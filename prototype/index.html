@@ -1329,6 +1329,10 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .st-spot .ppl-av { animation: stBob 2.4s ease-in-out infinite; }
 .st-spot.seen .ppl-av { animation: none; }
 .st-spot.seen em::after { content: ' ✓'; }
+/* 응대한 인물: 체크 없이 이름표만 회색으로 (조용하게 '끝났어요') */
+.st-scene .st-spot em { white-space: nowrap; }
+.st-scene.ph .st-spot.seen em { background: #9A93A6 !important; }   /* 테두리 · 그림자는 다른 이름표와 똑같이 */
+.st-scene.ph .st-spot.seen em::after { content: none; }
 .st-spot em { background: var(--pc, var(--ink)) !important; color: #fff !important; border-color: var(--ink) !important; }
 @keyframes stBob { 50% { transform: translateY(-3px); } }
 .st-sbub.dn { transform: translate(-50%, 46px); }
@@ -1344,6 +1348,8 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .st-hear .hs svg { width: 16px; height: 16px; }
 .st-hear .hk { font-size: 12.5px; font-weight: 700; color: var(--sub); line-height: 1.4; word-break: keep-all; }
 .st-hear .btn { height: 46px; width: 100%; }
+.st-hear .hk.done { font-size: 14px; font-weight: 900; color: var(--ink); }
+.st-hear .btn.hg-again { background: var(--white); }
 .ls-m { position: absolute; inset: 0; z-index: 60; display: flex; align-items: flex-end; padding: 16px; background: rgba(30,26,43,.45); animation: lsMIn .18s ease-out; }
 .ls-mc { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 18px 12px; border: 2px solid var(--ink); border-radius: 26px; background: var(--white); box-shadow: 0 6px 0 var(--ink); text-align: center; }
 .ls-mc img { width: 104px; margin-top: -52px; }
@@ -8353,7 +8359,7 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
           <div class="react-tools"><button type="button" data-say="${stEsc(sel.problem + ' ' + sel.want)}">${ICO.spk}듣기</button><button type="button" data-mk="${stEsc(sel.problem)}" data-ko="${stEsc(sel.name + '의 문제')}">${ICO.mark(false)}저장</button></div>`
         : `<div class="st-opts">${t.opts.map((o, k) => `<button class="st-opt" data-prob="${k}" lang="en">${stEsc(o)}</button>`).join('')}</div>`}</div>`
       : `<p class="st-intro" style="text-align:center">${(Sc.rps || [Sc.rp]).some((r) => r.wc) ? `응대한 손님 ${Object.keys(t.found).length}/${P.length}` : `인물을 눌러 보세요 · 찾은 사람 ${Object.keys(t.found).length}/${P.length}`}</p>`}
-      ${t.hear != null && !sel ? (() => { const h = P[t.hear]; return `<div class="card st-hear"><div class="hr"><span class="hf">${pplAv(h.name, 56)}<em style="color:${pplC(h.name)}">${h.name}</em></span><div class="hb"><p lang="en">${stEsc(h.say || h.problem).replace(/-/g, '\u2011')}</p><button type="button" class="hs" data-say="${stEsc(h.say || h.problem)}" data-who="${h.name}" aria-label="다시 듣기">${ICO.spk}</button></div></div><small class="hk">${stEsc(h.clue)}</small><button class="btn yellow press" type="button" data-hgo="${t.hear}">${h.name} 응대하기</button></div>`; })() : ''}
+      ${t.hear != null && !sel ? (() => { const h = P[t.hear]; return `<div class="card st-hear"><div class="hr"><span class="hf">${pplAv(h.name, 56)}<em style="color:${pplC(h.name)}">${h.name}</em></span><div class="hb"><p lang="en">${stEsc(h.say || h.problem).replace(/-/g, '\u2011')}</p><button type="button" class="hs" data-say="${stEsc(h.say || h.problem)}" data-who="${h.name}" aria-label="다시 듣기">${ICO.spk}</button></div></div>${(t.found || {})[t.hear] ? `<small class="hk done">해결했어요</small><button class="btn press hg-again" type="button" data-hgo="${t.hear}">한 번 더 하기</button>` : `<small class="hk">${stEsc(h.clue)}</small><button class="btn yellow press" type="button" data-hgo="${t.hear}">${h.name} 응대하기</button>`}</div>`; })() : ''}
       ${all && !(Sc.rps || [Sc.rp]).some((r) => r.wc) ? `<div class="card st-q st-pick"><span class="st-qn">역할극 · 응대할 손님을 골라요</span><div class="st-qko" style="color:var(--ink)">손님 말에 단어 카드로 답하며 3번 주고받아요</div>
         <div class="st-pickg">${(Sc.rps || [Sc.rp]).map((r, i) => { const p = P.find((x) => x.name === r.who) || {}; return `<button class="st-pk" data-rp="${i}"><span class="st-av" style="${AVC(r.c)}">${r.who[0]}</span><b>${stEsc(r.who)}</b><small lang="en">${stEsc(p.problem || '')}</small><em>${stEsc(r.me)} 역할 · ${r.wc ? '카드 대화 ' + r.wc.length + '번' : '대화 ' + (r.lines.length - 1) + '번'}</em></button>`; }).join('')}</div></div>` : ''}`;
     const RPS = Sc.rps || [Sc.rp], wcOn = RPS.some((r) => r.wc);
