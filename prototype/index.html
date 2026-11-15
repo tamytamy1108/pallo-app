@@ -6374,6 +6374,12 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
       speechSynthesis.speak(u);
     } catch (e) { toast('듣기를 재생하지 못했어요'); }
   }
+  // 대화형 활동(응대 대화 · AI 역할극 · 프리토킹 · 레슨 속 대화): 새 말이 나오면 다 그린 뒤 맨 아래로 → 답하는 칸이 바로 보여요
+  function stickBottom(box) {
+    if (!box) return;
+    box.scrollTop = box.scrollHeight;
+    requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; setTimeout(() => box.isConnected && box.scrollTo({ top: box.scrollHeight, behavior: reduced() ? 'auto' : 'smooth' }), 150); });
+  }
   // 예습·복습 화면 안에서만 스크롤해요 (scrollIntoView 는 바깥 앱 화면까지 밀어 올려서 쓰지 않아요)
   function stReveal(el, mode) {
     const box = $('#stBody'); if (!box || !el) return;
@@ -8078,7 +8084,7 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
         <p class="st-intro">${nOn ? `잘 썼어요: ${checks.filter((c) => c.on).map((c) => c.label).join(', ')}.` : `다음엔 ${label}를 하나 넣어 말해 봐요.`} 앱에서는 AI가 대화 전체를 보고 점수 · 잘한 점 · 고칠 문장을 알려줘요.</p>
         ${doneBtn()}`
       : chatInputHTML(C, t)}`;
-    const box = $('#stBody'); box.scrollTop = box.scrollHeight;
+    const box = $('#stBody'); stickBottom(box);
     $$('#stBody [data-mis]').forEach((b) => b.addEventListener('click', () => { const i = +b.dataset.mis; t.ms[i] = !t.ms[i]; sfx('tap'); t.draft = $('#stMsg')?.value || ''; renderChat(s, C); }));
     $$('#stBody [data-ins]').forEach((b) => b.addEventListener('click', () => { const el = $('#stMsg'); el.value = (el.value.trim() ? el.value.trim() + ' ' : '') + b.dataset.ins.replace(/ ___$/, ' '); el.focus(); t.draft = el.value; }));
     $('#stMsg')?.addEventListener('input', (e) => { t.draft = e.target.value; });
@@ -8229,7 +8235,7 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
           ? `<button type="button" class="ft-mic" id="ftMic">${FT_ICO.mic}<span>눌러서 말하기</span></button><input type="hidden" id="ftIn">`
           : `<div class="ft-inp"><input class="ft-f" id="ftIn" lang="en" placeholder="영어로 답해 보세요" value="${stEsc(F.draft)}" autocomplete="off" data-mic="off"><button type="button" class="ft-send" id="ftSend" aria-label="보내기">${FT_ICO.send}</button></div>`}
       </div>`;
-    const box = $('#stBody'); box.scrollTop = box.scrollHeight;
+    const box = $('#stBody'); stickBottom(box);
     if (F.said !== F.i) { F.said = F.i; setTimeout(() => sayEn(Q(F.i)[0], .95), 300); }
     const send = (v) => {
       v = String(v || '').trim(); if (!v) { toast('영어로 한마디 적어 주세요'); return; }
@@ -8262,7 +8268,7 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
     const cur = W[w.i];
     if (!done && !w.wb) w.wb = makeWB(cur[2], W.flatMap((x) => x[2].split(/\s+/)), 2);
     const bub = (m, k) => m.who
-      ? `<div class="st-msg${k === w.log.length - 1 && !m.seen ? ' wc-in' : ''}"><span class="st-av" style="${AVC(R.c)}">${R.who[0]}</span><div><div class="who">${stEsc(R.who)}</div><div class="b"><span lang="en">${stEsc(W[m.k][0])}</span><small>${stEsc(W[m.k][1])}</small></div><button type="button" class="st-say" data-say="${stEsc(W[m.k][0])}" data-who="${R.who}" aria-label="듣기">${ICO.spk}</button></div></div>`
+      ? `<div class="st-msg${k === w.log.length - 1 && !m.seen ? ' wc-in' : ''}">${pplAv(R.who, 40) || `<span class="st-av" style="${AVC(R.c)}">${R.who[0]}</span>`}<div><div class="who">${stEsc(R.who)}</div><div class="b"><span lang="en">${stEsc(W[m.k][0])}</span><small>${stEsc(W[m.k][1])}</small></div><button type="button" class="st-say" data-say="${stEsc(W[m.k][0])}" data-who="${R.who}" aria-label="듣기">${ICO.spk}</button></div></div>`
       : `<div class="st-msg me${k === w.log.length - 1 && !m.seen ? ' wc-in' : ''}"><div class="b" lang="en">${stEsc(W[m.k][2])}</div>${w.i >= W.length ? `<button type="button" class="wc-mk" data-mk="${stEsc(W[m.k][2])}" data-ko="${stEsc(W[m.k][3])}" aria-pressed="${S.marks.some((x) => x.t === W[m.k][2])}" aria-label="내 표현함에 저장"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></button>` : ''}</div>`;
     $('#stBody').innerHTML = `
       <p class="st-intro">${stEsc(R.me)} 역할로 ${stEsc(R.who)}에게 답해요 · 단어 카드를 순서대로 눌러요</p>
@@ -8312,6 +8318,7 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
       if (tk) el.querySelector(`[data-wcp="${tk.id}"]`)?.classList.add('hint');
     }
     if (!done && !w.reveal) wcCards();
+    stickBottom(box);   // 카드까지 다 그린 뒤 맨 아래로
     // 손님 말은 나올 때 한 번 읽어 줘요 (내 답은 맞춘 뒤에만)
     if (!done && w.said !== w.i) { w.said = w.i; setTimeout(() => sayEn(cur[0], .92, null, R.who), 350); }
     const norm = (x) => x.replace(/[’]/g, "'").replace(/\s+/g, ' ').trim().toLowerCase();
@@ -8889,7 +8896,7 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
         : `<div class="st-msg"><span class="st-av" style="${AVC(t.c)}">${t.who[0]}</span><div><div class="who">${stEsc(t.who)}</div><div class="b"><span lang="en">${stEsc(m.en)}</span>${m.ko ? `<small>${stEsc(m.ko)}</small>` : ''}</div></div></div>`).join('')}</div>
       ${done && t.result ? `<div class="card tk-team"><span class="st-kick2">${stEsc(t.result.title)}</span>${t.result.items(st.log.filter((m) => m.me).map((m) => m.en)).map((x) => `<div><i>${ICO.check}</i><span lang="en">${stEsc(x)}</span></div>`).join('')}</div>` : ''}
       ${done ? '' : `<textarea class="st-ta" id="tkDuo" lang="en" placeholder="${stEsc(t.ph || '영어로 답해요 · 마이크를 눌러 말해도 돼요')}" style="min-height:70px">${stEsc(st.draft || '')}</textarea>`}`;
-    const box = $('#lsBody'); box.scrollTop = box.scrollHeight;
+    const box = $('#lsBody'); stickBottom(box);
     if (done) { $('#lsFoot').innerHTML = `<button class="btn wide yellow press" id="tkGo">${goLabel()}</button>`; $('#tkGo').addEventListener('click', tkNext); return; }
     $('#lsFoot').innerHTML = noSpeakHTML() + `<div class="ls-row"><button class="ls-skip" type="button" id="tkSkip">건너뛰기</button><button class="btn wide yellow press" id="tkSend">보내기</button></div>`;
     $('#tkDuo').addEventListener('input', (e) => { st.draft = e.target.value; });
@@ -9462,7 +9469,8 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
   const chCat = (k) => LG_CHCAT.find((c) => c[0] === k) || LG_CHCAT[0];
   const CH_BG = { y: '#FFF5B0', sk: '#E3EAF8', '': '#E5DDF6' };
   // 참여 중: 예시로 c1 · c5에 이미 참여해 있어요. 내가 연 챌린지는 자동 참여
-  const chJ = (p) => !!(p.mine || (LG.chj || (LG.chj = { c1: 1, c5: 1, c7: 1, c8: 1, c11: 1 }))[p.id]);
+  // 참여 중: 표현 챌린지는 내가 문장 · 팁 · 답글을 달았을 때만 (LG.chjx), 다른 챌린지는 참여하기를 눌렀을 때 (LG.chj)
+  const chJ = (p) => { if (p.mine) return true; if (chIsX(p)) return !!(LG.chjx || {})[p.id]; return !!(LG.chj || (LG.chj = { c1: 1, c5: 1, c7: 1, c8: 1, c11: 1 }))[p.id]; };
   const chPre = (p) => chCat(p.cat)[0] !== 'study' && !p.day && !p.live;   // 표현 챌린지는 기간이 없어 늘 열려 있어요
   const chMem = (p) => p.members + (LG.chjn && LG.chjn[p.id] ? 1 : 0);
   const chToday = (p) => chPre(p) ? 0 : Math.max(1, Math.round(chMem(p) * .55) + (lgH(p.id) % 5)) + (LG.chal[p.id] ? 1 : 0);
@@ -9945,7 +9953,7 @@ ins.ft-o { text-decoration: none; color: #2E8B57; font-weight: 900; background: 
     else L.push([ME.n, LG_C.y, v, '방금', 0]);
     // 표현 챌린지는 댓글(문장 · 팁 · 답글)을 다는 순간 자동 참여
     const xm = /^ch[xq]:(.+)$/.exec(ctx.key), xp = xm && !(m && m.t === 'edit') && lgFind(xm[1]);
-    if (xp && !chJ(xp) && !xp.mine) { LG.chj[xp.id] = 1; ctx.head = (ctx.head || '').replace('<div class="chx-head"><small>', '<div class="chx-head"><small><b class="jn">참여 중</b> · '); toast('챌린지에 참여했어요'); }
+    if (xp && !chJ(xp) && !xp.mine) { (LG.chjx = LG.chjx || {})[xp.id] = 1; ctx.head = (ctx.head || '').replace('<div class="chx-head"><small>', '<div class="chx-head"><small><b class="jn">참여 중</b> · '); toast('챌린지에 참여했어요'); }
     LG.cmode = null; ctx.onChange && ctx.onChange(); lgCSRender();
     if (!m) { const l = $('#lgCSL'); l.scrollTop = l.scrollHeight; } $('#lgCSI').focus();
   }
