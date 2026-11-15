@@ -1329,6 +1329,10 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 .st-spot .ppl-av { animation: stBob 2.4s ease-in-out infinite; }
 .st-spot.seen .ppl-av { animation: none; }
 .st-spot.seen em::after { content: ' ✓'; }
+/* 응대한 인물: 체크 없이 이름표만 회색으로 (조용하게 '끝났어요') */
+.st-scene .st-spot em { white-space: nowrap; }
+.st-scene.ph .st-spot.seen em { background: #9A93A6 !important; border-color: #9A93A6 !important; box-shadow: none !important; }
+.st-scene.ph .st-spot.seen em::after { content: none; }
 .st-spot em { background: var(--pc, var(--ink)) !important; color: #fff !important; border-color: var(--ink) !important; }
 @keyframes stBob { 50% { transform: translateY(-3px); } }
 .st-sbub.dn { transform: translate(-50%, 46px); }
