@@ -1,0 +1,31 @@
+{
+  "body": {
+    "yellow": {
+      "name": "팔로 옐로",
+      "hex": "#FFE200",
+      "note": "원본"
+    },
+    "purple": {
+      "name": "팔로 퍼플",
+      "hex": "#493087"
+    },
+    "pink": {
+      "name": "버블 핑크",
+      "hex": "#F28CB1"
+    },
+    "sky": {
+      "name": "스카이",
+      "hex": "#7FA7E8"
+    },
+    "green": {
+      "name": "민트 그린",
+      "hex": "#5CBF8A"
+    },
+    "coral": {
+      "name": "코랄",
+      "hex": "#FF7A59"
+    }
+  },
+  "ink": "#1B1D24",
+  "eyeWhite": "#FFFFFF"
+}
