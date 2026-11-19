@@ -2974,6 +2974,12 @@ article.lg-new .lg-ch { animation: lgNew 1.5s cubic-bezier(.3,1.4,.5,1); }
 .dy-en .d small:first-child { margin: 0 0 3px; }
 .dy-en .d b { font-family: var(--f-display); font-size: 18px; font-weight: 800; line-height: 1; } .dy-en .d small { font-size: 11px; font-weight: 800; color: var(--sub); margin-top: 3px; }
 .dy-en .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; } .dy-en .k { font-size: 11px; font-weight: 900; color: var(--purple); } .dy-en .p { font-size: 13.5px; font-weight: 700; line-height: 1.5; } .dy-en .tg { font-size: 11px; font-weight: 900; color: var(--sub); }
+.pn-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 14px; }
+.pn-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 12px 12px; border-radius: 20px; border: 2px solid var(--ink); background: #fff; box-shadow: 4px 4px 0 var(--ink); font: inherit; color: var(--ink); text-align: left; cursor: pointer; min-width: 0; }
+.pn-tile.sv { background: #F3EEFB; }
+.pn-tile .ic { width: 38px; height: 38px; border-radius: 12px; border: 2px solid var(--ink); background: var(--cream); display: grid; place-items: center; overflow: hidden; margin-bottom: 6px; } .pn-tile .ic img { width: 44px; margin-top: 8px; } .pn-tile.sv .ic { background: var(--yellow); }
+.pn-tile b { font-size: 13.5px; font-weight: 900; } .pn-tile .n { font-family: var(--f-display); font-size: 24px; font-weight: 800; line-height: 1.1; } .pn-tile .n small { font-family: var(--f-body); font-size: 12px; font-weight: 900; margin-left: 2px; }
+.pn-tile .pv { width: 100%; font-size: 11.5px; font-weight: 700; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pn-dylink { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; margin: 4px 0 12px; border-radius: 20px; border: 2px solid var(--ink); background: #fff; box-shadow: 4px 4px 0 var(--ink); font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
 .pn-dylink .ic { flex: none; width: 46px; height: 46px; border-radius: 15px; border: 2px solid var(--ink); background: #F3EEFB; display: grid; place-items: center; overflow: hidden; } .pn-dylink .ic img { width: 52px; margin-top: 10px; }
 .pn-dylink .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; } .pn-dylink .tx b { font-size: 14.5px; font-weight: 900; } .pn-dylink .tx b em { font-style: normal; margin-left: 4px; font-size: 12px; font-weight: 900; color: var(--purple); }
@@ -3713,8 +3719,8 @@ article.lg-new .lg-ch { animation: lgNew 1.5s cubic-bezier(.3,1.4,.5,1); }
 .pf-rec .fb { width: 100%; height: 38px; margin-top: 8px; border-radius: 19px; border: 2px solid var(--ink); background: var(--yellow); box-shadow: 0 3px 0 var(--ink); font: inherit; font-weight: 900; font-size: 13.5px; cursor: pointer; }
 .pf-rec .x { position: absolute; right: 8px; top: 6px; border: 0; background: none; font-size: 18px; font-weight: 900; color: #9A93A6; cursor: pointer; }
 .pf-race { position: relative; height: 118px; border: 2px solid var(--ink); border-radius: 18px; background: #EAF6E7; overflow: hidden; flex-shrink: 0; }
-.pf-race.t1 { height: 134px; background: #D9614C; }
-.pf-race.t1 .lane { position: absolute; left: 0; right: 0; top: 65px; height: 2px; background: rgba(255,255,255,.85); }
+.pf-race.t1 { height: 162px; background: #D9614C; }
+.pf-race.t1 .lane { position: absolute; left: 0; right: 0; top: 79px; height: 2px; background: rgba(255,255,255,.85); }
 .pf-race.t1 .no { position: absolute; left: 9px; font-family: var(--f-display); font-size: 13px; font-weight: 800; color: #fff; }
 .pf-race.t1 .st { position: absolute; left: 28px; top: 0; bottom: 0; width: 3px; background: #fff; }
 .pf-race.t1 .fin { position: absolute; right: 0; top: 0; bottom: 0; width: 20px; border-left: 2px solid var(--ink); background: repeating-conic-gradient(#1E1A2B 0 25%, #fff 0 50%) 0 0 / 12px 12px; }
@@ -13429,7 +13435,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="pn-body"><p class="pn-intro">수업이 끝나면 프로님이 그날 배운 표현 · 바로잡은 문장 · 질문을 정리해서 보내 줘요. 마음에 드는 건 저장해 두고 다시 봐요.</p>
         <div class="card pn-wait"><b>오늘 ${teamName(PN_WAIT.team)} 노트 준비 중</b><span>${PN_WAIT.end}에 수업이 끝나면 ${PN_WAIT.pro} 프로님이 보내 줘요 · 도착하면 알림을 드려요</span></div>
         ${(() => { const L = PN.filter((x) => { const d = pndOf(x.id); return d && d.at; }), last = L[0], ld = last && pndOf(last.id);
-          return `<button type="button" class="pn-dylink" data-pndy><span class="ic"><img src="assets/c-upright-yellow.png" alt=""></span><span class="tx"><b>나의 스터디 일기 <em>${L.length}편</em></b><small>${last ? `${last.m}.${last.d} ${last.wd} · ${stEsc((ld.t || '').slice(0, 26))}${(ld.t || '').length > 26 ? '…' : ''}` : '노트 맨 아래에서 오늘의 일기를 써 봐요'}</small></span><span class="go">›</span></button>`; })()}
+          const sk = saved[saved.length - 1], sn = sk && PN.find((x) => x.id === sk.split(':')[0]), sv = sn && sn.items[+sk.split(':')[1]];
+          return `<div class="pn-two"><button type="button" class="pn-tile dy" data-pndy><span class="ic"><img src="assets/c-upright-yellow.png" alt=""></span><b>나의 스터디 일기</b><span class="n">${L.length}<small>편</small></span><small class="pv">${last ? `${last.m}.${last.d} · ${stEsc((ld.t || '').slice(0, 18))}…` : '노트 맨 아래에서 써요'}</small></button>
+            <button type="button" class="pn-tile sv" data-pnf="saved"><span class="ic">${lgI('save', 20, '#493087', '#1E1A2B', 2)}</span><b>저장한 표현</b><span class="n">${saved.length}<small>개</small></span><small class="pv">${sv ? stEsc(String(sv[1]).replace(/<[^>]+>/g, '').slice(0, 22)) : '노트에서 책갈피를 눌러 모아요'}</small></button></div>`; })()}
         <div class="pn-tabs" role="tablist">${[['all', '전체'], ...myTeams().map((t) => [t.no, tLabel(t)]), ['saved', `저장한 표현 ${saved.length}`]].map(([k, l]) => `<button role="tab" data-pnf="${k}" aria-selected="${f === k}">${l}</button>`).join('')}</div>
         ${f === 'saved' ? (it || '<div class="lg-empty">노트에서 저장 버튼을 누르면 여기 모여요.</div>') : `<div class="ym-h">2026년 11월</div><div class="card pn-list">${L.map(pnRow).join('')}</div>`}</div>`;
   }
@@ -14067,9 +14075,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       const tag = (r, top, txt) => r > 0.55 ? `<small style="left:${at(r)};top:${top}px;transform:translateX(calc(-100% - 4px))">${txt}</small>` : `<small style="left:calc(${at(r)} + 68px);top:${top}px">${txt}</small>`;
       const a = rr(theirWk), b = rr(myWk);
       return `<div class="pf-h2"><span>이번 주 포인트 달리기</span><b>${tie ? `동점 · ${myWk}P` : `${diff}P 차이`}</b></div>
-        <div class="pf-race t1"><span class="lane"></span><span class="no" style="top:22px">1</span><span class="no" style="top:88px">2</span><span class="st"></span><span class="fin"></span>
-          <span class="rn" style="left:${at(a)};top:10px">${avCharHTML(memberAv(name), false)}</span>${tag(a, 22, `${stEsc(name)} ${theirWk}P`)}
-          <span class="rn" style="left:${at(b)};top:76px">${avCharHTML(MYAV, false)}</span>${tag(b, 88, `나 ${myWk}P`)}</div>
+        <div class="pf-race t1"><span class="lane"></span><span class="no" style="top:32px">1</span><span class="no" style="top:112px">2</span><span class="st"></span><span class="fin"></span>
+          <span class="rn" style="left:${at(a)};top:28px">${avCharHTML(memberAv(name), false)}</span>${tag(a, 40, `${stEsc(name)} ${theirWk}P`)}
+          <span class="rn" style="left:${at(b)};top:108px">${avCharHTML(MYAV, false)}</span>${tag(b, 120, `나 ${myWk}P`)}</div>
         <p class="pf-tip">${tie ? `나란히 달리는 중! 오늘 출석하면 <b>+50P</b> 앞서요` : ahead ? `오늘 출석 + 복습하면 <b>+50P</b> 앞으로 달려요` : `내가 ${diff}P 앞서 있어요 · 오늘도 이어 가요`}</p>`; };
     const stats = `<div class="pf-h2"><span>학습 현황</span></div><div class="pf-st">
       <div>${PF_ICO.fire}<span><b>${streak}일</b><small>연속 출석</small></span></div>
@@ -14174,7 +14182,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       if (pb && MP.fromAct) { MP = Object.assign(MP, { mode: 'act', at: 'diary', fromAct: 0 }); renderMyPush(); P.scrollTop = 0; return; }
       if (pb) { if (MP.back) { MP.mode = 'pn'; MP.pf = MP.back; renderMyPush(); P.scrollTop = 0; } else myPushClose(); return; }
       if (pf) { keep(() => { MP.pf = pf.dataset.pnf; }); return; }
-      if (pm) { const k = pm.dataset.pnmk; PNS[k] = !PNS[k]; if (!PNS[k]) delete PNS[k]; pnSave(); keep(() => {}); toast(PNS[k] ? '내 표현함에 저장했어요' : '저장을 취소했어요'); return; }
+      if (pm) { const k = pm.dataset.pnmk; PNS[k] = !PNS[k]; if (!PNS[k]) delete PNS[k]; pnSave(); keep(() => {}); toast(PNS[k] ? "PRO'S NOTE › 저장한 표현에 담았어요" : '저장을 취소했어요'); return; }
       if (pt) { const id = pt.dataset.pnty; PNT[id] = !PNT[id]; pnSave(); keep(() => {}); if (PNT[id]) { sfx('save'); toast('고마워요를 보냈어요'); } return; }
       const pmg = e.target.closest('[data-pnmsg]'); if (pmg) { pnMsgSheet(pmg.dataset.pnmsg); return; }
     });
