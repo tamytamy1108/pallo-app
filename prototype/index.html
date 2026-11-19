@@ -554,8 +554,7 @@ a { color: inherit; }
 .post-card .af-big { position: absolute; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); color: #fff; font-family: var(--f-display); font-size: 22px; font-weight: 800; line-height: 1.2; text-align: center; }
 .post-card .af-big small { display: block; margin-top: 6px; font-family: var(--f-body); font-size: 13px; font-weight: 800; opacity: .9; }
 .post-card .af-big.af-k { font-size: 18px; letter-spacing: .5px; }
-#lgFeed article.lg-flash { animation: lgFlash 1.6s ease both; }
-@keyframes lgFlash { 0%, 100% { box-shadow: none; } 15%, 60% { box-shadow: 0 0 0 4px var(--yellow); } }
+
 .ph { position: relative; height: 214px; border-bottom: 2px solid var(--ink); overflow: hidden; }
 .ph::after { content: ""; position: absolute; inset: 0; opacity: .28; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
 .ch-badge { position: absolute; left: 12px; top: 12px; z-index: 1; height: 28px; padding: 0 12px; border-radius: 14px; border: 2px solid var(--ink); font-size: 12px; font-weight: 900; display: flex; align-items: center; color: var(--ink); }
@@ -1213,6 +1212,9 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) { .st-fly { animation: none; opacity: 1; } }
 /* 한국어 줄바꿈: 단어 중간에서 끊지 않고, 마지막 줄에 한 글자만 남지 않게 */
 body { word-break: keep-all; overflow-wrap: break-word; }
+/* 입력칸(앱 전체): 띄어쓰기 없이 길게 써도 칸 안에서 다음 줄로 · 한 줄 칸도 여러 줄이 되면 위아래 여백 유지 */
+textarea { white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; overflow-x: hidden; resize: none; }
+textarea[rows="1"] { padding-top: 11px !important; padding-bottom: 11px !important; line-height: 20px !important; box-sizing: border-box; }
 .tk-msg, .st-intro, .st-note, .tk-ko, .st-qko, .tk-kw2 span, .ls-fb-t small, .cel-sub { text-wrap: pretty; }
 /* 시간 제한 말하기: 아래 바 가운데 마이크 */
 .ls-microw { align-items: center; }
@@ -2956,6 +2958,111 @@ article.lg-new .lg-ch { animation: lgNew 1.5s cubic-bezier(.3,1.4,.5,1); }
 .my-id span { font-size: 13px; font-weight: 800; color: var(--sub); }
 .my-id p { margin: 4px 0 0; font-size: 14px; font-weight: 600; }
 .my-id .lg-link { align-self: flex-start; padding: 4px 0 0; }
+.pn-dy { margin: 16px 0 6px; overflow: hidden; }
+.dy-box { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+.dy-hero { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); background: var(--purple); color: #fff; }
+.dy-hero > div { flex: 1; min-width: 0; display: flex; flex-direction: column; } .dy-hero small { font-size: 12px; font-weight: 800; color: #E3DBF7; } .dy-hero b { font-family: var(--f-display); font-size: 26px; font-weight: 800; line-height: 1.1; } .dy-hero span { margin-top: 6px; font-size: 11.5px; font-weight: 900; color: var(--yellow); }
+.dy-hero img { width: 62px; margin: -10px -2px -14px 0; flex: none; }
+.dy-cal { padding: 10px 12px 12px; border-radius: 18px; border: 2px solid var(--line); background: #fff; }
+.dy-cal .wk, .dy-cal .ds { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
+.dy-cal .wk span { font-size: 10.5px; font-weight: 900; color: var(--sub); padding-bottom: 4px; }
+.dy-cal .ds span, .dy-cal .ds button { height: 28px; display: grid; place-items: center; font-size: 11.5px; font-weight: 800; color: #A39C8E; border-radius: 50%; border: 0; background: none; font-family: inherit; padding: 0; }
+.dy-cal .ds button.on { background: var(--yellow); color: var(--ink); font-weight: 900; box-shadow: inset 0 0 0 2px var(--ink); cursor: pointer; width: 28px; margin: 0 auto; }
+.dy-cal .ds .td { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.dy-en { display: flex; gap: 12px; padding: 12px 14px; text-align: left; font: inherit; color: inherit; cursor: pointer; width: 100%; }
+.dy-en .d { flex: none; width: 36px; display: flex; flex-direction: column; align-items: center; } .ym-h { font-size: 12.5px; font-weight: 900; color: var(--sub); margin: 4px 2px -2px; }
+.dy-en .d small:first-child { margin: 0 0 3px; }
+.dy-en .d b { font-family: var(--f-display); font-size: 18px; font-weight: 800; line-height: 1; } .dy-en .d small { font-size: 11px; font-weight: 800; color: var(--sub); margin-top: 3px; }
+.dy-en .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; } .dy-en .k { font-size: 11px; font-weight: 900; color: var(--purple); } .dy-en .p { font-size: 13.5px; font-weight: 700; line-height: 1.5; } .dy-en .tg { font-size: 11px; font-weight: 900; color: var(--sub); }
+.pn-dylink { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; margin: 4px 0 12px; border-radius: 20px; border: 2px solid var(--ink); background: #fff; box-shadow: 4px 4px 0 var(--ink); font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.pn-dylink .ic { flex: none; width: 46px; height: 46px; border-radius: 15px; border: 2px solid var(--ink); background: #F3EEFB; display: grid; place-items: center; overflow: hidden; } .pn-dylink .ic img { width: 52px; margin-top: 10px; }
+.pn-dylink .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; } .pn-dylink .tx b { font-size: 14.5px; font-weight: 900; } .pn-dylink .tx b em { font-style: normal; margin-left: 4px; font-size: 12px; font-weight: 900; color: var(--purple); }
+.pn-dylink .tx small { font-size: 12px; font-weight: 700; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .pn-dylink .go { flex: none; font-size: 18px; font-weight: 900; color: var(--sub); }
+.pn-dy .hd { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; } .pn-dy .hd img { width: 44px; margin: -6px 0 -10px; flex: none; }
+.pn-dy .hd b { display: block; font-size: 15px; font-weight: 900; } .pn-dy .hd small { font-size: 11.5px; font-weight: 800; color: var(--sub); }
+.pn-dy .hd .lk { margin-left: auto; display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 900; color: var(--purple); }
+.pn-dy .bd { padding: 0 14px 14px; }
+.dy-sts { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 2px 14px 2px; } .dy-sts::-webkit-scrollbar { display: none; }
+.dy-st { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 11px; border-radius: 16px; border: 1.5px solid var(--line); background: #fff; font: inherit; font-size: 12px; font-weight: 800; color: var(--sub); cursor: pointer; white-space: nowrap; }
+.dy-st.on { border: 2px solid var(--ink); background: var(--yellow); color: var(--ink); }
+.dy-q { margin-top: 12px; padding: 10px 12px; border-radius: 14px 14px 14px 4px; background: #F3EEFB; font-size: 13px; font-weight: 900; color: var(--purple); }
+.dy-ta { display: block; width: 100%; margin-top: 8px; padding: 12px; border: 0; border-radius: 14px; background: var(--cream); font: inherit; font-size: 14px; font-weight: 700; line-height: 1.6; color: var(--ink); min-height: 92px; resize: none; box-sizing: border-box; outline: none; }
+.dy-ta:focus { box-shadow: 0 0 0 2px var(--ink) inset; } .dy-done { white-space: pre-wrap; min-height: 0; }
+.dy-ft { display: flex; align-items: center; margin-top: 12px; gap: 8px; }
+.dy-ch { border: 0; background: none; padding: 4px 0; font: inherit; font-size: 12px; font-weight: 800; color: var(--sub); cursor: pointer; } .dy-at { font-size: 11.5px; font-weight: 800; color: var(--sub); }
+.dy-ft .dy-ch:last-child { margin-left: auto; color: var(--purple); font-weight: 900; }
+.dy-sv { margin-left: auto; height: 40px; padding: 0 18px; border-radius: 20px; border: 2px solid var(--ink); background: var(--yellow); box-shadow: 0 3px 0 var(--ink); font: inherit; font-size: 13.5px; font-weight: 900; color: var(--ink); cursor: pointer; }
+.brb { margin-top: 12px; padding: 14px; }
+.brb .hd { display: flex; align-items: center; justify-content: space-between; } .brb .hd b { font-size: 15px; font-weight: 900; } .brb .hd .lg-link { font-size: 12.5px; font-weight: 900; color: var(--purple); }
+.brb .sc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.brb .it { display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: none; padding: 0; font: inherit; font-size: 12px; font-weight: 800; color: var(--ink); cursor: pointer; }
+.brb .it .ic { width: 48px; height: 48px; border-radius: 16px; border: 2px solid var(--ink); display: grid; place-items: center; box-shadow: 2px 2px 0 var(--ink); }
+.brb .pn { display: flex; align-items: flex-start; gap: 8px; width: 100%; margin-top: 12px; padding: 10px 12px; border: 0; border-radius: 14px; background: #FFF6C2; font: inherit; font-size: 12.5px; font-weight: 800; line-height: 1.45; color: var(--ink); text-align: left; cursor: pointer; } .brb .pn svg { flex: none; margin-top: 2px; }
+.br-body { padding: 8px 16px 40px; display: flex; flex-direction: column; gap: 10px; }
+.br-pin { display: flex; gap: 10px; padding: 12px 14px; border-radius: 16px; background: #FFF6C2; border: 2px solid var(--ink); } .br-pin svg { flex: none; margin-top: 2px; } .br-pin b { display: block; font-size: 13.5px; font-weight: 900; line-height: 1.45; } .br-pin small { font-size: 11.5px; font-weight: 800; color: var(--sub); }
+.br-it { display: flex; align-items: center; gap: 12px; padding: 12px 14px; transition: box-shadow .3s; } .br-it.hl { box-shadow: 0 0 0 3px var(--yellow), 4px 4px 0 var(--ink); }
+.br-it .ic { flex: none; width: 40px; height: 40px; border-radius: 13px; border: 2px solid var(--ink); display: grid; place-items: center; }
+.br-it .tx { flex: 1; min-width: 0; } .br-it .tx b { display: block; font-size: 14px; font-weight: 900; } .br-it .tx span { display: block; margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--sub); line-height: 1.45; }
+.br-it .bt { flex: none; height: 32px; padding: 0 12px; border-radius: 16px; border: 2px solid var(--ink); background: var(--yellow); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+.br-h { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; } .br-h b { font-size: 14px; font-weight: 900; } .br-h small { font-size: 12px; font-weight: 900; color: var(--purple); }
+.br-ptn { display: flex; gap: 10px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 8px; scrollbar-width: none; } .br-ptn::-webkit-scrollbar { display: none; }
+.br-cp { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 6px; padding: 7px 10px; border-radius: 12px; border: 1.5px dashed #B9A9E3; background: #F7F3FD; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.br-cp > span { flex: 1; min-width: 0; display: flex; flex-direction: column; } .br-cp small { font-size: 10.5px !important; font-weight: 800; color: var(--sub) !important; margin: 0 !important; } .br-cp b { font-size: 13.5px !important; font-weight: 900; letter-spacing: .2px; }
+.br-cp i { flex: none; display: inline-flex; align-items: center; gap: 3px; font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--purple); }
+.br-cp.done { border-style: solid; border-color: var(--purple); background: #EDE6FB; } .br-cp.done i { color: var(--ink); }
+.br-seg { display: flex; gap: 4px; margin-top: 10px; padding: 4px; border-radius: 14px; background: #EFE8D8; }
+.br-seg button { flex: 1; height: 34px; border: 0; border-radius: 10px; background: none; font: inherit; font-size: 13px; font-weight: 900; color: var(--sub); cursor: pointer; }
+.br-seg button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
+.brp { padding: 8px 16px 40px; display: flex; flex-direction: column; gap: 12px; } .brp .br-seg { margin-top: 0; }
+.brp-hero { position: relative; overflow: hidden; padding: 16px 16px 18px; border-radius: 22px; background: var(--purple); color: #fff; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); display: flex; flex-direction: column; gap: 2px; }
+.brp-hero small { font-size: 11px; font-weight: 900; color: var(--yellow); letter-spacing: 1px; } .brp-hero b { font-family: var(--f-display); font-size: 22px; font-weight: 800; margin: 2px 0 4px; } .brp-hero span { font-size: 12.5px; font-weight: 700; color: #E3DBF7; max-width: 76%; }
+.brp-hero .map { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; height: 30px; padding: 0 12px; border-radius: 15px; border: 2px solid var(--ink); background: var(--yellow); font: inherit; font-size: 12px; font-weight: 900; color: var(--ink); cursor: pointer; }
+.brp-hero img { position: absolute; right: -6px; bottom: -14px; width: 84px; pointer-events: none; }
+.brp-pin { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; background: #FFF6C2; font-size: 12.5px; font-weight: 800; line-height: 1.45; } .brp-pin svg { flex: none; margin-top: 2px; }
+.brp-list { background: #fff; border: 2px solid var(--ink); border-radius: 22px; box-shadow: 4px 4px 0 var(--ink); overflow: hidden; }
+.brp-list .li { display: flex; gap: 12px; padding: 13px 14px; border-top: 1.5px solid var(--line); transition: background .3s; } .brp-list .li:first-child { border-top: 0; } .brp-list .li.hl { background: #FFF6C2; }
+.brp-list .ic { flex: none; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; }
+.brp-list .tx { flex: 1; min-width: 0; } .brp-list .tx b { display: block; font-size: 14px; font-weight: 900; } .brp-list .tx p { margin: 2px 0 0; font-size: 12px; font-weight: 700; color: var(--sub); line-height: 1.45; } .brp-list .tx p.cl { font-size: 11px; margin-top: 6px; }
+.br-val { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin: 6px 8px 0 0; padding: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.br-val code { min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; } .br-val .ci { flex: none; }   /* 계좌번호가 길면 회색 칸 안에서 줄바꿈 · 복사 아이콘은 오른쪽 그대로 */
+.br-val code { font-family: var(--f-body); font-size: 13px; font-weight: 900; color: var(--ink); padding: 4px 10px; border-radius: 8px; background: #F3EEE2; } .br-val .ci { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; color: var(--purple); background: #F3EEFB; }
+.br-val.done code { background: #EDE6FB; box-shadow: inset 0 0 0 1.5px var(--purple); }
+.brp-list .go { flex: none; align-self: center; height: 30px; padding: 0 12px; border-radius: 15px; border: 2px solid var(--ink); background: var(--yellow); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+.brp-h { display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px; } .brp-h b { font-size: 14px; font-weight: 900; } .brp-h small { font-size: 12px; font-weight: 900; color: var(--purple); }
+.br-pd2 { display: flex; flex-direction: column; gap: 14px; }
+.br-pd2 .hd { position: relative; height: 150px; border-radius: 20px; border: 2px solid var(--ink); color: #fff; padding: 14px 16px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+.br-pd2 .hd .w { position: absolute; right: 14px; top: 10px; font-family: var(--f-display); font-size: 30px; font-weight: 800; opacity: .25; }
+.br-pd2 .hd em { font-style: normal; font-size: 11px; font-weight: 900; color: var(--yellow); } .br-pd2 .hd b { font-family: var(--f-display); font-size: 22px; font-weight: 800; margin-top: 2px; }
+.br-pd2 .sec h3 { margin: 0 0 6px; font-size: 13px; font-weight: 900; color: var(--sub); } .br-pd2 .sec p { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.65; }
+.br-pd2 .cp { display: flex; align-items: stretch; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 4px 4px 0 var(--ink); overflow: hidden; background: #fff; }
+.br-pd2 .cp .l { flex: none; width: 96px; background: var(--yellow); border-right: 2px dashed var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 6px; text-align: center; }
+.br-pd2 .cp .l b { font-family: var(--f-display); font-size: 24px; font-weight: 800; line-height: 1; } .br-pd2 .cp .l b.sm { font-family: var(--f-body); font-size: 13px; line-height: 1.3; } .br-pd2 .cp .l small { font-size: 11.5px; font-weight: 900; margin-top: 4px; }
+.br-pd2 .cp .r { flex: 1; padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 3px; } .br-pd2 .cp .r small { font-size: 11px; font-weight: 900; color: var(--purple); } .br-pd2 .cp .r span { font-size: 13px; font-weight: 800; line-height: 1.45; }
+.br-pd2 .rows { background: #fff; border: 2px solid var(--line); border-radius: 16px; }
+.br-pd2 .pr { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1.5px solid var(--line); } .br-pd2 .pr:first-child { border-top: 0; }
+.br-pd2 .pr .ic { flex: none; width: 32px; height: 32px; border-radius: 10px; background: var(--cream); display: grid; place-items: center; }
+.br-pd2 .pr .tx { flex: 1; min-width: 0; } .br-pd2 .pr .tx b { display: block; font-size: 13.5px; font-weight: 800; } .br-pd2 .pr .tx small { font-size: 11.5px; font-weight: 800; color: var(--sub); }
+.br-pd2 .pr .bt { flex: none; height: 30px; padding: 0 12px; border-radius: 15px; border: 2px solid var(--ink); background: var(--yellow); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+.br-ptn .pc { flex: none; width: 150px; overflow: hidden; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.br-pd .im { height: 120px; border-radius: 18px; border: 2px solid var(--ink); display: flex; flex-direction: column; justify-content: flex-end; padding: 12px 14px; color: #fff; } .br-pd .im span { font-family: var(--f-display); font-size: 22px; font-weight: 800; } .br-pd .im em { font-style: normal; font-size: 11.5px; font-weight: 900; opacity: .9; }
+.br-pd h2 { margin: 14px 0 4px; } .br-pd .bn { display: flex; align-items: center; gap: 6px; color: var(--purple); font-size: 15px; } .br-pd .ds { margin: 8px 0 0; }
+.br-pd .rows { display: flex; flex-direction: column; margin-top: 10px; }
+.br-pr { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1.5px solid var(--line); } .br-pr .ic { flex: none; width: 34px; height: 34px; border-radius: 11px; border: 2px solid var(--ink); display: grid; place-items: center; background: #fff; }
+.br-pr .tx { flex: 1; min-width: 0; } .br-pr .tx b { display: block; font-size: 13.5px; font-weight: 800; } .br-pr .tx small { font-size: 11.5px; font-weight: 800; color: var(--sub); }
+.br-pr .bt { flex: none; height: 32px; padding: 0 12px; border-radius: 16px; border: 2px solid var(--ink); background: var(--yellow); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+.br-pd .how { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: #FFF6C2; display: flex; flex-direction: column; gap: 2px; } .br-pd .how b { font-size: 12.5px; font-weight: 900; } .br-pd .how span { font-size: 13px; font-weight: 700; } .br-ptn .im { height: 80px; display: flex; align-items: flex-end; padding: 8px 10px; font-family: var(--f-display); font-size: 13px; font-weight: 800; color: #fff; }
+.br-ptn .b { padding: 9px 10px 11px; } .br-ptn .b small { display: block; font-size: 10.5px; font-weight: 900; color: var(--purple); } .br-ptn .b b { display: block; font-size: 13.5px; font-weight: 900; } .br-ptn .b span { font-size: 11.5px; font-weight: 800; color: var(--sub); }
+.br-note { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; color: var(--sub); text-align: center; }
+.pop-wrap { position: absolute; inset: 0; z-index: 90; background: rgba(30,26,43,.55); display: flex; align-items: center; justify-content: center; padding: 28px; animation: lsMIn .2s ease-out; } .pop-wrap.out { opacity: 0; transition: opacity .18s; }
+.pop-c { width: 100%; max-width: 330px; background: #fff; border: 2px solid var(--ink); border-radius: 24px; box-shadow: 5px 5px 0 var(--ink); overflow: hidden; }
+.pop-im { position: relative; height: 320px; padding: 22px 20px; color: #fff; overflow: hidden; display: flex; flex-direction: column; }
+.pop-im .k { font-family: var(--f-display); font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--yellow); } .pop-im b { font-family: var(--f-display); font-size: 28px; font-weight: 800; line-height: 1.12; margin-top: 10px; } .pop-im small { font-size: 13px; font-weight: 800; margin-top: 10px; opacity: .9; }
+.pop-im img { position: absolute; right: -12px; bottom: -10px; width: 150px; pointer-events: none; }
+.pop-im .n { position: absolute; right: 12px; top: 12px; font-size: 11px; font-weight: 900; background: rgba(0,0,0,.4); padding: 2px 8px; border-radius: 10px; }
+.pop-im .nx { position: absolute; top: 50%; width: 34px; height: 34px; margin-top: -17px; border-radius: 50%; border: 0; background: rgba(255,255,255,.22); color: #fff; font-size: 22px; font-weight: 900; line-height: 1; cursor: pointer; } .pop-im .pv { left: 8px; } .pop-im .nn { right: 8px; }
+.pop-go { display: block; width: calc(100% - 24px); margin: 12px; height: 48px; border-radius: 24px; border: 2px solid var(--ink); background: var(--yellow); box-shadow: 0 3px 0 var(--ink); font: inherit; font-size: 15px; font-weight: 900; color: var(--ink); cursor: pointer; }
+.pop-ft { display: flex; border-top: 1.5px solid var(--line); } .pop-ft button { flex: 1; height: 46px; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 800; color: var(--sub); cursor: pointer; } .pop-ft button + button { border-left: 1.5px solid var(--line); color: var(--ink); font-weight: 900; }
+.pn-hearts { cursor: pointer; } .avs, .lg-av, .lgf { cursor: pointer; }
 .mp-top .pn-all { flex-shrink: 0; padding: 6px 4px; font-size: 13px; color: var(--purple); }
 .my-fol { display: flex; gap: 16px; margin-top: 8px; } .my-fol button { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; font-weight: 800; color: var(--sub); cursor: pointer; } .my-fol b { font-family: var(--f-display); font-size: 15px; font-weight: 800; color: var(--ink); margin-right: 4px; }
 .my-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -3606,6 +3713,12 @@ article.lg-new .lg-ch { animation: lgNew 1.5s cubic-bezier(.3,1.4,.5,1); }
 .pf-rec .fb { width: 100%; height: 38px; margin-top: 8px; border-radius: 19px; border: 2px solid var(--ink); background: var(--yellow); box-shadow: 0 3px 0 var(--ink); font: inherit; font-weight: 900; font-size: 13.5px; cursor: pointer; }
 .pf-rec .x { position: absolute; right: 8px; top: 6px; border: 0; background: none; font-size: 18px; font-weight: 900; color: #9A93A6; cursor: pointer; }
 .pf-race { position: relative; height: 118px; border: 2px solid var(--ink); border-radius: 18px; background: #EAF6E7; overflow: hidden; flex-shrink: 0; }
+.pf-race.t1 { height: 134px; background: #D9614C; }
+.pf-race.t1 .lane { position: absolute; left: 0; right: 0; top: 65px; height: 2px; background: rgba(255,255,255,.85); }
+.pf-race.t1 .no { position: absolute; left: 9px; font-family: var(--f-display); font-size: 13px; font-weight: 800; color: #fff; }
+.pf-race.t1 .st { position: absolute; left: 28px; top: 0; bottom: 0; width: 3px; background: #fff; }
+.pf-race.t1 .fin { position: absolute; right: 0; top: 0; bottom: 0; width: 20px; border-left: 2px solid var(--ink); background: repeating-conic-gradient(#1E1A2B 0 25%, #fff 0 50%) 0 0 / 12px 12px; }
+.pf-race.t1 small { font-size: 11.5px; padding: 2px 7px; border-width: 2px; border-radius: 9px; }
 .pf-race .ln { position: absolute; left: 0; right: 0; top: 58px; height: 2px; background: repeating-linear-gradient(90deg, #fff 0 10px, transparent 10px 20px); }
 .pf-race .fl { position: absolute; right: 8px; top: 0; bottom: 0; width: 12px; background: repeating-linear-gradient(var(--ink) 0 8px, #fff 8px 16px); }
 .pf-race .rn { position: absolute; width: 64px; height: 46px; } .pf-race .rn .av-char { left: 0; width: 100%; bottom: 0; }
@@ -4990,7 +5103,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       return { ...base, ch: '라운지', c: 'var(--pink)', text: p.title || p.text || '', ph: grad('#493087', '#1E1A2B'), inner: '' };
     });
   }
-  // 카드를 누르면: 글 · 해외살이는 라운지 그 탭으로 가서 그 글로 스크롤 + 반짝, 챌린지 · 번개 · 동아리는 상세를 바로 열어요
+  // 카드를 누르면: 글 · 해외살이는 라운지 그 탭으로 가서 그 글로 스크롤, 챌린지 · 번개 · 동아리는 상세를 바로 열어요
   function afOpen(a) {
     const p = a && LG_FEED.find((x) => x.id === a.id);
     go('azit'); if (!p) return;
@@ -5000,7 +5113,6 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       setTimeout(() => {
         const el = $(`#lgFeed [data-pid="${p.id}"]`), pg = $('#page-azit'); if (!el || !pg) return;
         pg.scrollTo({ top: pg.scrollTop + el.getBoundingClientRect().top - pg.getBoundingClientRect().top - 110, behavior: reduced() ? 'auto' : 'smooth' });
-        el.classList.remove('lg-flash'); void el.offsetWidth; el.classList.add('lg-flash'); setTimeout(() => el.classList.remove('lg-flash'), 1800);
       }, 120);
     } else setTimeout(() => lgDetail(p), 80);
   }
@@ -11118,8 +11230,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     el.innerHTML = LG.pup.map((u, i) => `<div class="pt${i ? '' : ' cov'}"><button type="button" data-lgpcov="${i}" style="background-image:url('${u}')" aria-label="${i + 1}번째 포스터${i ? ' · 대표로 정하기' : ' · 대표'}"></button><button type="button" class="rm" data-lgprm="${i}" aria-label="${i + 1}번째 포스터 빼기">${lgI('x', 12, 'none', '#fff', 3)}</button><small>${i ? i + 1 : '대표'}</small></div>`).join('')
       + (LG.pup.length < 10 ? `<label class="pt add"><input type="file" accept="image/*" multiple data-lgpimg hidden>${lgI('plus', 22, 'none', 'currentColor', 2.6)}<small>${LG.pup.length ? `${LG.pup.length}/10` : (LG.pupL || '포스터 넣기')}</small></label>` : '');
   }
-  // ---- 번개 날짜 · 시간 고르기: 오늘부터 2주(14일) 뒤까지만 ----
-  const MEET_MAX = 14, MEET_TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '19:00', '19:30', '20:00', '20:30', '21:00'];
+  // ---- 번개 날짜 · 시간 고르기: 오늘부터 1주(7일) 뒤까지만 ----
+  const MEET_MAX = 7, MEET_TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '19:00', '19:30', '20:00', '20:30', '21:00'];
   const lgT0 = () => new Date(new Date().toDateString());
   const lgIso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const lgDef3 = () => { const d = lgT0(); d.setDate(d.getDate() + 3); return lgIso(d); };
@@ -11134,7 +11246,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       cells += ok ? `<button type="button" class="cd${on ? ' on' : ''}${wd === 0 ? ' sun' : wd === 6 ? ' sat' : ''}" data-lgcal="${iso}" aria-pressed="${on}" aria-label="${d.getMonth() + 1}월 ${d.getDate()}일"><b>${d.getDate()}</b>${sub ? `<small>${sub}</small>` : ''}</button>`
         : `<span class="cd off" aria-hidden="true"><b>${d.getDate()}</b></span>`;
     }
-    return `<div class="lg-mcal"><div class="hd"><b>${t0.getMonth() + 1}월 ${t0.getDate()}일 ~ ${last.getMonth() + 1}월 ${last.getDate()}일</b><small>번개는 2주 뒤까지 열 수 있어요</small></div><div class="wk">${'일월화수목금토'.split('').map((w, i) => `<span class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</span>`).join('')}</div><div class="gd">${cells}</div></div>`;
+    return `<div class="lg-mcal"><div class="hd"><b>${t0.getMonth() + 1}월 ${t0.getDate()}일 ~ ${last.getMonth() + 1}월 ${last.getDate()}일</b><small>번개는 1주 뒤까지 열 수 있어요</small></div><div class="wk">${'일월화수목금토'.split('').map((w, i) => `<span class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</span>`).join('')}</div><div class="gd">${cells}</div></div>`;
   }
   const lgMeetTimes = () => { const v = ($('#lgfH') || {}).value || '20:00'; return `<div class="lg-mtm">${MEET_TIMES.map((t) => `<button type="button" data-lgtm="${t}" aria-pressed="${t === v}">${+t.slice(0, 2) < 12 ? '오전' : '오후'} ${(+t.slice(0, 2) % 12 || 12)}:${t.slice(3)}</button>`).join('')}</div>`; };
   const lgMeetWhen = () => { const d = new Date((($('#lgfD') || {}).value || lgDef3()) + 'T00:00'), t = ($('#lgfH') || {}).value || '20:00', k = Math.round((d - lgT0()) / 864e5); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]}) ${+t.slice(0, 2) < 12 ? '오전' : '오후'} ${+t.slice(0, 2) % 12 || 12}:${t.slice(3)}에 만나요 · ${k === 0 ? '오늘' : k === 1 ? '내일' : k + '일 뒤'}`; };
@@ -11237,9 +11349,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   const chxTips = (p) => {
     LG.chq = LG.chq || {};
     if (!LG.chq[p.id]) { const hl = p.hl || ''; LG.chq[p.id] = p.mine ? [] : [
-      ['하나', LG_C.y, `<em class="tg">팁</em> ${hl} 뒤에 about + 무엇을 붙이면 더 자연스러워요. 예) I’m ${hl} about the trip.`, '1시간', 7],
-      ['Leo', LG_C.pk, `<em class="tg q">질문</em> ${hl}를 회사 메일에 써도 괜찮을까요? 너무 캐주얼한가요?`, '2시간', 3],
-      ['유키', LG_C.lpu, `<em class="tg">팁</em> 친구한테는 Still ${hl}! 처럼 짧게 답해도 돼요.`, '어제', 5]]; }
+      ['하나', LG_C.y, `${stEsc(p.q || '')} 오늘 동료한테 바로 써 봤어요!`, '1시간', 7],
+      ['유키', LG_C.lpu, `${stEsc(hl)} — 친구랑 이야기할 때 써 보니 자연스러웠어요.`, '어제', 5]]; }   // 나만의 문장만 (팁 · 질문 구분 없음)
     return LG.chq[p.id];
   };
   function chxSheet(p, mode) {
@@ -11340,7 +11451,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="lg-fl"><span class="lb">지역</span>${lgPills('reg', LG_REG.map(([r]) => r), LG.reg || '서울')}</div>
       ${lgFld('lgfT', '제목', '예) 퇴근 후 영어 맥주 번개')}
       <input type="hidden" id="lgfD" value="${lgDef3()}"><input type="hidden" id="lgfH" value="20:00">
-      <div class="lg-fl"><span class="lb">날짜 · 오늘부터 2주 안에서 골라요</span><div id="lgCal">${lgMeetCal()}</div></div>
+      <div class="lg-fl"><span class="lb">날짜 · 오늘부터 1주 안에서 골라요</span><div id="lgCal">${lgMeetCal()}</div></div>
       <div class="lg-fl"><span class="lb">시간</span><div id="lgTm">${lgMeetTimes()}</div></div>
       <p class="lg-mwhen" id="lgMwhen">${lgMeetWhen()}</p>
       <input type="hidden" id="lgfP" value=""><input type="hidden" id="lgfPA" value="">
@@ -11490,7 +11601,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     if (a === 'do-meet') {
       const t = lgVal('lgfT'); if (!t) { $('#lgfT').focus(); toast('제목을 적어 주세요'); return true; }
       const d = new Date((lgVal('lgfD') || lgAddDays(3)) + 'T00:00'), reg = lgPv('reg')[0] || '서울', dk = Math.round((d - lgT0()) / 864e5);
-      if (dk < 0 || dk > MEET_MAX) { toast('번개는 오늘부터 2주 뒤까지만 열 수 있어요'); return true; }
+      if (dk < 0 || dk > MEET_MAX) { toast('번개는 오늘부터 1주 뒤까지만 열 수 있어요'); return true; }
       if (!lgVal('lgfP')) { LG.mopen = true; $('#lgPlc').innerHTML = lgPlcHTML(); toast('지도에서 장소를 골라 주세요'); return true; }
       LG_FEED.unshift({ id: 'u' + Date.now(), k: 'meet', tags: ['meet'], reg, kind: '번개', day: String(d.getDate()).padStart(2, '0'), mon: d.toLocaleString('en', { month: 'short' }).toUpperCase(), wd: `${'일월화수목금토'[d.getDay()]} ${lgVal('lgfH') || '20:00'}`, title: lgEsc(t), place: lgEsc(lgVal('lgfP') || ME.b), addr: lgVal('lgfPA'), addr2: lgEsc(lgVal('lgfPD')), host: ME.n, posters: LG.pup.length ? LG.pup.slice() : null, cur: 1, max: parseInt(lgPv('cap')[0], 10) || 6, mine: true });
       lgSheetClose(); LG.reg = reg; LG.sub.meet = 'meet'; lgTab('meet'); toast(`번개를 열었어요 · ${reg} 지도에 표시돼요`); return true;
@@ -13099,7 +13210,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   })();
   const ppT = () => MS.pp === Infinity ? '무제한' : `${MS.pp}번`;   // 연기 · 변경 남은 횟수
   const myBr = () => ME.b.split(' · ')[0];
-  const MY_TEAMS = [{ br: myBr(), no: '3팀', lang: '영어', when: '화목 19:30', pro: 'Julie', lv: 'Intermediate 2' }, { br: myBr(), no: '5팀', lang: '영어', when: '월수 21:00', pro: 'Sunny', lv: 'Intermediate 2' }, { br: myBr(), no: '8팀', lang: '일본어', when: '토 11:00', pro: 'Ken', lv: 'Intermediate 2' }];   // 프리미엄은 꼭 3팀
+  const MY_TEAMS = [{ br: myBr(), no: '3팀', lang: '영어', when: '화목 19:30', pro: 'Julie', lv: 'Intermediate 2' }, { br: myBr(), no: '5팀', lang: '영어', when: '월수 21:00', pro: 'Sunny', lv: 'Intermediate 2' }, { br: '잠실점', no: '8팀', lang: '일본어', when: '토 11:00', pro: 'Ken', lv: 'Intermediate 2' }];   // 프리미엄은 꼭 3팀
   const myTeams = () => MY_TEAMS;
   // 주 참여 · 만료일은 팀 수에 따라: 프리미엄은 늘 주 4회, 나머지는 팀 1개마다 주 2회(팀을 더하면 더 빨리 써요)
   Object.defineProperties(MS, {
@@ -13231,7 +13342,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ['질문', 'on the weekend, at the weekend 차이?', '둘 다 맞아요. 미국은 on, 영국은 at을 더 많이 써요.', []]],
       bye: '첫 수업 다들 수고했어요! 자기소개 한 문장씩 더 늘려 봐요.' }
   ];
-  let PNS = {}, PNR = {}, PNT = {}, PNM = {};   // PNM: 프로님께 보낸 메시지 (감사 인사 · 질문)
+  let PNS = {}, PNR = {}, PNT = {}, PNM = {}, PND = {};   // PND: 나의 스터디 일기 (나만 봐요)   // PNM: 프로님께 보낸 메시지 (감사 인사 · 질문)
   const PN_THX = ['오늘 수업 정말 재밌었어요!', '설명이 쉬워서 이해가 잘 됐어요.', '고쳐 주신 표현 꼭 써 볼게요.', '노트 정리해 주셔서 감사해요.', '다음 수업도 기대돼요!'];
   // 노트마다 같은 팀 멤버가 보낸 마음 (예시): 고마워요 누른 사람 · 감사 인사 쓴 사람
   function pnReacts(id) {
@@ -13267,15 +13378,19 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       }
     }
   }, true);
-  try { const o = JSON.parse(localStorage.getItem('pallo-pn') || '{}'); PNS = o.s || {}; PNR = o.r || {}; PNT = o.t || {}; PNM = o.m || {}; } catch (e) {}
-  const pnSave = () => { try { localStorage.setItem('pallo-pn', JSON.stringify({ s: PNS, r: PNR, t: PNT, m: PNM })); } catch (e) {} };
+  try { const o = JSON.parse(localStorage.getItem('pallo-pn') || '{}'); PNS = o.s || {}; PNR = o.r || {}; PNT = o.t || {}; PNM = o.m || {}; PND = o.d || {}; } catch (e) {}
+  // 예시: 지난 수업 일기 (내가 그 노트에 쓰면 내 일기로 바뀌어요)
+  const PND_EX = { pn3: { st: ['ask'], q: 0, t: 'Could you ~?로 세 번이나 질문했다. 점점 입이 트이는 느낌.', at: '11.6 22:40' }, pn2: { st: ['new', 'fun'], q: 1, t: 'exhausted를 처음 써 봤다. 다들 웃어 줘서 좋았다!', at: '11.5 22:30' }, pn1: { st: ['friend', 'fun'], q: 0, t: '새로 온 Mina님이랑 출퇴근 얘기. 다음 주에 같이 번개 가기로!', at: '11.4 22:35' } };
+  const pndOf = (id) => PND[id] || PND_EX[id] || null;
+  const pnSave = () => { try { localStorage.setItem('pallo-pn', JSON.stringify({ s: PNS, r: PNR, t: PNT, m: PNM, d: PND })); } catch (e) {} };
   const pnNew = (n) => n.isNew && !PNR[n.id];
   const PN_TAG_C = { 표현: 'var(--purple)', 바로잡기: '#D2477A', 뜻: '#2F6FD0', 질문: '#2E8B57' };
   const pnRow = (n) => `<button class="pn-row" data-pnopen="${n.id}"><span class="dt"><small>${n.m}월</small><b>${n.d}</b><small>${n.wd}</small></span><span class="tx"><span class="h">${teamName(n.team)} · ${n.pro} 프로${pnNew(n) ? '<em>NEW</em>' : ''}</span><span class="p">${n.items.map((x) => x[1]).join(' · ')}</span></span>›</button>`;
   function actHTML() {
     const t = MP.at || 'expr', J = myJoined(), C = LG_FEED.filter((p) => p.k === 'chal' && chJ(p)), SV2 = LG_FEED.filter((p) => LG.saved[p.id]);
     const P = LG_FEED.filter((p) => p.mine || p.who === ME.n), nE = S.marks.length + (S.saved ? 1 : 0);
-    const TB = [['expr', '표현함', nE], ['chal', '챌린지', C.length], ['meet', '모임', J.length], ['post', '내 글', P.length], ['save', '찜', SV2.length]];
+    const DY = PN.filter((n) => { const d = pndOf(n.id); return d && d.at; });
+    const TB = [['expr', '표현함', nE], ['diary', '일기', DY.length], ['chal', '챌린지', C.length], ['meet', '모임', J.length], ['post', '내 글', P.length], ['save', '찜', SV2.length]];
     const th = (p, w, bg) => `<span class="th" style="background:${bg};color:${lgDark(bg) ? LG_C.y : LG_C.ink}">${String(w).split('<br>')[0]}</span>`;
     const row = (p, sub) => { const [w, bg] = LG_PW[p.id] || [p.pw || (p.name || p.title || '').slice(0, 4), LG_C.lpu]; return `<button class="lg-cr" data-actopen="${p.id}">${th(p, p.pw || w, bg)}<span class="tx"><span class="t">${p.title || p.name || ''}</span><span class="m">${sub}</span></span></button>`; };
     const meetSub = (p) => p.k === 'club' ? `동아리 · ${p.br}` : `번개 · ${LG_MON.indexOf(p.mon) + 1}.${+p.day} ${p.wd} · ${p.place}`;
@@ -13284,6 +13399,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       chal: () => C.length ? `<div class="act-list">${C.map((p) => { const d = chPre(p) ? 0 : (p.day || 0) + (LG.chal[p.id] ? 1 : 0), o = p.of || 14, pc = Math.min(100, Math.round(d / o * 100));
         return `<button class="act-ch" data-actopen="${p.id}"><svg class="rg" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="#EFE8D8" stroke-width="6"/><circle cx="24" cy="24" r="20" fill="none" stroke="#493087" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(125.7 * pc / 100).toFixed(1)} 200" transform="rotate(-90 24 24)"/><text x="24" y="28" text-anchor="middle" font-size="11.5" font-weight="900" fill="#1E1A2B">${pc}%</text></svg><span class="tx"><b>${p.name}</b><small>${chPre(p) ? '곧 시작' : `${d}/${o}${p.unit || '일'}째`} · 함께 ${p.members || 20 + lgH(p.id) % 60}명</small></span><span class="go">›</span></button>`; }).join('')}</div>` : '<div class="lg-empty">참여 중인 챌린지가 없어요.</div>',
       expr: () => notesHTML(),
+      diary: () => diaryHTML(DY),
       post: () => P.length ? `<div class="act-list">${P.map((p) => `<button class="act-post" data-actopen="${p.id}"><b>${stEsc(String(p.text || p.title || p.name || '').slice(0, 60))}</b><small>${p.time || ''}${p.likes != null ? ` · 좋아요 ${p.likes}` : ''}</small></button>`).join('')}</div>` : '<div class="lg-empty">아직 쓴 글이 없어요.</div>',
       save: () => SV2.length ? `<div class="act-list lg-crs">${SV2.map((p) => `<div class="act-sv">${row(p, p.k === 'club' ? `동아리 · ${p.br}` : p.place || p.br || '')}<button type="button" class="act-hrt" data-actunsave="${p.id}" aria-pressed="true" aria-label="찜 취소">${lgI('heart', 20)}</button></div>`).join('')}</div>` : '<div class="lg-empty">상세 화면의 하트를 누르면 여기 모여요.</div>'
     };
@@ -13292,6 +13408,19 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="nt-tabs act-ul" role="tablist">${TB.map(([k, l, n]) => `<button role="tab" data-actt="${k}" aria-selected="${t === k}">${l} ${n}</button>`).join('')}</div>
       ${body[t]()}</div>`;
   }
+  // 나의 스터디 일기 모아 보기: 작은 달력(일기 쓴 날 점) + 이달 요약 + 날짜별 카드 → 누르면 그날 노트
+  function diaryHTML(DY) {
+    const Y = 2026, M = 11, first = new Date(Y, M - 1, 1).getDay(), last = new Date(Y, M, 0).getDate(), today = new Date().getMonth() + 1 === M ? new Date().getDate() : 0;
+    const byDay = {}; DY.forEach((n) => { if (n.m === M) byDay[n.d] = n; });
+    const cnt = {}; DY.forEach((n) => (pndOf(n.id).st || []).forEach((k) => { cnt[k] = (cnt[k] || 0) + 1; }));
+    const stName = (k) => (PN_ST.find((x) => x[0] === k) || [k, k])[1];
+    const cal = `<div class="dy-cal" aria-label="${M}월 일기 달력"><div class="wk">${['일', '월', '화', '수', '목', '금', '토'].map((d) => `<span>${d}</span>`).join('')}</div><div class="ds">${Array.from({ length: first }, () => '<span></span>').join('')}${Array.from({ length: last }, (_, i) => { const d = i + 1, n = byDay[d]; return n ? `<button type="button" class="on${d === today ? ' td' : ''}" data-dyopen="${n.id}" aria-label="${M}월 ${d}일 일기">${d}</button>` : `<span class="${d === today ? 'td' : ''}">${d}</span>`; }).join('')}</div></div>`;
+    const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${stName(k)} ${v}`).join(' · ');
+    const card = (n) => { const d = pndOf(n.id); return `<button type="button" class="card dy-en" data-dyopen="${n.id}"><span class="d"><small>${n.m}월</small><b>${n.d}</b><small>${n.wd}</small></span><span class="tx"><span class="k">${teamName(n.team)} · ${n.pro} 프로</span><span class="p">${stEsc(d.t || '')}</span>${(d.st || []).length ? `<span class="tg">${d.st.map(stName).join(' · ')}</span>` : ''}</span></button>`; };
+    return `<div class="dy-box">
+      <div class="dy-hero"><div><small>${Y}년 ${M}월 스터디 일기</small><b>${DY.length}편</b>${top ? `<span>${top}</span>` : ''}</div><img src="assets/c-upright-yellow.png" alt=""></div>
+      ${DY.length ? `<div class="ym-h">${Y}년 ${M}월</div>` + DY.map(card).join('') : '<div class="lg-empty">PRO\'S NOTE 맨 아래에서 오늘의 스터디 일기를 써 봐요.</div>'}</div>`;
+  }
   function pnListHTML() {
     const f = MP.pf || 'all', saved = Object.keys(PNS).filter((k) => PNS[k]);
     const L = PN.filter((n) => f === 'all' || n.team === f);
@@ -13299,18 +13428,35 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     return `<div class="dtop mp-top"><button class="icon-btn press" data-myx="close" aria-label="뒤로">${lgI('back', 22)}</button><span class="dtt">PRO'S NOTE</span><span class="sp"></span></div>
       <div class="pn-body"><p class="pn-intro">수업이 끝나면 프로님이 그날 배운 표현 · 바로잡은 문장 · 질문을 정리해서 보내 줘요. 마음에 드는 건 저장해 두고 다시 봐요.</p>
         <div class="card pn-wait"><b>오늘 ${teamName(PN_WAIT.team)} 노트 준비 중</b><span>${PN_WAIT.end}에 수업이 끝나면 ${PN_WAIT.pro} 프로님이 보내 줘요 · 도착하면 알림을 드려요</span></div>
+        ${(() => { const L = PN.filter((x) => { const d = pndOf(x.id); return d && d.at; }), last = L[0], ld = last && pndOf(last.id);
+          return `<button type="button" class="pn-dylink" data-pndy><span class="ic"><img src="assets/c-upright-yellow.png" alt=""></span><span class="tx"><b>나의 스터디 일기 <em>${L.length}편</em></b><small>${last ? `${last.m}.${last.d} ${last.wd} · ${stEsc((ld.t || '').slice(0, 26))}${(ld.t || '').length > 26 ? '…' : ''}` : '노트 맨 아래에서 오늘의 일기를 써 봐요'}</small></span><span class="go">›</span></button>`; })()}
         <div class="pn-tabs" role="tablist">${[['all', '전체'], ...myTeams().map((t) => [t.no, tLabel(t)]), ['saved', `저장한 표현 ${saved.length}`]].map(([k, l]) => `<button role="tab" data-pnf="${k}" aria-selected="${f === k}">${l}</button>`).join('')}</div>
-        ${f === 'saved' ? (it || '<div class="lg-empty">노트에서 저장 버튼을 누르면 여기 모여요.</div>') : `<div class="card pn-list">${L.map(pnRow).join('')}</div>`}</div>`;
+        ${f === 'saved' ? (it || '<div class="lg-empty">노트에서 저장 버튼을 누르면 여기 모여요.</div>') : `<div class="ym-h">2026년 11월</div><div class="card pn-list">${L.map(pnRow).join('')}</div>`}</div>`;
+  }
+  // 나의 스터디 일기: 오늘 잘한 것 스티커(여러 개) + 질문 하나 + 자유롭게 쓰기 · 나만 봐요
+  const PN_ST = [['new', '새 표현 써 봤어요', 'M12 3l2.6 5.6 6 .7-4.4 4.1 1.2 6L12 16.6 6.6 19.4l1.2-6L3.4 9.3l6-.7z'], ['talk', '많이 말했어요', 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z'], ['ask', '질문했어요', 'M9 9a3 3 0 1 1 4 2.8c-.8.3-1 1-1 1.7M12 17h.01'], ['friend', '새 친구', 'M16 11a4 4 0 1 0-8 0M3 21a7 7 0 0 1 9-6.7M17 15l2 2 3-4'], ['fun', '재밌었어요', 'M12 20s-7-4.3-8.7-8.9C2 7.6 4.2 4.5 7.3 4.5c1.9 0 3.4 1.1 4.7 2.6 1.3-1.5 2.8-2.6 4.7-2.6 3.1 0 5.3 3.1 4 6.6C19 15.7 12 20 12 20z']];
+  const PN_DQ = ['오늘 가장 뿌듯했던 순간은?', '오늘 새로 써 본 표현은?', '다음 수업에서 해 보고 싶은 건?', '오늘의 나를 칭찬한다면?'];
+  function pnDiaryHTML(n) {
+    const d = pndOf(n.id) || { st: [], q: 0, t: '' }, saved = !!d.at, ed = !saved || PND._ed === n.id;
+    const stk = (k, l, p, on) => `<button type="button" class="dy-st${on ? ' on' : ''}" ${ed ? `data-pdst="${k}"` : 'tabindex="-1"'} aria-pressed="${on}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${p}"/></svg>${l}</button>`;
+    const sts = ed ? PN_ST.map(([k, l, p]) => stk(k, l, p, d.st.includes(k))).join('') : PN_ST.filter(([k]) => d.st.includes(k)).map(([k, l, p]) => stk(k, l, p, true)).join('');
+    return `<div class="card pn-dy" id="pnDy"><div class="hd"><img src="assets/c-upright-yellow.png" alt=""><div><b>오늘의 스터디 일기</b><small>${n.m}.${n.d} ${n.wd} · ${teamName(n.team)}</small></div><span class="lk"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4"/></svg>나만</span></div>
+      <div class="bd">${sts ? `<div class="dy-sts">${sts}</div>` : ''}
+        <div class="dy-q">${PN_DQ[d.q % PN_DQ.length]}</div>
+        ${ed ? `<textarea class="dy-ta" id="pnDyT" rows="3" placeholder="생각나는 대로 짧게 써요" data-mic="off">${stEsc(d.t || '')}</textarea>
+          <div class="dy-ft"><button type="button" class="dy-ch" data-pdq>질문 바꾸기 ↻</button><button type="button" class="dy-sv" data-pdsave="${n.id}">${saved ? '고쳐서 저장' : '일기 저장'}</button></div>`
+        : `<div class="dy-ta dy-done">${stEsc(d.t)}</div><div class="dy-ft"><span class="dy-at">${d.at} 저장</span><button type="button" class="dy-ch" data-pded="${n.id}">고치기</button></div>`}</div></div>`;
   }
   function pnDetHTML(id) {
     const n = PN.find((x) => x.id === id);
     return `<div class="dtop mp-top"><button class="icon-btn press" data-pnback="1" aria-label="뒤로">${lgI('back', 22)}</button><span class="dtt">${n.m}/${n.d}(${n.wd}) PRO'S NOTE</span><span class="sp"></span>${MP && MP.back ? '' : '<button type="button" class="lg-link pn-all" data-pnall>전체 보기</button>'}</div>
       <div class="pn-body"><div class="pn-dh"><b>${n.m}월 ${n.d}일 ${n.wd}요일</b><span>${teamName(n.team)} · ${n.pro} 프로 · 정리 ${n.items.length}개</span></div>
         ${n.items.map(([tg, t, b, ex], i) => { const k = `${n.id}:${i}`; return `<div class="card pn-it"><span class="no">${i + 1}</span><div class="b"><small style="color:${PN_TAG_C[tg]}">${tg}</small><b>${t}</b><p>${b}</p>${ex.length ? `<ul>${ex.map((e) => `<li>${e}</li>`).join('')}</ul>` : ''}</div><button class="mk${PNS[k] ? ' on' : ''}" data-pnmk="${k}" aria-pressed="${!!PNS[k]}" aria-label="${PNS[k] ? '저장 취소' : '내 표현함에 저장'}">${lgI('save', 18)}</button></div>`; }).join('')}
+        ${pnDiaryHTML(n)}
         ${(() => { const R = pnReacts(n.id), H = [...(PNT[n.id] ? [[ME.n, LG_C.y]] : []), ...R.hearts], mine = PNM[n.id] || [];
           const row = (who, c, t, tm, me) => `<div class="m${me ? ' me' : ''}"><span class="lg-av fc" style="background:${c}" ${me ? '' : `data-lgprof="${who}" role="button" tabindex="0"`}>${lgFace(who)}</span><div><b>${stEsc(who)}${me ? '<em>나</em>' : ''}<small>${tm}</small></b><span>${stEsc(t)}</span></div></div>`;
           return `<div class="pn-sent"><b>${n.pro} 프로님께 보낸 마음</b>
-            <div class="pn-hearts"><span class="avs">${H.slice(0, 5).map(([w, c]) => `<span class="lg-av fc" style="background:${c}">${lgFace(w)}</span>`).join('')}</span><span>${lgI('heart', 14)}<b>${H[0][0] === ME.n ? '나' : H[0][0]}</b>${H.length > 1 ? ` 외 ${H.length - 1}명` : ''}이 고마워요를 보냈어요</span></div>
+            <div class="pn-hearts" data-ppl="${H.map((x) => x[0]).join('|')}" data-pplt="고마워요를 보낸 사람" role="button" tabindex="0"><span class="avs">${H.slice(0, 5).map(([w, c]) => `<span class="lg-av fc" style="background:${c}">${lgFace(w)}</span>`).join('')}</span><span>${lgI('heart', 14)}<b>${H[0][0] === ME.n ? '나' : H[0][0]}</b>${H.length > 1 ? ` 외 ${H.length - 1}명` : ''}이 고마워요를 보냈어요</span></div>
             ${R.msgs.map((m) => row(m.who, m.c, m.t, m.tm)).join('')}${mine.map((m) => row(ME.n, MYAV && MYAV.bg && MYAV.bg[0] === '#' ? MYAV.bg : LG_C.y, m.t, '방금', true)).join('')}</div>`; })()}</div>
       <div class="lg-dcta pn-cta"><button class="lg-btn wh pn-ty${PNT[n.id] ? ' on' : ''}" data-pnty="${n.id}" aria-pressed="${!!PNT[n.id]}">${lgI('heart', 18)}${PNT[n.id] ? '보냈어요' : '고마워요'}</button><button class="lg-btn main" data-pnmsg="${n.id}">감사 인사 보내기</button></div>`;
   }
@@ -13356,7 +13502,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   function lgFace(name) {
     const c = memberAv(String(name || ''));
     const bg = c.bg && c.bg[0] === '#' ? c.bg : (((AV_BG.find((b) => b.id === c.bg) || AV_BG[0]).css.match(/#[0-9A-Fa-f]{6}/) || ['#FBF6EA'])[0]);
-    return `<span class="lgf" style="background:${bg}" aria-hidden="true">${avCharHTML(c)}</span>`;   // 좌우 반전도 각자 설정 그대로
+    return `<span class="lgf" data-who="${stEsc(String(name || ''))}" style="background:${bg}" aria-hidden="true">${avCharHTML(c)}</span>`;   // 좌우 반전도 각자 설정 그대로
   }
   function memberAv(name) {
     if (name === ME.n) return MYAV;
@@ -13390,6 +13536,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="my-stats rise">${[['flame', `${streak}일`, '연속 학습'], ['crown', `${myRank}위`, '이번 주 랭킹'], ['users', `${J.length}개`, '참여 중인 모임'], ['heart', `${MY_BADGES.filter((b) => b[3]).length}개`, '받은 배지']].map(([ic, v, l], i) => `<button class="tile" data-my="${['quest', 'rank', 'joined', 'badge'][i]}"><span class="ic">${myIc(ic, 18)}</span><b>${v}</b><small>${l}</small></button>`).join('')}</div>
       ${myPnHTML()}
       ${myStudyHTML()}
+      <div class="card brb rise" id="brBoard"></div>
       <h2 class="sec-title my-h">랭킹<button class="lg-link" data-my="rank">전체 보기 ›</button></h2>
       <div class="card my-rank rise" data-my="rank" role="button" tabindex="0"><div class="pods">${[1, 0, 2].map((i) => { const p = top[i]; return `<div class="pd p${i + 1}"><span class="av fc" style="background:${p.c}">${lgFace(p.n)}</span><small>${p.n}</small><i>${i + 1}</i></div>`; }).join('')}</div>
         <div class="me"><span>내 순위</span><b>${myRank}위</b><span>${people[myRank - 1].pt.toLocaleString()}P · ${ME.b}</span></div><p class="hint">퀘스트를 하면 포인트가 쌓여요 · 지점 대항전도 여기서</p></div>
@@ -13399,6 +13546,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="card my-list rise">${[['joined', 'users', '내 모임', `${J.length}개`], ['saved', 'heart', '찜한 모임', `${saved}개`], ['posts', 'image', '내가 쓴 글', `${mine}개`], ['notes', 'save', '내 표현함', `${S.marks.length}개`], ['quest', 'flame', '랭킹 · 퀘스트', '']].map(([k, ic, l, v]) => `<button data-my="${k}"><span class="ic">${lgI(ic, 18)}</span>${l}<span class="sp"></span><small>${v}</small>›</button>`).join('')}</div>
       <div class="card my-list rise">${[['set', '설정'], ['help', '고객센터 · 자주 묻는 질문'], ['pass', '이용권 · 결제 내역']].map(([k, l]) => `<button data-my="${k}">${l}<span class="sp"></span>›</button>`).join('')}</div>
       <p class="my-ver">PALLO 1.0.0 · 예시 화면</p>`;
+    renderBrBoard();   // 지점 공지 보드: 내 스터디 카드 바로 아래
   }
   // ---- 겹쳐 뜨는 화면 (꾸미기 · 설정) ----
   let MP = null;   // { mode: 'shop' | 'set', cat, draft }
@@ -13627,6 +13775,131 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     if (k === 'oss') { lgSheet(`<h2>오픈소스 라이선스</h2><div class="lg-opts">${[['Noto Sans KR', 'SIL Open Font License 1.1'], ['Unbounded', 'SIL Open Font License 1.1'], ['React Native', 'MIT'], ['Lottie', 'Apache 2.0']].map(([n, l]) => `<button data-lgx="close"><span>${n}<small>${l}</small></span></button>`).join('')}</div>`, '오픈소스 라이선스'); return; }
     if (k === 'rp') { const r = REPORTS.find((x) => x.id === v); lgSheet(`<h2>${r.kind} 신고 · ${r.n}건</h2><p class="ds">${r.why}${r.left ? ` · ${r.left}` : ''}</p><div class="card rp-q"><small>${r.who}</small><p>${r.text}</p></div>${r.st === '처리 전' ? `<div class="lg-opts">${[['hide', '숨기기', '작성자에게 이유를 알려요'], ['warn', '경고 보내기', '3번이면 라운지 이용이 7일 제한돼요'], ['limit', '라운지 이용 제한', '7일'], ['ok', '문제 없음', '신고한 사람에게 결과를 알려요']].map(([a, l, d]) => `<button data-lgx="rpdo-${r.id}-${a}"><span>${l}<small>${d}</small></span></button>`).join('')}</div>` : `<p class="ds">처리: ${r.st}</p>`}`, '신고 처리'); return; }
   }
+  // ===== 지점 공지 보드: 그 지점 멤버가 알아야 할 정보(주차 · 와이파이 · 계좌 …) + 매니저 고정 공지 + 협업 업체 =====
+  // 매니저가 항목을 더하고(개수 제한 없음) 별표한 4개가 홈 바로가기 · 버튼 종류: copy(복사) · map(지도) · tel(전화) · none
+  const BR_IC = {
+    park: 'M4 3h16v18H4zM9 17V7h4a3 3 0 0 1 0 6H9', wifi: 'M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01',
+    bank: 'M3 6h18v13H3zM3 10h18M7 15h4', loc: 'M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z',
+    lock: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4', tel: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2', pin: 'M12 17v5M9 3h6l-1 6 3 3H7l3-3z', copy: 'M9 9h11v11H9zM5 15H4V4h11v1', clk: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2'
+  };
+  const brI = (k, s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${BR_IC[k]}"/></svg>`;
+  const BR_BOARDS = { '하남점': {
+    addr: '하남시 [주소] 3층', hrs: '평일 10~23시 · 주말 10~18시',
+    pin: { t: '11/22(토) 건물 점검으로 주차장 이용이 어려워요', by: '매니저 Jay', at: '11.18' },
+    items: [
+      { ic: 'park', bg: '#FFE200', t: '주차 · 입금 계좌', s: '주차 · 계좌', d: '건물 지하 2층 · 스터디 시간 2시간 무료 · 데스크에 차량 번호를 말해 주세요', cp: [['입금 계좌 · 예금주 [이름] · 주차 추가 · 이벤트 참가비', '[은행] [계좌번호]']], star: 1 },
+      { ic: 'wifi', bg: '#BFE4EC', t: '와이파이', d: '', cp: [['이름', 'PALLO_HANAM'], ['비밀번호', 'pallo2026!']], star: 1 },
+      { ic: 'loc', bg: '#F6C9D4', t: '오시는 길 · 운영 시간', d: '하남시 [주소] 3층 · 평일 10~23시 · 주말 10~18시', act: ['map', '하남시 [주소]'], star: 1 },
+      { ic: 'lock', bg: '#CDEBD0', t: '사물함', d: '3층 복도 · 비밀번호는 데스크에서 받아요' },
+      { ic: 'tel', bg: '#FFE7D1', t: '지점 문의', d: '0507-0000-0000 · 평일 10~19시', act: ['tel', '0507-0000-0000'], star: 1 }
+    ],
+    // 협업 업체: n 이름 · b 혜택 · c 색 · w 카드 글씨는 꼭 · addr 주소 · tel 번호 · hrs 영업 시간 · naver 네이버 플레이스 링크 · insta 인스타 아이디 · info 소개 · how 혜택 받는 법은 매니저가 올릴 때 골라요
+    partners: [
+      { n: '카페 하남온', b: '음료 10% 할인', c: '#8A4B3A', w: 'CAFE', addr: '하남시 [주소] 1층 · 지점에서 도보 2분', tel: '031-000-0000', hrs: '매일 8~22시', naver: 'https://naver.me/xxxx', insta: 'cafe_hanamon', info: '지점에서 걸어서 2분, 스터디 전후로 들르기 좋은 조용한 카페예요. 2층에 4인 테이블이 있어서 번개 모임이나 복습 자리로도 많이 써요. 영어로 주문하면 쿠키 하나를 더 주세요.', how: '주문할 때 PALLO 앱 멤버 화면을 보여 주세요' },
+      { n: '북스 미사', b: '원서 15% 할인', c: '#493087', w: 'BOOKS', addr: '하남시 미사 [주소] 2층', hrs: '10~21시 · 월요일 휴무', insta: 'books_misa', info: '원서 · 그래픽노블 코너가 따로 있는 동네 서점이에요. PALLO 교재 원서도 주문해 줘요.', how: '계산할 때 멤버 화면을 보여 주세요' },
+      { n: '스터디카페 온', b: '2시간 이용권 20% 할인', c: '#138A9E', w: 'STUDY' }
+    ]
+  },
+  '잠실점': {
+    addr: '서울 송파구 [주소] 5층 · 잠실역 8번 출구 도보 3분', hrs: '평일 10~22시 · 주말 10~18시',
+    pin: null,
+    items: [
+      { ic: 'park', bg: '#FFE200', t: '주차 · 입금 계좌', s: '주차 · 계좌', d: '롯데월드몰 주차장 · 데스크에서 3시간 할인 도장', cp: [['입금 계좌 · 예금주 [이름] · 이벤트 참가비', '[은행] [계좌번호]']], star: 1 },
+      { ic: 'wifi', bg: '#BFE4EC', t: '와이파이', d: '', cp: [['이름', 'PALLO_JAMSIL'], ['비밀번호', 'jamsil2026!']], star: 1 },
+      { ic: 'loc', bg: '#F6C9D4', t: '오시는 길 · 운영 시간', d: '서울 송파구 [주소] 5층 · 잠실역 8번 출구 도보 3분', act: ['map', '서울 송파구 [주소]'], star: 1 },
+      { ic: 'tel', bg: '#FFE7D1', t: '지점 문의', d: '0507-1111-1111 · 평일 10~19시', act: ['tel', '0507-1111-1111'], star: 1 }
+    ],
+    partners: [{ n: '잠실 북카페', b: '음료 15% 할인', c: '#6B4E9B', w: 'BOOK CAFE', addr: '서울 송파구 [주소] 2층', info: '원서가 300권 넘게 있는 북카페예요. 스터디 끝나고 복습하기 좋아요.' }]
+  } };
+  let BR_SEL = null;
+  const myBrs = () => [...new Set(myTeams().map((t) => t.br).filter(Boolean))];
+  const brCur = () => BR_BOARDS[BR_SEL] || BR_BOARDS[myBrs()[0]] || BR_BOARDS['하남점'];
+  const brName = () => (BR_BOARDS[BR_SEL] ? BR_SEL : myBrs()[0]) || ME.b;
+  const brSeg = () => { const L = myBrs(); return L.length > 1 ? `<div class="br-seg" role="tablist">${L.map((b) => `<button type="button" role="tab" data-brtab="${b}" aria-selected="${b === brName()}">${stEsc(b)}</button>`).join('')}</div>` : ''; };
+  function renderBrBoard() {
+    const el = $('#brBoard'); if (!el) return;
+    const B = brCur(), H = B.items.filter((x) => x.star).slice(0, 4);
+    el.innerHTML = `<div class="hd"><b>${myBrs().length > 1 ? '지점 안내' : `${stEsc(brName())} 안내`}</b><button type="button" class="lg-link" data-brall>전체 보기 ›</button></div>${brSeg()}
+      <div class="sc">${H.map((x, i) => `<button type="button" class="it" data-brgo="${B.items.indexOf(x)}"><span class="ic" style="background:${x.bg}">${brI(x.ic, 22)}</span>${stEsc(x.s || x.t.split(' · ')[0])}</button>`).join('')}</div>
+      ${B.pin ? `<button type="button" class="pn" data-brall>${brI('pin', 15)}<span>${stEsc(B.pin.t)} · ${stEsc(B.pin.by)}</span></button>` : ''}`;
+  }
+  function brInfoHTML() {
+    const B = brCur(), nm = brName();
+    const btn = (x, i) => x.act && x.act[0] !== 'copy' ? `<button type="button" class="go" data-bract="${i}">${{ map: '지도', tel: '전화' }[x.act[0]]}</button>` : '';
+    const vals = (x, i) => (x.cp || []).map(([l, v], j) => `<button type="button" class="br-val" data-brcp="${i}:${j}" aria-label="${stEsc(l)} ${stEsc(v)} 복사"><code>${stEsc(v)}</code><span class="ci">${brI('copy', 16)}</span></button>`).join('');
+    const cpLab = (x) => (x.cp || []).length === 1 ? `<p class="cl">${stEsc(x.cp[0][0])}</p>` : '';
+    const loc = B.items.findIndex((x) => x.ic === 'loc');
+    return `${mpTop('지점 안내')}<div class="brp">${brSeg()}
+      <div class="brp-hero" id="brIt${loc}"><small>MY BRANCH</small><b>${stEsc(nm)}</b><span>${stEsc(B.addr || '')}</span><span>${stEsc(B.hrs || '')}</span>${loc >= 0 ? `<button type="button" class="map" data-bract="${loc}">${brI('loc', 14)}지도</button>` : ''}<img src="assets/c-upright-yellow.png" alt=""></div>
+      ${B.pin ? `<div class="brp-pin">${brI('pin', 15)}<span>${stEsc(B.pin.t)} · ${stEsc(B.pin.by)}</span></div>` : ''}
+      ${B.items.filter((x) => x.ic !== 'loc').length ? `<div class="brp-list">${B.items.map((x, i) => x.ic === 'loc' ? '' : `<div class="li" id="brIt${i}"><span class="ic" style="background:${x.bg}">${brI(x.ic, 18)}</span><div class="tx"><b>${stEsc(x.t)}</b>${x.d ? `<p>${stEsc(x.d)}</p>` : ''}${cpLab(x)}${vals(x, i)}</div>${btn(x, i)}</div>`).join('')}</div>` : ''}
+      ${B.partners && B.partners.length ? `<div class="brp-h"><b>협업 업체 · 멤버 혜택</b><small>${B.partners.length}곳</small></div>
+      <div class="br-ptn">${B.partners.map((p, i) => `<button type="button" class="card pc" data-brpt="${i}" aria-label="${stEsc(p.n)} 자세히"><div class="im" style="background:${p.c}">${p.w}</div><div class="b"><small>협업 업체</small><b>${stEsc(p.n)}</b><span>${stEsc(p.b)}</span></div></button>`).join('')}</div>` : ''}</div>`;
+  }
+  document.addEventListener('click', (e) => {
+    const tb = e.target.closest('[data-brtab]');
+    if (tb) { BR_SEL = tb.dataset.brtab; sfx('tap'); renderBrBoard(); if (MP && MP.mode === 'br') { const y = $('#myPush').scrollTop; renderMyPush(); $('#myPush').scrollTop = y; } return; }
+    const pt = e.target.closest('[data-brpt]');
+    if (pt) { const p = brCur().partners[+pt.dataset.brpt]; if (!p) return; sfx('tap');
+      // 상세: 이름 → 소개 → 혜택 쿠폰 → 정보(주소 · 번호 · 영업 시간 · 네이버 · 인스타) · 매니저가 올린 것만
+      const row = (ic, a, b, btn) => `<div class="pr"><span class="ic">${ic}</span><span class="tx"><b>${a}</b>${b ? `<small>${b}</small>` : ''}</span>${btn || ''}</div>`;
+      const go = (k, v, l) => `<button type="button" class="bt" data-brpx="${k}" data-v="${stEsc(v)}">${l}</button>`;
+      const pct = (String(p.b).match(/\d+%/) || [''])[0], rest = String(p.b).replace(pct, '').trim();
+      const N_IC = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" fill="#03C75A"/><path d="M8 7h2.6l2.8 4.3V7H16v10h-2.6l-2.8-4.3V17H8z" fill="#fff"/></svg>';
+      const I_IC = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E1A2B" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="#1E1A2B" stroke="none"/></svg>';
+      const rows = [p.addr && row(brI('loc', 18), stEsc(p.addr), '', go('map', p.addr, '지도')), p.tel && row(brI('tel', 18), stEsc(p.tel), '', go('tel', p.tel, '전화')), p.hrs && row(brI('clk', 18), stEsc(p.hrs), '영업 시간'),
+        p.naver && row(N_IC, '네이버 플레이스', '리뷰 · 메뉴 · 길찾기', go('link', p.naver, '열기')), p.insta && row(I_IC, '@' + stEsc(p.insta.replace(/^@/, '')), '인스타그램', go('link', 'https://instagram.com/' + p.insta.replace(/^@/, ''), '열기'))].filter(Boolean);
+      lgSheet(`<div class="br-pd2"><div class="hd" style="background:${p.c}"><span class="w">${p.w}</span><em>협업 업체 · ${stEsc(brName())}</em><b>${stEsc(p.n)}</b></div>
+        ${p.info ? `<div class="sec"><h3>소개</h3><p>${stEsc(p.info)}</p></div>` : ''}
+        <div class="cp"><div class="l">${pct ? `<b>${pct}</b><small>${stEsc(rest || '할인')}</small>` : `<b class="sm">${stEsc(p.b)}</b>`}</div><div class="r"><small>PALLO 멤버 혜택</small><span>${stEsc(p.how || '결제할 때 PALLO 앱 멤버 화면을 보여 주세요')}</span></div></div>
+        ${rows.length ? `<div class="sec"><h3>정보</h3><div class="rows">${rows.join('')}</div></div>` : ''}</div>
+        <div class="lg-sfoot"><button class="lg-btn" data-lgx="close">확인</button></div>`, p.n);
+      $('#lgSheet').classList.add('tall');
+      return; }
+    const cpb = e.target.closest('[data-brcp]');
+    if (cpb) { const [i, j] = cpb.dataset.brcp.split(':').map(Number), x = brCur().items[i], [l, v] = (x && x.cp || [])[j] || []; if (!v) return; try { navigator.clipboard && navigator.clipboard.writeText(v); } catch (er) {} sfx('tap'); cpb.classList.add('done'); setTimeout(() => cpb.classList.remove('done'), 1200); toast(`${l.split(' · ')[0]} 복사했어요 · ${v}`); return; }
+    const px = e.target.closest('[data-brpx]');
+    if (px) { const k = px.dataset.brpx; toast(k === 'map' ? '지도 앱으로 길찾기를 열어요 (예시)' : k === 'tel' ? `${px.dataset.v}로 전화를 걸어요 (예시)` : `링크를 열어요 · ${px.dataset.v} (예시)`); return; }
+    const all = e.target.closest('[data-brall]'), g = e.target.closest('[data-brgo]'), a = e.target.closest('[data-bract]');
+    if (all || g) { sfx('tap'); myPush('br'); if (g) setTimeout(() => { const it = $('#brIt' + g.dataset.brgo); if (it) { it.scrollIntoView({ block: 'center' }); it.classList.add('hl'); setTimeout(() => it.classList.remove('hl'), 1200); } }, 80); return; }
+    if (a) { const x = brCur().items[+a.dataset.bract]; if (!x || !x.act) return; const [k, v] = x.act;
+      if (k === 'copy') { try { navigator.clipboard && navigator.clipboard.writeText(v); } catch (er) {} toast(x.ic === 'park' ? '입금 계좌를 복사했어요' : `${x.t}을(를) 복사했어요`); }
+      else if (k === 'map') toast('지도 앱으로 길찾기를 열어요 (예시)');
+      else if (k === 'tel') toast(`${v}로 전화를 걸어요 (예시)`);
+    }
+  });
+
+  // ===== 팝업 공지: 앱을 열 때 · 본사 관리자가 올려요 · 오늘은 그만 보기 =====
+  const POPS = [
+    { id: 'pop-party', k: 'YEAR END PARTY', t: 'PALLO<br>연말 랭귀지 파티', s: '11.29 토 19:00 · 전 지점', bg: 'linear-gradient(160deg, #493087 0%, #1E1A2B 100%)', go: ['ev', 'm2'], btn: '자세히 보기', until: '2026-11-29' },
+    { id: 'pop-dec', k: 'DECEMBER', t: '12월<br>스터디 일정', s: '25일 · 31일 휴무 · 27일 보충', bg: 'linear-gradient(160deg, #8FA6DC 0%, #493087 100%)', go: ['notice', 0], btn: '공지 보기', until: '2026-12-31' }
+  ];
+  let popIdx = 0;
+  const popToday = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  function popShow(force) {
+    let hide = {}; try { hide = JSON.parse(localStorage.getItem('pallo-pop') || '{}'); } catch (e) {}
+    const L = POPS.filter((p) => force || hide[p.id] !== popToday()); if (!L.length) return;
+    const app = $('#app'); if (!app || $('#popWrap')) return;
+    popIdx = 0;
+    const w = document.createElement('div'); w.id = 'popWrap'; w.className = 'pop-wrap'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', '공지 팝업');
+    const draw = () => { const p = L[popIdx];
+      w.innerHTML = `<div class="pop-c"><div class="pop-im" style="background:${p.bg}">${L.length > 1 ? `<span class="n">${popIdx + 1} / ${L.length}</span>` : ''}<span class="k">${p.k}</span><b>${p.t}</b><small>${p.s}</small><img src="assets/c-upright-yellow.png" alt="">
+        ${L.length > 1 ? `<button type="button" class="nx pv" data-popn="-1" aria-label="이전">‹</button><button type="button" class="nx nn" data-popn="1" aria-label="다음">›</button>` : ''}</div>
+        <button type="button" class="pop-go" data-popgo>${p.btn}</button>
+        <div class="pop-ft"><button type="button" data-poptoday>오늘은 그만 보기</button><button type="button" data-popx>닫기</button></div></div>`; };
+    draw(); app.appendChild(w);
+    const close = () => { w.classList.add('out'); setTimeout(() => w.remove(), 180); };
+    w.addEventListener('click', (e) => {
+      const n = e.target.closest('[data-popn]'); if (n) { popIdx = (popIdx + +n.dataset.popn + L.length) % L.length; draw(); return; }
+      if (e.target.closest('[data-popx]')) { close(); return; }
+      if (e.target.closest('[data-poptoday]')) { L.forEach((p) => { hide[p.id] = popToday(); }); try { localStorage.setItem('pallo-pop', JSON.stringify(hide)); } catch (er) {} close(); toast('오늘은 다시 안 보여요'); return; }
+      if (e.target.closest('[data-popgo]')) { const [k, v] = L[popIdx].go; close();
+        if (k === 'ev') { go('event'); setTimeout(() => { const p = lgFind(v); if (p) lgDetail(p); }, 120); }
+        else if (k === 'notice') { myPush('noticeD', { ni: +v || 0, from: 'pop' }); }   // 공지 보기 → 그 공지 상세
+        return; }
+      if (e.target === w) close();
+    });
+  }
   function myPush(mode, ex) {
     MP = Object.assign({ mode, cat: 'char', draft: JSON.parse(JSON.stringify(MYAV)) }, ex || {});
     renderMyPush(); const el = $('#myPush'); el.scrollTop = 0; el.classList.add('open'); el.setAttribute('aria-hidden', 'false');
@@ -13649,6 +13922,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const el = $('#myPush'); if (!MP) return;
     if (MP.mode === 'set') { el.innerHTML = mySettingsHTML(); return; }
     if (MP.mode === 'chg') { el.innerHTML = chgHTML(); return; }
+    if (MP.mode === 'br') { el.innerHTML = brInfoHTML(); return; }
     if (MP.mode === 'pn') { el.innerHTML = pnListHTML(); return; }
     if (MP.mode === 'act') { el.innerHTML = actHTML(); return; }
     if (MP.mode === 'pnd') { el.innerHTML = pnDetHTML(MP.id); return; }
@@ -13720,6 +13994,42 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const fer = me ? all.filter((_, i) => i % 4 === 1).slice(0, 4) : [...(LG.fol[name] ? [meRow] : []), ...all.filter((_, i) => (h + i) % 2 === 0).slice(0, 16)];
     return { fing, fer };
   }
+  // ===== 사람 목록: 프사 묶음(+N · 외 N명)을 누르면 누구인지 목록 → 누르면 프로필 =====
+  const pplInfo = (n) => n === ME.n ? [ME.n, LG_C.y, ME.b] : ([...LG_MEMS, ...LG_POOL].find((x) => x[0] === n) || [n, LG_C.y, '']);
+  function pplSheet(title, names) {
+    const L = [...new Set(names.filter(Boolean))].filter((n) => !LG.blocked || !LG.blocked[n]);
+    const row = ([n, c, br]) => `<div class="lg-mrow"><span class="lg-av fc" style="background:${c}" data-lgprof="${n}" role="button" tabindex="0">${lgFace(n)}</span><span class="tx" data-lgprof="${n}" role="button" tabindex="0"><b>${n === ME.n ? `${n} <em class="pf-me">나</em>` : n}</b><small>${br || ''}</small></span>${n === ME.n ? '' : `<button class="lg-btn${LG.fol && LG.fol[n] ? ' wh' : ''}" style="height:36px;padding:0 14px" data-frx="${LG.fol && LG.fol[n] ? 'unfol' : 'fol'}" data-n="${n}">${LG.fol && LG.fol[n] ? '팔로잉' : '팔로우'}</button>`}</div>`;
+    lgSheet(`<h2>${stEsc(title)} <small style="font-size:15px;color:var(--sub)">${L.length}명</small></h2><div class="lg-mlist">${L.map((n) => row(pplInfo(n))).join('')}</div>`, title);
+    $('#lgSheet').classList.add('tall');
+  }
+  // 묶음 안에 보이는 얼굴 + "+N"만큼 같은 지점 · 비슷한 멤버로 채워요 (예시 데이터)
+  function pplFromStack(box) {
+    const seen = [...box.querySelectorAll('.lgf[data-who]')].map((x) => x.dataset.who);
+    const more = [...box.querySelectorAll('.more, .lg-av.more')].map((x) => parseInt((x.textContent || '').replace(/[^0-9]/g, ''), 10) || 0).reduce((a, b) => a + b, 0);
+    const pool = [...LG_MEMS, ...LG_POOL].map((x) => x[0]).filter((n) => !seen.includes(n) && n !== ME.n);
+    const h = [...(box.textContent || '')].reduce((a, c) => a + c.charCodeAt(0), 0);
+    const extra = Array.from({ length: Math.min(more, pool.length) }, (_, i) => pool[(h + i * 3) % pool.length]).filter((x, i, a) => a.indexOf(x) === i);
+    return [...seen, ...extra];
+  }
+  const pplTitle = (box) => box.closest('.pn-hearts') ? '고마워요를 보낸 사람' : box.closest('.pf-mut') ? '함께 아는 멤버' : box.closest('[data-chid], .lg-chd, .ch-mem, .lg-rme') ? '함께하는 멤버' : box.closest('.lg-pc, .lg-det') ? '참여하는 멤버' : '멤버';
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-frx], [data-lgprof]')) return;   // 이미 프로필로 가는 곳은 그대로
+    const ex = e.target.closest('[data-ppl]');
+    if (ex) { e.preventDefault(); e.stopPropagation(); sfx('tap'); pplSheet(ex.dataset.pplt || '멤버', ex.dataset.ppl.split('|')); return; }
+    const face = e.target.closest('.lg-av, .av, .lgf, .more'); if (!face) return;
+    // 프사 묶음: 같은 줄에 얼굴이 둘 이상이거나 +N이 있으면 목록
+    let box = face.parentElement;
+    for (let k = 0; k < 2 && box; k++) { if (box.querySelectorAll('.lgf[data-who]').length >= 2 || box.querySelector('.more')) break; box = box.parentElement; }
+    if (box && (box.querySelectorAll('.lgf[data-who]').length >= 2 || (box.querySelector('.more') && box.querySelector('.lgf[data-who]'))) && !box.closest('.lg-mlist, .lg-story, #lgStories, .pods, .rk-list, #rankBody')) {
+      e.preventDefault(); e.stopPropagation(); sfx('tap'); pplSheet(pplTitle(box), pplFromStack(box)); return;
+    }
+    // 프사 하나: 누르면 그 사람 프로필 (버튼 안에 있는 프사는 버튼 동작 그대로)
+    const one = (face.matches('.lgf') ? face : face.querySelector('.lgf[data-who]'));
+    const who = one && one.dataset.who; if (!who) return;
+    const host = face.closest('button, a, [role="button"]');
+    if (host && host !== face && !host.contains(face) === false && !host.matches('.lg-av, .av')) return;
+    e.preventDefault(); e.stopPropagation(); sfx('tap'); openProfile(who);
+  }, true);
   function pfList(name, t) {
     LG.flv = { name, t };
     const L = pfLists(name), cur = t === 'fing' ? L.fing : L.fer;
@@ -13750,14 +14060,17 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const theirWk = me ? MY_WEEK_PT() : 90 + (h * 7) % 140, myWk = MY_WEEK_PT();
     const showRace = !me && fol, showRec = !me && LG.recFor === name;
     // 이번 주 포인트 달리기: 포인트만큼 결승선 쪽으로 (먼저 간 사람이 오른쪽)
-    const race = () => { const mx = Math.max(theirWk, myWk, 1) * 1.25, pos = (v) => Math.max(4, Math.min(74, v / mx * 100 - 6));
-      const diff = Math.abs(theirWk - myWk), ahead = theirWk >= myWk;
-      const lab = (p) => (p > 45 ? `right:calc(${100 - p}% + 4px)` : `left:calc(${p}% + 66px)`);   // 앞서 있으면 이름표를 캐릭터 왼쪽에
-      return `<div class="pf-h2"><span>이번 주 포인트 달리기</span><b>${diff}P 차이</b></div>
-        <div class="pf-race"><span class="ln"></span><span class="fl"></span>
-          <span class="rn" style="left:${pos(theirWk)}%;top:6px">${avCharHTML(memberAv(name), false)}</span><small style="${lab(pos(theirWk))};top:16px">${stEsc(name)} ${theirWk}P</small>
-          <span class="rn" style="left:${pos(myWk)}%;top:62px">${avCharHTML(MYAV, false)}</span><small style="${lab(pos(myWk))};top:72px">나 ${myWk}P</small></div>
-        <p class="pf-tip">${ahead ? `오늘 출석 + 복습하면 <b>+50P</b> 앞으로 달려요` : `내가 ${diff}P 앞서 있어요 · 오늘도 이어 가요`}</p>`; };
+    // 이번 주 포인트 달리기 = 육상 트랙 (레인 1 = 상대 · 레인 2 = 나). 캐릭터는 출발선 ~ 결승선 사이 안쪽에서만 움직여요
+    const race = () => { const mx = Math.max(theirWk, myWk, 1) * 1.15, rr = (v) => Math.max(0, Math.min(1, v / mx));
+      const diff = Math.abs(theirWk - myWk), tie = diff === 0, ahead = theirWk > myWk;
+      const at = (r) => `calc(32px + (100% - 32px - 24px - 64px) * ${r.toFixed(3)})`;   // 출발선(32) · 결승선(24) · 캐릭터 폭(64) 안쪽
+      const tag = (r, top, txt) => r > 0.55 ? `<small style="left:${at(r)};top:${top}px;transform:translateX(calc(-100% - 4px))">${txt}</small>` : `<small style="left:calc(${at(r)} + 68px);top:${top}px">${txt}</small>`;
+      const a = rr(theirWk), b = rr(myWk);
+      return `<div class="pf-h2"><span>이번 주 포인트 달리기</span><b>${tie ? `동점 · ${myWk}P` : `${diff}P 차이`}</b></div>
+        <div class="pf-race t1"><span class="lane"></span><span class="no" style="top:22px">1</span><span class="no" style="top:88px">2</span><span class="st"></span><span class="fin"></span>
+          <span class="rn" style="left:${at(a)};top:10px">${avCharHTML(memberAv(name), false)}</span>${tag(a, 22, `${stEsc(name)} ${theirWk}P`)}
+          <span class="rn" style="left:${at(b)};top:76px">${avCharHTML(MYAV, false)}</span>${tag(b, 88, `나 ${myWk}P`)}</div>
+        <p class="pf-tip">${tie ? `나란히 달리는 중! 오늘 출석하면 <b>+50P</b> 앞서요` : ahead ? `오늘 출석 + 복습하면 <b>+50P</b> 앞으로 달려요` : `내가 ${diff}P 앞서 있어요 · 오늘도 이어 가요`}</p>`; };
     const stats = `<div class="pf-h2"><span>학습 현황</span></div><div class="pf-st">
       <div>${PF_ICO.fire}<span><b>${streak}일</b><small>연속 출석</small></span></div>
       <div>${PF_ICO.book}<span><b>${langs.map((l, i) => `${l} Lv.${i ? 1 + (h + 1) % 2 : lv}`).join('<br>')}</b><small>${langs.length > 1 ? '두 언어 병행' : ['EVERYDAY ENGLISH', 'REAL ENGLISH', 'TOPIC TALK'][lv - 1]}</small></span></div>
@@ -13845,7 +14158,20 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       // PRO'S NOTE
       const po = e.target.closest('[data-pnopen]'), pf = e.target.closest('[data-pnf]'), pm = e.target.closest('[data-pnmk]'), pt = e.target.closest('[data-pnty]'), pb = e.target.closest('[data-pnback]');
       if (po) { const id = po.dataset.pnopen; PNR[id] = 1; pnSave(); MP.back = MP.mode === 'pn' ? (MP.pf || 'all') : null; MP.mode = 'pnd'; MP.id = id; renderMyPush(); P.scrollTop = 0; return; }
+      if (e.target.closest('[data-pndy]')) { sfx('tap'); MP = Object.assign(MP, { mode: 'act', at: 'diary' }); renderMyPush(); P.scrollTop = 0; return; }
+      const dyo = e.target.closest('[data-dyopen]');
+      if (dyo) { const id = dyo.dataset.dyopen; sfx('tap'); MP = Object.assign(MP, { mode: 'pnd', id, back: null, fromAct: 1 }); renderMyPush(); P.scrollTop = 0; setTimeout(() => $('#pnDy')?.scrollIntoView({ block: 'center' }), 60); return; }
+      const dyS = e.target.closest('[data-pdst]'), dyQ = e.target.closest('[data-pdq]'), dyV = e.target.closest('[data-pdsave]'), dyE = e.target.closest('[data-pded]');
+      if (dyS || dyQ || dyV || dyE) {
+        const id = MP.id, d = PND[id] = PND[id] || JSON.parse(JSON.stringify(PND_EX[id] || { st: [], q: 0, t: '' })), ta = $('#pnDyT'); if (ta) d.t = ta.value;
+        if (dyS) { const k = dyS.dataset.pdst; d.st = d.st.includes(k) ? d.st.filter((x) => x !== k) : [...d.st, k]; sfx(d.st.includes(k) ? 'pick' : 'tap'); }
+        if (dyQ) { d.q = (d.q || 0) + 1; sfx('tap'); }
+        if (dyE) { PND._ed = id; sfx('tap'); }
+        if (dyV) { if (!(d.t || '').trim() && !d.st.length) { toast('스티커를 고르거나 한 줄 써 주세요'); return; } const t = new Date(); d.at = `${t.getMonth() + 1}.${t.getDate()} ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`; delete PND._ed; sfx('save'); toast('스터디 일기를 저장했어요 · 나만 볼 수 있어요'); }
+        pnSave(); const y = P.scrollTop; renderMyPush(); P.scrollTop = y; if (dyE || dyS || dyQ) $('#pnDyT')?.focus({ preventScroll: true }); return;
+      }
       if (e.target.closest('[data-pnall]')) { MP.mode = 'pn'; MP.pf = 'all'; MP.back = null; renderMyPush(); P.scrollTop = 0; return; }   // 알림 등에서 바로 연 노트 → 전체 목록
+      if (pb && MP.fromAct) { MP = Object.assign(MP, { mode: 'act', at: 'diary', fromAct: 0 }); renderMyPush(); P.scrollTop = 0; return; }
       if (pb) { if (MP.back) { MP.mode = 'pn'; MP.pf = MP.back; renderMyPush(); P.scrollTop = 0; } else myPushClose(); return; }
       if (pf) { keep(() => { MP.pf = pf.dataset.pnf; }); return; }
       if (pm) { const k = pm.dataset.pnmk; PNS[k] = !PNS[k]; if (!PNS[k]) delete PNS[k]; pnSave(); keep(() => {}); toast(PNS[k] ? '내 표현함에 저장했어요' : '저장을 취소했어요'); return; }
@@ -13936,7 +14262,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   $$('.hero-char .hb').forEach((h) => { h.innerHTML = heroBlink(h.dataset.hero); });
   buildTabs(); wire(); wireStudy();
   setLayout(location.hash === '#main-notice' ? 'notice' : 'checkin');   // 링크 끝에 #main-notice 를 붙이면 시안 B로 열림
-  buildAzitFeed(); bindLounge(); bindSurvey(); bindMy(); renderMy();
+  buildAzitFeed(); bindLounge(); bindSurvey(); bindMy(); renderMy(); renderBrBoard();
+  setTimeout(() => popShow(), 900);   // 앱 열 때 팝업 공지 (오늘은 그만 보기를 누른 건 안 떠요)
   $('#qBack').addEventListener('click', () => go('my'));
   // 랭킹 › 챌린지 참여하러 가기 → 라운지 챌린지 탭 (지금 참여 중인 수 · 가장 핫한 챌린지를 한 줄로)
   $('#rkChal').addEventListener('click', () => { sfx('tap'); go('azit'); lgTab('chal'); const pg = $('#page-azit'); if (pg) pg.scrollTop = 0; });
