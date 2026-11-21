@@ -1044,6 +1044,16 @@ a { color: inherit; }
 .st-world { position: relative; aspect-ratio: 360 / 460; border: 2px solid var(--ink); border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); background: #BFE4EC; }
 .st-world.w3d { aspect-ratio: 340 / 430; background: #BFE4EC; touch-action: pan-y; }
 .st-world.w3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
+.st-world.w3d canvas.m3-in { animation: m3In .7s cubic-bezier(.2,.8,.2,1) both; }
+.st-world .m3-out { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 5; pointer-events: none; animation: m3Out .55s cubic-bezier(.5,0,.75,0) both; }
+.st-world .m3-name { position: absolute; left: 50%; top: 42%; z-index: 6; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 12px 22px 14px; border: 2px solid var(--ink); border-radius: 18px; background: var(--white); box-shadow: 4px 4px 0 var(--ink); pointer-events: none; white-space: nowrap; animation: m3NameIn .45s .15s cubic-bezier(.2,.9,.3,1.3) both, m3NameOut .35s 1.25s ease-in forwards; }
+.st-world .m3-name small { font-family: var(--f-display); font-size: 10px; font-weight: 600; letter-spacing: .14em; color: #7A7488; }
+.st-world .m3-name b { font-size: 20px; font-weight: 900; }
+@keyframes m3In { from { opacity: 0; transform: translateX(var(--dx, 0)) scale(.94); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes m3Out { to { opacity: 0; transform: translateX(var(--dx, 0)) scale(1.06); filter: blur(8px); } }
+@keyframes m3NameIn { from { opacity: 0; transform: translate(-50%, -30%) scale(.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes m3NameOut { to { opacity: 0; transform: translate(-50%, -70%) scale(.96); } }
+@media (prefers-reduced-motion: reduce) { .st-world .m3-out, .st-world .m3-name { display: none; } .st-world.w3d canvas.m3-in { animation: none; } }
 .m3-tag { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 2px 8px 3px; border-radius: 11px; border: 2px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 900; white-space: nowrap; pointer-events: none; line-height: 1.3; }
 .m3-tag.soon { border-style: dashed; border-color: #9A93A6; color: #6F6880; background: rgba(255,255,255,.88); }
 .m3-tag.cur { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
@@ -7499,6 +7509,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       panel = `<div class="st-phead"><div><div class="st-ptitle">${L.title} 맵 · 장면 ${dn}/${L.lessons.length}</div><p class="st-about">${L.about}</p></div></div>` + lessonRowsHTML(L)
         + '<div class="st-more">새 장면과 새 상황 맵은 계속 열려요</div>';
     }
+    { const w = $('#stWorld'), cv = w.querySelector('canvas'), ids = SITS.map((x) => x.id), nid = ST.sitMode ? curMap().id : null;
+      if (cv && nid && w.dataset.map && w.dataset.map !== nid) { try { window.__w3dSwap = { src: cv.toDataURL('image/jpeg', .85), dir: ids.indexOf(nid) >= ids.indexOf(w.dataset.map) ? 1 : -1 }; } catch (e) { window.__w3dSwap = null; } } else window.__w3dSwap = null;
+      w.dataset.map = nid || ''; }
     $('#stWorld').classList.remove('w3d');
     $('#stWorld').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" aria-hidden="true" preserveAspectRatio="xMidYMid slice">${world.svg}</svg>${world.over}`;
     if (M.kind === 'sit') {
@@ -7513,7 +7526,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#stLang').onclick = (e) => { e.stopPropagation(); const m = $('#stLMenu'), open = m.hidden; m.hidden = !open; $('#stLang').setAttribute('aria-expanded', String(open)); sfx('tap'); };
     $$('#stLMenu [data-lang]').forEach((b) => b.addEventListener('click', () => { const i = +b.dataset.lang; $('#stLMenu').hidden = true; if (i === ST.lang) return; ST.lang = i; ST.all = false; ST.bi = Math.max(0, LIB[i].findIndex((x) => x.mine)); sfx('tap'); renderStudyLib(); }));
     $$('#stMapChips [data-mode]').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.mode === '1'; if (v === ST.sitMode) return; ST.sitMode = v; ST.all = false; sfx('tap'); renderStudyLib(); }));
-    $$('#stMapMode [data-map]').forEach((b) => b.addEventListener('click', () => { ST.map = b.dataset.map; ST.all = false; sfx('tap'); renderStudyLib(); }));
+    $$('#stMapMode [data-map]').forEach((b) => b.addEventListener('click', () => { if (ST.map === b.dataset.map) return; ST.map = b.dataset.map; ST.all = false; sfx('tap'); renderStudyLib(); const on = $(`#stMapMode [data-map="${ST.map}"]`); if (on) on.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', inline: 'center', block: 'nearest' }); }));
     $$('#stMapMode [data-soon]').forEach((b) => b.addEventListener('click', () => { const s = SIT_SOON.find((x) => x.id === b.dataset.soon); toast('다음 상황 맵을 준비하고 있어요 · 열리면 알려드릴게요'); }));
     $$('#stWorld [data-isl]').forEach((b) => b.addEventListener('click', () => {
       ST.bi = +b.dataset.isl; ST.all = false; sfx('tap'); renderStudyLib();
@@ -14514,6 +14527,7 @@ function stage(el, { half, pos, target, bg, az, fog }) {
   const label = (p, html, cls = 'm3-tag', dy = 0) => { const e = document.createElement('div'); e.className = cls; e.innerHTML = html; el.appendChild(e); labels.push([p.clone(), e, dy]); };
   // 누르면 확대
   const home = target.clone(), ray = new THREE.Raycaster(); let tw = null, down = null;
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches; let intro = RM ? null : { t: 0, a: .42 * (window.__w3dSwap ? window.__w3dSwap.dir : 1) };
   const fly = (to, z) => { tw = { a: ctl.target.clone(), b: to.clone(), za: cam.zoom, zb: z, t: 0 }; };
   const zp = document.createElement('div'); zp.className = 'm3-zp'; el.appendChild(zp);
   const reset = () => { zp.classList.remove('on'); fly(home, 1); };
@@ -14535,6 +14549,8 @@ function stage(el, { half, pos, target, bg, az, fog }) {
   const loop = (t) => {
     if (!el.isConnected || !el.contains(r.domElement)) { cancelAnimationFrame(raf); ctl.dispose(); r.dispose(); r.forceContextLoss(); return; }
     if (el.offsetParent === null) { raf = requestAnimationFrame(loop); return; }
+    if (intro) { intro.t = Math.min(1, intro.t + .022); const k = 1 - Math.pow(1 - intro.t, 4), off = cam.position.clone().sub(ctl.target), base = intro.base || (intro.base = off.clone()), ang = intro.a * (1 - k);
+      off.copy(base).applyAxisAngle(new THREE.Vector3(0, 1, 0), ang); cam.position.copy(ctl.target).add(off); cam.zoom = .78 + .22 * k; cam.updateProjectionMatrix(); if (intro.t >= 1) intro = null; }
     if (tw) { tw.t = Math.min(1, tw.t + .045); const k = 1 - Math.pow(1 - tw.t, 3), o = cam.position.clone().sub(ctl.target); ctl.target.lerpVectors(tw.a, tw.b, k); cam.position.copy(ctl.target).add(o); cam.zoom = tw.za + (tw.zb - tw.za) * k; cam.updateProjectionMatrix(); if (tw.t >= 1) tw = null; }
     ctl.update(); ticks.forEach((f) => f(t / 1000)); r.render(sc, cam); el.classList.toggle('m3z', cam.zoom > 1.5);
     labels.forEach(([p, e, dy]) => { v.copy(p).project(cam); e.style.left = ((v.x + 1) / 2 * w) + 'px'; e.style.top = ((1 - v.y) / 2 * h + dy) + 'px'; });
@@ -15044,7 +15060,12 @@ BUILD.campus = (EL, SC) => {
 // 앱에서 부르는 곳: PALLO3D.mount(#stWorld, 'travel', [[이름, 아이콘, 'done'|'cur'|'open'|'soon'], ...], (장면 번호) => {})
 window.PALLO3D = { mount(el, id, SC, onOpen) {
   OPEN = onOpen; const f = BUILD[id] || BUILD.travel;
-  const go = () => { el.innerHTML = ''; f(el, SC); };
+  const NAMES = { travel: ['여행 맵', 'TRAVEL'], biz: ['비즈니스 맵', 'BUSINESS'], cafe: ['카페 맵', 'MELBOURNE CAFÉ'], campus: ['캠퍼스 맵', 'PALLO UNIVERSITY'] };
+  const go = () => { const sw = window.__w3dSwap; window.__w3dSwap = null; el.innerHTML = ''; f(el, SC); el.dataset.map = id;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cv = el.querySelector('canvas'); if (cv) cv.classList.add('m3-in');
+    if (sw) { const im = new Image(); im.src = sw.src; im.className = 'm3-out'; im.style.setProperty('--dx', (-sw.dir * 28) + '%'); el.appendChild(im); im.addEventListener('animationend', () => im.parentNode && im.parentNode.removeChild(im)); if (cv) cv.style.setProperty('--dx', (sw.dir * 18) + '%'); }
+    const nm = NAMES[id]; if (nm) { const t = document.createElement('div'); t.className = 'm3-name'; t.innerHTML = `<small>${nm[1]}</small><b>${nm[0]}</b>`; el.appendChild(t); t.addEventListener('animationend', (e) => { if (e.animationName === 'm3NameOut' && t.parentNode) t.parentNode.removeChild(t); }); } };
   if (el.clientWidth > 0) go(); else { const ro = new ResizeObserver(() => { if (el.clientWidth > 0) { ro.disconnect(); go(); } }); ro.observe(el); }
 } };
 window.dispatchEvent(new Event('pallo3d-ready'));
