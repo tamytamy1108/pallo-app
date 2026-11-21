@@ -1114,7 +1114,6 @@ a { color: inherit; }
 #stBody > .st-done, #stBody > .st-row2 { position: sticky; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 5; margin-top: auto; }
 .st-qfoot .st-opts.done .st-opt:not(.right):not(.wrong) { display: none; }
 .st-qfoot .st-opt { min-height: 50px; padding: 10px 14px; }
-.sq-lvb { display: flex; align-items: center; gap: 8px; } .sq-lvb b { height: 24px; padding: 0 10px; border: 2px solid var(--ink); border-radius: 12px; background: var(--yellow); font-family: var(--f-display); font-size: 11px; display: inline-flex; align-items: center; } .sq-lvb span { font-size: 12px; font-weight: 700; color: var(--sub); }
 .sq-pt { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.3px; }
 .sq-pick { display: flex; flex-direction: column; gap: 10px; }
 .sq-pc { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 16px; border: 2.5px solid var(--ink); border-radius: 18px; background: var(--white); box-shadow: 0 4px 0 var(--ink); text-align: left; font: inherit; color: var(--ink); transition: transform .12s, box-shadow .12s, background-color .2s; }
@@ -8853,7 +8852,6 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#stBody').innerHTML = `
       <div class="pr-top"><div class="pr-bar" aria-hidden="true"><i style="width:${t.i / t.order.length * 100}%"></i></div><span class="pr-count">${t.i + 1}/${t.order.length}</span></div>
       <div class="st-kick2">${it.kick}</div>
-      ${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? `<div class="sq-lvb"><b>Lv.${sitQLv()}</b><span>${SITQ_LV[sitQLv()]}</span></div>` : ''}
       <div class="card st-qc">
         ${it.big ? `<div class="st-qc-top"><span class="st-big" lang="en">${stEsc(it.big)}</span>${saySpan(it.say)}</div>` : `<div class="st-qc-top"><span class="st-prompt" lang="en">${it.top}</span>${it.en || !it.say ? '' : saySpan(it.say)}</div>`}
         ${it.q ? `<div class="st-qc-q">${it.q}</div>` : ''}
