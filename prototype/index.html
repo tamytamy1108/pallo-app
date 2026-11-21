@@ -1012,7 +1012,7 @@ a { color: inherit; }
 .st-mchip[aria-selected="true"] .g { border-color: var(--white); }
 .st-mchip .new { width: 8px; height: 8px; border-radius: 50%; background: #E9789B; border: 1.5px solid var(--ink); }
 .st-mchip.soon { border-style: dashed; border-color: #9A93A6; color: #8C8597; background: transparent; }
-.st-mode { margin: 0 0 14px; } .st-mode:empty { margin-bottom: 14px; }
+.st-mode { margin: 0; } .st-mode:empty { display: none; }
 .st-head { position: relative; z-index: 6; }
 .st-lwrap { position: relative; }
 .st-lang { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px 0 6px; border-radius: 18px; border: 2px solid var(--ink); background: var(--white); font: inherit; font-size: 13.5px; font-weight: 900; color: var(--ink); cursor: pointer; }
@@ -1021,8 +1021,8 @@ a { color: inherit; }
 .st-lmenu[hidden] { display: none; }
 .st-lmenu button { display: flex; align-items: center; gap: 9px; height: 42px; padding: 0 10px; border: 0; border-radius: 11px; background: none; font: inherit; font-size: 14px; font-weight: 800; color: var(--ink); cursor: pointer; text-align: left; }
 .st-lmenu button[aria-checked="true"] { background: #FFF4B8; font-weight: 900; }
-.st-mtabs { display: flex; margin: 14px 0 0; border-bottom: 2px solid #E2D9C7; }
-.st-mtabs button { flex: 1; position: relative; height: 48px; border: 0; background: none; font: inherit; font-size: 17px; font-weight: 900; color: #A39C8E; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.st-mtabs { display: flex; margin: 0; border-bottom: 2px solid #E2D9C7; }
+.st-mtabs button { flex: 1; position: relative; height: 42px; border: 0; background: none; font: inherit; font-size: 17px; font-weight: 900; color: #A39C8E; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .st-mtabs button[aria-selected="true"] { color: var(--ink); }
 .st-mtabs button[aria-selected="true"]:after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -2px; height: 4px; border-radius: 2px; background: var(--ink); }
 .st-mtabs .new, .st-schips .new { width: 7px; height: 7px; border-radius: 50%; background: #E9789B; display: inline-block; }
