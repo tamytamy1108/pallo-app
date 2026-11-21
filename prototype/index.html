@@ -1046,7 +1046,7 @@ a { color: inherit; }
 .st-world.w3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
 .st-world.w3d canvas.m3-in { animation: m3In .7s cubic-bezier(.2,.8,.2,1) both; }
 .st-world .m3-out { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 5; pointer-events: none; animation: m3Out .55s cubic-bezier(.5,0,.75,0) both; }
-@keyframes m3In { from { opacity: 0; transform: translateX(var(--dx, 0)) scale(.94); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes m3In { from { transform: translateX(var(--dx, 0)) scale(.96); } to { transform: none; } }
 @keyframes m3Out { to { opacity: 0; transform: translateX(var(--dx, 0)) scale(1.06); filter: blur(8px); } }
 @media (prefers-reduced-motion: reduce) { .st-world .m3-out { display: none; } .st-world.w3d canvas.m3-in { animation: none; } }
 .m3-tag { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 2px 8px 3px; border-radius: 11px; border: 2px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 900; white-space: nowrap; pointer-events: none; line-height: 1.3; }
@@ -14805,10 +14805,14 @@ function stage(el, { half, pos, target, bg, az, fog }) {
       off.copy(base).applyAxisAngle(new THREE.Vector3(0, 1, 0), ang); cam.position.copy(ctl.target).add(off); cam.zoom = .78 + .22 * k; cam.updateProjectionMatrix(); if (intro.t >= 1) intro = null; }
     if (tw) { tw.t = Math.min(1, tw.t + .045); const k = 1 - Math.pow(1 - tw.t, 3), o = cam.position.clone().sub(ctl.target); ctl.target.lerpVectors(tw.a, tw.b, k); cam.position.copy(ctl.target).add(o); cam.zoom = tw.za + (tw.zb - tw.za) * k; cam.updateProjectionMatrix(); if (tw.t >= 1) tw = null; }
     ctl.update(); ticks.forEach((f) => f(t / 1000)); r.render(sc, cam); el.classList.toggle('m3z', cam.zoom > 1.5);
-    labels.forEach(([p, e, dy]) => { v.copy(p).project(cam); e.style.left = ((v.x + 1) / 2 * w) + 'px'; e.style.top = ((1 - v.y) / 2 * h + dy) + 'px'; });
+    placeLabels();
     raf = requestAnimationFrame(loop); };
+  const placeLabels = () => labels.forEach(([p, e, dy]) => { v.copy(p).project(cam); e.style.left = ((v.x + 1) / 2 * w) + 'px'; e.style.top = ((1 - v.y) / 2 * h + dy) + 'px'; });
+  // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게
+  const draw = () => { if (intro && !intro.base) { const off = cam.position.clone().sub(ctl.target); intro.base = off.clone(); off.applyAxisAngle(new THREE.Vector3(0, 1, 0), intro.a); cam.position.copy(ctl.target).add(off); cam.zoom = .78; cam.updateProjectionMatrix(); }
+    ticks.forEach((f) => f(0)); r.render(sc, cam); placeLabels(); };
   raf = requestAnimationFrame(loop);
-  return { sc, label, ticks, focus, el };
+  return { sc, label, ticks, focus, el, draw };
 }
 const loader = new THREE.TextureLoader();
 function pallo(sc, x, y, z, hgt = 1.45) { loader.load('assets/c-upright-yellow.png', (t) => { t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false })); s.renderOrder = 10; s.scale.set(hgt * t.image.width / t.image.height, hgt, 1); s.center.set(.5, 0); s.position.set(x, y, z); sc.add(s); }); }
@@ -15038,7 +15042,9 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   // 유람선 · 조정 보트
   const cruise = new THREE.Group(); cruise.add(at(std(new THREE.BoxGeometry(5, .7, 1.4), { color: 0xF7F7F8 }), 0, 0, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.4, .7, 1.2), { color: 0x2B2F44, roughness: .2 }), -.3, .7, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.6, .1, 1.3), { color: 0xF7F7F8 }), -.3, 1.1, 0));
   for (let k = -1.8; k <= 1.2; k += .5) cruise.add(at(new THREE.Mesh(new THREE.BoxGeometry(.3, .25, .02), new THREE.MeshBasicMaterial({ color: 0xFFE7A8 })), k, .7, .61)); cruise.rotation.y = ROW; sc.add(cruise);
-  S.ticks.push((t) => { const p = 20 - ((t * 1.2) % 44), [x, z] = along(-13.6, -13.6, p); cruise.position.set(x, FL - .2, z); });
+  // 다리(8.5 지점) 밑으로 들어가지 않게: 다리 앞 구간만 오가요 · 끝에서 속도를 줄이며 돌아서요
+  const shuttle = (t, a, b, sp, ph) => { const k = t * sp + ph, p = (a + b) / 2 + (b - a) / 2 * Math.sin(k), v = Math.cos(k); return [p, ROW + Math.PI * (.5 - .5 * Math.max(-1, Math.min(1, v * 3)))]; };
+  S.ticks.push((t) => { const [p, yaw] = shuttle(t, -18, .5, .07, 2.2), [x, z] = along(-13.6, -13.6, p); cruise.position.set(x, FL - .2, z); cruise.rotation.y = yaw + Math.PI; });
   const boat = new THREE.Group(), hs = new THREE.Shape(); hs.moveTo(-2.6, 0); hs.quadraticCurveTo(0, .24, 2.6, 0); hs.quadraticCurveTo(0, -.24, -2.6, 0);
   const hull = std(new THREE.ExtrudeGeometry(hs, { depth: .16, bevelEnabled: true, bevelThickness: .04, bevelSize: .03, bevelSegments: 2 }), { color: 0x1F4E9C, roughness: .35 }); hull.rotation.x = Math.PI / 2; hull.position.y = .1; boat.add(hull);
   const deckS = new THREE.Shape(); deckS.moveTo(-2.4, 0); deckS.quadraticCurveTo(0, .2, 2.4, 0); deckS.quadraticCurveTo(0, -.2, -2.4, 0); const deckM = std(new THREE.ShapeGeometry(deckS), { color: 0xF7F4EE }); deckM.rotation.x = -Math.PI / 2; deckM.position.y = .13; boat.add(deckM);
@@ -15048,7 +15054,7 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
     const sh = std(new THREE.CylinderGeometry(.026, .026, 1.8, 6), { color: 0x2B2B2E }); sh.rotation.x = Math.PI / 2; sh.position.z = side * .85; piv.add(sh);
     const bl = std(new THREE.BoxGeometry(.14, .03, .34), { color: 0xF2C230 }); bl.position.z = side * 1.72; piv.add(bl); boat.add(piv); oars.push([piv, side]); });
   boat.rotation.y = ROW; sc.add(boat);
-  S.ticks.push((t) => { const p = ((t * 1.6) % 50) - 25, [x, z] = along(-12, -12, p); boat.position.set(x, FL - .48, z); const st = t * 3.2; oars.forEach(([pv, sd]) => { pv.rotation.y = Math.sin(st) * .45 * sd; pv.rotation.x = (Math.cos(st) > 0 ? -.2 : .06) * sd; }); });
+  S.ticks.push((t) => { const [p, yaw] = shuttle(t, -16, 4, .09, 0), [x, z] = along(-12, -12, p); boat.position.set(x, FL - .42, z); boat.rotation.y = yaw; const st = t * 3.2; oars.forEach(([pv, sd]) => { pv.rotation.y = Math.sin(st) * .45 * sd; pv.rotation.x = (Math.cos(st) > 0 ? -.2 : .06) * sd; }); });
   // 강변 카페 테이블 · 사람 · 유칼립투스
   const C = [0x1F4E9C, 0xE0483F, 0xF2C230, 0x2F8F5B, 0xF7F4EE];
   [[-7.2, -2.6], [-2.6, -7.2], [-7.6, 1.6], [1.6, -7.6]].forEach(([x, z], i) => { sc.add(umbrella(x, z, [0xF7F4EE, 0x2F6B4A][i % 2], FL)); sc.add(person(x + .7, z + .3, C[i % 5], 1, FL)); sc.add(person(x - .6, z - .4, C[(i + 2) % 5], 1, FL)); });
@@ -15312,7 +15318,7 @@ BUILD.campus = (EL, SC) => {
 // 앱에서 부르는 곳: PALLO3D.mount(#stWorld, 'travel', [[이름, 아이콘, 'done'|'cur'|'open'|'soon'], ...], (장면 번호) => {})
 window.PALLO3D = { mount(el, id, SC, onOpen) {
   OPEN = onOpen; const f = BUILD[id] || BUILD.travel;
-  const go = () => { const sw = window.__w3dSwap; window.__w3dSwap = null; el.innerHTML = ''; f(el, SC); el.dataset.map = id;
+  const go = () => { const sw = window.__w3dSwap; window.__w3dSwap = null; el.innerHTML = ''; const S = f(el, SC); el.dataset.map = id; if (S && S.draw) S.draw();
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cv = el.querySelector('canvas'); if (cv) cv.classList.add('m3-in');
     if (sw) { const im = new Image(); im.src = sw.src; im.className = 'm3-out'; im.style.setProperty('--dx', (-sw.dir * 28) + '%'); el.appendChild(im); im.addEventListener('animationend', () => im.parentNode && im.parentNode.removeChild(im)); if (cv) cv.style.setProperty('--dx', (sw.dir * 18) + '%'); } };
