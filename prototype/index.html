@@ -293,6 +293,7 @@ a { color: inherit; }
 .node.chest.locked { --tc-b: #E4DED2; --tc-l: #EFEAE0; --tc-s: #D6CFC0; --tc-k: #9A93A6; }
 .node.chest.locked .tchest > rect:first-child { fill: #CFC8BA; }
 .node.chest .tchest { width: 100%; height: 100%; overflow: visible; }
+.node.chest { -webkit-tap-highlight-color: transparent; } .node.chest:focus, .node.chest:focus-visible { outline: none; }   /* 보상 상자: 누른 뒤 테두리(포커스 링 · 탭 하이라이트) 없이 */
 .node.chest .tc-lid { transform-box: fill-box; transform-origin: 50% 100%; }
 .node.chest .node-label { margin-top: 2px; }
 #qmapInner .node.chest:not(.locked):active { box-shadow: none; transform: translateY(3px); }
@@ -1012,7 +1013,7 @@ a { color: inherit; }
 .st-mchip[aria-selected="true"] .g { border-color: var(--white); }
 .st-mchip .new { width: 8px; height: 8px; border-radius: 50%; background: #E9789B; border: 1.5px solid var(--ink); }
 .st-mchip.soon { border-style: dashed; border-color: #9A93A6; color: #8C8597; background: transparent; }
-.st-mode { margin: 0 0 14px; } .st-mode:empty { margin-bottom: 14px; }
+.st-mode { margin: 0; } .st-mode:empty { display: none; }
 .st-head { position: relative; z-index: 6; }
 .st-lwrap { position: relative; }
 .st-lang { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px 0 6px; border-radius: 18px; border: 2px solid var(--ink); background: var(--white); font: inherit; font-size: 13.5px; font-weight: 900; color: var(--ink); cursor: pointer; }
@@ -1021,8 +1022,8 @@ a { color: inherit; }
 .st-lmenu[hidden] { display: none; }
 .st-lmenu button { display: flex; align-items: center; gap: 9px; height: 42px; padding: 0 10px; border: 0; border-radius: 11px; background: none; font: inherit; font-size: 14px; font-weight: 800; color: var(--ink); cursor: pointer; text-align: left; }
 .st-lmenu button[aria-checked="true"] { background: #FFF4B8; font-weight: 900; }
-.st-mtabs { display: flex; margin: 14px 0 0; border-bottom: 2px solid #E2D9C7; }
-.st-mtabs button { flex: 1; position: relative; height: 48px; border: 0; background: none; font: inherit; font-size: 17px; font-weight: 900; color: #A39C8E; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.st-mtabs { display: flex; margin: 0; border-bottom: 2px solid #E2D9C7; }
+.st-mtabs button { flex: 1; position: relative; height: 42px; border: 0; background: none; font: inherit; font-size: 17px; font-weight: 900; color: #A39C8E; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .st-mtabs button[aria-selected="true"] { color: var(--ink); }
 .st-mtabs button[aria-selected="true"]:after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -2px; height: 4px; border-radius: 2px; background: var(--ink); }
 .st-mtabs .new, .st-schips .new { width: 7px; height: 7px; border-radius: 50%; background: #E9789B; display: inline-block; }
@@ -1042,8 +1043,13 @@ a { color: inherit; }
 .st-stabs button.soon { color: #C9C1B0; }
 .st-msep { flex: none; width: 2px; height: 22px; align-self: center; background: #D9D1BF; border-radius: 1px; }
 .st-world { position: relative; aspect-ratio: 360 / 460; border: 2px solid var(--ink); border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); background: #BFE4EC; }
-.st-world.w3d { aspect-ratio: 340 / 500; background: #BFE4EC; touch-action: pan-y; }
+.st-world.w3d { aspect-ratio: 340 / 430; background: #BFE4EC; touch-action: pan-y; }
 .st-world.w3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
+.st-world.w3d canvas.m3-in { animation: m3In .7s cubic-bezier(.2,.8,.2,1) both; }
+.st-world .m3-out { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 5; pointer-events: none; animation: m3Out .55s cubic-bezier(.5,0,.75,0) both; }
+@keyframes m3In { from { transform: translateX(var(--dx, 0)) scale(.96); } to { transform: none; } }
+@keyframes m3Out { to { opacity: 0; transform: translateX(var(--dx, 0)) scale(1.06); filter: blur(8px); } }
+@media (prefers-reduced-motion: reduce) { .st-world .m3-out { display: none; } .st-world.w3d canvas.m3-in { animation: none; } }
 .m3-tag { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 2px 8px 3px; border-radius: 11px; border: 2px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 900; white-space: nowrap; pointer-events: none; line-height: 1.3; }
 .m3-tag.soon { border-style: dashed; border-color: #9A93A6; color: #6F6880; background: rgba(255,255,255,.88); }
 .m3-tag.cur { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
@@ -1106,6 +1112,28 @@ a { color: inherit; }
 /* 아래 고정 버튼 (복습 스피킹 퀴즈): 레슨 화면처럼 엄지 자리에 늘 같은 버튼 */
 .st-foot { position: sticky; bottom: calc(-40px - env(safe-area-inset-bottom, 0px)); z-index: 5; margin: auto -16px calc(-40px - env(safe-area-inset-bottom, 0px)); padding: 18px 16px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; background: linear-gradient(rgba(250, 245, 232, 0), var(--cream, #FAF5E8) 22px); }
 .st-foot .st-bigmic { width: 100%; }
+#stBody > .st-done, #stBody > .st-row2 { position: sticky; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 5; margin-top: auto; }
+.st-qfoot .st-opts.done .st-opt:not(.right):not(.wrong) { display: none; }
+.st-qfoot .st-opt { min-height: 50px; padding: 10px 14px; }
+.sq-pt { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.3px; }
+.sq-pick { display: flex; flex-direction: column; gap: 10px; }
+.sq-pc { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 16px; border: 2.5px solid var(--ink); border-radius: 18px; background: var(--white); box-shadow: 0 4px 0 var(--ink); text-align: left; font: inherit; color: var(--ink); transition: transform .12s, box-shadow .12s, background-color .2s; }
+.sq-pc:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.sq-pc.on { background: #FFF6B8; }
+.sq-pc .h { display: flex; align-items: center; gap: 8px; } .sq-pc .h b { font-family: var(--f-display); font-size: 15px; } .sq-pc .h em { font-style: normal; font-size: 15px; font-weight: 900; } .sq-pc .h i { font-style: normal; height: 20px; padding: 0 8px; border-radius: 10px; background: var(--ink); color: var(--yellow); font-size: 10px; font-weight: 900; display: inline-flex; align-items: center; }
+.sq-pc .d { font-size: 13px; font-weight: 700; color: var(--sub); line-height: 1.45; } .sq-pc .ex { font-size: 12px; font-weight: 700; color: #7A7488; background: #F4F0E6; border-radius: 8px; padding: 4px 8px; }
+.sq-pc.on .ex { background: #fff; }
+.sq-pc .h u { text-decoration: none; margin-left: auto; font-size: 11px; font-weight: 800; color: #2E8B57; background: #E3F5EA; border-radius: 10px; height: 20px; padding: 0 8px; display: inline-flex; align-items: center; } .sq-pc .h { width: 100%; }
+.sq-word { display: block; font-size: 26px; font-weight: 900; letter-spacing: -.3px; }
+.sq-tip { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border: 2px solid var(--ink); border-radius: 14px; background: #E9F4FF; } .sq-tip b { font-size: 11px; font-weight: 900; letter-spacing: .04em; color: #2E5E9A; } .sq-tip span { font-size: 14px; font-weight: 800; line-height: 1.45; }
+.sq-ctx { display: block; font-family: var(--f-body); font-size: 15px; font-weight: 700; line-height: 1.5; color: var(--ink); }
+.st-qc-q .sq-ctx { font-size: 13px; color: var(--sub); }
+.sq-bub { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 44px 10px 14px; border: 2px solid var(--ink); border-radius: 16px 16px 16px 4px; background: #F3EEFF; text-align: left; }
+.sq-bub em { font-style: normal; font-family: var(--f-display); font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--sub); }
+.sq-bub > span { font-size: 16px; font-weight: 800; line-height: 1.4; color: var(--ink); }
+.sq-bub .sq-hid { font-family: var(--f-body); font-size: 13px; font-weight: 700; color: var(--sub); }
+.sq-spk { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 16px; border: 2px solid var(--ink); background: var(--yellow); display: grid; place-items: center; }
+.sq-spk svg { width: 16px; height: 16px; }
 #stBody { gap: 10px; } .st-foot { gap: 8px; padding-top: 12px; } .st-hrow .ft-bulb { width: 40px; height: 40px; border-radius: 20px; }
 .st-foot .st-retry { margin-bottom: 2px; }
 /* 정답 · 마지막 오답: 예습·본학습처럼 바탕 그대로 + 캐릭터 + 보라(오답은 분홍) 큰 글씨 */
@@ -5108,7 +5136,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     { n: 'Dami', b: '영등포', w: 200, m: 980 }, { n: 'Ken', b: '대전 둔산점', w: 150, m: 860 },
     { n: 'Ari', b: '대전 둔산점', w: 120, m: 720 }, { n: 'Joy', b: '연신내', w: 90, m: 540 }
   ];
-  const ME = { n: 'Tammy', b: '하남점', monthBase: 260 };
+  const ME = { n: 'Tammy', b: '하남점', monthBase: 260, lvs: [1, 2] };   // lvs: 지금 듣는 레벨 · 두 레벨 병행이면 두 개
   const AV_COLORS = ['var(--yellow)', 'var(--pink)', 'var(--sky)', '#CDEBD0', '#E5E0F5', '#FFD3B8'];
   const RK = { view: 'me', per: 'w' };
   const myPts = () => totalActs() * 10 + (S.checked ? 30 : 0) + ST.pts;   // 예습·복습 포인트 포함
@@ -6943,10 +6971,214 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   const SIT_CAMPUS = { id: 'campus', lv: 'campus', title: '캠퍼스', series: 'CAMPUS', c: '#5EA35A', kind: 'situation', about: '수업 · 질문 · 조별 과제 · 동아리',
     lessons: [sc('첫 수업 자기소개', 'First class', 'book', null), sc('수업 중 질문', 'Asking in class', 'chat', null), sc('조별 과제', 'Group project', 'group', null), sc('도서관', 'Library', 'lib', null), sc('동아리 가입', 'Joining a club', 'star', null), sc('기숙사 생활', 'Dorm life', 'dorm', null)].map((x, i) => ({ no: i + 1, ...x })) };
   const SITS = [SIT_TRAVEL, SIT_BIZ, SIT_CAFE, SIT_CAMPUS];
-  const SIT_SOON = [{ id: 'hosp', title: '병원', when: '12월' }];
+  const SIT_SOON = [{ id: 'next', title: '새 맵', when: '준비 중' }];
+  // ---- 상황 맵 퀴즈 (장면마다 15문항 · 멤버 레벨에 따라 문제 방식과 보기 난이도가 달라져요) ----
+  // [상황(한국어), 상대가 하는 말(없으면 null), 정답 문장, 정답 뜻, 빈칸 단어(없으면 null), [그럴듯하지만 틀린 말 2개], 어색한 직역 표현, [빈칸 오답 2개]]
+  // Lv.1 뜻 → 표현 · 쉬운 빈칸 / Lv.2 상황 → 표현 · 빈칸 / Lv.3 상대 말에 답하기 (영어만) / Lv.4 듣기만 하고 답하기 · 가장 자연스러운 말 고르기 (직역 함정)
+  const SIT_QUIZ = {
+    '공항 체크인': [
+      ["직원이 원하는 자리가 있는지 물어요. 창가에 앉고 싶어요.", "Do you have a seat preference?", "Could I get a window seat, please?", "창가 자리로 주실 수 있나요?", "window", ["Can I open the window, please?", "I'd like an aisle seat, please."], "Give me window seat.", ["door", "side"]],
+      ["부칠 가방이 하나 있어요.", "Are you checking any bags today?", "Yes, I'd like to check this bag.", "네, 이 가방 부칠게요.", "check", ["Yes, I'd like to check out today.", "No, I'll carry everything on."], "Yes, I want to send this bag.", ["send", "give"]],
+      ["가방을 저울에 올렸어요. 무게가 괜찮은지 궁금해요.", "Please put your bag on the scale.", "Is it under the weight limit?", "무게 제한 안 넘었나요?", "limit", ["Is it under the seat?", "How much does this bag cost?"], "My bag is too heavy, no?", ["line", "point"]],
+      ["가방 무게가 초과됐대요. 추가 요금이 얼마인지 알고 싶어요.", "Your bag is three kilos over the limit.", "How much is the overweight fee?", "초과 요금이 얼마예요?", "fee", ["How much does the bag weigh?", "Can I get a discount on my ticket?"], "Can you just pass it, please?", ["money", "pay"]],
+      ["손에 든 작은 가방은 비행기에 들고 탈 거예요.", "Is this bag going in the cabin with you?", "Yes, this is my carry-on.", "네, 이건 기내용이에요.", "carry-on", ["Yes, please check it all the way through.", "No, it's not mine."], "Yes, this is my hand bag for airplane.", ["carry-out", "take-in"]],
+      ["보조배터리는 부치는 가방이 아니라 기내용 가방에 넣어 뒀어요.", "Do you have any batteries in your checked bag?", "No, my power bank is in my carry-on.", "아니요, 보조배터리는 기내용 가방에 있어요.", "power bank", ["No, my phone is fully charged.", "Yes, could you charge it for me?"], "I have auxiliary battery in my bag.", ["charger", "adapter"]],
+      ["탑승권을 받았어요. 언제부터 탈 수 있는지 궁금해요.", "Here's your boarding pass.", "What time does boarding start?", "탑승은 몇 시에 시작해요?", "boarding", ["What time does the flight land?", "Where can I buy a boarding pass?"], "When is the riding time?", ["riding", "landing"]],
+      ["몇 번 게이트로 가야 하는지 몰라요.", null, "Which gate do I go to?", "몇 번 게이트로 가요?", "gate", ["Which gate did you come from?", "Is the gate free?"], "Gate number is what?", ["door", "exit"]],
+      ["전광판에 내 비행기 옆에 Delayed가 떴어요.", null, "Is my flight delayed?", "제 비행기 지연됐나요?", "delayed", ["Is my flight full?", "Is my flight cheap?"], "My airplane is late-late?", ["late", "stopped"]],
+      ["친구랑 같이 왔어요. 붙어 앉고 싶어요.", "Is there anything else I can help you with?", "Could my friend and I sit together?", "친구랑 같이 앉을 수 있을까요?", "together", ["Could my friend sit in my seat?", "Could my friend check in for me?"], "Me and friend, same place sit, please.", ["alone", "apart"]],
+      ["수하물 태그를 받았어요. 도착해서 가방을 어디서 찾는지 궁금해요.", "Here's your baggage claim tag.", "Thanks. Where do I pick up my bag?", "감사해요. 가방은 어디서 찾아요?", "pick up", ["Thanks. Where do I drop off my bag?", "Thanks. Can I keep this tag?"], "Thanks. Where is my bag coming?", ["pick out", "take on"]],
+      ["직원이 여권을 달라고 해요.", "Can I see your passport, please?", "Sure, here you go.", "네, 여기요.", null, ["Sure, go ahead.", "Sure, I'll see it."], "Sure, here you are going.", []],
+      ["온라인으로 체크인은 이미 했어요. 가방만 맡기면 돼요.", "Did you check in online?", "Yes, I just need to drop off my bag.", "네, 가방만 부치면 돼요.", "drop off", ["Yes, I just need to pick up my bag.", "No, I don't have a bag."], "Yes, only bag throw.", ["drop by", "drop out"]],
+      ["비상구 좌석이래요. 비상시 도울 수 있냐고 물어요.", "This is an exit row. Are you willing to help in an emergency?", "Yes, I can do that.", "네, 할 수 있어요.", null, ["Yes, I'm in an emergency.", "Yes, where is the exit?"], "Yes, okay okay.", []],
+      ["항공 마일리지를 적립하고 싶어요.", null, "Can I add my frequent flyer number?", "마일리지 회원 번호 넣어 주실 수 있나요?", "frequent flyer", ["Can I add another bag?", "Can I use my phone number to fly?"], "Please save my mileage point.", ["free flight", "fast pass"]]
+    ],
+    '기내 주문': [
+      ["승무원이 음료를 물어요. 물을 마시고 싶어요.", "Would you like something to drink?", "Could I get some water, please?", "물 좀 주시겠어요?", "water", ["Could I get some air, please?", "Could I get some sleep, please?"], "Water give me.", ["waiter", "weather"]],
+      ["식사로 치킨과 소고기 중에 치킨을 먹고 싶어요.", "Chicken or beef?", "I'll have the chicken, please.", "치킨으로 할게요.", "have", ["I had chicken yesterday.", "I'll have the window, please."], "Chicken, give me.", ["be", "do"]],
+      ["좀 추워요. 담요가 하나 더 필요해요.", null, "Could I have an extra blanket?", "담요 하나 더 주실 수 있나요?", "blanket", ["Could I have an extra seat?", "Could I have an extra meal?"], "Blanket one more, please.", ["bucket", "basket"]],
+      ["앞사람 등받이가 너무 넘어와서 불편해요. 승무원에게 부탁해요.", null, "Could you ask him to raise his seat a little?", "의자를 조금만 올려 달라고 말해 주실 수 있나요?", "raise", ["Could you ask him to change seats with me?", "Could you raise my seat a little?"], "His chair is too lying.", ["race", "rice"]],
+      ["자는 동안 식사를 놓치고 싶지 않아요.", null, "Could you wake me up for the meal?", "식사 때 깨워 주실 수 있나요?", "wake me up", ["Could you wake up for the meal?", "Could you bring the meal after I sleep?"], "When meal, wake me.", ["make me up", "take me up"]],
+      ["화장실 문 앞이에요. 안에 사람이 있는지 몰라요.", null, "Is anyone in there?", "안에 누구 있어요?", null, ["Is anyone sitting here?", "Who is in the restroom's name?"], "Inside person exist?", []],
+      ["창가 자리인데 화장실에 가려면 옆 사람을 지나가야 해요.", null, "Excuse me, could I get past?", "실례지만 좀 지나갈게요.", "get past", ["Excuse me, could I get off?", "Excuse me, could you get up for the meal?"], "Sorry, I go.", ["get pass", "go pass"]],
+      ["입국 신고서를 받았는데 펜이 없어요.", "Do you need an arrival card?", "Yes, please. Could I borrow a pen too?", "네, 펜도 빌릴 수 있을까요?", "borrow", ["No, I already arrived.", "Yes, please. Could I keep the pen?"], "Yes, please. Could I lend a pen too?", ["lend", "rent"]],
+      ["면세품을 살 생각이 없어요.", "Would you like anything from duty-free?", "No, thank you. I'm fine.", "아니요, 괜찮아요.", "fine", ["No, thank you. I'm free.", "Yes, I'm duty-free."], "No need. Not want.", ["free", "find", "fire"]],
+      ["채식 식사를 주는데, 나는 그걸 신청한 적이 없어요.", "Here's your vegetarian meal.", "Oh, I didn't order that. I think there's a mistake.", "저 그거 주문 안 했어요. 착오가 있는 것 같아요.", "mistake", ["Oh, I didn't eat that yet.", "Oh, thanks. I love vegetarian food."], "Not mine, wrong wrong.", ["miss", "mess"]],
+      ["다 먹은 쟁반을 치워 줬으면 해요.", null, "Could you take this tray, please?", "이 쟁반 좀 가져가 주시겠어요?", "take", ["Could you bring this tray, please?", "Could I take this tray home?"], "Please clean this.", ["make", "give"]],
+      ["이어폰에서 소리가 안 나요.", null, "My headphones aren't working.", "이어폰이 안 돼요.", "working", ["My headphones are too loud.", "My headphones are in my bag."], "My earphone is broken-ed.", ["walking", "worked"]],
+      ["도착까지 얼마나 남았는지 궁금해요.", null, "How long until we land?", "착륙까지 얼마나 남았어요?", "land", ["How long until we take off?", "How long is the flight back?"], "When we arrive time?", ["lend", "line"]],
+      ["속이 울렁거려요. 비행기 멀미 같아요.", "Are you okay?", "I'm feeling a little airsick.", "비행기 멀미가 좀 나요.", "airsick", ["I'm feeling a little homesick.", "I'm feeling a little hungry."], "I have flying sickness.", ["airline", "airy"]],
+      ["짐칸에 가방을 올려야 하는데 너무 높아요.", null, "Could you help me put this up there?", "이거 위에 올리는 것 좀 도와주실 수 있나요?", "put", ["Could you help me take this down later?", "Could you put me up there?"], "Help me, bag, up.", ["pull", "push"]]
+    ],
+    '입국 심사': [
+      ["심사관이 방문 목적을 물어요. 휴가로 왔어요.", "What's the purpose of your visit?", "I'm here on vacation.", "휴가로 왔어요.", "vacation", ["I'm here on a plane.", "I'm here for the purpose."], "Purpose is travel.", ["vocation", "location"]],
+      ["얼마나 머무는지 물어요. 5일 있을 거예요.", "How long are you staying?", "I'm staying for five days.", "5일 동안 있어요.", "for", ["I'm staying at a hotel.", "I stayed five days ago."], "Five days stay.", ["during", "since"]],
+      ["어디서 묵는지 물어요. 시내 그랜드 호텔이에요.", "Where are you staying?", "At the Grand Hotel downtown.", "시내 그랜드 호텔이요.", "downtown", ["For five days downtown.", "I'm staying with pleasure."], "Hotel. Grand. Downtown.", ["download", "downstairs"]],
+      ["이 나라는 처음이에요.", "Is this your first time here?", "Yes, it's my first time.", "네, 처음이에요.", "first", ["Yes, it's my first name.", "No, it's my first time."], "Yes, first visit is this.", ["last", "fast"]],
+      ["직업을 물어요. 마케팅 일을 해요.", "What do you do?", "I work in marketing.", "마케팅 일을 해요.", "work", ["I do sightseeing.", "I'm doing fine, thanks."], "My job is marketing work.", ["walk", "word"]],
+      ["혼자 왔는지 물어요. 친구랑 같이 왔어요.", "Are you traveling alone?", "No, I'm with my friend.", "아니요, 친구랑 같이 왔어요.", "with", ["No, I'm alone with my friend.", "Yes, I'm traveling with my friend."], "No, friend together.", ["by", "at"]],
+      ["돌아가는 비행기표가 있는지 물어요.", "Do you have a return ticket?", "Yes, here's my return ticket.", "네, 돌아가는 표 여기 있어요.", "return", ["Yes, here's my boarding pass.", "Yes, I'll return the ticket."], "Yes, coming back ticket here.", ["retire", "repeat"]],
+      ["세관 신고할 물건이 없어요.", "Do you have anything to declare?", "No, nothing to declare.", "아니요, 신고할 것 없어요.", "declare", ["No, I have nothing to eat.", "Yes, I'd like to declare my hotel."], "No, nothing to report me.", ["decline", "decide"]],
+      ["음식이 있는지 물어요. 과자만 조금 있어요.", "Are you carrying any food?", "Just some snacks. Do I need to declare them?", "과자만 있어요. 신고해야 하나요?", "snacks", ["Just some cash. Is that okay?", "No, I already ate on the plane."], "Only cookie little bit.", ["snakes", "snaps"]],
+      ["현금을 얼마나 가지고 있는지 물어요. 500달러쯤 있어요.", "How much cash are you carrying?", "About 500 dollars.", "500달러 정도요.", "About", ["About five days.", "It costs 500 dollars."], "Around 500 dollar money.", ["Abroad", "Ahead"]],
+      ["심사관의 질문을 못 알아들었어요.", null, "Sorry, could you say that again?", "죄송한데, 다시 말씀해 주실 수 있나요?", "again", ["Sorry, could you say that faster?", "Sorry, I can't say."], "What? Again!", ["gain", "agent"]],
+      ["카메라를 보라고 해요. 이렇게 하면 되는지 확인하고 싶어요.", "Please look at the camera.", "Like this?", "이렇게요?", null, ["Like a camera?", "I like this."], "Me look, okay?", []],
+      ["지문 스캐너에 손가락을 올리래요. 어느 손인지 헷갈려요.", "Put your fingers on the scanner.", "Which hand, the right or the left?", "어느 손이요, 오른손이요 왼손이요?", "hand", ["Which finger do you like?", "Which scanner is better?"], "Right? Left?", ["hang", "hard"]],
+      ["이 도시 다음에 어디로 가는지 물어요. 여기서 서울로 돌아가요.", "Where will you go after this city?", "I'm flying back to Seoul from here.", "여기서 서울로 돌아가요.", "back", ["I'm flying here from Seoul.", "I'm going to the hotel after this."], "Next, Seoul return.", ["black", "bag"]],
+      ["심사가 끝났어요. 인사하고 나가요.", "Okay. Enjoy your stay!", "Thank you. Have a good day!", "감사합니다. 좋은 하루 보내세요!", "good", ["Thank you. Enjoy your stay too!", "You're welcome. Enjoy!"], "Thank you. You too enjoy.", ["god", "goods", "goody"]]
+    ],
+    '첫 미팅 자기소개': [
+      ["협력사 담당자를 처음 직접 만났어요. 그동안 메일로만 연락했어요.", "Hi, you must be from PALLO. I'm Grace Kim.", "Yes, I'm Tammy. Nice to finally meet you in person.", "네, 태미예요. 드디어 직접 뵙네요.", "in person", ["Yes, I'm Tammy. Nice to meet you again.", "Yes, I'm from PALLO. Where are you from?"], "Yes, I am PALLO's Tammy. Nice meeting.", ["by person", "on person"]],
+      ["무슨 일을 하는지 물어요. 아시아 팀 마케팅을 맡고 있어요.", "What do you do at PALLO?", "I'm in charge of marketing for the Asia team.", "아시아 팀 마케팅을 맡고 있어요.", "in charge of", ["I'm charging marketing for the Asia team.", "I work at PALLO for three years."], "My position is marketing part.", ["on charge of", "in change of"]],
+      ["그 팀에 얼마나 있었는지 물어요. 2년쯤 됐어요.", "How long have you been on that team?", "About two years now.", "이제 2년쯤 됐어요.", "About", ["For two years ago.", "Two years later."], "Two year.", ["Since", "During"]],
+      ["상대 회사 프로젝트 이야기를 미리 많이 들었어요.", null, "I've heard a lot about your project.", "프로젝트 얘기 많이 들었어요.", "heard", ["I've told a lot about your project.", "I've heard a lot of your noise."], "I listened your project much.", ["hear", "heared"]],
+      ["참석자가 다 모였어요. 회의를 시작하자고 해요.", null, "Since everyone's here, shall we get started?", "다 모였으니 시작할까요?", "get started", ["Since everyone's here, shall we finish?", "Since everyone's here, shall we leave?"], "Everybody come. Start!", ["get starting", "get start"]],
+      ["커피나 차를 권해요. 물이면 충분해요.", "Can I get you some coffee or tea?", "Just water would be great, thanks.", "물이면 충분해요, 감사합니다.", "would be", ["Coffee is great, I'll pay for it.", "No thanks, I'm on a meeting."], "Water, okay.", ["wood be", "had be"]],
+      ["명함을 건네요. 이메일 주소는 뒷면에 있어요.", null, "Here's my card. My email's on the back.", "제 명함이에요. 이메일은 뒷면에 있어요.", "card", ["Here's my credit card.", "Please take my car."], "This is my name card.", ["cart", "code"]],
+      ["상대 이름을 어떻게 발음하는지 헷갈려요.", null, "Sorry, how do you pronounce your name?", "죄송한데, 성함을 어떻게 발음하세요?", "pronounce", ["Sorry, how do you spell my name?", "Sorry, what's your name again? I forgot it."], "Your name, how read?", ["announce", "promise"]],
+      ["오는 길이 어땠는지 물어요. 차도 안 막히고 편하게 왔어요.", "How was your trip here?", "Pretty smooth, thanks. The traffic wasn't bad.", "꽤 순조로웠어요. 차도 안 막혔고요.", "smooth", ["Pretty smooth, thanks. I'll trip tomorrow.", "I'm here on a business trip."], "Trip was no problem, traffic no.", ["smoothly", "smell"]],
+      ["이번 프로젝트에서 맡을 역할을 물어요. 런칭 캠페인을 맡아요.", "So, what will your role be on this project?", "I'll be handling the launch campaign.", "런칭 캠페인을 맡게 될 거예요.", "handling", ["I'll be watching the launch on TV.", "I handled my role last year."], "My role is campaign doing.", ["handled", "handle"]],
+      ["상대가 빨리 말해서 마지막 부분을 놓쳤어요.", null, "Sorry, could you go over that last part again?", "죄송한데, 마지막 부분 다시 말씀해 주시겠어요?", "go over", ["Sorry, could you go over there?", "Sorry, can you speak Korean?"], "Pardon? Once more speak.", ["go on", "go off"]],
+      ["3월에 출시하자는 의견에 동의해요.", "We'd like to launch in March. What do you think?", "That sounds good to me.", "저는 좋아요.", "sounds", ["That sounds like March.", "I don't think, I like it."], "I am agree.", ["sound", "sounding"]],
+      ["예산을 오늘 확정해 달래요. 팀과 먼저 확인해야 해요.", "Can you confirm the budget today?", "Let me check with my team and get back to you.", "팀이랑 확인하고 다시 연락드릴게요.", "get back to", ["Let me check my team and come back home.", "Sure, I'll confirm it next year."], "I will ask team and call you after.", ["get back from", "get back at"]],
+      ["미팅이 끝났어요. 시간 내 줘서 고맙다고 해요.", null, "Thanks for your time today.", "오늘 시간 내 주셔서 감사해요.", "time", ["Thanks for your time yesterday.", "Thanks for the time. What time is it?"], "Thank you for today's meeting time.", ["team", "tie"]],
+      ["헤어지기 전에 앞으로도 연락하자고 해요.", null, "It was great meeting you. Let's keep in touch.", "만나서 반가웠어요. 계속 연락해요.", "keep in touch", ["It was great meeting you. Let's keep in mind.", "Nice to meet you. Let's get started."], "Nice to meet you. Contact often.", ["keep in mind", "keep on touch", "keep in time"]]
+    ],
+    '주문 바꾸기': [
+      ["바리스타가 주문을 확인해요. 마음이 바뀌어서 주문을 바꾸고 싶어요.", "Hi! One iced latte, right?", "Actually, could I change my order?", "사실, 주문 좀 바꿀 수 있을까요?", "change", ["Actually, could I charge my order?", "Actually, could I order my change?"], "Order change, possible?", ["charge", "chance"]],
+      ["일반 우유 말고 오트밀크로 바꾸고 싶어요.", null, "Could I get it with oat milk instead?", "대신 오트밀크로 해 주실 수 있나요?", "instead", ["Could I get it with oat milk in the bag?", "Could I get some oatmeal instead?"], "Oat milk change, please.", ["inside", "instant"]],
+      ["단 걸 별로 안 좋아해요.", "Anything else?", "Could you make it less sweet?", "덜 달게 해 주실 수 있나요?", "less", ["Could you make it more sweet?", "Could you make it less sweat?"], "Sugar little, please.", ["lass", "loss"]],
+      ["카페에 앉아서 마시고 갈 거예요.", "For here or to go?", "For here, please.", "먹고 갈게요.", "here", ["To go, please.", "For you, please."], "Eat here.", ["hear", "hire"]],
+      ["큰 사이즈로 마시고 싶어요.", "What size would you like?", "Can I get a large?", "큰 거로 주실래요?", "large", ["Can I get a larger cup later?", "Can I get a large discount?"], "Big size, please.", ["largely", "lodge"]],
+      ["얼음이 많으면 금방 싱거워져요. 얼음을 적게 넣어 달라고 해요.", null, "Light ice, please.", "얼음 적게 주세요.", "Light", ["Light coffee, please.", "No ice cream, please."], "Ice little, please.", ["Night", "Tight"]],
+      ["커피를 더 진하게 마시고 싶어요.", null, "Could I add an extra shot?", "샷 추가할 수 있을까요?", "extra", ["Could I add an extra cup?", "Could I take an extra photo?"], "One more shot plus, please.", ["extract", "exit"]],
+      ["금액을 들었어요. 카드로 내고 싶어요.", "That'll be 6.50.", "Can I pay by card?", "카드로 계산할 수 있어요?", "by", ["Can I pay by tomorrow?", "Can I pay my card?"], "Card is okay?", ["on", "for"]],
+      ["영수증은 필요 없어요.", "Would you like a receipt?", "No, I'm good, thanks.", "아니요, 괜찮아요.", "good", ["No, I'm good at it.", "Yes, I'm good, thanks."], "No need receipt.", ["goal", "gold"]],
+      ["주문할 때 이름을 물어요.", "Can I get a name for the order?", "It's Tammy. T-A-M-M-Y.", "태미예요. T-A-M-M-Y.", null, ["It's an iced latte.", "My order name is coffee."], "My name is Tammy, call me.", []],
+      ["오트밀크로 바꿨는데 일반 우유로 나온 것 같아요.", null, "Sorry, I think this is regular milk. I asked for oat milk.", "죄송한데, 이거 일반 우유 같아요. 오트밀크로 부탁드렸거든요.", "asked for", ["Sorry, I think this is oat milk. I asked for regular.", "It's fine, I'll just take it. Thanks!"], "This is wrong! Change!", ["asked to", "asked at"]],
+      ["빈자리처럼 보이는데 가방이 놓여 있어요.", null, "Is this seat taken?", "이 자리 사람 있어요?", "taken", ["Is this seat taking?", "Can I take this seat home?"], "Here, somebody sit?", ["token", "takes"]],
+      ["와이파이를 쓰고 싶어요.", null, "What's the Wi-Fi password?", "와이파이 비밀번호가 뭐예요?", "password", ["Is the Wi-Fi free with coffee?", "Can you pass the word?"], "Wi-Fi password, please teach me.", ["passport", "pass"]],
+      ["휴대폰 배터리가 얼마 안 남았어요. 충전하고 싶어요.", null, "Is there an outlet I could use?", "쓸 수 있는 콘센트 있어요?", "outlet", ["Is there an outlet mall nearby?", "Is there an outlet for my coffee?"], "Where is consent?", ["outlook", "output"]],
+      ["나갈 때 바리스타가 인사해요.", "Have a great day!", "Thanks, you too!", "감사해요, 좋은 하루 보내세요!", "too", ["Thanks, me too!", "You're welcome, have a great day!"], "Thank you, same same.", ["to", "two"]]
+    ]
+  };
+  // ---- 상황 퀴즈 Lv.0 (왕기초): 장면에 꼭 필요한 단어 8개 + 기초 문법 7개 ----
+  // 단어 ['w', 한국어, 예문, 정답 단어, [오답 3개]] · 문법 ['g', 문장 뜻, 빈칸 문장(___), 정답, [오답 3개], 문법 팁]
+  const SIT_Q0 = {
+    '공항 체크인': [
+      ['w', '창가 (자리)', 'Could I get a window seat?', 'window', ['aisle', 'door', 'wall']],
+      ['w', '통로 쪽 (자리)', "I'd like an aisle seat.", 'aisle', ['window', 'exit', 'gate']],
+      ['w', '여권', "Here's my passport.", 'passport', ['password', 'ticket', 'visa']],
+      ['w', '탑승권', "Here's your boarding pass.", 'boarding pass', ['passport', 'receipt', 'bag tag']],
+      ['w', '(가방을) 부치다', "I'd like to check this bag.", 'check', ['carry', 'open', 'buy']],
+      ['w', '기내용 가방', 'This is my carry-on.', 'carry-on', ['checked bag', 'baggage claim', 'trunk']],
+      ['w', '탑승구 (게이트)', 'Which gate do I go to?', 'gate', ['door', 'exit', 'counter']],
+      ['w', '지연된', 'Is my flight delayed?', 'delayed', ['canceled', 'on time', 'early']],
+      ['g', '창가 자리로 주실 수 있나요?', 'Could I ___ a window seat?', 'get', ['gets', 'got', 'getting'], 'Could I + 동사원형 = 정중한 부탁이에요.'],
+      ['g', '이 가방을 부치고 싶어요.', "I'd like ___ check this bag.", 'to', ['for', 'at', 'on'], "I'd like to + 동사 = ~하고 싶어요."],
+      ['g', '제 여권 여기 있어요.', 'Here ___ my passport.', 'is', ['are', 'am', 'be'], 'Here is + 하나 · Here are + 여러 개'],
+      ['g', '저희 탑승권 여기 있어요.', 'Here ___ our boarding passes.', 'are', ['is', 'am', 'be'], 'boarding passes처럼 여러 개면 Here are예요.'],
+      ['g', '탑승은 몇 시예요?', 'What ___ is boarding?', 'time', ['clock', 'watch', 'timer'], 'What time ~? = 몇 시에 ~?'],
+      ['g', '23번 게이트로 가세요.', 'Go ___ Gate 23.', 'to', ['at', 'in', 'on'], '어디로 갈 때는 go to + 장소'],
+      ['g', '추가 가방이 하나 있어요.', 'I have ___ extra bag.', 'an', ['a', 'two', 'much'], '모음 소리 앞에는 a 대신 an (an extra, an aisle)']
+    ],
+    '기내 주문': [
+      ['w', '물', 'Could I get some water?', 'water', ['juice', 'tea', 'milk']],
+      ['w', '담요', 'Could I have an extra blanket?', 'blanket', ['pillow', 'jacket', 'towel']],
+      ['w', '베개', 'Could I get a pillow?', 'pillow', ['blanket', 'seat', 'bag']],
+      ['w', '승무원', "I'll ask the flight attendant.", 'flight attendant', ['pilot', 'passenger', 'officer']],
+      ['w', '화장실', 'Where is the restroom?', 'restroom', ['bedroom', 'kitchen', 'lobby']],
+      ['w', '소고기', "I'll have the beef, please.", 'beef', ['chicken', 'pork', 'fish']],
+      ['w', '간식', 'Do you have any snacks?', 'snack', ['meal', 'dinner', 'menu']],
+      ['w', '착륙하다', 'How long until we land?', 'land', ['take off', 'board', 'fly']],
+      ['g', '치킨으로 할게요.', "I'll ___ the chicken, please.", 'have', ['has', 'having', 'had'], "I'll have ~ = ~로 할게요 (주문할 때)"],
+      ['g', '물 좀 주시겠어요?', 'Could I get ___ water?', 'some', ['a', 'an', 'many'], 'water처럼 셀 수 없는 것 앞에는 some'],
+      ['g', '담요 하나 더 주실래요?', 'Could I have ___ extra blanket?', 'an', ['a', 'many', 'some'], 'extra는 모음 소리로 시작해서 an'],
+      ['g', '추워요.', 'I ___ cold.', 'am', ['is', 'are', 'be'], 'I 다음에는 am (I am = I’m)'],
+      ['g', '식사 때 깨워 주세요.', 'Please wake me ___ for the meal.', 'up', ['on', 'off', 'in'], 'wake me up = 나를 깨우다'],
+      ['g', '펜 좀 빌릴 수 있을까요?', 'Could I ___ a pen?', 'borrow', ['lend', 'give', 'rent'], '내가 빌릴 땐 borrow · 남에게 빌려줄 땐 lend'],
+      ['g', '착륙까지 얼마나 남았어요?', 'How ___ until we land?', 'long', ['much', 'many', 'old'], 'How long ~? = 얼마나 오래 ~?']
+    ],
+    '입국 심사': [
+      ['w', '휴가', "I'm here on vacation.", 'vacation', ['business', 'study', 'work']],
+      ['w', '출장', "I'm here on a business trip.", 'business trip', ['vacation', 'day trip', 'road trip']],
+      ['w', '머물다', "I'm staying for five days.", 'stay', ['leave', 'visit', 'arrive']],
+      ['w', '시내 (도심)', 'My hotel is downtown.', 'downtown', ['upstairs', 'outside', 'overseas']],
+      ['w', '돌아가는 표', "Here's my return ticket.", 'return ticket', ['one-way ticket', 'boarding pass', 'receipt']],
+      ['w', '(세관에) 신고하다', 'I have nothing to declare.', 'declare', ['decide', 'describe', 'deliver']],
+      ['w', '현금', 'I have about 500 dollars in cash.', 'cash', ['card', 'receipt', 'account']],
+      ['w', '목적', "What's the purpose of your visit?", 'purpose', ['plan', 'price', 'place']],
+      ['g', '5일 동안 있을 거예요.', "I'm staying ___ five days.", 'for', ['during', 'in', 'since'], 'for + 기간 (for five days)'],
+      ['g', '그랜드 호텔에 묵어요.', "I'm staying ___ the Grand Hotel.", 'at', ['on', 'to', 'for'], 'at + 장소 (at a hotel)'],
+      ['g', '여기 처음이에요.', "It's my ___ time here.", 'first', ['one', 'once', 'firstly'], 'first time = 처음'],
+      ['g', '친구랑 같이 왔어요.', "I'm here ___ my friend.", 'with', ['and', 'to', 'for'], 'with = ~와 함께'],
+      ['g', '마케팅 일을 해요.', 'I ___ in marketing.', 'work', ['works', 'working', 'worked'], 'I 다음에는 동사원형 (I work)'],
+      ['g', '다시 말씀해 주시겠어요?', 'Could you say that ___?', 'again', ['more', 'back', 'repeat'], 'again = 다시'],
+      ['g', '관광하러 왔어요.', "I'm here ___ sightseeing.", 'for', ['to', 'at', 'with'], 'for + 명사 = ~하러 (for sightseeing, for work)']
+    ],
+    '첫 미팅 자기소개': [
+      ['w', '회의', 'Shall we start the meeting?', 'meeting', ['meal', 'menu', 'message']],
+      ['w', '명함', "Here's my business card.", 'business card', ['name card', 'credit card', 'ID card']],
+      ['w', '~을 담당하는', "I'm in charge of marketing.", 'in charge of', ['in change of', 'on charge of', 'charge for']],
+      ['w', '동료', 'This is my coworker, Jin.', 'coworker', ['customer', 'boss', 'guest']],
+      ['w', '일정', "Let's check the schedule.", 'schedule', ['budget', 'contract', 'invoice']],
+      ['w', '(회의) 안건', "Here's today's agenda.", 'agenda', ['schedule', 'budget', 'report']],
+      ['w', '예산', 'Can you confirm the budget?', 'budget', ['profit', 'price', 'bill']],
+      ['w', '출시하다', "We'll launch in March.", 'launch', ['lunch', 'land', 'leave']],
+      ['g', '만나서 반가워요.', 'Nice to ___ you.', 'meet', ['meeting', 'met', 'meets'], 'Nice to + 동사원형'],
+      ['g', '마케팅을 맡고 있어요.', "I'm in charge ___ marketing.", 'of', ['for', 'on', 'at'], 'in charge of + 맡은 일'],
+      ['g', '여기서 2년째 일하고 있어요.', "I've worked here ___ two years.", 'for', ['since', 'during', 'ago'], 'have + 과거분사 + for + 기간'],
+      ['g', '말씀 많이 들었어요.', "I've ___ a lot about you.", 'heard', ['hear', 'hearing', 'listened'], 'have 다음에는 과거분사 (heard)'],
+      ['g', '시작할까요?', '___ we get started?', 'Shall', ['Do', 'Are', 'Did'], 'Shall we ~? = ~할까요? (제안)'],
+      ['g', '저는 좋아요.', 'That ___ good to me.', 'sounds', ['sound', 'sounding', 'is sound'], 'That은 하나라서 동사에 -s (That sounds)'],
+      ['g', '다시 연락드릴게요.', "I'll get back ___ you.", 'to', ['for', 'at', 'with'], 'get back to + 사람 = 다시 연락하다']
+    ],
+    '주문 바꾸기': [
+      ['w', '뜨거운 (음료)', 'One hot latte, please.', 'hot', ['iced', 'cold', 'cool']],
+      ['w', '얼음', 'Light ice, please.', 'ice', ['rice', 'water', 'cup']],
+      ['w', '우유', 'Could I get it with oat milk?', 'milk', ['water', 'sugar', 'syrup']],
+      ['w', '영수증', 'Can I get a receipt?', 'receipt', ['recipe', 'ticket', 'menu']],
+      ['w', '빨대', 'Could I get a straw?', 'straw', ['spoon', 'lid', 'napkin']],
+      ['w', '콘센트', 'Is there an outlet I could use?', 'outlet', ['consent', 'charger', 'cable']],
+      ['w', '포장 (가져갈게요)', 'To go, please.', 'to go', ['for here', 'to stay', 'delivery']],
+      ['w', '비밀번호', "What's the Wi-Fi password?", 'password', ['passport', 'username', 'pass']],
+      ['g', '라테 한 잔 주세요.', 'Can I get ___ latte?', 'a', ['an', 'some', 'many'], '자음 소리 앞 a (a latte) · 모음 소리 앞 an (an iced latte)'],
+      ['g', '아이스 라테 하나 주세요.', 'Can I get ___ iced latte?', 'an', ['a', 'some', 'many'], 'iced는 모음 소리로 시작해서 an'],
+      ['g', '덜 달게 해 주세요.', 'Could you make it ___ sweet?', 'less', ['fewer', 'small', 'lower'], 'less + 형용사 = 덜 ~하게'],
+      ['g', '대신 오트밀크로 해 주세요.', 'Could I get it ___ oat milk instead?', 'with', ['by', 'in', 'for'], 'with + 재료 = ~를 넣어서'],
+      ['g', '카드로 계산할게요.', 'Can I pay ___ card?', 'by', ['on', 'at', 'for'], 'by card = 카드로 · in cash = 현금으로'],
+      ['g', '이 자리 사람 있어요?', 'Is this seat ___?', 'taken', ['take', 'took', 'taking'], 'be + 과거분사 (is taken) = 차지되어 있다'],
+      ['g', '물 두 잔 주세요.', 'Two ___ of water, please.', 'glasses', ['glass', 'glasss', 'glassies'], '여러 개면 복수형 · glass → glasses']
+    ]
+  };
+  const myQLvs = () => { const L = (ME.lvs && ME.lvs.length ? ME.lvs : [+String((BOOKS.find((b) => b.mine) || { l: 'Lv.1' }).l).replace(/\D/g, '') || 1]).map((n) => Math.min(4, Math.max(0, n))); return [...new Set(L)].sort(); };
+  const sitQLv = () => Math.min(4, Math.max(0, ST.qLv != null ? ST.qLv : myQLvs()[0]));
+  const SITQ_LV = { 0: '왕기초 · 단어와 기초 문법', 1: '입문 · 뜻을 보고 골라요', 2: '기초 · 상황을 보고 골라요', 3: '중급 · 영어로 듣고 답해요', 4: '고급 · 듣기만 하고 자연스럽게 답해요' };
+  function sitQuizItems(title, who) {
+    const Q = SIT_QUIZ[title]; if (!Q) return null;
+    if (sitQLv() === 0 && SIT_Q0[title]) return SIT_Q0[title].map(([k, ko, x, ans, wr, tip]) => k === 'w'
+      ? { kick: '이 단어를 영어로 하면?', top: `<span class="sq-word">${stEsc(ko)}</span>`, q: '', ans, opts: wr, en: true, mk: [x, `${ko} = ${ans}`] }
+      : { kick: '빈칸에 맞는 말을 골라요 · 기초 문법', top: stEsc(ko), q: `<span lang="en">${stEsc(x).replace('___', '<span class="st-blk">&nbsp;</span>')}</span>`, ans, opts: wr, ol: true, tip, mk: [x.replace('___', ans), `${ko} · ${tip}`] });
+    const lv = sitQLv(), others = (i) => stShuffle(Q.filter((_, k) => k !== i).map((q) => q[2]));
+    const blanks = (i) => stShuffle(Q.filter((q, k) => k !== i && q[4]).map((q) => q[4]));
+    const bubble = (l, hide) => `<span class="sq-bub"><em>${stEsc(who)}</em>${hide ? '<span class="sq-hid">듣고 답해요 · 스피커를 눌러 다시 들어요</span>' : `<span lang="en">${stEsc(l)}</span>`}<button type="button" class="sq-spk" data-say="${stEsc(l)}" aria-label="다시 듣기">${ICO.spk}</button></span>`;
+    const ctx = (c) => `<span class="sq-ctx">${stEsc(c)}</span>`;
+    return Q.map((q, i) => {
+      const [c, l, a, k, b, near, awk, wb] = q, mk = [a, k];
+      const blank = b && i % 3 === 2 && lv <= 2;
+      if (blank) { const re = new RegExp(b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), sent = stEsc(a).replace(stEsc(b), '<span class="st-blk">&nbsp;</span>');
+        return { kick: lv === 1 ? '빈칸에 들어갈 말을 골라요' : '빈칸을 채워 이 상황에 맞는 문장을 완성해요', top: lv === 1 ? stEsc(k) : ctx(c), q: `<span lang="en">${sent}</span>`, ans: b, opts: [...wb.filter(Boolean), ...Q.map((_, k) => Q[(i + 5 + k) % Q.length][4]).filter((x) => x && x !== b && !wb.includes(x) && x.length > 3 && !a.includes(x))].slice(0, 3), ol: true, mk }; }
+      if (lv === 1) return { kick: '뜻에 맞는 표현을 골라요', top: stEsc(k), q: '', ans: a, opts: others(i).slice(0, 3), en: true, mk };
+      if (lv === 2) return { kick: '이 상황에서 뭐라고 할까요?', top: ctx(c), q: l ? bubble(l) : '', ans: a, opts: [near[0], ...others(i).slice(0, 2)], en: true, mk };
+      if (lv === 3) return l ? { kick: '상대의 말에 알맞게 답해요', top: bubble(l), q: '', ans: a, opts: [...near, others(i)[0]], en: true, mk, auto: l }
+        : { kick: '이 상황에 딱 맞는 말을 골라요', top: ctx(c), q: '', ans: a, opts: [...near, awk], en: true, mk };
+      return l ? { kick: '듣고 가장 자연스럽게 답해요', top: bubble(l, true), q: ctx(c), ans: a, opts: [...near, awk], en: true, mk: [a, `${who}: ${l} → ${k}`], auto: l }
+        : { kick: '원어민처럼 가장 자연스러운 말을 골라요', top: ctx(c), q: '', ans: a, opts: [...near, awk], en: true, mk };
+    });
+  }
   STUDY_STEPS.situation = { pre: [], post: [], main: [
     { id: 'expr', type: 'cards', t: '표현 익히기', d: '이 장면에서 꼭 쓰는 표현 5개 · 듣고 따라 말하기', min: 3, xp: 5 },
-    { id: 'exq', type: 'choice', t: '표현 퀴즈', d: '상황에 맞는 표현 고르기', min: 2, xp: 5 },
+    { id: 'exq', type: 'choice', t: '상황 퀴즈', d: '실제 상황 15문제 · 내 레벨에 맞춘 난이도', min: 6, xp: 10 },
     { id: 'rp', type: 'chat', t: '롤플레이', d: 'AI와 실제 상황처럼 대화하기', min: 5, xp: 15 }
   ] };
   const ALL_L = [...STUDY_LV, ...SITS];
@@ -7499,6 +7731,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       panel = `<div class="st-phead"><div><div class="st-ptitle">${L.title} 맵 · 장면 ${dn}/${L.lessons.length}</div><p class="st-about">${L.about}</p></div></div>` + lessonRowsHTML(L)
         + '<div class="st-more">새 장면과 새 상황 맵은 계속 열려요</div>';
     }
+    { const w = $('#stWorld'), cv = w.querySelector('canvas'), ids = SITS.map((x) => x.id), nid = ST.sitMode ? curMap().id : null;
+      if (cv && nid && w.dataset.map && w.dataset.map !== nid) { try { window.__w3dSwap = { src: cv.toDataURL('image/jpeg', .85), dir: ids.indexOf(nid) >= ids.indexOf(w.dataset.map) ? 1 : -1 }; } catch (e) { window.__w3dSwap = null; } } else window.__w3dSwap = null;
+      w.dataset.map = nid || ''; }
     $('#stWorld').classList.remove('w3d');
     $('#stWorld').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" aria-hidden="true" preserveAspectRatio="xMidYMid slice">${world.svg}</svg>${world.over}`;
     if (M.kind === 'sit') {
@@ -7513,8 +7748,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#stLang').onclick = (e) => { e.stopPropagation(); const m = $('#stLMenu'), open = m.hidden; m.hidden = !open; $('#stLang').setAttribute('aria-expanded', String(open)); sfx('tap'); };
     $$('#stLMenu [data-lang]').forEach((b) => b.addEventListener('click', () => { const i = +b.dataset.lang; $('#stLMenu').hidden = true; if (i === ST.lang) return; ST.lang = i; ST.all = false; ST.bi = Math.max(0, LIB[i].findIndex((x) => x.mine)); sfx('tap'); renderStudyLib(); }));
     $$('#stMapChips [data-mode]').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.mode === '1'; if (v === ST.sitMode) return; ST.sitMode = v; ST.all = false; sfx('tap'); renderStudyLib(); }));
-    $$('#stMapMode [data-map]').forEach((b) => b.addEventListener('click', () => { ST.map = b.dataset.map; ST.all = false; sfx('tap'); renderStudyLib(); }));
-    $$('#stMapMode [data-soon]').forEach((b) => b.addEventListener('click', () => { const s = SIT_SOON.find((x) => x.id === b.dataset.soon); toast(`${s.title} 맵은 ${s.when}에 열려요 · 열리면 알려드릴게요`); }));
+    $$('#stMapMode [data-map]').forEach((b) => b.addEventListener('click', () => { if (ST.map === b.dataset.map) return; ST.map = b.dataset.map; ST.all = false; sfx('tap'); renderStudyLib(); const on = $(`#stMapMode [data-map="${ST.map}"]`); if (on) on.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', inline: 'center', block: 'nearest' }); }));
+    $$('#stMapMode [data-soon]').forEach((b) => b.addEventListener('click', () => { const s = SIT_SOON.find((x) => x.id === b.dataset.soon); toast('다음 상황 맵을 준비하고 있어요 · 열리면 알려드릴게요'); }));
     $$('#stWorld [data-isl]').forEach((b) => b.addEventListener('click', () => {
       ST.bi = +b.dataset.isl; ST.all = false; sfx('tap'); renderStudyLib();
       const pg = $('#page-library'), pn = $('#stPanel'); pg.scrollTo({ top: pn.offsetTop - 90, behavior: reduced() ? 'auto' : 'smooth' });
@@ -8595,6 +8830,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const D = SV.D;
     if (s.id === 'bank') return D.bank.map(([en, k, ko, ans]) => ({ kick: `${D.bankName} · 빈칸에 맞는 뜻을 골라요`, top: hl(en, k), say: en, q: stEsc(ko).replace('___', '<span class="st-blk">&nbsp;</span>'), ans, pool: D.bank.map((b) => b[3]), mk: [en, ko.replace('___', ans)] }));
     if (s.id === 'vocab') return D.keywords.map(([w, m, ex]) => ({ kick: D.review4.includes(w) ? '다음 회차 VOCABULARY REVIEW 단어 · 뜻을 골라요' : 'KEYWORDS · 뜻을 골라요', big: w, say: w + '. ' + ex, q: `<span lang="en">${hlw(ex, w)}</span>`, ans: m, pool: D.keywords.map((k) => k[1]), mk: [ex, m + ' · ' + w] }));
+    if (s.id === 'exq') { const sq = sitQuizItems(SV.ls.title, D.rp ? D.rp.who : 'Staff'); if (sq) return sq; }
     if (s.id === 'exq') return D.expr.map(([w, m, ex]) => ({ kick: '이 상황에서 쓰는 말 · 뜻에 맞는 표현을 골라요', top: stEsc(m), say: w, q: '', ans: w, pool: D.expr.map((e) => e[0]), en: true, mk: [w, m] }));
     if (s.id === 'keyq') return D.key.map(([w, m, ex]) => ({ kick: 'KEY EXPRESSIONS · 뜻을 골라요', big: w, say: w + '. ' + ex, q: `<span lang="en">${hlw(ex, w)}</span>`, ans: m, pool: D.key.map((k) => k[1]), mk: [ex, m + ' · ' + w] }));
     const pairs = D.better;
@@ -8603,6 +8839,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   }
   STEP_VIEW.choice = (s) => {
     if (s.id === 'bank') { runBank(s); showHub(); return; }
+    if (s.id === 'exq' && SIT_QUIZ[SV.ls.title] && !SV.t.lvOk && !ST.pos[stKey(s.id)]) return sitLvPick(s);
     const items = choiceItems(s), t = SV.t, saved = ST.pos[stKey(s.id)];
     if (!t.order) {
       if (saved) { t.order = saved.order; t.i = saved.i; t.right = saved.right; setTimeout(() => toast(`${t.i + 1}번 문제부터 이어서 해요`), 300); }
@@ -8611,18 +8848,18 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     }
     if (t.i >= t.order.length) return choiceResult(s, items);
     const it = items[t.order[t.i]];
-    const opts = t.opts || (t.opts = stShuffle([it.ans, ...stShuffle(it.pool.filter((x) => x !== it.ans)).slice(0, 3)]));
+    const opts = t.opts || (t.opts = stShuffle([it.ans, ...(it.opts ? it.opts.filter((x) => x && x !== it.ans).slice(0, 3) : stShuffle(it.pool.filter((x) => x !== it.ans)).slice(0, 3))]));
     t.picked = false;
     $('#stBody').innerHTML = `
       <div class="pr-top"><div class="pr-bar" aria-hidden="true"><i style="width:${t.i / t.order.length * 100}%"></i></div><span class="pr-count">${t.i + 1}/${t.order.length}</span></div>
       <div class="st-kick2">${it.kick}</div>
       <div class="card st-qc">
-        ${it.big ? `<div class="st-qc-top"><span class="st-big" lang="en">${stEsc(it.big)}</span>${saySpan(it.say)}</div>` : `<div class="st-qc-top"><span class="st-prompt" lang="en">${it.top}</span>${it.en ? '' : saySpan(it.say)}</div>`}
+        ${it.big ? `<div class="st-qc-top"><span class="st-big" lang="en">${stEsc(it.big)}</span>${saySpan(it.say)}</div>` : `<div class="st-qc-top"><span class="st-prompt" lang="en">${it.top}</span>${it.en || !it.say ? '' : saySpan(it.say)}</div>`}
         ${it.q ? `<div class="st-qc-q">${it.q}</div>` : ''}
       </div>
-      <div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" ${it.en ? 'lang="en"' : ''}>${stEsc(o)}</button>`).join('')}</div>
-      <div id="stFb" role="status"></div>`;
-    if (!it.en && !it.big) setTimeout(() => sayEn(it.say, .92), 250);
+      <div id="stFb" role="status"></div>
+      <div class="st-foot st-qfoot"><div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" ${it.en || it.ol ? 'lang="en"' : ''}>${stEsc(o)}</button>`).join('')}</div></div>`;
+    if (it.auto) setTimeout(() => sayEn(it.auto, .92), 300);
     $$('#stBody [data-opt]').forEach((b) => b.addEventListener('click', () => {
       if (t.picked) return;
       const pick = opts[+b.dataset.opt], ok = pick === it.ans;
@@ -8632,28 +8869,55 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         return;
       }
       t.picked = true;
-      $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === it.ans) x.classList.add('right'); });
+      $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === it.ans) x.classList.add('right'); }); $('#stBody .st-qfoot .st-opts').classList.add('done');
       if (!ok) b.classList.add('wrong');
       sfx(ok ? 'correct' : 'wrong');
       if (ok && !t.miss) t.right += 1;
       t.res[t.order[t.i]] = ok && !t.miss;
       const rx = REACT_BY[0][ok ? 'good' : 'bad'][Math.floor(Math.random() * REACT_BY[0][ok ? 'good' : 'bad'].length)];
       $('#stFb').innerHTML = `<div class="st-rx"><img src="assets/${ok ? 'c-upright-yellow.png' : 'c-tilted-yellow.png'}" alt=""><div><div class="st-rx-big" lang="en">${stEsc(rx[0])}</div><div class="st-rx-ko">${stEsc(rx[1])}</div></div></div>
+        ${it.tip ? `<div class="sq-tip"><b>문법 팁</b><span>${stEsc(it.tip)}</span></div>` : ''}
         ${ok ? '' : it.en ? ansCardsHTML(it.ans) : `<div class="cp" style="margin-top:12px"><div class="cp-b cp-mine"><small>내가 고른 답</small><b style="font-size:15px">${stEsc(pick)}</b></div><div class="cp-ar">${ICO.arrow}</div><div class="cp-b cp-ans"><small>정답</small><b style="font-size:15px">${stEsc(it.ans)}</b></div></div>${ansCardsHTML(it.mk[0], '정답 문장 · 카드로 맞춰 볼게요')}`}
-        <div class="react-tools" style="margin-top:12px"><button type="button" data-say="${stEsc(it.mk[0])}">${ICO.spk}듣기</button><button type="button" data-mk="${stEsc(it.mk[0])}" data-ko="${stEsc(it.mk[1])}" aria-pressed="${S.marks.some((m) => m.t === it.mk[0])}">${ICO.mark(false)}저장</button></div>
-        <button class="btn wide yellow press" id="stNext" style="margin-top:16px">${t.i < t.order.length - 1 ? '다음 문제' : '결과 보기'}</button>`;
+        <div class="react-tools" style="margin-top:12px"><button type="button" data-say="${stEsc(it.mk[0])}">${ICO.spk}듣기</button><button type="button" data-mk="${stEsc(it.mk[0])}" data-ko="${stEsc(it.mk[1])}" aria-pressed="${S.marks.some((m) => m.t === it.mk[0])}">${ICO.mark(false)}저장</button></div>`;
+      $('#stBody .st-qfoot').insertAdjacentHTML('beforeend', `<button class="btn wide yellow press" id="stNext">${t.i < t.order.length - 1 ? '다음 문제' : '결과 보기'}</button>`);
       stReveal($('#stFb'));
       if (!ok) ansCardsSay(it.en ? it.ans : it.mk[0]);
       $('#stNext').addEventListener('click', () => { t.i += 1; t.opts = null; t.miss = null; STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
     }));
   };
+  // 상황 퀴즈 · 시작 전에 난이도 고르기 (내 레벨이 먼저 골라져 있어요)
+  const SITQ_PICK = [
+    [0, '왕기초', '이 장면에 꼭 필요한 단어와 기초 문법부터 익혀요', '영수증 → receipt · Can I get ___ iced latte? → an'],
+    [1, '입문', '한국어 뜻을 보고 영어 표현을 골라요', '카드로 계산할 수 있어요? → Can I pay by card?'],
+    [2, '기초', '상황을 읽고 이럴 때 할 말을 골라요 · 빈칸 채우기', '영수증은 필요 없어요. → No, I\'m ___, thanks.'],
+    [3, '중급', '직원의 영어 말을 듣고 알맞은 대답을 골라요', 'Barista: Anything else? → Could you make it less sweet?'],
+    [4, '고급', '글자 없이 듣기만 하고 답해요 · 한국어식 직역 함정 피하기', 'Wi-Fi password, please teach me. (X)']
+  ];
+  function sitLvPick(s) {
+    const mine = myQLvs(), best = (ST.qBest || {})[SV.ls.title] || {};
+    let sel = SV.t.lvSel || (mine.includes(ST.qLv) ? ST.qLv : mine[0]);
+    const draw = () => {
+      $('#stBody').innerHTML = `
+        <div class="st-kick2">상황 퀴즈 · ${stEsc(SV.ls.title)} · 15문제</div>
+        <h2 class="sq-pt">어떤 난이도로 풀까요?</h2>
+        <p class="st-intro" style="margin:0">${mine.length > 1 ? `<b>${mine.map((n) => 'Lv.' + n).join(' · ')}</b>를 함께 듣고 있어요. 두 레벨 모두 풀어 보면 좋아요.` : '같은 상황 15개를 레벨마다 다른 방식으로 물어요. 다 풀고 다른 난이도로 다시 풀 수 있어요.'}</p>
+        <div class="sq-pick" role="radiogroup" aria-label="난이도">${SITQ_PICK.map(([n, nm, d, ex]) => `<button type="button" class="sq-pc${sel === n ? ' on' : ''}" role="radio" aria-checked="${sel === n}" data-lvp="${n}">
+          <span class="h"><b>Lv.${n}</b><em>${nm}</em>${mine.includes(n) ? '<i>내 레벨</i>' : ''}${best[n] != null ? `<u>최고 ${best[n]}/15</u>` : ''}</span><span class="d">${d}</span><span class="ex" lang="en">${stEsc(ex)}</span></button>`).join('')}</div>
+        <div class="st-foot"><button class="btn wide yellow press" id="sqGo">Lv.${sel} ${SITQ_PICK.find((x) => x[0] === sel)[1]}으로 시작하기</button></div>`;
+      $$('#stBody [data-lvp]').forEach((b) => b.addEventListener('click', () => { sel = SV.t.lvSel = +b.dataset.lvp; sfx('tap'); draw(); }));
+      $('#sqGo').addEventListener('click', () => { ST.qLv = sel; SV.t = { lvOk: true }; sfx('tap'); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
+    };
+    draw();
+  }
   function choiceResult(s, items) {
     const t = SV.t; t.finished = true;
     $('#stBody').innerHTML = `
       <div class="card st-score"><span class="st-kick2">맞힌 문제</span><b>${t.right}<small> / ${t.order.length}</small></b><span class="st-qko">${t.right === t.order.length ? '하나도 안 틀렸어요!' : '틀린 문제는 아래에서 다시 들어 보세요.'}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px">${t.order.map((k) => { const it = items[k], ok = t.res[k]; return `<div class="card st-res${ok ? '' : ' no'}"><span class="st-ok">${ok === false ? ICO.x : ICO.check}</span><div class="t"><b lang="en">${stEsc(it.mk[0])}</b><small>${stEsc(it.mk[1])}</small></div>${saySpan(it.mk[0])}${markSpan(it.mk[0], it.mk[1])}</div>`; }).join('')}</div>
-      ${doneBtn()}`;
+      <div class="st-foot">${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? (() => { const B = ((ST.qBest = ST.qBest || {})[SV.ls.title] = ST.qBest[SV.ls.title] || {}), lv = sitQLv(); B[lv] = Math.max(B[lv] || 0, t.right); const next = myQLvs().find((n) => n !== lv && B[n] == null);
+        return next != null ? `<button class="btn wide press" id="sqAgain" data-next="${next}" style="background:#fff">Lv.${next}로도 풀어 보기</button>` : '<button class="btn wide press" id="sqAgain" style="background:#fff">다른 난이도로 다시 풀기</button>'; })() : ''}${doneBtn()}</div>`;
     $('#stDone').addEventListener('click', () => finishStep(s, { right: t.right, total: t.order.length }));
+    const ag = $('#sqAgain'); if (ag) ag.addEventListener('click', () => { delete ST.pos[stKey(s.id)]; const nx = ag.dataset.next != null ? +ag.dataset.next : null; if (nx != null) { ST.qLv = nx; SV.t = { lvOk: true }; } else SV.t = { lvSel: sitQLv() }; sfx('tap'); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; if (nx != null) toast(`Lv.${nx} 난이도로 같은 상황을 다시 풀어요`); });
   }
 
   // 5) 짝 맞추기 (USEFUL EXPRESSIONS)
@@ -14502,18 +14766,19 @@ const SHAPES = {
 };
 
 // ---------- 무대 ----------
-function stage(el, { half, pos, target, bg }) {
+function stage(el, { half, pos, target, bg, az, fog }) {
   const w = el.clientWidth, h = el.clientHeight;
   const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) < 2 ? 2 : 2); r.setSize(w, h); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.outputColorSpace = THREE.SRGBColorSpace; el.appendChild(r.domElement);
-  const sc = new THREE.Scene(); sc.background = bg;
+  const sc = new THREE.Scene(); sc.background = bg; if (fog) sc.fog = fog;
   const a = h / w, cam = new THREE.OrthographicCamera(-half, half, half * a, -half * a, .1, 200); cam.position.copy(pos); cam.lookAt(target);
   sc.add(new THREE.HemisphereLight(0xffffff, 0xC9B99C, 1.45));
   const d = new THREE.DirectionalLight(0xffffff, 1.9); d.position.set(-6, 14, 9); d.castShadow = true; d.shadow.mapSize.set(2048, 2048); Object.assign(d.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 }); d.shadow.bias = -.0008; d.shadow.radius = 3; sc.add(d);
-  const ctl = new OrbitControls(cam, r.domElement); ctl.target.copy(target); ctl.enablePan = false; ctl.enableDamping = true; ctl.minPolarAngle = .45; ctl.maxPolarAngle = 1.2; ctl.minZoom = .7; ctl.maxZoom = 2.6; ctl.enableZoom = false; ctl.update(); r.domElement.style.touchAction = 'pan-y';
+  const ctl = new OrbitControls(cam, r.domElement); ctl.target.copy(target); ctl.enablePan = false; ctl.enableDamping = true; ctl.minPolarAngle = .45; ctl.maxPolarAngle = 1.2; ctl.minZoom = .7; ctl.maxZoom = 2.6; ctl.enableZoom = false; if (az) { ctl.minAzimuthAngle = az[0]; ctl.maxAzimuthAngle = az[1]; } ctl.update(); r.domElement.style.touchAction = 'pan-y';
   const labels = [], ticks = [], v = new THREE.Vector3();
   const label = (p, html, cls = 'm3-tag', dy = 0) => { const e = document.createElement('div'); e.className = cls; e.innerHTML = html; el.appendChild(e); labels.push([p.clone(), e, dy]); };
   // 누르면 확대
   const home = target.clone(), ray = new THREE.Raycaster(); let tw = null, down = null;
+  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches; let intro = RM ? null : { t: 0, a: .42 * (window.__w3dSwap ? window.__w3dSwap.dir : 1) };
   const fly = (to, z) => { tw = { a: ctl.target.clone(), b: to.clone(), za: cam.zoom, zb: z, t: 0 }; };
   const zp = document.createElement('div'); zp.className = 'm3-zp'; el.appendChild(zp);
   const reset = () => { zp.classList.remove('on'); fly(home, 1); };
@@ -14535,15 +14800,21 @@ function stage(el, { half, pos, target, bg }) {
   const loop = (t) => {
     if (!el.isConnected || !el.contains(r.domElement)) { cancelAnimationFrame(raf); ctl.dispose(); r.dispose(); r.forceContextLoss(); return; }
     if (el.offsetParent === null) { raf = requestAnimationFrame(loop); return; }
+    if (intro) { intro.t = Math.min(1, intro.t + .022); const k = 1 - Math.pow(1 - intro.t, 4), off = cam.position.clone().sub(ctl.target), base = intro.base || (intro.base = off.clone()), ang = intro.a * (1 - k);
+      off.copy(base).applyAxisAngle(new THREE.Vector3(0, 1, 0), ang); cam.position.copy(ctl.target).add(off); cam.zoom = .78 + .22 * k; cam.updateProjectionMatrix(); if (intro.t >= 1) intro = null; }
     if (tw) { tw.t = Math.min(1, tw.t + .045); const k = 1 - Math.pow(1 - tw.t, 3), o = cam.position.clone().sub(ctl.target); ctl.target.lerpVectors(tw.a, tw.b, k); cam.position.copy(ctl.target).add(o); cam.zoom = tw.za + (tw.zb - tw.za) * k; cam.updateProjectionMatrix(); if (tw.t >= 1) tw = null; }
     ctl.update(); ticks.forEach((f) => f(t / 1000)); r.render(sc, cam); el.classList.toggle('m3z', cam.zoom > 1.5);
-    labels.forEach(([p, e, dy]) => { v.copy(p).project(cam); e.style.left = ((v.x + 1) / 2 * w) + 'px'; e.style.top = ((1 - v.y) / 2 * h + dy) + 'px'; });
+    placeLabels();
     raf = requestAnimationFrame(loop); };
+  const placeLabels = () => labels.forEach(([p, e, dy]) => { v.copy(p).project(cam); e.style.left = ((v.x + 1) / 2 * w) + 'px'; e.style.top = ((1 - v.y) / 2 * h + dy) + 'px'; });
+  // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게
+  const draw = () => { if (intro && !intro.base) { const off = cam.position.clone().sub(ctl.target); intro.base = off.clone(); off.applyAxisAngle(new THREE.Vector3(0, 1, 0), intro.a); cam.position.copy(ctl.target).add(off); cam.zoom = .78; cam.updateProjectionMatrix(); }
+    ticks.forEach((f) => f(0)); r.render(sc, cam); placeLabels(); };
   raf = requestAnimationFrame(loop);
-  return { sc, label, ticks, focus, el };
+  return { sc, label, ticks, focus, el, draw };
 }
 const loader = new THREE.TextureLoader();
-function pallo(sc, x, y, z, hgt = 1.45) { loader.load('assets/c-upright-yellow.png', (t) => { t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true })); s.scale.set(hgt * t.image.width / t.image.height, hgt, 1); s.center.set(.5, 0); s.position.set(x, y, z); sc.add(s); }); }
+function pallo(sc, x, y, z, hgt = 1.45) { loader.load('assets/c-upright-yellow.png', (t) => { t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false })); s.renderOrder = 10; s.scale.set(hgt * t.image.width / t.image.height, hgt, 1); s.center.set(.5, 0); s.position.set(x, y, z); sc.add(s); }); }
 const tree = (x, z, y = 0, s = 1, c = 0x6DBE6A) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.1 * s, .14 * s, .6 * s, 8), 0xB9824F, { line: .03 }), 0, .3 * s, 0)); g.add(at(mesh(new THREE.IcosahedronGeometry(.48 * s, 1), c), 0, .85 * s, 0)); return at(g, x, y, z); };
 const cloud = (x, y, z, s = 1) => { const g = new THREE.Group(); [[0, 0, .6], [.6, -.1, .45], [-.6, -.12, .45], [.25, .25, .45]].forEach(([a, b, r]) => g.add(at(mesh(new THREE.IcosahedronGeometry(r * s, 2), 0xffffff, { line: .03, cast: false }), a * s, b * s, 0))); return at(g, x, y, z); };
 const flag = (x, y, z, c) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.05, .05, 1.8, 8), 0xffffff, { line: .03 }), 0, .9, 0)); g.add(at(mesh(new THREE.BoxGeometry(.8, .45, .05), c, { line: .03 }), .42, 1.55, 0)); return at(g, x, y, z); };
@@ -14568,7 +14839,7 @@ function stops(S, P, TOP, SC, roadCol = 0xF3EBDD, tail = null) {
     top.rotation.x = -Math.PI / 2; top.position.set(x, TOP + h + .01, z); top.userData.info = it; sc.add(top);
     if (cur) S.label(new THREE.Vector3(x, TOP, z + r + .2), n, 'm3-tag cur', 2);
     else S.label(new THREE.Vector3(x, TOP, z + r + .05), `<span class="s">${i + 1}</span><span class="f">${n}</span>`, 'm3-tag min' + (soon ? ' soon' : ''), 0);
-    if (cur) { pallo(sc, x + 1.2, TOP + .02, z - .45); S.label(new THREE.Vector3(x, TOP + h + 1.05, z), 'START', 'm3-here'); }
+    if (cur) { pallo(sc, x + 1.65, TOP + .02, z - .8); S.label(new THREE.Vector3(x, TOP + h + 1.05, z), 'START', 'm3-here'); }
   });
   return info;
 }
@@ -14579,14 +14850,16 @@ const demo = /demo/.test(location.search);
 
 // ================= 1. 여행 · 하늘색 바다 · 콩 모양 섬 =================
 BUILD.travel = (EL, SC) => {
-  const bg = bgTex('#9ED6F0', '#DDF3F8', (g, W, H) => { drawSun(g, W * .8, H * .15, 42);
-    [[.18, .12, 34], [.55, .2, 26], [.9, .34, 30], [.1, .9, 40], [.75, .93, 34]].forEach(([x, y, r]) => puff(g, x * W, y * H, r)); });
-  const S = stage(EL, { half: 7.9, pos: CAM, target: new THREE.Vector3(-.3, 1.5, .2), bg }), sc = S.sc;
+  // 뒤 배경: 해변 리조트 (travelBeach)
+  const S = stage(EL, { half: 9.4, pos: CAM, target: new THREE.Vector3(-1.0, 5.36, -.8), bg: bgTex('#5EC1EA', '#E8F7FB', (g, W, H) => drawSun(g, W * .82, H * .1, 34)), az: [.2, 1.2], fog: new THREE.Fog(0xE8F2F8, 40, 90) }), sc = S.sc;
+  const E = travelBeach(S) || {};
+  if (!E.noSea) {
   // 바다 디오라마 판: 옆면 진한 파랑 · 윗면 바다 · 섬 둘레 얕은 물
   const sea = at(mesh(new THREE.CylinderGeometry(7.7, 7.7, 1.2, 72), 0x4FA8CF, { line: .07 }), 0, -.6, 0); sea.userData.bg = 1; sc.add(sea);
   const top = at(flat(new THREE.CircleGeometry(7.6, 72), 0x8FD3E8, 1), 0, .01, 0); top.userData.bg = 1; sc.add(top);
   const sh = at(flat(new THREE.ShapeGeometry((() => { const s = new THREE.Shape(); for (let i = 0; i <= 120; i++) { const a = i / 120 * TAU, r = 7.1 * SHAPES.bean(a); const x = Math.cos(a) * r, y = Math.sin(a) * r * 1.12; i ? s.lineTo(x, y) : s.moveTo(x, y); } return s; })()), 0xB8E8F1, 1), 0, .02, 0); sh.userData.bg = 1; sc.add(sh);
   for (let i = 0; i < 16; i++) { const a = i * 2.3, rr = 6.8 + (i % 3) * .25; const f = new THREE.Mesh(new THREE.BoxGeometry(.6, .02, .07), new THREE.MeshBasicMaterial({ color: 0xffffff })); f.position.set(Math.cos(a) * rr, .04, Math.sin(a) * rr); f.rotation.y = a; sc.add(f); }
+  }
   layer(sc, SHAPES.bean, 6.5, .7, 0, 0xEAD7AE, { sz: 1.12 }); layer(sc, SHAPES.bean, 5.8, .55, .7, 0xA7D8A0, { sz: 1.12 });
   const TOP = 1.42;
   const info = stops(S, [[-3.4, 4.4], [-.4, 5.0], [2.6, 4.0], [3.4, 1.2], [.8, .4], [-2.6, -.6], [-2.0, -3.6], [1.4, -4.4]], TOP, SC);
@@ -14615,19 +14888,20 @@ BUILD.travel = (EL, SC) => {
   const trail = []; for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(.16 + i * .02, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 - i * .09 })); m.position.set(-1.9 - i * .42, 0, 0); plane.add(m); trail.push(m); }
   plane.scale.setScalar(.95); sc.add(plane);
   S.ticks.push((t) => { const a = t * .18 + 2.2, R = 7.2; plane.position.set(Math.cos(a) * R, 6.6 + Math.sin(t * 1.3) * .2, -Math.sin(a) * R); plane.rotation.set(0, a + Math.PI / 2, 0); plane.rotateX(-.22); trail.forEach((m, i) => { m.scale.setScalar(1 + Math.sin(t * 3 + i) * .08); }); });
-  boat(S, 5.6, 4.6, 0xD0798E);
+  if (!E.noSea) boat(S, 5.6, 4.6, 0xD0798E);
   return S;
 };
 
 // ================= 2. 비즈니스 · 노을 저녁 · 네모난 2층 섬 =================
 BUILD.biz = (EL, SC) => {
-  const bg = bgTex('#3A2D6E', '#F6B9A0', (g, W, H) => { for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(255,255,255,${.4 + rnd() * .5})`; g.beginPath(); g.arc(rnd() * W, rnd() * H * .45, 1.5 + rnd() * 2.5, 0, 7); g.fill(); }
-    drawMoon(g, W * .78, H * .16, 46);
-    g.fillStyle = 'rgba(73,48,135,.25)'; [[.05, 70], [.13, 120], [.22, 90], [.72, 140], [.82, 80], [.9, 110]].forEach(([x, hh]) => g.fillRect(x * W, H * .5 - hh, W * .07, hh)); });
-  const S = stage(EL, { half: 7.3, pos: CAM, target: new THREE.Vector3(.1, 1.8, -.15), bg }), sc = S.sc;
+  // 뒤 배경: 낮 도심 (bizDowntown)
+  const S = stage(EL, { half: 9.0, pos: CAM, target: new THREE.Vector3(-.6, 5.46, -.9), bg: bgTex('#86C1EA', '#EEF5FA'), az: [.2, 1.2] }), sc = S.sc;
+  const E = bizDowntown(S) || {};
+  if (!E.noSea) {
   const sea = at(mesh(new THREE.BoxGeometry(13.6, 1.2, 13.6), 0x3E3378, { line: .07 }), 0, -.6, 0); sea.userData.bg = 1; sc.add(sea);
   const top = at(flat(new THREE.PlaneGeometry(13.5, 13.5), 0x5E50A0, 1), 0, .01, 0); top.userData.bg = 1; sc.add(top);
   for (let i = 0; i < 14; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(.9 + rnd(), .02, .08), new THREE.MeshBasicMaterial({ color: i % 3 ? 0xFFE27A : 0xF6B9A0 })); f.position.set(-6 + rnd() * 12, .03, (i % 2 ? 6.0 : -6.2) + rnd() * .4); sc.add(f); }
+  }
   layer(sc, SHAPES.squircle, 6.2, .7, 0, 0xB7AECD); layer(sc, SHAPES.squircle, 5.6, .5, .7, 0xE3DEEE);
   // 뒤쪽 높은 층 (빌딩 숲)
   const back = mesh(islandGeo(SHAPES.squircle, 2.5, .8), 0xCFC8E2, { line: .05 }); back.position.set(-2.6, 1.2 + .4, -2.6); sc.add(back);
@@ -14644,32 +14918,299 @@ BUILD.biz = (EL, SC) => {
   const jet = at(mesh(new THREE.SphereGeometry(.2, 16, 12), 0xBFE4EC, { line: .02 }), 0, 1, 0); fz.add(jet); sc.add(at(fz, .4, TOP, 1.0)); S.ticks.push((t) => { jet.position.y = .95 + Math.abs(Math.sin(t * 3)) * .25; });
   [[-3.6, 3.0], [3.8, 3.6], [-.4, 2.4], [2.0, 1.6], [4.6, 1.2]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .8, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
   [[-2.8, 2.2], [3.0, 2.4], [.2, -2.8], [2.6, -2.4]].forEach(([x, z]) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.05, .05, 1.6, 8), 0x2B2F5E, { line: .02 }), 0, .8, 0)); g.add(at(mesh(new THREE.IcosahedronGeometry(.17, 1), 0xFFE200, { line: .02 }), 0, 1.68, 0)); sc.add(at(g, x, TOP, z)); });
-  sc.add(flag(4.6, TOP, -4.4, 0x493087)); boat(S, 5.4, 5.6, 0x493087);
+  sc.add(flag(4.6, TOP, -4.4, 0x493087)); if (!E.noSea) boat(S, 5.4, 5.6, 0x493087);
+  applyMood(S, MOOD[3]);
   return S;
 };
 
+// ---------- 배경 공간 (카페 · 캠퍼스): 그림 한 장 대신 3D 오브젝트로 ----------
+function canvasTex(w, h, draw, rx = 1, ry = 1) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; return t;
+}
+const std = (geo, o = {}, { cast = true, recv = true } = {}) => { const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ roughness: .8, metalness: 0, ...o })); m.castShadow = cast; m.receiveShadow = recv; return m; };
+const woodTex = (rx, ry, base = 28) => canvasTex(512, 512, (g, W, H) => {
+  const ph = 64;
+  for (let y = 0; y < H; y += ph) {
+    const l = base + rnd() * 8; g.fillStyle = `hsl(28, 45%, ${l}%)`; g.fillRect(0, y, W, ph);
+    for (let i = 0; i < 26; i++) { g.strokeStyle = `hsla(25, 50%, ${l - 10 + rnd() * 6}%, ${.25 + rnd() * .3})`; g.lineWidth = 1 + rnd() * 2; const yy = y + rnd() * ph; g.beginPath(); g.moveTo(0, yy); for (let x = 0; x <= W; x += 32) g.lineTo(x, yy + Math.sin(x * .02 + i) * 3); g.stroke(); }
+    g.fillStyle = 'rgba(40,20,10,.45)'; g.fillRect(0, y, W, 3); const cx = rnd() * W; g.fillRect(cx, y, 3, ph);
+  }
+}, rx, ry);
+
+// ---------- 카페 (멜버른) · 캠퍼스 (잔디 위 PALLO UNIVERSITY) 배경 ----------
+const ROW = Math.PI / 4;                                   // 화면과 나란한 방향 (뒤쪽 배경 줄)
+const along = (cx, cz, t) => [cx + t * .7071, cz - t * .7071];
+const bgs = (m) => { m.userData.bg = 1; return m; };
+const glow = (sc, x, y, z, c = 0xFFC478, I = 16, d = 11) => { const L = new THREE.PointLight(c, I, d, 1.6); L.position.set(x, y, z); sc.add(L); return L; };
+const faceBox = (w, h, d, front, side) => { const sm = new THREE.MeshStandardMaterial(side), fm = new THREE.MeshStandardMaterial({ roughness: .85, ...front }); const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [sm, sm, sm, sm, fm, sm]); m.castShadow = m.receiveShadow = true; return m; };
+const cobbleTex = (rx, ry) => canvasTex(512, 512, (g, W, H) => { g.fillStyle = '#2C3038'; g.fillRect(0, 0, W, H);
+  for (let r = 0; r < 8; r++) for (let c = -1; c < 5; c++) { const k = rnd(), x = c * 128 + (r % 2) * 64 + 3, y = r * 64 + 3; g.fillStyle = `hsl(220, 8%, ${30 + k * 12}%)`; g.beginPath(); g.roundRect(x, y, 122, 58, 8); g.fill(); g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(x + 6, y + 4, 80, 5); } }, rx, ry);
+const signTex = (txt, bg = '#1F4E9C', fg = '#FFFFFF') => canvasTex(512, 128, (g, W, H) => { g.fillStyle = bg; g.beginPath(); g.roundRect(4, 4, W - 8, H - 8, 14); g.fill(); g.lineWidth = 6; g.strokeStyle = fg; g.beginPath(); g.roundRect(14, 14, W - 28, H - 28, 8); g.stroke();
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle'; let fs = 64; g.font = `800 ${fs}px Lexend, sans-serif`; while (g.measureText(txt).width > W * .82) { fs -= 2; g.font = `800 ${fs}px Lexend, sans-serif`; } g.fillText(txt, W / 2, H / 2 + 3); });
+function streetSign(txt, x, z, y = 0, ry = ROW) { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.06, .06, 3.2, 8), { color: 0x2B2B2E, metalness: .5 }), 0, 1.6, 0));
+  g.add(at(new THREE.Mesh(new THREE.PlaneGeometry(1.9, .48), new THREE.MeshStandardMaterial({ map: signTex(txt), roughness: .4, side: THREE.DoubleSide })), 0, 3.0, .07)); g.rotation.y = ry; return at(g, x, y, z); }
+// 멜버른 트램 (초록 · 크림 · 금색 띠)
+function tram(num = '35') { const g = new THREE.Group(), grn = { color: 0x2F6B4A, roughness: .45 }, crm = { color: 0xF1E2B8, roughness: .5 };
+  g.add(at(std(new THREE.BoxGeometry(6.4, 1.0, 1.5), grn), 0, .85, 0)); g.add(at(std(new THREE.BoxGeometry(6.4, .9, 1.5), crm), 0, 1.8, 0)); g.add(at(std(new THREE.BoxGeometry(6.42, .1, 1.52), { color: 0xC9A24A, metalness: .6, roughness: .3 }), 0, 1.36, 0));
+  g.add(at(std(new THREE.BoxGeometry(6.6, .2, 1.6), { color: 0x7A2E28 }), 0, 2.35, 0)); g.add(at(std(new THREE.BoxGeometry(4.6, .25, 1.2), { color: 0x7A2E28 }), 0, 2.55, 0));
+  const win = new THREE.MeshStandardMaterial({ color: 0xBFD9E6, roughness: .1, metalness: .2 }); for (let i = -2.6; i <= 2.6; i += .65) for (const k of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(.5, .55, .04), win); w.position.set(i, 1.85, k * .77); g.add(w); }
+  [-2, 2].forEach((x) => { g.add(at(std(new THREE.BoxGeometry(1.4, .35, 1.2), { color: 0x2B2B2E }), x, .2, 0)); });
+  const pole = std(new THREE.CylinderGeometry(.03, .03, 2.6, 6), { color: 0x2B2B2E }); pole.position.set(-.6, 3.6, 0); pole.rotation.z = -.9; g.add(pole);
+  const nt = new THREE.Mesh(new THREE.PlaneGeometry(.7, .32), new THREE.MeshBasicMaterial({ map: signTex(num, '#1E1A2B', '#FFE27A') })); nt.position.set(3.22, 2.05, 0); nt.rotation.y = Math.PI / 2; g.add(nt); return g; }
+function tramLine(S, cx, cz, y, len = 34, speed = 2.2, num = '35') { const sc = S.sc;
+  for (const k of [-.36, .36]) { const r = std(new THREE.BoxGeometry(len, .06, .1), { color: 0x9EA3AA, metalness: .8, roughness: .3 }, { cast: false }); r.rotation.y = ROW; const [x, z] = [cx + k * .7071, cz + k * .7071]; r.position.set(x, y + .03, z); sc.add(r); }
+  const wire = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, len, 4), new THREE.MeshBasicMaterial({ color: 0x1E1A2B })); wire.rotation.z = Math.PI / 2; const wg = new THREE.Group(); wg.add(wire); wg.rotation.y = ROW; wg.position.set(cx, y + 4.6, cz); sc.add(wg);
+  const t = tram(num); t.rotation.y = ROW; sc.add(t); S.ticks.push((tt) => { const p = ((tt * speed) % (len + 8)) - (len + 8) / 2; const [x, z] = along(cx, cz, p); t.position.set(x, y, z); }); }
+// 빅토리아 테라스 하우스 (철제 레이스 발코니)
+const terraceTex = (wall, trim) => canvasTex(256, 512, (g, W, H) => { g.fillStyle = wall; g.fillRect(0, 0, W, H);
+  g.fillStyle = trim; g.fillRect(0, 0, W, 46); for (let x = 10; x < W; x += 40) { g.beginPath(); g.arc(x + 10, 46, 12, 0, Math.PI); g.fill(); }
+  const win = (x, y, w, h) => { g.fillStyle = '#F4EFE6'; g.fillRect(x - 6, y - 6, w + 12, h + 12); g.fillStyle = '#5B7389'; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x + w / 2 - 2, y, 4, h); g.fillRect(x, y + h / 2 - 2, w, 4); };
+  win(40, 90, 66, 120); win(150, 90, 66, 120);
+  g.fillStyle = '#3A3F45'; g.fillRect(0, 236, W, 20); g.strokeStyle = '#F7F4EE'; g.lineWidth = 3; for (let x = 6; x < W; x += 22) { g.beginPath(); g.arc(x + 11, 272, 9, 0, 7); g.stroke(); g.beginPath(); g.moveTo(x, 256); g.lineTo(x, 300); g.stroke(); } g.fillRect(0, 300, W, 4);
+  g.fillStyle = '#7A3E33'; for (let x = 0; x < W; x += 12) g.fillRect(x, 304, 6, 18);
+  win(30, 350, 90, 130); g.fillStyle = '#2F5A46'; g.fillRect(160, 350, 60, 162); g.fillStyle = '#C9A24A'; g.beginPath(); g.arc(190, 350, 30, Math.PI, 0); g.fill(); });
+function terraceRow(sc, cx, cz, n = 6, y = 0) { const cols = [['#E9D6B4', '#F7F4EE'], ['#C9D8C5', '#F7F4EE'], ['#E8B9A6', '#F7F4EE'], ['#BFD0E0', '#F7F4EE'], ['#F2E0A6', '#F7F4EE'], ['#D9C2DD', '#F7F4EE']];
+  for (let i = 0; i < n; i++) { const [x, z] = along(cx, cz, (i - (n - 1) / 2) * 2.5); const c = cols[i % cols.length]; const b = faceBox(2.4, 5.2, 2.6, { map: terraceTex(c[0], c[1]) }, { color: new THREE.Color(c[0]).multiplyScalar(.85), roughness: .9 });
+    b.position.set(x, y + 2.6, z); b.rotation.y = ROW; sc.add(bgs(b)); const rf = std(new THREE.BoxGeometry(2.5, .25, 2.7), { color: 0x6E7277 }); rf.position.set(x, y + 5.3, z); rf.rotation.y = ROW; sc.add(rf); } }
+// 돔과 시계가 있는 역 건물
+const stationTex = () => canvasTex(1024, 384, (g, W, H) => { g.fillStyle = '#E0B060'; g.fillRect(0, 0, W, H); g.fillStyle = '#C98F45'; for (let y = 30; y < H; y += 60) g.fillRect(0, y, W, 10);
+  for (let i = 0; i < 9; i++) { const x = 40 + i * 110; g.fillStyle = '#F4E6C8'; g.beginPath(); g.moveTo(x, H - 40); g.lineTo(x, 150); g.arc(x + 35, 150, 35, Math.PI, 0); g.lineTo(x + 70, H - 40); g.fill(); g.fillStyle = '#4F6A80'; g.beginPath(); g.moveTo(x + 8, H - 48); g.lineTo(x + 8, 152); g.arc(x + 35, 152, 27, Math.PI, 0); g.lineTo(x + 62, H - 48); g.fill(); }
+  for (let i = 0; i < 7; i++) { const x = W * .5 - 180 + i * 60; g.fillStyle = '#F7F4EE'; g.beginPath(); g.arc(x, 70, 22, 0, 7); g.fill(); g.strokeStyle = '#1E1A2B'; g.lineWidth = 3; g.stroke(); g.beginPath(); g.moveTo(x, 70); g.lineTo(x, 56); g.moveTo(x, 70); g.lineTo(x + 10, 74); g.stroke(); } });
+function station(sc, x, y, z, ry = ROW, s = 1) { const g = new THREE.Group(), ochre = { color: 0xD9A456, roughness: .85 };
+  g.add(at(faceBox(12 * s, 3.6 * s, 3 * s, { map: stationTex() }, ochre), 0, 1.8 * s, 0));
+  g.add(at(std(new THREE.CylinderGeometry(1.6 * s, 1.6 * s, 1.2 * s, 24), ochre), -2.6 * s, 4.2 * s, 0)); g.add(at(std(new THREE.SphereGeometry(1.6 * s, 24, 12, 0, TAU, 0, Math.PI / 2), { color: 0x5E9A7A, roughness: .5, metalness: .3 }), -2.6 * s, 4.8 * s, 0));
+  g.add(at(std(new THREE.CylinderGeometry(.12 * s, .12 * s, .8 * s, 8), { color: 0xC9A24A, metalness: .7 }), -2.6 * s, 6.7 * s, 0));
+  g.add(at(std(new THREE.BoxGeometry(1.6 * s, 6.4 * s, 1.6 * s), ochre), 4.2 * s, 3.2 * s, 0)); g.add(at(std(new THREE.ConeGeometry(1.2 * s, 1.4 * s, 4), { color: 0x5E9A7A, metalness: .3 }), 4.2 * s, 7.1 * s, 0)); g.children[g.children.length - 1].rotation.y = Math.PI / 4;
+  const ck = new THREE.Mesh(new THREE.CircleGeometry(.5 * s, 32), new THREE.MeshBasicMaterial({ color: 0xF7F4EE })); ck.position.set(4.2 * s, 5.4 * s, .81 * s); g.add(ck);
+  const nameT = canvasTex(1024, 150, () => {}); const drawName = () => { const c = nameT.image, gg = c.getContext('2d'), W = c.width, H = c.height; gg.clearRect(0, 0, W, H); gg.fillStyle = '#1F4636'; gg.beginPath(); gg.roundRect(4, 8, W - 8, H - 16, 18); gg.fill(); gg.lineWidth = 6; gg.strokeStyle = '#D9B45A'; gg.stroke();
+    gg.fillStyle = '#F3D98A'; gg.textAlign = 'center'; gg.textBaseline = 'middle'; let fs = 84; gg.font = `400 ${fs}px "DM Serif Display", Georgia, serif`; while (gg.measureText('Flinders Street Station').width > W * .88) { fs -= 2; gg.font = `400 ${fs}px "DM Serif Display", Georgia, serif`; } gg.fillText('Flinders Street Station', W / 2, H / 2 + 4); nameT.needsUpdate = true; };
+  drawName(); if (document.fonts && document.fonts.load) document.fonts.load('84px "DM Serif Display"').then(drawName).catch(() => {});
+  const nm = new THREE.Mesh(new THREE.PlaneGeometry(4.2 * s, .62 * s), new THREE.MeshBasicMaterial({ map: nameT, transparent: true })); nm.position.set(1.1 * s, 4.0 * s, 1.36 * s); g.add(nm); g.add(at(std(new THREE.BoxGeometry(4.3 * s, .7 * s, .12 * s), { color: 0xC98F45, roughness: .85 }), 1.1 * s, 4.0 * s, 1.28 * s));
+  g.rotation.y = ry; sc.add(bgs(at(g, x, y, z))); return g; }
+// 유리 빌딩 창 텍스처
+const glassTex = (c1, c2) => { const t = canvasTex(128, 256, (g, W, H) => { g.fillStyle = c1; g.fillRect(0, 0, W, H); g.fillStyle = c2; for (let y = 4; y < H; y += 16) for (let x = 4; x < W; x += 16) { g.globalAlpha = .5 + rnd() * .5; g.fillRect(x, y, 10, 10); } g.globalAlpha = 1; }, 1, 3); t.userData.glass = 1; return t; };
+const lamp = (sc, x, z, y = 0, lit = false) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.06, .09, 2.6, 8), { color: 0x23262B, metalness: .5 }), 0, 1.3, 0)); const gb = at(new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), new THREE.MeshStandardMaterial({ color: 0xFFF4D6, emissive: 0xFFD27A, emissiveIntensity: lit ? 1.4 : .3 })), 0, 2.75, 0); gb.userData.lamp = 1; g.add(gb); sc.add(at(g, x, y, z)); if (lit) glow(sc, x, y + 2.6, z, 0xFFD27A, 6, 6).userData.lampLight = 1; return g; };
+const umbrella = (x, z, c, y = 0) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.04, .04, 2.2, 8), { color: 0xF7F4EE }), 0, 1.1, 0)); g.add(at(std(new THREE.ConeGeometry(1.3, .5, 8), { color: c }), 0, 2.3, 0)); g.add(at(std(new THREE.CylinderGeometry(.5, .5, .06, 20), { color: 0xF7F4EE }), 0, .8, 0)); [-.8, .8].forEach((k) => g.add(at(std(new THREE.BoxGeometry(.38, .45, .38), { color: 0x2B2B2E }), k, .22, 0))); return at(g, x, y, z); };
+const crate = (x, z, c, y = 0, r = 0) => { const g = new THREE.Group(), m = { color: c, roughness: .6 }; g.add(at(std(new THREE.BoxGeometry(.9, .06, .9), m), 0, .03, 0)); [[0, .45], [0, -.45], [.45, 0], [-.45, 0]].forEach(([a, b]) => { const s = std(new THREE.BoxGeometry(a ? .06 : .9, .7, b ? .06 : .9), m); s.position.set(a, .35, b); g.add(s); }); g.rotation.y = r; return at(g, x, y, z); };
+const gum = (x, z, y = 0, s = 1) => { const g = new THREE.Group(); const tr = std(new THREE.CylinderGeometry(.12 * s, .2 * s, 2.6 * s, 8), { color: 0xE9E2D4, roughness: .8 }); tr.position.y = 1.3 * s; tr.rotation.z = .08; g.add(tr);
+  for (let i = 0; i < 6; i++) g.add(at(std(new THREE.IcosahedronGeometry(.75 * s, 1), { color: i % 2 ? 0x7E9B78 : 0x95AE86, roughness: .9 }), Math.cos(i * 1.7) * .7 * s, (2.8 + (i % 3) * .4) * s, Math.sin(i * 1.7) * .7 * s)); return at(g, x, y, z); };
+
+// ===== 카페 · 멜버른 야라 강변 (보드워크 · 아치 다리를 건너는 트램 · 강가 역 · 유람선 · 노을) =====
+function cafeRiver(S) { const sc = S.sc, FL = -1.2;
+  const deck = std(new THREE.BoxGeometry(70, .9, 40), { map: woodTex(16, 9, 44), roughness: .7 }, { cast: false }); deck.rotation.y = ROW; deck.position.set(4.94, FL - .45, 4.94); sc.add(bgs(deck));
+  const bank = std(new THREE.BoxGeometry(90, .9, 22), { map: cobbleTex(18, 4), roughness: .85 }, { cast: false }); bank.rotation.y = ROW; bank.position.set(-24.0, FL - .45, -24.0); sc.add(bgs(bank));
+  const wt = canvasTex(512, 256, (g, W, H) => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#E99A7A'); gr.addColorStop(.5, '#5E8FB0'); gr.addColorStop(1, '#3F6F92'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(255,${220 + rnd() * 35},${170 + rnd() * 60},${.25 + rnd() * .35})`; g.fillRect(rnd() * W, rnd() * H, 10 + rnd() * 26, 2); } }, 6, 1);
+  const river = new THREE.Mesh(new THREE.PlaneGeometry(80, 10), new THREE.MeshStandardMaterial({ map: wt, roughness: .08, metalness: .25 })); river.userData.water = 1; river.rotation.x = -Math.PI / 2; river.rotation.z = ROW; river.position.set(-12.9, FL - .5, -12.9); sc.add(bgs(river)); S.ticks.push((t) => { wt.offset.x = t * .015; });
+  [[-9.4, -9.4], [-16.4, -16.4]].forEach(([x, z]) => { const e = std(new THREE.BoxGeometry(80, .7, .4), { color: 0x7A746C, roughness: .9 }); e.rotation.y = ROW; e.position.set(x, FL - .35, z); sc.add(e); });
+  // 강가 난간 + 가로등 (불 켜짐)
+  const rail = std(new THREE.BoxGeometry(80, .06, .06), { color: 0x2B2B2E, metalness: .5 }); rail.rotation.y = ROW; rail.position.set(-8.9, FL + 1, -8.9); sc.add(rail);
+  for (let i = -6; i <= 6; i++) { const [x, z] = along(-8.9, -8.9, i * 2.6); sc.add(at(std(new THREE.CylinderGeometry(.03, .03, 1, 6), { color: 0x2B2B2E }), x, FL + .5, z)); if (i % 2 === 0) lamp(sc, x, z, FL, true); }
+  // 아치 다리 + 다리를 건너는 트램
+  const brg = new THREE.Group(), stn = { color: 0xB9A88E, roughness: .85 }; brg.add(at(std(new THREE.BoxGeometry(2.8, .5, 12), stn), 0, .4, 0));
+  [-3, 0, 3].forEach((z) => { const a = std(new THREE.TorusGeometry(1.4, .25, 8, 20, Math.PI), stn); a.rotation.y = Math.PI / 2; a.position.set(0, -1.1, z); brg.add(a); }); [-1.3, 1.3].forEach((x) => { brg.add(at(std(new THREE.BoxGeometry(.12, .5, 12), { color: 0x3A3F45 }), x, .9, 0)); for (let z = -5.5; z <= 5.5; z += 2.75) brg.add(at(std(new THREE.CylinderGeometry(.05, .05, 1.8, 6), { color: 0x3A3F45 }), x, 1.5, z)); });
+  brg.rotation.y = ROW + Math.PI / 2; const [bx, bz] = along(-12.9, -12.9, 8.5); brg.position.set(bx, FL, bz); sc.add(bgs(brg));
+  tramLine(S, -17.4, -17.4, FL, 70, 2.0, '1');
+  [-3, -.5, 2.5].forEach((k, i) => sc.add(person(bx + k * .7071 + (i % 2 ? .4 : -.4) * .7071, bz + k * .7071 - (i % 2 ? .4 : -.4) * .7071, [0x1F4E9C, 0xE0483F, 0xF2C230][i], 0, FL + .65)));
+  // 건너편: 강가 역 (돔 · 시계) + 시티
+  station(sc, -19.5, FL - .4, -19.5, ROW, 1.05);
+  // 역 뒤: 선명한 멜버른 도심 실루엣
+  [-8, 13].forEach((t) => { const [x, z] = along(-21.5, -21.5, t); sc.add(tree(x, z, FL - .4, 1.6, 0x6FAE6A)); });
+  { // 역 뒤 멜버른 도심 실루엣 (선명하게 · 창 불빛 점)
+    const sil = canvasTex(2048, 640, (g, W, H) => { g.clearRect(0, 0, W, H); const layer = (col, hmin, hmax, step, lit) => { let x = 0; while (x < W) { const w = step * (.6 + rnd() * .8), h = hmin + rnd() * (hmax - hmin); g.fillStyle = col; g.fillRect(x, H - h, w - 6, h);
+        if (lit) for (let yy = H - h + 14; yy < H - 10; yy += 18) for (let xx = x + 8; xx < x + w - 16; xx += 14) if (rnd() > .55) { g.fillStyle = 'rgba(255,214,140,.85)'; g.fillRect(xx, yy, 6, 8); } x += w; } };
+      layer('#C69A8E', 140, 320, 90, false); layer('#9C7480', 70, 240, 110, true);
+      const ex = W * .62; g.fillStyle = '#6E5664'; g.fillRect(ex, H - 560, 70, 560); g.fillStyle = '#E8C478'; g.fillRect(ex, H - 560, 70, 70); g.fillRect(ex + 30, H - 610, 10, 50); for (let yy = H - 480; yy < H - 20; yy += 18) if (rnd() > .4) { g.fillStyle = 'rgba(255,214,140,.9)'; g.fillRect(ex + 12, yy, 46, 5); }
+      g.fillStyle = '#6E5664'; g.beginPath(); g.moveTo(W * .3, H - 380); g.lineTo(W * .3 + 22, H - 380); g.lineTo(W * .3 + 11, H - 470); g.fill(); g.fillRect(W * .3 - 30, H - 380, 82, 380);
+      layer('#6E5664', 30, 150, 130, true); });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(64, 20), new THREE.MeshBasicMaterial({ map: sil, transparent: true, depthWrite: false, fog: false })); pl.rotation.y = ROW; const [x, z] = along(-24, -24, 3); pl.position.set(x, FL + 7.6, z); sc.add(bgs(pl)); }
+  // 큰유황앵무 (흰 몸 · 노란 볏): 강 위를 나는 무리 + 난간에 앉은 두 마리
+  const cockatoo = () => { const b = new THREE.Group(), wh = { color: 0xF7F6F2, roughness: .6 };
+    const body = std(new THREE.SphereGeometry(.22, 14, 10), wh); body.scale.set(1.5, .9, .9); b.add(body); b.add(at(std(new THREE.SphereGeometry(.15, 12, 10), wh), .3, .12, 0));
+    b.add(at(std(new THREE.ConeGeometry(.05, .12, 8), { color: 0x2B2B2E }), .45, .08, 0)); b.children[b.children.length - 1].rotation.z = -Math.PI / 2;
+    for (let k = 0; k < 4; k++) { const c = std(new THREE.ConeGeometry(.03, .26, 6), { color: 0xFFD23C, roughness: .5 }); c.position.set(.26 - k * .04, .3, (k - 1.5) * .02); c.rotation.z = .5 + k * .18; b.add(c); }
+    const tail = std(new THREE.BoxGeometry(.3, .04, .14), wh); tail.position.set(-.38, -.02, 0); b.add(tail);
+    // 날개: 어깨에서 끝으로 가늘어지고 뒤쪽 깃털이 갈라진 모양 (몸 옆에서 위아래로 퍼덕여요)
+    const ws = new THREE.Shape(); ws.moveTo(.16, 0); ws.quadraticCurveTo(.2, .32, .06, .62); ws.quadraticCurveTo(-.02, .78, -.16, .82); ws.lineTo(-.2, .7); ws.lineTo(-.28, .66); ws.lineTo(-.27, .54); ws.lineTo(-.34, .48); ws.lineTo(-.3, .36); ws.lineTo(-.36, .28); ws.lineTo(-.28, .14); ws.quadraticCurveTo(-.24, 0, -.16, 0); ws.lineTo(.16, 0);
+    const wg = new THREE.ShapeGeometry(ws); wg.rotateX(Math.PI / 2); wg.translate(0, .04, .1);
+    const wm = new THREE.MeshStandardMaterial({ color: 0xF7F6F2, emissive: 0x2A2410, side: THREE.DoubleSide, roughness: .6 }), w1 = new THREE.Mesh(wg, wm), w2 = new THREE.Mesh(wg, wm); w2.scale.z = -1; b.add(w1, w2); return { b, w1, w2 }; };
+  const flock = []; for (let i = 0; i < 9; i++) { const c = cockatoo(); c.b.scale.setScalar(1.6); sc.add(c.b); flock.push([c, rnd() * 6, (rnd() - .5) * 3, (rnd() - .5) * 1.6]); }
+  S.ticks.push((t) => flock.forEach(([c, ph, dt, dy], i) => { const p = ((t * 1.1 + ph * 4) % 44) - 22, [x, z] = along(-15, -15, p + dt); c.b.position.set(x + dy, 7.6 + dy * .6 + Math.sin(t * 1.5 + ph) * .35, z + dy); c.b.rotation.set(0, ROW, Math.sin(t * 1.5 + ph) * .1); const f = Math.sin(t * 7 + ph * 3) * .75 + .15; c.w1.rotation.x = -f; c.w2.rotation.x = f; }));
+  [[-3.6, .3], [5.4, -.2]].forEach(([tt, yy]) => { const c = cockatoo(), [x, z] = along(-8.9, -8.9, tt); c.b.scale.setScalar(1.4); c.w1.visible = c.w2.visible = false; const fold = std(new THREE.SphereGeometry(.2, 12, 8), { color: 0xEDEBE4, roughness: .6 }); fold.scale.set(1.5, .55, 1.05); fold.position.set(-.06, .03, 0); c.b.add(fold); c.b.position.set(x, FL + 1.3 + yy * 0, z); c.b.rotation.y = ROW + Math.PI * .5 + yy; sc.add(c.b); S.ticks.push((t) => { c.b.rotation.z = Math.sin(t * 2 + tt) * .08; }); });
+  // 유람선 · 조정 보트
+  const cruise = new THREE.Group(); cruise.add(at(std(new THREE.BoxGeometry(5, .7, 1.4), { color: 0xF7F7F8 }), 0, 0, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.4, .7, 1.2), { color: 0x2B2F44, roughness: .2 }), -.3, .7, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.6, .1, 1.3), { color: 0xF7F7F8 }), -.3, 1.1, 0));
+  for (let k = -1.8; k <= 1.2; k += .5) cruise.add(at(new THREE.Mesh(new THREE.BoxGeometry(.3, .25, .02), new THREE.MeshBasicMaterial({ color: 0xFFE7A8 })), k, .7, .61)); cruise.rotation.y = ROW; sc.add(cruise);
+  // 다리(8.5 지점) 밑으로 들어가지 않게: 다리 앞 구간만 오가요 · 끝에서 속도를 줄이며 돌아서요
+  const shuttle = (t, a, b, sp, ph) => { const k = t * sp + ph, p = (a + b) / 2 + (b - a) / 2 * Math.sin(k), v = Math.cos(k); return [p, ROW + Math.PI * (.5 - .5 * Math.max(-1, Math.min(1, v * 3)))]; };
+  S.ticks.push((t) => { const [p, yaw] = shuttle(t, -18, .5, .07, 2.2), [x, z] = along(-13.6, -13.6, p); cruise.position.set(x, FL - .2, z); cruise.rotation.y = yaw + Math.PI; });
+  const boat = new THREE.Group(), hs = new THREE.Shape(); hs.moveTo(-2.6, 0); hs.quadraticCurveTo(0, .24, 2.6, 0); hs.quadraticCurveTo(0, -.24, -2.6, 0);
+  const hull = std(new THREE.ExtrudeGeometry(hs, { depth: .16, bevelEnabled: true, bevelThickness: .04, bevelSize: .03, bevelSegments: 2 }), { color: 0x1F4E9C, roughness: .35 }); hull.rotation.x = Math.PI / 2; hull.position.y = .1; boat.add(hull);
+  const deckS = new THREE.Shape(); deckS.moveTo(-2.4, 0); deckS.quadraticCurveTo(0, .2, 2.4, 0); deckS.quadraticCurveTo(0, -.2, -2.4, 0); const deckM = std(new THREE.ShapeGeometry(deckS), { color: 0xF7F4EE }); deckM.rotation.x = -Math.PI / 2; deckM.position.y = .13; boat.add(deckM);
+  const oars = [];
+  [-1.35, -.45, .45, 1.35].forEach((x, i) => { const r = person(0, 0, [0xE0483F, 0xF2C230, 0xE0483F, 0xF2C230][i], 1, 0); r.rotation.y = -Math.PI / 2; r.scale.setScalar(.95); r.position.set(x, .06, 0); boat.add(r);
+    const side = i % 2 ? 1 : -1, piv = new THREE.Group(); piv.position.set(x + .18, .38, side * .2);
+    const sh = std(new THREE.CylinderGeometry(.026, .026, 1.8, 6), { color: 0x2B2B2E }); sh.rotation.x = Math.PI / 2; sh.position.z = side * .85; piv.add(sh);
+    const bl = std(new THREE.BoxGeometry(.14, .03, .34), { color: 0xF2C230 }); bl.position.z = side * 1.72; piv.add(bl); boat.add(piv); oars.push([piv, side]); });
+  boat.rotation.y = ROW; sc.add(boat);
+  S.ticks.push((t) => { const [p, yaw] = shuttle(t, -16, 4, .09, 0), [x, z] = along(-12, -12, p); boat.position.set(x, FL - .42, z); boat.rotation.y = yaw; const st = t * 3.2; oars.forEach(([pv, sd]) => { pv.rotation.y = Math.sin(st) * .45 * sd; pv.rotation.x = (Math.cos(st) > 0 ? -.2 : .06) * sd; }); });
+  // 강변 카페 테이블 · 사람 · 유칼립투스
+  const C = [0x1F4E9C, 0xE0483F, 0xF2C230, 0x2F8F5B, 0xF7F4EE];
+  [[-7.2, -2.6], [-2.6, -7.2], [-7.6, 1.6], [1.6, -7.6]].forEach(([x, z], i) => { sc.add(umbrella(x, z, [0xF7F4EE, 0x2F6B4A][i % 2], FL)); sc.add(person(x + .7, z + .3, C[i % 5], 1, FL)); sc.add(person(x - .6, z - .4, C[(i + 2) % 5], 1, FL)); });
+  sc.add(gum(-8.6, 4.6, FL, 1.2)); sc.add(gum(4.6, -8.6, FL, 1.1)); }
+
+// ===== 캠퍼스: 잔디 위 (공통) =====
+const lawnTex = () => canvasTex(256, 256, (g, W, H) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#8CC97A' : '#83C171'; g.fillRect(0, i * H / 8, W, H / 8); } }, 12, 12);
+function lawn(sc, pathCol = 0xE6DCC8) { const l = std(new THREE.PlaneGeometry(110, 110), { map: lawnTex(), roughness: .95 }, { cast: false }); l.rotation.x = -Math.PI / 2; l.position.y = -.25; sc.add(bgs(l));
+  const p = std(new THREE.PlaneGeometry(2.2, 60), { color: pathCol, roughness: .9 }, { cast: false }); p.rotation.x = -Math.PI / 2; p.rotation.z = ROW; p.position.set(-8.4, -.23, -8.4); sc.add(bgs(p)); }
+const SKINS = [0xF1C9A5, 0xE3B08A, 0xC68B62, 0x8D5A3B], HAIRS = [0x2B1E16, 0x5A3A22, 0xD9A845, 0x1E1A2B, 0xB5562E, 0x7A6A5E], PANTS = [0x2F3B5C, 0x3A3A3E, 0x6B5A48, 0x24508F, 0xE8E2D6];
+const person = (x, z, c, sit = 0, y = -.25) => { const g = new THREE.Group(), h = Math.abs(Math.round(x * 7.3 + z * 13.1)), skin = { color: SKINS[h % 4], roughness: .7 }, hair = { color: HAIRS[(h >> 2) % 6], roughness: .8 }, pant = { color: PANTS[(h >> 3) % 5], roughness: .8 }, top = { color: c, roughness: .7 };
+  const cap = (r, l, m) => std(new THREE.CapsuleGeometry(r, l, 4, 10), m);
+  const hip = sit ? .26 : .42;
+  [-.075, .075].forEach((k) => { if (sit) { const th = cap(.06, .2, pant); th.rotation.x = Math.PI / 2; th.position.set(k, hip, .14); g.add(th); const sh = cap(.055, .18, pant); sh.position.set(k, hip - .14, .27); g.add(sh); g.add(at(std(new THREE.BoxGeometry(.09, .06, .14), { color: 0x2B2B2E }), k, .03, .31)); }
+    else { const lg = cap(.06, .26, pant); lg.position.set(k, .2, 0); g.add(lg); g.add(at(std(new THREE.BoxGeometry(.09, .06, .15), { color: 0x2B2B2E }), k, .03, .03)); } });
+  const tor = cap(.13, .2, top); tor.position.y = hip + .17; tor.scale.z = .8; g.add(tor);
+  [-1, 1].forEach((k) => { const ar = cap(.045, .24, top); ar.position.set(k * .17, hip + .14, sit ? .06 : 0); ar.rotation.z = k * .18; if (sit) ar.rotation.x = -.5; g.add(ar); g.add(at(std(new THREE.SphereGeometry(.045, 8, 6), skin), k * .2, hip - .02, sit ? .14 : 0)); });
+  const hy = hip + .5; g.add(at(std(new THREE.SphereGeometry(.13, 16, 12), skin), 0, hy, 0));
+  const hr = std(new THREE.SphereGeometry(.137, 16, 10, 0, TAU, 0, Math.PI * .55), hair); hr.position.set(0, hy + .01, -.015); hr.rotation.x = -.25; g.add(hr);
+  if (h % 3 === 0) g.add(at(std(new THREE.SphereGeometry(.07, 10, 8), hair), 0, hy - .02, -.14));
+  if (h % 4 === 1 && !sit) g.add(at(std(new THREE.BoxGeometry(.22, .26, .1), { color: [0xE0483F, 0x2F8F5B, 0xF2C230][h % 3], roughness: .7 }), 0, hip + .2, -.14));
+  [-1, 1].forEach((k) => g.add(at(new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x1E1A2B })), k * .045, hy + .01, .122)));
+  g.rotation.y = ((h % 12) / 12) * TAU; g.scale.setScalar(1.15); return at(g, x, y, z); };
+const crowd = (sc, cx, cz, n, sit) => { const C = [0x1F4E9C, 0xE0483F, 0xF2C230, 0x2F8F5B, 0xF7F4EE, 0x8E6CF0, 0x1E1A2B]; for (let i = 0; i < n; i++) sc.add(person(cx + (rnd() - .5) * 4, cz + (rnd() - .5) * 4, C[i % C.length], sit)); };
+const capsFly = (S, cx, cz, n = 14) => { const caps = []; for (let i = 0; i < n; i++) { const g = new THREE.Group(); g.add(std(new THREE.BoxGeometry(.5, .04, .5), { color: 0x1E2347 })); g.add(at(std(new THREE.CylinderGeometry(.16, .16, .16, 12), { color: 0x1E2347 }), 0, -.1, 0)); g.add(at(std(new THREE.BoxGeometry(.03, .22, .03), { color: 0xD9B45A }), .2, -.1, .2)); S.sc.add(g); caps.push([g, cx + (rnd() - .5) * 6, cz + (rnd() - .5) * 6, rnd() * 4, .8 + rnd() * .6]); }
+  S.ticks.push((t) => caps.forEach(([g, x, z, ph, v]) => { const k = ((t * v + ph) % 4) / 4, y = Math.sin(k * Math.PI) * 6.5; g.position.set(x + Math.sin(t + ph) * .3, y, z); g.rotation.set(t * 2 + ph, t + ph, t * 1.5); })); };
+const crestTex = () => canvasTex(128, 256, (g, W, H) => { g.fillStyle = '#23305E'; g.fillRect(0, 0, W, H); g.fillStyle = '#F3D98A'; g.beginPath(); g.moveTo(W * .5, H * .2); g.lineTo(W * .82, H * .28); g.lineTo(W * .78, H * .55); g.lineTo(W * .5, H * .72); g.lineTo(W * .22, H * .55); g.lineTo(W * .18, H * .28); g.closePath(); g.fill(); g.fillStyle = '#23305E'; g.font = '900 64px Lexend, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('P', W * .5, H * .44); g.fillStyle = '#F3D98A'; g.fillRect(0, H * .88, W, 6); });
+const bannerPost = (sc, x, z) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.06, .08, 3.4, 8), { color: 0x23262B, metalness: .5 }), 0, 1.7, 0)); const b = new THREE.Mesh(new THREE.PlaneGeometry(.7, 1.4), new THREE.MeshStandardMaterial({ map: crestTex(), side: THREE.DoubleSide })); b.position.set(.4, 2.5, 0); g.add(b); g.rotation.y = ROW; sc.add(at(g, x, -.25, z)); };
+const plaqueTex = (big, small, w = 1024, h = 160) => canvasTex(w, h, (g, W, H) => { g.fillStyle = '#23305E'; g.fillRect(0, 0, W, H); g.fillStyle = '#F3D98A'; g.textAlign = 'center'; g.textBaseline = 'middle'; let fs = Math.round(H * (small ? .42 : .56)); g.font = `800 ${fs}px Lexend, sans-serif`; while (g.measureText(big).width > W * .9) { fs -= 2; g.font = `800 ${fs}px Lexend, sans-serif`; } g.fillText(big, W / 2, H * (small ? .4 : .52)); if (small) { g.font = `600 ${Math.round(H * .2)}px Lexend, sans-serif`; g.fillStyle = '#C9D2F0'; g.fillText(small, W / 2, H * .8); } });
+const colTex = (c) => canvasTex(512, 256, (g, W, H) => { g.fillStyle = c; g.fillRect(0, 0, W, H); for (let i = 0; i < 5; i++) { const x = 30 + i * 96; g.fillStyle = '#F7F4EE'; g.fillRect(x - 6, 40, 60, 170); g.fillStyle = '#5B7389'; g.fillRect(x, 46, 48, 158); g.fillStyle = 'rgba(255,255,255,.3)'; g.fillRect(x + 22, 46, 4, 158); g.fillRect(x, 120, 48, 4); } });
+// 캠퍼스 1안 · 기둥 도서관 (신고전 · 돔 · 계단 · 배너)
+function uniLibrary(S) { const sc = S.sc; lawn(sc); const g = new THREE.Group(), stn = { color: 0xE8DCC4, roughness: .85 };
+  [0, 1, 2].forEach((i) => g.add(at(std(new THREE.BoxGeometry(14 - i * .6, .3, 7 - i * .6), stn), 0, .15 + i * .3, .3 + i * .2)));
+  g.add(at(faceBox(12, 4.2, 4.6, { map: colTex('#E8DCC4') }, stn), 0, .9 + 2.1, -.6));
+  for (let i = 0; i < 8; i++) g.add(at(std(new THREE.CylinderGeometry(.26, .3, 4.2, 16), { color: 0xF4EDE0, roughness: .7 }), -5.1 + i * 1.46, .9 + 2.1, 2.3));
+  g.add(at(std(new THREE.BoxGeometry(12.4, .55, 1.2), stn), 0, 5.4, 2.1)); g.add(at(std(new THREE.BoxGeometry(12.4, .55, 5.2), stn), 0, 5.4, -.4));
+  const pd = new THREE.Shape(); pd.moveTo(-6.2, 0); pd.lineTo(6.2, 0); pd.lineTo(0, 1.8); pd.lineTo(-6.2, 0); const pg = new THREE.ExtrudeGeometry(pd, { depth: .6, bevelEnabled: false }); const pm = std(pg, stn); pm.position.set(0, 5.67, 2.1); g.add(pm);
+  const pl = new THREE.Mesh(new THREE.PlaneGeometry(5.4, .5), new THREE.MeshBasicMaterial({ map: plaqueTex('PALLO UNIVERSITY LIBRARY') })); pl.position.set(0, 5.4, 2.71); g.add(pl);
+  g.add(at(std(new THREE.CylinderGeometry(2.0, 2.0, 1.2, 32), stn), 0, 6.3, -.6)); g.add(at(std(new THREE.SphereGeometry(2.0, 32, 16, 0, TAU, 0, Math.PI / 2), { color: 0x6FA58C, roughness: .5, metalness: .3 }), 0, 6.9, -.6)); g.add(at(std(new THREE.CylinderGeometry(.3, .4, .7, 12), stn), 0, 9.1, -.6));
+  g.rotation.y = ROW; sc.add(bgs(at(g, -13, -.25, -13)));
+  for (let i = -3; i <= 3; i += 2) { const [x, z] = along(-7.2, -7.2, i * 2.4); bannerPost(sc, x, z); }
+  crowd(sc, -7, 2, 6, 1); crowd(sc, 2, -7, 6, 0); [[-10, 6], [6, -10], [9, 4], [4, 9]].forEach(([x, z], i) => sc.add(tree(x, z, -.25, 1.7, i % 2 ? 0x5DAA5E : 0x6DBE6A))); }
+// ---------- 여행 · 비즈니스 배경 ----------
+const asphaltTex = (rx, ry, base = '#5A5E65') => canvasTex(256, 256, (g, W, H) => { g.fillStyle = base; g.fillRect(0, 0, W, H); for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(${rnd() > .5 ? '255,255,255' : '0,0,0'},${.03 + rnd() * .05})`; g.fillRect(rnd() * W, rnd() * H, 2, 2); } }, rx, ry);
+const ground = (sc, map, y = -.02, size = 140) => { const m = std(new THREE.PlaneGeometry(size, size), { map, roughness: .92 }, { cast: false }); m.rotation.x = -Math.PI / 2; m.position.y = y; sc.add(bgs(m)); return m; };
+const strip = (sc, cx, cz, len, wid, col, y = .005, map) => { const m = std(new THREE.PlaneGeometry(len, wid), map ? { map, roughness: .8 } : { color: col, roughness: .8 }, { cast: false }); m.rotation.x = -Math.PI / 2; m.rotation.z = ROW; m.position.set(cx, y, cz); sc.add(bgs(m)); return m; };
+const rowDash = (sc, cx, cz, len, col, y = .02, step = 1.6, w = .8, h = .12) => { for (let t = -len / 2; t < len / 2; t += step) { const [x, z] = along(cx, cz, t); const d = new THREE.Mesh(new THREE.BoxGeometry(w, .02, h), new THREE.MeshBasicMaterial({ color: col })); d.rotation.y = ROW; d.position.set(x, y, z); sc.add(d); } };
+const palmT = (x, z, y = 0, s = 1) => { const g = new THREE.Group(); const tr = std(new THREE.CylinderGeometry(.1 * s, .16 * s, 2.6 * s, 8), { color: 0xA97B4F }); tr.position.y = 1.3 * s; tr.rotation.z = .15; g.add(tr);
+  for (let i = 0; i < 7; i++) { const l = std(new THREE.ConeGeometry(.2 * s, 1.6 * s, 4), { color: i % 2 ? 0x3E9A55 : 0x56B067 }); l.geometry.translate(0, .8 * s, 0); l.position.set(.2 * s, 2.6 * s, 0); l.rotation.set(0, i * .9, Math.PI / 2 - .4); g.add(l); } return at(g, x, y, z); };
+const facadeTex = (wall, win, rows = 4, cols = 3) => canvasTex(256, 512, (g, W, H) => { g.fillStyle = wall; g.fillRect(0, 0, W, H); const cw = W / cols, rh = H / (rows + 1);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const x = c * cw + cw * .22, y = rh * .6 + r * rh; g.fillStyle = '#F7F4EE'; g.fillRect(x - 5, y - 5, cw * .56 + 10, rh * .62 + 10); g.fillStyle = win; g.fillRect(x, y, cw * .56, rh * .62); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(x + cw * .26, y, 3, rh * .62); } });
+
+// 여행 · 해변 리조트 (바다 · 모래사장 · 야자수 · 호텔 · 요트)
+function travelBeach(S) { const sc = S.sc;
+  const wt = canvasTex(256, 256, (g, W, H) => { g.fillStyle = '#3BB3D6'; g.fillRect(0, 0, W, H); g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 3; for (let i = 0; i < 40; i++) { const x = rnd() * W, y = rnd() * H; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 10, y - 4, x + 22, y); g.stroke(); } }, 18, 18);
+  const sea = std(new THREE.PlaneGeometry(160, 160), { map: wt, roughness: .15, metalness: .15 }, { cast: false }); sea.rotation.x = -Math.PI / 2; sea.position.y = -.05; sc.add(bgs(sea)); S.ticks.push((t) => { wt.offset.set(t * .01, t * .006); });
+  const sh = new THREE.Mesh(new THREE.CircleGeometry(8.6, 64), new THREE.MeshBasicMaterial({ color: 0x8FDCEB, transparent: true, opacity: .7 })); sh.rotation.x = -Math.PI / 2; sh.scale.y = 1.15; sh.position.y = -.03; sc.add(bgs(sh));
+  const sand = std(new THREE.BoxGeometry(110, .6, 9), { color: 0xEFD9A6, roughness: .95 }); sand.rotation.y = ROW; sand.position.set(-14, -.1, -14); sc.add(bgs(sand));
+  rowDash(sc, -10.8, -10.8, 100, 0xFFFFFF, .02, 2.4, 1.6, .16);
+  for (let t = -24; t <= 24; t += 4) { const [x, z] = along(-12.2, -12.2, t); sc.add(palmT(x, z, .2, 1.3)); }
+  const umb = (x, z, c) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.04, .04, 1.8, 6), { color: 0xF7F7F8 }), 0, .9, 0)); const tx = canvasTex(128, 32, (gg, W, H) => { for (let i = 0; i < 8; i++) { gg.fillStyle = i % 2 ? c : '#FFFFFF'; gg.fillRect(i * 16, 0, 16, H); } }); g.add(at(std(new THREE.ConeGeometry(1.1, .45, 16), { map: tx }), 0, 1.9, 0)); g.add(at(std(new THREE.BoxGeometry(1.4, .12, .55), { color: 0xFFFFFF }), .6, .2, .6)); return at(g, x, .2, z); };
+  [-10, -6, -2, 2, 6, 10].forEach((t, i) => { const [x, z] = along(-10.6, -10.6, t); sc.add(umb(x, z, ['#E9536A', '#3F5BA9', '#FFC93C'][i % 3])); });
+  // 감성 해변 상점가: 파스텔 · 원목 · 아치 창 · 따뜻한 실내 불빛 · 꽃상자 · 칠판 입간판 · 전구 줄
+  const SHOPS = [['Salt & Sun', 'coffee · brunch', '#EFE3CF', '#6B8F7A', 'cafe'], ['Little Gelato', 'handmade', '#F3D3CF', '#B8655A', 'gelato'], ['Sea Glass', 'vintage boutique', '#D6E4E0', '#3F6E74', 'boutique'],
+    ['Bloom', 'flowers', '#F1E1D8', '#A85F6E', 'flower'], ['Paper Moon', 'books & coffee', '#E7DCC8', '#4E5A7A', 'books'], ['Driftwood', 'bakery', '#EADCC4', '#8C6239', 'bakery'],
+    ['Wave Records', 'vinyl', '#DCD6E6', '#5E4E7A', 'records'], ['Linen House', 'slow living', '#EEE8DE', '#7A7466', 'linen'], ['Golden Hour', 'wine bar', '#EAD7B8', '#9C6B2E', 'bar']];
+  const SERIF = '"DM Serif Display", Georgia, serif', shopTexs = [];
+  const drawShop = (g, W, H, [name, sub, wall, acc, kind]) => { g.clearRect(0, 0, W, H); g.fillStyle = wall; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(120,90,60,.06)'; for (let i = 0; i < 120; i++) g.fillRect((i * 53) % W, (i * 97) % H, 18, 2);
+    // 위층: 아치 창 + 덧창 + 꽃상자
+    [40, 150].forEach((y) => [34, 146].forEach((x) => { g.fillStyle = '#F7F2EA'; g.beginPath(); g.moveTo(x - 6, y + 92); g.lineTo(x - 6, y + 30); g.arc(x + 38, y + 30, 44, Math.PI, 0); g.lineTo(x + 82, y + 92); g.fill();
+      g.fillStyle = '#F3D9A8'; g.beginPath(); g.moveTo(x, y + 86); g.lineTo(x, y + 30); g.arc(x + 38, y + 30, 38, Math.PI, 0); g.lineTo(x + 76, y + 86); g.fill(); g.fillStyle = 'rgba(255,240,200,.6)'; g.fillRect(x + 36, y - 6, 4, 92); g.fillRect(x, y + 46, 76, 4);
+      g.fillStyle = acc; g.globalAlpha = .55; g.fillRect(x - 20, y + 4, 14, 82); g.fillRect(x + 82, y + 4, 14, 82); g.globalAlpha = 1;
+      g.fillStyle = '#8C6239'; g.fillRect(x - 4, y + 90, 84, 12); ['#E9A0A8', '#F4E3A0', '#F7F2EA', '#C9A8D8'].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(x + 6 + i * 22, y + 88, 7, 0, 7); g.fill(); }); g.fillStyle = '#6E9A6A'; for (let i = 0; i < 6; i++) { g.beginPath(); g.ellipse(x + i * 15, y + 86, 6, 3, .4, 0, 7); g.fill(); } }));
+    // 간판: 나무 판 위 세리프 이탤릭 + 작은 부제
+    g.fillStyle = acc; g.beginPath(); g.roundRect(14, 262, W - 28, 66, 10); g.fill(); g.strokeStyle = 'rgba(255,248,232,.7)'; g.lineWidth = 3; g.beginPath(); g.roundRect(20, 268, W - 40, 54, 7); g.stroke();
+    g.fillStyle = '#FFF8E8'; g.textAlign = 'center'; g.textBaseline = 'middle'; let fs = 40; g.font = `italic 400 ${fs}px ${SERIF}`; while (g.measureText(name).width > W * .8) { fs -= 2; g.font = `italic 400 ${fs}px ${SERIF}`; } g.fillText(name, W / 2, 288);
+    g.font = `600 13px Lexend, sans-serif`; g.fillStyle = 'rgba(255,248,232,.85)'; g.fillText(sub.toUpperCase().split('').join(' '), W / 2, 314);
+    // 1층: 아치 진열창 (따뜻한 실내) + 원목 문
+    g.fillStyle = '#5A4232'; g.beginPath(); g.moveTo(10, 506); g.lineTo(10, 392); g.arc(88, 392, 78, Math.PI, 0); g.lineTo(166, 506); g.fill();
+    const lit = g.createRadialGradient(88, 420, 10, 88, 420, 110); lit.addColorStop(0, '#FFE6B0'); lit.addColorStop(1, '#E8B878'); g.fillStyle = lit; g.beginPath(); g.moveTo(18, 500); g.lineTo(18, 394); g.arc(88, 394, 70, Math.PI, 0); g.lineTo(158, 500); g.fill();
+    g.strokeStyle = '#5A4232'; g.lineWidth = 3; g.beginPath(); g.moveTo(88, 324); g.lineTo(88, 500); g.moveTo(18, 430); g.lineTo(158, 430); g.stroke();
+    const P = { cafe: ['#F7F2EA', '#B8865A', '#F7F2EA'], gelato: ['#F4B6C8', '#F7E3A0', '#C9E8D8'], boutique: ['#9FC4C4', '#E9C8B8', '#F7F2EA'], flower: ['#E9A0A8', '#F4E3A0', '#C9A8D8'], books: ['#4E5A7A', '#B8655A', '#6B8F7A'], bakery: ['#D9A45A', '#C98A3E', '#E8C88A'], records: ['#1E1A2B', '#B8655A', '#F2C230'], linen: ['#F7F2EA', '#D9CDBA', '#B8AE9C'], bar: ['#7A2E3A', '#C9A24A', '#F3D9A8'] }[kind];
+    for (let i = 0; i < 4; i++) { g.fillStyle = P[i % 3]; if (kind === 'books') g.fillRect(30 + i * 30, 448, 18, 44); else if (kind === 'records') { g.beginPath(); g.arc(40 + i * 32, 470, 14, 0, 7); g.fill(); g.fillStyle = '#F7F2EA'; g.beginPath(); g.arc(40 + i * 32, 470, 4, 0, 7); g.fill(); } else if (kind === 'flower') { g.beginPath(); g.arc(40 + i * 32, 456, 13, 0, 7); g.fill(); g.fillStyle = '#6E9A6A'; g.fillRect(38 + i * 32, 466, 4, 28); } else if (kind === 'bar') { g.fillRect(36 + i * 32, 446, 10, 46); g.fillRect(34 + i * 32, 440, 14, 8); } else { g.beginPath(); g.arc(40 + i * 32, 476, 13, Math.PI, 0); g.fill(); g.fillRect(27 + i * 32, 476, 26, 14); } }
+    g.fillStyle = '#5A4232'; g.fillRect(20, 492, 136, 8);
+    g.fillStyle = '#8C6239'; g.beginPath(); g.moveTo(178, 506); g.lineTo(178, 372); g.arc(210, 372, 32, Math.PI, 0); g.lineTo(242, 506); g.fill(); g.fillStyle = '#F3D9A8'; g.beginPath(); g.arc(210, 380, 18, Math.PI, 0); g.fill(); g.fillStyle = '#C9A24A'; g.fillRect(232, 440, 5, 12); };
+  const shopTex = (sp) => { const t = canvasTex(256, 512, (g, W, H) => drawShop(g, W, H, sp)); shopTexs.push([t, sp]); return t; };
+  const scallop = (c) => canvasTex(128, 64, (g, W, H) => { for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? c : '#FBF6EA'; g.fillRect(i * W / 6, 0, W / 6, H - 14); g.beginPath(); g.arc(i * W / 6 + W / 12, H - 14, W / 12, 0, Math.PI); g.fill(); } });
+  const board = (txt) => canvasTex(128, 160, (g, W, H) => { g.fillStyle = '#8C6239'; g.fillRect(0, 0, W, H); g.fillStyle = '#2E3530'; g.fillRect(8, 8, W - 16, H - 16); g.fillStyle = '#F4F1E8'; g.textAlign = 'center'; g.font = `italic 400 26px ${SERIF}`; txt.split('|').forEach((l, i) => g.fillText(l, W / 2, 50 + i * 36)); });
+  const BOARD = { cafe: 'flat white|& toast', gelato: 'pistachio|today', boutique: 'new in', flower: 'peonies|$12', books: 'read &|stay', bakery: 'fresh|sourdough', records: 'open|late', linen: 'hello', bar: 'happy|hour 5pm' };
+  const bulbM = new THREE.MeshStandardMaterial({ color: 0xFFE7B0, emissive: 0xFFC478, emissiveIntensity: 1.4 }), wireM = new THREE.LineBasicMaterial({ color: 0x3A2E26 });
+  const fronts = [];
+  SHOPS.forEach((sp, i) => { const t = (i - 4) * 4.6, [x, z] = along(-19.6, -19.6, t), h = 5.4 + (i % 3) * .9, g = new THREE.Group();
+    g.add(at(faceBox(4.4, h, 3, { map: shopTex(sp) }, { color: new THREE.Color(sp[2]).multiplyScalar(.9), roughness: .8 }), 0, h / 2, 0));
+    g.add(at(std(new THREE.BoxGeometry(4.6, .22, 3.2), { color: 0xB9775A, roughness: .8 }), 0, h + .11, 0));
+    if (i % 2) for (let k = -1.6; k <= 1.6; k += .4) g.add(at(std(new THREE.BoxGeometry(.38, .14, 3.2), { color: 0xC98466, roughness: .8 }), k, h + .26, 0));
+    const aw = std(new THREE.BoxGeometry(2.0, .06, 1.0), { map: scallop(sp[3]) }); aw.position.set(-.85, h * .26, 1.85); aw.rotation.x = .42; g.add(aw);
+    const bd = new THREE.Group(); const bm = new THREE.Mesh(new THREE.PlaneGeometry(.55, .7), new THREE.MeshStandardMaterial({ map: board(BOARD[sp[4]]), roughness: .9 })); bm.position.y = .42; bm.rotation.x = -.18; bd.add(bm); bd.position.set(.9, 0, 2.2); g.add(bd);
+    const pot = (px) => { const pg = new THREE.Group(); pg.add(at(std(new THREE.CylinderGeometry(.22, .16, .4, 14), { color: 0xC9805A }), 0, .2, 0)); for (let k = 0; k < 5; k++) pg.add(at(std(new THREE.SphereGeometry(.18, 10, 8), { color: k % 2 ? 0x5E8A5A : 0x7AA86E }), Math.cos(k) * .1, .5 + (k % 2) * .12, Math.sin(k) * .1)); pg.position.set(px, 0, 1.75); return pg; };
+    g.add(pot(-1.95)); if (i % 3 === 0) g.add(pot(1.95));
+    if (sp[4] === 'cafe' || sp[4] === 'bar' || sp[4] === 'bakery') { g.add(at(std(new THREE.CylinderGeometry(.3, .3, .05, 16), { color: 0xF7F2EA }), -.2, .6, 3.2)); g.add(at(std(new THREE.CylinderGeometry(.03, .03, .6, 6), { color: 0x2B2B2E }), -.2, .3, 3.2)); [-.65, .25].forEach((k) => g.add(at(std(new THREE.BoxGeometry(.3, .4, .3), { color: 0x8C6239 }), k, .2, 3.2))); }
+    if (sp[4] === 'flower') [0xE9A0A8, 0xF4E3A0, 0xC9A8D8].forEach((c, k) => { g.add(at(std(new THREE.CylinderGeometry(.18, .15, .3, 12), { color: 0x7A5A42 }), -.4 + k * .4, .15, 2.6)); g.add(at(std(new THREE.SphereGeometry(.2, 12, 10), { color: c }), -.4 + k * .4, .42, 2.6)); });
+    g.rotation.y = ROW; sc.add(bgs(at(g, x, .15, z))); const [fx, fz] = along(-19.6 + 1.9 * .7071, -19.6 + 1.9 * .7071, t); fronts.push(new THREE.Vector3(fx, .15 + h * .42, fz)); });
+  // 가게 앞 전구 줄 (가게에서 가게로 늘어져요)
+  for (let i = 0; i < fronts.length - 1; i++) { const a = fronts[i], b = fronts[i + 1], pts = []; for (let k = 0; k <= 10; k++) { const p = a.clone().lerp(b, k / 10); p.y -= Math.sin(k / 10 * Math.PI) * .5; pts.push(p); if (k % 2) sc.add(at(new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 6), bulbM), p.x, p.y - .1, p.z)); } sc.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireM)); }
+  if (document.fonts && document.fonts.load) document.fonts.load(`italic 40px ${SERIF}`).then(() => shopTexs.forEach(([t, sp]) => { drawShop(t.image.getContext('2d'), t.image.width, t.image.height, sp); t.needsUpdate = true; })).catch(() => {});
+  [[-30, -6, 7], [-6, -30, 6]].forEach(([x, z, r]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, r * 1.2, 8), new THREE.MeshLambertMaterial({ color: 0x5E9C6A, flatShading: true })); m.position.set(x, r * .4, z); sc.add(m); });
+  const sail = (c) => { const g = new THREE.Group(); g.add(at(std(new THREE.BoxGeometry(1.6, .3, .5), { color: 0xFFFFFF }), 0, .1, 0)); const s = new THREE.Shape(); s.moveTo(0, 0); s.lineTo(1.1, 0); s.lineTo(0, 2); s.lineTo(0, 0); const sg = std(new THREE.ShapeGeometry(s), { color: c, side: THREE.DoubleSide }); sg.position.set(-.3, .3, 0); g.add(sg); return g; };
+  [[9, 2, 0xFFFFFF], [3, 10, 0xE9536A]].forEach(([x, z, c], i) => { const b = sail(c); b.rotation.y = .8; sc.add(b); S.ticks.push((t) => { b.position.set(x + Math.sin(t * .2 + i) * 2, Math.sin(t * 1.5 + i) * .05, z + Math.cos(t * .2 + i) * 1.2); }); });
+  return { noSea: true }; }
+// 비즈니스 · 낮 도심 (고층 빌딩 · 택시 · 횡단보도 · PALLO 타워)
+const taxi = (c = 0xF2C230) => { const g = new THREE.Group(); g.add(at(std(new THREE.BoxGeometry(1.5, .4, .7), { color: c, roughness: .35 }), 0, .35, 0)); g.add(at(std(new THREE.BoxGeometry(.8, .3, .62), { color: 0x2B2F44, roughness: .2 }), -.1, .68, 0)); [-.5, .5].forEach((x) => [-.33, .33].forEach((z) => g.add(at(std(new THREE.CylinderGeometry(.14, .14, .1, 12), { color: 0x1E1A2B }), x, .14, z)))); g.children.slice(2).forEach((w) => { w.rotation.x = Math.PI / 2; }); return g; };
+function bizDowntown(S) { const sc = S.sc; ground(sc, canvasTex(128, 128, (g, W, H) => { g.fillStyle = '#C9C6C0'; g.fillRect(0, 0, W, H); g.strokeStyle = 'rgba(90,90,90,.25)'; for (let i = 0; i <= W; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, H); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(W, i); g.stroke(); } }, 40, 40));
+  strip(sc, -10.5, -10.5, 120, 5.2, 0, .01, asphaltTex(30, 2)); rowDash(sc, -10.5, -10.5, 110, 0xF7F7F8, .02, 1.8, 1, .1);
+  for (let i = -4; i <= 4; i++) { const [x, z] = along(-10.5 + .7071 * 0, -10.5, 0); const d = new THREE.Mesh(new THREE.BoxGeometry(.5, .02, 4.6), new THREE.MeshBasicMaterial({ color: 0xF7F7F8 })); const [cx, cz] = along(-10.5, -10.5, 7 + i * .9); d.rotation.y = ROW; d.position.set(cx, .025, cz); sc.add(d); }
+  [[0xF2C230, 2.6, -1.2, 0], [0xF2C230, 2, 1.2, 9], [0x3F5BA9, 1.6, 1.2, 20]].forEach(([c, v, off, ph]) => { const tx = taxi(c); tx.rotation.y = off < 0 ? ROW : ROW + Math.PI; sc.add(tx); S.ticks.push((t) => { const p = (((t * v + ph) % 60) - 30) * (off < 0 ? 1 : -1), [x, z] = along(-10.5 + off * .7071, -10.5 + off * .7071, p); tx.position.set(x, 0, z); }); });
+  const H = [9, 13, 7, 16, 10, 12, 8, 14, 9, 11];
+  H.forEach((h, i) => { const t = (i - 4.5) * 4, [x, z] = along(-18, -18, t), w = 3 + (i % 3) * .5; const b = std(new THREE.BoxGeometry(w, h, w), { map: glassTex(i % 2 ? '#6F8FB0' : '#8AA7C4', '#E2EEF6'), roughness: .2, metalness: .35 }); b.position.set(x, h / 2, z); b.rotation.y = ROW; sc.add(bgs(b));
+    const rf = std(new THREE.BoxGeometry(w + .2, .3, w + .2), { color: 0xE8E6E1 }); rf.position.set(x, h + .15, z); rf.rotation.y = ROW; sc.add(rf); });
+  const [px, pz] = along(-18, -18, -2); const ps = new THREE.Mesh(new THREE.PlaneGeometry(3, .9), new THREE.MeshBasicMaterial({ map: signTex('PALLO', '#493087', '#FFE200') })); ps.position.set(px + 1.6, 16.6, pz + 1.6); ps.rotation.y = ROW; sc.add(ps);
+  for (let t = -20; t <= 20; t += 4) { const [x, z] = along(-7.4, -7.4, t); if (Math.hypot(x, z) > 8) { sc.add(tree(x, z, 0, 1.1, 0x6DBE6A)); } const [lx, lz] = along(-13.4, -13.4, t + 2); lamp(sc, lx, lz, 0); }
+  return { noSea: true }; }
+
+
+
+// ---------- 하늘 · 조명: 카페 = 2 골든아워 (연하게) · 비즈니스 = 3 해 질 녘 ----------
+const MOOD = {
+  2: { sky: ['#F9C9A2', '#FFF3E2'], deco: 'low', hemi: [0xFFF2E2, 0xC9AE92, 1.35], sun: [0xFFD6A8, 2.0, [-14, 8, 7]], fog: 0xFAE6D2, water: ['#F9CFAE', '#B4AFC4', '#6F93B4', '255,236,200'], night: 0 },
+  3: { sky: ['#26336E', '#F2907A'], deco: 'dusk', hemi: [0xBCB6F0, 0x6A5A7A, .95], sun: [0xFF9C7E, 1.0, [-15, 4, 5]], fog: 0x8E7FA8, water: ['#EE9A86', '#5E5E9C', '#2C3A6E', '255,206,160'], night: .7 }
+};
+const litGlass = (() => { let t; return () => t || (t = canvasTex(128, 256, (g, W, H) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); for (let y = 4; y < H; y += 16) for (let x = 4; x < W; x += 16) if (rnd() > .38) { g.fillStyle = rnd() > .3 ? '#FFD978' : '#BFE4FF'; g.fillRect(x, y, 10, 10); } }, 1, 3)); })();
+function skyOf(m) { return bgTex(m.sky[0], m.sky[1], (g, W, H) => {
+  if (m.deco === 'sun') drawSun(g, W * .82, H * .1, 34);
+  if (m.deco === 'low') { const gl = g.createRadialGradient(W * .78, H * .42, 10, W * .78, H * .42, W * .75); gl.addColorStop(0, 'rgba(255,246,214,.9)'); gl.addColorStop(.25, 'rgba(255,214,170,.4)'); gl.addColorStop(1, 'rgba(255,214,170,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); g.fillStyle = '#FFF1C4'; g.beginPath(); g.arc(W * .78, H * .42, 40, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.55)'; [[.2, .16, 30], [.5, .1, 22]].forEach(([x, y, r]) => puff(g, x * W, y * H, r, 'rgba(255,214,190,.7)')); }
+  if (m.deco === 'dusk' || m.deco === 'moon') for (let i = 0; i < (m.deco === 'moon' ? 110 : 40); i++) { g.fillStyle = `rgba(255,255,255,${.35 + rnd() * .6})`; g.beginPath(); g.arc(rnd() * W, rnd() * H * (m.deco === 'moon' ? .7 : .4), .8 + rnd() * 2.2, 0, 7); g.fill(); }
+  if (m.deco === 'dusk') { const gl = g.createLinearGradient(0, H * .45, 0, H); gl.addColorStop(0, 'rgba(255,150,120,0)'); gl.addColorStop(1, 'rgba(255,190,150,.6)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); }
+  if (m.deco === 'moon') drawMoon(g, W * .8, H * .12, 36); }); }
+function applyMood(S, m, fogNear = 42, fogFar = 100) { const sc = S.sc, v = new THREE.Vector3(); let n = 0;
+  sc.background = skyOf(m); sc.fog = new THREE.Fog(m.fog, fogNear, fogFar); sc.updateMatrixWorld(true);
+  const add = [];
+  sc.traverse((o) => {
+    if (o.isHemisphereLight) { o.color.setHex(m.hemi[0]); o.groundColor.setHex(m.hemi[1]); o.intensity = m.hemi[2]; }
+    if (o.isDirectionalLight) { o.color.setHex(m.sun[0]); o.intensity = m.sun[1]; o.position.set(...m.sun[2]); }
+    if (o.userData.lampLight) o.intensity = m.night ? 7 : 0;
+    const mt = o.material; if (!o.isMesh || !mt || Array.isArray(mt)) return;
+    if (mt.map && mt.map.userData && mt.map.userData.glass && m.night) { mt.emissive = new THREE.Color(0xffffff); mt.emissiveMap = litGlass(); mt.emissiveIntensity = m.night * .95; mt.needsUpdate = true; }
+    if (o.userData.lamp) { mt.emissiveIntensity = m.night ? 1.8 : .25; if (m.night && n < 10) { o.getWorldPosition(v); add.push(v.clone()); n++; } }
+    if (o.userData.water && mt.map) { const c = mt.map.image, g = c.getContext('2d'), W = c.width, H = c.height, gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, m.water[0]); gr.addColorStop(.5, m.water[1]); gr.addColorStop(1, m.water[2]); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 80; i++) { g.fillStyle = `rgba(${m.water[3]},${.2 + rnd() * .4})`; g.fillRect(rnd() * W, rnd() * H, 8 + rnd() * 26, 2); } mt.map.needsUpdate = true; mt.metalness = m.night ? .4 : .25; } });
+  if (m.night) add.forEach((p) => { if (!sc.children.some((c) => c.isPointLight && c.userData.lampLight && c.position.distanceTo(p) < 1)) glow(sc, p.x, p.y - .2, p.z, 0xFFD27A, 7 * m.night, 7); }); }
+
 // ================= 3. 카페 · 라테 바다 · 케이크 섬 =================
 BUILD.cafe = (EL, SC) => {
-  const bg = bgTex('#D5EDE4', '#C9E5DA', (g, W, H) => {
-    const ty = H * .6;
-    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 3;
-    for (let y = 0, row = 0; y < ty; y += 36, row++) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); for (let x = (row % 2) * 36; x < W; x += 72) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 36); g.stroke(); } }
-    // 선반 + 컵 · 화분
-    const sy = H * .34; g.fillStyle = '#B97A4E'; g.strokeStyle = '#1E1A2B'; g.lineWidth = 5; g.beginPath(); g.roundRect(W * .06, sy, W * .5, 16, 5); g.fill(); g.stroke();
-    [[.1, '#FFFFFF', 46], [.19, '#E9789B', 38], [.27, '#FFE27A', 52]].forEach(([x, c, h]) => { g.fillStyle = c; g.beginPath(); g.roundRect(W * x, sy - h, 40, h, [4, 4, 10, 10]); g.fill(); g.stroke(); });
-    g.fillStyle = '#E8B77E'; g.beginPath(); g.roundRect(W * .4, sy - 44, 52, 44, [4, 4, 12, 12]); g.fill(); g.stroke();
-    g.fillStyle = '#6DBE6A'; [[-16, -70, 18], [8, -86, 20], [26, -64, 16]].forEach(([a, b, r]) => { g.beginPath(); g.ellipse(W * .4 + 26 + a, sy + b, r * .6, r, a / 40, 0, 7); g.fill(); g.stroke(); });
-    // 펜던트 조명
-    [[.7, .2], [.9, .14]].forEach(([x, y]) => { const X = W * x, Y = H * y; g.strokeStyle = '#1E1A2B'; g.lineWidth = 4; g.beginPath(); g.moveTo(X, 0); g.lineTo(X, Y - 30); g.stroke();
-      const gl = g.createRadialGradient(X, Y + 10, 6, X, Y + 10, 110); gl.addColorStop(0, 'rgba(255,230,140,.75)'); gl.addColorStop(1, 'rgba(255,230,140,0)'); g.fillStyle = gl; g.beginPath(); g.arc(X, Y + 10, 110, 0, 7); g.fill();
-      g.fillStyle = '#138A9E'; g.lineWidth = 5; g.beginPath(); g.moveTo(X - 46, Y + 4); g.quadraticCurveTo(X - 40, Y - 34, X, Y - 34); g.quadraticCurveTo(X + 40, Y - 34, X + 46, Y + 4); g.closePath(); g.fill(); g.stroke();
-      g.fillStyle = '#FFF3C4'; g.beginPath(); g.arc(X, Y + 10, 12, 0, 7); g.fill(); g.stroke(); });
-    // 나무 테이블
-    g.fillStyle = '#DDAA78'; g.fillRect(0, ty, W, H - ty); g.fillStyle = '#B97A4E'; g.fillRect(0, ty, W, 18); g.fillStyle = '#1E1A2B'; g.fillRect(0, ty - 3, W, 5);
-    g.strokeStyle = 'rgba(150,95,55,.45)'; g.lineWidth = 3; for (let y = ty + 70; y < H; y += 74) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-    g.strokeStyle = 'rgba(150,95,55,.25)'; g.lineWidth = 2; for (let i = 0; i < 14; i++) { const x = rnd() * W, y = ty + 30 + rnd() * (H - ty - 40); g.beginPath(); g.ellipse(x, y, 30 + rnd() * 30, 6, 0, 0, 7); g.stroke(); }
-  });
-  const S = stage(EL, { half: 6.6, pos: CAM, target: new THREE.Vector3(.2, 1.4, -.2), bg }), sc = S.sc;
+  // 뒤 배경: 멜버른 야라 강변 (cafeRiver)
+  const S = stage(EL, { half: 8.8, pos: CAM, target: new THREE.Vector3(-1.0, 6.81, -1.4), bg: bgTex('#F3A27A', '#FCE6C8', (g, W, H) => { const gl = g.createRadialGradient(W * .7, H * .35, 10, W * .7, H * .35, W * .6); gl.addColorStop(0, 'rgba(255,236,170,.9)'); gl.addColorStop(1, 'rgba(255,236,170,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); }), az: [.2, 1.2] }), sc = S.sc;
+  cafeRiver(S);
   // 라테 잔 받침 + 라테
   const cup = at(mesh(new THREE.CylinderGeometry(7.6, 7.0, 1.2, 72), 0xffffff, { line: .07 }), 0, -.6, 0); cup.userData.bg = 1; sc.add(cup);
   const lat = at(flat(new THREE.CircleGeometry(7.1, 72), 0xC99A6E, 1), 0, .01, 0); lat.userData.bg = 1; sc.add(lat);
@@ -14698,18 +15239,16 @@ BUILD.cafe = (EL, SC) => {
   const steam = [0, 1].map((i) => { const s = at(mesh(new THREE.SphereGeometry(.16, 12, 10), 0xffffff, { line: .02, cast: false }), -3.2 + (i ? .2 : -.15), TOP + 1.5, -2.6); sc.add(s); return s; });
   S.ticks.push((t) => steam.forEach((s, i) => { const k = (t * .6 + i * .5) % 1; s.position.y = TOP + 1.4 + k * 1.2; s.scale.setScalar(1 - k * .6); }));
   [[-3.6, 1.6], [3.6, 2.6]].forEach(([x, z]) => sc.add(tree(x, z, TOP, .75, 0x8FCB7E)));
+  applyMood(S, MOOD[2], 34, 62);
   return S;
 };
 
 // ================= 4. 캠퍼스 · 하늘에 뜬 섬 =================
 BUILD.campus = (EL, SC) => {
-  const bg = bgTex('#8FD2F2', '#FFE8C8', (g, W, H) => {
-    ['#F7A8B8', '#FFD27A', '#C3E8A6', '#A8D8F5'].forEach((c, i) => { g.strokeStyle = c; g.globalAlpha = .6; g.lineWidth = 24; g.beginPath(); g.arc(W * .5, H * .66, W * .62 - i * 24, Math.PI, 0); g.stroke(); }); g.globalAlpha = 1;
-    [[.12, .3, 26], [.88, .42, 20], [.7, .2, 14]].forEach(([x, y, r]) => { const X = x * W, Y = y * H; g.fillStyle = 'rgba(96,150,130,.35)'; g.beginPath(); g.moveTo(X - r * 1.6, Y); g.quadraticCurveTo(X, Y - r * .9, X + r * 1.6, Y); g.lineTo(X + r * .4, Y + r * 1.5); g.lineTo(X - r * .5, Y + r * 1.1); g.closePath(); g.fill(); });
-    g.strokeStyle = '#1E1A2B'; g.lineWidth = 4; g.lineCap = 'round'; [[.34, .13, 1], [.42, .17, .8], [.58, .1, .9]].forEach(([x, y, k]) => { const X = x * W, Y = y * H, s = 14 * k; g.beginPath(); g.moveTo(X - s, Y - s * .2); g.quadraticCurveTo(X - s * .45, Y - s * .75, X, Y); g.quadraticCurveTo(X + s * .45, Y - s * .75, X + s, Y - s * .2); g.stroke(); });
-    [[.8, '#F3F8FB', 46], [.86, '#FFFFFF', 54], [.93, '#FFFFFF', 62]].forEach(([y, c, r], k) => { for (let x = -40 + k * 30; x < W + 60; x += r * 1.5) puff(g, x, y * H + (Math.sin(x * .03) * 10), r, c); });
-  });
-  const S = stage(EL, { half: 7.0, pos: CAM, target: new THREE.Vector3(-.15, .4, .1), bg }), sc = S.sc;
+  // 섬은 잔디 위에 놓여요 · 뒤 배경: 기둥 도서관 (uniLibrary)
+  const bg = bgTex('#86C6EE', '#F1F7FA', (g, W, H) => { const gl = g.createRadialGradient(W * .18, H * .06, 10, W * .18, H * .06, W * .7); gl.addColorStop(0, 'rgba(255,248,220,.8)'); gl.addColorStop(1, 'rgba(255,248,220,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); });
+  const S = stage(EL, { half: 9.0, pos: CAM, target: new THREE.Vector3(-.9, 4.86, -.7), bg, az: [.2, 1.2], fog: new THREE.Fog(0xE6F1F8, 34, 80) }), sc = S.sc;
+  uniLibrary(S); const V = { ground: true };
   // 섬 아래 바위 (뒤집힌 원뿔, 울퉁불퉁)
   const cg = new THREE.ConeGeometry(5.6, 5.2, 11, 4); cg.rotateX(Math.PI); const cp = cg.attributes.position;
   for (let i = 0; i < cp.count; i++) { const y = cp.getY(i), k = 1 + (Math.sin(i * 1.7) * .08); if (y < 2.5) { cp.setX(i, cp.getX(i) * k); cp.setZ(i, cp.getZ(i) * k * 1.1); } } cg.computeVertexNormals();
@@ -14717,25 +15256,57 @@ BUILD.campus = (EL, SC) => {
   layer(sc, SHAPES.peanut, 5.7, .8, -.5, 0xC08A5A, { sz: 1.05 }); layer(sc, SHAPES.peanut, 5.5, .45, .3, 0x9ED48A, { sz: 1.05 });
   const TOP = .9;
   // 작은 돌섬들 (둥실둥실)
-  const rocks = [[-7, -1, 3.2, .9], [6.6, 1.4, -3.4, .7], [5.8, -2.6, 4.2, .6]].map(([x, y, z, s]) => { const g = new THREE.Group(); const c2 = new THREE.ConeGeometry(1.2 * s, 1.6 * s, 7); c2.rotateX(Math.PI); g.add(at(mesh(c2, 0x9C7A5C, { line: .04 }), 0, -.8 * s, 0)); g.add(at(mesh(new THREE.CylinderGeometry(1.25 * s, 1.2 * s, .35 * s, 7), 0x9ED48A, { line: .04 }), 0, .1, 0)); g.add(tree(0, 0, .25 * s, .7 * s)); sc.add(at(g, x, y, z)); return [g, y]; });
+  const rocks = (V.ground ? [] : [[-7, -1, 3.2, .9], [6.6, 1.4, -3.4, .7], [5.8, -2.6, 4.2, .6]]).map(([x, y, z, s]) => { const g = new THREE.Group(); const c2 = new THREE.ConeGeometry(1.2 * s, 1.6 * s, 7); c2.rotateX(Math.PI); g.add(at(mesh(c2, 0x9C7A5C, { line: .04 }), 0, -.8 * s, 0)); g.add(at(mesh(new THREE.CylinderGeometry(1.25 * s, 1.2 * s, .35 * s, 7), 0x9ED48A, { line: .04 }), 0, .1, 0)); g.add(tree(0, 0, .25 * s, .7 * s)); sc.add(at(g, x, y, z)); return [g, y]; });
   S.ticks.push((t) => rocks.forEach(([g, y], i) => { g.position.y = y + Math.sin(t * 1.3 + i * 2) * .25; }));
   const info = stops(S, [[-3.6, 3.0], [.2, 3.8], [3.6, 2.2], [3.0, -.8], [-.2, -1.0], [-3.4, -.4]], TOP, SC);
-  // 학교 + 시계탑
-  const sch = new THREE.Group(); sch.add(at(mesh(new THREE.BoxGeometry(3.6, 1.5, 1.4), 0xF2D8B4), 0, .75, 0));
-  const rf = new THREE.CylinderGeometry(.9, .9, 3.8, 3); rf.rotateZ(Math.PI / 2); const roof = mesh(rf, 0xC23B3B, { line: .04 }); roof.position.y = 1.72; roof.scale.set(1, .7, 1); roof.rotation.x = Math.PI / 6; sch.add(roof);
-  sch.add(at(mesh(new THREE.BoxGeometry(1.0, 3.2, 1.0), 0xF7E6C8), 0, 1.6, .2)); sch.add(at(mesh(new THREE.ConeGeometry(.78, .9, 4), 0x3F5BA9, { line: .03 }), 0, 3.65, .2)); sch.children[sch.children.length - 1].rotation.y = Math.PI / 4;
-  const clk = new THREE.Mesh(new THREE.CircleGeometry(.36, 32), new THREE.MeshBasicMaterial({ color: 0xffffff })); clk.position.set(0, 2.7, .71); sch.add(clk);
-  const hand = new THREE.Mesh(new THREE.BoxGeometry(.04, .26, .01), new THREE.MeshBasicMaterial({ color: INK })); hand.geometry.translate(0, .12, 0); hand.position.set(0, 2.7, .73); sch.add(hand); S.ticks.push((t) => { hand.rotation.z = -t; });
-  for (const x of [-1.3, -.8, .8, 1.3]) sch.add(at(new THREE.Mesh(new THREE.BoxGeometry(.3, .4, .02), new THREE.MeshBasicMaterial({ color: 0xBFE4EC })), x, .9, .71));
+  // 학교 본관: 레드브릭 칼리지풍 · 가운데 시계탑 · 양옆 날개동 · 아치 현관과 기둥 · 계단 · 슬레이트 지붕 · 담쟁이
+  const sch = new THREE.Group(), BR = 0xB4553F, ST = 0xEADFC8, SL = 0x4A5566;
+  const archWin = (w, h, lit) => { const c = document.createElement('canvas'); c.width = 64; c.height = 96; const g = c.getContext('2d'); g.fillStyle = '#EADFC8'; g.beginPath(); g.moveTo(0, 96); g.lineTo(0, 32); g.arc(32, 32, 32, Math.PI, 0); g.lineTo(64, 96); g.fill();
+    g.fillStyle = lit ? '#FFD98A' : '#5F7C94'; g.beginPath(); g.moveTo(8, 90); g.lineTo(8, 34); g.arc(32, 34, 24, Math.PI, 0); g.lineTo(56, 90); g.fill(); g.fillStyle = '#EADFC8'; g.fillRect(30, 10, 4, 80); g.fillRect(8, 52, 48, 4);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, transparent: true })); };
+  const slate = (w, d, h, x, y, z) => { const r = new THREE.CylinderGeometry(d * .62, d * .62, w, 3); r.rotateZ(Math.PI / 2); const m = mesh(r, SL, { line: .03 }); m.scale.set(1, h / (d * .62) * .6, 1); m.position.set(x, y, z); return m; };
+  // 날개동 (양옆)
+  [-1.45, 1.45].forEach((x) => { sch.add(at(mesh(new THREE.BoxGeometry(1.3, 1.2, 1.2), BR), x, .6, -.05)); sch.add(at(mesh(new THREE.BoxGeometry(1.36, .1, 1.26), ST, { line: .02 }), x, 1.22, -.05)); sch.add(slate(1.3, 1.2, .5, x, 1.48, -.05));
+    [-.32, .32].forEach((k) => { const w = archWin(.28, .44, k > 0); w.position.set(x + k, .62, .56); sch.add(w); });
+    const dm = new THREE.Group(); dm.add(at(mesh(new THREE.BoxGeometry(.3, .3, .3), ST, { line: .02 }), 0, 0, 0)); dm.add(at(mesh(new THREE.ConeGeometry(.24, .3, 4), SL, { line: .02 }), 0, .3, 0)); dm.children[1].rotation.y = Math.PI / 4; sch.add(at(dm, x, 1.62, .25)); });
+  // 본관 (가운데) + 돌 띠
+  sch.add(at(mesh(new THREE.BoxGeometry(1.7, 1.75, 1.45), BR), 0, .875, .05));
+  [.04, .9, 1.78].forEach((y) => sch.add(at(mesh(new THREE.BoxGeometry(1.78, .09, 1.52), ST, { line: .02 }), 0, y, .05)));
+  [-.55, .55].forEach((k) => { const w = archWin(.3, .48, true); w.position.set(k, 1.3, .79); sch.add(w); });
+  // 시계탑
+  sch.add(at(mesh(new THREE.BoxGeometry(.95, 1.5, .95), BR), 0, 2.55, 0)); sch.add(at(mesh(new THREE.BoxGeometry(1.05, .12, 1.05), ST, { line: .02 }), 0, 3.32, 0));
+  [-.42, .42].forEach((x) => [-.42, .42].forEach((z) => sch.add(at(mesh(new THREE.BoxGeometry(.16, 1.6, .16), ST, { line: .02 }), x, 2.6, z))));
+  const clkF = new THREE.Mesh(new THREE.CircleGeometry(.3, 32), new THREE.MeshBasicMaterial({ color: 0xFBF6EA })); clkF.position.set(0, 2.75, .48); sch.add(clkF); const clkR = new THREE.Mesh(new THREE.RingGeometry(.3, .35, 32), new THREE.MeshBasicMaterial({ color: 0xC9A24A })); clkR.position.set(0, 2.75, .481); sch.add(clkR);
+  const hand = new THREE.Mesh(new THREE.BoxGeometry(.035, .22, .01), new THREE.MeshBasicMaterial({ color: INK })); hand.geometry.translate(0, .1, 0); hand.position.set(0, 2.75, .49); sch.add(hand); const hand2 = new THREE.Mesh(new THREE.BoxGeometry(.035, .15, .01), new THREE.MeshBasicMaterial({ color: INK })); hand2.geometry.translate(0, .07, 0); hand2.position.set(0, 2.75, .49); sch.add(hand2); S.ticks.push((t) => { hand.rotation.z = -t * .5; hand2.rotation.z = -t * .04; });
+  const bell = archWin(.34, .42, false); bell.position.set(0, 2.15, .48); sch.add(bell);
+  const spire = mesh(new THREE.ConeGeometry(.72, 1.25, 4), SL, { line: .03 }); spire.rotation.y = Math.PI / 4; spire.position.set(0, 4.0, 0); sch.add(spire);
+  [-.42, .42].forEach((x) => [-.42, .42].forEach((z) => sch.add(at(mesh(new THREE.ConeGeometry(.08, .4, 6), ST, { line: .015 }), x, 3.58, z))));
+  sch.add(at(mesh(new THREE.SphereGeometry(.09, 12, 10), 0xE8C070, { line: .015 }), 0, 4.68, 0)); sch.add(at(mesh(new THREE.CylinderGeometry(.02, .02, .35, 6), 0xE8C070, { line: 0 }), 0, 4.88, 0));
+  // 아치 현관: 기둥 2개 · 박공 · 계단
+  const por = new THREE.Group(); [-.42, .42].forEach((x) => por.add(at(mesh(new THREE.CylinderGeometry(.07, .08, .78, 12), 0xF7F2EA, { line: .02 }), x, .44, 0)));
+  por.add(at(mesh(new THREE.BoxGeometry(1.05, .12, .42), ST, { line: .02 }), 0, .86, 0)); const pd = new THREE.Shape(); pd.moveTo(-.55, 0); pd.lineTo(.55, 0); pd.lineTo(0, .3); pd.lineTo(-.55, 0); const pdm = mesh(new THREE.ExtrudeGeometry(pd, { depth: .4, bevelEnabled: false }), ST, { line: .02 }); pdm.position.set(0, .92, -.2); por.add(pdm);
+  const door = archWin(.5, .62, true); door.position.set(0, .4, -.18); por.add(door);
+  [0, 1, 2].forEach((k) => por.add(at(mesh(new THREE.BoxGeometry(1.2 - k * .12, .06, .36 - k * .08), ST, { line: .015 }), 0, .03 + k * .06, .12 - k * .04)));
+  sch.add(at(por, 0, 0, .95));
+  // 담쟁이 (날개동 모서리)
+  [[-2.06, .55], [2.06, .55]].forEach(([x, z]) => { for (let k = 0; k < 6; k++) { const iv = mesh(new THREE.SphereGeometry(.14, 8, 6), k % 2 ? 0x4E8A4E : 0x5E9A56, { line: 0 }); iv.scale.set(.5, 1, 1); iv.position.set(x, .15 + k * .17, z - (k % 3) * .25); sch.add(iv); } });
+  // PALLO UNIVERSITY 현판 (건물 정면)
+  const plaque = (w, h, big, small) => canvasTex(1024, Math.round(1024 * h / w), (g, W, H) => { g.fillStyle = '#23305E'; g.beginPath(); g.roundRect(6, 6, W - 12, H - 12, 18); g.fill(); g.lineWidth = 10; g.strokeStyle = '#D9B45A'; g.stroke();
+    g.fillStyle = '#F3D98A'; g.textAlign = 'center'; g.textBaseline = 'middle'; let fs = Math.round(H * (small ? .4 : .5)); g.font = `800 ${fs}px Lexend, sans-serif`; while (g.measureText(big).width > W * .86) { fs -= 2; g.font = `800 ${fs}px Lexend, sans-serif`; } g.fillText(big, W / 2, H * (small ? .42 : .52)); if (small) { g.font = `600 ${Math.round(H * .17)}px Lexend, sans-serif`; g.fillStyle = '#C9D2F0'; g.fillText(small, W / 2, H * .78); } });
+  const sg = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .3), new THREE.MeshBasicMaterial({ map: plaque(1.6, .3, 'PALLO UNIVERSITY') })); sg.position.set(0, 1.97, .88); sch.add(sg); sch.add(at(new THREE.Mesh(new THREE.BoxGeometry(1.68, .36, .1), new THREE.MeshBasicMaterial({ color: 0x23305E })), 0, 1.97, .79));
   sc.add(at(sch, .6, TOP, -3.6));
+  // 정문: 돌기둥 두 개 + 현판 (카메라 쪽을 봐요)
+  const gate = new THREE.Group(); [-1.15, 1.15].forEach((k) => { gate.add(at(mesh(new THREE.BoxGeometry(.42, 1.9, .42), 0xD9CDB8, { line: .03 }), k, .95, 0)); gate.add(at(mesh(new THREE.BoxGeometry(.56, .16, .56), 0xBFB29C, { line: .02 }), k, 1.98, 0)); });
+  gate.add(at(mesh(new THREE.BoxGeometry(2.9, .5, .3), 0x23305E, { line: .03 }), 0, 1.75, 0));
+  const gp = new THREE.Mesh(new THREE.PlaneGeometry(2.7, .42), new THREE.MeshBasicMaterial({ map: plaque(2.7, .42, 'PALLO UNIVERSITY') })); gp.position.set(0, 1.75, .25); gate.add(gp);
+  gate.rotation.y = .72; sc.add(at(gate, -4.5, TOP, 1.2));
+  // 학교 깃발 (P 문장)
+  const crest = canvasTex(256, 160, (g, W, H) => { g.fillStyle = '#23305E'; g.fillRect(0, 0, W, H); g.fillStyle = '#F3D98A'; g.beginPath(); g.moveTo(W * .5, H * .12); g.lineTo(W * .7, H * .22); g.lineTo(W * .68, H * .62); g.lineTo(W * .5, H * .9); g.lineTo(W * .32, H * .62); g.lineTo(W * .3, H * .22); g.closePath(); g.fill(); g.fillStyle = '#23305E'; g.font = '900 64px Lexend, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('P', W * .5, H * .5); });
   // 운동장 트랙
   const trk = mesh(new THREE.TorusGeometry(1.2, .18, 8, 40), 0xD86A4A, { line: .03 }); trk.rotation.x = Math.PI / 2; trk.scale.set(1.3, 1, .4); trk.position.set(3.4, TOP + .02, -3.2); sc.add(trk);
   sc.add(at(flat(new THREE.CircleGeometry(1.1, 32), 0x7FC46F, 1), 3.4, TOP + .03, -3.2)); sc.children[sc.children.length - 1].scale.set(1.3, .9, 1);
-  [[-1.6, 1.4], [1.8, 1.0], [-4.4, 1.2], [-2.6, -2.8], [4.4, .8]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .85, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
-  sc.add(flag(-1.4, TOP, -2.6, 0xFFE200));
-  // 연
-  const kite = new THREE.Group(); const kg = new THREE.Shape(); kg.moveTo(0, .6); kg.lineTo(.4, 0); kg.lineTo(0, -.6); kg.lineTo(-.4, 0); kg.lineTo(0, .6);
-  kite.add(mesh(new THREE.ShapeGeometry(kg), 0xE9789B, { line: .03 })); kite.position.set(-4.6, 6.2, -3); kite.rotation.y = .8; sc.add(kite); S.ticks.push((t) => { kite.position.y = 6.2 + Math.sin(t * 1.6) * .3; kite.rotation.z = Math.sin(t * 1.6) * .2; });
+  [[-1.6, 1.4], [1.8, 1.0], [-2.6, -2.8], [4.4, .8]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .85, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
+  const fl = flag(-2.6, TOP, -1.2, 0x23305E); const fc = new THREE.Mesh(new THREE.PlaneGeometry(.78, .43), new THREE.MeshBasicMaterial({ map: crest })); fc.position.set(.42, 1.55, .03); fl.add(fc); fl.rotation.y = .72; sc.add(fl);
   sc.add(cloud(5.6, 5.2, -1, .9));
   return S;
 };
@@ -14743,7 +15314,10 @@ BUILD.campus = (EL, SC) => {
 // 앱에서 부르는 곳: PALLO3D.mount(#stWorld, 'travel', [[이름, 아이콘, 'done'|'cur'|'open'|'soon'], ...], (장면 번호) => {})
 window.PALLO3D = { mount(el, id, SC, onOpen) {
   OPEN = onOpen; const f = BUILD[id] || BUILD.travel;
-  const go = () => { el.innerHTML = ''; f(el, SC); };
+  const go = () => { const sw = window.__w3dSwap; window.__w3dSwap = null; el.innerHTML = ''; const S = f(el, SC); el.dataset.map = id; if (S && S.draw) S.draw();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cv = el.querySelector('canvas'); if (cv) cv.classList.add('m3-in');
+    if (sw) { const im = new Image(); im.src = sw.src; im.className = 'm3-out'; im.style.setProperty('--dx', (-sw.dir * 28) + '%'); el.appendChild(im); im.addEventListener('animationend', () => im.parentNode && im.parentNode.removeChild(im)); if (cv) cv.style.setProperty('--dx', (sw.dir * 18) + '%'); } };
   if (el.clientWidth > 0) go(); else { const ro = new ResizeObserver(() => { if (el.clientWidth > 0) { ro.disconnect(); go(); } }); ro.observe(el); }
 } };
 window.dispatchEvent(new Event('pallo3d-ready'));
