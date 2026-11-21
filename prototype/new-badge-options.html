@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>새 맵 표시 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+:root { --ink: #1E1A2B; --white: #fff; --yellow: #FFE200; --cream: #FBF6EA; --f-display: 'Unbounded', 'Noto Sans KR', sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #E9E2D2; font-family: 'Noto Sans KR', sans-serif; color: var(--ink); padding: 18px; display: grid; grid-template-columns: repeat(4, 360px); gap: 18px; }
+.ph { background: var(--cream); border-radius: 24px; padding: 18px 16px 22px; overflow: hidden; }
+.lab { font-family: var(--f-display); font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+.desc { font-size: 13px; font-weight: 700; color: #6F6880; margin-bottom: 16px; }
+h1 { font-size: 26px; font-weight: 900; margin: 0 0 12px; }
+.tabs { display: flex; border-bottom: 2px solid #E2D9C7; }
+.tabs b { flex: 1; position: relative; height: 42px; font-size: 17px; font-weight: 900; color: #A39C8E; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.tabs b.on { color: var(--ink); }
+.tabs b.on:after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -2px; height: 4px; border-radius: 2px; background: var(--ink); }
+.chips { display: flex; gap: 7px; margin: 14px -16px 0; padding: 0 16px; overflow: visible; flex-wrap: nowrap; }
+.chips span { flex: none; position: relative; height: 34px; padding: 0 14px; border-radius: 17px; border: 2px solid var(--ink); background: var(--white); font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.chips span.on { background: var(--ink); color: var(--white); }
+.chips span.soon { border-style: dashed; border-color: #9A93A6; color: #8C8597; background: transparent; }
+.map { margin-top: 14px; height: 150px; border-radius: 22px; border: 2px solid var(--ink); background: linear-gradient(#BFE4EC, #8FD3E8); }
+/* A · NEW 글자 */
+.A .nw { font-family: var(--f-display); font-size: 9px; font-weight: 800; letter-spacing: .02em; color: #E0486E; }
+.A .chips .on .nw { color: var(--yellow); }
+.A .tabs .nw { font-size: 10px; align-self: flex-start; margin-top: 8px; }
+/* B · N 배지 (모서리) */
+.B .n { position: absolute; top: -7px; right: -5px; width: 17px; height: 17px; border-radius: 50%; background: #F0435E; color: #fff; font-family: var(--f-display); font-size: 9px; font-weight: 800; display: grid; place-items: center; border: 2px solid var(--cream); }
+.B .tabs .n { position: static; border: 0; margin-top: -10px; }
+/* C · 말풍선 */
+.C .chips { margin-top: 44px; }
+.C .tip { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); border-radius: 10px; padding: 3px 9px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.C .tip:after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border: 6px solid transparent; border-top-color: var(--ink); }
+.C .tip:before { content: ""; position: absolute; top: calc(100% - 1px); left: 50%; margin-left: -4px; border: 4px solid transparent; border-top-color: var(--yellow); z-index: 1; }
+/* D · 노란 칩 + 반짝 */
+.D .chips span.fresh { background: var(--yellow); }
+.D .chips span.fresh svg { flex: none; }
+.D .tabs svg { margin-top: -8px; }
+</style></head><body>
+
+<div class="ph A"><div class="lab">A</div><div class="desc">NEW 글자 · 칩 안, 탭 옆</div>
+  <h1>라이브러리</h1>
+  <div class="tabs"><b>스터디 맵</b><b class="on">상황 맵<i class="nw">NEW</i></b></div>
+  <div class="chips"><span class="on">여행</span><span>비즈니스</span><span>카페<i class="nw">NEW</i></span><span>캠퍼스</span><span class="soon">새 맵 · 준비 중</span></div>
+  <div class="map"></div></div>
+
+<div class="ph B"><div class="lab">B</div><div class="desc">N 배지 · 칩 오른쪽 위 모서리</div>
+  <h1>라이브러리</h1>
+  <div class="tabs"><b>스터디 맵</b><b class="on">상황 맵<i class="n">N</i></b></div>
+  <div class="chips"><span class="on">여행</span><span>비즈니스</span><span>카페<i class="n">N</i></span><span>캠퍼스</span><span class="soon">새 맵 · 준비 중</span></div>
+  <div class="map"></div></div>
+
+<div class="ph C"><div class="lab">C</div><div class="desc">말풍선 "새 맵" · 칩 위에 떠 있음</div>
+  <h1>라이브러리</h1>
+  <div class="tabs"><b>스터디 맵</b><b class="on">상황 맵</b></div>
+  <div class="chips"><span class="on">여행</span><span>비즈니스</span><span>카페<i class="tip">새 맵</i></span><span>캠퍼스</span><span class="soon">새 맵 · 준비 중</span></div>
+  <div class="map"></div></div>
+
+<div class="ph D"><div class="lab">D</div><div class="desc">칩을 노랗게 + 반짝 아이콘</div>
+  <h1>라이브러리</h1>
+  <div class="tabs"><b>스터디 맵</b><b class="on">상황 맵<svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 1c.8 5.6 3.4 8.2 9 9-5.6.8-8.2 3.4-9 9-.8-5.6-3.4-8.2-9-9 5.6-.8 8.2-3.4 9-9z" fill="#F0B400" stroke="#1E1A2B" stroke-width="1.6" stroke-linejoin="round"/></svg></b></div>
+  <div class="chips"><span class="on">여행</span><span>비즈니스</span><span class="fresh"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 1c.8 5.6 3.4 8.2 9 9-5.6.8-8.2 3.4-9 9-.8-5.6-3.4-8.2-9-9 5.6-.8 8.2-3.4 9-9z" fill="#fff" stroke="#1E1A2B" stroke-width="2" stroke-linejoin="round"/></svg>카페</span><span>캠퍼스</span><span class="soon">새 맵 · 준비 중</span></div>
+  <div class="map"></div></div>
+</body></html>
