@@ -14728,7 +14728,7 @@ const gum = (x, z, y = 0, s = 1) => { const g = new THREE.Group(); const tr = st
 // ===== 카페 · 멜버른 야라 강변 (보드워크 · 아치 다리를 건너는 트램 · 강가 역 · 유람선 · 노을) =====
 function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   const deck = std(new THREE.BoxGeometry(70, .9, 40), { map: woodTex(16, 9, 44), roughness: .7 }, { cast: false }); deck.rotation.y = ROW; deck.position.set(4.94, FL - .45, 4.94); sc.add(bgs(deck));
-  const bank = std(new THREE.BoxGeometry(70, .9, 40), { map: cobbleTex(14, 8), roughness: .85 }, { cast: false }); bank.rotation.y = ROW; bank.position.set(-30.5, FL - .45, -30.5); sc.add(bgs(bank));
+  const bank = std(new THREE.BoxGeometry(90, .9, 22), { map: cobbleTex(18, 4), roughness: .85 }, { cast: false }); bank.rotation.y = ROW; bank.position.set(-24.0, FL - .45, -24.0); sc.add(bgs(bank));
   const wt = canvasTex(512, 256, (g, W, H) => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#E99A7A'); gr.addColorStop(.5, '#5E8FB0'); gr.addColorStop(1, '#3F6F92'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(255,${220 + rnd() * 35},${170 + rnd() * 60},${.25 + rnd() * .35})`; g.fillRect(rnd() * W, rnd() * H, 10 + rnd() * 26, 2); } }, 6, 1);
   const river = new THREE.Mesh(new THREE.PlaneGeometry(80, 10), new THREE.MeshStandardMaterial({ map: wt, roughness: .08, metalness: .25 })); river.userData.water = 1; river.rotation.x = -Math.PI / 2; river.rotation.z = ROW; river.position.set(-12.9, FL - .5, -12.9); sc.add(bgs(river)); S.ticks.push((t) => { wt.offset.x = t * .015; });
@@ -14744,40 +14744,40 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   [-3, -.5, 2.5].forEach((k, i) => sc.add(person(bx + k * .7071 + (i % 2 ? .4 : -.4) * .7071, bz + k * .7071 - (i % 2 ? .4 : -.4) * .7071, [0x1F4E9C, 0xE0483F, 0xF2C230][i], 0, FL + .65)));
   // 건너편: 강가 역 (돔 · 시계) + 시티
   station(sc, -19.5, FL - .4, -19.5, ROW, 1.05);
-  // 역 뒤 풍경 시안 (?cafe=N): 1 열기구 · 2 관람차 · 3 산맥과 앵무새 · 4 불꽃놀이
+  // 역 뒤 멜버른 랜드마크 시안 (?cafe=N): 1 아츠센터 첨탑 · 2 세인트폴 성당 · 3 흐린 스카이라인 · 4 페더레이션 스퀘어
   const BK = Math.min(4, Math.max(1, +(new URLSearchParams(location.search).get('cafe') || 1)));
-  if (BK !== 3) for (let i = -9; i <= 9; i++) { const [x, z] = along(-23.5 - (i % 2) * 1.6, -23.5 - (i % 2) * 1.6, i * 2.3); sc.add(i % 3 ? tree(x, z, FL - .4, 2.2 + (i % 2) * .5, [0x5E9A5E, 0x6FAE6A, 0x4E8A56][(i + 9) % 3]) : gum(x, z, FL - .4, 1.8)); }
-  if (BK === 1) {
-    const balloon = (x, y, z, c1, c2, sz = 1) => { const b = new THREE.Group(), tx = canvasTex(256, 128, (gg, W, H) => { for (let i = 0; i < 8; i++) { gg.fillStyle = i % 2 ? c1 : c2; gg.fillRect(i * W / 8, 0, W / 8, H); } });
-      const env = std(new THREE.SphereGeometry(1, 24, 18), { map: tx, roughness: .6 }); env.scale.set(1, 1.2, 1); b.add(env); b.add(at(std(new THREE.CylinderGeometry(.25, .2, .3, 12), { color: 0x8C6239 }), 0, -1.75, 0));
-      [[-.2, -.2], [.2, -.2], [-.2, .2], [.2, .2]].forEach(([a, c]) => b.add(at(new THREE.Mesh(new THREE.CylinderGeometry(.01, .01, .7, 4), new THREE.MeshBasicMaterial({ color: 0x3A2A1E })), a, -1.3, c)));
-      b.scale.setScalar(sz); b.position.set(x, y, z); sc.add(b); const ph = x * .7; S.ticks.push((t) => { b.position.y = y + Math.sin(t * .5 + ph) * .4; b.position.x = x + Math.sin(t * .08 + ph) * 1.2; }); };
-    [[9, 4.6, 1.1, '#E9536A', '#FFE27A'], [13, 6.4, .9, '#3F5BA9', '#F7F4EE'], [5.5, 7.4, .75, '#69BE5F', '#FFE27A'], [-12, 6.8, .8, '#F2A33A', '#F7F4EE']].forEach(([t, y, sz, c1, c2]) => { const [x, z] = along(-21, -21, t); balloon(x, y, z, c1, c2, sz); });
-  }
-  if (BK === 2) { // 강변 대형 관람차 (천천히 돌아요)
-    const wh = new THREE.Group(), steel = { color: 0xF2F2F4, metalness: .5, roughness: .35 }, R = 4.2, wheel = new THREE.Group();
-    wheel.add(std(new THREE.TorusGeometry(R, .09, 8, 64), steel)); wheel.add(std(new THREE.TorusGeometry(R * .93, .05, 6, 64), steel));
-    for (let i = 0; i < 16; i++) { const sp = std(new THREE.BoxGeometry(.05, R, .05), steel); sp.geometry.translate(0, R / 2, 0); sp.rotation.z = i / 16 * TAU; wheel.add(sp); }
-    wheel.add(std(new THREE.CylinderGeometry(.35, .35, .5, 16), { color: 0x9AA0A8, metalness: .6 })); wheel.children[wheel.children.length - 1].rotation.x = Math.PI / 2;
-    const cabs = []; for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, c = std(new THREE.SphereGeometry(.32, 14, 10), { color: [0xF7F7F8, 0xD0798E, 0x8FD3E8, 0xFFE27A][i % 4], roughness: .2 }); c.scale.set(1, .8, 1); c.position.set(Math.cos(a) * R, Math.sin(a) * R, 0); wheel.add(c); cabs.push(c); }
-    wheel.position.y = R + 1.1; wh.add(wheel);
-    [[-1.6, .5], [1.6, .5], [-1.6, -.5], [1.6, -.5]].forEach(([x, z]) => { const l = std(new THREE.CylinderGeometry(.08, .12, R + 1.6, 8), steel); l.position.set(x * .5, (R + 1.1) / 2, z); l.rotation.z = -x * .16; l.rotation.x = z * .12; wh.add(l); });
-    wh.rotation.y = ROW; const [wx, wz] = along(-22, -22, 10.5); wh.position.set(wx, FL - .4, wz); sc.add(bgs(wh));
-    S.ticks.push((t) => { wheel.rotation.z = t * .08; cabs.forEach((c) => { c.rotation.z = -wheel.rotation.z; }); });
-  }
-  if (BK === 3) { // 유칼립투스 숲 · 무지개 앵무새 떼
-    for (let i = -10; i <= 10; i++) { const [x, z] = along(-23.5 - (i % 3) * 1.4, -23.5 - (i % 3) * 1.4, i * 2.1); sc.add(gum(x, z, FL - .4, 1.6 + (i % 2) * .5)); }
-    const birdM = [[0x3FA34D, 0xE0483F], [0x3FA34D, 0x3F5BA9], [0xF7F7F8, 0xF2C230]], flock = [];
-    for (let i = 0; i < 14; i++) { const b = new THREE.Group(), [body, head] = birdM[i % 3]; b.add(std(new THREE.SphereGeometry(.16, 10, 8), { color: body })); b.children[0].scale.set(1.6, .8, .8); b.add(at(std(new THREE.SphereGeometry(.1, 8, 6), { color: head }), .24, .06, 0));
-      const wg = new THREE.PlaneGeometry(.5, .2); wg.rotateX(-Math.PI / 2); wg.translate(0, 0, .25); const w1 = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: body, side: THREE.DoubleSide })), w2 = w1.clone(); w2.rotation.y = Math.PI; b.add(w1, w2); sc.add(b); flock.push([b, w1, w2, rnd() * 6, (rnd() - .5) * 4, (rnd() - .5) * 2]); }
-    S.ticks.push((t) => flock.forEach(([b, w1, w2, ph, dx, dy], i) => { const a = t * .25 + ph * .15, [x, z] = along(-19 + Math.cos(a) * 2.5, -19 + Math.sin(a) * 2.5, 8 + Math.sin(t * .2) * 4 + dx); b.position.set(x, 4.6 + dy + Math.sin(t * 2 + ph) * .3, z); b.rotation.y = -a; b.scale.setScalar(2.2); const f = Math.sin(t * 10 + ph) * .7; w1.rotation.x = f; w2.rotation.x = -f; }));
-  }
-  if (BK === 4) { // 강 위 불꽃놀이
-    const bursts = [[6, 5.6, '#FF5C8A'], [11, 4.6, '#FFD34D'], [14, 7.0, '#6FE3FF'], [-11, 6.4, '#B98CFF']].map(([tt, y, c], k) => { const [x, z] = along(-21, -21, tt);
-      const N = 140, pos = new Float32Array(N * 3), dir = []; for (let i = 0; i < N; i++) { const u = rnd() * 2 - 1, th = rnd() * TAU, r = Math.sqrt(1 - u * u); dir.push([r * Math.cos(th), u, r * Math.sin(th)]); }
-      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const mat = new THREE.PointsMaterial({ color: c, size: 7, sizeAttenuation: false, transparent: true, depthWrite: false }); const pts = new THREE.Points(geo, mat); sc.add(pts); return { pts, pos, dir, x, y, z, ph: k * .9 }; });
-    S.ticks.push((t) => bursts.forEach((b) => { const k = ((t + b.ph) % 3.6) / 3.6, r = Math.min(1, k * 2.2) * 2.6, fall = k * k * 1.6; b.dir.forEach(([dx, dy, dz], i) => { b.pos[i * 3] = b.x + dx * r; b.pos[i * 3 + 1] = b.y + dy * r - fall; b.pos[i * 3 + 2] = b.z + dz * r; }); b.pts.geometry.attributes.position.needsUpdate = true; b.pts.material.opacity = k < .1 ? 0 : 1 - k; }));
-  }
+  [-8, 13].forEach((t) => { const [x, z] = along(-21.5, -21.5, t); sc.add(tree(x, z, FL - .4, 1.6, 0x6FAE6A)); });
+  if (BK === 1) { // 격자 첨탑 (끝이 빛나요)
+    const sp = new THREE.Group(), white = { color: 0xF4F2EE, metalness: .4, roughness: .35 }, H = 9.5, R0 = 1.5;
+    sp.add(at(std(new THREE.CylinderGeometry(3.4, 3.6, 3.0, 16), { color: 0xCDBFA8, roughness: .8 }), 0, 1.5, 0)); sp.add(at(std(new THREE.CylinderGeometry(3.0, 3.4, .5, 16), { color: 0xE2D6C2, roughness: .7 }), 0, 3.2, 0)); sp.add(at(std(new THREE.CylinderGeometry(1.8, 2.4, 1.0, 8), { color: 0xCDBFA8, roughness: .8 }), 0, 3.9, 0));
+    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, x0 = Math.cos(a) * R0, z0 = Math.sin(a) * R0, len = Math.hypot(R0, H); const r = std(new THREE.CylinderGeometry(.05, .07, len, 6), white); r.position.set(x0 / 2, 4.4 + H / 2, z0 / 2); r.lookAt(0, 4.4 + H, 0); r.rotateX(Math.PI / 2); r.position.set(x0 / 2, 4.4 + H / 2, z0 / 2); sp.add(r); }
+    for (let k = 1; k < 8; k++) { const y = k / 8 * H, rr = R0 * (1 - k / 8); const ring = std(new THREE.TorusGeometry(rr, .035, 6, 24), white); ring.rotation.x = Math.PI / 2; ring.position.y = 4.4 + y; sp.add(ring); }
+    const inner = new THREE.Mesh(new THREE.ConeGeometry(R0 * .9, H * .96, 8, 1, true), new THREE.MeshStandardMaterial({ color: 0x9FB3C8, transparent: true, opacity: .25, side: THREE.DoubleSide })); inner.position.y = 4.4 + H * .48; sp.add(inner);
+    sp.add(at(std(new THREE.CylinderGeometry(.03, .05, 2.4, 6), white), 0, 4.4 + H + 1.2, 0)); const tip = new THREE.Mesh(new THREE.SphereGeometry(.18, 12, 10), new THREE.MeshBasicMaterial({ color: 0xFFE7A0 })); tip.position.y = 4.4 + H + 2.5; sp.add(tip); S.ticks.push((t) => tip.scale.setScalar(1 + Math.sin(t * 3) * .25));
+    const [x, z] = along(-21.5, -21.5, 9.5); sp.position.set(x, FL - .4, z); sc.add(bgs(sp)); }
+  if (BK === 2) { // 고딕 첨탑 세 개 (블루스톤 · 사암 줄무늬)
+    const banded = canvasTex(128, 512, (g, W, H) => { g.fillStyle = '#C9B48F'; g.fillRect(0, 0, W, H); for (let y = 0; y < H; y += 40) { g.fillStyle = '#7A7468'; g.fillRect(0, y, W, 14); } g.fillStyle = '#3E4A58'; for (let y = 60; y < H - 40; y += 120) { g.beginPath(); g.moveTo(W * .35, y + 70); g.lineTo(W * .35, y + 20); g.arc(W / 2, y + 20, W * .15, Math.PI, 0); g.lineTo(W * .65, y + 70); g.fill(); } });
+    const cat = new THREE.Group(), stn = { map: banded, roughness: .85 };
+    cat.add(at(std(new THREE.BoxGeometry(7, 3.6, 3), stn), 0, 1.8, 0)); const rf = new THREE.CylinderGeometry(1.8, 1.8, 7, 3); rf.rotateZ(Math.PI / 2); const r = std(rf, { color: 0x4E5560 }); r.scale.set(1, .6, 1); r.position.y = 4.3; cat.add(r);
+    [[-2.6, 7.2], [2.6, 7.2], [0, 10.5]].forEach(([x, h]) => { cat.add(at(std(new THREE.BoxGeometry(1.5, h, 1.5), stn), x, h / 2, .4)); const sp = std(new THREE.ConeGeometry(1.0, h * .45, 4), { color: 0x4E5560, roughness: .6 }); sp.rotation.y = Math.PI / 4; sp.position.set(x, h + h * .225, .4); cat.add(sp);
+      [[-.75, -.75], [.75, -.75], [-.75, .75], [.75, .75]].forEach(([a, b]) => cat.add(at(std(new THREE.ConeGeometry(.12, .9, 4), { color: 0xC9B48F }), x + a, h + .4, .4 + b))); });
+    const rose = new THREE.Mesh(new THREE.CircleGeometry(.8, 24), new THREE.MeshBasicMaterial({ color: 0x5E7FB0 })); rose.position.set(0, 6.6, 1.16); cat.add(rose);
+    cat.rotation.y = ROW; const [x, z] = along(-21, -21, 8.6); cat.position.set(x, FL - .4, z); sc.add(bgs(cat)); }
+  if (BK === 3) { // 안개 낀 도심 실루엣 (멀리 · 흐리게) + 금색 꼭대기 타워
+    const sil = canvasTex(2048, 640, (g, W, H) => { g.clearRect(0, 0, W, H); const layer = (col, base, hmin, hmax, step) => { g.fillStyle = col; let x = 0; while (x < W) { const w = step * (.6 + rnd() * .8), h = hmin + rnd() * (hmax - hmin); g.fillRect(x, H - base - h, w - 6, h + base); x += w; } };
+      layer('rgba(236,214,206,.5)', 0, 140, 320, 90); layer('rgba(214,190,190,.65)', 0, 70, 240, 110);
+      const ex = W * .62; g.fillStyle = 'rgba(196,170,172,.92)'; g.fillRect(ex, H - 560, 70, 560); g.fillStyle = 'rgba(232,196,120,.95)'; g.fillRect(ex, H - 560, 70, 70); g.fillRect(ex + 30, H - 610, 10, 50);
+      g.fillStyle = 'rgba(196,170,172,.92)'; g.beginPath(); g.moveTo(W * .3, H - 380); g.lineTo(W * .3 + 22, H - 380); g.lineTo(W * .3 + 11, H - 470); g.fill(); g.fillRect(W * .3 - 30, H - 380, 82, 380);
+      layer('rgba(190,164,166,.9)', 0, 30, 150, 130); });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(64, 20), new THREE.MeshBasicMaterial({ map: sil, transparent: true, depthWrite: false, fog: false })); pl.rotation.y = ROW; const [x, z] = along(-24, -24, 3); pl.position.set(x, FL + 7.6, z); sc.add(bgs(pl)); }
+  if (BK === 4) { // 페더레이션 스퀘어: 삼각 패널 파사드 · 각진 지붕 · 야외 스크린
+    const tri = canvasTex(256, 256, (g, W, H) => { const C = ['#C9A27A', '#9AA3AA', '#D8C3A0', '#6F7880', '#E2D2B6', '#B0B8BE']; const n = 6, s2 = W / n; for (let r = 0; r < n; r++) for (let c = 0; c < n * 2; c++) { const x = c * s2 / 2, y = r * s2, up = (r + c) % 2 === 0; g.fillStyle = C[(r * 7 + c * 3) % C.length]; g.beginPath(); if (up) { g.moveTo(x, y + s2); g.lineTo(x + s2 / 2, y); g.lineTo(x + s2, y + s2); } else { g.moveTo(x, y); g.lineTo(x + s2, y); g.lineTo(x + s2 / 2, y + s2); } g.fill(); g.strokeStyle = 'rgba(40,40,40,.35)'; g.lineWidth = 2; g.stroke(); } }, 2, 2);
+    const fs = new THREE.Group(), mt = { map: tri, roughness: .7, metalness: .2 };
+    [[0, 3.2, 5, 4, .0], [4.2, 4.6, 3.2, 3.6, .25], [-3.6, 2.6, 3, 3.4, -.2]].forEach(([x, h, w, d, tilt]) => { const b = std(new THREE.BoxGeometry(w, h, d), mt); b.position.set(x, h / 2, 0); b.rotation.z = tilt * .25; fs.add(b); const cap = std(new THREE.BoxGeometry(w * .9, .5, d * .9), mt); cap.position.set(x + tilt * 1.2, h + .1, 0); cap.rotation.z = tilt; fs.add(cap); });
+    const atr = std(new THREE.BoxGeometry(2.6, 5.6, 2.6), { color: 0xBFD6E2, roughness: .1, metalness: .4, transparent: true, opacity: .7 }); atr.position.set(2.2, 2.8, 1.2); atr.rotation.y = .4; fs.add(atr);
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.8), new THREE.MeshBasicMaterial({ map: canvasTex(512, 288, (g, W, H) => { const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#493087'); gr.addColorStop(1, '#D0798E'); g.fillStyle = gr; g.fillRect(0, 0, W, H); g.fillStyle = '#FFE200'; g.font = '900 72px Lexend, sans-serif'; g.textAlign = 'center'; g.fillText('PALLO', W / 2, H * .5); g.fillStyle = '#fff'; g.font = '700 30px Lexend, sans-serif'; g.fillText('FED SQUARE · LIVE', W / 2, H * .75); }) }));
+    scr.position.set(-1.6, 3.4, 2.05); fs.add(scr); fs.add(at(std(new THREE.BoxGeometry(3.4, 2, .2), { color: 0x2B2F44 }), -1.6, 3.4, 1.95));
+    fs.rotation.y = ROW; const [x, z] = along(-21, -21, 9); fs.position.set(x, FL - .4, z); sc.add(bgs(fs)); }
   // 유람선 · 조정 보트
   const cruise = new THREE.Group(); cruise.add(at(std(new THREE.BoxGeometry(5, .7, 1.4), { color: 0xF7F7F8 }), 0, 0, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.4, .7, 1.2), { color: 0x2B2F44, roughness: .2 }), -.3, .7, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.6, .1, 1.3), { color: 0xF7F7F8 }), -.3, 1.1, 0));
   for (let k = -1.8; k <= 1.2; k += .5) cruise.add(at(new THREE.Mesh(new THREE.BoxGeometry(.3, .25, .02), new THREE.MeshBasicMaterial({ color: 0xFFE7A8 })), k, .7, .61)); cruise.rotation.y = ROW; sc.add(cruise);
@@ -14866,8 +14866,8 @@ function skyOf(m) { return bgTex(m.sky[0], m.sky[1], (g, W, H) => {
   if (m.deco === 'dusk' || m.deco === 'moon') for (let i = 0; i < (m.deco === 'moon' ? 110 : 40); i++) { g.fillStyle = `rgba(255,255,255,${.35 + rnd() * .6})`; g.beginPath(); g.arc(rnd() * W, rnd() * H * (m.deco === 'moon' ? .7 : .4), .8 + rnd() * 2.2, 0, 7); g.fill(); }
   if (m.deco === 'dusk') { const gl = g.createLinearGradient(0, H * .45, 0, H); gl.addColorStop(0, 'rgba(255,150,120,0)'); gl.addColorStop(1, 'rgba(255,190,150,.6)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); }
   if (m.deco === 'moon') drawMoon(g, W * .8, H * .12, 36); }); }
-function applyMood(S, m) { const sc = S.sc, v = new THREE.Vector3(); let n = 0;
-  sc.background = skyOf(m); sc.fog = new THREE.Fog(m.fog, 42, 100); sc.updateMatrixWorld(true);
+function applyMood(S, m, fogNear = 42, fogFar = 100) { const sc = S.sc, v = new THREE.Vector3(); let n = 0;
+  sc.background = skyOf(m); sc.fog = new THREE.Fog(m.fog, fogNear, fogFar); sc.updateMatrixWorld(true);
   const add = [];
   sc.traverse((o) => {
     if (o.isHemisphereLight) { o.color.setHex(m.hemi[0]); o.groundColor.setHex(m.hemi[1]); o.intensity = m.hemi[2]; }
@@ -14913,7 +14913,7 @@ BUILD.cafe = (EL, SC) => {
   const steam = [0, 1].map((i) => { const s = at(mesh(new THREE.SphereGeometry(.16, 12, 10), 0xffffff, { line: .02, cast: false }), -3.2 + (i ? .2 : -.15), TOP + 1.5, -2.6); sc.add(s); return s; });
   S.ticks.push((t) => steam.forEach((s, i) => { const k = (t * .6 + i * .5) % 1; s.position.y = TOP + 1.4 + k * 1.2; s.scale.setScalar(1 - k * .6); }));
   [[-3.6, 1.6], [3.6, 2.6]].forEach(([x, z]) => sc.add(tree(x, z, TOP, .75, 0x8FCB7E)));
-  applyMood(S, MOOD[2]);
+  applyMood(S, MOOD[2], 34, 62);
   return S;
 };
 
