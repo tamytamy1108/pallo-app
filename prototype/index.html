@@ -1042,7 +1042,7 @@ a { color: inherit; }
 .st-stabs button.soon { color: #C9C1B0; }
 .st-msep { flex: none; width: 2px; height: 22px; align-self: center; background: #D9D1BF; border-radius: 1px; }
 .st-world { position: relative; aspect-ratio: 360 / 460; border: 2px solid var(--ink); border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); background: #BFE4EC; }
-.st-world.w3d { aspect-ratio: 340 / 500; background: #BFE4EC; touch-action: pan-y; }
+.st-world.w3d { aspect-ratio: 340 / 430; background: #BFE4EC; touch-action: pan-y; }
 .st-world.w3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
 .m3-tag { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 2px 8px 3px; border-radius: 11px; border: 2px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 900; white-space: nowrap; pointer-events: none; line-height: 1.3; }
 .m3-tag.soon { border-style: dashed; border-color: #9A93A6; color: #6F6880; background: rgba(255,255,255,.88); }
@@ -14580,7 +14580,7 @@ const demo = /demo/.test(location.search);
 // ================= 1. 여행 · 하늘색 바다 · 콩 모양 섬 =================
 BUILD.travel = (EL, SC) => {
   // 뒤 배경: 해변 리조트 (travelBeach)
-  const S = stage(EL, { half: 9.4, pos: CAM, target: new THREE.Vector3(-1.0, 3.0, -.8), bg: bgTex('#5EC1EA', '#E8F7FB', (g, W, H) => drawSun(g, W * .82, H * .1, 34)), az: [.2, 1.2], fog: new THREE.Fog(0xE8F2F8, 40, 90) }), sc = S.sc;
+  const S = stage(EL, { half: 9.4, pos: CAM, target: new THREE.Vector3(-1.0, 5.36, -.8), bg: bgTex('#5EC1EA', '#E8F7FB', (g, W, H) => drawSun(g, W * .82, H * .1, 34)), az: [.2, 1.2], fog: new THREE.Fog(0xE8F2F8, 40, 90) }), sc = S.sc;
   const E = travelBeach(S) || {};
   if (!E.noSea) {
   // 바다 디오라마 판: 옆면 진한 파랑 · 윗면 바다 · 섬 둘레 얕은 물
@@ -14624,7 +14624,7 @@ BUILD.travel = (EL, SC) => {
 // ================= 2. 비즈니스 · 노을 저녁 · 네모난 2층 섬 =================
 BUILD.biz = (EL, SC) => {
   // 뒤 배경: 낮 도심 (bizDowntown)
-  const S = stage(EL, { half: 9.0, pos: CAM, target: new THREE.Vector3(-.6, 3.2, -.9), bg: bgTex('#86C1EA', '#EEF5FA'), az: [.2, 1.2] }), sc = S.sc;
+  const S = stage(EL, { half: 9.0, pos: CAM, target: new THREE.Vector3(-.6, 5.46, -.9), bg: bgTex('#86C1EA', '#EEF5FA'), az: [.2, 1.2] }), sc = S.sc;
   const E = bizDowntown(S) || {};
   if (!E.noSea) {
   const sea = at(mesh(new THREE.BoxGeometry(13.6, 1.2, 13.6), 0x3E3378, { line: .07 }), 0, -.6, 0); sea.userData.bg = 1; sc.add(sea);
@@ -14771,8 +14771,16 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   const cruise = new THREE.Group(); cruise.add(at(std(new THREE.BoxGeometry(5, .7, 1.4), { color: 0xF7F7F8 }), 0, 0, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.4, .7, 1.2), { color: 0x2B2F44, roughness: .2 }), -.3, .7, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.6, .1, 1.3), { color: 0xF7F7F8 }), -.3, 1.1, 0));
   for (let k = -1.8; k <= 1.2; k += .5) cruise.add(at(new THREE.Mesh(new THREE.BoxGeometry(.3, .25, .02), new THREE.MeshBasicMaterial({ color: 0xFFE7A8 })), k, .7, .61)); cruise.rotation.y = ROW; sc.add(cruise);
   S.ticks.push((t) => { const p = 20 - ((t * 1.2) % 44), [x, z] = along(-13.6, -13.6, p); cruise.position.set(x, FL - .2, z); });
-  const boat = new THREE.Group(); boat.add(at(std(new THREE.BoxGeometry(4.4, .16, .3), { color: 0xF7F4EE }), 0, 0, 0)); for (let i = -1.5; i <= 1.5; i += 1) { boat.add(at(std(new THREE.SphereGeometry(.15, 10, 8), { color: 0x1F4E9C }), i, .25, 0)); const o = std(new THREE.BoxGeometry(.04, .04, 2.2), { color: 0xE0483F }); o.position.set(i + .1, .12, 0); boat.add(o); }
-  boat.rotation.y = ROW; sc.add(boat); S.ticks.push((t) => { const p = ((t * 1.8) % 50) - 25, [x, z] = along(-12, -12, p); boat.position.set(x, FL - .4, z); });
+  const boat = new THREE.Group(), hs = new THREE.Shape(); hs.moveTo(-2.6, 0); hs.quadraticCurveTo(0, .24, 2.6, 0); hs.quadraticCurveTo(0, -.24, -2.6, 0);
+  const hull = std(new THREE.ExtrudeGeometry(hs, { depth: .16, bevelEnabled: true, bevelThickness: .04, bevelSize: .03, bevelSegments: 2 }), { color: 0x1F4E9C, roughness: .35 }); hull.rotation.x = Math.PI / 2; hull.position.y = .1; boat.add(hull);
+  const deckS = new THREE.Shape(); deckS.moveTo(-2.4, 0); deckS.quadraticCurveTo(0, .2, 2.4, 0); deckS.quadraticCurveTo(0, -.2, -2.4, 0); const deckM = std(new THREE.ShapeGeometry(deckS), { color: 0xF7F4EE }); deckM.rotation.x = -Math.PI / 2; deckM.position.y = .13; boat.add(deckM);
+  const oars = [];
+  [-1.35, -.45, .45, 1.35].forEach((x, i) => { const r = person(0, 0, [0xE0483F, 0xF2C230, 0xE0483F, 0xF2C230][i], 1, 0); r.rotation.y = -Math.PI / 2; r.scale.setScalar(.95); r.position.set(x, .06, 0); boat.add(r);
+    const side = i % 2 ? 1 : -1, piv = new THREE.Group(); piv.position.set(x + .18, .38, side * .2);
+    const sh = std(new THREE.CylinderGeometry(.026, .026, 1.8, 6), { color: 0x2B2B2E }); sh.rotation.x = Math.PI / 2; sh.position.z = side * .85; piv.add(sh);
+    const bl = std(new THREE.BoxGeometry(.14, .03, .34), { color: 0xF2C230 }); bl.position.z = side * 1.72; piv.add(bl); boat.add(piv); oars.push([piv, side]); });
+  boat.rotation.y = ROW; sc.add(boat);
+  S.ticks.push((t) => { const p = ((t * 1.6) % 50) - 25, [x, z] = along(-12, -12, p); boat.position.set(x, FL - .48, z); const st = t * 3.2; oars.forEach(([pv, sd]) => { pv.rotation.y = Math.sin(st) * .45 * sd; pv.rotation.x = (Math.cos(st) > 0 ? -.2 : .06) * sd; }); });
   // 강변 카페 테이블 · 사람 · 유칼립투스
   const C = [0x1F4E9C, 0xE0483F, 0xF2C230, 0x2F8F5B, 0xF7F4EE];
   [[-7.2, -2.6], [-2.6, -7.2], [-7.6, 1.6], [1.6, -7.6]].forEach(([x, z], i) => { sc.add(umbrella(x, z, [0xF7F4EE, 0x2F6B4A][i % 2], FL)); sc.add(person(x + .7, z + .3, C[i % 5], 1, FL)); sc.add(person(x - .6, z - .4, C[(i + 2) % 5], 1, FL)); });
@@ -14782,7 +14790,20 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
 const lawnTex = () => canvasTex(256, 256, (g, W, H) => { for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#8CC97A' : '#83C171'; g.fillRect(0, i * H / 8, W, H / 8); } }, 12, 12);
 function lawn(sc, pathCol = 0xE6DCC8) { const l = std(new THREE.PlaneGeometry(110, 110), { map: lawnTex(), roughness: .95 }, { cast: false }); l.rotation.x = -Math.PI / 2; l.position.y = -.25; sc.add(bgs(l));
   const p = std(new THREE.PlaneGeometry(2.2, 60), { color: pathCol, roughness: .9 }, { cast: false }); p.rotation.x = -Math.PI / 2; p.rotation.z = ROW; p.position.set(-8.4, -.23, -8.4); sc.add(bgs(p)); }
-const person = (x, z, c, sit = 0, y = -.25) => { const g = new THREE.Group(); const b = std(new THREE.CapsuleGeometry(.16, sit ? .12 : .38, 4, 8), { color: c, roughness: .7 }); b.position.y = sit ? .22 : .42; g.add(b); g.add(at(std(new THREE.SphereGeometry(.14, 12, 10), { color: 0xF1C9A5, roughness: .7 }), 0, sit ? .52 : .84, 0)); return at(g, x, y, z); };
+const SKINS = [0xF1C9A5, 0xE3B08A, 0xC68B62, 0x8D5A3B], HAIRS = [0x2B1E16, 0x5A3A22, 0xD9A845, 0x1E1A2B, 0xB5562E, 0x7A6A5E], PANTS = [0x2F3B5C, 0x3A3A3E, 0x6B5A48, 0x24508F, 0xE8E2D6];
+const person = (x, z, c, sit = 0, y = -.25) => { const g = new THREE.Group(), h = Math.abs(Math.round(x * 7.3 + z * 13.1)), skin = { color: SKINS[h % 4], roughness: .7 }, hair = { color: HAIRS[(h >> 2) % 6], roughness: .8 }, pant = { color: PANTS[(h >> 3) % 5], roughness: .8 }, top = { color: c, roughness: .7 };
+  const cap = (r, l, m) => std(new THREE.CapsuleGeometry(r, l, 4, 10), m);
+  const hip = sit ? .26 : .42;
+  [-.075, .075].forEach((k) => { if (sit) { const th = cap(.06, .2, pant); th.rotation.x = Math.PI / 2; th.position.set(k, hip, .14); g.add(th); const sh = cap(.055, .18, pant); sh.position.set(k, hip - .14, .27); g.add(sh); g.add(at(std(new THREE.BoxGeometry(.09, .06, .14), { color: 0x2B2B2E }), k, .03, .31)); }
+    else { const lg = cap(.06, .26, pant); lg.position.set(k, .2, 0); g.add(lg); g.add(at(std(new THREE.BoxGeometry(.09, .06, .15), { color: 0x2B2B2E }), k, .03, .03)); } });
+  const tor = cap(.13, .2, top); tor.position.y = hip + .17; tor.scale.z = .8; g.add(tor);
+  [-1, 1].forEach((k) => { const ar = cap(.045, .24, top); ar.position.set(k * .17, hip + .14, sit ? .06 : 0); ar.rotation.z = k * .18; if (sit) ar.rotation.x = -.5; g.add(ar); g.add(at(std(new THREE.SphereGeometry(.045, 8, 6), skin), k * .2, hip - .02, sit ? .14 : 0)); });
+  const hy = hip + .5; g.add(at(std(new THREE.SphereGeometry(.13, 16, 12), skin), 0, hy, 0));
+  const hr = std(new THREE.SphereGeometry(.137, 16, 10, 0, TAU, 0, Math.PI * .55), hair); hr.position.set(0, hy + .01, -.015); hr.rotation.x = -.25; g.add(hr);
+  if (h % 3 === 0) g.add(at(std(new THREE.SphereGeometry(.07, 10, 8), hair), 0, hy - .02, -.14));
+  if (h % 4 === 1 && !sit) g.add(at(std(new THREE.BoxGeometry(.22, .26, .1), { color: [0xE0483F, 0x2F8F5B, 0xF2C230][h % 3], roughness: .7 }), 0, hip + .2, -.14));
+  [-1, 1].forEach((k) => g.add(at(new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0x1E1A2B })), k * .045, hy + .01, .122)));
+  g.rotation.y = ((h % 12) / 12) * TAU; g.scale.setScalar(1.15); return at(g, x, y, z); };
 const crowd = (sc, cx, cz, n, sit) => { const C = [0x1F4E9C, 0xE0483F, 0xF2C230, 0x2F8F5B, 0xF7F4EE, 0x8E6CF0, 0x1E1A2B]; for (let i = 0; i < n; i++) sc.add(person(cx + (rnd() - .5) * 4, cz + (rnd() - .5) * 4, C[i % C.length], sit)); };
 const capsFly = (S, cx, cz, n = 14) => { const caps = []; for (let i = 0; i < n; i++) { const g = new THREE.Group(); g.add(std(new THREE.BoxGeometry(.5, .04, .5), { color: 0x1E2347 })); g.add(at(std(new THREE.CylinderGeometry(.16, .16, .16, 12), { color: 0x1E2347 }), 0, -.1, 0)); g.add(at(std(new THREE.BoxGeometry(.03, .22, .03), { color: 0xD9B45A }), .2, -.1, .2)); S.sc.add(g); caps.push([g, cx + (rnd() - .5) * 6, cz + (rnd() - .5) * 6, rnd() * 4, .8 + rnd() * .6]); }
   S.ticks.push((t) => caps.forEach(([g, x, z, ph, v]) => { const k = ((t * v + ph) % 4) / 4, y = Math.sin(k * Math.PI) * 6.5; g.position.set(x + Math.sin(t + ph) * .3, y, z); g.rotation.set(t * 2 + ph, t + ph, t * 1.5); })); };
@@ -14872,7 +14893,7 @@ function applyMood(S, m, fogNear = 42, fogFar = 100) { const sc = S.sc, v = new 
 // ================= 3. 카페 · 라테 바다 · 케이크 섬 =================
 BUILD.cafe = (EL, SC) => {
   // 뒤 배경: 멜버른 야라 강변 (cafeRiver)
-  const S = stage(EL, { half: 8.8, pos: CAM, target: new THREE.Vector3(-1.0, 4.6, -1.4), bg: bgTex('#F3A27A', '#FCE6C8', (g, W, H) => { const gl = g.createRadialGradient(W * .7, H * .35, 10, W * .7, H * .35, W * .6); gl.addColorStop(0, 'rgba(255,236,170,.9)'); gl.addColorStop(1, 'rgba(255,236,170,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); }), az: [.2, 1.2] }), sc = S.sc;
+  const S = stage(EL, { half: 8.8, pos: CAM, target: new THREE.Vector3(-1.0, 6.81, -1.4), bg: bgTex('#F3A27A', '#FCE6C8', (g, W, H) => { const gl = g.createRadialGradient(W * .7, H * .35, 10, W * .7, H * .35, W * .6); gl.addColorStop(0, 'rgba(255,236,170,.9)'); gl.addColorStop(1, 'rgba(255,236,170,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); }), az: [.2, 1.2] }), sc = S.sc;
   cafeRiver(S);
   // 라테 잔 받침 + 라테
   const cup = at(mesh(new THREE.CylinderGeometry(7.6, 7.0, 1.2, 72), 0xffffff, { line: .07 }), 0, -.6, 0); cup.userData.bg = 1; sc.add(cup);
@@ -14910,7 +14931,7 @@ BUILD.cafe = (EL, SC) => {
 BUILD.campus = (EL, SC) => {
   // 섬은 잔디 위에 놓여요 · 뒤 배경: 기둥 도서관 (uniLibrary)
   const bg = bgTex('#86C6EE', '#F1F7FA', (g, W, H) => { const gl = g.createRadialGradient(W * .18, H * .06, 10, W * .18, H * .06, W * .7); gl.addColorStop(0, 'rgba(255,248,220,.8)'); gl.addColorStop(1, 'rgba(255,248,220,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); });
-  const S = stage(EL, { half: 9.0, pos: CAM, target: new THREE.Vector3(-.9, 2.6, -.7), bg, az: [.2, 1.2], fog: new THREE.Fog(0xE6F1F8, 34, 80) }), sc = S.sc;
+  const S = stage(EL, { half: 9.0, pos: CAM, target: new THREE.Vector3(-.9, 4.86, -.7), bg, az: [.2, 1.2], fog: new THREE.Fog(0xE6F1F8, 34, 80) }), sc = S.sc;
   uniLibrary(S); const V = { ground: true };
   // 섬 아래 바위 (뒤집힌 원뿔, 울퉁불퉁)
   const cg = new THREE.ConeGeometry(5.6, 5.2, 11, 4); cg.rotateX(Math.PI); const cp = cg.attributes.position;
