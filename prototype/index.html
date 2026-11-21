@@ -1123,6 +1123,7 @@ a { color: inherit; }
 .sq-pc .h { display: flex; align-items: center; gap: 8px; } .sq-pc .h b { font-family: var(--f-display); font-size: 15px; } .sq-pc .h em { font-style: normal; font-size: 15px; font-weight: 900; } .sq-pc .h i { font-style: normal; height: 20px; padding: 0 8px; border-radius: 10px; background: var(--ink); color: var(--yellow); font-size: 10px; font-weight: 900; display: inline-flex; align-items: center; }
 .sq-pc .d { font-size: 13px; font-weight: 700; color: var(--sub); line-height: 1.45; } .sq-pc .ex { font-size: 12px; font-weight: 700; color: #7A7488; background: #F4F0E6; border-radius: 8px; padding: 4px 8px; }
 .sq-pc.on .ex { background: #fff; }
+.sq-pc .h u { text-decoration: none; margin-left: auto; font-size: 11px; font-weight: 800; color: #2E8B57; background: #E3F5EA; border-radius: 10px; height: 20px; padding: 0 8px; display: inline-flex; align-items: center; } .sq-pc .h { width: 100%; }
 .sq-ctx { display: block; font-family: var(--f-body); font-size: 15px; font-weight: 700; line-height: 1.5; color: var(--ink); }
 .st-qc-q .sq-ctx { font-size: 13px; color: var(--sub); }
 .sq-bub { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 44px 10px 14px; border: 2px solid var(--ink); border-radius: 16px 16px 16px 4px; background: #F3EEFF; text-align: left; }
@@ -5133,7 +5134,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     { n: 'Dami', b: '영등포', w: 200, m: 980 }, { n: 'Ken', b: '대전 둔산점', w: 150, m: 860 },
     { n: 'Ari', b: '대전 둔산점', w: 120, m: 720 }, { n: 'Joy', b: '연신내', w: 90, m: 540 }
   ];
-  const ME = { n: 'Tammy', b: '하남점', monthBase: 260 };
+  const ME = { n: 'Tammy', b: '하남점', monthBase: 260, lvs: [1, 2] };   // lvs: 지금 듣는 레벨 · 두 레벨 병행이면 두 개
   const AV_COLORS = ['var(--yellow)', 'var(--pink)', 'var(--sky)', '#CDEBD0', '#E5E0F5', '#FFD3B8'];
   const RK = { view: 'me', per: 'w' };
   const myPts = () => totalActs() * 10 + (S.checked ? 30 : 0) + ST.pts;   // 예습·복습 포인트 포함
@@ -7059,7 +7060,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ["나갈 때 바리스타가 인사해요.", "Have a great day!", "Thanks, you too!", "감사해요, 좋은 하루 보내세요!", "too", ["Thanks, me too!", "You're welcome, have a great day!"], "Thank you, same same.", ["to", "two"]]
     ]
   };
-  const sitQLv = () => Math.min(4, Math.max(1, ST.qLv || +String((BOOKS.find((b) => b.mine) || { l: 'Lv.1' }).l).replace(/\D/g, '') || 1));
+  const myQLvs = () => { const L = (ME.lvs && ME.lvs.length ? ME.lvs : [+String((BOOKS.find((b) => b.mine) || { l: 'Lv.1' }).l).replace(/\D/g, '') || 1]).map((n) => Math.min(4, Math.max(1, n))); return [...new Set(L)].sort(); };
+  const sitQLv = () => Math.min(4, Math.max(1, ST.qLv || myQLvs()[0]));
   const SITQ_LV = { 1: '입문 · 뜻을 보고 골라요', 2: '기초 · 상황을 보고 골라요', 3: '중급 · 영어로 듣고 답해요', 4: '고급 · 듣기만 하고 자연스럽게 답해요' };
   function sitQuizItems(title, who) {
     const Q = SIT_QUIZ[title]; if (!Q) return null;
@@ -8797,15 +8799,15 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     [4, '고급', '글자 없이 듣기만 하고 답해요 · 한국어식 직역 함정 피하기', 'Wi-Fi password, please teach me. (X)']
   ];
   function sitLvPick(s) {
-    const mine = Math.min(4, Math.max(1, +String((BOOKS.find((b) => b.mine) || { l: 'Lv.1' }).l).replace(/\D/g, '') || 1));
-    let sel = SV.t.lvSel || sitQLv();
+    const mine = myQLvs(), best = (ST.qBest || {})[SV.ls.title] || {};
+    let sel = SV.t.lvSel || (mine.includes(ST.qLv) ? ST.qLv : mine[0]);
     const draw = () => {
       $('#stBody').innerHTML = `
         <div class="st-kick2">상황 퀴즈 · ${stEsc(SV.ls.title)} · 15문제</div>
         <h2 class="sq-pt">어떤 난이도로 풀까요?</h2>
-        <p class="st-intro" style="margin:0">같은 상황 15개를 레벨마다 다른 방식으로 물어요. 다 풀고 다른 난이도로 다시 풀 수 있어요.</p>
+        <p class="st-intro" style="margin:0">${mine.length > 1 ? `<b>${mine.map((n) => 'Lv.' + n).join(' · ')}</b>를 함께 듣고 있어요. 두 레벨 모두 풀어 보면 좋아요.` : '같은 상황 15개를 레벨마다 다른 방식으로 물어요. 다 풀고 다른 난이도로 다시 풀 수 있어요.'}</p>
         <div class="sq-pick" role="radiogroup" aria-label="난이도">${SITQ_PICK.map(([n, nm, d, ex]) => `<button type="button" class="sq-pc${sel === n ? ' on' : ''}" role="radio" aria-checked="${sel === n}" data-lvp="${n}">
-          <span class="h"><b>Lv.${n}</b><em>${nm}</em>${n === mine ? '<i>내 레벨</i>' : ''}</span><span class="d">${d}</span><span class="ex" lang="en">${stEsc(ex)}</span></button>`).join('')}</div>
+          <span class="h"><b>Lv.${n}</b><em>${nm}</em>${mine.includes(n) ? '<i>내 레벨</i>' : ''}${best[n] != null ? `<u>최고 ${best[n]}/15</u>` : ''}</span><span class="d">${d}</span><span class="ex" lang="en">${stEsc(ex)}</span></button>`).join('')}</div>
         <div class="st-foot"><button class="btn wide yellow press" id="sqGo">Lv.${sel} ${SITQ_PICK[sel - 1][1]}으로 시작하기</button></div>`;
       $$('#stBody [data-lvp]').forEach((b) => b.addEventListener('click', () => { sel = SV.t.lvSel = +b.dataset.lvp; sfx('tap'); draw(); }));
       $('#sqGo').addEventListener('click', () => { ST.qLv = sel; SV.t = { lvOk: true }; sfx('tap'); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
@@ -8817,9 +8819,10 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#stBody').innerHTML = `
       <div class="card st-score"><span class="st-kick2">맞힌 문제</span><b>${t.right}<small> / ${t.order.length}</small></b><span class="st-qko">${t.right === t.order.length ? '하나도 안 틀렸어요!' : '틀린 문제는 아래에서 다시 들어 보세요.'}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px">${t.order.map((k) => { const it = items[k], ok = t.res[k]; return `<div class="card st-res${ok ? '' : ' no'}"><span class="st-ok">${ok === false ? ICO.x : ICO.check}</span><div class="t"><b lang="en">${stEsc(it.mk[0])}</b><small>${stEsc(it.mk[1])}</small></div>${saySpan(it.mk[0])}${markSpan(it.mk[0], it.mk[1])}</div>`; }).join('')}</div>
-      <div class="st-foot">${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? '<button class="btn wide press" id="sqAgain" style="background:#fff">다른 난이도로 다시 풀기</button>' : ''}${doneBtn()}</div>`;
+      <div class="st-foot">${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? (() => { const B = ((ST.qBest = ST.qBest || {})[SV.ls.title] = ST.qBest[SV.ls.title] || {}), lv = sitQLv(); B[lv] = Math.max(B[lv] || 0, t.right); const next = myQLvs().find((n) => n !== lv && B[n] == null);
+        return next ? `<button class="btn wide press" id="sqAgain" data-next="${next}" style="background:#fff">Lv.${next}로도 풀어 보기</button>` : '<button class="btn wide press" id="sqAgain" style="background:#fff">다른 난이도로 다시 풀기</button>'; })() : ''}${doneBtn()}</div>`;
     $('#stDone').addEventListener('click', () => finishStep(s, { right: t.right, total: t.order.length }));
-    const ag = $('#sqAgain'); if (ag) ag.addEventListener('click', () => { delete ST.pos[stKey(s.id)]; SV.t = { lvSel: sitQLv() }; sfx('tap'); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
+    const ag = $('#sqAgain'); if (ag) ag.addEventListener('click', () => { delete ST.pos[stKey(s.id)]; const nx = +ag.dataset.next; if (nx) { ST.qLv = nx; SV.t = { lvOk: true }; } else SV.t = { lvSel: sitQLv() }; sfx('tap'); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; if (nx) toast(`Lv.${nx} 난이도로 같은 상황을 다시 풀어요`); });
   }
 
   // 5) 짝 맞추기 (USEFUL EXPRESSIONS)
