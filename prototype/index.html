@@ -1048,7 +1048,8 @@ a { color: inherit; }
 .st-world .m3-out { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 5; pointer-events: none; animation: m3Out .55s cubic-bezier(.5,0,.75,0) both; }
 @keyframes m3In { from { opacity: 0; transform: translateX(var(--dx, 0)) scale(.94); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes m3Out { to { opacity: 0; transform: translateX(var(--dx, 0)) scale(1.06); filter: blur(8px); } }
-@media (prefers-reduced-motion: reduce) { .st-world .m3-out, .m3-tag { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 2px 8px 3px; border-radius: 11px; border: 2px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 900; white-space: nowrap; pointer-events: none; line-height: 1.3; }
+@media (prefers-reduced-motion: reduce) { .st-world .m3-out { display: none; } .st-world.w3d canvas.m3-in { animation: none; } }
+.m3-tag { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 2px 8px 3px; border-radius: 11px; border: 2px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 900; white-space: nowrap; pointer-events: none; line-height: 1.3; }
 .m3-tag.soon { border-style: dashed; border-color: #9A93A6; color: #6F6880; background: rgba(255,255,255,.88); }
 .m3-tag.cur { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
 .st-world:not(.m3z) .m3-tag.min { width: 20px; height: 20px; padding: 0; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-size: 10px; line-height: 1; }
@@ -1110,6 +1111,21 @@ a { color: inherit; }
 /* 아래 고정 버튼 (복습 스피킹 퀴즈): 레슨 화면처럼 엄지 자리에 늘 같은 버튼 */
 .st-foot { position: sticky; bottom: calc(-40px - env(safe-area-inset-bottom, 0px)); z-index: 5; margin: auto -16px calc(-40px - env(safe-area-inset-bottom, 0px)); padding: 18px 16px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; background: linear-gradient(rgba(250, 245, 232, 0), var(--cream, #FAF5E8) 22px); }
 .st-foot .st-bigmic { width: 100%; }
+#stBody > .st-done, #stBody > .st-row2 { position: sticky; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 5; margin-top: auto; }
+.st-qfoot .st-opts.done .st-opt:not(.right):not(.wrong) { display: none; }
+.st-qfoot .st-opt { min-height: 50px; padding: 10px 14px; }
+.sq-lv { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sq-lv button { height: 28px; padding: 0 10px; border: 2px solid var(--ink); border-radius: 14px; background: var(--white); font-family: var(--f-display); font-size: 11px; font-weight: 700; color: var(--ink); }
+.sq-lv button[aria-pressed="true"] { background: var(--yellow); }
+.sq-lv span { font-size: 12px; font-weight: 700; color: var(--sub); }
+.sq-ctx { display: block; font-family: var(--f-body); font-size: 15px; font-weight: 700; line-height: 1.5; color: var(--ink); }
+.st-qc-q .sq-ctx { font-size: 13px; color: var(--sub); }
+.sq-bub { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 44px 10px 14px; border: 2px solid var(--ink); border-radius: 16px 16px 16px 4px; background: #F3EEFF; text-align: left; }
+.sq-bub em { font-style: normal; font-family: var(--f-display); font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--sub); }
+.sq-bub > span { font-size: 16px; font-weight: 800; line-height: 1.4; color: var(--ink); }
+.sq-bub .sq-hid { font-family: var(--f-body); font-size: 13px; font-weight: 700; color: var(--sub); }
+.sq-spk { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 16px; border: 2px solid var(--ink); background: var(--yellow); display: grid; place-items: center; }
+.sq-spk svg { width: 16px; height: 16px; }
 #stBody { gap: 10px; } .st-foot { gap: 8px; padding-top: 12px; } .st-hrow .ft-bulb { width: 40px; height: 40px; border-radius: 20px; }
 .st-foot .st-retry { margin-bottom: 2px; }
 /* 정답 · 마지막 오답: 예습·본학습처럼 바탕 그대로 + 캐릭터 + 보라(오답은 분홍) 큰 글씨 */
@@ -6948,9 +6964,120 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     lessons: [sc('첫 수업 자기소개', 'First class', 'book', null), sc('수업 중 질문', 'Asking in class', 'chat', null), sc('조별 과제', 'Group project', 'group', null), sc('도서관', 'Library', 'lib', null), sc('동아리 가입', 'Joining a club', 'star', null), sc('기숙사 생활', 'Dorm life', 'dorm', null)].map((x, i) => ({ no: i + 1, ...x })) };
   const SITS = [SIT_TRAVEL, SIT_BIZ, SIT_CAFE, SIT_CAMPUS];
   const SIT_SOON = [{ id: 'next', title: '새 맵', when: '준비 중' }];
+  // ---- 상황 맵 퀴즈 (장면마다 15문항 · 멤버 레벨에 따라 문제 방식과 보기 난이도가 달라져요) ----
+  // [상황(한국어), 상대가 하는 말(없으면 null), 정답 문장, 정답 뜻, 빈칸 단어(없으면 null), [그럴듯하지만 틀린 말 2개], 어색한 직역 표현, [빈칸 오답 2개]]
+  // Lv.1 뜻 → 표현 · 쉬운 빈칸 / Lv.2 상황 → 표현 · 빈칸 / Lv.3 상대 말에 답하기 (영어만) / Lv.4 듣기만 하고 답하기 · 가장 자연스러운 말 고르기 (직역 함정)
+  const SIT_QUIZ = {
+    '공항 체크인': [
+      ["직원이 원하는 자리가 있는지 물어요. 창가에 앉고 싶어요.", "Do you have a seat preference?", "Could I get a window seat, please?", "창가 자리로 주실 수 있나요?", "window", ["Can I open the window, please?", "I'd like an aisle seat, please."], "Give me window seat.", ["door", "side"]],
+      ["부칠 가방이 하나 있어요.", "Are you checking any bags today?", "Yes, I'd like to check this bag.", "네, 이 가방 부칠게요.", "check", ["Yes, I'd like to check out today.", "No, I'll carry everything on."], "Yes, I want to send this bag.", ["send", "give"]],
+      ["가방을 저울에 올렸어요. 무게가 괜찮은지 궁금해요.", "Please put your bag on the scale.", "Is it under the weight limit?", "무게 제한 안 넘었나요?", "limit", ["Is it under the seat?", "How much does this bag cost?"], "My bag is too heavy, no?", ["line", "point"]],
+      ["가방 무게가 초과됐대요. 추가 요금이 얼마인지 알고 싶어요.", "Your bag is three kilos over the limit.", "How much is the overweight fee?", "초과 요금이 얼마예요?", "fee", ["How much does the bag weigh?", "Can I get a discount on my ticket?"], "Can you just pass it, please?", ["money", "pay"]],
+      ["손에 든 작은 가방은 비행기에 들고 탈 거예요.", "Is this bag going in the cabin with you?", "Yes, this is my carry-on.", "네, 이건 기내용이에요.", "carry-on", ["Yes, please check it all the way through.", "No, it's not mine."], "Yes, this is my hand bag for airplane.", ["carry-out", "take-in"]],
+      ["보조배터리는 부치는 가방이 아니라 기내용 가방에 넣어 뒀어요.", "Do you have any batteries in your checked bag?", "No, my power bank is in my carry-on.", "아니요, 보조배터리는 기내용 가방에 있어요.", "power bank", ["No, my phone is fully charged.", "Yes, could you charge it for me?"], "I have auxiliary battery in my bag.", ["charger", "adapter"]],
+      ["탑승권을 받았어요. 언제부터 탈 수 있는지 궁금해요.", "Here's your boarding pass.", "What time does boarding start?", "탑승은 몇 시에 시작해요?", "boarding", ["What time does the flight land?", "Where can I buy a boarding pass?"], "When is the riding time?", ["riding", "landing"]],
+      ["몇 번 게이트로 가야 하는지 몰라요.", null, "Which gate do I go to?", "몇 번 게이트로 가요?", "gate", ["Which gate did you come from?", "Is the gate free?"], "Gate number is what?", ["door", "exit"]],
+      ["전광판에 내 비행기 옆에 Delayed가 떴어요.", null, "Is my flight delayed?", "제 비행기 지연됐나요?", "delayed", ["Is my flight full?", "Is my flight cheap?"], "My airplane is late-late?", ["late", "stopped"]],
+      ["친구랑 같이 왔어요. 붙어 앉고 싶어요.", "Is there anything else I can help you with?", "Could my friend and I sit together?", "친구랑 같이 앉을 수 있을까요?", "together", ["Could my friend sit in my seat?", "Could my friend check in for me?"], "Me and friend, same place sit, please.", ["alone", "apart"]],
+      ["수하물 태그를 받았어요. 도착해서 가방을 어디서 찾는지 궁금해요.", "Here's your baggage claim tag.", "Thanks. Where do I pick up my bag?", "감사해요. 가방은 어디서 찾아요?", "pick up", ["Thanks. Where do I drop off my bag?", "Thanks. Can I keep this tag?"], "Thanks. Where is my bag coming?", ["pick out", "take on"]],
+      ["직원이 여권을 달라고 해요.", "Can I see your passport, please?", "Sure, here you go.", "네, 여기요.", null, ["Sure, go ahead.", "Sure, I'll see it."], "Sure, here you are going.", []],
+      ["온라인으로 체크인은 이미 했어요. 가방만 맡기면 돼요.", "Did you check in online?", "Yes, I just need to drop off my bag.", "네, 가방만 부치면 돼요.", "drop off", ["Yes, I just need to pick up my bag.", "No, I don't have a bag."], "Yes, only bag throw.", ["drop by", "drop out"]],
+      ["비상구 좌석이래요. 비상시 도울 수 있냐고 물어요.", "This is an exit row. Are you willing to help in an emergency?", "Yes, I can do that.", "네, 할 수 있어요.", null, ["Yes, I'm in an emergency.", "Yes, where is the exit?"], "Yes, okay okay.", []],
+      ["항공 마일리지를 적립하고 싶어요.", null, "Can I add my frequent flyer number?", "마일리지 회원 번호 넣어 주실 수 있나요?", "frequent flyer", ["Can I add another bag?", "Can I use my phone number to fly?"], "Please save my mileage point.", ["free flight", "fast pass"]]
+    ],
+    '기내 주문': [
+      ["승무원이 음료를 물어요. 물을 마시고 싶어요.", "Would you like something to drink?", "Could I get some water, please?", "물 좀 주시겠어요?", "water", ["Could I get some air, please?", "Could I get some sleep, please?"], "Water give me.", ["waiter", "weather"]],
+      ["식사로 치킨과 소고기 중에 치킨을 먹고 싶어요.", "Chicken or beef?", "I'll have the chicken, please.", "치킨으로 할게요.", "have", ["I had chicken yesterday.", "I'll have the window, please."], "Chicken, give me.", ["be", "do"]],
+      ["좀 추워요. 담요가 하나 더 필요해요.", null, "Could I have an extra blanket?", "담요 하나 더 주실 수 있나요?", "blanket", ["Could I have an extra seat?", "Could I have an extra meal?"], "Blanket one more, please.", ["bucket", "basket"]],
+      ["앞사람 등받이가 너무 넘어와서 불편해요. 승무원에게 부탁해요.", null, "Could you ask him to raise his seat a little?", "의자를 조금만 올려 달라고 말해 주실 수 있나요?", "raise", ["Could you ask him to change seats with me?", "Could you raise my seat a little?"], "His chair is too lying.", ["race", "rice"]],
+      ["자는 동안 식사를 놓치고 싶지 않아요.", null, "Could you wake me up for the meal?", "식사 때 깨워 주실 수 있나요?", "wake me up", ["Could you wake up for the meal?", "Could you bring the meal after I sleep?"], "When meal, wake me.", ["make me up", "take me up"]],
+      ["화장실 문 앞이에요. 안에 사람이 있는지 몰라요.", null, "Is anyone in there?", "안에 누구 있어요?", null, ["Is anyone sitting here?", "Who is in the restroom's name?"], "Inside person exist?", []],
+      ["창가 자리인데 화장실에 가려면 옆 사람을 지나가야 해요.", null, "Excuse me, could I get past?", "실례지만 좀 지나갈게요.", "get past", ["Excuse me, could I get off?", "Excuse me, could you get up for the meal?"], "Sorry, I go.", ["get pass", "go pass"]],
+      ["입국 신고서를 받았는데 펜이 없어요.", "Do you need an arrival card?", "Yes, please. Could I borrow a pen too?", "네, 펜도 빌릴 수 있을까요?", "borrow", ["No, I already arrived.", "Yes, please. Could I keep the pen?"], "Yes, please. Could I lend a pen too?", ["lend", "rent"]],
+      ["면세품을 살 생각이 없어요.", "Would you like anything from duty-free?", "No, thank you. I'm fine.", "아니요, 괜찮아요.", "fine", ["No, thank you. I'm free.", "Yes, I'm duty-free."], "No need. Not want.", ["free", "find"]],
+      ["채식 식사를 주는데, 나는 그걸 신청한 적이 없어요.", "Here's your vegetarian meal.", "Oh, I didn't order that. I think there's a mistake.", "저 그거 주문 안 했어요. 착오가 있는 것 같아요.", "mistake", ["Oh, I didn't eat that yet.", "Oh, thanks. I love vegetarian food."], "Not mine, wrong wrong.", ["miss", "mess"]],
+      ["다 먹은 쟁반을 치워 줬으면 해요.", null, "Could you take this tray, please?", "이 쟁반 좀 가져가 주시겠어요?", "take", ["Could you bring this tray, please?", "Could I take this tray home?"], "Please clean this.", ["make", "give"]],
+      ["이어폰에서 소리가 안 나요.", null, "My headphones aren't working.", "이어폰이 안 돼요.", "working", ["My headphones are too loud.", "My headphones are in my bag."], "My earphone is broken-ed.", ["walking", "worked"]],
+      ["도착까지 얼마나 남았는지 궁금해요.", null, "How long until we land?", "착륙까지 얼마나 남았어요?", "land", ["How long until we take off?", "How long is the flight back?"], "When we arrive time?", ["lend", "line"]],
+      ["속이 울렁거려요. 비행기 멀미 같아요.", "Are you okay?", "I'm feeling a little airsick.", "비행기 멀미가 좀 나요.", "airsick", ["I'm feeling a little homesick.", "I'm feeling a little hungry."], "I have flying sickness.", ["airline", "airy"]],
+      ["짐칸에 가방을 올려야 하는데 너무 높아요.", null, "Could you help me put this up there?", "이거 위에 올리는 것 좀 도와주실 수 있나요?", "put", ["Could you help me take this down later?", "Could you put me up there?"], "Help me, bag, up.", ["pull", "push"]]
+    ],
+    '입국 심사': [
+      ["심사관이 방문 목적을 물어요. 휴가로 왔어요.", "What's the purpose of your visit?", "I'm here on vacation.", "휴가로 왔어요.", "vacation", ["I'm here on a plane.", "I'm here for the purpose."], "Purpose is travel.", ["vocation", "location"]],
+      ["얼마나 머무는지 물어요. 5일 있을 거예요.", "How long are you staying?", "I'm staying for five days.", "5일 동안 있어요.", "for", ["I'm staying at a hotel.", "I stayed five days ago."], "Five days stay.", ["during", "since"]],
+      ["어디서 묵는지 물어요. 시내 그랜드 호텔이에요.", "Where are you staying?", "At the Grand Hotel downtown.", "시내 그랜드 호텔이요.", "downtown", ["For five days downtown.", "I'm staying with pleasure."], "Hotel. Grand. Downtown.", ["download", "downstairs"]],
+      ["이 나라는 처음이에요.", "Is this your first time here?", "Yes, it's my first time.", "네, 처음이에요.", "first", ["Yes, it's my first name.", "No, it's my first time."], "Yes, first visit is this.", ["last", "fast"]],
+      ["직업을 물어요. 마케팅 일을 해요.", "What do you do?", "I work in marketing.", "마케팅 일을 해요.", "work", ["I do sightseeing.", "I'm doing fine, thanks."], "My job is marketing work.", ["walk", "word"]],
+      ["혼자 왔는지 물어요. 친구랑 같이 왔어요.", "Are you traveling alone?", "No, I'm with my friend.", "아니요, 친구랑 같이 왔어요.", "with", ["No, I'm alone with my friend.", "Yes, my friend is here too."], "No, friend together.", ["by", "at"]],
+      ["돌아가는 비행기표가 있는지 물어요.", "Do you have a return ticket?", "Yes, here's my return ticket.", "네, 돌아가는 표 여기 있어요.", "return", ["Yes, here's my boarding pass.", "Yes, I'll return the ticket."], "Yes, coming back ticket here.", ["retire", "repeat"]],
+      ["세관 신고할 물건이 없어요.", "Do you have anything to declare?", "No, nothing to declare.", "아니요, 신고할 것 없어요.", "declare", ["No, I have nothing to eat.", "Yes, I'd like to declare my hotel."], "No, nothing to report me.", ["decline", "decide"]],
+      ["음식이 있는지 물어요. 과자만 조금 있어요.", "Are you carrying any food?", "Just some snacks. Do I need to declare them?", "과자만 있어요. 신고해야 하나요?", "snacks", ["Just some cash. Is that okay?", "No, I already ate on the plane."], "Only cookie little bit.", ["snakes", "snaps"]],
+      ["현금을 얼마나 가지고 있는지 물어요. 500달러쯤 있어요.", "How much cash are you carrying?", "About 500 dollars.", "500달러 정도요.", "About", ["About five days.", "It costs 500 dollars."], "Around 500 dollar money.", ["Abroad", "Ahead"]],
+      ["심사관의 질문을 못 알아들었어요.", null, "Sorry, could you say that again?", "죄송한데, 다시 말씀해 주실 수 있나요?", "again", ["Sorry, could you say that faster?", "Sorry, I can't say."], "What? Again!", ["gain", "agent"]],
+      ["카메라를 보라고 해요. 이렇게 하면 되는지 확인하고 싶어요.", "Please look at the camera.", "Like this?", "이렇게요?", null, ["Like a camera?", "I like this."], "Me look, okay?", []],
+      ["지문 스캐너에 손가락을 올리래요. 어느 손인지 헷갈려요.", "Put your fingers on the scanner.", "Which hand, the right or the left?", "어느 손이요, 오른손이요 왼손이요?", "hand", ["Which finger do you like?", "Which scanner is better?"], "Right? Left?", ["hang", "hard"]],
+      ["이 도시 다음에 어디로 가는지 물어요. 여기서 서울로 돌아가요.", "Where will you go after this city?", "I'm flying back to Seoul from here.", "여기서 서울로 돌아가요.", "back", ["I'm flying here from Seoul.", "I'm going to the hotel after this."], "Next, Seoul return.", ["black", "bag"]],
+      ["심사가 끝났어요. 인사하고 나가요.", "Okay. Enjoy your stay!", "Thank you. Have a good day!", "감사합니다. 좋은 하루 보내세요!", "good", ["Thank you. Enjoy your stay too!", "You're welcome. Enjoy!"], "Thank you. You too enjoy.", ["god", "goods"]]
+    ],
+    '첫 미팅 자기소개': [
+      ["협력사 담당자를 처음 직접 만났어요. 그동안 메일로만 연락했어요.", "Hi, you must be from PALLO. I'm Grace Kim.", "Yes, I'm Tammy. Nice to finally meet you in person.", "네, 태미예요. 드디어 직접 뵙네요.", "in person", ["Yes, I'm Tammy. Nice to meet you again.", "Yes, I'm from PALLO. Where are you from?"], "Yes, I am PALLO's Tammy. Nice meeting.", ["by person", "on person"]],
+      ["무슨 일을 하는지 물어요. 아시아 팀 마케팅을 맡고 있어요.", "What do you do at PALLO?", "I'm in charge of marketing for the Asia team.", "아시아 팀 마케팅을 맡고 있어요.", "in charge of", ["I'm charging marketing for the Asia team.", "I work at PALLO for three years."], "My position is marketing part.", ["on charge of", "in change of"]],
+      ["그 팀에 얼마나 있었는지 물어요. 2년쯤 됐어요.", "How long have you been on that team?", "About two years now.", "이제 2년쯤 됐어요.", "About", ["For two years ago.", "Two years later."], "Two year.", ["Since", "During"]],
+      ["상대 회사 프로젝트 이야기를 미리 많이 들었어요.", null, "I've heard a lot about your project.", "프로젝트 얘기 많이 들었어요.", "heard", ["I've told a lot about your project.", "I've heard a lot of your noise."], "I listened your project much.", ["hear", "heared"]],
+      ["참석자가 다 모였어요. 회의를 시작하자고 해요.", null, "Since everyone's here, shall we get started?", "다 모였으니 시작할까요?", "get started", ["Since everyone's here, shall we finish?", "Since everyone's here, shall we leave?"], "Everybody come. Start!", ["get starting", "get start"]],
+      ["커피나 차를 권해요. 물이면 충분해요.", "Can I get you some coffee or tea?", "Just water would be great, thanks.", "물이면 충분해요, 감사합니다.", "would be", ["Coffee is great, I'll pay for it.", "No thanks, I'm on a meeting."], "Water, okay.", ["wood be", "had be"]],
+      ["명함을 건네요. 이메일 주소는 뒷면에 있어요.", null, "Here's my card. My email's on the back.", "제 명함이에요. 이메일은 뒷면에 있어요.", "card", ["Here's my credit card.", "Please take my car."], "This is my name card.", ["cart", "code"]],
+      ["상대 이름을 어떻게 발음하는지 헷갈려요.", null, "Sorry, how do you pronounce your name?", "죄송한데, 성함을 어떻게 발음하세요?", "pronounce", ["Sorry, how do you spell my name?", "Sorry, what's your name again? I forgot it."], "Your name, how read?", ["announce", "promise"]],
+      ["오는 길이 어땠는지 물어요. 차도 안 막히고 편하게 왔어요.", "How was your trip here?", "Pretty smooth, thanks. The traffic wasn't bad.", "꽤 순조로웠어요. 차도 안 막혔고요.", "smooth", ["Pretty smooth, thanks. I'll trip tomorrow.", "I'm here on a business trip."], "Trip was no problem, traffic no.", ["smoothly", "smell"]],
+      ["이번 프로젝트에서 맡을 역할을 물어요. 런칭 캠페인을 맡아요.", "So, what will your role be on this project?", "I'll be handling the launch campaign.", "런칭 캠페인을 맡게 될 거예요.", "handling", ["I'll be watching the launch on TV.", "I handled my role last year."], "My role is campaign doing.", ["handled", "handle"]],
+      ["상대가 빨리 말해서 마지막 부분을 놓쳤어요.", null, "Sorry, could you go over that last part again?", "죄송한데, 마지막 부분 다시 말씀해 주시겠어요?", "go over", ["Sorry, could you go over there?", "Sorry, can you speak Korean?"], "Pardon? Once more speak.", ["go on", "go off"]],
+      ["3월에 출시하자는 의견에 동의해요.", "We'd like to launch in March. What do you think?", "That sounds good to me.", "저는 좋아요.", "sounds", ["That sounds like March.", "I don't think, I like it."], "I am agree.", ["sound", "sounding"]],
+      ["예산을 오늘 확정해 달래요. 팀과 먼저 확인해야 해요.", "Can you confirm the budget today?", "Let me check with my team and get back to you.", "팀이랑 확인하고 다시 연락드릴게요.", "get back to", ["Let me check my team and come back home.", "Sure, I'll confirm it next year."], "I will ask team and call you after.", ["get back from", "get back at"]],
+      ["미팅이 끝났어요. 시간 내 줘서 고맙다고 해요.", null, "Thanks for your time today.", "오늘 시간 내 주셔서 감사해요.", "time", ["Thanks for your time yesterday.", "Thanks for the time. What time is it?"], "Thank you for today's meeting time.", ["team", "tie"]],
+      ["헤어지기 전에 앞으로도 연락하자고 해요.", null, "It was great meeting you. Let's keep in touch.", "만나서 반가웠어요. 계속 연락해요.", "keep in touch", ["It was great meeting you. Let's keep in mind.", "Nice to meet you. Let's get started."], "Nice to meet you. Contact often.", ["keep in mind", "keep on touch"]]
+    ],
+    '주문 바꾸기': [
+      ["바리스타가 주문을 확인해요. 마음이 바뀌어서 주문을 바꾸고 싶어요.", "Hi! One iced latte, right?", "Actually, could I change my order?", "사실, 주문 좀 바꿀 수 있을까요?", "change", ["Actually, could I charge my order?", "Actually, could I order my change?"], "Order change, possible?", ["charge", "chance"]],
+      ["일반 우유 말고 오트밀크로 바꾸고 싶어요.", null, "Could I get it with oat milk instead?", "대신 오트밀크로 해 주실 수 있나요?", "instead", ["Could I get it with oat milk in the bag?", "Could I get some oatmeal instead?"], "Oat milk change, please.", ["inside", "instant"]],
+      ["단 걸 별로 안 좋아해요.", "Anything else?", "Could you make it less sweet?", "덜 달게 해 주실 수 있나요?", "less", ["Could you make it more sweet?", "Could you make it less sweat?"], "Sugar little, please.", ["lass", "loss"]],
+      ["카페에 앉아서 마시고 갈 거예요.", "For here or to go?", "For here, please.", "먹고 갈게요.", "here", ["To go, please.", "For you, please."], "Eat here.", ["hear", "hire"]],
+      ["큰 사이즈로 마시고 싶어요.", "What size would you like?", "Can I get a large?", "큰 거로 주실래요?", "large", ["Can I get a larger cup later?", "Can I get a large discount?"], "Big size, please.", ["largely", "lodge"]],
+      ["얼음이 많으면 금방 싱거워져요. 얼음을 적게 넣어 달라고 해요.", null, "Light ice, please.", "얼음 적게 주세요.", "Light", ["Light coffee, please.", "No ice cream, please."], "Ice little, please.", ["Night", "Tight"]],
+      ["커피를 더 진하게 마시고 싶어요.", null, "Could I add an extra shot?", "샷 추가할 수 있을까요?", "extra", ["Could I add an extra cup?", "Could I take an extra photo?"], "One more shot plus, please.", ["extract", "exit"]],
+      ["금액을 들었어요. 카드로 내고 싶어요.", "That'll be 6.50.", "Can I pay by card?", "카드로 계산할 수 있어요?", "by", ["Can I pay by tomorrow?", "Can I pay my card?"], "Card is okay?", ["on", "for"]],
+      ["영수증은 필요 없어요.", "Would you like a receipt?", "No, I'm good, thanks.", "아니요, 괜찮아요.", "good", ["No, I'm good at it.", "Yes, I'm good, thanks."], "No need receipt.", ["goal", "gold"]],
+      ["주문할 때 이름을 물어요.", "Can I get a name for the order?", "It's Tammy. T-A-M-M-Y.", "태미예요. T-A-M-M-Y.", null, ["It's an iced latte.", "My order name is coffee."], "My name is Tammy, call me.", []],
+      ["오트밀크로 바꿨는데 일반 우유로 나온 것 같아요.", null, "Sorry, I think this is regular milk. I asked for oat milk.", "죄송한데, 이거 일반 우유 같아요. 오트밀크로 부탁드렸거든요.", "asked for", ["Sorry, I think this is oat milk. I asked for regular.", "It's fine, I'll just take it. Thanks!"], "This is wrong! Change!", ["asked to", "asked at"]],
+      ["빈자리처럼 보이는데 가방이 놓여 있어요.", null, "Is this seat taken?", "이 자리 사람 있어요?", "taken", ["Is this seat taking?", "Can I take this seat home?"], "Here, somebody sit?", ["token", "takes"]],
+      ["와이파이를 쓰고 싶어요.", null, "What's the Wi-Fi password?", "와이파이 비밀번호가 뭐예요?", "password", ["Is the Wi-Fi free with coffee?", "Can you pass the word?"], "Wi-Fi password, please teach me.", ["passport", "pass"]],
+      ["휴대폰 배터리가 얼마 안 남았어요. 충전하고 싶어요.", null, "Is there an outlet I could use?", "쓸 수 있는 콘센트 있어요?", "outlet", ["Is there an outlet mall nearby?", "Is there an outlet for my coffee?"], "Where is consent?", ["outlook", "output"]],
+      ["나갈 때 바리스타가 인사해요.", "Have a great day!", "Thanks, you too!", "감사해요, 좋은 하루 보내세요!", "too", ["Thanks, me too!", "You're welcome, have a great day!"], "Thank you, same same.", ["to", "two"]]
+    ]
+  };
+  const sitQLv = () => Math.min(4, Math.max(1, ST.qLv || +String((BOOKS.find((b) => b.mine) || { l: 'Lv.1' }).l).replace(/\D/g, '') || 1));
+  const SITQ_LV = { 1: '입문 · 뜻을 보고 골라요', 2: '기초 · 상황을 보고 골라요', 3: '중급 · 영어로 듣고 답해요', 4: '고급 · 듣기만 하고 자연스럽게 답해요' };
+  function sitQuizItems(title, who) {
+    const Q = SIT_QUIZ[title]; if (!Q) return null;
+    const lv = sitQLv(), others = (i) => stShuffle(Q.filter((_, k) => k !== i).map((q) => q[2]));
+    const blanks = (i) => stShuffle(Q.filter((q, k) => k !== i && q[4]).map((q) => q[4]));
+    const bubble = (l, hide) => `<span class="sq-bub"><em>${stEsc(who)}</em>${hide ? '<span class="sq-hid">듣고 답해요 · 스피커를 눌러 다시 들어요</span>' : `<span lang="en">${stEsc(l)}</span>`}<button type="button" class="sq-spk" data-say="${stEsc(l)}" aria-label="다시 듣기">${ICO.spk}</button></span>`;
+    const ctx = (c) => `<span class="sq-ctx">${stEsc(c)}</span>`;
+    return Q.map((q, i) => {
+      const [c, l, a, k, b, near, awk, wb] = q, mk = [a, k];
+      const blank = b && i % 3 === 2 && lv <= 2;
+      if (blank) { const re = new RegExp(b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), sent = stEsc(a).replace(stEsc(b), '<span class="st-blk">&nbsp;</span>');
+        return { kick: lv === 1 ? '빈칸에 들어갈 말을 골라요' : '빈칸을 채워 이 상황에 맞는 문장을 완성해요', top: lv === 1 ? stEsc(k) : ctx(c), q: `<span lang="en">${sent}</span>`, ans: b, opts: [...wb.filter(Boolean), ...blanks(i).filter((x) => x !== b && !wb.includes(x))].slice(0, 3), ol: true, mk }; }
+      if (lv === 1) return { kick: '뜻에 맞는 표현을 골라요', top: stEsc(k), q: '', ans: a, opts: others(i).slice(0, 3), en: true, mk };
+      if (lv === 2) return { kick: '이 상황에서 뭐라고 할까요?', top: ctx(c), q: l ? bubble(l) : '', ans: a, opts: [near[0], ...others(i).slice(0, 2)], en: true, mk };
+      if (lv === 3) return l ? { kick: '상대의 말에 알맞게 답해요', top: bubble(l), q: '', ans: a, opts: [...near, others(i)[0]], en: true, mk, auto: l }
+        : { kick: '이 상황에 딱 맞는 말을 골라요', top: ctx(c), q: '', ans: a, opts: [...near, awk], en: true, mk };
+      return l ? { kick: '듣고 가장 자연스럽게 답해요', top: bubble(l, true), q: ctx(c), ans: a, opts: [...near, awk], en: true, mk: [a, `${who}: ${l} → ${k}`], auto: l }
+        : { kick: '원어민처럼 가장 자연스러운 말을 골라요', top: ctx(c), q: '', ans: a, opts: [...near, awk], en: true, mk };
+    });
+  }
   STUDY_STEPS.situation = { pre: [], post: [], main: [
     { id: 'expr', type: 'cards', t: '표현 익히기', d: '이 장면에서 꼭 쓰는 표현 5개 · 듣고 따라 말하기', min: 3, xp: 5 },
-    { id: 'exq', type: 'choice', t: '표현 퀴즈', d: '상황에 맞는 표현 고르기', min: 2, xp: 5 },
+    { id: 'exq', type: 'choice', t: '상황 퀴즈', d: '실제 상황 15문제 · 내 레벨에 맞춘 난이도', min: 6, xp: 10 },
     { id: 'rp', type: 'chat', t: '롤플레이', d: 'AI와 실제 상황처럼 대화하기', min: 5, xp: 15 }
   ] };
   const ALL_L = [...STUDY_LV, ...SITS];
@@ -8602,6 +8729,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const D = SV.D;
     if (s.id === 'bank') return D.bank.map(([en, k, ko, ans]) => ({ kick: `${D.bankName} · 빈칸에 맞는 뜻을 골라요`, top: hl(en, k), say: en, q: stEsc(ko).replace('___', '<span class="st-blk">&nbsp;</span>'), ans, pool: D.bank.map((b) => b[3]), mk: [en, ko.replace('___', ans)] }));
     if (s.id === 'vocab') return D.keywords.map(([w, m, ex]) => ({ kick: D.review4.includes(w) ? '다음 회차 VOCABULARY REVIEW 단어 · 뜻을 골라요' : 'KEYWORDS · 뜻을 골라요', big: w, say: w + '. ' + ex, q: `<span lang="en">${hlw(ex, w)}</span>`, ans: m, pool: D.keywords.map((k) => k[1]), mk: [ex, m + ' · ' + w] }));
+    if (s.id === 'exq') { const sq = sitQuizItems(SV.ls.title, D.rp ? D.rp.who : 'Staff'); if (sq) return sq; }
     if (s.id === 'exq') return D.expr.map(([w, m, ex]) => ({ kick: '이 상황에서 쓰는 말 · 뜻에 맞는 표현을 골라요', top: stEsc(m), say: w, q: '', ans: w, pool: D.expr.map((e) => e[0]), en: true, mk: [w, m] }));
     if (s.id === 'keyq') return D.key.map(([w, m, ex]) => ({ kick: 'KEY EXPRESSIONS · 뜻을 골라요', big: w, say: w + '. ' + ex, q: `<span lang="en">${hlw(ex, w)}</span>`, ans: m, pool: D.key.map((k) => k[1]), mk: [ex, m + ' · ' + w] }));
     const pairs = D.better;
@@ -8618,18 +8746,20 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     }
     if (t.i >= t.order.length) return choiceResult(s, items);
     const it = items[t.order[t.i]];
-    const opts = t.opts || (t.opts = stShuffle([it.ans, ...stShuffle(it.pool.filter((x) => x !== it.ans)).slice(0, 3)]));
+    const opts = t.opts || (t.opts = stShuffle([it.ans, ...(it.opts ? it.opts.filter((x) => x && x !== it.ans).slice(0, 3) : stShuffle(it.pool.filter((x) => x !== it.ans)).slice(0, 3))]));
     t.picked = false;
     $('#stBody').innerHTML = `
       <div class="pr-top"><div class="pr-bar" aria-hidden="true"><i style="width:${t.i / t.order.length * 100}%"></i></div><span class="pr-count">${t.i + 1}/${t.order.length}</span></div>
       <div class="st-kick2">${it.kick}</div>
+      ${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? `<div class="sq-lv" role="group" aria-label="난이도">${[1, 2, 3, 4].map((n) => `<button type="button" data-qlv="${n}" aria-pressed="${sitQLv() === n}">Lv.${n}</button>`).join('')}<span>${SITQ_LV[sitQLv()]}</span></div>` : ''}
       <div class="card st-qc">
         ${it.big ? `<div class="st-qc-top"><span class="st-big" lang="en">${stEsc(it.big)}</span>${saySpan(it.say)}</div>` : `<div class="st-qc-top"><span class="st-prompt" lang="en">${it.top}</span>${it.en ? '' : saySpan(it.say)}</div>`}
         ${it.q ? `<div class="st-qc-q">${it.q}</div>` : ''}
       </div>
-      <div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" ${it.en ? 'lang="en"' : ''}>${stEsc(o)}</button>`).join('')}</div>
-      <div id="stFb" role="status"></div>`;
-    if (!it.en && !it.big) setTimeout(() => sayEn(it.say, .92), 250);
+      <div id="stFb" role="status"></div>
+      <div class="st-foot st-qfoot"><div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" ${it.en || it.ol ? 'lang="en"' : ''}>${stEsc(o)}</button>`).join('')}</div></div>`;
+    if (it.auto) setTimeout(() => sayEn(it.auto, .92), 300);
+    $$('#stBody [data-qlv]').forEach((b) => b.addEventListener('click', () => { const n = +b.dataset.qlv; if (n === sitQLv()) return; ST.qLv = n; delete ST.pos[stKey(s.id)]; SV.t = {}; sfx('tap'); toast(`Lv.${n} 난이도로 처음부터 풀어요`); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; }));
     $$('#stBody [data-opt]').forEach((b) => b.addEventListener('click', () => {
       if (t.picked) return;
       const pick = opts[+b.dataset.opt], ok = pick === it.ans;
@@ -8639,7 +8769,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         return;
       }
       t.picked = true;
-      $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === it.ans) x.classList.add('right'); });
+      $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === it.ans) x.classList.add('right'); }); $('#stBody .st-qfoot .st-opts').classList.add('done');
       if (!ok) b.classList.add('wrong');
       sfx(ok ? 'correct' : 'wrong');
       if (ok && !t.miss) t.right += 1;
@@ -8647,8 +8777,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       const rx = REACT_BY[0][ok ? 'good' : 'bad'][Math.floor(Math.random() * REACT_BY[0][ok ? 'good' : 'bad'].length)];
       $('#stFb').innerHTML = `<div class="st-rx"><img src="assets/${ok ? 'c-upright-yellow.png' : 'c-tilted-yellow.png'}" alt=""><div><div class="st-rx-big" lang="en">${stEsc(rx[0])}</div><div class="st-rx-ko">${stEsc(rx[1])}</div></div></div>
         ${ok ? '' : it.en ? ansCardsHTML(it.ans) : `<div class="cp" style="margin-top:12px"><div class="cp-b cp-mine"><small>내가 고른 답</small><b style="font-size:15px">${stEsc(pick)}</b></div><div class="cp-ar">${ICO.arrow}</div><div class="cp-b cp-ans"><small>정답</small><b style="font-size:15px">${stEsc(it.ans)}</b></div></div>${ansCardsHTML(it.mk[0], '정답 문장 · 카드로 맞춰 볼게요')}`}
-        <div class="react-tools" style="margin-top:12px"><button type="button" data-say="${stEsc(it.mk[0])}">${ICO.spk}듣기</button><button type="button" data-mk="${stEsc(it.mk[0])}" data-ko="${stEsc(it.mk[1])}" aria-pressed="${S.marks.some((m) => m.t === it.mk[0])}">${ICO.mark(false)}저장</button></div>
-        <button class="btn wide yellow press" id="stNext" style="margin-top:16px">${t.i < t.order.length - 1 ? '다음 문제' : '결과 보기'}</button>`;
+        <div class="react-tools" style="margin-top:12px"><button type="button" data-say="${stEsc(it.mk[0])}">${ICO.spk}듣기</button><button type="button" data-mk="${stEsc(it.mk[0])}" data-ko="${stEsc(it.mk[1])}" aria-pressed="${S.marks.some((m) => m.t === it.mk[0])}">${ICO.mark(false)}저장</button></div>`;
+      $('#stBody .st-qfoot').insertAdjacentHTML('beforeend', `<button class="btn wide yellow press" id="stNext">${t.i < t.order.length - 1 ? '다음 문제' : '결과 보기'}</button>`);
       stReveal($('#stFb'));
       if (!ok) ansCardsSay(it.en ? it.ans : it.mk[0]);
       $('#stNext').addEventListener('click', () => { t.i += 1; t.opts = null; t.miss = null; STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
@@ -8659,7 +8789,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#stBody').innerHTML = `
       <div class="card st-score"><span class="st-kick2">맞힌 문제</span><b>${t.right}<small> / ${t.order.length}</small></b><span class="st-qko">${t.right === t.order.length ? '하나도 안 틀렸어요!' : '틀린 문제는 아래에서 다시 들어 보세요.'}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px">${t.order.map((k) => { const it = items[k], ok = t.res[k]; return `<div class="card st-res${ok ? '' : ' no'}"><span class="st-ok">${ok === false ? ICO.x : ICO.check}</span><div class="t"><b lang="en">${stEsc(it.mk[0])}</b><small>${stEsc(it.mk[1])}</small></div>${saySpan(it.mk[0])}${markSpan(it.mk[0], it.mk[1])}</div>`; }).join('')}</div>
-      ${doneBtn()}`;
+      <div class="st-foot">${doneBtn()}</div>`;
     $('#stDone').addEventListener('click', () => finishStep(s, { right: t.right, total: t.order.length }));
   }
 
