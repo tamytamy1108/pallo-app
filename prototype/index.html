@@ -15307,9 +15307,6 @@ BUILD.campus = (EL, SC) => {
   sc.add(at(flat(new THREE.CircleGeometry(1.1, 32), 0x7FC46F, 1), 3.4, TOP + .03, -3.2)); sc.children[sc.children.length - 1].scale.set(1.3, .9, 1);
   [[-1.6, 1.4], [1.8, 1.0], [-2.6, -2.8], [4.4, .8]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .85, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
   const fl = flag(-2.6, TOP, -1.2, 0x23305E); const fc = new THREE.Mesh(new THREE.PlaneGeometry(.78, .43), new THREE.MeshBasicMaterial({ map: crest })); fc.position.set(.42, 1.55, .03); fl.add(fc); fl.rotation.y = .72; sc.add(fl);
-  // 연
-  const kite = new THREE.Group(); const kg = new THREE.Shape(); kg.moveTo(0, .6); kg.lineTo(.4, 0); kg.lineTo(0, -.6); kg.lineTo(-.4, 0); kg.lineTo(0, .6);
-  kite.add(mesh(new THREE.ShapeGeometry(kg), 0xE9789B, { line: .03 })); kite.position.set(-4.6, 6.2, -3); kite.rotation.y = .8; sc.add(kite); S.ticks.push((t) => { kite.position.y = 6.2 + Math.sin(t * 1.6) * .3; kite.rotation.z = Math.sin(t * 1.6) * .2; });
   sc.add(cloud(5.6, 5.2, -1, .9));
   return S;
 };
