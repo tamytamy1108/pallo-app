@@ -14744,33 +14744,9 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   [-3, -.5, 2.5].forEach((k, i) => sc.add(person(bx + k * .7071 + (i % 2 ? .4 : -.4) * .7071, bz + k * .7071 - (i % 2 ? .4 : -.4) * .7071, [0x1F4E9C, 0xE0483F, 0xF2C230][i], 0, FL + .65)));
   // 건너편: 강가 역 (돔 · 시계) + 시티
   station(sc, -19.5, FL - .4, -19.5, ROW, 1.05);
-  // 역 뒤 멜버른 랜드마크 시안 (?cafe=N): 1 아츠센터 첨탑 · 2 세인트폴 성당 · 3 흐린 스카이라인 · 4 페더레이션 스퀘어
-  const BK = Math.min(6, Math.max(1, +(new URLSearchParams(location.search).get('cafe') || 1)));
+  // 역 뒤: 선명한 멜버른 도심 실루엣
   [-8, 13].forEach((t) => { const [x, z] = along(-21.5, -21.5, t); sc.add(tree(x, z, FL - .4, 1.6, 0x6FAE6A)); });
-  if (BK === 1) { // 격자 첨탑 (끝이 빛나요)
-    const sp = new THREE.Group(), white = { color: 0xF4F2EE, metalness: .4, roughness: .35 }, H = 9.5, R0 = 1.5;
-    sp.add(at(std(new THREE.CylinderGeometry(3.4, 3.6, 3.0, 16), { color: 0xCDBFA8, roughness: .8 }), 0, 1.5, 0)); sp.add(at(std(new THREE.CylinderGeometry(3.0, 3.4, .5, 16), { color: 0xE2D6C2, roughness: .7 }), 0, 3.2, 0)); sp.add(at(std(new THREE.CylinderGeometry(1.8, 2.4, 1.0, 8), { color: 0xCDBFA8, roughness: .8 }), 0, 3.9, 0));
-    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, x0 = Math.cos(a) * R0, z0 = Math.sin(a) * R0, len = Math.hypot(R0, H); const r = std(new THREE.CylinderGeometry(.05, .07, len, 6), white); r.position.set(x0 / 2, 4.4 + H / 2, z0 / 2); r.lookAt(0, 4.4 + H, 0); r.rotateX(Math.PI / 2); r.position.set(x0 / 2, 4.4 + H / 2, z0 / 2); sp.add(r); }
-    for (let k = 1; k < 8; k++) { const y = k / 8 * H, rr = R0 * (1 - k / 8); const ring = std(new THREE.TorusGeometry(rr, .035, 6, 24), white); ring.rotation.x = Math.PI / 2; ring.position.y = 4.4 + y; sp.add(ring); }
-    const inner = new THREE.Mesh(new THREE.ConeGeometry(R0 * .9, H * .96, 8, 1, true), new THREE.MeshStandardMaterial({ color: 0x9FB3C8, transparent: true, opacity: .25, side: THREE.DoubleSide })); inner.position.y = 4.4 + H * .48; sp.add(inner);
-    sp.add(at(std(new THREE.CylinderGeometry(.03, .05, 2.4, 6), white), 0, 4.4 + H + 1.2, 0)); const tip = new THREE.Mesh(new THREE.SphereGeometry(.18, 12, 10), new THREE.MeshBasicMaterial({ color: 0xFFE7A0 })); tip.position.y = 4.4 + H + 2.5; sp.add(tip); S.ticks.push((t) => tip.scale.setScalar(1 + Math.sin(t * 3) * .25));
-    const [x, z] = along(-21.5, -21.5, 9.5); sp.position.set(x, FL - .4, z); sc.add(bgs(sp)); }
-  if (BK === 2) { // 고딕 첨탑 세 개 (블루스톤 · 사암 줄무늬)
-    const banded = canvasTex(128, 512, (g, W, H) => { g.fillStyle = '#C9B48F'; g.fillRect(0, 0, W, H); for (let y = 0; y < H; y += 40) { g.fillStyle = '#7A7468'; g.fillRect(0, y, W, 14); } g.fillStyle = '#3E4A58'; for (let y = 60; y < H - 40; y += 120) { g.beginPath(); g.moveTo(W * .35, y + 70); g.lineTo(W * .35, y + 20); g.arc(W / 2, y + 20, W * .15, Math.PI, 0); g.lineTo(W * .65, y + 70); g.fill(); } });
-    const cat = new THREE.Group(), stn = { map: banded, roughness: .85 };
-    cat.add(at(std(new THREE.BoxGeometry(7, 3.6, 3), stn), 0, 1.8, 0)); const rf = new THREE.CylinderGeometry(1.8, 1.8, 7, 3); rf.rotateZ(Math.PI / 2); const r = std(rf, { color: 0x4E5560 }); r.scale.set(1, .6, 1); r.position.y = 4.3; cat.add(r);
-    [[-2.6, 7.2], [2.6, 7.2], [0, 10.5]].forEach(([x, h]) => { cat.add(at(std(new THREE.BoxGeometry(1.5, h, 1.5), stn), x, h / 2, .4)); const sp = std(new THREE.ConeGeometry(1.0, h * .45, 4), { color: 0x4E5560, roughness: .6 }); sp.rotation.y = Math.PI / 4; sp.position.set(x, h + h * .225, .4); cat.add(sp);
-      [[-.75, -.75], [.75, -.75], [-.75, .75], [.75, .75]].forEach(([a, b]) => cat.add(at(std(new THREE.ConeGeometry(.12, .9, 4), { color: 0xC9B48F }), x + a, h + .4, .4 + b))); });
-    const rose = new THREE.Mesh(new THREE.CircleGeometry(.8, 24), new THREE.MeshBasicMaterial({ color: 0x5E7FB0 })); rose.position.set(0, 6.6, 1.16); cat.add(rose);
-    cat.rotation.y = ROW; const [x, z] = along(-21, -21, 8.6); cat.position.set(x, FL - .4, z); sc.add(bgs(cat)); }
-  if (BK === 3) { // 안개 낀 도심 실루엣 (멀리 · 흐리게) + 금색 꼭대기 타워
-    const sil = canvasTex(2048, 640, (g, W, H) => { g.clearRect(0, 0, W, H); const layer = (col, base, hmin, hmax, step) => { g.fillStyle = col; let x = 0; while (x < W) { const w = step * (.6 + rnd() * .8), h = hmin + rnd() * (hmax - hmin); g.fillRect(x, H - base - h, w - 6, h + base); x += w; } };
-      layer('rgba(236,214,206,.5)', 0, 140, 320, 90); layer('rgba(214,190,190,.65)', 0, 70, 240, 110);
-      const ex = W * .62; g.fillStyle = 'rgba(196,170,172,.92)'; g.fillRect(ex, H - 560, 70, 560); g.fillStyle = 'rgba(232,196,120,.95)'; g.fillRect(ex, H - 560, 70, 70); g.fillRect(ex + 30, H - 610, 10, 50);
-      g.fillStyle = 'rgba(196,170,172,.92)'; g.beginPath(); g.moveTo(W * .3, H - 380); g.lineTo(W * .3 + 22, H - 380); g.lineTo(W * .3 + 11, H - 470); g.fill(); g.fillRect(W * .3 - 30, H - 380, 82, 380);
-      layer('rgba(190,164,166,.9)', 0, 30, 150, 130); });
-    const pl = new THREE.Mesh(new THREE.PlaneGeometry(64, 20), new THREE.MeshBasicMaterial({ map: sil, transparent: true, depthWrite: false, fog: false })); pl.rotation.y = ROW; const [x, z] = along(-24, -24, 3); pl.position.set(x, FL + 7.6, z); sc.add(bgs(pl)); }
-  if (BK === 5) { // 3안 · 안개 없이 선명한 실루엣 (창 불빛 점)
+  { // 역 뒤 멜버른 도심 실루엣 (선명하게 · 창 불빛 점)
     const sil = canvasTex(2048, 640, (g, W, H) => { g.clearRect(0, 0, W, H); const layer = (col, hmin, hmax, step, lit) => { let x = 0; while (x < W) { const w = step * (.6 + rnd() * .8), h = hmin + rnd() * (hmax - hmin); g.fillStyle = col; g.fillRect(x, H - h, w - 6, h);
         if (lit) for (let yy = H - h + 14; yy < H - 10; yy += 18) for (let xx = x + 8; xx < x + w - 16; xx += 14) if (rnd() > .55) { g.fillStyle = 'rgba(255,214,140,.85)'; g.fillRect(xx, yy, 6, 8); } x += w; } };
       layer('#C69A8E', 140, 320, 90, false); layer('#9C7480', 70, 240, 110, true);
@@ -14778,19 +14754,16 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
       g.fillStyle = '#6E5664'; g.beginPath(); g.moveTo(W * .3, H - 380); g.lineTo(W * .3 + 22, H - 380); g.lineTo(W * .3 + 11, H - 470); g.fill(); g.fillRect(W * .3 - 30, H - 380, 82, 380);
       layer('#6E5664', 30, 150, 130, true); });
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(64, 20), new THREE.MeshBasicMaterial({ map: sil, transparent: true, depthWrite: false, fog: false })); pl.rotation.y = ROW; const [x, z] = along(-24, -24, 3); pl.position.set(x, FL + 7.6, z); sc.add(bgs(pl)); }
-  if (BK === 6) { // 3안 · 진짜 3D 빌딩 · 창마다 불이 들어와요 (금색 꼭대기 타워)
-    const T = [[-14, 1.6, 6], [-11.5, 1.2, 8], [-9, 1.8, 7], [-6.5, 1.3, 10], [-4, 1.6, 8.5], [-1.5, 1.2, 11], [1, 1.7, 9], [3.5, 1.3, 12], [6, 1.6, 8], [8.6, 1.1, 14.5], [11, 1.7, 9.5], [13.5, 1.3, 7], [16, 1.6, 10]];
-    T.forEach(([t, w, h0], i) => { const h = h0 * .5, [x, z] = along(-24 - (i % 2) * 1.4, -24 - (i % 2) * 1.4, t); const m = new THREE.Mesh(new THREE.BoxGeometry(w * 2, h, w * 2), new THREE.MeshStandardMaterial({ map: glassTex(i % 3 ? '#A88E94' : '#B89CA0', '#E6D2CC'), emissive: 0xffffff, emissiveMap: litGlass(), emissiveIntensity: .7, roughness: .35, metalness: .3, fog: false }));
-      m.position.set(x, FL - .4 + h / 2, z); m.rotation.y = ROW; sc.add(bgs(m)); const rf = new THREE.Mesh(new THREE.BoxGeometry(w * 2 + .2, .25, w * 2 + .2), new THREE.MeshStandardMaterial({ color: 0x5E5262, fog: false })); rf.position.set(x, FL - .4 + h + .12, z); rf.rotation.y = ROW; sc.add(rf);
-      if (i === 9) { const cr = new THREE.Mesh(new THREE.BoxGeometry(w * 2, 1.4, w * 2), new THREE.MeshStandardMaterial({ color: 0xE8C070, metalness: .85, roughness: .2, emissive: 0x6A4A10, fog: false })); cr.position.set(x, FL - .4 + h + .8, z); cr.rotation.y = ROW; sc.add(cr); const an = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1.6, 6), new THREE.MeshStandardMaterial({ color: 0xE8C070, fog: false })); an.position.set(x, FL - .4 + h + 2.3, z); sc.add(an); } }); }
-  if (BK === 4) { // 페더레이션 스퀘어: 삼각 패널 파사드 · 각진 지붕 · 야외 스크린
-    const tri = canvasTex(256, 256, (g, W, H) => { const C = ['#C9A27A', '#9AA3AA', '#D8C3A0', '#6F7880', '#E2D2B6', '#B0B8BE']; const n = 6, s2 = W / n; for (let r = 0; r < n; r++) for (let c = 0; c < n * 2; c++) { const x = c * s2 / 2, y = r * s2, up = (r + c) % 2 === 0; g.fillStyle = C[(r * 7 + c * 3) % C.length]; g.beginPath(); if (up) { g.moveTo(x, y + s2); g.lineTo(x + s2 / 2, y); g.lineTo(x + s2, y + s2); } else { g.moveTo(x, y); g.lineTo(x + s2, y); g.lineTo(x + s2 / 2, y + s2); } g.fill(); g.strokeStyle = 'rgba(40,40,40,.35)'; g.lineWidth = 2; g.stroke(); } }, 2, 2);
-    const fs = new THREE.Group(), mt = { map: tri, roughness: .7, metalness: .2 };
-    [[0, 3.2, 5, 4, .0], [4.2, 4.6, 3.2, 3.6, .25], [-3.6, 2.6, 3, 3.4, -.2]].forEach(([x, h, w, d, tilt]) => { const b = std(new THREE.BoxGeometry(w, h, d), mt); b.position.set(x, h / 2, 0); b.rotation.z = tilt * .25; fs.add(b); const cap = std(new THREE.BoxGeometry(w * .9, .5, d * .9), mt); cap.position.set(x + tilt * 1.2, h + .1, 0); cap.rotation.z = tilt; fs.add(cap); });
-    const atr = std(new THREE.BoxGeometry(2.6, 5.6, 2.6), { color: 0xBFD6E2, roughness: .1, metalness: .4, transparent: true, opacity: .7 }); atr.position.set(2.2, 2.8, 1.2); atr.rotation.y = .4; fs.add(atr);
-    const scr = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.8), new THREE.MeshBasicMaterial({ map: canvasTex(512, 288, (g, W, H) => { const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#493087'); gr.addColorStop(1, '#D0798E'); g.fillStyle = gr; g.fillRect(0, 0, W, H); g.fillStyle = '#FFE200'; g.font = '900 72px Lexend, sans-serif'; g.textAlign = 'center'; g.fillText('PALLO', W / 2, H * .5); g.fillStyle = '#fff'; g.font = '700 30px Lexend, sans-serif'; g.fillText('FED SQUARE · LIVE', W / 2, H * .75); }) }));
-    scr.position.set(-1.6, 3.4, 2.05); fs.add(scr); fs.add(at(std(new THREE.BoxGeometry(3.4, 2, .2), { color: 0x2B2F44 }), -1.6, 3.4, 1.95));
-    fs.rotation.y = ROW; const [x, z] = along(-21, -21, 9); fs.position.set(x, FL - .4, z); sc.add(bgs(fs)); }
+  // 큰유황앵무 (흰 몸 · 노란 볏): 강 위를 나는 무리 + 난간에 앉은 두 마리
+  const cockatoo = () => { const b = new THREE.Group(), wh = { color: 0xF7F6F2, roughness: .6 };
+    const body = std(new THREE.SphereGeometry(.22, 14, 10), wh); body.scale.set(1.5, .9, .9); b.add(body); b.add(at(std(new THREE.SphereGeometry(.15, 12, 10), wh), .3, .12, 0));
+    b.add(at(std(new THREE.ConeGeometry(.05, .12, 8), { color: 0x2B2B2E }), .45, .08, 0)); b.children[b.children.length - 1].rotation.z = -Math.PI / 2;
+    for (let k = 0; k < 4; k++) { const c = std(new THREE.ConeGeometry(.03, .26, 6), { color: 0xFFD23C, roughness: .5 }); c.position.set(.26 - k * .04, .3, (k - 1.5) * .02); c.rotation.z = .5 + k * .18; b.add(c); }
+    const tail = std(new THREE.BoxGeometry(.3, .04, .14), wh); tail.position.set(-.38, -.02, 0); b.add(tail);
+    const wg = new THREE.PlaneGeometry(.34, .7); wg.rotateX(-Math.PI / 2); wg.translate(0, 0, .35); const wm = new THREE.MeshStandardMaterial({ color: 0xF7F6F2, side: THREE.DoubleSide, roughness: .6 }), w1 = new THREE.Mesh(wg, wm), w2 = new THREE.Mesh(wg, wm); w2.rotation.y = Math.PI; b.add(w1, w2); return { b, w1, w2 }; };
+  const flock = []; for (let i = 0; i < 9; i++) { const c = cockatoo(); c.b.scale.setScalar(1.6); sc.add(c.b); flock.push([c, rnd() * 6, (rnd() - .5) * 3, (rnd() - .5) * 1.6]); }
+  S.ticks.push((t) => flock.forEach(([c, ph, dt, dy], i) => { const p = ((t * 1.1 + ph * 4) % 44) - 22, [x, z] = along(-15, -15, p + dt); c.b.position.set(x + dy, 7.6 + dy * .6 + Math.sin(t * 1.5 + ph) * .35, z + dy); c.b.rotation.set(0, ROW, Math.sin(t * 1.5 + ph) * .1); const f = Math.sin(t * 9 + ph * 3) * .8; c.w1.rotation.x = f; c.w2.rotation.x = -f; }));
+  [[-3.6, .3], [5.4, -.2]].forEach(([tt, yy]) => { const c = cockatoo(), [x, z] = along(-8.9, -8.9, tt); c.b.scale.setScalar(1.4); c.w1.visible = c.w2.visible = false; const fold = std(new THREE.SphereGeometry(.2, 12, 8), { color: 0xEDEBE4, roughness: .6 }); fold.scale.set(1.5, .55, 1.05); fold.position.set(-.06, .03, 0); c.b.add(fold); c.b.position.set(x, FL + 1.3 + yy * 0, z); c.b.rotation.y = ROW + Math.PI * .5 + yy; sc.add(c.b); S.ticks.push((t) => { c.b.rotation.z = Math.sin(t * 2 + tt) * .08; }); });
   // 유람선 · 조정 보트
   const cruise = new THREE.Group(); cruise.add(at(std(new THREE.BoxGeometry(5, .7, 1.4), { color: 0xF7F7F8 }), 0, 0, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.4, .7, 1.2), { color: 0x2B2F44, roughness: .2 }), -.3, .7, 0)); cruise.add(at(std(new THREE.BoxGeometry(3.6, .1, 1.3), { color: 0xF7F7F8 }), -.3, 1.1, 0));
   for (let k = -1.8; k <= 1.2; k += .5) cruise.add(at(new THREE.Mesh(new THREE.BoxGeometry(.3, .25, .02), new THREE.MeshBasicMaterial({ color: 0xFFE7A8 })), k, .7, .61)); cruise.rotation.y = ROW; sc.add(cruise);
