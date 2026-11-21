@@ -1114,10 +1114,15 @@ a { color: inherit; }
 #stBody > .st-done, #stBody > .st-row2 { position: sticky; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 5; margin-top: auto; }
 .st-qfoot .st-opts.done .st-opt:not(.right):not(.wrong) { display: none; }
 .st-qfoot .st-opt { min-height: 50px; padding: 10px 14px; }
-.sq-lv { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.sq-lv button { height: 28px; padding: 0 10px; border: 2px solid var(--ink); border-radius: 14px; background: var(--white); font-family: var(--f-display); font-size: 11px; font-weight: 700; color: var(--ink); }
-.sq-lv button[aria-pressed="true"] { background: var(--yellow); }
-.sq-lv span { font-size: 12px; font-weight: 700; color: var(--sub); }
+.sq-lvb { display: flex; align-items: center; gap: 8px; } .sq-lvb b { height: 24px; padding: 0 10px; border: 2px solid var(--ink); border-radius: 12px; background: var(--yellow); font-family: var(--f-display); font-size: 11px; display: inline-flex; align-items: center; } .sq-lvb span { font-size: 12px; font-weight: 700; color: var(--sub); }
+.sq-pt { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.3px; }
+.sq-pick { display: flex; flex-direction: column; gap: 10px; }
+.sq-pc { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 16px; border: 2.5px solid var(--ink); border-radius: 18px; background: var(--white); box-shadow: 0 4px 0 var(--ink); text-align: left; font: inherit; color: var(--ink); transition: transform .12s, box-shadow .12s, background-color .2s; }
+.sq-pc:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.sq-pc.on { background: #FFF6B8; }
+.sq-pc .h { display: flex; align-items: center; gap: 8px; } .sq-pc .h b { font-family: var(--f-display); font-size: 15px; } .sq-pc .h em { font-style: normal; font-size: 15px; font-weight: 900; } .sq-pc .h i { font-style: normal; height: 20px; padding: 0 8px; border-radius: 10px; background: var(--ink); color: var(--yellow); font-size: 10px; font-weight: 900; display: inline-flex; align-items: center; }
+.sq-pc .d { font-size: 13px; font-weight: 700; color: var(--sub); line-height: 1.45; } .sq-pc .ex { font-size: 12px; font-weight: 700; color: #7A7488; background: #F4F0E6; border-radius: 8px; padding: 4px 8px; }
+.sq-pc.on .ex { background: #fff; }
 .sq-ctx { display: block; font-family: var(--f-body); font-size: 15px; font-weight: 700; line-height: 1.5; color: var(--ink); }
 .st-qc-q .sq-ctx { font-size: 13px; color: var(--sub); }
 .sq-bub { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 44px 10px 14px; border: 2px solid var(--ink); border-radius: 16px 16px 16px 4px; background: #F3EEFF; text-align: left; }
@@ -6994,7 +6999,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ["화장실 문 앞이에요. 안에 사람이 있는지 몰라요.", null, "Is anyone in there?", "안에 누구 있어요?", null, ["Is anyone sitting here?", "Who is in the restroom's name?"], "Inside person exist?", []],
       ["창가 자리인데 화장실에 가려면 옆 사람을 지나가야 해요.", null, "Excuse me, could I get past?", "실례지만 좀 지나갈게요.", "get past", ["Excuse me, could I get off?", "Excuse me, could you get up for the meal?"], "Sorry, I go.", ["get pass", "go pass"]],
       ["입국 신고서를 받았는데 펜이 없어요.", "Do you need an arrival card?", "Yes, please. Could I borrow a pen too?", "네, 펜도 빌릴 수 있을까요?", "borrow", ["No, I already arrived.", "Yes, please. Could I keep the pen?"], "Yes, please. Could I lend a pen too?", ["lend", "rent"]],
-      ["면세품을 살 생각이 없어요.", "Would you like anything from duty-free?", "No, thank you. I'm fine.", "아니요, 괜찮아요.", "fine", ["No, thank you. I'm free.", "Yes, I'm duty-free."], "No need. Not want.", ["free", "find"]],
+      ["면세품을 살 생각이 없어요.", "Would you like anything from duty-free?", "No, thank you. I'm fine.", "아니요, 괜찮아요.", "fine", ["No, thank you. I'm free.", "Yes, I'm duty-free."], "No need. Not want.", ["free", "find", "fire"]],
       ["채식 식사를 주는데, 나는 그걸 신청한 적이 없어요.", "Here's your vegetarian meal.", "Oh, I didn't order that. I think there's a mistake.", "저 그거 주문 안 했어요. 착오가 있는 것 같아요.", "mistake", ["Oh, I didn't eat that yet.", "Oh, thanks. I love vegetarian food."], "Not mine, wrong wrong.", ["miss", "mess"]],
       ["다 먹은 쟁반을 치워 줬으면 해요.", null, "Could you take this tray, please?", "이 쟁반 좀 가져가 주시겠어요?", "take", ["Could you bring this tray, please?", "Could I take this tray home?"], "Please clean this.", ["make", "give"]],
       ["이어폰에서 소리가 안 나요.", null, "My headphones aren't working.", "이어폰이 안 돼요.", "working", ["My headphones are too loud.", "My headphones are in my bag."], "My earphone is broken-ed.", ["walking", "worked"]],
@@ -7008,7 +7013,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ["어디서 묵는지 물어요. 시내 그랜드 호텔이에요.", "Where are you staying?", "At the Grand Hotel downtown.", "시내 그랜드 호텔이요.", "downtown", ["For five days downtown.", "I'm staying with pleasure."], "Hotel. Grand. Downtown.", ["download", "downstairs"]],
       ["이 나라는 처음이에요.", "Is this your first time here?", "Yes, it's my first time.", "네, 처음이에요.", "first", ["Yes, it's my first name.", "No, it's my first time."], "Yes, first visit is this.", ["last", "fast"]],
       ["직업을 물어요. 마케팅 일을 해요.", "What do you do?", "I work in marketing.", "마케팅 일을 해요.", "work", ["I do sightseeing.", "I'm doing fine, thanks."], "My job is marketing work.", ["walk", "word"]],
-      ["혼자 왔는지 물어요. 친구랑 같이 왔어요.", "Are you traveling alone?", "No, I'm with my friend.", "아니요, 친구랑 같이 왔어요.", "with", ["No, I'm alone with my friend.", "Yes, my friend is here too."], "No, friend together.", ["by", "at"]],
+      ["혼자 왔는지 물어요. 친구랑 같이 왔어요.", "Are you traveling alone?", "No, I'm with my friend.", "아니요, 친구랑 같이 왔어요.", "with", ["No, I'm alone with my friend.", "Yes, I'm traveling with my friend."], "No, friend together.", ["by", "at"]],
       ["돌아가는 비행기표가 있는지 물어요.", "Do you have a return ticket?", "Yes, here's my return ticket.", "네, 돌아가는 표 여기 있어요.", "return", ["Yes, here's my boarding pass.", "Yes, I'll return the ticket."], "Yes, coming back ticket here.", ["retire", "repeat"]],
       ["세관 신고할 물건이 없어요.", "Do you have anything to declare?", "No, nothing to declare.", "아니요, 신고할 것 없어요.", "declare", ["No, I have nothing to eat.", "Yes, I'd like to declare my hotel."], "No, nothing to report me.", ["decline", "decide"]],
       ["음식이 있는지 물어요. 과자만 조금 있어요.", "Are you carrying any food?", "Just some snacks. Do I need to declare them?", "과자만 있어요. 신고해야 하나요?", "snacks", ["Just some cash. Is that okay?", "No, I already ate on the plane."], "Only cookie little bit.", ["snakes", "snaps"]],
@@ -7017,7 +7022,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ["카메라를 보라고 해요. 이렇게 하면 되는지 확인하고 싶어요.", "Please look at the camera.", "Like this?", "이렇게요?", null, ["Like a camera?", "I like this."], "Me look, okay?", []],
       ["지문 스캐너에 손가락을 올리래요. 어느 손인지 헷갈려요.", "Put your fingers on the scanner.", "Which hand, the right or the left?", "어느 손이요, 오른손이요 왼손이요?", "hand", ["Which finger do you like?", "Which scanner is better?"], "Right? Left?", ["hang", "hard"]],
       ["이 도시 다음에 어디로 가는지 물어요. 여기서 서울로 돌아가요.", "Where will you go after this city?", "I'm flying back to Seoul from here.", "여기서 서울로 돌아가요.", "back", ["I'm flying here from Seoul.", "I'm going to the hotel after this."], "Next, Seoul return.", ["black", "bag"]],
-      ["심사가 끝났어요. 인사하고 나가요.", "Okay. Enjoy your stay!", "Thank you. Have a good day!", "감사합니다. 좋은 하루 보내세요!", "good", ["Thank you. Enjoy your stay too!", "You're welcome. Enjoy!"], "Thank you. You too enjoy.", ["god", "goods"]]
+      ["심사가 끝났어요. 인사하고 나가요.", "Okay. Enjoy your stay!", "Thank you. Have a good day!", "감사합니다. 좋은 하루 보내세요!", "good", ["Thank you. Enjoy your stay too!", "You're welcome. Enjoy!"], "Thank you. You too enjoy.", ["god", "goods", "goody"]]
     ],
     '첫 미팅 자기소개': [
       ["협력사 담당자를 처음 직접 만났어요. 그동안 메일로만 연락했어요.", "Hi, you must be from PALLO. I'm Grace Kim.", "Yes, I'm Tammy. Nice to finally meet you in person.", "네, 태미예요. 드디어 직접 뵙네요.", "in person", ["Yes, I'm Tammy. Nice to meet you again.", "Yes, I'm from PALLO. Where are you from?"], "Yes, I am PALLO's Tammy. Nice meeting.", ["by person", "on person"]],
@@ -7034,7 +7039,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ["3월에 출시하자는 의견에 동의해요.", "We'd like to launch in March. What do you think?", "That sounds good to me.", "저는 좋아요.", "sounds", ["That sounds like March.", "I don't think, I like it."], "I am agree.", ["sound", "sounding"]],
       ["예산을 오늘 확정해 달래요. 팀과 먼저 확인해야 해요.", "Can you confirm the budget today?", "Let me check with my team and get back to you.", "팀이랑 확인하고 다시 연락드릴게요.", "get back to", ["Let me check my team and come back home.", "Sure, I'll confirm it next year."], "I will ask team and call you after.", ["get back from", "get back at"]],
       ["미팅이 끝났어요. 시간 내 줘서 고맙다고 해요.", null, "Thanks for your time today.", "오늘 시간 내 주셔서 감사해요.", "time", ["Thanks for your time yesterday.", "Thanks for the time. What time is it?"], "Thank you for today's meeting time.", ["team", "tie"]],
-      ["헤어지기 전에 앞으로도 연락하자고 해요.", null, "It was great meeting you. Let's keep in touch.", "만나서 반가웠어요. 계속 연락해요.", "keep in touch", ["It was great meeting you. Let's keep in mind.", "Nice to meet you. Let's get started."], "Nice to meet you. Contact often.", ["keep in mind", "keep on touch"]]
+      ["헤어지기 전에 앞으로도 연락하자고 해요.", null, "It was great meeting you. Let's keep in touch.", "만나서 반가웠어요. 계속 연락해요.", "keep in touch", ["It was great meeting you. Let's keep in mind.", "Nice to meet you. Let's get started."], "Nice to meet you. Contact often.", ["keep in mind", "keep on touch", "keep in time"]]
     ],
     '주문 바꾸기': [
       ["바리스타가 주문을 확인해요. 마음이 바뀌어서 주문을 바꾸고 싶어요.", "Hi! One iced latte, right?", "Actually, could I change my order?", "사실, 주문 좀 바꿀 수 있을까요?", "change", ["Actually, could I charge my order?", "Actually, could I order my change?"], "Order change, possible?", ["charge", "chance"]],
@@ -7066,7 +7071,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       const [c, l, a, k, b, near, awk, wb] = q, mk = [a, k];
       const blank = b && i % 3 === 2 && lv <= 2;
       if (blank) { const re = new RegExp(b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), sent = stEsc(a).replace(stEsc(b), '<span class="st-blk">&nbsp;</span>');
-        return { kick: lv === 1 ? '빈칸에 들어갈 말을 골라요' : '빈칸을 채워 이 상황에 맞는 문장을 완성해요', top: lv === 1 ? stEsc(k) : ctx(c), q: `<span lang="en">${sent}</span>`, ans: b, opts: [...wb.filter(Boolean), ...blanks(i).filter((x) => x !== b && !wb.includes(x))].slice(0, 3), ol: true, mk }; }
+        return { kick: lv === 1 ? '빈칸에 들어갈 말을 골라요' : '빈칸을 채워 이 상황에 맞는 문장을 완성해요', top: lv === 1 ? stEsc(k) : ctx(c), q: `<span lang="en">${sent}</span>`, ans: b, opts: [...wb.filter(Boolean), ...Q.map((_, k) => Q[(i + 5 + k) % Q.length][4]).filter((x) => x && x !== b && !wb.includes(x) && x.length > 3 && !a.includes(x))].slice(0, 3), ol: true, mk }; }
       if (lv === 1) return { kick: '뜻에 맞는 표현을 골라요', top: stEsc(k), q: '', ans: a, opts: others(i).slice(0, 3), en: true, mk };
       if (lv === 2) return { kick: '이 상황에서 뭐라고 할까요?', top: ctx(c), q: l ? bubble(l) : '', ans: a, opts: [near[0], ...others(i).slice(0, 2)], en: true, mk };
       if (lv === 3) return l ? { kick: '상대의 말에 알맞게 답해요', top: bubble(l), q: '', ans: a, opts: [...near, others(i)[0]], en: true, mk, auto: l }
@@ -8738,6 +8743,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   }
   STEP_VIEW.choice = (s) => {
     if (s.id === 'bank') { runBank(s); showHub(); return; }
+    if (s.id === 'exq' && SIT_QUIZ[SV.ls.title] && !SV.t.lvOk && !ST.pos[stKey(s.id)]) return sitLvPick(s);
     const items = choiceItems(s), t = SV.t, saved = ST.pos[stKey(s.id)];
     if (!t.order) {
       if (saved) { t.order = saved.order; t.i = saved.i; t.right = saved.right; setTimeout(() => toast(`${t.i + 1}번 문제부터 이어서 해요`), 300); }
@@ -8751,7 +8757,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#stBody').innerHTML = `
       <div class="pr-top"><div class="pr-bar" aria-hidden="true"><i style="width:${t.i / t.order.length * 100}%"></i></div><span class="pr-count">${t.i + 1}/${t.order.length}</span></div>
       <div class="st-kick2">${it.kick}</div>
-      ${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? `<div class="sq-lv" role="group" aria-label="난이도">${[1, 2, 3, 4].map((n) => `<button type="button" data-qlv="${n}" aria-pressed="${sitQLv() === n}">Lv.${n}</button>`).join('')}<span>${SITQ_LV[sitQLv()]}</span></div>` : ''}
+      ${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? `<div class="sq-lvb"><b>Lv.${sitQLv()}</b><span>${SITQ_LV[sitQLv()]}</span></div>` : ''}
       <div class="card st-qc">
         ${it.big ? `<div class="st-qc-top"><span class="st-big" lang="en">${stEsc(it.big)}</span>${saySpan(it.say)}</div>` : `<div class="st-qc-top"><span class="st-prompt" lang="en">${it.top}</span>${it.en ? '' : saySpan(it.say)}</div>`}
         ${it.q ? `<div class="st-qc-q">${it.q}</div>` : ''}
@@ -8759,7 +8765,6 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div id="stFb" role="status"></div>
       <div class="st-foot st-qfoot"><div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" ${it.en || it.ol ? 'lang="en"' : ''}>${stEsc(o)}</button>`).join('')}</div></div>`;
     if (it.auto) setTimeout(() => sayEn(it.auto, .92), 300);
-    $$('#stBody [data-qlv]').forEach((b) => b.addEventListener('click', () => { const n = +b.dataset.qlv; if (n === sitQLv()) return; ST.qLv = n; delete ST.pos[stKey(s.id)]; SV.t = {}; sfx('tap'); toast(`Lv.${n} 난이도로 처음부터 풀어요`); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; }));
     $$('#stBody [data-opt]').forEach((b) => b.addEventListener('click', () => {
       if (t.picked) return;
       const pick = opts[+b.dataset.opt], ok = pick === it.ans;
@@ -8784,13 +8789,37 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       $('#stNext').addEventListener('click', () => { t.i += 1; t.opts = null; t.miss = null; STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
     }));
   };
+  // 상황 퀴즈 · 시작 전에 난이도 고르기 (내 레벨이 먼저 골라져 있어요)
+  const SITQ_PICK = [
+    [1, '입문', '한국어 뜻을 보고 영어 표현을 골라요', '카드로 계산할 수 있어요? → Can I pay by card?'],
+    [2, '기초', '상황을 읽고 이럴 때 할 말을 골라요 · 빈칸 채우기', '영수증은 필요 없어요. → No, I\'m ___, thanks.'],
+    [3, '중급', '직원의 영어 말을 듣고 알맞은 대답을 골라요', 'Barista: Anything else? → Could you make it less sweet?'],
+    [4, '고급', '글자 없이 듣기만 하고 답해요 · 한국어식 직역 함정 피하기', 'Wi-Fi password, please teach me. (X)']
+  ];
+  function sitLvPick(s) {
+    const mine = Math.min(4, Math.max(1, +String((BOOKS.find((b) => b.mine) || { l: 'Lv.1' }).l).replace(/\D/g, '') || 1));
+    let sel = SV.t.lvSel || sitQLv();
+    const draw = () => {
+      $('#stBody').innerHTML = `
+        <div class="st-kick2">상황 퀴즈 · ${stEsc(SV.ls.title)} · 15문제</div>
+        <h2 class="sq-pt">어떤 난이도로 풀까요?</h2>
+        <p class="st-intro" style="margin:0">같은 상황 15개를 레벨마다 다른 방식으로 물어요. 다 풀고 다른 난이도로 다시 풀 수 있어요.</p>
+        <div class="sq-pick" role="radiogroup" aria-label="난이도">${SITQ_PICK.map(([n, nm, d, ex]) => `<button type="button" class="sq-pc${sel === n ? ' on' : ''}" role="radio" aria-checked="${sel === n}" data-lvp="${n}">
+          <span class="h"><b>Lv.${n}</b><em>${nm}</em>${n === mine ? '<i>내 레벨</i>' : ''}</span><span class="d">${d}</span><span class="ex" lang="en">${stEsc(ex)}</span></button>`).join('')}</div>
+        <div class="st-foot"><button class="btn wide yellow press" id="sqGo">Lv.${sel} ${SITQ_PICK[sel - 1][1]}으로 시작하기</button></div>`;
+      $$('#stBody [data-lvp]').forEach((b) => b.addEventListener('click', () => { sel = SV.t.lvSel = +b.dataset.lvp; sfx('tap'); draw(); }));
+      $('#sqGo').addEventListener('click', () => { ST.qLv = sel; SV.t = { lvOk: true }; sfx('tap'); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
+    };
+    draw();
+  }
   function choiceResult(s, items) {
     const t = SV.t; t.finished = true;
     $('#stBody').innerHTML = `
       <div class="card st-score"><span class="st-kick2">맞힌 문제</span><b>${t.right}<small> / ${t.order.length}</small></b><span class="st-qko">${t.right === t.order.length ? '하나도 안 틀렸어요!' : '틀린 문제는 아래에서 다시 들어 보세요.'}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px">${t.order.map((k) => { const it = items[k], ok = t.res[k]; return `<div class="card st-res${ok ? '' : ' no'}"><span class="st-ok">${ok === false ? ICO.x : ICO.check}</span><div class="t"><b lang="en">${stEsc(it.mk[0])}</b><small>${stEsc(it.mk[1])}</small></div>${saySpan(it.mk[0])}${markSpan(it.mk[0], it.mk[1])}</div>`; }).join('')}</div>
-      <div class="st-foot">${doneBtn()}</div>`;
+      <div class="st-foot">${s.id === 'exq' && SIT_QUIZ[SV.ls.title] ? '<button class="btn wide press" id="sqAgain" style="background:#fff">다른 난이도로 다시 풀기</button>' : ''}${doneBtn()}</div>`;
     $('#stDone').addEventListener('click', () => finishStep(s, { right: t.right, total: t.order.length }));
+    const ag = $('#sqAgain'); if (ag) ag.addEventListener('click', () => { delete ST.pos[stKey(s.id)]; SV.t = { lvSel: sitQLv() }; sfx('tap'); STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
   }
 
   // 5) 짝 맞추기 (USEFUL EXPRESSIONS)
