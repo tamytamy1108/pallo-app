@@ -14648,6 +14648,7 @@ BUILD.biz = (EL, SC) => {
   [[-3.6, 3.0], [3.8, 3.6], [-.4, 2.4], [2.0, 1.6], [4.6, 1.2]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .8, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
   [[-2.8, 2.2], [3.0, 2.4], [.2, -2.8], [2.6, -2.4]].forEach(([x, z]) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.05, .05, 1.6, 8), 0x2B2F5E, { line: .02 }), 0, .8, 0)); g.add(at(mesh(new THREE.IcosahedronGeometry(.17, 1), 0xFFE200, { line: .02 }), 0, 1.68, 0)); sc.add(at(g, x, TOP, z)); });
   sc.add(flag(4.6, TOP, -4.4, 0x493087)); if (!E.noSea) boat(S, 5.4, 5.6, 0x493087);
+  applyMood(S, moodOf('biz', 1));
   return S;
 };
 
@@ -14713,11 +14714,11 @@ function station(sc, x, y, z, ry = ROW, s = 1) { const g = new THREE.Group(), oc
   const ck = new THREE.Mesh(new THREE.CircleGeometry(.5 * s, 32), new THREE.MeshBasicMaterial({ color: 0xF7F4EE })); ck.position.set(4.2 * s, 5.4 * s, .81 * s); g.add(ck);
   g.rotation.y = ry; sc.add(bgs(at(g, x, y, z))); return g; }
 // 시티 스카이라인 (유리 타워 · 금색 왕관 타워)
-const glassTex = (c1, c2) => canvasTex(128, 256, (g, W, H) => { g.fillStyle = c1; g.fillRect(0, 0, W, H); g.fillStyle = c2; for (let y = 4; y < H; y += 16) for (let x = 4; x < W; x += 16) { g.globalAlpha = .5 + rnd() * .5; g.fillRect(x, y, 10, 10); } g.globalAlpha = 1; }, 1, 3);
+const glassTex = (c1, c2) => { const t = canvasTex(128, 256, (g, W, H) => { g.fillStyle = c1; g.fillRect(0, 0, W, H); g.fillStyle = c2; for (let y = 4; y < H; y += 16) for (let x = 4; x < W; x += 16) { g.globalAlpha = .5 + rnd() * .5; g.fillRect(x, y, 10, 10); } g.globalAlpha = 1; }, 1, 3); t.userData.glass = 1; return t; };
 function skyline(sc, cx, cz, y, s = 1) { [[-9, 1.4, 7], [-6.5, 1.1, 10], [-4, 1.6, 8], [-1.5, 1.0, 13], [1, 1.5, 9], [3.4, 1.2, 11.5], [6, 1.6, 7.5], [8.5, 1.2, 9.5]].forEach(([t, w, h], i) => {
     const [x, z] = along(cx, cz, t * s); const m = std(new THREE.BoxGeometry(w * s, h * s, w * s), { map: glassTex(i % 2 ? '#7C93B0' : '#8FA6BF', '#DDE8F2'), roughness: .3, metalness: .3 }); m.position.set(x, y + h * s / 2, z); m.rotation.y = ROW; sc.add(bgs(m)); });
   const [x, z] = along(cx, cz, -1.5 * s); const crown = std(new THREE.CylinderGeometry(.2 * s, .5 * s, 1.4 * s, 8), { color: 0xD9B45A, metalness: .8, roughness: .25 }); crown.position.set(x, y + 13.7 * s, z); sc.add(crown); }
-const lamp = (sc, x, z, y = 0, lit = false) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.06, .09, 2.6, 8), { color: 0x23262B, metalness: .5 }), 0, 1.3, 0)); g.add(at(new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), new THREE.MeshStandardMaterial({ color: 0xFFF4D6, emissive: 0xFFD27A, emissiveIntensity: lit ? 1.4 : .3 })), 0, 2.75, 0)); sc.add(at(g, x, y, z)); if (lit) glow(sc, x, y + 2.6, z, 0xFFD27A, 6, 6); return g; };
+const lamp = (sc, x, z, y = 0, lit = false) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.06, .09, 2.6, 8), { color: 0x23262B, metalness: .5 }), 0, 1.3, 0)); const gb = at(new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), new THREE.MeshStandardMaterial({ color: 0xFFF4D6, emissive: 0xFFD27A, emissiveIntensity: lit ? 1.4 : .3 })), 0, 2.75, 0); gb.userData.lamp = 1; g.add(gb); sc.add(at(g, x, y, z)); if (lit) glow(sc, x, y + 2.6, z, 0xFFD27A, 6, 6).userData.lampLight = 1; return g; };
 const umbrella = (x, z, c, y = 0) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.04, .04, 2.2, 8), { color: 0xF7F4EE }), 0, 1.1, 0)); g.add(at(std(new THREE.ConeGeometry(1.3, .5, 8), { color: c }), 0, 2.3, 0)); g.add(at(std(new THREE.CylinderGeometry(.5, .5, .06, 20), { color: 0xF7F4EE }), 0, .8, 0)); [-.8, .8].forEach((k) => g.add(at(std(new THREE.BoxGeometry(.38, .45, .38), { color: 0x2B2B2E }), k, .22, 0))); return at(g, x, y, z); };
 const crate = (x, z, c, y = 0, r = 0) => { const g = new THREE.Group(), m = { color: c, roughness: .6 }; g.add(at(std(new THREE.BoxGeometry(.9, .06, .9), m), 0, .03, 0)); [[0, .45], [0, -.45], [.45, 0], [-.45, 0]].forEach(([a, b]) => { const s = std(new THREE.BoxGeometry(a ? .06 : .9, .7, b ? .06 : .9), m); s.position.set(a, .35, b); g.add(s); }); g.rotation.y = r; return at(g, x, y, z); };
 const gum = (x, z, y = 0, s = 1) => { const g = new THREE.Group(); const tr = std(new THREE.CylinderGeometry(.12 * s, .2 * s, 2.6 * s, 8), { color: 0xE9E2D4, roughness: .8 }); tr.position.y = 1.3 * s; tr.rotation.z = .08; g.add(tr);
@@ -14729,7 +14730,7 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   const bank = std(new THREE.BoxGeometry(70, .9, 40), { map: cobbleTex(14, 8), roughness: .85 }, { cast: false }); bank.rotation.y = ROW; bank.position.set(-30.5, FL - .45, -30.5); sc.add(bgs(bank));
   const wt = canvasTex(512, 256, (g, W, H) => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#E99A7A'); gr.addColorStop(.5, '#5E8FB0'); gr.addColorStop(1, '#3F6F92'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(255,${220 + rnd() * 35},${170 + rnd() * 60},${.25 + rnd() * .35})`; g.fillRect(rnd() * W, rnd() * H, 10 + rnd() * 26, 2); } }, 6, 1);
-  const river = new THREE.Mesh(new THREE.PlaneGeometry(80, 10), new THREE.MeshStandardMaterial({ map: wt, roughness: .08, metalness: .25 })); river.rotation.x = -Math.PI / 2; river.rotation.z = ROW; river.position.set(-12.9, FL - .5, -12.9); sc.add(bgs(river)); S.ticks.push((t) => { wt.offset.x = t * .015; });
+  const river = new THREE.Mesh(new THREE.PlaneGeometry(80, 10), new THREE.MeshStandardMaterial({ map: wt, roughness: .08, metalness: .25 })); river.userData.water = 1; river.rotation.x = -Math.PI / 2; river.rotation.z = ROW; river.position.set(-12.9, FL - .5, -12.9); sc.add(bgs(river)); S.ticks.push((t) => { wt.offset.x = t * .015; });
   [[-9.4, -9.4], [-16.4, -16.4]].forEach(([x, z]) => { const e = std(new THREE.BoxGeometry(80, .7, .4), { color: 0x7A746C, roughness: .9 }); e.rotation.y = ROW; e.position.set(x, FL - .35, z); sc.add(e); });
   // 강가 난간 + 가로등 (불 켜짐)
   const rail = std(new THREE.BoxGeometry(80, .06, .06), { color: 0x2B2B2E, metalness: .5 }); rail.rotation.y = ROW; rail.position.set(-8.9, FL + 1, -8.9); sc.add(rail);
@@ -14738,7 +14739,8 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   const brg = new THREE.Group(), stn = { color: 0xB9A88E, roughness: .85 }; brg.add(at(std(new THREE.BoxGeometry(2.8, .5, 12), stn), 0, .4, 0));
   [-3, 0, 3].forEach((z) => { const a = std(new THREE.TorusGeometry(1.4, .25, 8, 20, Math.PI), stn); a.rotation.y = Math.PI / 2; a.position.set(0, -1.1, z); brg.add(a); }); [-1.3, 1.3].forEach((x) => { brg.add(at(std(new THREE.BoxGeometry(.12, .5, 12), { color: 0x3A3F45 }), x, .9, 0)); for (let z = -5.5; z <= 5.5; z += 2.75) brg.add(at(std(new THREE.CylinderGeometry(.05, .05, 1.8, 6), { color: 0x3A3F45 }), x, 1.5, z)); });
   brg.rotation.y = ROW + Math.PI / 2; const [bx, bz] = along(-12.9, -12.9, 8.5); brg.position.set(bx, FL, bz); sc.add(bgs(brg));
-  const tr = tram('1'); tr.scale.setScalar(.7); sc.add(tr); S.ticks.push((t) => { const k = ((t * .09) % 1), p = (k < .5 ? k * 2 : 2 - k * 2) * 18 - 9; tr.rotation.y = ROW - Math.PI / 2; tr.position.set(bx + p * .7071, FL + .65, bz + p * .7071); });
+  tramLine(S, -17.4, -17.4, FL, 70, 2.0, '1');
+  [-3, -.5, 2.5].forEach((k, i) => sc.add(person(bx + k * .7071 + (i % 2 ? .4 : -.4) * .7071, bz + k * .7071 - (i % 2 ? .4 : -.4) * .7071, [0x1F4E9C, 0xE0483F, 0xF2C230][i], 0, FL + .65)));
   // 건너편: 강가 역 (돔 · 시계) + 시티
   station(sc, -19.5, FL - .4, -19.5, ROW, 1.05); skyline(sc, -27, -27, FL - .4, 1.3);
   // 유람선 · 조정 보트
@@ -14815,6 +14817,38 @@ function bizDowntown(S) { const sc = S.sc; ground(sc, canvasTex(128, 128, (g, W,
   return { noSea: true }; }
 
 
+
+// ---------- 하늘 · 조명 시안 (?cafe=N · ?biz=N): 1 맑은 낮 · 2 골든아워 · 3 해 질 녘 · 4 밤 ----------
+const MQ = new URLSearchParams(location.search);
+const moodOf = (k, d) => MOOD[Math.min(4, Math.max(1, +(MQ.get(k) || d)))];
+const MOOD = {
+  1: { sky: ['#5FB2EA', '#E4F2FB'], deco: 'sun', hemi: [0xFFFFFF, 0xC9B99C, 1.45], sun: [0xFFFFFF, 1.9, [-6, 14, 9]], fog: 0xE4F0F8, water: ['#8CCBE6', '#4C93B8', '#3B7FA2', '255,255,255'], night: 0 },
+  2: { sky: ['#F08E4E', '#FFE6BC'], deco: 'low', hemi: [0xFFE2C0, 0xB98E6A, 1.15], sun: [0xFFB36B, 2.3, [-15, 6, 6]], fog: 0xF4CFAE, water: ['#F4A86E', '#B9808A', '#4E6E92', '255,226,170'], night: 0 },
+  3: { sky: ['#26336E', '#F2907A'], deco: 'dusk', hemi: [0xBCB6F0, 0x6A5A7A, .95], sun: [0xFF9C7E, 1.0, [-15, 4, 5]], fog: 0x8E7FA8, water: ['#EE9A86', '#5E5E9C', '#2C3A6E', '255,206,160'], night: .7 },
+  4: { sky: ['#0A1230', '#283662'], deco: 'moon', hemi: [0x8E9BD8, 0x2A2A44, .62], sun: [0xA8B8FF, .75, [-6, 14, 9]], fog: 0x1E2A52, water: ['#24305E', '#18224C', '#0E1638', '255,214,120'], night: 1 }
+};
+const litGlass = (() => { let t; return () => t || (t = canvasTex(128, 256, (g, W, H) => { g.fillStyle = '#000'; g.fillRect(0, 0, W, H); for (let y = 4; y < H; y += 16) for (let x = 4; x < W; x += 16) if (rnd() > .38) { g.fillStyle = rnd() > .3 ? '#FFD978' : '#BFE4FF'; g.fillRect(x, y, 10, 10); } }, 1, 3)); })();
+function skyOf(m) { return bgTex(m.sky[0], m.sky[1], (g, W, H) => {
+  if (m.deco === 'sun') drawSun(g, W * .82, H * .1, 34);
+  if (m.deco === 'low') { const gl = g.createRadialGradient(W * .78, H * .42, 10, W * .78, H * .42, W * .75); gl.addColorStop(0, 'rgba(255,240,190,.95)'); gl.addColorStop(.25, 'rgba(255,196,120,.55)'); gl.addColorStop(1, 'rgba(255,196,120,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); g.fillStyle = '#FFF1C4'; g.beginPath(); g.arc(W * .78, H * .42, 40, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.55)'; [[.2, .16, 30], [.5, .1, 22]].forEach(([x, y, r]) => puff(g, x * W, y * H, r, 'rgba(255,214,190,.7)')); }
+  if (m.deco === 'dusk' || m.deco === 'moon') for (let i = 0; i < (m.deco === 'moon' ? 110 : 40); i++) { g.fillStyle = `rgba(255,255,255,${.35 + rnd() * .6})`; g.beginPath(); g.arc(rnd() * W, rnd() * H * (m.deco === 'moon' ? .7 : .4), .8 + rnd() * 2.2, 0, 7); g.fill(); }
+  if (m.deco === 'dusk') { const gl = g.createLinearGradient(0, H * .45, 0, H); gl.addColorStop(0, 'rgba(255,150,120,0)'); gl.addColorStop(1, 'rgba(255,190,150,.6)'); g.fillStyle = gl; g.fillRect(0, 0, W, H); }
+  if (m.deco === 'moon') drawMoon(g, W * .8, H * .12, 36); }); }
+function applyMood(S, m) { const sc = S.sc, v = new THREE.Vector3(); let n = 0;
+  sc.background = skyOf(m); sc.fog = new THREE.Fog(m.fog, 42, 100); sc.updateMatrixWorld(true);
+  const add = [];
+  sc.traverse((o) => {
+    if (o.isHemisphereLight) { o.color.setHex(m.hemi[0]); o.groundColor.setHex(m.hemi[1]); o.intensity = m.hemi[2]; }
+    if (o.isDirectionalLight) { o.color.setHex(m.sun[0]); o.intensity = m.sun[1]; o.position.set(...m.sun[2]); }
+    if (o.userData.lampLight) o.intensity = m.night ? 7 : 0;
+    const mt = o.material; if (!o.isMesh || !mt || Array.isArray(mt)) return;
+    if (mt.map && mt.map.userData && mt.map.userData.glass && m.night) { mt.emissive = new THREE.Color(0xffffff); mt.emissiveMap = litGlass(); mt.emissiveIntensity = m.night * .95; mt.needsUpdate = true; }
+    if (o.userData.lamp) { mt.emissiveIntensity = m.night ? 1.8 : .25; if (m.night && n < 10) { o.getWorldPosition(v); add.push(v.clone()); n++; } }
+    if (o.userData.water && mt.map) { const c = mt.map.image, g = c.getContext('2d'), W = c.width, H = c.height, gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, m.water[0]); gr.addColorStop(.5, m.water[1]); gr.addColorStop(1, m.water[2]); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      for (let i = 0; i < 80; i++) { g.fillStyle = `rgba(${m.water[3]},${.2 + rnd() * .4})`; g.fillRect(rnd() * W, rnd() * H, 8 + rnd() * 26, 2); } mt.map.needsUpdate = true; mt.metalness = m.night ? .4 : .25; } });
+  if (m.night) add.forEach((p) => { if (!sc.children.some((c) => c.isPointLight && c.userData.lampLight && c.position.distanceTo(p) < 1)) glow(sc, p.x, p.y - .2, p.z, 0xFFD27A, 7 * m.night, 7); }); }
+
 // ================= 3. 카페 · 라테 바다 · 케이크 섬 =================
 BUILD.cafe = (EL, SC) => {
   // 뒤 배경: 멜버른 야라 강변 (cafeRiver)
@@ -14848,6 +14882,7 @@ BUILD.cafe = (EL, SC) => {
   const steam = [0, 1].map((i) => { const s = at(mesh(new THREE.SphereGeometry(.16, 12, 10), 0xffffff, { line: .02, cast: false }), -3.2 + (i ? .2 : -.15), TOP + 1.5, -2.6); sc.add(s); return s; });
   S.ticks.push((t) => steam.forEach((s, i) => { const k = (t * .6 + i * .5) % 1; s.position.y = TOP + 1.4 + k * 1.2; s.scale.setScalar(1 - k * .6); }));
   [[-3.6, 1.6], [3.6, 2.6]].forEach(([x, z]) => sc.add(tree(x, z, TOP, .75, 0x8FCB7E)));
+  applyMood(S, moodOf('cafe', 2));
   return S;
 };
 
