@@ -14745,7 +14745,7 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
   // 건너편: 강가 역 (돔 · 시계) + 시티
   station(sc, -19.5, FL - .4, -19.5, ROW, 1.05);
   // 역 뒤 멜버른 랜드마크 시안 (?cafe=N): 1 아츠센터 첨탑 · 2 세인트폴 성당 · 3 흐린 스카이라인 · 4 페더레이션 스퀘어
-  const BK = Math.min(4, Math.max(1, +(new URLSearchParams(location.search).get('cafe') || 1)));
+  const BK = Math.min(6, Math.max(1, +(new URLSearchParams(location.search).get('cafe') || 1)));
   [-8, 13].forEach((t) => { const [x, z] = along(-21.5, -21.5, t); sc.add(tree(x, z, FL - .4, 1.6, 0x6FAE6A)); });
   if (BK === 1) { // 격자 첨탑 (끝이 빛나요)
     const sp = new THREE.Group(), white = { color: 0xF4F2EE, metalness: .4, roughness: .35 }, H = 9.5, R0 = 1.5;
@@ -14770,6 +14770,19 @@ function cafeRiver(S) { const sc = S.sc, FL = -1.2;
       g.fillStyle = 'rgba(196,170,172,.92)'; g.beginPath(); g.moveTo(W * .3, H - 380); g.lineTo(W * .3 + 22, H - 380); g.lineTo(W * .3 + 11, H - 470); g.fill(); g.fillRect(W * .3 - 30, H - 380, 82, 380);
       layer('rgba(190,164,166,.9)', 0, 30, 150, 130); });
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(64, 20), new THREE.MeshBasicMaterial({ map: sil, transparent: true, depthWrite: false, fog: false })); pl.rotation.y = ROW; const [x, z] = along(-24, -24, 3); pl.position.set(x, FL + 7.6, z); sc.add(bgs(pl)); }
+  if (BK === 5) { // 3안 · 안개 없이 선명한 실루엣 (창 불빛 점)
+    const sil = canvasTex(2048, 640, (g, W, H) => { g.clearRect(0, 0, W, H); const layer = (col, hmin, hmax, step, lit) => { let x = 0; while (x < W) { const w = step * (.6 + rnd() * .8), h = hmin + rnd() * (hmax - hmin); g.fillStyle = col; g.fillRect(x, H - h, w - 6, h);
+        if (lit) for (let yy = H - h + 14; yy < H - 10; yy += 18) for (let xx = x + 8; xx < x + w - 16; xx += 14) if (rnd() > .55) { g.fillStyle = 'rgba(255,214,140,.85)'; g.fillRect(xx, yy, 6, 8); } x += w; } };
+      layer('#C69A8E', 140, 320, 90, false); layer('#9C7480', 70, 240, 110, true);
+      const ex = W * .62; g.fillStyle = '#6E5664'; g.fillRect(ex, H - 560, 70, 560); g.fillStyle = '#E8C478'; g.fillRect(ex, H - 560, 70, 70); g.fillRect(ex + 30, H - 610, 10, 50); for (let yy = H - 480; yy < H - 20; yy += 18) if (rnd() > .4) { g.fillStyle = 'rgba(255,214,140,.9)'; g.fillRect(ex + 12, yy, 46, 5); }
+      g.fillStyle = '#6E5664'; g.beginPath(); g.moveTo(W * .3, H - 380); g.lineTo(W * .3 + 22, H - 380); g.lineTo(W * .3 + 11, H - 470); g.fill(); g.fillRect(W * .3 - 30, H - 380, 82, 380);
+      layer('#6E5664', 30, 150, 130, true); });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(64, 20), new THREE.MeshBasicMaterial({ map: sil, transparent: true, depthWrite: false, fog: false })); pl.rotation.y = ROW; const [x, z] = along(-24, -24, 3); pl.position.set(x, FL + 7.6, z); sc.add(bgs(pl)); }
+  if (BK === 6) { // 3안 · 진짜 3D 빌딩 · 창마다 불이 들어와요 (금색 꼭대기 타워)
+    const T = [[-14, 1.6, 6], [-11.5, 1.2, 8], [-9, 1.8, 7], [-6.5, 1.3, 10], [-4, 1.6, 8.5], [-1.5, 1.2, 11], [1, 1.7, 9], [3.5, 1.3, 12], [6, 1.6, 8], [8.6, 1.1, 14.5], [11, 1.7, 9.5], [13.5, 1.3, 7], [16, 1.6, 10]];
+    T.forEach(([t, w, h0], i) => { const h = h0 * .5, [x, z] = along(-24 - (i % 2) * 1.4, -24 - (i % 2) * 1.4, t); const m = new THREE.Mesh(new THREE.BoxGeometry(w * 2, h, w * 2), new THREE.MeshStandardMaterial({ map: glassTex(i % 3 ? '#A88E94' : '#B89CA0', '#E6D2CC'), emissive: 0xffffff, emissiveMap: litGlass(), emissiveIntensity: .7, roughness: .35, metalness: .3, fog: false }));
+      m.position.set(x, FL - .4 + h / 2, z); m.rotation.y = ROW; sc.add(bgs(m)); const rf = new THREE.Mesh(new THREE.BoxGeometry(w * 2 + .2, .25, w * 2 + .2), new THREE.MeshStandardMaterial({ color: 0x5E5262, fog: false })); rf.position.set(x, FL - .4 + h + .12, z); rf.rotation.y = ROW; sc.add(rf);
+      if (i === 9) { const cr = new THREE.Mesh(new THREE.BoxGeometry(w * 2, 1.4, w * 2), new THREE.MeshStandardMaterial({ color: 0xE8C070, metalness: .85, roughness: .2, emissive: 0x6A4A10, fog: false })); cr.position.set(x, FL - .4 + h + .8, z); cr.rotation.y = ROW; sc.add(cr); const an = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1.6, 6), new THREE.MeshStandardMaterial({ color: 0xE8C070, fog: false })); an.position.set(x, FL - .4 + h + 2.3, z); sc.add(an); } }); }
   if (BK === 4) { // 페더레이션 스퀘어: 삼각 패널 파사드 · 각진 지붕 · 야외 스크린
     const tri = canvasTex(256, 256, (g, W, H) => { const C = ['#C9A27A', '#9AA3AA', '#D8C3A0', '#6F7880', '#E2D2B6', '#B0B8BE']; const n = 6, s2 = W / n; for (let r = 0; r < n; r++) for (let c = 0; c < n * 2; c++) { const x = c * s2 / 2, y = r * s2, up = (r + c) % 2 === 0; g.fillStyle = C[(r * 7 + c * 3) % C.length]; g.beginPath(); if (up) { g.moveTo(x, y + s2); g.lineTo(x + s2 / 2, y); g.lineTo(x + s2, y + s2); } else { g.moveTo(x, y); g.lineTo(x + s2, y); g.lineTo(x + s2 / 2, y + s2); } g.fill(); g.strokeStyle = 'rgba(40,40,40,.35)'; g.lineWidth = 2; g.stroke(); } }, 2, 2);
     const fs = new THREE.Group(), mt = { map: tri, roughness: .7, metalness: .2 };
