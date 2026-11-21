@@ -192,7 +192,7 @@ const demo = /demo/.test(location.search);
 {
   const bg = bgTex('#9ED6F0', '#DDF3F8', (g, W, H) => { drawSun(g, W * .8, H * .15, 42);
     [[.18, .12, 34], [.55, .2, 26], [.9, .34, 30], [.1, .9, 40], [.75, .93, 34]].forEach(([x, y, r]) => puff(g, x * W, y * H, r)); });
-  const S = stage(document.getElementById('mTravel'), { half: 7.3, pos: CAM, target: new THREE.Vector3(-.1, 1.5, 0), bg }), sc = S.sc;
+  const S = stage(document.getElementById('mTravel'), { half: 7.9, pos: CAM, target: new THREE.Vector3(-.3, 1.5, .2), bg }), sc = S.sc;
   // 바다 디오라마 판: 옆면 진한 파랑 · 윗면 바다 · 섬 둘레 얕은 물
   const sea = at(mesh(new THREE.CylinderGeometry(7.7, 7.7, 1.2, 72), 0x4FA8CF, { line: .07 }), 0, -.6, 0); sea.userData.bg = 1; sc.add(sea);
   const top = at(flat(new THREE.CircleGeometry(7.6, 72), 0x8FD3E8, 1), 0, .01, 0); top.userData.bg = 1; sc.add(top);

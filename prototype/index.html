@@ -1042,6 +1042,20 @@ a { color: inherit; }
 .st-stabs button.soon { color: #C9C1B0; }
 .st-msep { flex: none; width: 2px; height: 22px; align-self: center; background: #D9D1BF; border-radius: 1px; }
 .st-world { position: relative; aspect-ratio: 360 / 460; border: 2px solid var(--ink); border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); background: #BFE4EC; }
+.st-world.w3d { aspect-ratio: 340 / 500; background: #BFE4EC; touch-action: pan-y; }
+.st-world.w3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
+.m3-tag { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 2px 8px 3px; border-radius: 11px; border: 2px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 900; white-space: nowrap; pointer-events: none; line-height: 1.3; }
+.m3-tag.soon { border-style: dashed; border-color: #9A93A6; color: #6F6880; background: rgba(255,255,255,.88); }
+.m3-tag.cur { background: var(--yellow); box-shadow: 2px 2px 0 var(--ink); }
+.st-world:not(.m3z) .m3-tag.min { width: 20px; height: 20px; padding: 0; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-display); font-size: 10px; line-height: 1; }
+.st-world:not(.m3z) .m3-tag.min .f, .st-world.m3z .m3-tag.min .s { display: none; }
+.m3-here { position: absolute; z-index: 4; transform: translate(-50%, -100%); height: 20px; padding: 0 9px; border-radius: 10px; background: var(--ink); color: var(--yellow); font-size: 10px; font-weight: 900; display: flex; align-items: center; pointer-events: none; font-family: var(--f-display); }
+.m3-zp { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 6; display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; border-radius: 18px; border: 2px solid var(--ink); background: var(--white); box-shadow: 3px 4px 0 var(--ink); transform: translateY(140%); transition: transform .35s cubic-bezier(.2,.9,.3,1.2); }
+.m3-zp.on { transform: none; }
+.m3-zp .t { flex: 1; min-width: 0; } .m3-zp small { display: block; font-size: 11px; font-weight: 900; color: var(--purple); } .m3-zp b { font-size: 16px; font-weight: 900; }
+.m3-zp .go { flex: none; height: 40px; padding: 0 16px; border-radius: 20px; border: 2px solid var(--ink); background: var(--yellow); font: inherit; font-size: 13px; font-weight: 900; color: var(--ink); cursor: pointer; }
+.m3-zp .go.soon { background: #EFEAE0; color: #8C8597; border-style: dashed; border-color: #9A93A6; }
+.m3-zp .x { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); background: var(--white); display: grid; place-items: center; cursor: pointer; padding: 0; }
 .st-world > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .st-wtitle { position: absolute; right: 14px; top: 12px; display: flex; flex-direction: column; align-items: flex-end; text-align: right; pointer-events: none; }
 .st-wtitle b, .st-wtitle span { text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff; }
@@ -6926,7 +6940,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
           chips: ['Can I change my order?', 'Could I get it with oat milk?', 'Can you make it less sweet?', 'For here, please.'] } }),
       sc('자리 찾기', 'Find a seat', 'seat', null), sc('컴플레인', 'Complaint', 'chat', null)
     ].map((x, i) => ({ no: i + 1, ...x })) };
-  const SITS = [SIT_TRAVEL, SIT_BIZ, SIT_CAFE];
+  const SIT_CAMPUS = { id: 'campus', lv: 'campus', title: '캠퍼스', series: 'CAMPUS', c: '#5EA35A', kind: 'situation', about: '수업 · 질문 · 조별 과제 · 동아리',
+    lessons: [sc('첫 수업 자기소개', 'First class', 'book', null), sc('수업 중 질문', 'Asking in class', 'chat', null), sc('조별 과제', 'Group project', 'group', null), sc('도서관', 'Library', 'lib', null), sc('동아리 가입', 'Joining a club', 'star', null), sc('기숙사 생활', 'Dorm life', 'dorm', null)].map((x, i) => ({ no: i + 1, ...x })) };
+  const SITS = [SIT_TRAVEL, SIT_BIZ, SIT_CAFE, SIT_CAMPUS];
   const SIT_SOON = [{ id: 'hosp', title: '병원', when: '12월' }];
   STUDY_STEPS.situation = { pre: [], post: [], main: [
     { id: 'expr', type: 'cards', t: '표현 익히기', d: '이 장면에서 꼭 쓰는 표현 5개 · 듣고 따라 말하기', min: 3, xp: 5 },
@@ -7483,7 +7499,15 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       panel = `<div class="st-phead"><div><div class="st-ptitle">${L.title} 맵 · 장면 ${dn}/${L.lessons.length}</div><p class="st-about">${L.about}</p></div></div>` + lessonRowsHTML(L)
         + '<div class="st-more">새 장면과 새 상황 맵은 계속 열려요</div>';
     }
+    $('#stWorld').classList.remove('w3d');
     $('#stWorld').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" aria-hidden="true" preserveAspectRatio="xMidYMid slice">${world.svg}</svg>${world.over}`;
+    if (M.kind === 'sit') {
+      const L = M.L, nx = (L.lessons.find((ls) => ls.data && !lessonDone(L, ls)) || {}).no;
+      const SC3 = L.lessons.map((ls) => [ls.title, ls.icon, !ls.data ? 'soon' : lessonDone(L, ls) ? 'done' : ls.no === nx ? 'cur' : 'open']);
+      const go3d = () => { if (!ST.sitMode || curMap().id !== L.id || !window.PALLO3D) return; const el = $('#stWorld');
+        try { el.classList.add('w3d'); window.PALLO3D.mount(el, L.id, SC3, (no) => { const ls = L.lessons.find((x) => x.no === no); if (!ls || !ls.data) { toast(`${ls ? ls.title : ''} 장면은 곧 열려요`); return; } openStudy(L.lv, no); }); } catch (e) { el.classList.remove('w3d'); } };
+      if (window.PALLO3D) go3d(); else window.addEventListener('pallo3d-ready', go3d, { once: true });
+    }
     $('#stPanel').innerHTML = panel;
     // 연결
     $('#stLang').onclick = (e) => { e.stopPropagation(); const m = $('#stLMenu'), open = m.hidden; m.hidden = !open; $('#stLang').setAttribute('aria-expanded', String(open)); sfx('tap'); };
@@ -14393,6 +14417,336 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   startLife();
   setInterval(() => { S.sec += 1; if (S.sec >= 60) { S.sec = 0; S.now += 1; renderHero(); } else renderCount(); }, 1000);
 })();
+</script>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+// ===== 상황 맵 3D 섬 (three.js) · 앱은 window.PALLO3D.mount 로 불러요 =====
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const INK = 0x1E1A2B, TAU = Math.PI * 2;
+const ICO = { plane: 'M2 13l8-2 4-8h2l-2 8 6 1 2-2h1l-1 4 1 4h-1l-2-2-6 1 2 8h-2l-4-8-8-2z', seat: 'M7 3v11h9l2 7M7 14l-2 7M7 9h7', pass: 'M5 3h14v18H5zM9 8h6M9 12h6M9 16h3', taxi: 'M4 16V11l2-5h12l2 5v5zM4 16v3M20 16v3M7 13h1M16 13h1M9 6V4h6v2', hotel: 'M3 21V7l9-4 9 4v14M9 21v-6h6v6M8 10h2M14 10h2', food: 'M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5M16 3c-2 2-2 7 0 9v9', bag: 'M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2', map: 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14',
+  brief: 'M3 8h18v12H3zM8 8V5h8v3M3 13h18', chat: 'M4 5h16v11H9l-5 4z', mail: 'M3 6h18v12H3zM3 7l9 7 9-7', deal: 'M2 12l5-5 5 3 5-3 5 5-6 6-4-3-4 3z', mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3',
+  coffee: 'M4 9h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6zM17 11h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3',
+  book: 'M3 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H3zM21 5h-7a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h7z', group: 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20c0-3 3-5 6-5s6 2 6 5M12 20c0-3 2-5 4-5 3 0 6 2 6 5',
+  star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z', dorm: 'M3 11l9-7 9 7v9H3zM9 20v-5h6v5', lib: 'M4 20V8l8-4 8 4v12M8 20v-8M12 20v-8M16 20v-8M3 20h18' };
+
+// ---------- 공통: 툰 재질 · 외곽선 · 텍스처 ----------
+const grad = (() => { const t = new THREE.DataTexture(new Uint8Array([110, 180, 255]), 3, 1, THREE.RedFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+const mat = (c, o = {}) => new THREE.MeshToonMaterial({ color: c, gradientMap: grad, ...o });
+const inkMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
+function mesh(geo, color, { line = .05, cast = true } = {}) {
+  const o = new THREE.Mesh(geo, mat(color)); o.castShadow = cast; o.receiveShadow = true;
+  if (line) { geo.computeBoundingSphere(); const e = new THREE.Mesh(geo, inkMat); e.scale.setScalar(1 + line / geo.boundingSphere.radius); o.add(e); }
+  return o;
+}
+const at = (o, x, y, z) => { o.position.set(x, y, z); return o; };
+const flat = (geo, color, o = .9) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: o < 1, opacity: o })); m.rotation.x = -Math.PI / 2; return m; };
+function iconTex(name, { bg = '#fff', fg = '#1E1A2B' } = {}) {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), s = 256;
+  if (bg) { g.fillStyle = bg; g.beginPath(); g.arc(s / 2, s / 2, s / 2 - 2, 0, 7); g.fill(); }
+  const k = s / 24 * .55; g.save(); g.translate(s / 2 - 12 * k, s / 2 - 12 * k); g.scale(k, k); g.strokeStyle = fg; g.lineWidth = 2.3; g.lineCap = g.lineJoin = 'round'; g.stroke(new Path2D(ICO[name])); g.restore();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function textTex(txt, bg, fg, w = 512, h = 160, font = 'Lexend', size = 92) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  g.fillStyle = bg; g.beginPath(); g.roundRect(4, 4, w - 8, h - 8, h / 2); g.fill(); g.lineWidth = 8; g.strokeStyle = '#1E1A2B'; g.stroke();
+  g.fillStyle = fg; g.font = `800 ${size}px ${font}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, w / 2, h / 2 + 4);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+// 배경: 세로 그라데이션 + 맵마다 그림
+function bgTex(top, bot, draw) {
+  const c = document.createElement('canvas'); c.width = 340 * 2; c.height = 520 * 2; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, c.height); gr.addColorStop(0, top); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height);
+  if (draw) draw(g, c.width, c.height);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const rnd = (() => { let s = 7; return () => (s = (s * 9301 + 49297) % 233280) / 233280; })();
+const puff = (g, x, y, r, col = 'rgba(255,255,255,.85)') => { g.fillStyle = col; [[0, 0, 1], [r * .9, r * .2, .75], [-r * .9, r * .25, .7], [r * .3, -r * .45, .7]].forEach(([a, b, k]) => { g.beginPath(); g.arc(x + a, y + b, r * k, 0, 7); g.fill(); }); };
+
+function drawSun(g, x, y, r) {
+  const gl = g.createRadialGradient(x, y, r * .5, x, y, r * 2.8); gl.addColorStop(0, 'rgba(255,236,150,.8)'); gl.addColorStop(1, 'rgba(255,236,150,0)'); g.fillStyle = gl; g.beginPath(); g.arc(x, y, r * 2.8, 0, 7); g.fill();
+  g.save(); g.translate(x, y); g.lineCap = 'round';
+  for (let i = 0; i < 12; i++) { const L = i % 2 ? r * .38 : r * .6; g.rotate(TAU / 12); g.beginPath(); g.moveTo(r * 1.25, 0); g.lineTo(r * 1.25 + L, 0); g.strokeStyle = '#1E1A2B'; g.lineWidth = 14; g.stroke(); g.strokeStyle = '#FFC93C'; g.lineWidth = 7; g.stroke(); }
+  const fg = g.createLinearGradient(0, -r, 0, r); fg.addColorStop(0, '#FFEE7A'); fg.addColorStop(1, '#FFB52E'); g.fillStyle = fg; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill(); g.lineWidth = 5; g.strokeStyle = '#1E1A2B'; g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 7; g.beginPath(); g.arc(0, 0, r * .66, Math.PI * 1.08, Math.PI * 1.42); g.stroke(); g.restore();
+}
+function sparkle(g, x, y, s, c = '#FFF3C4') { g.fillStyle = c; g.beginPath(); g.moveTo(x, y - s); g.quadraticCurveTo(x, y, x + s, y); g.quadraticCurveTo(x, y, x, y + s); g.quadraticCurveTo(x, y, x - s, y); g.quadraticCurveTo(x, y, x, y - s); g.fill(); }
+function drawMoon(g, x, y, r) {
+  const gl = g.createRadialGradient(x, y, r * .6, x, y, r * 3); gl.addColorStop(0, 'rgba(255,240,180,.45)'); gl.addColorStop(1, 'rgba(255,240,180,0)'); g.fillStyle = gl; g.beginPath(); g.arc(x, y, r * 3, 0, 7); g.fill();
+  const S = r * 3, mk = () => { const c = document.createElement('canvas'); c.width = c.height = S * 2; return c; };
+  const bx = S + r * .48, by = S - r * .34, br = r * .84;
+  const ink = mk(), ig = ink.getContext('2d'); ig.fillStyle = '#1E1A2B'; ig.beginPath(); ig.arc(S, S, r + 3, 0, 7); ig.fill(); ig.globalCompositeOperation = 'destination-out'; ig.beginPath(); ig.arc(bx, by, br - 3, 0, 7); ig.fill();
+  const col = mk(), cg = col.getContext('2d'); const mg = cg.createLinearGradient(S - r, S - r, S + r, S + r); mg.addColorStop(0, '#FFF7CF'); mg.addColorStop(1, '#FFD86B'); cg.fillStyle = mg; cg.beginPath(); cg.arc(S, S, r, 0, 7); cg.fill();
+  cg.fillStyle = 'rgba(230,180,70,.45)'; [[-.5, .2, .16], [-.2, .62, .12], [-.66, -.28, .09]].forEach(([a, b, k]) => { cg.beginPath(); cg.arc(S + a * r, S + b * r, k * r, 0, 7); cg.fill(); });
+  cg.globalCompositeOperation = 'destination-out'; cg.beginPath(); cg.arc(bx, by, br, 0, 7); cg.fill();
+  ig.globalCompositeOperation = 'source-over'; ig.drawImage(col, 0, 0); g.drawImage(ink, x - S, y - S);
+  [[-1.5, -.6, 12], [1.6, 1.3, 9], [-.9, 1.6, 7], [2.2, -.5, 6]].forEach(([a, b, k]) => sparkle(g, x + a * r, y + b * r, k));
+}
+// 섬 모양: 반지름 함수 R(a)로 2D 모양 → 두께 있게 (가장자리 둥글게)
+function islandGeo(R, rad, depth, { sx = 1, sz = 1, bevel = .22 } = {}) {
+  const sh = new THREE.Shape(), N = 120;
+  for (let i = 0; i <= N; i++) { const a = i / N * TAU, r = rad * R(a), x = Math.cos(a) * r * sx, y = Math.sin(a) * r * sz; i ? sh.lineTo(x, y) : sh.moveTo(x, y); }
+  const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: true, bevelThickness: bevel * .7, bevelSize: bevel, bevelSegments: 3, curveSegments: 6 });
+  g.rotateX(-Math.PI / 2); g.center(); g.computeVertexNormals(); return g;
+}
+const layer = (sc, R, rad, depth, y0, color, o) => { const m = mesh(islandGeo(R, rad, depth, o), color, { line: .06 }); m.position.y = y0 + depth / 2; sc.add(m); return m; };
+// 섬 위 한 점의 높이를 맞추려고 쓰는 모양 함수들
+const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+const SHAPES = {
+  bean: (a) => 1 + .07 * Math.sin(3 * a + 1) + .045 * Math.sin(5 * a + .4) - .14 * Math.exp(-(wrapA(a - 2.5) ** 2) / .1),
+  squircle: (a) => 1 / Math.pow(Math.abs(Math.cos(a)) ** 4 + Math.abs(Math.sin(a)) ** 4, .25) * .92,
+  scallop: (a) => 1 + .035 * Math.cos(14 * a),
+  peanut: (a) => 1 + .1 * Math.cos(2 * a) + .05 * Math.sin(3 * a + .5)
+};
+
+// ---------- 무대 ----------
+function stage(el, { half, pos, target, bg }) {
+  const w = el.clientWidth, h = el.clientHeight;
+  const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1) < 2 ? 2 : 2); r.setSize(w, h); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.outputColorSpace = THREE.SRGBColorSpace; el.appendChild(r.domElement);
+  const sc = new THREE.Scene(); sc.background = bg;
+  const a = h / w, cam = new THREE.OrthographicCamera(-half, half, half * a, -half * a, .1, 200); cam.position.copy(pos); cam.lookAt(target);
+  sc.add(new THREE.HemisphereLight(0xffffff, 0xC9B99C, 1.45));
+  const d = new THREE.DirectionalLight(0xffffff, 1.9); d.position.set(-6, 14, 9); d.castShadow = true; d.shadow.mapSize.set(2048, 2048); Object.assign(d.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 }); d.shadow.bias = -.0008; d.shadow.radius = 3; sc.add(d);
+  const ctl = new OrbitControls(cam, r.domElement); ctl.target.copy(target); ctl.enablePan = false; ctl.enableDamping = true; ctl.minPolarAngle = .45; ctl.maxPolarAngle = 1.2; ctl.minZoom = .7; ctl.maxZoom = 2.6; ctl.enableZoom = false; ctl.update(); r.domElement.style.touchAction = 'pan-y';
+  const labels = [], ticks = [], v = new THREE.Vector3();
+  const label = (p, html, cls = 'm3-tag', dy = 0) => { const e = document.createElement('div'); e.className = cls; e.innerHTML = html; el.appendChild(e); labels.push([p.clone(), e, dy]); };
+  // 누르면 확대
+  const home = target.clone(), ray = new THREE.Raycaster(); let tw = null, down = null;
+  const fly = (to, z) => { tw = { a: ctl.target.clone(), b: to.clone(), za: cam.zoom, zb: z, t: 0 }; };
+  const zp = document.createElement('div'); zp.className = 'm3-zp'; el.appendChild(zp);
+  const reset = () => { zp.classList.remove('on'); fly(home, 1); };
+  const focus = (info) => { fly(info.at, 2.3); const soon = info.st === 'soon';
+    zp.innerHTML = `<span class="t"><small>${info.no}번 장면</small><b>${info.n}</b></span><button class="go${soon ? ' soon' : ''}">${soon ? '곧 열려요' : info.st === 'done' ? '다시 하기' : '장면 열기'}</button><button class="x" aria-label="전체 보기"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12" stroke="#1E1A2B" stroke-width="2.4" stroke-linecap="round"/></svg></button>`;
+    zp.querySelector('.x').onclick = (e) => { e.stopPropagation(); reset(); }; zp.querySelector('.go').onclick = (e) => { e.stopPropagation(); OPEN && OPEN(info.no); }; zp.classList.add('on'); };
+  r.domElement.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
+  r.domElement.addEventListener('pointerup', (e) => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+    const b = r.domElement.getBoundingClientRect(); ray.setFromCamera(new THREE.Vector2((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1), cam);
+    const hit = ray.intersectObjects(sc.children, true).find((x) => x.object.isMesh && x.object.material !== inkMat);
+    let o = hit && hit.object; while (o && !o.userData.info && !o.userData.bg) o = o.parent;
+    if (!hit || (o && o.userData.bg)) return reset();
+    if (o && o.userData.info) return focus(o.userData.info);
+    if (cam.zoom > 1.3) return reset();
+    zp.classList.remove('on'); fly(hit.point, 1.8);
+  });
+  let raf = 0;
+  const loop = (t) => {
+    if (!el.isConnected || !el.contains(r.domElement)) { cancelAnimationFrame(raf); ctl.dispose(); r.dispose(); r.forceContextLoss(); return; }
+    if (el.offsetParent === null) { raf = requestAnimationFrame(loop); return; }
+    if (tw) { tw.t = Math.min(1, tw.t + .045); const k = 1 - Math.pow(1 - tw.t, 3), o = cam.position.clone().sub(ctl.target); ctl.target.lerpVectors(tw.a, tw.b, k); cam.position.copy(ctl.target).add(o); cam.zoom = tw.za + (tw.zb - tw.za) * k; cam.updateProjectionMatrix(); if (tw.t >= 1) tw = null; }
+    ctl.update(); ticks.forEach((f) => f(t / 1000)); r.render(sc, cam); el.classList.toggle('m3z', cam.zoom > 1.5);
+    labels.forEach(([p, e, dy]) => { v.copy(p).project(cam); e.style.left = ((v.x + 1) / 2 * w) + 'px'; e.style.top = ((1 - v.y) / 2 * h + dy) + 'px'; });
+    raf = requestAnimationFrame(loop); };
+  raf = requestAnimationFrame(loop);
+  return { sc, label, ticks, focus, el };
+}
+const loader = new THREE.TextureLoader();
+function pallo(sc, x, y, z, hgt = 1.45) { loader.load('assets/c-upright-yellow.png', (t) => { t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true })); s.scale.set(hgt * t.image.width / t.image.height, hgt, 1); s.center.set(.5, 0); s.position.set(x, y, z); sc.add(s); }); }
+const tree = (x, z, y = 0, s = 1, c = 0x6DBE6A) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.1 * s, .14 * s, .6 * s, 8), 0xB9824F, { line: .03 }), 0, .3 * s, 0)); g.add(at(mesh(new THREE.IcosahedronGeometry(.48 * s, 1), c), 0, .85 * s, 0)); return at(g, x, y, z); };
+const cloud = (x, y, z, s = 1) => { const g = new THREE.Group(); [[0, 0, .6], [.6, -.1, .45], [-.6, -.12, .45], [.25, .25, .45]].forEach(([a, b, r]) => g.add(at(mesh(new THREE.IcosahedronGeometry(r * s, 2), 0xffffff, { line: .03, cast: false }), a * s, b * s, 0))); return at(g, x, y, z); };
+const flag = (x, y, z, c) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.05, .05, 1.8, 8), 0xffffff, { line: .03 }), 0, .9, 0)); g.add(at(mesh(new THREE.BoxGeometry(.8, .45, .05), c, { line: .03 }), .42, 1.55, 0)); return at(g, x, y, z); };
+const boat = (S, x, z, c) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.BoxGeometry(1.3, .32, .55), c), 0, .16, 0)); g.add(at(mesh(new THREE.ConeGeometry(.42, 1, 3), 0xffffff, { line: .03 }), .1, .8, 0)); S.sc.add(at(g, x, 0, z)); S.ticks.push((t) => { g.rotation.z = Math.sin(t * 2) * .06; g.position.y = Math.sin(t * 2) * .05; }); };
+function building(x, y, z, w, h, d, c, roof, lit = 0xFFF3C4, rows = .55) {
+  const g = new THREE.Group(); g.add(at(mesh(new THREE.BoxGeometry(w, h, d), c), 0, h / 2, 0)); g.add(at(mesh(new THREE.BoxGeometry(w + .12, .18, d + .12), roof), 0, h + .09, 0));
+  const wm = new THREE.MeshBasicMaterial({ color: lit });
+  for (let yy = .45; yy < h - .3; yy += rows) for (const k of [-.3, 0, .3]) { if (w > .9 || k) { g.add(at(new THREE.Mesh(new THREE.BoxGeometry(.16, .22, .02), wm), k * w, yy, d / 2 + .01)); g.add(at(new THREE.Mesh(new THREE.BoxGeometry(.02, .22, .16), wm), w / 2 + .01, yy, k * d)); } }
+  return at(g, x, y, z);
+}
+// 정류장 · 길 · 라벨 · 팔로
+function stops(S, P, TOP, SC, roadCol = 0xF3EBDD, tail = null) {
+  const sc = S.sc, pts = P.map(([x, z]) => new THREE.Vector3(x, TOP, z)); if (tail) pts.push(new THREE.Vector3(tail[0], TOP, tail[1]));
+  const road = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, .34, 8), roadCol, { line: .04, cast: false }); road.scale.y = .22; road.position.y = TOP * .79; sc.add(road);
+  const info = [];
+  SC.forEach(([n, ic, st], i) => {
+    const [x, z] = P[i], cur = st === 'cur', soon = st === 'soon', r = cur ? .78 : .58, h = cur ? .7 : .36;
+    const col = st === 'done' || cur ? 0xFFE200 : soon ? 0xE4DFD5 : 0xffffff;
+    const it = { n, st, no: i + 1, at: new THREE.Vector3(x, TOP + h, z) }; info.push(it);
+    const pil = at(mesh(new THREE.CylinderGeometry(r, r * 1.05, h, 32), col, { line: .05 }), x, TOP + h / 2, z); pil.userData.info = it; sc.add(pil);
+    const top = new THREE.Mesh(new THREE.CircleGeometry(r * .82, 32), new THREE.MeshBasicMaterial({ map: iconTex(ic, { bg: soon ? '#EFEAE0' : '#fff', fg: soon ? '#9A93A6' : '#1E1A2B' }), transparent: true }));
+    top.rotation.x = -Math.PI / 2; top.position.set(x, TOP + h + .01, z); top.userData.info = it; sc.add(top);
+    if (cur) S.label(new THREE.Vector3(x, TOP, z + r + .2), n, 'm3-tag cur', 2);
+    else S.label(new THREE.Vector3(x, TOP, z + r + .05), `<span class="s">${i + 1}</span><span class="f">${n}</span>`, 'm3-tag min' + (soon ? ' soon' : ''), 0);
+    if (cur) { pallo(sc, x + 1.2, TOP + .02, z - .45); S.label(new THREE.Vector3(x, TOP + h + 1.05, z), 'START', 'm3-here'); }
+  });
+  return info;
+}
+const title = (S, name, col, done, total) => { const e = document.createElement('div'); e.className = 'ttl'; e.innerHTML = `<i style="background:${col}"></i><b>${name} 맵</b><span>${done}/${total}</span>`; S.el.appendChild(e); };
+const CAM = new THREE.Vector3(11, 12, 13);
+const BUILD = {}; let OPEN = null;
+const demo = /demo/.test(location.search);
+
+// ================= 1. 여행 · 하늘색 바다 · 콩 모양 섬 =================
+BUILD.travel = (EL, SC) => {
+  const bg = bgTex('#9ED6F0', '#DDF3F8', (g, W, H) => { drawSun(g, W * .8, H * .15, 42);
+    [[.18, .12, 34], [.55, .2, 26], [.9, .34, 30], [.1, .9, 40], [.75, .93, 34]].forEach(([x, y, r]) => puff(g, x * W, y * H, r)); });
+  const S = stage(EL, { half: 7.9, pos: CAM, target: new THREE.Vector3(-.3, 1.5, .2), bg }), sc = S.sc;
+  // 바다 디오라마 판: 옆면 진한 파랑 · 윗면 바다 · 섬 둘레 얕은 물
+  const sea = at(mesh(new THREE.CylinderGeometry(7.7, 7.7, 1.2, 72), 0x4FA8CF, { line: .07 }), 0, -.6, 0); sea.userData.bg = 1; sc.add(sea);
+  const top = at(flat(new THREE.CircleGeometry(7.6, 72), 0x8FD3E8, 1), 0, .01, 0); top.userData.bg = 1; sc.add(top);
+  const sh = at(flat(new THREE.ShapeGeometry((() => { const s = new THREE.Shape(); for (let i = 0; i <= 120; i++) { const a = i / 120 * TAU, r = 7.1 * SHAPES.bean(a); const x = Math.cos(a) * r, y = Math.sin(a) * r * 1.12; i ? s.lineTo(x, y) : s.moveTo(x, y); } return s; })()), 0xB8E8F1, 1), 0, .02, 0); sh.userData.bg = 1; sc.add(sh);
+  for (let i = 0; i < 16; i++) { const a = i * 2.3, rr = 6.8 + (i % 3) * .25; const f = new THREE.Mesh(new THREE.BoxGeometry(.6, .02, .07), new THREE.MeshBasicMaterial({ color: 0xffffff })); f.position.set(Math.cos(a) * rr, .04, Math.sin(a) * rr); f.rotation.y = a; sc.add(f); }
+  layer(sc, SHAPES.bean, 6.5, .7, 0, 0xEAD7AE, { sz: 1.12 }); layer(sc, SHAPES.bean, 5.8, .55, .7, 0xA7D8A0, { sz: 1.12 });
+  const TOP = 1.42;
+  const info = stops(S, [[-3.4, 4.4], [-.4, 5.0], [2.6, 4.0], [3.4, 1.2], [.8, .4], [-2.6, -.6], [-2.0, -3.6], [1.4, -4.4]], TOP, SC);
+  const tw = new THREE.Group(); tw.add(at(mesh(new THREE.CylinderGeometry(.26, .34, 2, 16), 0xffffff), 0, 1, 0)); tw.add(at(mesh(new THREE.CylinderGeometry(.62, .5, .55, 16), 0x9ED8E6), 0, 2.25, 0)); tw.add(at(mesh(new THREE.CylinderGeometry(.68, .68, .12, 16), 0xD0798E), 0, 2.58, 0)); sc.add(at(tw, -4.6, TOP, 2.0));
+  sc.add(building(4.0, TOP, -1.8, 1.2, 2.6, 1.1, 0xF7C9D2, 0xD0798E)); sc.add(building(4.5, TOP, -.2, .9, 1.6, .9, 0xFFE7A8, 0xE8A93C)); sc.add(building(2.8, TOP, -3.2, .9, 1.9, .9, 0xCFE7F5, 0x3F5BA9));
+  const palm = (x, z) => { const g = new THREE.Group(); const tr = mesh(new THREE.CylinderGeometry(.09, .14, 1.8, 8), 0xB9824F, { line: .03 }); tr.position.y = .9; tr.rotation.z = .18; g.add(tr);
+    for (let i = 0; i < 5; i++) { const l = mesh(new THREE.ConeGeometry(.22, 1.2, 6), 0x5DB26A, { line: .03 }); l.geometry.translate(0, .55, 0); l.position.set(-.16, 1.8, 0); l.rotation.set(0, i * 1.26, Math.PI / 2 - .5); g.add(l); } return at(g, x, TOP, z); };
+  sc.add(palm(5.0, 3.0)); sc.add(palm(-5.0, -1.4));
+  [[-1, 2.5], [1.2, 2.3], [-4.2, -3.2], [3.4, 3.2], [-.4, -2.0], [-4.6, 4.4]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .9 + (i % 3) * .12, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
+  sc.add(flag(2.4, TOP, -5.0, 0xD0798E));
+  const plane = new THREE.Group();
+  const fus = mesh(new THREE.CapsuleGeometry(.34, 1.9, 8, 16), 0xffffff); fus.rotation.z = Math.PI / 2; plane.add(fus);
+  const stripe = mesh(new THREE.CapsuleGeometry(.345, 1.7, 8, 16), 0xD0798E, { line: 0 }); stripe.rotation.z = Math.PI / 2; stripe.scale.set(1, 1, .32); stripe.position.y = -.08; plane.add(stripe);
+  const nose = mesh(new THREE.SphereGeometry(.2, 16, 12), 0x3F5BA9, { line: .02 }); nose.position.set(1.18, .08, 0); nose.scale.set(.6, .7, 1.4); plane.add(nose);
+  for (let i = 0; i < 6; i++) for (const zz of [-1, 1]) { const w = new THREE.Mesh(new THREE.CircleGeometry(.07, 16), new THREE.MeshBasicMaterial({ color: 0x2B2F5E })); w.position.set(.7 - i * .26, .1, zz * .335); if (zz < 0) w.rotation.y = Math.PI; plane.add(w); }
+  const wingS = new THREE.Shape(); wingS.moveTo(.4, 0); wingS.lineTo(-.3, 0); wingS.lineTo(-.85, 1.55); wingS.lineTo(-.5, 1.55); wingS.lineTo(.4, 0);
+  const wingG = new THREE.ExtrudeGeometry(wingS, { depth: .07, bevelEnabled: false }); wingG.rotateX(Math.PI / 2); wingG.translate(0, .035, 0);
+  for (const k of [1, -1]) { const wg = mesh(wingG, 0xffffff, { line: .025 }); wg.scale.z = k; wg.position.y = -.12; plane.add(wg);
+    const tip = mesh(new THREE.BoxGeometry(.38, .08, .1), 0xD0798E, { line: .02 }); tip.position.set(-.67, -.12, k * 1.52); plane.add(tip);
+    const eng = mesh(new THREE.CylinderGeometry(.13, .15, .5, 14), 0xC9C2D8, { line: .02 }); eng.rotation.z = Math.PI / 2; eng.position.set(.05, -.28, k * .72); plane.add(eng); }
+  const finS = new THREE.Shape(); finS.moveTo(-1.0, 0); finS.lineTo(-1.45, 0); finS.lineTo(-1.62, .85); finS.lineTo(-1.3, .85); finS.lineTo(-1.0, 0);
+  const finG = new THREE.ExtrudeGeometry(finS, { depth: .07, bevelEnabled: false }); finG.translate(0, .15, -.035); plane.add(mesh(finG, 0xD0798E, { line: .025 }));
+  const stab = new THREE.Shape(); stab.moveTo(-1.1, 0); stab.lineTo(-1.45, 0); stab.lineTo(-1.6, .6); stab.lineTo(-1.42, .6); stab.lineTo(-1.1, 0);
+  const stG = new THREE.ExtrudeGeometry(stab, { depth: .05, bevelEnabled: false }); stG.rotateX(Math.PI / 2); stG.translate(0, .12, 0);
+  for (const k of [1, -1]) { const st2 = mesh(stG, 0xffffff, { line: .02 }); st2.scale.z = k; plane.add(st2); }
+  const trail = []; for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(.16 + i * .02, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 - i * .09 })); m.position.set(-1.9 - i * .42, 0, 0); plane.add(m); trail.push(m); }
+  plane.scale.setScalar(.95); sc.add(plane);
+  S.ticks.push((t) => { const a = t * .18 + 2.2, R = 7.2; plane.position.set(Math.cos(a) * R, 6.6 + Math.sin(t * 1.3) * .2, -Math.sin(a) * R); plane.rotation.set(0, a + Math.PI / 2, 0); plane.rotateX(-.22); trail.forEach((m, i) => { m.scale.setScalar(1 + Math.sin(t * 3 + i) * .08); }); });
+  boat(S, 5.6, 4.6, 0xD0798E);
+  return S;
+};
+
+// ================= 2. 비즈니스 · 노을 저녁 · 네모난 2층 섬 =================
+BUILD.biz = (EL, SC) => {
+  const bg = bgTex('#3A2D6E', '#F6B9A0', (g, W, H) => { for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(255,255,255,${.4 + rnd() * .5})`; g.beginPath(); g.arc(rnd() * W, rnd() * H * .45, 1.5 + rnd() * 2.5, 0, 7); g.fill(); }
+    drawMoon(g, W * .78, H * .16, 46);
+    g.fillStyle = 'rgba(73,48,135,.25)'; [[.05, 70], [.13, 120], [.22, 90], [.72, 140], [.82, 80], [.9, 110]].forEach(([x, hh]) => g.fillRect(x * W, H * .5 - hh, W * .07, hh)); });
+  const S = stage(EL, { half: 7.3, pos: CAM, target: new THREE.Vector3(.1, 1.8, -.15), bg }), sc = S.sc;
+  const sea = at(mesh(new THREE.BoxGeometry(13.6, 1.2, 13.6), 0x3E3378, { line: .07 }), 0, -.6, 0); sea.userData.bg = 1; sc.add(sea);
+  const top = at(flat(new THREE.PlaneGeometry(13.5, 13.5), 0x5E50A0, 1), 0, .01, 0); top.userData.bg = 1; sc.add(top);
+  for (let i = 0; i < 14; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(.9 + rnd(), .02, .08), new THREE.MeshBasicMaterial({ color: i % 3 ? 0xFFE27A : 0xF6B9A0 })); f.position.set(-6 + rnd() * 12, .03, (i % 2 ? 6.0 : -6.2) + rnd() * .4); sc.add(f); }
+  layer(sc, SHAPES.squircle, 6.2, .7, 0, 0xB7AECD); layer(sc, SHAPES.squircle, 5.6, .5, .7, 0xE3DEEE);
+  // 뒤쪽 높은 층 (빌딩 숲)
+  const back = mesh(islandGeo(SHAPES.squircle, 2.5, .8), 0xCFC8E2, { line: .05 }); back.position.set(-2.6, 1.2 + .4, -2.6); sc.add(back);
+  const TOP = 1.32;
+  // 바둑판 길 무늬
+  for (const k of [-1.6, 1.8]) { sc.add(at(flat(new THREE.PlaneGeometry(10, .5), 0xD2CBE3, 1), 0, TOP - .08, k)); }
+  const info = stops(S, [[-1.8, 4.0], [1.8, 3.8], [3.8, 1.0], [1.6, -1.2], [3.4, -3.6]], TOP, SC, 0xFFF6E6);
+  const T2 = 2.0;
+  [[-3.6, -1.6, 1.2, 4.6, 0x493087, 0xFFE200], [-2.0, -3.4, 1.0, 3.4, 0x7C6CC0, 0xFFE200], [-3.8, -3.6, .9, 2.6, 0x9C8BDB], [-1.6, -1.6, .8, 2.0, 0xC9BEDF]].forEach(([x, z, w, h, c, l]) => sc.add(building(x, T2, z, w, h, w, c, 0xE3DBF7, l || 0xFFF3C4, .45)));
+  sc.add(building(4.6, TOP, -1.2, .9, 2.4, .9, 0x7C6CC0, 0xE3DBF7, 0xFFE200, .45)); sc.add(building(-4.6, TOP, 1.6, .9, 1.6, .9, 0x9C8BDB, 0xE3DBF7));
+  sc.add(at(mesh(new THREE.CylinderGeometry(.04, .04, 1.2, 8), 0xffffff, { line: .02 }), -3.6, T2 + 4.6 + .6, -1.6)); const bl = at(mesh(new THREE.SphereGeometry(.16, 16, 12), 0xE9789B, { line: .02 }), -3.6, T2 + 5.9, -1.6); sc.add(bl);
+  S.ticks.push((t) => { bl.material.emissive = new THREE.Color(Math.sin(t * 4) > 0 ? 0xE9789B : 0x000000); });
+  const fz = new THREE.Group(); fz.add(at(mesh(new THREE.CylinderGeometry(1.2, 1.2, .1, 32), 0xA7D8A0, { line: .03 }), 0, .05, 0)); fz.add(at(mesh(new THREE.CylinderGeometry(.75, .8, .3, 32), 0xffffff, { line: .03 }), 0, .2, 0)); fz.add(at(mesh(new THREE.CylinderGeometry(.62, .62, .05, 32), 0x9ED8E6, { line: 0 }), 0, .34, 0)); fz.add(at(mesh(new THREE.CylinderGeometry(.1, .14, .7, 12), 0xffffff, { line: .02 }), 0, .55, 0));
+  const jet = at(mesh(new THREE.SphereGeometry(.2, 16, 12), 0xBFE4EC, { line: .02 }), 0, 1, 0); fz.add(jet); sc.add(at(fz, .4, TOP, 1.0)); S.ticks.push((t) => { jet.position.y = .95 + Math.abs(Math.sin(t * 3)) * .25; });
+  [[-3.6, 3.0], [3.8, 3.6], [-.4, 2.4], [2.0, 1.6], [4.6, 1.2]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .8, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
+  [[-2.8, 2.2], [3.0, 2.4], [.2, -2.8], [2.6, -2.4]].forEach(([x, z]) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.05, .05, 1.6, 8), 0x2B2F5E, { line: .02 }), 0, .8, 0)); g.add(at(mesh(new THREE.IcosahedronGeometry(.17, 1), 0xFFE200, { line: .02 }), 0, 1.68, 0)); sc.add(at(g, x, TOP, z)); });
+  sc.add(flag(4.6, TOP, -4.4, 0x493087)); boat(S, 5.4, 5.6, 0x493087);
+  return S;
+};
+
+// ================= 3. 카페 · 라테 바다 · 케이크 섬 =================
+BUILD.cafe = (EL, SC) => {
+  const bg = bgTex('#D5EDE4', '#C9E5DA', (g, W, H) => {
+    const ty = H * .6;
+    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 3;
+    for (let y = 0, row = 0; y < ty; y += 36, row++) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); for (let x = (row % 2) * 36; x < W; x += 72) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 36); g.stroke(); } }
+    // 선반 + 컵 · 화분
+    const sy = H * .34; g.fillStyle = '#B97A4E'; g.strokeStyle = '#1E1A2B'; g.lineWidth = 5; g.beginPath(); g.roundRect(W * .06, sy, W * .5, 16, 5); g.fill(); g.stroke();
+    [[.1, '#FFFFFF', 46], [.19, '#E9789B', 38], [.27, '#FFE27A', 52]].forEach(([x, c, h]) => { g.fillStyle = c; g.beginPath(); g.roundRect(W * x, sy - h, 40, h, [4, 4, 10, 10]); g.fill(); g.stroke(); });
+    g.fillStyle = '#E8B77E'; g.beginPath(); g.roundRect(W * .4, sy - 44, 52, 44, [4, 4, 12, 12]); g.fill(); g.stroke();
+    g.fillStyle = '#6DBE6A'; [[-16, -70, 18], [8, -86, 20], [26, -64, 16]].forEach(([a, b, r]) => { g.beginPath(); g.ellipse(W * .4 + 26 + a, sy + b, r * .6, r, a / 40, 0, 7); g.fill(); g.stroke(); });
+    // 펜던트 조명
+    [[.7, .2], [.9, .14]].forEach(([x, y]) => { const X = W * x, Y = H * y; g.strokeStyle = '#1E1A2B'; g.lineWidth = 4; g.beginPath(); g.moveTo(X, 0); g.lineTo(X, Y - 30); g.stroke();
+      const gl = g.createRadialGradient(X, Y + 10, 6, X, Y + 10, 110); gl.addColorStop(0, 'rgba(255,230,140,.75)'); gl.addColorStop(1, 'rgba(255,230,140,0)'); g.fillStyle = gl; g.beginPath(); g.arc(X, Y + 10, 110, 0, 7); g.fill();
+      g.fillStyle = '#138A9E'; g.lineWidth = 5; g.beginPath(); g.moveTo(X - 46, Y + 4); g.quadraticCurveTo(X - 40, Y - 34, X, Y - 34); g.quadraticCurveTo(X + 40, Y - 34, X + 46, Y + 4); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#FFF3C4'; g.beginPath(); g.arc(X, Y + 10, 12, 0, 7); g.fill(); g.stroke(); });
+    // 나무 테이블
+    g.fillStyle = '#DDAA78'; g.fillRect(0, ty, W, H - ty); g.fillStyle = '#B97A4E'; g.fillRect(0, ty, W, 18); g.fillStyle = '#1E1A2B'; g.fillRect(0, ty - 3, W, 5);
+    g.strokeStyle = 'rgba(150,95,55,.45)'; g.lineWidth = 3; for (let y = ty + 70; y < H; y += 74) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    g.strokeStyle = 'rgba(150,95,55,.25)'; g.lineWidth = 2; for (let i = 0; i < 14; i++) { const x = rnd() * W, y = ty + 30 + rnd() * (H - ty - 40); g.beginPath(); g.ellipse(x, y, 30 + rnd() * 30, 6, 0, 0, 7); g.stroke(); }
+  });
+  const S = stage(EL, { half: 6.6, pos: CAM, target: new THREE.Vector3(.2, 1.4, -.2), bg }), sc = S.sc;
+  // 라테 잔 받침 + 라테
+  const cup = at(mesh(new THREE.CylinderGeometry(7.6, 7.0, 1.2, 72), 0xffffff, { line: .07 }), 0, -.6, 0); cup.userData.bg = 1; sc.add(cup);
+  const lat = at(flat(new THREE.CircleGeometry(7.1, 72), 0xC99A6E, 1), 0, .01, 0); lat.userData.bg = 1; sc.add(lat);
+  const ring = at(flat(new THREE.RingGeometry(5.6, 7.1, 72), 0xE2BE97, 1), 0, .02, 0); ring.userData.bg = 1; sc.add(ring);
+  // 라테 아트 하트
+  const hs = new THREE.Shape(); hs.moveTo(0, -1); hs.bezierCurveTo(-1.6, 0, -1.4, 1.3, 0, .6); hs.bezierCurveTo(1.4, 1.3, 1.6, 0, 0, -1);
+  const heart = at(flat(new THREE.ShapeGeometry(hs), 0xFFF6E6, 1), 4.8, .03, 4.2); heart.rotation.z = .7; heart.scale.setScalar(.9); heart.userData.bg = 1; sc.add(heart);
+  // 케이크 섬: 물결 가장자리 시트 + 크림
+  layer(sc, SHAPES.scallop, 4.9, 1.0, 0, 0xE8B77E); layer(sc, SHAPES.scallop, 4.75, .32, 1.0, 0xFFF6E6, { bevel: .28 });
+  const TOP = 1.55;
+  for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, x = Math.cos(a) * 4.6, z = -Math.sin(a) * 4.6; if (a > 4.9 && a < 6.0) continue; const s = at(mesh(new THREE.SphereGeometry(.26, 16, 12), i % 2 ? 0xE9536A : 0xFFFFFF, { line: .03 }), x, TOP - .05, z); s.scale.y = .8; sc.add(s); }
+  const info = stops(S, [[-2.0, 2.6], [1.0, 3.4], [3.0, .8]], TOP, SC, 0xE8C9A6, [.6, -1.2]);
+  // 카페 건물
+  const cf = new THREE.Group(); cf.add(at(mesh(new THREE.BoxGeometry(3.0, 1.8, 1.8), 0xFFF7E6), 0, .9, 0));
+  for (let i = 0; i < 6; i++) { const a = mesh(new THREE.BoxGeometry(.5, .08, .8), i % 2 ? 0xffffff : 0x138A9E, { line: .02 }); a.position.set(-1.25 + i * .5, 1.45, 1.25); a.rotation.x = .45; cf.add(a); }
+  cf.add(at(mesh(new THREE.BoxGeometry(3.2, .22, 2.0), 0x138A9E), 0, 1.91, 0)); cf.add(at(mesh(new THREE.BoxGeometry(.6, 1.0, .08), 0x138A9E, { line: .02 }), 0, .5, .92));
+  cf.add(at(mesh(new THREE.BoxGeometry(.7, .55, .06), 0xBFE4EC, { line: .02 }), -.95, .9, .92)); cf.add(at(mesh(new THREE.BoxGeometry(.7, .55, .06), 0xBFE4EC, { line: .02 }), .95, .9, .92));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .5), new THREE.MeshBasicMaterial({ map: textTex('CAFÉ', '#1E1A2B', '#FFE200'), transparent: true })); sign.position.set(0, 2.35, .6); cf.add(sign);
+  sc.add(at(cf, .2, TOP, -2.4));
+  const para = (x, z, c) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.04, .04, 1.4, 8), 0xffffff, { line: .02 }), 0, .7, 0)); g.add(at(mesh(new THREE.ConeGeometry(.9, .45, 10), c, { line: .03 }), 0, 1.5, 0)); g.add(at(mesh(new THREE.CylinderGeometry(.42, .42, .06, 20), 0xffffff, { line: .02 }), 0, .55, 0));
+    [-.65, .65].forEach((k) => g.add(at(mesh(new THREE.BoxGeometry(.3, .35, .3), 0xFFF7E6, { line: .02 }), k, .18, 0))); return at(g, x, TOP, z); };
+  sc.add(para(-2.8, -.6, 0xE9789B)); sc.add(para(3.2, -1.8, 0xFFE200));
+  // 큰 커피잔
+  const mug = new THREE.Group(); mug.add(at(mesh(new THREE.CylinderGeometry(.75, .62, 1.2, 28), 0xffffff), 0, .6, 0)); mug.add(at(flat(new THREE.CircleGeometry(.66, 28), 0x7A4A2C, 1), 0, 1.15, 0));
+  const hd = mesh(new THREE.TorusGeometry(.32, .09, 10, 20), 0xffffff, { line: .02 }); hd.position.set(.8, .65, 0); mug.add(hd); sc.add(at(mug, -3.2, TOP, -2.6));
+  const steam = [0, 1].map((i) => { const s = at(mesh(new THREE.SphereGeometry(.16, 12, 10), 0xffffff, { line: .02, cast: false }), -3.2 + (i ? .2 : -.15), TOP + 1.5, -2.6); sc.add(s); return s; });
+  S.ticks.push((t) => steam.forEach((s, i) => { const k = (t * .6 + i * .5) % 1; s.position.y = TOP + 1.4 + k * 1.2; s.scale.setScalar(1 - k * .6); }));
+  [[-3.6, 1.6], [3.6, 2.6]].forEach(([x, z]) => sc.add(tree(x, z, TOP, .75, 0x8FCB7E)));
+  return S;
+};
+
+// ================= 4. 캠퍼스 · 하늘에 뜬 섬 =================
+BUILD.campus = (EL, SC) => {
+  const bg = bgTex('#8FD2F2', '#FFE8C8', (g, W, H) => {
+    ['#F7A8B8', '#FFD27A', '#C3E8A6', '#A8D8F5'].forEach((c, i) => { g.strokeStyle = c; g.globalAlpha = .6; g.lineWidth = 24; g.beginPath(); g.arc(W * .5, H * .66, W * .62 - i * 24, Math.PI, 0); g.stroke(); }); g.globalAlpha = 1;
+    [[.12, .3, 26], [.88, .42, 20], [.7, .2, 14]].forEach(([x, y, r]) => { const X = x * W, Y = y * H; g.fillStyle = 'rgba(96,150,130,.35)'; g.beginPath(); g.moveTo(X - r * 1.6, Y); g.quadraticCurveTo(X, Y - r * .9, X + r * 1.6, Y); g.lineTo(X + r * .4, Y + r * 1.5); g.lineTo(X - r * .5, Y + r * 1.1); g.closePath(); g.fill(); });
+    g.strokeStyle = '#1E1A2B'; g.lineWidth = 4; g.lineCap = 'round'; [[.34, .13, 1], [.42, .17, .8], [.58, .1, .9]].forEach(([x, y, k]) => { const X = x * W, Y = y * H, s = 14 * k; g.beginPath(); g.moveTo(X - s, Y - s * .2); g.quadraticCurveTo(X - s * .45, Y - s * .75, X, Y); g.quadraticCurveTo(X + s * .45, Y - s * .75, X + s, Y - s * .2); g.stroke(); });
+    [[.8, '#F3F8FB', 46], [.86, '#FFFFFF', 54], [.93, '#FFFFFF', 62]].forEach(([y, c, r], k) => { for (let x = -40 + k * 30; x < W + 60; x += r * 1.5) puff(g, x, y * H + (Math.sin(x * .03) * 10), r, c); });
+  });
+  const S = stage(EL, { half: 7.0, pos: CAM, target: new THREE.Vector3(-.15, .4, .1), bg }), sc = S.sc;
+  // 섬 아래 바위 (뒤집힌 원뿔, 울퉁불퉁)
+  const cg = new THREE.ConeGeometry(5.6, 5.2, 11, 4); cg.rotateX(Math.PI); const cp = cg.attributes.position;
+  for (let i = 0; i < cp.count; i++) { const y = cp.getY(i), k = 1 + (Math.sin(i * 1.7) * .08); if (y < 2.5) { cp.setX(i, cp.getX(i) * k); cp.setZ(i, cp.getZ(i) * k * 1.1); } } cg.computeVertexNormals();
+  sc.add(at(mesh(cg, 0x9C7A5C, { line: .06 }), 0, -2.0, 0));
+  layer(sc, SHAPES.peanut, 5.7, .8, -.5, 0xC08A5A, { sz: 1.05 }); layer(sc, SHAPES.peanut, 5.5, .45, .3, 0x9ED48A, { sz: 1.05 });
+  const TOP = .9;
+  // 작은 돌섬들 (둥실둥실)
+  const rocks = [[-7, -1, 3.2, .9], [6.6, 1.4, -3.4, .7], [5.8, -2.6, 4.2, .6]].map(([x, y, z, s]) => { const g = new THREE.Group(); const c2 = new THREE.ConeGeometry(1.2 * s, 1.6 * s, 7); c2.rotateX(Math.PI); g.add(at(mesh(c2, 0x9C7A5C, { line: .04 }), 0, -.8 * s, 0)); g.add(at(mesh(new THREE.CylinderGeometry(1.25 * s, 1.2 * s, .35 * s, 7), 0x9ED48A, { line: .04 }), 0, .1, 0)); g.add(tree(0, 0, .25 * s, .7 * s)); sc.add(at(g, x, y, z)); return [g, y]; });
+  S.ticks.push((t) => rocks.forEach(([g, y], i) => { g.position.y = y + Math.sin(t * 1.3 + i * 2) * .25; }));
+  const info = stops(S, [[-3.6, 3.0], [.2, 3.8], [3.6, 2.2], [3.0, -.8], [-.2, -1.0], [-3.4, -.4]], TOP, SC);
+  // 학교 + 시계탑
+  const sch = new THREE.Group(); sch.add(at(mesh(new THREE.BoxGeometry(3.6, 1.5, 1.4), 0xF2D8B4), 0, .75, 0));
+  const rf = new THREE.CylinderGeometry(.9, .9, 3.8, 3); rf.rotateZ(Math.PI / 2); const roof = mesh(rf, 0xC23B3B, { line: .04 }); roof.position.y = 1.72; roof.scale.set(1, .7, 1); roof.rotation.x = Math.PI / 6; sch.add(roof);
+  sch.add(at(mesh(new THREE.BoxGeometry(1.0, 3.2, 1.0), 0xF7E6C8), 0, 1.6, .2)); sch.add(at(mesh(new THREE.ConeGeometry(.78, .9, 4), 0x3F5BA9, { line: .03 }), 0, 3.65, .2)); sch.children[sch.children.length - 1].rotation.y = Math.PI / 4;
+  const clk = new THREE.Mesh(new THREE.CircleGeometry(.36, 32), new THREE.MeshBasicMaterial({ color: 0xffffff })); clk.position.set(0, 2.7, .71); sch.add(clk);
+  const hand = new THREE.Mesh(new THREE.BoxGeometry(.04, .26, .01), new THREE.MeshBasicMaterial({ color: INK })); hand.geometry.translate(0, .12, 0); hand.position.set(0, 2.7, .73); sch.add(hand); S.ticks.push((t) => { hand.rotation.z = -t; });
+  for (const x of [-1.3, -.8, .8, 1.3]) sch.add(at(new THREE.Mesh(new THREE.BoxGeometry(.3, .4, .02), new THREE.MeshBasicMaterial({ color: 0xBFE4EC })), x, .9, .71));
+  sc.add(at(sch, .6, TOP, -3.6));
+  // 운동장 트랙
+  const trk = mesh(new THREE.TorusGeometry(1.2, .18, 8, 40), 0xD86A4A, { line: .03 }); trk.rotation.x = Math.PI / 2; trk.scale.set(1.3, 1, .4); trk.position.set(3.4, TOP + .02, -3.2); sc.add(trk);
+  sc.add(at(flat(new THREE.CircleGeometry(1.1, 32), 0x7FC46F, 1), 3.4, TOP + .03, -3.2)); sc.children[sc.children.length - 1].scale.set(1.3, .9, 1);
+  [[-1.6, 1.4], [1.8, 1.0], [-4.4, 1.2], [-2.6, -2.8], [4.4, .8]].forEach(([x, z], i) => sc.add(tree(x, z, TOP, .85, i % 2 ? 0x6DBE6A : 0x8FCB7E)));
+  sc.add(flag(-1.4, TOP, -2.6, 0xFFE200));
+  // 연
+  const kite = new THREE.Group(); const kg = new THREE.Shape(); kg.moveTo(0, .6); kg.lineTo(.4, 0); kg.lineTo(0, -.6); kg.lineTo(-.4, 0); kg.lineTo(0, .6);
+  kite.add(mesh(new THREE.ShapeGeometry(kg), 0xE9789B, { line: .03 })); kite.position.set(-4.6, 6.2, -3); kite.rotation.y = .8; sc.add(kite); S.ticks.push((t) => { kite.position.y = 6.2 + Math.sin(t * 1.6) * .3; kite.rotation.z = Math.sin(t * 1.6) * .2; });
+  sc.add(cloud(5.6, 5.2, -1, .9));
+  return S;
+};
+
+// 앱에서 부르는 곳: PALLO3D.mount(#stWorld, 'travel', [[이름, 아이콘, 'done'|'cur'|'open'|'soon'], ...], (장면 번호) => {})
+window.PALLO3D = { mount(el, id, SC, onOpen) {
+  OPEN = onOpen; const f = BUILD[id] || BUILD.travel;
+  const go = () => { el.innerHTML = ''; f(el, SC); };
+  if (el.clientWidth > 0) go(); else { const ro = new ResizeObserver(() => { if (el.clientWidth > 0) { ro.disconnect(); go(); } }); ro.observe(el); }
+} };
+window.dispatchEvent(new Event('pallo3d-ready'));
 </script>
 </body>
 </html>
