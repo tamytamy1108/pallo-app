@@ -643,7 +643,7 @@ a { color: inherit; }
 .pn-tabs.act-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; overflow: visible; } .pn-tabs.act-tabs button { white-space: nowrap; padding-left: 0; padding-right: 0; font-size: 13px; min-width: 0; } .act-tabs small { font-weight: 800; opacity: .7; }
 .act-list { padding: 0; }
 .act-list.lg-crs .lg-cr { border-radius: 0; }
-.nt-tabs.act-ul { padding: 0; gap: 20px; overflow-x: auto; scrollbar-width: none; } .nt-tabs.act-ul button { white-space: nowrap; font-size: 15px; }
+.nt-tabs.act-ul { padding: 0; gap: 6px; justify-content: space-between; overflow-x: auto; scrollbar-width: none; } .nt-tabs.act-ul button { flex: none; white-space: nowrap; font-size: 14.5px; } .nt-tabs.act-ul button small { font-size: 12px; font-weight: 800; margin-left: 2px; }
 .act-ch { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 0; border: 0; border-top: 1.5px solid var(--line); background: none; font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
 .act-ch:first-child { border-top: 0; } .act-ch .rg { flex: none; }
 .act-ch .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .act-ch b { font-size: 15.5px; font-weight: 900; } .act-ch small { font-size: 12.5px; font-weight: 700; color: var(--sub); } .act-ch .go { color: var(--sub); font-weight: 900; }
@@ -1012,6 +1012,34 @@ a { color: inherit; }
 .st-mchip[aria-selected="true"] .g { border-color: var(--white); }
 .st-mchip .new { width: 8px; height: 8px; border-radius: 50%; background: #E9789B; border: 1.5px solid var(--ink); }
 .st-mchip.soon { border-style: dashed; border-color: #9A93A6; color: #8C8597; background: transparent; }
+.st-mode { margin: 0 0 14px; } .st-mode:empty { margin-bottom: 14px; }
+.st-head { position: relative; z-index: 6; }
+.st-lwrap { position: relative; }
+.st-lang { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px 0 6px; border-radius: 18px; border: 2px solid var(--ink); background: var(--white); font: inherit; font-size: 13.5px; font-weight: 900; color: var(--ink); cursor: pointer; }
+.st-lang .g, .st-lmenu .g { width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid var(--ink); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; box-sizing: border-box; }
+.st-lmenu { position: absolute; right: 0; top: 44px; min-width: 150px; padding: 6px; border-radius: 16px; border: 2px solid var(--ink); background: var(--white); box-shadow: 3px 4px 0 var(--ink); display: flex; flex-direction: column; }
+.st-lmenu[hidden] { display: none; }
+.st-lmenu button { display: flex; align-items: center; gap: 9px; height: 42px; padding: 0 10px; border: 0; border-radius: 11px; background: none; font: inherit; font-size: 14px; font-weight: 800; color: var(--ink); cursor: pointer; text-align: left; }
+.st-lmenu button[aria-checked="true"] { background: #FFF4B8; font-weight: 900; }
+.st-mtabs { display: flex; margin: 14px 0 0; border-bottom: 2px solid #E2D9C7; }
+.st-mtabs button { flex: 1; position: relative; height: 48px; border: 0; background: none; font: inherit; font-size: 17px; font-weight: 900; color: #A39C8E; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.st-mtabs button[aria-selected="true"] { color: var(--ink); }
+.st-mtabs button[aria-selected="true"]:after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -2px; height: 4px; border-radius: 2px; background: var(--ink); }
+.st-mtabs .new, .st-schips .new { width: 7px; height: 7px; border-radius: 50%; background: #E9789B; display: inline-block; }
+.st-schips { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; margin: 12px -16px 0; padding: 0 16px 2px; }
+.st-schips::-webkit-scrollbar { display: none; }
+.st-schips button { flex: none; height: 34px; padding: 0 14px; border-radius: 17px; border: 2px solid var(--ink); background: var(--white); font: inherit; font-size: 13px; font-weight: 800; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.st-schips button[aria-selected="true"] { background: var(--ink); color: var(--white); }
+.st-schips button.soon { border-style: dashed; border-color: #9A93A6; color: #8C8597; background: transparent; }
+.st-seg { display: flex; padding: 4px; border-radius: 16px; background: #EDE6D6; }
+.st-seg button { flex: 1; height: 40px; border: 2px solid transparent; border-radius: 12px; background: none; font: inherit; font-size: 14px; font-weight: 900; color: var(--sub); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.st-seg button[aria-selected="true"] { background: var(--white); color: var(--ink); border-color: var(--ink); }
+.st-seg .new, .st-stabs .new { width: 7px; height: 7px; border-radius: 50%; background: #E9789B; display: inline-block; }
+.st-stabs { display: flex; gap: 20px; margin: 14px 4px 0; overflow-x: auto; scrollbar-width: none; }
+.st-stabs::-webkit-scrollbar { display: none; }
+.st-stabs button { flex: none; padding: 0 0 7px; border: 0; background: none; font: inherit; font-size: 14.5px; font-weight: 900; color: #A39C8E; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.st-stabs button[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 -3px 0 var(--yellow); }
+.st-stabs button.soon { color: #C9C1B0; }
 .st-msep { flex: none; width: 2px; height: 22px; align-self: center; background: #D9D1BF; border-radius: 1px; }
 .st-world { position: relative; aspect-ratio: 360 / 460; border: 2px solid var(--ink); border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); background: #BFE4EC; }
 .st-world > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -1703,6 +1731,7 @@ textarea[rows="1"] { padding-top: 11px !important; padding-bottom: 11px !importa
 }
 /* ---------- 라운지 (A 스토리 + 사진 피드, C 피드 속 모임 카드) ---------- */
 #page-azit { gap: 0; padding-left: 0; padding-right: 0; }
+#page-azit .lg-fabw { margin-top: 150px; }   /* 끝까지 내렸을 때 마지막 글이 + 버튼 · 위로 버튼에 안 가리게 (버튼 자리 위에 여백) */
 #page-azit.ev-mode #lgTabs, #page-azit.ev-mode #lgStories, #page-azit.ev-mode #lgMapBtn, #page-azit.ev-mode #lgWrite { display: none !important; }
 #page-azit.ev-mode #lgSub { margin-top: 6px; }
 .lg-hd { display: flex; align-items: center; gap: 8px; padding: 0 16px 10px; min-height: 44px; }
@@ -1870,6 +1899,9 @@ textarea[rows="1"] { padding-top: 11px !important; padding-bottom: 11px !importa
 .lg-dim.show { opacity: 1; pointer-events: auto; }
 #lgSheet { z-index: 47; display: flex; flex-direction: column; gap: 12px; }
 #lgSheet.tall { height: 84%; max-height: 84%; overflow: hidden; padding-bottom: 0; gap: 0; }
+/* 키 큰 시트: 내용이 길면 시트 안에서 스크롤 · 아래 버튼은 바닥에 붙여서 안 잘리게 (댓글 시트 .lg-cs 는 안쪽 목록이 스크롤) */
+#lgSheet.tall:not(:has(.lg-cs)) { overflow-y: auto; scrollbar-width: none; }
+#lgSheet.tall .lg-sfoot { bottom: 0; margin-bottom: 0; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .lg-cs { flex: 1; min-height: 0; display: flex; flex-direction: column; margin: 0 -18px; }
 .lg-cs .cst { text-align: center; padding: 2px 0 10px; border-bottom: 1.5px solid var(--line); }
 .lg-cs .cst h2 { margin: 0; font-size: 16px; font-weight: 900; }
@@ -3122,6 +3154,12 @@ article.lg-new .lg-ch { animation: lgNew 1.5s cubic-bezier(.3,1.4,.5,1); }
 .ms-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ms-info .pl { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; } .ms-info .pl b { font-size: 18px; font-weight: 900; } .ms-info .pl small { font-size: 12px; font-weight: 700; color: var(--sub); }
 .ms-info .kv { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1.5px solid var(--line); } .ms-info .kv span { font-size: 12.5px; font-weight: 800; color: var(--sub); } .ms-info .kv b { font-size: 14px; font-weight: 900; color: var(--ink); white-space: nowrap; }
+.ms-tl { position: relative; margin-top: 16px; padding: 8px 0 2px 22px; border-top: 1.5px solid var(--line); }
+.ms-tl:before { content: ""; position: absolute; left: 6px; top: 26px; bottom: 26px; width: 2px; border-radius: 1px; background: var(--line); }
+.ms-tl .r { position: relative; display: flex; align-items: center; gap: 16px; padding: 12px 0; }
+.ms-tl .r i { position: absolute; left: -22px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; border: 2px solid var(--ink); box-sizing: border-box; }
+.my-study .ms-tl .tm { border-top: 0; } .ms-tl .tm { flex: none; width: 66px; display: flex; flex-direction: column; gap: 2px; } .ms-tl .tm b { font-family: var(--f-display); font-size: 18px; font-weight: 800; line-height: 1.1; } .ms-tl .tm small { font-size: 11.5px; font-weight: 800; color: var(--sub); white-space: nowrap; }
+.ms-tl .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; } .ms-tl .tx b { font-size: 15px; font-weight: 900; } .ms-tl .tx small { font-size: 12px; font-weight: 800; color: var(--sub); }
 .ms-tm { margin-top: 14px; padding-top: 4px; border-top: 1.5px solid var(--line); display: flex; flex-direction: column; }
 .ms-tm > div { display: flex; align-items: center; gap: 10px; padding: 9px 0; } .ms-tm i { width: 10px; height: 10px; border-radius: 50%; flex: none; } .ms-tm b { flex: 1; font-size: 15px; font-weight: 900; } .ms-tm small { font-size: 12.5px; font-weight: 700; color: var(--sub); }
 .ms-a .ms-go { width: 100%; height: 50px; border-radius: 25px; margin-top: 12px; font-size: 15px; background: var(--yellow); box-shadow: 0 4px 0 var(--ink); }
@@ -4428,9 +4466,10 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
 
       <!-- ============ 라이브러리 ============ -->
       <section class="page" id="page-library" aria-label="라이브러리">
-        <div class="page-head"><h1>라이브러리</h1></div>
-        <!-- ① 언어 → ② 레벨(교재 표지) → ③ 그 교재의 과 목록 · 예습 / 복습 -->
-        <div class="st-mapchips rise" id="stMapChips" role="tablist" aria-label="지도"></div>
+        <div class="page-head st-head"><h1>라이브러리</h1><div class="st-lwrap"><button type="button" class="st-lang press" id="stLang" aria-haspopup="true" aria-expanded="false"></button><div class="st-lmenu" id="stLMenu" role="menu" hidden></div></div></div>
+        <!-- ① 맵 종류(메인 탭) → ② 상황 맵이면 어떤 상황(칩) · 언어는 제목 옆에서 바꿔요 -->
+        <div class="st-mtabs rise" id="stMapChips" role="tablist" aria-label="맵 종류"></div>
+        <div class="st-mode rise" id="stMapMode"></div>
         <div class="st-world rise" id="stWorld"></div>
         <div class="card st-lib rise" id="stPanel"></div>
       </section>
@@ -5326,6 +5365,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       return `<button class="chap${cls}${isWeekLesson(n) ? ' week-mark' : ''}" role="tab" data-lesson="${n}" aria-selected="${n === S.lesson}" aria-label="${n}과 ${lessonTitle(n)}, ${c}/10${isWeekLesson(n) ? ', 이번 주 스터디 진도' : ''}">${n}과${c === 10 ? check : ''}</button>`;
     }).join('');
     $$('#chapRow .chap').forEach((b) => b.addEventListener('click', () => setLesson(+b.dataset.lesson)));
+    { const row = $('#chapRow'), cb = row && row.querySelector('[aria-selected="true"]'); if (cb && (cb.offsetLeft < row.scrollLeft || cb.offsetLeft + cb.offsetWidth > row.scrollLeft + row.clientWidth)) row.scrollLeft = cb.offsetLeft - 14; }   // 고른 과가 칩 줄 밖으로 잘리지 않게
     const wc = $('#weekChip');
     if (wc && !wc.dataset.bound) { wc.dataset.bound = 1; wc.setAttribute('role', 'button'); wc.tabIndex = 0; wc.addEventListener('click', () => {
       const row = $('#chapRow'), bs = WEEK_LESSONS.map((n) => $(`#chapRow [data-lesson="${n}"]`)).filter(Boolean);
@@ -6934,7 +6974,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
 
   // ---- 예습 / 복습: 상태 ----
   // ST 는 데모 시각을 바꿔도 남아 있어요 (처음으로 되돌리기에서만 초기화)
-  const freshST = () => ({ map: 'lang' + MY_LANG, lang: MY_LANG, bi: 1, all: false, done: {}, ans: {}, after: {}, side: {}, pos: {}, pts: 0 });
+  const freshST = () => ({ map: 'lang' + MY_LANG, lang: MY_LANG, sitMode: false, bi: 1, all: false, done: {}, ans: {}, after: {}, side: {}, pos: {}, pts: 0 });
   let ST = freshST();
   let SV = null;                    // 지금 열린 과 { L, ls, D, lk, stage, step, t }
   let stNext = null, stNextGo = false, stTimer = null, stPlay = 0;
@@ -7225,7 +7265,13 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     ...SITS.map((L) => ({ id: L.id, kind: 'sit', L, label: L.title, isNew: L.isNew })),
     ...SIT_SOON.map((x) => ({ id: x.id, kind: 'soon', label: x.title, when: x.when }))
   ];
-  const curMap = () => MAP_LIST().find((m) => m.id === ST.map) || MAP_LIST()[0];
+  // 상황 맵은 언어 안에 들어 있어요 (L.lang 없으면 영어). 언어 칩 → [스터디 맵 | 상황 맵] → 상황 맵 글자 탭
+  const sitLang = (L) => L.lang == null ? 0 : L.lang;
+  const curMap = () => {
+    const all = MAP_LIST();
+    if (ST.sitMode) return all.find((m) => m.kind === 'sit' && m.id === ST.map && sitLang(m.L) === ST.lang) || all.find((m) => m.kind === 'sit' && sitLang(m.L) === ST.lang) || { id: 'none', kind: 'none' };
+    return all.find((m) => m.id === 'lang' + ST.lang) || all[0];
+  };
   const lessonDone = (L, ls) => stagesOf(L).every((k) => doneCount(L, ls, k) === stepsOf(L)[k].length);
   // 장면 아이콘 (24 그리드 · 잉크 선)
   const MAP_ICO = {
@@ -7316,23 +7362,79 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     return { svg, over };
   }
   // 상황 맵: 장면 = 섬 위 정류장 (길을 따라 다음 장면으로)
+  // ===== 상황 맵 그림: 맵마다 다른 섬 (여행 = 공항 · 활주로 · 호텔 / 비즈니스 = 빌딩 숲 · 분수 광장 / 카페 = 줄무늬 차양 카페 · 테라스) =====
+  // 새 상황 맵은 SIT_THEME 에 한 줄(섬 모양 · 땅 색 · 정류장 자리 · 장식) 추가. 없으면 여행 모양을 써요.
+  const smoothPath = (P) => {
+    let d = `M${P[0][0]} ${P[0][1]}`;
+    for (let i = 0; i < P.length - 1; i++) {
+      const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+      d += ` C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0]} ${p2[1]}`;
+    }
+    return d;
+  };
+  const mTree = (x, y, s = 1, c = '#6DBE6A') => `<rect x="${x - 2.5 * s}" y="${y - 9 * s}" width="${5 * s}" height="${10 * s}" fill="#B9824F" ${stk(1.8)}/><circle cx="${x}" cy="${y - 15 * s}" r="${11 * s}" fill="${c}" ${stk(2)}/><circle cx="${x - 4 * s}" cy="${y - 19 * s}" r="${3.2 * s}" fill="#fff" opacity=".45"/>`;
+  const mBush = (x, y, c = '#6DBE6A') => `<path d="M${x - 10} ${y}a6 6 0 0 1 4-9a7 7 0 0 1 12 0a6 6 0 0 1 4 9z" fill="${c}" ${stk(1.8)}/>`;
+  const mBld = (x, y, w, h, c, lit = '#FFF3C4') => {
+    let win = '';
+    for (let yy = y - h + 7; yy < y - 8; yy += 10) for (let xx = x + 4; xx + 4 <= x + w - 3; xx += 7) win += `<rect x="${xx}" y="${yy}" width="4" height="5" rx="1" fill="${lit}"/>`;
+    return `<rect x="${x + 3}" y="${y - h + 3}" width="${w}" height="${h}" rx="2" fill="${ISK}"/><rect x="${x}" y="${y - h}" width="${w}" height="${h}" rx="2" fill="${c}" ${stk(2)}/>${win}`;
+  };
+  const mBoat = (x, y, c) => `<g class="st-boat"><path d="M${x} ${y}h30l-6 8h-18z" fill="${c}" ${stk(2)}/><path d="M${x + 15} ${y}v-22l12 18z" fill="#fff" ${stk(2)}/></g>`;
+  const mFlag = (x, y, c) => `<path d="M${x} ${y}v-30" ${stk(2.2)}/><path d="M${x} ${y - 30}l20 7-20 7z" fill="${c}" ${stk(1.8)}/>`;
+  const mIsland = (I) => `<path d="${blob(I.cx + 5, I.cy + 8, I.rx + 14, I.ry + 13, I.a, I.n, I.p)}" fill="${ISK}"/>`
+    + `<path d="${blob(I.cx, I.cy + 4, I.rx + 14, I.ry + 13, I.a, I.n, I.p)}" fill="#EAD7AE" ${stk(2.5)}/>`
+    + `<path d="${blob(I.cx, I.cy + 4, I.rx + 12.5, I.ry + 11.5, I.a, I.n, I.p)}" fill="url(#isLo)"/>`
+    + `<path d="${blob(I.cx, I.cy, I.rx, I.ry, I.a, I.n, I.p)}" fill="${I.g}" ${stk(2.3)}/>`
+    + `<path d="${blob(I.cx, I.cy, I.rx - 1.2, I.ry - 1.2, I.a, I.n, I.p)}" fill="url(#isHi)"/>`;
+  const SIT_THEME = {
+    travel: { dy: -10, I: { cx: 182, cy: 250, rx: 150, ry: 184, a: .05, n: 4, p: .6, g: '#A7D8A0' },
+      P: [[96, 390], [188, 404], [270, 360], [238, 288], [134, 268], [90, 196], [168, 140], [262, 110]],
+      deco: () => `<rect x="58" y="300" width="12" height="32" fill="#fff" ${stk(2)}/><path d="M58 312h12M58 322h12" stroke="#D0798E" stroke-width="3"/><rect x="53" y="290" width="22" height="12" rx="3" fill="#BFE4EC" ${stk(2)}/>`
+        + mBld(276, 252, 16, 34, '#F7C9D2') + mBld(294, 252, 18, 50, '#D0798E') + mBld(313, 252, 13, 26, '#FFE7A8')
+        + palm(316, 330, .9) + mTree(196, 222, .9) + mTree(52, 150) + mTree(132, 92, .85) + mTree(218, 76, .8, '#8FCB7E')
+        + mBush(154, 438) + mBush(226, 334) + mFlag(290, 92, '#D0798E')
+        + `<g transform="translate(40 34) rotate(-14)"><path d="M0 0h34l8-6h4l-3 8 3 8h-4l-8-6H0z" fill="#fff" ${stk(2)}/><path d="M14 0l-6-12h6l10 12M14 4l-6 12h6l10-12" fill="#fff" ${stk(2)}/></g>`
+        + `<path d="M28 52q-14 10-20 26" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="3 7" stroke-linecap="round"/>`
+        + mBoat(306, 436, '#D0798E') },
+    biz: { dy: -10, I: { cx: 182, cy: 250, rx: 148, ry: 178, a: .035, n: 6, p: .2, g: '#D9D1EA' },
+      P: [[104, 384], [226, 378], [272, 290], [150, 236], [214, 142]],
+      deco: () => `<path d="${blob(80, 288, 32, 22, .05, 3, .4)}" fill="#A7D8A0" ${stk(2)}/><circle cx="80" cy="288" r="12" fill="#9ED8E6" ${stk(2)}/><circle cx="80" cy="288" r="4.5" fill="#fff" ${stk(1.6)}/><path d="M80 283v-8M76 277q4-5 8 0" fill="none" stroke="#6CB7CC" stroke-width="2" stroke-linecap="round"/>`
+        + mBld(52, 186, 22, 64, '#9C8BDB') + mBld(76, 186, 26, 98, '#493087', '#FFE200') + mBld(104, 186, 20, 52, '#C9BEDF')
+        + mBld(286, 238, 18, 52, '#7C6CC0', '#FFE200') + mBld(306, 238, 18, 34, '#E3DBF7')
+        + `<path d="M89 88v-12" ${stk(2)}/><circle cx="89" cy="74" r="3" fill="#E9789B" ${stk(1.6)}/>`
+        + mTree(160, 318, .9) + mTree(262, 206, .85) + mTree(306, 340, .9) + mTree(150, 110, .85)
+        + mBush(130, 330) + mBush(286, 410, '#8FCB7E') + mFlag(240, 124, '#493087')
+        + mBoat(300, 40, '#493087') },
+    cafe: { dy: -22, I: { cx: 180, cy: 266, rx: 142, ry: 150, a: .04, n: 5, p: 1.1, g: '#BFE6D8' },
+      P: [[100, 362], [196, 390], [272, 318]], tail: [180, 226],
+      deco: () => `<rect x="125" y="155" width="116" height="64" rx="3" fill="${ISK}"/><rect x="122" y="152" width="116" height="64" rx="3" fill="#FFF7E6" ${stk(2.2)}/>`
+        + `<rect x="133" y="172" width="28" height="26" rx="3" fill="#BFE4EC" ${stk(2)}/><rect x="199" y="172" width="28" height="26" rx="3" fill="#BFE4EC" ${stk(2)}/><path d="M147 172v26M213 172v26" ${stk(1.6)}/>`
+        + `<rect x="170" y="186" width="20" height="30" rx="2" fill="#138A9E" ${stk(2)}/><circle cx="185" cy="202" r="1.6" fill="${ISK}"/>`
+        + `<path d="M114 146h132v12${Array.from({ length: 11 }, (_, i) => `a6 6 0 0 1 -12 0`).join('')}z" fill="#fff" ${stk(2.2)}/>`
+        + Array.from({ length: 6 }, (_, i) => `<path d="M${114 + i * 24} 146h12v12a6 6 0 0 1 -12 0z" fill="#138A9E"/>`).join('') + `<path d="M114 146h132" ${stk(2.2)}/>`
+        + `<rect x="146" y="118" width="68" height="24" rx="12" fill="${ISK}"/><text x="180" y="135" text-anchor="middle" font-family="Lexend, sans-serif" font-size="13" font-weight="800" fill="#FFE200">CAFÉ</text>`
+        + `<path d="M180 142v4" ${stk(2)}/>`
+        + [[70, 262, '#E9789B'], [292, 246, '#FFE200']].map(([x, y, c]) => `<path d="M${x} ${y}v-26" ${stk(2)}/><path d="M${x - 20} ${y - 26}q20-20 40 0z" fill="${c}" ${stk(2)}/><path d="M${x - 7} ${y - 26}q7-14 14 0" fill="#fff" ${stk(1.6)}/><ellipse cx="${x}" cy="${y}" rx="13" ry="5" fill="#fff" ${stk(2)}/><rect x="${x - 24}" y="${y - 4}" width="8" height="10" rx="2" fill="#FFF7E6" ${stk(1.6)}/><rect x="${x + 16}" y="${y - 4}" width="8" height="10" rx="2" fill="#FFF7E6" ${stk(1.6)}/>`).join('')
+        + mBush(116, 222, '#E9A6BC') + mBush(246, 222, '#E9A6BC') + mTree(52, 330, .9) + mTree(160, 304, .85) + mTree(300, 176, .8) + mTree(64, 194, .8)
+        + mBoat(22, 436, '#138A9E') }
+  };
   function sitMap(L) {
-    const P = [[100, 382], [196, 402], [276, 342], [222, 278], [118, 250], [100, 168], [192, 128], [272, 96]].slice(0, L.lessons.length);
-    const grass = { travel: '#A7D8A0', biz: '#C9BEDF', cafe: '#BFE0DA' }[L.id] || '#A7D8A0';
-    const road = 'M' + P.map((p) => p.join(' ')).join(' L');
+    const T = SIT_THEME[L.id] || SIT_THEME.travel, dy = T.dy || 0, P = T.P.slice(0, L.lessons.length);
+    while (P.length < L.lessons.length) P.push(SIT_THEME.travel.P[P.length % 8]);
+    P.forEach((p, i) => { P[i] = [p[0], p[1] + dy]; });
+    const road = smoothPath(T.tail ? [...P, [T.tail[0], T.tail[1] + dy]] : P);
     const nextNo = (L.lessons.find((ls) => ls.data && !lessonDone(L, ls)) || {}).no;
-    let svg = `<rect width="${W}" height="${H}" fill="#BFE4EC"/>` + WAVES([[20, 60], [300, 30], [20, 420], [320, 440], [330, 220], [12, 250]])
-      + `<path d="M54 230C20 320 36 420 76 452 L300 452C352 410 350 300 330 220 C318 150 346 74 290 44 C220 10 96 28 70 110 C60 150 66 190 54 230z" fill="#1E1A2B" transform="translate(4 6)"/>`
-      + `<path d="M54 230C20 320 36 420 76 452 L300 452C352 410 350 300 330 220 C318 150 346 74 290 44 C220 10 96 28 70 110 C60 150 66 190 54 230z" fill="#EAD7AE" stroke="#1E1A2B" stroke-width="2.5"/>`
-      + `<path d="M74 232C46 318 60 404 92 432 L288 432C330 398 330 302 312 226 C300 164 324 92 278 66 C222 36 112 50 90 118 C82 154 86 192 74 232z" fill="${grass}" stroke="#1E1A2B" stroke-width="2.2"/>`
-      + [[300, 410], [70, 300], [310, 170], [150, 80]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="13" fill="#6DBE6A" stroke="#1E1A2B" stroke-width="2"/><rect x="${x - 2.5}" y="${y + 10}" width="5" height="10" fill="#B9824F" stroke="#1E1A2B" stroke-width="1.5"/>`).join('')
-      + `<path d="M118 100v-34l22 9-22 9" fill="${L.c}" stroke="#1E1A2B" stroke-width="2" stroke-linejoin="round"/>`
-      + `<path d="${road}" fill="none" stroke="#1E1A2B" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"/><path d="${road}" fill="none" stroke="#F3EBDD" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>`;
+    let svg = ISLE_DEFS + `<rect width="${W}" height="${H}" fill="#BFE4EC"/><ellipse cx="310" cy="40" rx="90" ry="44" fill="#CDEBF1"/><ellipse cx="30" cy="430" rx="100" ry="50" fill="#CDEBF1"/>`
+      + WAVES([[18, 120], [318, 64], [14, 236], [330, 200], [20, 400], [324, 418]])
+      + `<g transform="translate(0 ${dy})">${mIsland(T.I)}${T.deco()}</g>`
+      + `<path d="${road}" fill="none" stroke="${ISK}" stroke-width="15" stroke-linejoin="round" stroke-linecap="round"/><path d="${road}" fill="none" stroke="#F3EBDD" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>`
+      + `<path d="${road}" fill="none" stroke="#D9CBB0" stroke-width="2" stroke-dasharray="5 7" stroke-linecap="round"/>`
+      + CLOUD(332, 448, .55);
     let over = '';
     L.lessons.forEach((ls, i) => {
       const [x, y] = P[i], st = !ls.data ? 'soon' : lessonDone(L, ls) ? 'done' : ls.no === nextNo ? 'cur' : 'open';
       const r = st === 'cur' ? 25 : 20;
-      svg += `<circle cx="${x + 3}" cy="${y + 4}" r="${r}" fill="${st === 'soon' ? 'none' : '#1E1A2B'}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${st === 'soon' ? '#EFEAE0' : st === 'open' ? '#fff' : '#FFE200'}" stroke="${st === 'soon' ? '#9A93A6' : '#1E1A2B'}" stroke-width="2.6"${st === 'soon' ? ' stroke-dasharray="4 3"' : ''}/>`
+      svg += `<circle cx="${x + 3}" cy="${y + 4}" r="${r}" fill="${st === 'soon' ? 'none' : '#1E1A2B'}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${st === 'soon' ? '#EFEAE0' : st === 'open' ? '#fff' : '#FFE200'}" stroke="${st === 'soon' ? '#9A93A6' : '#1E1A2B'}" stroke-width="${st === 'soon' ? 2 : 2.6}"${st === 'soon' ? ' stroke-dasharray="4 4"' : ''}/>`
         + (st === 'done' ? `<path d="M${x - 8} ${y} l5 6 l10 -11" fill="none" stroke="#1E1A2B" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>` : icoG(ls.icon, x, y, st === 'cur' ? 1 : .85, st === 'soon' ? '#8C8597' : '#1E1A2B'));
       over += `<button class="st-itag${st === 'soon' ? ' soon' : ''}" data-scene="${ls.no}" style="left:${pct(x, W)};top:${pct(y + r + 6, H)}">${stEsc(ls.title)}</button>`
         + `<button class="st-ihit" data-scene="${ls.no}" aria-label="${stEsc(ls.title)}" style="left:${pct(x, W)};top:${pct(y, H)};width:${pct(56, W)};height:${pct(56, H)}"></button>`;
@@ -7349,15 +7451,19 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         <span class="st-prog">${stagesOf(L).map((k) => `<span class="st-p-${k}">${L.kind === 'situation' ? '연습' : STAGE_KO[k]} ${dots(k)}</span>`).join('')}</span></span>${ICO.chev}</button>`;
     }).join('') + '</div>' + '' + (L.more ? `<div class="st-more">${L.more}</div>` : '');
   }
+  document.addEventListener('click', (e) => { const m = document.getElementById('stLMenu'); if (m && !m.hidden && !e.target.closest('.st-lwrap')) { m.hidden = true; document.getElementById('stLang')?.setAttribute('aria-expanded', 'false'); } });
   function renderStudyLib() {
-    const maps = MAP_LIST(), M = curMap();
-    $('#stMapChips').innerHTML = maps.map((m, i) => {
-      const sep = i > 0 && m.kind !== 'curr' && maps[i - 1].kind === 'curr' ? '<span class="st-msep" aria-hidden="true"></span>' : '';
-      if (m.kind === 'soon') return sep + `<button class="st-mchip soon" data-soon="${m.id}">${m.label} · ${m.when}</button>`;
-      return sep + `<button class="st-mchip" role="tab" aria-selected="${m.id === M.id}" data-map="${m.id}">${m.kind === 'curr' ? `<span class="g" style="background:${m.color};color:${m.ink}">${m.g}</span>` : ''}${m.label} 맵${m.isNew ? '<i class="new" aria-label="새 맵"></i>' : ''}</button>`;
-    }).join('');
+    const M = curMap(), sits = SITS.filter((L) => sitLang(L) === ST.lang), soons = SIT_SOON.filter((x) => (x.lang == null ? 0 : x.lang) === ST.lang);
+    const LG0 = LANGS[ST.lang], gl = (l) => `<span class="g" style="background:${l.color};color:${l.ink}">${l.g}</span>`;
+    $('#stLang').innerHTML = `${gl(LG0)}${LG0.ko}<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    $('#stLMenu').innerHTML = LANGS.map((l, i) => `<button type="button" role="menuitemradio" aria-checked="${i === ST.lang}" data-lang="${i}">${gl(l)}${l.ko}</button>`).join('');
+    $('#stMapChips').innerHTML = `<button type="button" role="tab" aria-selected="${!ST.sitMode}" data-mode="0">스터디 맵</button><button type="button" role="tab" aria-selected="${ST.sitMode}" data-mode="1">상황 맵${sits.some((L) => L.isNew) ? '<i class="new" aria-label="새 맵"></i>' : ''}</button>`;
+    $('#stMapMode').innerHTML = ST.sitMode && (sits.length || soons.length) ? `<div class="st-schips" role="tablist">${sits.map((L) => `<button type="button" role="tab" aria-selected="${L.id === M.id}" data-map="${L.id}">${L.title}${L.isNew ? '<i class="new" aria-label="새 맵"></i>' : ''}</button>`).join('')}${soons.map((x) => `<button type="button" class="soon" data-soon="${x.id}">${x.title} · ${x.when}</button>`).join('')}</div>` : '';
     let world = null, panel = '';
-    if (M.kind === 'curr') {
+    if (M.kind === 'none') {
+      world = { svg: `<rect width="${W}" height="${H}" fill="#BFE4EC"/>` + WAVES([[40, 80], [280, 140], [60, 300], [290, 380], [160, 420]]) + islandSVG(180, 220, '#C9C2B3', 1.6, true, false, 0), over: `<span class="st-itag soon" style="left:50%;top:${pct(286, H)}">준비 중</span>` };
+      panel = `<div class="st-empty"><b>${LANGS[ST.lang].ko} 상황 맵은 준비 중이에요</b><span>여행 · 카페 맵부터 열려요.</span></div>`;
+    } else if (M.kind === 'curr') {
       const books = LIB[M.lang];
       if (!books.length) {
         world = { svg: `<rect width="${W}" height="${H}" fill="#BFE4EC"/>` + WAVES([[40, 80], [280, 140], [60, 300], [290, 380], [160, 420]]) + islandSVG(180, 220, '#C9C2B3', 1.6, true, false, 0), over: `<span class="st-itag soon" style="left:50%;top:${pct(286, H)}">${M.label} 섬 · 준비 중</span>` };
@@ -7377,12 +7483,14 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       panel = `<div class="st-phead"><div><div class="st-ptitle">${L.title} 맵 · 장면 ${dn}/${L.lessons.length}</div><p class="st-about">${L.about}</p></div></div>` + lessonRowsHTML(L)
         + '<div class="st-more">새 장면과 새 상황 맵은 계속 열려요</div>';
     }
-    $('#stWorld').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" aria-hidden="true" preserveAspectRatio="xMidYMid slice">${world.svg}</svg>${world.over}
-      ${M.kind === 'curr' ? '' : `<div class="st-wtitle"><b>${M.label} 맵</b><span>정류장을 눌러 장면을 열어요</span></div>`}`;
+    $('#stWorld').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" aria-hidden="true" preserveAspectRatio="xMidYMid slice">${world.svg}</svg>${world.over}`;
     $('#stPanel').innerHTML = panel;
     // 연결
-    $$('#stMapChips [data-map]').forEach((b) => b.addEventListener('click', () => { ST.map = b.dataset.map; ST.all = false; const m = curMap(); if (m.kind === 'curr') { ST.lang = m.lang; ST.bi = Math.max(0, LIB[m.lang].findIndex((x) => x.mine)); } sfx('tap'); renderStudyLib(); }));
-    $$('#stMapChips [data-soon]').forEach((b) => b.addEventListener('click', () => { const s = SIT_SOON.find((x) => x.id === b.dataset.soon); toast(`${s.title} 맵은 ${s.when}에 열려요 · 열리면 알려드릴게요`); }));
+    $('#stLang').onclick = (e) => { e.stopPropagation(); const m = $('#stLMenu'), open = m.hidden; m.hidden = !open; $('#stLang').setAttribute('aria-expanded', String(open)); sfx('tap'); };
+    $$('#stLMenu [data-lang]').forEach((b) => b.addEventListener('click', () => { const i = +b.dataset.lang; $('#stLMenu').hidden = true; if (i === ST.lang) return; ST.lang = i; ST.all = false; ST.bi = Math.max(0, LIB[i].findIndex((x) => x.mine)); sfx('tap'); renderStudyLib(); }));
+    $$('#stMapChips [data-mode]').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.mode === '1'; if (v === ST.sitMode) return; ST.sitMode = v; ST.all = false; sfx('tap'); renderStudyLib(); }));
+    $$('#stMapMode [data-map]').forEach((b) => b.addEventListener('click', () => { ST.map = b.dataset.map; ST.all = false; sfx('tap'); renderStudyLib(); }));
+    $$('#stMapMode [data-soon]').forEach((b) => b.addEventListener('click', () => { const s = SIT_SOON.find((x) => x.id === b.dataset.soon); toast(`${s.title} 맵은 ${s.when}에 열려요 · 열리면 알려드릴게요`); }));
     $$('#stWorld [data-isl]').forEach((b) => b.addEventListener('click', () => {
       ST.bi = +b.dataset.isl; ST.all = false; sfx('tap'); renderStudyLib();
       const pg = $('#page-library'), pn = $('#stPanel'); pg.scrollTo({ top: pn.offsetTop - 90, behavior: reduced() ? 'auto' : 'smooth' });
@@ -7404,7 +7512,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const lk = lkOf(L, ls);
     const stage = SV && SV.lk === lk ? SV.stage : (ORDER3.find((k) => doneCount(L, ls, k) < stepsOf(L)[k].length) || 'post');
     SV = { L, ls, D: ls.data, lk, stage, step: null, t: {} };
-    if (L.kind === 'situation') ST.map = L.id; else { ST.map = 'lang0'; ST.lang = 0; ST.bi = LIB[0].findIndex((b) => b.study && b.study.lv === lv); }
+    if (L.kind === 'situation') { ST.map = L.id; ST.sitMode = true; ST.lang = sitLang(L); } else { ST.map = 'lang0'; ST.lang = 0; ST.sitMode = false; ST.bi = LIB[0].findIndex((b) => b.study && b.study.lv === lv); }
     ST.all = false;
     showHub();
     const el = $('#study'); el.classList.add('open'); el.setAttribute('aria-hidden', 'false');
@@ -13411,7 +13519,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     };
     return `${mpTop('내 활동')}<div class="act-body">
       <div class="act-sum">${[['출석', `${(S.todayDone > 0 || totalActs() > 0) ? 1 : 0}일`], ['표현', nE], ['챌린지', C.length], ['모임', J.length]].map(([l, v]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div>
-      <div class="nt-tabs act-ul" role="tablist">${TB.map(([k, l, n]) => `<button role="tab" data-actt="${k}" aria-selected="${t === k}">${l} ${n}</button>`).join('')}</div>
+      <div class="nt-tabs act-ul" role="tablist">${TB.map(([k, l, n]) => `<button role="tab" data-actt="${k}" aria-selected="${t === k}">${l}<small>${n}</small></button>`).join('')}</div>
       ${body[t]()}</div>`;
   }
   // 나의 스터디 일기 모아 보기: 작은 달력(일기 쓴 날 점) + 이달 요약 + 날짜별 카드 → 누르면 그날 노트
@@ -13476,7 +13584,11 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
           return `<div class="ms-top"><div class="ms-ring" aria-label="남은 횟수 ${left}회"><svg width="104" height="104" viewBox="0 0 104 104" aria-hidden="true"><circle cx="52" cy="52" r="44" fill="none" stroke="#EFE9DC" stroke-width="10"/><circle cx="52" cy="52" r="44" fill="none" stroke="#FFE200" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 52 52)"/><circle cx="52" cy="52" r="49.5" fill="none" stroke="#1E1A2B" stroke-width="1.5"/><circle cx="52" cy="52" r="38.5" fill="none" stroke="#1E1A2B" stroke-width="1.5"/></svg><span><b>${left}</b><small>남은 횟수</small></span></div>
             <div class="ms-info"><div class="pl"><b>${MS.plan}</b><small>${MS.period}</small></div>
               <div class="kv"><span>무료</span><b>${MS.freeL}회 포함</b></div><div class="kv"><span>연기 · 변경</span><b>${ppT()}</b></div><div class="kv"><span>팀</span><b>${T.length}팀 · 주 ${MS.wk}회</b></div></div></div>`; })()}
-        <div class="ms-tm">${T.map((x) => { const l = tLabel(x), c = (typeof LG_LANGC !== 'undefined' && LG_LANGC[l.split(' ')[0]]) || 'var(--en)'; return `<div><i style="background:${c}"></i><b>${l}</b><small>${x.br}</small></div>`; }).join('')}</div>
+        <div class="ms-tl">${(() => {   // 팀 목록 = 시간 순 타임라인: 월요일부터 가는 순서 · 시간이 맨 앞 · 세로선에 언어 색 점
+          const WD = '월화수목금토일', first = (x) => Math.min(...[...String(x.when).split(' ')[0]].map((d) => WD.indexOf(d)).filter((i) => i >= 0));
+          return T.slice().sort((p, q) => first(p) - first(q)).map((x) => { const l = tLabel(x), c = (typeof LG_LANGC !== 'undefined' && LG_LANGC[l.split(' ')[0]]) || 'var(--en)';
+            const [ds, hm = ''] = String(x.when).split(' '), [h, m] = hm.split(':').map(Number), ap = h < 12 ? '오전' : h < 18 ? '오후' : '저녁';
+            return `<div class="r"><i style="background:${c}"></i><span class="tm"><b>${(h % 12) || 12}:${String(m || 0).padStart(2, '0')}</b><small>${[...ds].join(' · ')} ${ap}</small></span><span class="tx"><b>${l}</b><small>${x.br}</small></span></div>`; }).join(''); })()}</div>
         ${CHG ? `<div class="rq"><b>${CHG.label} 신청 · 운영진 확인 중</b><span>${CHG.txt}</span><button class="lg-link" data-my="chgcancel">신청 취소</button></div>` : `<button class="lg-btn ms-go" data-my="chg">연기 · 팀 · 지점 변경</button>`}</div>
 `;
   }
@@ -14161,7 +14273,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         return;
       }
       // 내 활동
-      const at = e.target.closest('[data-actt]'); if (at) { MP.at = at.dataset.actt; renderMyPush(); return; }
+      const at = e.target.closest('[data-actt]'); if (at) { MP.at = at.dataset.actt; renderMyPush(); requestAnimationFrame(() => document.querySelector('.act-ul [aria-selected="true"]')?.scrollIntoView({ inline: 'nearest', block: 'nearest' })); return; }
       const ao = e.target.closest('[data-actopen]'); if (ao) { const p = lgFind(ao.dataset.actopen); if (p) { $('#lgDet').classList.add('ovr'); lgDetail(p); } return; }
       // PRO'S NOTE
       const po = e.target.closest('[data-pnopen]'), pf = e.target.closest('[data-pnf]'), pm = e.target.closest('[data-pnmk]'), pt = e.target.closest('[data-pnty]'), pb = e.target.closest('[data-pnback]');

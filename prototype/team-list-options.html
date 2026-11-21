@@ -1,0 +1,105 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+:root{--cream:#FBF6EA;--ink:#1E1A2B;--sub:#5A5366;--line:#E3DCCB;--yellow:#FFE200;--purple:#493087;--en:#4463A8;--ja:#F06593;--fd:'Unbounded','Noto Sans KR',sans-serif;--fb:'Noto Sans KR',sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#E7E0CF;font-family:var(--fb);color:var(--ink);padding:26px}
+.row{display:flex;gap:22px;align-items:flex-start}.col{display:flex;flex-direction:column;width:360px}
+.cap b{font-family:var(--fd);font-size:15px;font-weight:800}.cap span{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:3px 0 10px;line-height:1.45}
+.card{background:#fff;border:2px solid var(--ink);border-radius:24px;box-shadow:4px 4px 0 var(--ink);padding:16px 18px}
+.top{font-size:12px;font-weight:900;color:var(--sub);padding-bottom:10px;border-bottom:1.5px solid var(--line);margin-bottom:6px}
+/* 1 */
+.r1{display:flex;align-items:center;gap:12px;padding:10px 0}
+.lg{flex:none;width:40px;height:40px;border-radius:12px;border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--fd);font-size:11px;font-weight:800;color:#fff}
+.r1 .tx{flex:1}.r1 .dd{display:flex;gap:4px}.r1 .dd span{height:24px;min-width:24px;padding:0 6px;border-radius:12px;border:1.5px solid var(--ink);font-size:12px;font-weight:900;display:grid;place-items:center}
+.r1 .tm{font-family:var(--fd);font-size:17px;font-weight:800;text-align:right;line-height:1}.r1 .tm small{display:block;font-family:var(--fb);font-size:11px;font-weight:800;color:var(--sub);margin-top:4px}
+.r1 .tx small{display:block;font-size:11.5px;font-weight:800;color:var(--sub);margin-top:4px}
+/* 2 */
+.r2{padding:10px 0;border-top:1.5px solid var(--line)}.r2:first-of-type{border-top:0}
+.r2 .h{display:flex;align-items:baseline;justify-content:space-between}.r2 .h b{font-size:15px;font-weight:900}.r2 .h b i{font-style:normal;font-size:11px;margin-right:6px;padding:2px 7px;border-radius:8px;color:#fff;vertical-align:2px}.r2 .h span{font-family:var(--fd);font-size:15px;font-weight:800}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}.wk span{height:26px;border-radius:8px;background:#F3EEE2;font-size:11px;font-weight:800;color:#B9B1A1;display:grid;place-items:center}
+.wk span.on{color:#fff;font-weight:900}
+.r2 small{display:block;font-size:11px;font-weight:800;color:var(--sub);margin-top:6px}
+/* 3 */
+.r3{display:flex;align-items:center;gap:12px;margin-top:8px;padding:12px 14px;border-radius:16px;position:relative;overflow:hidden}
+.r3:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px}
+.r3 .tx{flex:1;padding-left:4px}.r3 .tx small{font-size:11px;font-weight:900;letter-spacing:.3px}.r3 .tx b{display:block;font-size:15.5px;font-weight:900;margin-top:1px}.r3 .tx span{font-size:11.5px;font-weight:800;color:var(--sub)}
+.r3 .tm{font-family:var(--fd);font-size:20px;font-weight:800;line-height:1;text-align:right}.r3 .tm small{display:block;font-family:var(--fb);font-size:11px;font-weight:900;margin-top:3px}
+</style><style>
+:root{--cream:#FBF6EA;--ink:#1E1A2B;--sub:#5A5366;--line:#E3DCCB;--yellow:#FFE200;--purple:#493087;--en:#4463A8;--ja:#F06593;--fd:'Unbounded','Noto Sans KR',sans-serif;--fb:'Noto Sans KR',sans-serif}
+*{box-sizing:border-box}.x{margin:0;background:#E7E0CF;font-family:var(--fb);color:var(--ink);padding:26px}
+.sec{font-family:var(--fd);font-size:17px;font-weight:800;margin:0 0 14px}
+.row{display:flex;gap:22px;align-items:flex-start;margin-bottom:30px}.col{display:flex;flex-direction:column;width:360px}
+.cap b{font-family:var(--fd);font-size:14.5px;font-weight:800}.cap span{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:3px 0 10px;line-height:1.45}
+.card{background:#fff;border:2px solid var(--ink);border-radius:24px;box-shadow:4px 4px 0 var(--ink);padding:16px 18px}
+.top{font-size:12px;font-weight:900;color:var(--sub);padding-bottom:10px;border-bottom:1.5px solid var(--line);margin-bottom:8px}
+/* 4 시간표 타임라인 */
+.tl{position:relative;padding-left:18px}.tl:before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.ti{position:relative;display:flex;align-items:center;gap:10px;padding:8px 0}.ti:before{content:"";position:absolute;left:-18px;width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);background:var(--c)}
+.ti .tm{width:62px;font-family:var(--fd);font-size:15px;font-weight:800}.ti .tm small{display:block;font-family:var(--fb);font-size:10.5px;font-weight:800;color:var(--sub)}
+.ti .tx b{display:block;font-size:14.5px;font-weight:900}.ti .tx span{font-size:11.5px;font-weight:800;color:var(--sub)}
+/* 5 언어별 묶음 */
+.gp{margin-top:6px}.gp .gh{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;margin:6px 0 4px}.gp .gh i{width:10px;height:10px;border-radius:50%}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.ch{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px 0 10px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:13.5px;font-weight:900;box-shadow:2px 2px 0 var(--ink)}
+.ch em{font-style:normal;font-family:var(--fd);font-size:12.5px;font-weight:800;padding:2px 7px;border-radius:8px;color:#fff}
+.br5{margin-top:10px;font-size:11.5px;font-weight:800;color:var(--sub)}
+/* 6 티켓 줄 */
+.tk{display:flex;align-items:stretch;margin-top:8px;border:2px solid var(--ink);border-radius:16px;overflow:hidden}
+.tk .l{flex:none;width:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;border-right:2px dashed rgba(255,255,255,.6)}.tk .l b{font-family:var(--fd);font-size:16px;font-weight:800;line-height:1}.tk .l small{font-size:10.5px;font-weight:900;margin-top:3px;opacity:.9}
+.tk .r{flex:1;padding:9px 12px;background:#fff}.tk .r b{display:block;font-size:14px;font-weight:900}.tk .r span{font-size:11.5px;font-weight:800;color:var(--sub)}
+/* 지점 */
+.brb{padding:14px}.brb .hd{display:flex;align-items:center;justify-content:space-between}.brb .hd b{font-size:15px;font-weight:900}.brb .hd span{font-size:12.5px;font-weight:900;color:var(--purple)}
+.seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:#F3EEE2;margin-top:10px}.seg span{flex:1;height:32px;border-radius:10px;display:grid;place-items:center;font-size:12.5px;font-weight:900;color:var(--sub)}.seg span.on{background:#fff;color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.sc{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.it{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;font-weight:800}.it .ic{width:46px;height:46px;border-radius:15px;border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);display:grid;place-items:center}
+.pn{margin-top:12px;padding:10px 12px;border-radius:14px;background:#FFF6C2;font-size:12.5px;font-weight:800;line-height:1.45}
+.mini{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1.5px solid var(--line)}.mini:first-of-type{border-top:0}.mini .bn{font-size:14px;font-weight:900;flex:1}.mini .bn small{display:block;font-size:11.5px;font-weight:800;color:var(--sub);margin-top:2px}.mini .ics{display:flex;gap:6px}.mini .ics span{width:32px;height:32px;border-radius:10px;border:2px solid var(--ink);display:grid;place-items:center}
+.mini .go{font-size:16px;font-weight:900;color:var(--sub)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+svg{display:block}
+</style></head><body><h1 style="font-family:Unbounded,sans-serif;font-size:20px;margin:0 0 18px">내 스터디 · 팀 목록 시안 1~6</h1><div class="row">
+
+<div class="col"><div class="cap"><b>1 · 언어 배지 + 요일 칩</b><span>왼쪽 언어 배지(EN · JP), 가운데 요일을 동그란 칩으로, 오른쪽에 시간을 크게. 지점은 아래 작게.</span></div>
+<div class="card"><div class="top">내 팀 3</div>
+ <div class="r1"><span class="lg" style="background:var(--en)">EN</span><div class="tx"><div class="dd"><span>화</span><span>목</span></div><small>영어 · 하남점</small></div><div class="tm">7:30<small>저녁</small></div></div>
+ <div class="r1"><span class="lg" style="background:var(--en)">EN</span><div class="tx"><div class="dd"><span>월</span><span>수</span></div><small>영어 · 하남점</small></div><div class="tm">9:00<small>저녁</small></div></div>
+ <div class="r1"><span class="lg" style="background:var(--ja)">JP</span><div class="tx"><div class="dd"><span>토</span></div><small>일본어 · 하남점</small></div><div class="tm">11:00<small>오전</small></div></div>
+</div></div>
+
+<div class="col"><div class="cap"><b>2 · 팀마다 일주일 줄</b><span>월~일 7칸 중 수업 있는 날만 언어 색으로. “언제 가는지”가 그림처럼 보여요.</span></div>
+<div class="card"><div class="top">내 팀 3</div>
+ <div class="r2"><div class="h"><b><i style="background:var(--en)">영어</i>화목</b><span>7:30 PM</span></div><div class="wk"><span>월</span><span class="on" style="background:var(--en)">화</span><span>수</span><span class="on" style="background:var(--en)">목</span><span>금</span><span>토</span><span>일</span></div></div>
+ <div class="r2"><div class="h"><b><i style="background:var(--en)">영어</i>월수</b><span>9:00 PM</span></div><div class="wk"><span class="on" style="background:var(--en)">월</span><span>화</span><span class="on" style="background:var(--en)">수</span><span>목</span><span>금</span><span>토</span><span>일</span></div></div>
+ <div class="r2"><div class="h"><b><i style="background:var(--ja)">일본어</i>토</b><span>11:00 AM</span></div><div class="wk"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="on" style="background:var(--ja)">토</span><span>일</span></div><small>모두 하남점</small></div>
+</div></div>
+
+<div class="col"><div class="cap"><b>3 · 연한 언어 색 블록</b><span>팀마다 언어 색을 아주 연하게 깔고 왼쪽에 진한 띠. 시간은 오른쪽에 크게. 가장 단순하고 부드러워요.</span></div>
+<div class="card"><div class="top">내 팀 3</div>
+ <div class="r3" style="background:#E9EEF8"><style>.a1:before{background:var(--en)}</style><div class="tx"><small style="color:var(--en)">ENGLISH</small><b>영어 화목</b><span>하남점</span></div><div class="tm">7:30<small style="color:var(--en)">PM</small></div></div>
+ <div class="r3" style="background:#E9EEF8"><div class="tx"><small style="color:var(--en)">ENGLISH</small><b>영어 월수</b><span>하남점</span></div><div class="tm">9:00<small style="color:var(--en)">PM</small></div></div>
+ <div class="r3" style="background:#FDE8EF"><div class="tx"><small style="color:var(--ja)">JAPANESE</small><b>일본어 토</b><span>하남점</span></div><div class="tm">11:00<small style="color:var(--ja)">AM</small></div></div>
+</div></div>
+
+</div>
+<style>.r3:nth-of-type(2):before,.r3:nth-of-type(3):before{background:var(--en)}.r3:nth-of-type(4):before{background:var(--ja)}</style>
+
+<div class="row">
+<div class="col"><div class="cap"><b>4 · 시간 순 타임라인</b><span>월요일부터 가는 순서대로 한 줄. 왼쪽 세로선에 언어 색 점, 시간이 맨 앞. “이번 주 언제 가지?”에 바로 답해요.</span></div>
+<div class="card"><div class="top">이번 주 스터디 · 주 5회</div><div class="tl">
+ <div class="ti" style="--c:var(--en)"><span class="tm">9:00<small>월 · 수</small></span><span class="tx"><b>영어 월수 9시</b><span>하남점</span></span></div>
+ <div class="ti" style="--c:var(--en)"><span class="tm">7:30<small>화 · 목</small></span><span class="tx"><b>영어 화목 7시 30분</b><span>하남점</span></span></div>
+ <div class="ti" style="--c:var(--ja)"><span class="tm">11:00<small>토 오전</small></span><span class="tx"><b>일본어 토 오전 11시</b><span>하남점</span></span></div>
+</div></div></div>
+<div class="col"><div class="cap"><b>5 · 언어별로 묶은 칩</b><span>언어 이름 아래에 그 언어 팀을 칩으로. 칩 안 숫자 배지가 시간. 공간을 가장 적게 써요.</span></div>
+<div class="card"><div class="top">내 팀 3</div>
+ <div class="gp"><div class="gh"><i style="background:var(--en)"></i>영어 2팀</div><div class="chips"><span class="ch">화목<em style="background:var(--en)">7:30</em></span><span class="ch">월수<em style="background:var(--en)">9:00</em></span></div></div>
+ <div class="gp"><div class="gh"><i style="background:var(--ja)"></i>일본어 1팀</div><div class="chips"><span class="ch">토<em style="background:var(--ja)">11:00</em></span></div></div>
+ <div class="br5">모두 하남점</div>
+</div></div>
+<div class="col"><div class="cap"><b>6 · 이용권 티켓 줄</b><span>왼쪽 언어 색 칸에 시간, 점선으로 끊고 오른쪽에 요일 · 지점. 멤버십 카드와 결이 맞아요.</span></div>
+<div class="card"><div class="top">내 팀 3</div>
+ <div class="tk"><div class="l" style="background:var(--en)"><b>7:30</b><small>PM</small></div><div class="r"><b>영어 · 화 목</b><span>하남점</span></div></div>
+ <div class="tk"><div class="l" style="background:var(--en)"><b>9:00</b><small>PM</small></div><div class="r"><b>영어 · 월 수</b><span>하남점</span></div></div>
+ <div class="tk"><div class="l" style="background:var(--ja)"><b>11:00</b><small>AM</small></div><div class="r"><b>일본어 · 토</b><span>하남점</span></div></div>
+</div></div>
+</div>
+
+</body></html>
