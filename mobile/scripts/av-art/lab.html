@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>꾸미기 작업대</title>
+<style>
+body { margin: 0; font: 13px/1.4 system-ui, sans-serif; background: #F4EFE3; color: #1E1A2B; }
+h2 { margin: 18px 12px 6px; font-size: 15px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cw, 190px), 1fr)); gap: 10px; padding: 0 12px; }
+.cell { background: #FBF6EA; border-radius: 14px; padding: 6px; text-align: center; }
+.stage { position: relative; width: 100%; aspect-ratio: 300 / 220; overflow: hidden; border-radius: 10px; background: #FBF6EA; }
+.bg { position: absolute; inset: 0; } .bg svg, .fx svg { width: 100%; height: 100%; display: block; }
+.fx { position: absolute; inset: 0; z-index: 3; }
+.ch { position: absolute; left: 18%; width: 64%; bottom: 10%; aspect-ratio: 520 / 332; z-index: 2; }
+.ch.flip { transform: scaleX(-1); }
+.ch img { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+.x { position: absolute; left: -26.923%; top: -78.313%; width: 153.846%; height: 192.771%; pointer-events: none; }
+.x.back { z-index: 0; } .x.paint { z-index: 2; } .x.eye { z-index: 3; } .x.front { z-index: 4; }
+#status { position: fixed; right: 10px; bottom: 10px; background: #1E1A2B; color: #fff; padding: 6px 10px; border-radius: 8px; }
+</style></head>
+<body>
+<div id="out"></div><div id="status"></div>
+<script src="art.js"></script>
+<script>
+const A = window.AVART, INK = A.INK;
+const strip = (s) => s.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+const layerSvg = (body, cls) => `<svg class="x ${cls}" viewBox="${A.V}" xmlns="http://www.w3.org/2000/svg">${strip(A.svg(body))}</svg>`;
+// 눈꺼풀 (앱 Lids 와 같은 계산)
+const EYES = [[258.5, 64, 260, 64.5], [339.5, 65.5, 341, 65.5]], ERY = 57.5;
+function lids(spec, col = '#FFE200') {
+  let u = Math.random().toString(36).slice(2, 7);
+  return EYES.map(([x, y, ix, iy], i) => {
+    if (spec.only != null && spec.only !== i) return '';
+    let s = `<clipPath id="c${u}${i}"><ellipse cx="${ix}" cy="${iy}" rx="25.5" ry="44"/></clipPath><g clip-path="url(#c${u}${i})">`;
+    if (spec.t) { const t = y - ERY - 3, b = y - ERY + 2 * ERY * spec.t; s += `<path d="M${x - 42} ${t} L${x + 42} ${t} L${x + 42} ${b} Q${x} ${b + 12} ${x - 42} ${b}Z" fill="${col}"/><path d="M${x + 42} ${b} Q${x} ${b + 12} ${x - 42} ${b}" fill="none" stroke="${INK}" stroke-width="7"/>`; }
+    if (spec.b) { const bt = y + ERY + 3, tp = y + ERY - 2 * ERY * spec.b; s += `<path d="M${x - 42} ${bt} L${x + 42} ${bt} L${x + 42} ${tp + 16} Q${x} ${tp - 22} ${x - 42} ${tp + 16}Z" fill="${col}"/><path d="M${x + 42} ${tp + 16} Q${x} ${tp - 22} ${x - 42} ${tp + 16}" fill="none" stroke="${INK}" stroke-width="7"/>`; }
+    return s + '</g>';
+  }).join('');
+}
+function charHTML(eq, hc = '#3B2A20', flip = false) {
+  const its = eq.map((id) => A.ITEMS.find((i) => i.id === id)).filter(Boolean);
+  const cover = its.find((i) => i.hat && i.cover);
+  let h = '';
+  for (const it of its) {
+    if (it.hair) {
+      if (cover) { h += layerSvg(it.cap(hc), 'back'); h += layerSvg(`<clipPath id="lc"><rect x="-200" y="${cover.clipY}" width="900" height="600"/></clipPath><g clip-path="url(#lc)">${it.side(hc)}</g>`, 'front'); }
+      else { h += layerSvg(it.back(hc), 'back'); if (it.front) h += layerSvg(it.front(hc), 'front'); }
+      continue;
+    }
+    if (it.layer === 'fx') continue;
+    if (it.lid) h += layerSvg(lids(it.lid), 'eye');
+    if (it.art) h += layerSvg(it.art(), it.layer === 'back' && it.hat ? 'back' : it.layer);
+  }
+  return `<div class="ch${flip ? ' flip' : ''}"><img src="up-yellow.png">${h}</div>`;
+}
+function stage(eq, bg = 'cream', hc) {
+  const B = A.BGS.find((b) => b.id === bg);
+  const fx = eq.map((id) => A.ITEMS.find((i) => i.id === id)).filter((i) => i && i.layer === 'fx');
+  return `<div class="stage"><div class="bg">${A.svg(B.art(), '0 0 300 220')}</div>${fx.map((i) => `<div class="fx">${A.svg(i.art(), '0 0 300 220')}</div>`).join('')}${charHTML(eq, hc)}</div>`;
+}
+const cats = ['hair', 'eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc'];
+const q = new URLSearchParams(location.search), only = q.get('cat'); if (q.get('w')) document.body.style.setProperty('--cw', q.get('w') + 'px');
+let html = '';
+if (!only || only === 'combo') html += `<h2>조합</h2><div class="grid">${[
+  [['h-beanie', 'w-tee', 'a-bow', 'd-flag', 's-purple'], 'cream'],
+  [['hr-bob', 'e-sparkle', 'f-cheek', 'w-hoodie', 'd-boba', 's-hightop'], 'sky'],
+  [['hr-long', 'f-glasses', 'w-sweater', 'd-book', 's-loafer', 'a-scarf'], 'class'],
+  [['h-santa', 'f-beard', 'w-santa', 's-snow', 'g-red'], 'snow'],
+  [['hr-pig', 'e-happy', 'w-hanbok', 'd-flower', 's-maryjane'], 'cherry'],
+  [['h-crown', 'a-cape', 'w-suit', 'e-star', 'a-spark'], 'night'],
+].map(([eq, bg]) => `<div class="cell">${stage(eq, bg, '#7A4A2A')}</div>`).join('')}</div>`;
+for (const c of cats) if (!only || only === c) html += `<h2>${c}</h2><div class="grid">${A.ITEMS.filter((i) => i.cat === c).map((i) => `<div class="cell">${stage([i.id], 'cream', '#7A4A2A')}<b>${i.name}</b> <small>${i.id}</small></div>`).join('')}</div>`;
+if (only === 'hairhat') { const hats = A.ITEMS.filter((i) => i.hat); html += A.ITEMS.filter((i) => i.hair).map((hr) => `<h2>${hr.name}</h2><div class="grid">${hats.map((ht) => `<div class="cell">${stage([hr.id, ht.id], 'cream', '#7A4A2A')}</div>`).join('')}</div>`).join(''); }
+if (!only || only === 'bg') html += `<h2>bg</h2><div class="grid">${A.BGS.map((b) => `<div class="cell">${stage([], b.id)}<b>${b.name}</b></div>`).join('')}</div>`;
+document.getElementById('out').innerHTML = html;
+</script>
+</body></html>
