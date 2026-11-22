@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { SparkIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { LessonModal } from '@/components/lesson/lesson-modal';
 import { L, MicButton, ModeTabs, YellowButton } from '@/components/lesson/lesson-ui';

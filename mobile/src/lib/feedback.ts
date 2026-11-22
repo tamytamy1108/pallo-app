@@ -98,6 +98,31 @@ function noteFor(key: string): SfxFile {
  * @param noteKey 'tap' 일 때 버튼 글자를 넘기면 버튼마다 다른 음 (안 넘기면 기본 '톡')
  */
 export function sfx(name: Sfx, noteKey?: string) {
+  if (pending) {
+    // 버튼 기본 소리가 기다리는 중이면 그건 취소하고 이 소리 하나만 (프로토타입 tapPend). 그냥 'tap' 이면 기본 소리의 음을 써요
+    clearTimeout(pending.timer);
+    if (name === 'tap' && !noteKey) [name, noteKey] = [pending.name, pending.key];
+    pending = null;
+  }
+  play(name, noteKey);
+}
+
+let pending: { timer: ReturnType<typeof setTimeout>; name: Sfx; key?: string } | null = null;
+
+/**
+ * 누르는 것마다 나는 기본 소리 (components/ui/pressable 이 불러요).
+ * 바로 울리지 않고 한 틱 기다려서, 그 버튼이 sfx(...) 로 자기 소리를 내면 기본 소리는 빼요.
+ */
+export function tapSound(name: Sfx, key?: string) {
+  if (pending) clearTimeout(pending.timer);
+  const timer = setTimeout(() => {
+    pending = null;
+    play(name, key);
+  }, 0);
+  pending = { timer, name, key };
+}
+
+function play(name: Sfx, noteKey?: string) {
   if (!soundStore.get().on) return;
   const file: SfxFile = name === 'card' ? (`card-${cardTurn++ % 3}` as SfxFile) : name === 'tap' && noteKey ? noteFor(noteKey) : name;
   try {

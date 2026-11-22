@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Poster, posterSlides } from '@/components/meet/poster';
 import { useMeetStore } from '@/components/meet/meet-store';
 import { PText } from '@/components/ui/text';

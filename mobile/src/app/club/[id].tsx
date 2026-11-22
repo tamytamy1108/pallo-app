@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { ClubAlbum } from '@/components/meet/club/club-album';
 import { ClubBoard } from '@/components/meet/club/club-board';
 import { ClubChat } from '@/components/meet/club/club-chat';

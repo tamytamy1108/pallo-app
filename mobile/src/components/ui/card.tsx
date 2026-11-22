@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
 import { Raised } from './raised';
@@ -24,7 +25,7 @@ export function Card({ children, color = Colors.white, onPress, accessibilityLab
   );
   if (!onPress) return body(false);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
+    <Pressable onPress={onPress} sound="open" accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
       {({ pressed }) => body(pressed)}
     </Pressable>
   );

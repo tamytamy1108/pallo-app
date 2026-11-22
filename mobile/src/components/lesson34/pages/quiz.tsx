@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { FeedbackBand } from '@/components/lesson/feedback-band';
 import { MicIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';

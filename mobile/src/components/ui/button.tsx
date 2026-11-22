@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
@@ -30,6 +31,7 @@ export function Button({ label, onPress, variant = 'primary', wide = false, disa
   return (
     <Pressable
       onPress={onPress}
+      sound={variant === 'primary' ? 'big' : undefined}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}

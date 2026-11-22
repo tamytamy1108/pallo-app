@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
@@ -23,6 +24,7 @@ export function Chip({ label, selected = false, onPress }: { label: string; sele
   return (
     <Pressable
       onPress={onPress}
+      sound="pick"
       accessibilityRole="button"
       accessibilityState={{ selected }}
       style={({ pressed }) => StyleSheet.flatten([styles.chip, selected && styles.chipOn, pressed && styles.pressed])}>

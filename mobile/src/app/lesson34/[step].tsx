@@ -1,6 +1,8 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 
+import { SCREEN } from '@/lib/transitions';
 import { corner34 } from '@/components/lesson34/corners';
 import type { StepCtx } from '@/components/lesson34/finish';
 import { StepPage } from '@/components/lesson34/pages';
@@ -25,7 +27,7 @@ export default function Lesson34Screen() {
   // 문제 목록은 처음 열 때 한 번만 만들어요 (말하기가 어려워요를 켜고 끄면 문제 안에서 바뀌어요)
   const [env] = useState(() => (u && found ? { uk: `${lv}:${unit}`, key: stepKey(lv, unit, p.step), source: `Lv.${lv} ${unitName34(u)} · ${found.step.t}`, noSpeak } : null));
 
-  const screen = <Stack.Screen options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />;
+  const screen = <Stack.Screen options={SCREEN.rise} />;
   if (!u || !found || !env) {
     return (
       <Screen title="준비 중">

@@ -1,6 +1,7 @@
 import { useContext, type ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { SheetFooterContext } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

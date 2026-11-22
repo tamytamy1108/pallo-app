@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { FieldLabel, keepAll, SheetButton } from '@/components/common/sheet-parts';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';

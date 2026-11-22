@@ -1,9 +1,13 @@
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { Modal, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -77,7 +81,7 @@ export function DetailFrame({ id, club, posters, title, kicker, heading, childre
 
   return (
     <View style={styles.root} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: 24 }}>
         <PosterStack id={id} slides={slides} height={posterH} onOpen={(i) => setView(i)} />
         <View style={styles.dbd}>
@@ -98,9 +102,7 @@ export function DetailFrame({ id, club, posters, title, kicker, heading, childre
 
       {/* 위 막대: 뒤로 · (모임 이름) · 공유 */}
       <View style={[styles.dtop, { paddingTop: insets.top + 8, height: topH }, solid && styles.dtopSolid]} pointerEvents="box-none">
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="뒤로" style={styles.ib} hitSlop={4}>
-          <Icon name="back" size={22} color={ink} />
-        </Pressable>
+        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} color={ink} />
         <FadeTitle show={titled} text={title} />
         <Pressable onPress={() => showToast('링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={styles.ib} hitSlop={4}>
           <Icon name="send" size={19} color={ink} />

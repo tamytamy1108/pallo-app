@@ -1,9 +1,10 @@
 import { Image, type ImageSource } from 'expo-image';
 import { useEffect } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetDesc } from '@/components/common/sheet-parts';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';

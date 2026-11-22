@@ -1,10 +1,12 @@
-import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
-import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps, type TabsDescriptor, type TabsSlotRenderOptions } from 'expo-router/ui';
+import { type ReactNode, useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { Screen } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Colors } from '@/constants/theme';
 import { SPRING } from '@/lib/motion';
 
@@ -21,7 +23,7 @@ export default function TabBar() {
   const insets = useSafeAreaInsets();
   return (
     <Tabs>
-      <TabSlot style={styles.slot} />
+      <TabSlot style={styles.slot} renderFn={renderTab} />
       <TabList asChild>
         <View style={StyleSheet.flatten([styles.bar, { bottom: Math.max(insets.bottom, 12) }])}>
           {TABS.map((t) => (
@@ -33,6 +35,37 @@ export default function TabBar() {
       </TabList>
     </Tabs>
   );
+}
+
+/**
+ * 탭을 바꾸면 새 화면이 살짝 아래에서 떠오르며 나타나요 (프로토타입 .page → .page.active:
+ * 투명도 .35초 · 14px 올라오기 .45초).
+ */
+function renderTab(descriptor: TabsDescriptor, { isFocused, loaded, detachInactiveScreens }: TabsSlotRenderOptions) {
+  const { lazy = true } = descriptor.options;
+  if (lazy && !loaded && !isFocused) return null;
+  return (
+    <Screen key={descriptor.route.key} enabled={detachInactiveScreens} activityState={isFocused ? 2 : 0} freezeOnBlur={false} style={[styles.screen, isFocused ? styles.focused : styles.unfocused]}>
+      <TabPage focused={isFocused}>{descriptor.render()}</TabPage>
+    </Screen>
+  );
+}
+
+const PAGE_EASE = Easing.bezier(0.16, 1, 0.3, 1);
+
+function TabPage({ focused, children }: { focused: boolean; children: ReactNode }) {
+  const still = useReducedMotion();
+  const fade = useSharedValue(1);
+  const rise = useSharedValue(0);
+  useEffect(() => {
+    if (!focused || still) return;
+    fade.set(0);
+    rise.set(14);
+    fade.set(withTiming(1, { duration: 350, easing: PAGE_EASE }));
+    rise.set(withTiming(0, { duration: 450, easing: PAGE_EASE }));
+  }, [focused, still, fade, rise]);
+  const style = useAnimatedStyle(() => ({ opacity: fade.get(), transform: [{ translateY: rise.get() }] }));
+  return <Animated.View style={[styles.page, style]}>{children}</Animated.View>;
 }
 
 type TabButtonProps = TabTriggerSlotProps & { icon: string; label: string };
@@ -50,6 +83,7 @@ function TabButton({ icon, label, isFocused, ref: _ref, ...props }: TabButtonPro
   return (
     <Pressable
       {...props}
+      sound="nav"
       accessibilityRole="tab"
       accessibilityLabel={label}
       accessibilityState={{ selected: isFocused }}
@@ -68,6 +102,10 @@ function TabButton({ icon, label, isFocused, ref: _ref, ...props }: TabButtonPro
 
 const styles = StyleSheet.create({
   slot: { flex: 1 },
+  screen: { flex: 1, position: 'relative', height: '100%' },
+  focused: { zIndex: 1, display: 'flex', flexShrink: 0, flexGrow: 1 },
+  unfocused: { zIndex: -1, display: 'none', flexShrink: 1, flexGrow: 0 },
+  page: { flex: 1 },
   bar: {
     position: 'absolute',
     left: 14,

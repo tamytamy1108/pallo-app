@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, SafeAreaView } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { guardMember } from '@/components/common/trial-guide';
 import { EventBanner } from '@/components/event/event-banner';
 import { splitEvents } from '@/components/event/event-model';

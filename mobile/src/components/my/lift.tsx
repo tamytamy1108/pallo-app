@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { Sink } from '@/components/ui/raised';
 import { Colors } from '@/constants/theme';
 
 /**
@@ -29,8 +30,10 @@ export function Lift({
 }) {
   return (
     <View style={style}>
-      {!pressed && shadow && <View pointerEvents="none" style={[styles.shadow, { borderRadius: radius, top: y, left: x, right: -x, bottom: -y, backgroundColor: color }]} />}
-      <View style={pressed ? { transform: [{ translateX: x }, { translateY: y }] } : null}>{children}</View>
+      {shadow && <View pointerEvents="none" style={[styles.shadow, { borderRadius: radius, top: y, left: x, right: -x, bottom: -y, backgroundColor: color }]} />}
+      <Sink x={x} y={y} pressed={pressed}>
+        {children}
+      </Sink>
     </View>
   );
 }

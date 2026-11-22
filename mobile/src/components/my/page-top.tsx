@@ -1,14 +1,13 @@
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { sfx } from '@/lib/feedback';
 
-import { LgIcon } from './icons';
 
 /**
  * 마이에서 겹쳐 뜨는 화면의 위 줄 (프로토타입 mpTop · .lg-det.mp .dtop): 뒤로 ‹ · 제목 · 오른쪽 칸 · 아래 연한 선.
@@ -18,18 +17,7 @@ export function PageTop({ title, right, onBack }: { title: string; right?: React
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
-      <Pressable
-        onPress={() => {
-          sfx('back');
-          if (onBack) onBack();
-          else if (router.canGoBack()) router.back();
-          else router.replace('/my');
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="뒤로"
-        style={styles.back}>
-        <LgIcon name="back" size={22} />
-      </Pressable>
+      <BackButton onPress={() => { if (onBack) onBack(); else if (router.canGoBack()) router.back(); else router.replace('/my'); }} />
       <PText style={styles.title} numberOfLines={1} accessibilityRole="header">
         {title}
       </PText>

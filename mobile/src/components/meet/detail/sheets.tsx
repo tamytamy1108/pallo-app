@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { FieldLabel, keepAll, SheetButton, SheetDesc, SheetLink } from '@/components/common/sheet-parts';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';

@@ -1,7 +1,8 @@
 import * as Speech from 'expo-speech';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';

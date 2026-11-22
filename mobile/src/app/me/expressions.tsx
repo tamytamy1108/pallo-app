@@ -1,7 +1,9 @@
-import { Stack } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
 import { openChallenge, sayEn, unsave } from '@/components/my/expr-rows';
 import { LgIcon, type IcName } from '@/components/my/icons';
@@ -86,7 +88,7 @@ export default function ExpressionsScreen() {
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <PageTop title="내 표현함" />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {tools && (

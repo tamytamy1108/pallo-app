@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { useEffect, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { BookmarkIcon, BulbIcon, CardsIcon, KeyboardIcon, MicIcon, MicOffIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { keepAll } from '@/components/common/sheet-parts';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

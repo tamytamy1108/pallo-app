@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { SpeakerIcon } from '@/components/lesson/icons';
 import { Avatar, NoSpeakToggle, pplColor } from '@/components/lesson/lesson-ui';
 import { TaskLayout, useTask } from '@/components/lesson/task-layout';

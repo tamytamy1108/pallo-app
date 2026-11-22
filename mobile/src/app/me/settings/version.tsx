@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Head, TextLink } from '@/components/account/parts';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';

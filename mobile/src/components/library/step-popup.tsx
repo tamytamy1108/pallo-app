@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import { useEffect } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Button } from '@/components/ui/button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

@@ -1,6 +1,7 @@
 import { router, type Href } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { MemberFace } from '@/components/character/avatar';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { FeedbackBand } from '@/components/lesson/feedback-band';
 import { SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';

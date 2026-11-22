@@ -1,7 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { BookmarkIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Avatar, L } from '@/components/lesson/lesson-ui';
 import { PText } from '@/components/ui/text';

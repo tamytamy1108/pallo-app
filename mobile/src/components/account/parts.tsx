@@ -4,11 +4,14 @@
  */
 import { router } from 'expo-router';
 import type { ReactNode, RefObject } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
 import { BottomBar } from '@/components/bottom-bar';
+import { Sink } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -46,19 +49,7 @@ export function Icon({ name, size = 22, color = Colors.ink, fill = 'none', strok
 export function TopBar({ title, onBack, right }: { title: string; onBack?: () => void; right?: ReactNode }) {
   return (
     <View style={styles.top}>
-      <Pressable
-        onPress={() => {
-          sfx('back');
-          if (onBack) onBack();
-          else if (router.canGoBack()) router.back();
-          else router.replace('/my');
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="뒤로"
-        hitSlop={6}
-        style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-        <Icon name="back" size={22} strokeWidth={2.4} />
-      </Pressable>
+      <BackButton onPress={() => { if (onBack) onBack(); else if (router.canGoBack()) router.back(); else router.replace('/my'); }} />
       <PText numberOfLines={1} style={styles.topTitle} accessibilityRole="header">
         {title}
       </PText>
@@ -113,8 +104,10 @@ export function Bar({ children, style }: { children: ReactNode; style?: ViewStyl
 export function Lift({ children, radius, dx = 4, dy = 4, color = Colors.ink, pressed = false, style }: { children: ReactNode; radius: number; dx?: number; dy?: number; color?: string; pressed?: boolean; style?: ViewStyle }) {
   return (
     <View style={[{ marginRight: dx, marginBottom: dy }, style]}>
-      {!pressed && <View pointerEvents="none" style={{ position: 'absolute', top: dy, left: dx, right: -dx, bottom: -dy, borderRadius: radius, backgroundColor: color }} />}
-      <View style={pressed ? { transform: [{ translateX: dx }, { translateY: dy }] } : undefined}>{children}</View>
+      <View pointerEvents="none" style={{ position: 'absolute', top: dy, left: dx, right: -dx, bottom: -dy, borderRadius: radius, backgroundColor: color }} />
+      <Sink x={dx} y={dy} pressed={pressed}>
+        {children}
+      </Sink>
     </View>
   );
 }

@@ -1,8 +1,9 @@
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';

@@ -1,9 +1,10 @@
 import * as Speech from 'expo-speech';
 import { router } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { useBlockedNames } from '@/components/common/report-sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';

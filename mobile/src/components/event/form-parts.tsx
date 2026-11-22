@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Icon, type IconName } from '@/components/meet/icons';
 import { LgLink } from '@/components/meet/parts';
 import { PText } from '@/components/ui/text';
