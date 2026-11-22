@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>상황 맵 학습 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+:root { --ink: #1E1A2B; --white: #fff; --yellow: #FFE200; --pink: #D0798E; --purple: #493087; --sky: #BFE4EC; --cream: #FBF6EA; --sub: #6F6880; --line: #E2D9C7; --f-display: 'Unbounded', 'Noto Sans KR', sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #E9E2D2; font-family: 'Noto Sans KR', sans-serif; color: var(--ink); padding: 20px; display: grid; grid-template-columns: repeat(4, 360px); gap: 20px; }
+.col h2 { margin: 0 0 4px; font-family: var(--f-display); font-size: 22px; font-weight: 800; }
+.col .what { font-size: 13px; font-weight: 700; color: var(--sub); margin: 0 0 12px; line-height: 1.5; min-height: 58px; }
+.ph { background: var(--cream); border-radius: 30px; border: 3px solid var(--ink); padding: 18px 16px 20px; height: 720px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
+.top { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 900; }
+.top .x { width: 26px; text-align: center; font-size: 18px; }
+.bar { flex: 1; height: 14px; border-radius: 7px; border: 2px solid var(--ink); background: #F1EBDC; overflow: hidden; } .bar i { display: block; height: 100%; background: var(--yellow); }
+.kick { font-size: 12px; font-weight: 800; color: var(--sub); }
+.card { background: var(--white); border: 2.5px solid var(--ink); border-radius: 18px; box-shadow: 0 4px 0 var(--ink); padding: 14px 16px; }
+.lv { display: flex; gap: 5px; } .lv span { flex: 1; text-align: center; padding: 6px 0; border-radius: 12px; border: 2px solid var(--ink); font-family: var(--f-display); font-size: 10.5px; font-weight: 800; background: var(--white); }
+.lv span.on { background: var(--ink); color: var(--yellow); }
+.btn { height: 50px; border-radius: 25px; border: 2.5px solid var(--ink); background: var(--yellow); box-shadow: 0 5px 0 var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; margin-top: auto; }
+.en { font-weight: 800; font-size: 15.5px; line-height: 1.4; } .ko { font-size: 12.5px; font-weight: 700; color: var(--sub); margin-top: 2px; }
+.hl { background: linear-gradient(transparent 55%, #FFE98A 55%); }
+/* A 미션 */
+.ms { display: flex; gap: 10px; align-items: center; } .ms .n { width: 30px; height: 30px; flex: none; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-family: var(--f-display); font-size: 12px; font-weight: 800; background: var(--white); }
+.ms.done .n { background: var(--yellow); } .ms.cur { background: #FFF8D6; }
+.ms b { font-size: 14.5px; } .ms small { display: block; font-size: 11.5px; font-weight: 700; color: var(--sub); }
+.tier { border-top: 2px dashed var(--line); padding-top: 10px; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.tier div { display: flex; gap: 8px; align-items: baseline; font-size: 13px; font-weight: 700; color: #A39C8E; } .tier div i { font-style: normal; font-family: var(--f-display); font-size: 10px; font-weight: 800; width: 34px; flex: none; }
+.tier div.me { color: var(--ink); font-weight: 800; } .tier div.me i { color: var(--purple); }
+/* B 사다리 */
+.lad { display: flex; flex-direction: column-reverse; gap: 8px; }
+.rung { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 16px; border: 2px solid var(--line); background: #FFFDF6; }
+.rung i { font-style: normal; font-family: var(--f-display); font-size: 10.5px; font-weight: 800; width: 34px; flex: none; color: var(--sub); }
+.rung span { font-size: 13.5px; font-weight: 800; color: #A39C8E; line-height: 1.35; }
+.rung.me { border: 2.5px solid var(--ink); background: var(--yellow); box-shadow: 0 4px 0 var(--ink); } .rung.me span, .rung.me i { color: var(--ink); }
+.rung.up { border: 2px dashed var(--purple); background: #F1ECFB; } .rung.up span { color: var(--purple); }
+.rung.lock span { filter: blur(3px); }
+/* C 흐름 */
+.flow { display: flex; gap: 6px; align-items: center; } .flow span { flex: 1; height: 8px; border-radius: 4px; background: var(--line); } .flow span.on { background: var(--ink); } .flow span.now { background: var(--pink); }
+.flow-l { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 800; color: var(--sub); margin-top: -6px; }
+.bub { display: flex; gap: 10px; align-items: flex-start; } .av { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); background: #2F4E8C; color: #fff; display: grid; place-items: center; font-weight: 900; flex: none; }
+.bub .card { padding: 10px 14px; border-radius: 4px 18px 18px 18px; }
+.sub-hide { font-size: 12px; font-weight: 800; color: var(--purple); display: flex; gap: 6px; align-items: center; }
+.opt { background: var(--white); border: 2.5px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); padding: 11px 14px; font-weight: 800; font-size: 14px; }
+.opt.tw { border-style: dashed; box-shadow: none; background: #FFF6E0; }
+.twist { font-size: 12px; font-weight: 900; color: #C2416B; }
+/* D 단어 → 문장 */
+.word { text-align: center; } .word b { font-family: var(--f-display); font-size: 26px; } .word .ko { font-size: 14px; }
+.mode { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 14px; border: 2px solid var(--line); background: #FFFDF6; }
+.mode i { font-style: normal; font-family: var(--f-display); font-size: 10.5px; font-weight: 800; width: 34px; flex: none; color: var(--sub); }
+.mode b { font-size: 13px; display: block; } .mode small { font-size: 11.5px; font-weight: 700; color: var(--sub); }
+.mode.me { border: 2.5px solid var(--ink); background: var(--white); box-shadow: 0 4px 0 var(--ink); } .mode.me i { color: var(--purple); }
+.chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; } .chips span { padding: 4px 9px; border-radius: 10px; border: 2px solid var(--ink); background: var(--white); font-size: 12px; font-weight: 800; }
+.steps { font-size: 12px; font-weight: 800; color: var(--sub); background: #F3EDDF; border-radius: 12px; padding: 8px 10px; line-height: 1.6; }
+.steps b { color: var(--ink); }
+</style></head><body>
+
+<div class="col"><h2>A · 미션 카드</h2><p class="what">장면 = 미션 3개. 미션은 모든 레벨 같고, <b>레벨마다 목표 문장만 달라져요.</b></p>
+<div class="ph">
+  <div class="top"><span class="x"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span><div class="bar"><i style="width:35%"></i></div><span>1/3</span></div>
+  <div class="kick">공항 체크인 · 오늘의 미션</div>
+  <div class="card ms done"><span class="n"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span><div><b>창가 자리 받기</b><small>완료 · 별 3개</small></div></div>
+  <div class="card ms cur"><span class="n">2</span><div style="flex:1"><b>가방 부치기</b><small>직원이 짐을 물어봐요</small>
+    <div class="tier"><div><i>Lv.0</i>Bag, please.</div><div class="me"><i>Lv.1</i><span class="hl">I'd like to check this bag.</span></div><div><i>Lv.2</i>Can I check this bag? It's about 20 kilos.</div><div><i>Lv.3</i>Could I check this one and carry the small one on?</div><div><i>Lv.4</i>It's a bit overweight — is there any way to avoid the fee?</div></div></div></div>
+  <div class="card ms"><span class="n">3</span><div><b>탑승 시간 묻기</b><small>잠겨 있어요</small></div></div>
+  <div class="steps">흐름 · <b>미션 고르기 → 내 레벨 문장 듣고 따라 → 직원과 미션 대화 → 별 받기</b></div>
+  <div class="btn">미션 시작</div>
+</div></div>
+
+<div class="col"><h2>B · 표현 사다리</h2><p class="what">같은 말을 쉬운 것부터 어려운 것까지 5칸. <b>내 칸을 익히고, 한 칸 위에 도전</b>해요.</p>
+<div class="ph">
+  <div class="top"><span class="x"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span><div class="bar"><i style="width:40%"></i></div><span>2/5</span></div>
+  <div class="kick">주문 바꾸기 · 우유를 바꾸고 싶을 때</div>
+  <div class="lad">
+    <div class="rung"><i>Lv.0</i><span>Oat milk, please.</span></div>
+    <div class="rung me"><i>Lv.1</i><span>Could I get it with oat milk?</span></div>
+    <div class="rung up"><i>Lv.2</i><span>Could I get it with oat milk instead of regular?</span></div>
+    <div class="rung lock"><i>Lv.3</i><span>Would you mind switching the milk to oat?</span></div>
+    <div class="rung lock"><i>Lv.4</i><span>I know it's already made, but is it too late to switch to oat?</span></div>
+  </div>
+  <div class="card" style="padding:12px 14px"><div class="kick" style="margin-bottom:4px">한 칸 위 도전</div><div class="en">“instead of”를 넣어서 말해 보세요</div><div class="ko">성공하면 사다리 한 칸 올라가요</div></div>
+  <div class="steps">흐름 · <b>상황 5개 × 사다리 → 내 칸 따라 말하기 → 한 칸 위 도전 → AI 대화</b></div>
+  <div class="btn">말해서 올라가기</div>
+</div></div>
+
+<div class="col"><h2>C · 장면 흐름 롤플레이</h2><p class="what">장면을 순간 4개로 나눠 직원 말에 대답해요. <b>레벨은 듣기 도움 · 보기 · 돌발 상황</b>으로 달라져요.</p>
+<div class="ph">
+  <div class="top"><span class="x"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span><div class="bar"><i style="width:55%"></i></div><span>3/4</span></div>
+  <div class="flow"><span class="on"></span><span class="on"></span><span class="now"></span><span></span></div>
+  <div class="flow-l"><span>도착</span><span>요청</span><span>문제</span><span>마무리</span></div>
+  <div class="bub"><span class="av">L</span><div class="card"><div class="en">Sorry, the window seats are all taken.</div><div class="sub-hide">Lv.3 · 자막 없이 듣기 · 다시 듣기 1번</div></div></div>
+  <div class="twist">돌발 상황! 원하는 자리가 없어요</div>
+  <div class="opt">Oh, okay. An aisle seat is fine.</div>
+  <div class="opt">Could you put me on the waiting list?</div>
+  <div class="opt tw">내 말로 대답하기 (Lv.3 · 4)</div>
+  <div class="steps">레벨 차이 · <b>Lv.0 그림 보기</b> → Lv.1 한국어 자막 → Lv.2 영어 자막 → <b>Lv.3 자막 없음 · 돌발</b> → Lv.4 자유 대답 · 협상</div>
+  <div class="btn">이걸로 대답</div>
+</div></div>
+
+<div class="col"><h2>D · 단어 → 문장 빌드업</h2><p class="what">장면 단어 10개는 모두 같고, <b>레벨이 정해 주는 건 문제 방식</b>이에요.</p>
+<div class="ph">
+  <div class="top"><span class="x"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span><div class="bar"><i style="width:20%"></i></div><span>2/10</span></div>
+  <div class="card word"><b>window seat</b><div class="ko">창가 자리</div></div>
+  <div class="mode"><i>Lv.0</i><div><b>그림 · 뜻 짝 맞추기</b><small>window seat ↔ 창가 자리</small></div></div>
+  <div class="mode me"><i>Lv.1</i><div><b>빈칸 채우기</b><small>Can I have a ______ ?</small><div class="chips"><span>window seat</span><span>receipt</span><span>gate</span></div></div></div>
+  <div class="mode"><i>Lv.2</i><div><b>조각으로 문장 만들기</b><small>a / Can / window seat / have / I</small></div></div>
+  <div class="mode"><i>Lv.3</i><div><b>한국어 보고 말하기</b><small>창가 자리 있으면 주세요</small></div></div>
+  <div class="mode"><i>Lv.4</i><div><b>단어 넣어 돌발 대응</b><small>창가 자리가 없대요. 어떻게 할까요?</small></div></div>
+  <div class="steps">흐름 · <b>Word Bank → 내 레벨 문제 10개 → 장면 대화문 → AI 대화</b></div>
+  <div class="btn">확인</div>
+</div></div>
+</body></html>
