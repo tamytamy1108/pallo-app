@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Pressable } from '@/components/ui/pressable';
-import { SCREEN } from '@/lib/transitions';
+import { CARD, SCREEN } from '@/lib/transitions';
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { isBlocked } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
@@ -159,7 +159,7 @@ export default function StoryScreen() {
   const manager = me.role === 'manager';
   return (
     <View style={[styles.root, { backgroundColor: c.bg }]}>
-      <Stack.Screen options={{ ...SCREEN.fade, cardStyle: { backgroundColor: c.bg } }} />
+      <Stack.Screen options={{ ...SCREEN.fade, cardStyle: { ...CARD, backgroundColor: c.bg } }} />
       {/* 사진이 화면을 꽉 채우고 (예시는 큰 글씨 그림), 위 · 아래만 살짝 어둡게 */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: st.art[0] }]}>
         {st.img ? <Image source={{ uri: st.img }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <PText style={[styles.word, { top: top + 84, color: isDarkBg(st.art[0]) ? LG_C.y : Colors.ink }]}>{st.art[1]}</PText>}

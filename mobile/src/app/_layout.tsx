@@ -10,7 +10,7 @@ import { TrialGuideHost } from '@/components/common/trial-guide';
 import { ToastHost } from '@/components/ui/toast';
 import { FontAssets } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { SCREEN } from '@/lib/transitions';
+import { CARD, SCREEN } from '@/lib/transitions';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,7 +31,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="dark" />
       {/* 화면 넘김은 프로토타입처럼 (src/lib/transitions.ts): 기본은 오른쪽에서 밀려 들어오기 */}
-      <Stack screenOptions={{ headerShown: false, cardStyle: { backgroundColor: Colors.cream }, ...SCREEN.push }}>
+      <Stack screenOptions={{ headerShown: false, cardStyle: { ...CARD, backgroundColor: Colors.cream }, ...SCREEN.push }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="design" />
         <Stack.Screen name="notice/[id]" />

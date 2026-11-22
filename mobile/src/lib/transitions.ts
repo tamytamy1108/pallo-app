@@ -44,11 +44,17 @@ const forFade: StackCardStyleInterpolator = ({ current }) => ({
 
 const forNone: StackCardStyleInterpolator = () => ({});
 
+/**
+ * 화면 틀: 웹에서 Stack 은 기본으로 '문서 전체가 스크롤'하는 방식(minHeight 100%)인데,
+ * Expo 웹은 문서 스크롤을 막아 둬서 화면이 안 내려가요. 화면 높이에 맞추고 안쪽 ScrollView 가 스크롤하게 해요.
+ */
+export const CARD = { flex: 1, overflow: 'hidden' } as const;
+
 export const SCREEN = {
   push: { animation: 'default', cardStyleInterpolator: forPush, transitionSpec: both(500), gestureDirection: 'horizontal', cardOverlayEnabled: false },
   rise: { animation: 'default', cardStyleInterpolator: forRise, transitionSpec: both(450), gestureEnabled: false, cardOverlayEnabled: false },
   fade: { animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(350), gestureEnabled: false, cardOverlayEnabled: false },
-  overlay: { presentation: 'transparentModal', animation: 'none', cardStyleInterpolator: forNone, transitionSpec: both(0), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { backgroundColor: 'transparent' } },
+  overlay: { presentation: 'transparentModal', animation: 'none', cardStyleInterpolator: forNone, transitionSpec: both(0), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { ...CARD, backgroundColor: 'transparent' } },
   /** 뒤 화면 위에 겹치면서 서서히 (이벤트 시트 화면) */
-  overlayFade: { presentation: 'transparentModal', animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(350), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { backgroundColor: 'transparent' } },
+  overlayFade: { presentation: 'transparentModal', animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(350), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { ...CARD, backgroundColor: 'transparent' } },
 } satisfies Record<string, StackNavigationOptions>;
