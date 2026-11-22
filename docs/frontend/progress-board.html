@@ -1,0 +1,400 @@
+<title>PALLO 앱 프론트 진행판</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>
+/* 레이아웃: PALLO 앱과 같은 크림 바탕 · 잉크 테두리 · 하드 섀도. 위 요약 → 내 할 일 → 단계별 로드맵 → 발견 로그 → 규칙 · 배울 것 */
+:root {
+  --bg: #FBF6EA; --card: #FFFFFF; --ink: #1E1A2B; --sub: #5A5366; --line: #E3DCCB;
+  --shadow: #1E1A2B; --yellow: #FFE200; --pink: #D0798E; --sky: #8FA6DC; --lav: #E5DDF6;
+  --green: #2E8A5C; --greenBg: #DDF1E4; --amberBg: #FFF3B0; --mutedBg: #F1EBDC; --redBg: #F9DCE2; --red: #B4324A;
+  --display: 'Unbounded', 'Noto Sans KR', system-ui, sans-serif;
+  --body: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17141F; --card: #221E2D; --ink: #F3EEE2; --sub: #B5ADC2; --line: #3A3448; --shadow: #000000;
+  --yellow: #E8CF1A; --pink: #C86F85; --sky: #7D93C9; --lav: #3A3150;
+  --green: #6FD39C; --greenBg: #1F3A2C; --amberBg: #3E3512; --mutedBg: #2D2839; --redBg: #3D1E27; --red: #F08EA2; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #17141F; --card: #221E2D; --ink: #F3EEE2; --sub: #B5ADC2; --line: #3A3448; --shadow: #000000;
+  --yellow: #E8CF1A; --pink: #C86F85; --sky: #7D93C9; --lav: #3A3150;
+  --green: #6FD39C; --greenBg: #1F3A2C; --amberBg: #3E3512; --mutedBg: #2D2839; --redBg: #3D1E27; --red: #F08EA2; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2 { font-family: var(--display); letter-spacing: -0.02em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(26px, 6vw, 38px); line-height: 1.1; }
+h2 { font-size: 20px; line-height: 1.25; }
+h3 { font-size: 16px; font-weight: 900; margin: 0; }
+p { margin: 0; }
+.mark { background: var(--yellow); color: #1E1A2B; border: 2px solid var(--ink); border-radius: 8px; padding: 0 6px; }
+header { padding-top: 28px; display: flex; flex-direction: column; gap: 10px; }
+.meta { color: var(--sub); font-size: 13px; font-weight: 700; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; margin-block: -10px;
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+nav a { flex: none; font-weight: 900; font-size: 13px; color: var(--ink); text-decoration: none; border: 2px solid var(--ink); border-radius: 999px; padding: 5px 12px; background: var(--card); }
+nav a:hover, nav a:focus-visible { background: var(--yellow); color: #1E1A2B; outline: none; }
+.box { background: var(--card); border: 2px solid var(--ink); border-radius: 22px; box-shadow: 4px 4px 0 var(--shadow); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+section { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 64px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.sec-head small { color: var(--sub); font-weight: 700; font-size: 13px; }
+
+/* 요약 */
+.now { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.now .box h3 { font-size: 13px; color: var(--sub); font-weight: 900; letter-spacing: .04em; }
+.big { font-family: var(--display); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.bar { height: 14px; border: 2px solid var(--ink); border-radius: 8px; background: var(--mutedBg); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--yellow); }
+
+/* 상태 표시 */
+.st { flex: none; font-size: 12px; font-weight: 900; border-radius: 999px; padding: 1px 9px; border: 1.5px solid currentColor; white-space: nowrap; }
+.st.done { color: var(--green); background: var(--greenBg); }
+.st.doing { color: var(--ink); background: var(--amberBg); }
+.st.next { color: var(--ink); background: var(--lav); }
+.st.todo { color: var(--sub); background: transparent; }
+.st.wait { color: var(--red); background: var(--redBg); }
+.who { flex: none; font-size: 11.5px; font-weight: 800; color: var(--sub); }
+
+/* 내 할 일 */
+.todo-list { display: flex; flex-direction: column; gap: 12px; counter-reset: t; list-style: none; padding: 0; margin: 0; }
+.todo-list li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+.todo-list li::before { counter-increment: t; content: counter(t); font-family: var(--display); font-size: 14px; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; background: var(--yellow); color: #1E1A2B; }
+.todo-list li > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.todo-list .why { color: var(--sub); font-size: 13.5px; }
+code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .9em; background: var(--mutedBg); padding: 1px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+pre { margin: 0; overflow-x: auto; background: var(--mutedBg); border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+pre code { background: none; padding: 0; }
+
+/* 로드맵 */
+.phase { gap: 10px; }
+.phase summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; }
+.phase summary::-webkit-details-marker { display: none; }
+.phase summary:focus-visible { outline: 3px solid var(--yellow); outline-offset: 4px; border-radius: 10px; }
+.phase .pname { font-weight: 900; font-size: 16.5px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.phase .pnum { font-family: var(--display); font-size: 13px; color: var(--sub); }
+.phase .pbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+.phase .pbar .bar { flex: 1; height: 10px; }
+.phase .pbar span { font-family: var(--display); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--sub); }
+.phase[open] summary { padding-bottom: 6px; border-bottom: 2px dashed var(--line); }
+.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.items li { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.items li:last-child { border-bottom: 0; }
+.items .t { min-width: 0; font-weight: 700; }
+.items .n { grid-column: 2 / -1; color: var(--sub); font-size: 13.5px; min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--sub); font-size: 13px; font-weight: 700; }
+
+/* 로그 · 발견 */
+.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.log li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; }
+.log time { font-family: var(--display); font-size: 12px; color: var(--sub); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.log b { font-weight: 900; }
+.found li { grid-template-columns: auto 1fr; align-items: baseline; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.rules .box { padding: 14px; gap: 6px; box-shadow: none; }
+.rules .box p { color: var(--sub); font-size: 13.5px; }
+.learn li .n { color: var(--sub); }
+.callout { border-style: dashed; box-shadow: none; background: transparent; }
+@media (max-width: 480px) {
+  .log li { grid-template-columns: 1fr; gap: 2px; }
+  .items li { grid-template-columns: auto 1fr; }
+  .items .who { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>PALLO 앱 <span class="mark">프론트</span> 진행판</h1>
+    <div class="meta"><span id="updated"></span><span>Expo SDK 58 · <code>mobile/</code></span><span>Claude가 작업할 때마다 고쳐서 다시 올려요</span></div>
+  </header>
+
+  <nav aria-label="바로 가기">
+    <a href="#now">지금</a><a href="#mine">내 할 일</a><a href="#roadmap">로드맵</a><a href="#found">발견한 것</a><a href="#log">작업 기록</a><a href="#rules">규칙</a><a href="#learn">배울 것</a>
+  </nav>
+
+  <section id="now">
+    <div class="now">
+      <div class="box"><h3>전체 진행</h3><div class="big" id="pct"></div><div class="bar"><i id="pctBar"></i></div><p class="who" id="pctNote"></p></div>
+      <div class="box"><h3>지금 하는 것</h3><p id="nowDoing" style="font-weight:900"></p><p class="who" id="nowNext"></p></div>
+      <div class="box"><h3>막힌 것</h3><p id="blocked" style="font-weight:700"></p></div>
+    </div>
+  </section>
+
+  <section id="mine">
+    <div class="sec-head"><h2>내가 할 일</h2><small>위에서부터 하면 돼요</small></div>
+    <div class="box"><ol class="todo-list" id="myTodo"></ol></div>
+  </section>
+
+  <section id="roadmap">
+    <div class="sec-head"><h2>단계별 로드맵</h2><small>누르면 펼쳐져요</small></div>
+    <div class="legend"><span class="st done">완료</span><span class="st doing">진행 중</span><span class="st next">다음</span><span class="st todo">할 일</span><span class="st wait">백엔드 · 결정 기다림</span></div>
+    <div id="phases" style="display:flex;flex-direction:column;gap:14px"></div>
+  </section>
+
+  <section id="found">
+    <div class="sec-head"><h2>내가 발견한 것</h2><small>채팅에 바로 말해 주면 여기에 적고 고쳐요</small></div>
+    <div class="box"><ul class="log found" id="foundList"></ul></div>
+  </section>
+
+  <section id="log">
+    <div class="sec-head"><h2>작업 기록</h2><small>최근 것이 위</small></div>
+    <div class="box"><ul class="log" id="logList"></ul></div>
+  </section>
+
+  <section id="rules">
+    <div class="sec-head"><h2>함께 지키는 규칙</h2></div>
+    <div class="rules" id="ruleList"></div>
+  </section>
+
+  <section id="learn">
+    <div class="sec-head"><h2>프론트 처음이라면 배울 것</h2><small>우리 코드에서 바로 볼 수 있는 곳</small></div>
+    <div class="box"><ul class="items learn" id="learnList"></ul></div>
+  </section>
+</div>
+
+<script>
+/* ───── 데이터: Claude가 작업할 때마다 이 부분을 고쳐요 ───── */
+const UPDATED = '2026-11-22';
+const NOW = {
+  doing: '가장 어려운 부분(말하기) 시험 통과 — 아이폰 사파리에서 동작',
+  next: '다음: git 에 올리기 → 출석 · QR. 진짜 앱 빌드는 Apple 개발자 계정이 생기면',
+  blocked: '백엔드 첫 회의 전이라 API 주소 · 로그인 방식 · 에러 모양이 아직 안 정해졌어요. 그 전까지는 가짜 데이터로 화면을 먼저 만들어요.'
+};
+
+// who: 'me' = 내가(프론트 담당) · 'claude' = Claude · 'both' = 같이 · 'back' = 백엔드
+const MY_TODO = [
+  { t: '폰에서 지금 앱 보기', why: '웹 미리보기로만 확인했어요. 폰에서 글꼴 · 애니메이션 · 아래 탭이 다르게 보일 수 있어요.',
+    how: '폰에 Expo Go 설치 → 터미널에서 아래 실행 → QR 찍기 (컴퓨터와 같은 와이파이)', cmd: 'cd mobile && npx expo start' },
+  { t: '지금까지 한 것 git에 올리기', why: '아직 커밋하지 않았어요. 컴퓨터에만 있으면 잃어버릴 수 있어요.', how: '채팅에 "커밋해줘"라고 하면 Claude가 정리해서 올려요. 처음엔 같이 보면서 git 사용법도 익혀요.' },
+  { t: '백엔드 개발자에게 자료 보내고 첫 회의 잡기', why: 'API 모양이 정해져야 가짜 데이터를 진짜로 바꿀 수 있어요.',
+    how: '보낼 것: docs/frontend/backend-kickoff.md · docs/PRD.md · docs/appendix/api-inventory.md · data-model.md · enum-dictionary.md. 회의에서 B1~B8을 정해요.' },
+  { t: '저장소 방식 정하기', why: '앱과 서버 코드를 한 저장소에 둘지, 나눌지에 따라 작업 흐름이 달라요.', how: '백엔드 개발자와 회의에서 같이 정해요. 브랜치 → PR → 서로 확인 후 합치는 규칙도 이때.' },
+  { t: '스토어 개발자 계정 준비', why: '출시하려면 꼭 필요하고, 회사 명의는 심사에 몇 주 걸릴 수 있어요.',
+    how: 'Apple Developer Program(연 99달러, 회사 명의면 D-U-N-S 번호 필요) · Google Play Console(한 번 25달러) · Expo 계정(무료, EAS 빌드용). 누구 명의로 만들지 대표와 정해요.' },
+  { t: '앱 이름 · 번들 ID 정하기', why: '지금 app.json 이 템플릿 그대로 "mobile" 이에요. 출시 뒤에는 번들 ID를 못 바꿔요.', how: '예: 이름 PALLO, 번들 ID com.pallo.app, 딥링크 주소 pallo:// — 정해서 알려 주면 Claude가 바꿔요.' },
+  { t: '앱 아이콘 · 스플래시 원본 고르기', why: '지금은 Expo 기본 아이콘이에요.', how: '1024×1024 아이콘, 안드로이드용 앞 · 뒤 레이어, 스플래시 로고. 브랜드 파일 폴더에서 고르면 Claude가 크기를 맞춰요.' },
+  { t: '개인정보처리방침 · 이용약관 주소 준비', why: '두 스토어 모두 심사에 필요해요. 앱 안에서 계정 삭제도 꼭 있어야 해요(애플 규칙).', how: '웹 페이지 주소 두 개. 내용은 회사(또는 법무)와 정해요.' },
+  { t: '소셜 로그인 앱 등록', why: '카카오 · 애플 · 구글 로그인을 쓰려면 각 회사에 앱을 등록해야 해요. 다른 소셜 로그인이 있으면 애플 로그인은 필수예요.', how: '카카오 Developers · Apple Sign in · Google Cloud OAuth. 백엔드 개발자와 같이 해요(키는 서버가 보관).' },
+  { t: '새 화면은 프로토타입에서 먼저 확정', why: '앱에서 디자인을 고치면 두 배로 일해요.', how: '"이 화면 이렇게 바꿔줘"는 프로토타입에서 → 마음에 들면 "앱에 옮겨줘".' }
+];
+
+const PHASES = [
+  { n: 0, name: '프로젝트 준비', items: [
+    { t: 'Expo 프로젝트 만들기 (mobile/)', s: 'done', who: 'claude', n: 'Expo SDK 58 · TypeScript · expo-router · React Compiler' },
+    { t: '글꼴 (Unbounded · Noto Sans KR)', s: 'done', who: 'claude', n: 'Unbounded 에 한글이 없어서 한글만 Noto로 나눠 그려요' },
+    { t: '색 · 둥글기 · 간격 토큰', s: 'done', who: 'claude', n: 'mobile/src/constants/theme.ts — DESIGN.md 와 같은 값' },
+    { t: '웹 미리보기 설정', s: 'done', who: 'claude', n: '.claude/launch.json "mobile-web" · 8081 포트' },
+    { t: 'app.json 정리 (이름 · 번들 ID · 아이콘 · 라이트 모드 고정)', s: 'next', who: 'both', n: '지금 이름이 "mobile", 다크 모드 자동. PALLO 디자인은 밝은 화면 하나라 light 로 고정할 예정' },
+    { t: '폰 Expo Go 확인', s: 'next', who: 'me' },
+    { t: 'git 첫 커밋 · 브랜치 규칙', s: 'done', who: 'both', n: '작업 브랜치에 자동 커밋 · 푸시, main 합치기는 물어보고' }
+  ]},
+  { n: 1, name: '디자인 부품', items: [
+    { t: '글자 PText (8단계)', s: 'done', who: 'claude' },
+    { t: '버튼 · 카드 · 알약 · 칩 · 하드 섀도', s: 'done', who: 'claude' },
+    { t: '아래 탭 바 (5개)', s: 'done', who: 'claude' },
+    { t: '아래 고정 바 (행동 버튼 자리)', s: 'done', who: 'claude' },
+    { t: '부품 모음 화면 (마이 → 디자인 부품 보기)', s: 'done', who: 'claude', n: '개발용. 출시 전에 빼요' },
+    { t: '시트(아래에서 올라오는 창) · 확인 창', s: 'todo', who: 'claude', n: '출석 · 신청 · 설정에서 같이 써요' },
+    { t: '토스트 (잠깐 뜨는 알림)', s: 'todo', who: 'claude' },
+    { t: '입력칸 · 체크 · 스위치', s: 'todo', who: 'claude' },
+    { t: '빈 화면 · 불러오는 중 · 오류 화면', s: 'todo', who: 'claude', n: 'API 연결 때 꼭 필요' },
+    { t: '효과음 · 진동', s: 'todo', who: 'claude' }
+  ]},
+  { n: 2, name: '홈', items: [
+    { t: '로고 · 알림 버튼 · 인사', s: 'done', who: 'claude' },
+    { t: '공지 띠 (3.2초마다 넘어감)', s: 'done', who: 'claude' },
+    { t: '공지 · 이벤트 상세 (누르면 지금 보이는 글로)', s: 'done', who: 'claude', n: '행동 버튼은 아래 고정 바' },
+    { t: '오늘 스터디 카드 (카운트다운)', s: 'done', who: 'claude' },
+    { t: '스터디 맵 (과 고르기 · 진도 · 퀘스트 길 · 보상 상자)', s: 'done', who: 'claude' },
+    { t: '크리스마스 맵 (11/22~12/31)', s: 'done', who: 'claude', n: '봄 · 여름 · 가을 · 겨울 장식은 아직' },
+    { t: '계절 장식 봄 · 여름 · 가을 · 겨울', s: 'todo', who: 'claude' },
+    { t: '스터디 카드 상태들 (오늘 없음 · 사전 출석 · 출석 완료 등)', s: 'todo', who: 'claude', n: 'docs/pages/01-home.md 상태 표' },
+    { t: '출석 시트 · QR 스캐너 · 출석 완료', s: 'todo', who: 'claude', n: 'expo-camera 사용' },
+    { t: '정류장 누르기 → 가운데 팝업', s: 'todo', who: 'claude' },
+    { t: '구간 건너뛰기 테스트', s: 'todo', who: 'claude' },
+    { t: '맵 위 캐릭터를 내 캐릭터로', s: 'todo', who: 'claude', n: '마이 꾸미기 만든 뒤' },
+    { t: '라운지 미리보기', s: 'todo', who: 'claude' },
+    { t: '알림함', s: 'todo', who: 'claude' }
+  ]},
+  { n: 3, name: '레슨 (학습 화면)', items: [
+    { t: '문제 화면 틀 (위 진행 · 아래 버튼 고정)', s: 'done', who: 'claude', n: 'mobile/src/app/lesson/[step].tsx' },
+    { t: '따라 말하기 (오늘의 패턴) — 음성 인식 · 단어 카드 · 소리 끄기', s: 'done', who: 'both', n: '아이폰 사파리에서 말하기 · 오답 반응 확인 완료 (11-22). 진짜 앱(개발 빌드)에서 다시 확인 · 제한 시간 칩은 아직' },
+    { t: '개발 빌드 만들어 내 폰에 깔기', s: 'next', who: 'both', n: '음성 인식은 Expo Go 에 없어서 필요해요. 아이폰 / 안드로이드에 따라 방법이 달라요' },
+    { t: '문제 방식 블록 (고르기 · 순서 맞추기 · 말하기 …)', s: 'todo', who: 'claude', n: 'docs/pages/03-lesson.md' },
+    { t: 'Lv.1 · 2 코너 (패턴 · 대화문 · Bank 퀴즈 · 상황 활동 · My Story · AI 프리토킹 · 스피킹 퀴즈 · 30초 챌린지)', s: 'todo', who: 'claude' },
+    { t: 'Lv.3 · 4 코너', s: 'todo', who: 'claude' },
+    { t: '말하기 어려움 · 소리 끄기 대체 흐름', s: 'todo', who: 'claude', n: '모든 문제에 같이. 소리 끄기 때 정답을 글로 보여 주지 않기' },
+    { t: '정답 · 오답 · 그만두기 · 이어서 하기', s: 'todo', who: 'claude' },
+    { t: '완료(축하) 화면 · 포인트', s: 'todo', who: 'claude' },
+    { t: '녹음 · 음성 인식 · AI 대화', s: 'wait', who: 'back', n: '엔진이 정해져야 해요 (Q-T4 · Q-T5)' }
+  ]},
+  { n: 4, name: '라이브러리', items: [
+    { t: '맵 칩 (커리큘럼 · 상황 · 곧 열릴 맵)', s: 'todo', who: 'claude' },
+    { t: '커리큘럼 섬 지도 · 상황 섬 지도', s: 'todo', who: 'claude', n: '맵은 계속 늘어나니 데이터 한 줄로 추가되게' },
+    { t: '과 화면 · 교재 소개(잠김)', s: 'todo', who: 'claude' },
+    { t: '리스닝 룸', s: 'todo', who: 'claude' }
+  ]},
+  { n: 5, name: '라운지', items: [
+    { t: '탭 · 서브 칩 · 지점 선택 시트', s: 'todo', who: 'claude' },
+    { t: '스토리 보기 · 올리기', s: 'todo', who: 'claude' },
+    { t: '커뮤니티 사진 글 · 글쓰기 2단계', s: 'todo', who: 'claude', n: '사진 올리기는 백엔드 업로드 방식 필요 (Q-T7)' },
+    { t: '번개 · 동아리 지도 · 상세 · 참여', s: 'todo', who: 'claude' },
+    { t: '해외 동행', s: 'todo', who: 'claude' },
+    { t: '댓글 창 · 신고 · 차단', s: 'todo', who: 'claude' },
+    { t: '동아리 채팅 (실시간)', s: 'wait', who: 'back', n: 'Q-T6' }
+  ]},
+  { n: 6, name: '챌린지', items: [
+    { t: '챌린지 탭 · 카드', s: 'todo', who: 'claude' },
+    { t: '챌린지 상세 · 열기', s: 'todo', who: 'claude' },
+    { t: '저장 표현 → 챌린지 불러오기', s: 'todo', who: 'claude', n: '표현 카드 1개 이상 골라서' }
+  ]},
+  { n: 7, name: '이벤트', items: [
+    { t: '이벤트 목록', s: 'todo', who: 'claude' },
+    { t: '이벤트 상세 · 신청 시트 · 내 신청 카드', s: 'todo', who: 'claude' },
+    { t: '이벤트 제안 (회원)', s: 'todo', who: 'claude' }
+  ]},
+  { n: 8, name: '마이', items: [
+    { t: '마이 화면 · 숫자 4칸', s: 'todo', who: 'claude' },
+    { t: '꾸미기 (스파크 상점)', s: 'todo', who: 'claude', n: '캐릭터는 원본 3D 그대로 · 색 교체 · 좌우 반전만' },
+    { t: '내 스터디 · 연기 · 팀 · 지점 변경 신청', s: 'todo', who: 'claude' },
+    { t: '프로 노트 · 랭킹 · 내 표현함', s: 'todo', who: 'claude' },
+    { t: '설정 · 이용권 · 결제 내역 · 고객센터', s: 'todo', who: 'claude' },
+    { t: '계정 삭제', s: 'todo', who: 'claude', n: '애플 심사 필수' }
+  ]},
+  { n: 9, name: '로그인 · 처음 시작', items: [
+    { t: '로그인 화면 (카카오 · 애플 · 구글)', s: 'todo', who: 'claude' },
+    { t: '휴대폰 확인', s: 'todo', who: 'claude' },
+    { t: '비회원 체험 안내 · 체험 신청 3단계', s: 'todo', who: 'claude' },
+    { t: '소셜 로그인 앱 등록 · 키', s: 'wait', who: 'both', n: '내 할 일 9번' }
+  ]},
+  { n: 10, name: 'API 연결', items: [
+    { t: '백엔드 첫 회의 (B1~B8)', s: 'wait', who: 'both', n: 'docs/frontend/backend-kickoff.md' },
+    { t: 'OpenAPI 문서로 타입 자동 만들기', s: 'todo', who: 'claude', n: '서버 모양이 바뀌면 타입 오류로 바로 알 수 있어요' },
+    { t: 'API 부르는 공통 코드 (주소 · 토큰 · 에러 { code, message })', s: 'todo', who: 'claude' },
+    { t: '서버 데이터 관리 (불러오기 · 캐시 · 새로고침)', s: 'todo', who: 'claude', n: 'TanStack Query 추천' },
+    { t: '로그인 토큰 안전하게 저장', s: 'todo', who: 'claude', n: 'expo-secure-store' },
+    { t: '가짜 데이터(mock.ts) → 진짜 API 하나씩 바꾸기', s: 'todo', who: 'claude', n: '순서: 로그인 · /me → 홈 · 출석 → 학습 → 라운지 · 이벤트 · 마이' }
+  ]},
+  { n: 11, name: '출시 준비', items: [
+    { t: '스토어 개발자 계정 · Expo 계정', s: 'next', who: 'me' },
+    { t: '앱 아이콘 · 스플래시', s: 'todo', who: 'both' },
+    { t: '개인정보처리방침 · 이용약관', s: 'todo', who: 'me' },
+    { t: '푸시 알림 (Expo 푸시)', s: 'todo', who: 'both' },
+    { t: '딥링크 (공지 · 이벤트 바로 열기)', s: 'todo', who: 'claude', n: 'Q-T9' },
+    { t: '접근성 (화면 읽기 · 글자 크기 · 터치 44px)', s: 'todo', who: 'claude' },
+    { t: '오류 추적 · 사용 통계', s: 'todo', who: 'both', n: '예: Sentry' },
+    { t: '자동 테스트 (중요 흐름: 로그인 · 출석 · 레슨 완료)', s: 'doing', who: 'claude', n: 'jest 설치 · 말하기 채점 · 듣기 흐름 44개 완료. npm test' },
+    { t: 'EAS 빌드 → TestFlight · 내부 테스트', s: 'todo', who: 'both' },
+    { t: '스토어 스크린샷 · 설명 · 심사 제출', s: 'todo', who: 'me' },
+    { t: '출시 뒤 빠른 수정 (EAS Update)', s: 'todo', who: 'claude' },
+    { t: '개발용 부품 모음 화면 빼기', s: 'todo', who: 'claude' }
+  ]}
+];
+
+const FOUND = [
+  { d: '11-22', t: '정류장 반동 점프를 프로토타입 확인해서 다시', s: 'done', fix: '두 화면의 움직임을 0.02초 간격으로 재서 비교: 캐릭터가 40ms 늦게 웅크리던 걸 맞춰, 프로토타입처럼 정류장이 튀어 오르는 순간 웅크렸다 뛰어요. 캐릭터 그림자 흐림(blur 1.5px) · 기본 속도 곡선(ease)도 프로토타입대로' },
+  { d: '11-22', t: '정류장이 튀는 반동으로 캐릭터가 뛰는 느낌이 나야 해요', s: 'done', fix: '정류장 통통 · 바닥 그림자 · 캐릭터 점프 · 캐릭터 그림자를 같은 1.4초 박자에 맞춤 (따로 시작해서 어긋나 있었어요). 정류장이 눌렸다(15%) 튀어 오르는 순간 캐릭터가 웅크렸다(20%) 뛰어올라요(27%). 측정으로 박자 일치 확인' },
+  { d: '11-22', t: '옆으로 도는 점프를 프로토타입처럼 더 자주', s: 'done', fix: '프로토타입은 캐릭터 눈 깜빡임(눈꺼풀 2개 · 3초)도 같은 신호로 올라와 도는 기회가 더 많았어요. 맵 캐릭터에 눈 깜빡임을 넣고 같은 규칙으로 — 40초 동안 프로토타입 14번 · 앱 11번 (확률이라 매번 조금씩 달라요)' },
+  { d: '11-22', t: '점프할 때 랙이 걸리는 것처럼 보여요 · 좌우 반전 점프를 더 자주', s: 'done', fix: '반복 움직임(점프 · 빛 · 떨어지는 장식 30개 · 반짝이 · 출석 카드)을 자바스크립트 계산 대신 CSS 애니메이션으로 — 브라우저 · 화면 스레드가 직접 그려요 (녹화로 초당 57장 확인). 좌우 반전은 프로토타입처럼 점프 한 번이 끝날 때마다 35%, 공중(0.42초)에서' },
+  { d: '11-22', t: '맵 지금 정류장: 뛰는 게 · 위치가 · 버튼 디자인이 달라요', s: 'done', fix: '정류장을 사탕 같은 볼록 동전(광택 · 그늘 · 바닥 그림자)으로, 스포트라이트 · 빛살 크기를 프로토타입 계산대로(모서리까지 반지름), 뛰는 캐릭터를 프로토타입 기본 내 캐릭터(비니 · 나비넥타이 · 깃발 · 보라 신발)로 · 같은 크기와 자리 · 가끔 공중에서 좌우로 홱. 두 화면을 같은 크기로 녹화해 8장씩 비교' },
+  { d: '11-22', t: '3번 틀린 뒤 정답 힌트가 프로토타입과 달라요', s: 'done', fix: '프로토타입처럼 진한 노란 카드가 위아래로 통통 + 둘레에 노란 빛. 앱에만 있던 안내 문구는 뺐어요. 말해서 들린 카드도 같은 노란 빛 + 살짝 커지게' },
+  { d: '11-22', t: '맞는 낱말 노란 ✓ 대신, 앞 순서로 봐서 어긋나면 전부 오답으로', s: 'done', fix: '앞에서부터 순서대로 맞은 데까지만 정답. 어긋난 곳부터 끝까지는 전부 빨강 (I\'d like to light have something → I\'d like to 까지). 노란 ✓ 기억 카드는 뺐어요' },
+  { d: '11-22', t: '오답으로 말한 낱말들은 빨갛게 표시해 주세요', s: 'done', fix: '"들린 말"에서 틀리게 말한 낱말을 모두 빨갛게 (틀린 곳부터, 맞춘 낱말 · 군말 · 더듬기는 빼고). 말하는 중에 바로 바뀌어요' },
+  { d: '11-22', t: '문장 중 한 곳만 틀려도 뒤의 맞는 부분까지 다 오답이 돼요', s: 'done', fix: '틀린 낱말 뒤에서 제자리에 맞게 말한 카드는 ✓ 로 기억해요. 빠진 낱말만 말하거나 누르면 기억한 카드까지 바로 이어져요' },
+  { d: '11-22', t: 'Do you wifi have: do you 까지 실시간으로 이어지고, 뒤는 틀린 표시', s: 'done', fix: '순서를 바꾸거나 사이에 다른 말을 끼우면 틀림. 틀린 말 뒤에 말이 더 이어지면 말하는 중에 바로 틀린 표시 (끝까지 기다리지 않아요)' },
+  { d: '11-22', t: 'an 뿐 아니라 어떤 낱말이든 비슷한 소리는 인정해 주세요', s: 'done', fix: '낱말 목록 대신 낱말마다 \'소리 열쇠\'를 만들어 비교 (모든 낱말에 같은 규칙). 레슨 낱말 + 자주 쓰는 낱말 100여 개에 변형을 자동으로 만들어 시험 통과' },
+  { d: '11-22', t: 'latte 를 자꾸 nothing 으로 들어요', s: 'done', fix: '소리로는 못 이어서, 같은 칸에서 말로 2번 틀리면 다음엔 그 자리에서 한 말을 인정 (앞뒤 낱말이 맞을 때만). 폰 앱에선 후보 3개 중 가장 잘 맞는 것도 봐요' },
+  { d: '11-22', t: 'an 을 on 처럼 말하면 될 때도 있고 안 될 때도 있어요 (힌트가 뜬 뒤엔 돼요)', s: 'doing', fix: '짧게 말한 an 이 Ann · Anne · N · own 으로 받아 적혀도 인정하게 넓혔어요. 그래도 안 되면 그때 "들린 말"을 확인해 원인을 좁혀요' },
+  { d: '11-22', t: '오답 때 빨간 표시가 프로토타입과 달라요', s: 'done', fix: '프로토타입처럼: 틀린 카드는 분홍 점선 + × 배지, 처음 틀릴 때와 3번째마다 보라 팔로가 옆에서 한마디. 빈칸 빨강 · 빨간 줄은 뺐어요' },
+  { d: '11-22', t: 'on 을 an 처럼 인정해 주세요', s: 'done', fix: '짧은 낱말은 모음만 다르면 인정(on · in ↔ an). to ↔ do 처럼 자음이 다르면 틀림' },
+  { d: '11-22', t: '3~4번 말하면 이어서 말하기를 눌러도 안 들려요', s: 'done', fix: '끝나지 않은 듣기 위에 또 켜서 생긴 문제. 새로 켜기 전에 이전 듣기를 완전히 끝내요. 자동 테스트로 5번 연달아 확인' },
+  { d: '11-22', t: '말을 안 하면 저절로 닫혀요 — 누를 때까지 계속 들어 주세요', s: 'done', fix: '버튼을 다시 누를 때까지 계속 들어요. 폰 · 사파리가 스스로 끝내도 조용히 다시 켜요. 말하다 1.5초 멈추면 채점만 해요' },
+  { d: '11-22', t: '말을 더 정확하게 알아들었으면 좋겠어요', s: 'doing', fix: '비슷한 소리(to/too, a nice↔an iced, menu/manu) 인정 · 말을 멈출 때까지 끝까지 듣기 · 폰 앱에선 문제 낱말 힌트. I like ↔ I\'d like 같은 진짜 틀림은 그대로 틀림. 아이폰에서 다시 확인 중' },
+  { d: '11-22', t: '아이폰 사파리에서 말해도 단어 카드가 안 이어져요', s: 'done', fix: '사파리가 말을 조각으로 보내는데 마지막 조각만 보고 있었어요. 조각을 이어 붙이고, I would → I\'d 같은 줄임말도 인정' },
+  { d: '11-22', t: '틀리게 말하면 단어 카드가 아무 반응이 없어요', s: 'done', fix: '틀린 낱말 카드가 빨갛게 흔들리고(카드에 없는 말이면 빈칸이 빨개짐), 들린 말에서 틀린 낱말에 빨간 줄. 같은 칸에서 3번 틀리면 정답 카드 반짝' },
+  { d: '11-22', t: '가랜드 전구가 동그랗지 않고 조금 각져 보여요', s: 'done', fix: '늘려 그리던 그림을 픽셀 크기 그대로 다시 그려서 매끈하게 둥글어졌어요' },
+  { d: '11-22', t: '스터디 맵 알약 · 버튼이 전구 · 떨어지는 장식 뒤로 가려져요', s: 'done', fix: '맵 내용 전체를 장식보다 앞 층으로 올렸어요' },
+  { d: '11-22', t: '1과 · 2과 칩 글꼴이 프로토타입과 달라요', s: 'done', fix: 'Unbounded 글자 속 한글이 기기 기본 글꼴로 나오던 문제. 같은 굵기의 Noto로 그리게 부품(PText)에서 고쳐서 모든 화면에 적용' },
+  { d: '11-22', t: '스터디 카드 "스터디 · 시작까지" 글꼴이 안 맞아요', s: 'done', fix: '위와 같은 원인 · 같은 수정' },
+  { d: '11-21', t: '공지 보드의 공지 · 이벤트를 눌러도 글로 안 넘어가요', s: 'done', fix: '프로토타입 · 앱 모두 지금 보이는 글로 열려요' },
+  { d: '11-21', t: '이벤트 신청하기 같은 버튼이 글 중간에 있어요', s: 'done', fix: '행동 버튼은 늘 아래 고정 바로 (프로토타입 · 앱 규칙)' },
+  { d: '11-21', t: '수채화 계절 장식이 실제로 보니 별로예요', s: 'done', fix: '종이 컷아웃(E)으로 바꿨어요' },
+  { d: '11-21', t: '산타 · 루돌프 퀄리티가 별로예요', s: 'done', fix: '빼고 떨어지는 빨간 장식을 늘렸어요' }
+];
+
+const LOG = [
+  { d: '11-22', t: '<b>git 에 올림</b> — 브랜치 frontend/expo-app-start 에 커밋 3개(프로토타입 v477~v502 · 앱 · 문서)를 푸시. 앞으로 작업이 끝나면 자동으로 커밋 · 푸시해요.' },
+  { d: '11-22', t: '<b>애니메이션</b> — 프로토타입 효과를 그대로: 홈 칸 차례로 올라오기 · ACTION! 빨간 점 퍼짐 · 출석 버튼 흰 빛 · 보라 팔로 숨쉬기 · 눈 깜빡임 · 제목 문구 · 포즈 바꾸기 · 지금 정류장 스포트라이트 · 빛살 · 통통 · 노랑 팔로 점프와 그림자 · 탭 아이콘 톡 · 레슨 카드 등장 · 줄로 올라가기 · 완성 파도 · 반응 캐릭터 통 · 보라 팔로 팔 흔들기. 프로토타입: 말로 3번 틀려도 힌트 (v502)' },
+  { d: '11-22', t: '<b>음성 인식 시험 준비</b> — 흔한 문제 20가지를 조사해 대응하고, 자동 테스트 44개(채점 25 · 듣기 흐름 19) 를 만들어 모두 통과. 폰에서 직접 할 시험 목록: docs/frontend/speech-test-plan.md' },
+  { d: '11-22', t: '<b>말하기 시험 통과</b> — 아이폰 사파리에서 말하면 카드가 이어지고, 틀리면 카드가 흔들려요. 이 맥은 Xcode 를 못 깔아서(macOS 14.4 · 공간 22GB) 진짜 앱 빌드는 Apple 개발자 계정 + Expo 클라우드 빌드로 가요.' },
+  { d: '11-22', t: '<b>가장 어려운 부분 시도: 말하기 문제</b> — 오늘의 패턴(따라 말하기) 6문제. 말하면 들린 단어 카드가 빛나고 이어져요. 단어 카드 모드 · 소리 끄기 · 3번 틀리면 정답 반짝 · 다 이으면 읽어 주기 · 표현 저장. 웹에서 확인, 폰은 개발 빌드가 필요해요.' },
+  { d: '11-22', t: '<b>진행판 만들기</b> — 이 페이지. 작업이 끝날 때마다 고쳐서 다시 올려요.' },
+  { d: '11-22', t: '<b>발견한 것 3개 고침</b> — 맵 버튼을 장식 앞으로, 한글 글꼴(과 칩 · 스터디 카드 라벨)을 프로토타입과 같게.' },
+  { d: '11-22', t: '<b>홈 스터디 맵 크리스마스 장식</b> — 초록 바탕 · 깜빡이는 전구 · 반짝이는 별 · 떨어지는 종이 장식 · 종이 숲. 11/22~12/31만. 움직임 줄이기를 켜면 떨어지는 장식은 숨겨요.' },
+  { d: '11-22', t: '<b>홈 스터디 맵</b> — 과 고르기 20개 · 진도 막대 · 예습 · 본학습 · 복습 구역 · 정류장 8개 · 보상 상자 · 다음 챕터.' },
+  { d: '11-21', t: '<b>홈 화면</b> — 로고 · 인사 · 공지 띠 · 공지 상세 · 오늘 스터디 카드.' },
+  { d: '11-21', t: '<b>디자인 부품</b> — 글자 · 버튼 · 카드 · 알약 · 하드 섀도 · 탭 바 · 아래 고정 바.' },
+  { d: '11-21', t: '<b>Expo 시작</b> — mobile/ 폴더, 글꼴 · 색 토큰, 웹 미리보기. 백엔드 회의 안건 정리.' }
+];
+
+const RULES = [
+  ['정하는 건 프로토타입, 만드는 건 앱', '디자인 · 흐름은 prototype/index.html 에서 먼저 확정하고 앱에 옮겨요.'],
+  ['행동 버튼은 늘 아래 고정', '학습 · 상세 화면 모두. 신청 · 보내기 · 다음 같은 버튼.'],
+  ['화면 문구는 짧게', '설명 문단 · 힌트 줄 없이 라벨 한 줄.'],
+  ['색 카드 위에 박스 · 알약 피하기', '카운트다운 · 상태는 박스 없이 글씨로.'],
+  ['캐릭터는 원본 3D 그대로', '다시 그리지 않고 색 교체 · 좌우 반전만.'],
+  ['말하기 어려움 · 소리 끄기', '새 문제마다 두 대체 흐름을 같이. 소리 끄기 때 정답을 글로 보이지 않기.'],
+  ['가짜 데이터로 먼저', 'mobile/src/data/mock.ts. API가 나오면 하나씩 바꿔요.'],
+  ['끝날 때마다 검사', 'npx tsc --noEmit (타입) · npx expo lint (코드 규칙). 그리고 바뀐 화면 캡처.'],
+  ['관리자 화면은 나중에', '지금은 멤버용만.']
+];
+
+const LEARN = [
+  ['컴포넌트 · props', '화면을 레고처럼 쪼갠 조각. Button 에 variant · wide 를 넘겨서 모양을 바꿔요.', 'mobile/src/components/ui/button.tsx'],
+  ['state (useState)', '바뀌는 값. 스터디 맵에서 고른 과 번호가 state 예요.', 'mobile/src/components/home/study-map.tsx'],
+  ['StyleSheet · flex 배치', '웹 CSS 와 비슷하지만 기본이 세로 줄(column). 가로는 flexDirection: row.', 'mobile/src/app/(tabs)/index.tsx'],
+  ['파일 = 화면 (expo-router)', 'src/app 안 파일 하나가 화면 하나. notice/[id].tsx 는 주소의 id 로 글을 골라요.', 'mobile/src/app/notice/[id].tsx'],
+  ['TypeScript 타입', '데이터 모양을 미리 적어 두면 잘못 쓰면 바로 빨간 줄. Notice 타입을 보세요.', 'mobile/src/data/mock.ts'],
+  ['애니메이션 (Reanimated)', '움직임을 폰의 화면 담당 쪽에서 돌려서 부드러워요.', 'mobile/src/components/home/christmas.tsx'],
+  ['git · 브랜치 · PR', '작업을 저장하고, 백엔드 개발자와 서로 확인하고 합치는 방법.', '커밋할 때 같이 해요'],
+  ['API 부르기', '서버에 데이터를 달라고 하고, 기다리는 동안 · 실패했을 때 화면도 만들어요.', 'API 연결 단계에서']
+];
+
+/* ───── 그리기 ───── */
+const LABEL = { done: '완료', doing: '진행 중', next: '다음', todo: '할 일', wait: '기다림' };
+const WHO = { me: '내가', claude: 'Claude', both: '같이', back: '백엔드' };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const $ = (id) => document.getElementById(id);
+
+$('updated').textContent = '마지막 업데이트 ' + UPDATED;
+const all = PHASES.flatMap((p) => p.items);
+const doneN = all.filter((i) => i.s === 'done').length;
+const pct = Math.round((doneN / all.length) * 100);
+$('pct').textContent = pct + '%';
+$('pctBar').style.width = pct + '%';
+$('pctNote').textContent = `${all.length}개 중 ${doneN}개 완료 · 화면 기준이라 API 연결 뒤 다시 늘어날 수 있어요`;
+$('nowDoing').textContent = NOW.doing;
+$('nowNext').textContent = NOW.next;
+$('blocked').textContent = NOW.blocked;
+
+$('myTodo').innerHTML = MY_TODO.map((m) => `<li><div><h3>${esc(m.t)}</h3><p class="why">${esc(m.why)}</p><p>${esc(m.how)}</p>${m.cmd ? `<pre><code>${esc(m.cmd)}</code></pre>` : ''}</div></li>`).join('');
+
+$('phases').innerHTML = PHASES.map((p) => {
+  const d = p.items.filter((i) => i.s === 'done').length;
+  const active = p.items.some((i) => i.s === 'doing' || i.s === 'next') || (d > 0 && d < p.items.length);
+  const st = d === p.items.length ? 'done' : active ? 'doing' : 'todo';
+  return `<details class="box phase" id="phase-${p.n}" ${active ? 'open' : ''}>
+    <summary><span class="pname"><span class="pnum">${String(p.n).padStart(2, '0')}</span>${esc(p.name)}</span><span class="st ${st}">${LABEL[st]}</span>
+      <span class="pbar"><span class="bar"><i style="width:${(d / p.items.length) * 100}%"></i></span><span>${d}/${p.items.length}</span></span></summary>
+    <ul class="items">${p.items.map((i) => `<li><span class="st ${i.s}">${LABEL[i.s]}</span><span class="t">${esc(i.t)}</span><span class="who">${WHO[i.who]}</span>${i.n ? `<span class="n">${esc(i.n)}</span>` : ''}</li>`).join('')}</ul>
+  </details>`;
+}).join('');
+
+$('foundList').innerHTML = FOUND.length ? FOUND.map((f) => `<li><span class="st ${f.s}">${f.s === 'done' ? '고침' : f.s === 'doing' ? '고치는 중' : '확인 중'}</span><div><b>${esc(f.t)}</b><p class="why" style="color:var(--sub);font-size:13.5px">${esc(f.fix || '')} · ${esc(f.d)}</p></div></li>`).join('') : '<li>아직 없어요. 보이는 대로 채팅에 말해 주세요.</li>';
+$('logList').innerHTML = LOG.map((l) => `<li><time>${esc(l.d)}</time><p>${l.t}</p></li>`).join('');
+$('ruleList').innerHTML = RULES.map(([h, p]) => `<div class="box"><h3>${esc(h)}</h3><p>${esc(p)}</p></div>`).join('');
+$('learnList').innerHTML = LEARN.map(([h, p, f]) => `<li><span class="st next">개념</span><span class="t">${esc(h)}</span><span class="who"></span><span class="n">${esc(p)} <code>${esc(f)}</code></span></li>`).join('');
+</script>

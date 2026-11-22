@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>계절 장식 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>
+:root { --ink: #1E1A2B; --cream: #FBF6EA; --sub: #6F6880; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 18px; background: #E9E2D2; font-family: 'Noto Sans KR', sans-serif; color: var(--ink); }
+.grid { display: grid; grid-template-columns: 150px repeat(4, 200px); gap: 12px; align-items: stretch; }
+.hd { font-weight: 900; font-size: 15px; text-align: center; align-self: end; padding-bottom: 2px; }
+.rl { display: flex; flex-direction: column; justify-content: center; } .rl b { font-family: 'Unbounded', sans-serif; font-size: 20px; } .rl span { font-size: 12.5px; font-weight: 700; color: var(--sub); line-height: 1.45; margin-top: 4px; }
+.pn { position: relative; height: 240px; border-radius: 22px; border: 2.5px solid var(--ink); overflow: hidden; background: var(--cream) radial-gradient(#E4DCCB 1.3px, transparent 1.4px) 0 0 / 18px 18px; }
+.pn .node { position: absolute; left: 50%; top: 56%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; border: 2.5px solid var(--ink); background: radial-gradient(circle at 40% 35%, #FFF6B0, #FFE200 60%, #E8C400); box-shadow: 0 5px 0 var(--ink); font-family: 'Unbounded'; font-weight: 800; font-size: 24px; display: grid; place-items: center; z-index: 2; }
+.pn .tag { position: absolute; left: 14px; top: 12px; z-index: 3; font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 10px; background: var(--ink); color: #FFE200; }
+.p { position: absolute; top: 0; left: var(--x); width: var(--s); height: var(--s); animation: fall var(--d) linear infinite; animation-delay: var(--dl); z-index: var(--z, 1); }
+.p .w { display: block; width: 100%; height: 100%; animation: sway var(--sw) ease-in-out infinite alternate; }
+.p svg { display: block; width: 100%; height: 100%; overflow: visible; }
+@keyframes fall { from { transform: translate(0, -40px); } to { transform: translate(var(--dx, 0px), 280px); } }
+@keyframes rise { from { transform: translate(0, 260px); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { transform: translate(var(--dx, 0px), -30px); opacity: 0; } }
+@keyframes sway { from { transform: translateX(-14px) rotate(-30deg); } to { transform: translateX(14px) rotate(40deg); } }
+@keyframes tumble { 0% { transform: translateX(-14px) rotate(-30deg) rotateY(0); } 50% { transform: translateX(4px) rotate(10deg) rotateY(80deg); } 100% { transform: translateX(16px) rotate(50deg) rotateY(170deg); } }
+@keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes glowp { 0%, 100% { filter: drop-shadow(0 0 2px var(--g)) drop-shadow(0 0 6px var(--g)); } 50% { filter: drop-shadow(0 0 5px var(--g)) drop-shadow(0 0 12px var(--g)); } }
+/* A 수채 소프트: 테두리 없이 · 가까운 건 크고 흐리게 (원근) */
+.A .p.near { filter: blur(1.6px); opacity: .55; } .A .p { opacity: .9; }
+/* B 스티커 팝: 잉크 테두리 · 살짝 그림자 */
+.B .p svg { filter: drop-shadow(1px 2px 0 rgba(30,26,43,.28)); }
+/* C 반짝 빛 */
+.C .p.gl svg { animation: glowp 1.6s ease-in-out infinite; }
+.C .sp { position: absolute; width: var(--s); height: var(--s); left: var(--x); top: var(--y); animation: twinkle var(--d) ease-in-out infinite; animation-delay: var(--dl); z-index: 1; }
+.C .p.up { animation-name: rise; }
+/* D 바람: 사선으로 흩날리고 바람 줄기 */
+.D .p { animation-timing-function: cubic-bezier(.3, .1, .6, 1); }
+.D .gust { position: absolute; height: 2px; width: 70px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(30,26,43,.22), transparent); top: var(--y); left: -80px; animation: gust var(--d) ease-in-out infinite; animation-delay: var(--dl); }
+@keyframes gust { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translateX(320px); opacity: 0; } }
+.leafwrap .w { animation-name: tumble; } .leafwrap { perspective: 200px; }
+@media (prefers-reduced-motion: reduce) { .p, .p .w, .sp, .gust { animation: none !important; } }
+</style></head><body>
+<div class="grid" id="g"></div>
+<script>
+const INK = '#1E1A2B';
+const R = (a, b) => a + Math.random() * (b - a);
+// 모양들 (stroke: 잉크 테두리 여부)
+const petal = (c1, c2, st) => `<svg viewBox="0 0 24 24"><defs><linearGradient id="pg${c1.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M12 5 L10.4 2 C5.6 4.4 3.4 11 6.8 17.6 C9 21.8 15 21.8 17.2 17.6 C20.6 11 18.4 4.4 13.6 2 Z" fill="url(#pg${c1.slice(1)})" ${st ? `stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"` : ''}/><path d="M12 7 Q12.5 13 12 19" stroke="#fff" stroke-opacity=".6" stroke-width="1" fill="none"/></svg>`;
+const blossom = (c, st) => `<svg viewBox="0 0 24 24">${[0, 72, 144, 216, 288].map((r) => `<ellipse cx="12" cy="6.5" rx="3.6" ry="5" transform="rotate(${r} 12 12)" fill="${c}" ${st ? `stroke="${INK}" stroke-width="1.2"` : ''}/>`).join('')}<circle cx="12" cy="12" r="2.4" fill="#FFE27A" ${st ? `stroke="${INK}" stroke-width="1"` : ''}/></svg>`;
+const maple = (c1, c2, st) => `<svg viewBox="0 0 48 48"><path d="M24 2.5l3.2 7.6 4.6-2.6-.9 8.3 7.2-3.7-1.6 6.1 7.6.3-5.5 5.8 2.9 2.4-8.6 4.6 1.7 4.4-9.2-1.8-.6 10.6h-1.6l-.6-10.6-9.2 1.8 1.7-4.4-8.6-4.6 2.9-2.4-5.5-5.8 7.6-.3-1.6-6.1 7.2 3.7-.9-8.3 4.6 2.6z" fill="${c1}" ${st ? `stroke="${INK}" stroke-width="2"` : `stroke="${c2}" stroke-width="1.2"`} stroke-linejoin="round"/><path d="M24 9v37M24 31l-11-8M24 31l11-8" stroke="${c2}" stroke-opacity=".7" stroke-width="1.2" fill="none"/></svg>`;
+const ginkgo = (c, st) => `<svg viewBox="0 0 24 24"><path d="M12 22 L12 14" stroke="${st ? INK : '#B3861A'}" stroke-width="1.4"/><path d="M12 14 C4 13.5 1.5 7 4.5 3 C7.5 5 10 4.2 12 2.2 C14 4.2 16.5 5 19.5 3 C22.5 7 20 13.5 12 14 Z" fill="${c}" ${st ? `stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"` : ''}/><path d="M12 14 L9 6 M12 14 L12 4 M12 14 L15 6" stroke="#fff" stroke-opacity=".45" stroke-width=".8"/></svg>`;
+const flake = (c, st) => `<svg viewBox="0 0 24 24"><g stroke="${st ? INK : c}" stroke-width="${st ? 2.6 : 1.8}" stroke-linecap="round">${[0, 60, 120].map((r) => `<g transform="rotate(${r} 12 12)"><path d="M12 2 V22 M12 5 L9.5 3 M12 5 L14.5 3 M12 19 L9.5 21 M12 19 L14.5 21"/></g>`).join('')}</g>${st ? `<g stroke="${c}" stroke-width="1.2" stroke-linecap="round">${[0, 60, 120].map((r) => `<path d="M12 2.6 V21.4" transform="rotate(${r} 12 12)"/>`).join('')}</g>` : ''}</svg>`;
+const dot = (c, o = 1) => `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="${c}" opacity="${o}"/></svg>`;
+const leafG = (c1, c2, st) => `<svg viewBox="0 0 40 40"><path d="M20 3 C31 10 33 25 20 37 C7 25 9 10 20 3 Z" fill="${c1}" ${st ? `stroke="${INK}" stroke-width="2"` : ''}/><path d="M20 7 Q21 22 20 34" fill="none" stroke="${c2}" stroke-width="1.6"/></svg>`;
+const seed = () => `<svg viewBox="0 0 24 24"><path d="M12 22 L12 11" stroke="#BCA98A" stroke-width="1"/>${Array.from({ length: 9 }, (_, k) => { const a = -Math.PI + k * Math.PI / 8; return `<path d="M12 11 L${12 + Math.cos(a) * 9} ${11 + Math.sin(a) * 9}" stroke="#fff" stroke-width=".9"/><circle cx="${12 + Math.cos(a) * 9}" cy="${11 + Math.sin(a) * 9}" r="1" fill="#fff"/>`; }).join('')}<ellipse cx="12" cy="22" rx="1.2" ry="2" fill="#9C7A5C"/></svg>`;
+const firefly = () => `<svg viewBox="0 0 24 24"><defs><radialGradient id="ff"><stop offset="0" stop-color="#FFFBD0"/><stop offset=".45" stop-color="#FFE45C" stop-opacity=".9"/><stop offset="1" stop-color="#FFE45C" stop-opacity="0"/></radialGradient></defs><circle cx="12" cy="12" r="11" fill="url(#ff)"/><circle cx="12" cy="12" r="2.6" fill="#FFFDE8"/></svg>`;
+const star = (c) => `<svg viewBox="0 0 24 24"><path d="M12 1 C12.8 8 16 11.2 23 12 C16 12.8 12.8 16 12 23 C11.2 16 8 12.8 1 12 C8 11.2 11.2 8 12 1 Z" fill="${c}"/></svg>`;
+const starI = (c) => `<svg viewBox="0 0 24 24"><path d="M12 1 C12.8 8 16 11.2 23 12 C16 12.8 12.8 16 12 23 C11.2 16 8 12.8 1 12 C8 11.2 11.2 8 12 1 Z" fill="${c}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+// 스타일 × 계절
+const STY = {
+  A: { name: '수채 소프트', d: '테두리 없는 파스텔 · 가까운 건 크고 흐리게 (원근) · 느리고 부드럽게',
+    spring: () => pick([petal('#FBD9E3', '#F2A8BA'), petal('#FCE6EC', '#F7C3D2'), blossom('#FBD3DF')]), summer: () => pick([seed(), seed(), leafG('#CDEFB0', '#9BD486')]),
+    autumn: () => pick([maple('#F6A06B', '#E0784A'), maple('#F28B7E', '#D85C50'), ginkgo('#F7D46A')]), winter: () => pick([dot('#CFE3F7', .95), dot('#B9D6F2', .9), flake('#A9CBEB')]) },
+  B: { name: '스티커 팝', d: 'PALLO 잉크 테두리 · 쨍한 색 · 살짝 그림자 · 노란 별이 섞여요',
+    spring: () => pick([petal('#FF9EBB', '#F06A92', 1), blossom('#FFB8CC', 1), starI('#FFE200')]), summer: () => pick([leafG('#8EE07A', '#3E9B4A', 1), leafG('#B6F06A', '#5DA83A', 1), starI('#FFE200')]),
+    autumn: () => pick([maple('#FF7A3D', '#B94A1E', 1), maple('#FF5A4E', '#9E2A22', 1), ginkgo('#FFD23F', 1), starI('#FFE200')]), winter: () => pick([flake('#BFE4FF', 1), flake('#FFFFFF', 1), starI('#FFE200')]) },
+  C: { name: '반짝 빛', d: '은은한 빛 · 반딧불이 떠오르고 금빛 가루 · 반짝임이 깜빡여요',
+    spring: () => pick([petal('#FFD0DE', '#F59BB6'), blossom('#FFE0EA')]), summer: 'firefly',
+    autumn: () => pick([maple('#FFB15C', '#E0784A'), ginkgo('#FFD86B')]), winter: () => pick([flake('#BFDCF5'), dot('#CFE3F7')]) },
+  D: { name: '바람결', d: '바람에 사선으로 흩날려요 · 가끔 바람 줄기가 스쳐요',
+    spring: () => pick([petal('#FBC7D6', '#EE95AE'), petal('#FDE1E9', '#F5B5C7')]), summer: () => pick([leafG('#B8E89C', '#6CBF5C'), leafG('#D9F2A8', '#94CF5C')]),
+    autumn: () => pick([maple('#F47B3B', '#B94A1E'), maple('#E2483C', '#9E2A22'), ginkgo('#F6B12B')]), winter: () => pick([dot('#C6DDF3'), flake('#A9CBEB')]) }
+};
+const SEA = [['spring', '봄 · 벚꽃'], ['summer', '여름'], ['autumn', '가을 · 단풍'], ['winter', '겨울 · 눈']];
+const g = document.getElementById('g');
+g.innerHTML = '<div></div>' + SEA.map(([, n]) => `<div class="hd">${n}</div>`).join('');
+Object.entries(STY).forEach(([k, st]) => {
+  g.insertAdjacentHTML('beforeend', `<div class="rl"><b>${k}</b><b style="font-family:'Noto Sans KR';font-size:15px">${st.name}</b><span>${st.d}</span></div>`);
+  SEA.forEach(([se]) => {
+    let h = `<div class="pn ${k}"><span class="node">1</span>`;
+    const n = k === 'A' ? 22 : 18;
+    for (let i = 0; i < n; i++) {
+      if (k === 'C' && se === 'summer') { const s = R(10, 20); h += `<span class="p up gl" style="--g:#FFE45C;--x:${R(4, 90)}%;--s:${s}px;--d:${R(7, 12)}s;--dl:-${R(0, 10)}s;--dx:${R(-30, 30)}px;--sw:${R(1.5, 2.5)}s"><span class="w">${firefly()}</span></span>`; continue; }
+      const near = k === 'A' && i % 4 === 0, s = near ? R(30, 40) : k === 'A' ? R(12, 22) : R(16, 28);
+      const leafy = se === 'autumn' || (se === 'summer' && k !== 'C');
+      const dx = k === 'D' ? R(90, 160) : R(-20, 20), d = k === 'D' ? R(5, 8) : k === 'A' ? R(12, 18) : R(8, 13);
+      h += `<span class="p${near ? ' near' : ''}${k === 'C' ? ' gl' : ''}${leafy ? ' leafwrap' : ''}" style="--g:${se === 'autumn' ? '#FFC46B' : se === 'spring' ? '#FFB6CB' : '#9CC7EE'};--x:${k === 'D' ? R(-30, 70) : R(2, 92)}%;--s:${s}px;--d:${d}s;--dl:-${R(0, d)}s;--dx:${dx}px;--sw:${R(1.8, 3.2)}s;--z:${near ? 3 : 1}"><span class="w">${st[se]()}</span></span>`;
+    }
+    if (k === 'C') for (let i = 0; i < 10; i++) { const s = R(6, 12); h += `<span class="sp" style="--x:${R(4, 92)}%;--y:${R(4, 92)}%;--s:${s}px;--d:${R(1.4, 2.6)}s;--dl:-${R(0, 2)}s">${star(se === 'autumn' ? '#FFD27A' : se === 'spring' ? '#FFD0DE' : se === 'summer' ? '#FFF3A0' : '#BFDCF5')}</span>`; }
+    if (k === 'D') for (let i = 0; i < 4; i++) h += `<span class="gust" style="--y:${R(10, 85)}%;--d:${R(2.6, 4)}s;--dl:-${R(0, 4)}s"></span>`;
+    g.insertAdjacentHTML('beforeend', h + '</div>');
+  });
+});
+</script>
+</body></html>

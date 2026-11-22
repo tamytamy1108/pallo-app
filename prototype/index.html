@@ -91,6 +91,7 @@ a { color: inherit; }
 .greet mark { background: var(--yellow); color: var(--ink); padding: 0 6px; border-radius: 8px; border: 2px solid var(--ink); }
 .notice { display: flex; align-items: center; height: 48px; border-radius: 16px; overflow: hidden; box-shadow: none; }
 .notice-tag { height: 100%; min-width: 62px; padding: 0 10px; display: flex; align-items: center; justify-content: center; text-align: center; border-right: 2px solid var(--ink); background: var(--ink); color: var(--white); font-family: var(--f-display); font-size: 9.5px; line-height: 1.15; font-weight: 800; letter-spacing: .3px; flex-shrink: 0; box-sizing: border-box; }
+#noticeStrip { cursor: pointer; transition: transform .15s var(--ease); } #noticeStrip:active { transform: scale(.98); }
 .notice-view { flex: 1; min-width: 0; overflow: hidden; padding: 0; }
 .notice-track { display: flex; transition: transform .7s var(--ease); }
 .notice-track > span { flex: 0 0 100%; min-width: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
@@ -132,6 +133,33 @@ a { color: inherit; }
 @keyframes flutter { from { transform: translateX(-26px) rotate(-14deg); } to { transform: translateX(26px) rotate(16deg); } }
 .wing { transform-box: view-box; transform-origin: 12px 12px; animation: flap .2s ease-in-out infinite alternate; }
 @keyframes flap { to { transform: scaleX(.22); } }
+.season.sfx-a .pt { opacity: .9; } .season.sfx-a .pt.near { filter: blur(1.6px); opacity: .55; }
+.season.sfx-c .pt.gl svg { animation: glowp 1.6s ease-in-out infinite; }
+.season .pt.up { animation-name: sfRise; }
+@keyframes sfRise { from { transform: translate(0, var(--h, 1700px)); opacity: 0; } 8% { opacity: 1; } 90% { opacity: 1; } to { transform: translate(var(--dx, 0px), -40px); opacity: 0; } }
+@keyframes glowp { 0%, 100% { filter: drop-shadow(0 0 2px var(--g)) drop-shadow(0 0 6px var(--g)); } 50% { filter: drop-shadow(0 0 5px var(--g)) drop-shadow(0 0 12px var(--g)); } }
+.season .sp { position: absolute; width: var(--s); height: var(--s); left: var(--x); top: var(--y); animation: twinkle var(--d) ease-in-out infinite; animation-delay: var(--dl); }
+.season .sp svg { display: block; width: 100%; height: 100%; }
+@keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.1); } }
+.season.sfx-e .pt { perspective: 200px; } .season.sfx-e .pt .sw { animation-name: sfFlip; } .season.sfx-e.xm .pt .sw { animation-name: sway; } .season.sfx-e .pt svg { filter: drop-shadow(0 3px 2px rgba(80,60,30,.22)); }
+.season.sfx-h .pt { perspective: 160px; } .season.sfx-h .pt .sw { animation-name: sfSpin; animation-timing-function: linear; }
+@keyframes sfFlip { 0% { transform: translateX(-12px) rotate(-20deg) rotateY(0); } 50% { transform: translateX(2px) rotate(10deg) rotateY(90deg); } 100% { transform: translateX(14px) rotate(40deg) rotateY(180deg); } }
+@keyframes sfSpin { from { transform: translateX(-10px) rotate(0) rotateX(0); } to { transform: translateX(10px) rotate(200deg) rotateX(70deg); } }
+.qmap-card.xm-bg { background-color: #1B4A3A; background-image: radial-gradient(rgba(255,255,255,.16) 1.3px, transparent 1.5px), radial-gradient(rgba(255,255,255,.08) 1px, transparent 1.2px), linear-gradient(180deg, #143A2F 0%, #1D5440 45%, #236048 100%); background-size: 26px 26px, 13px 13px, 100% 100%; background-position: 0 0, 6px 9px, 0 0; }
+.qmap-card.xm-bg h2, .qmap-card.xm-bg .qmap-prog b, .qmap-card.xm-bg .node-label { color: #FFF8E8; }
+.qmap-card.xm-bg #qmapInner .node-label { text-shadow: 0 0 3px #143A2F, 0 0 3px #143A2F, 0 1px 4px rgba(0,0,0,.4); }
+.qmap-card.xm-bg .week-chip { background: #FFF8E8; }
+.xm-star { position: absolute; width: var(--s); height: var(--s); left: var(--x); top: var(--y); animation: xmTw var(--d) ease-in-out infinite; animation-delay: var(--dl); }
+.xm-star svg { display: block; width: 100%; height: 100%; }
+@keyframes xmTw { 0%, 100% { opacity: .25; transform: scale(.7); } 50% { opacity: 1; transform: scale(1); } }
+.xm-drift.big { height: 130px; }
+.xm-garland { position: absolute; left: 0; right: 0; top: -4px; height: 40px; z-index: 3; pointer-events: none; }
+.xm-garland svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.xm-bulb { animation: xmBlink 1.6s ease-in-out infinite; }
+@keyframes xmBlink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.xm-drift { position: absolute; left: 0; right: 0; bottom: 0; height: 46px; z-index: 1; pointer-events: none; }
+.xm-drift svg { display: block; width: 100%; height: 100%; }
+@media (prefers-reduced-motion: reduce) { .xm-bulb, .xm-star { animation: none; } }
 .season-chip { height: 24px; padding: 0 10px; border-radius: 12px; border: 1.5px solid var(--ink); background: var(--white); font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; margin-left: 6px; white-space: nowrap; }
 /* 이번 주 진도: 칩과 과 탭이 같은 베이지 바탕 + 잉크 테두리로 한 묶음처럼 보여요 */
 .week-mark, .chap.week-mark { border: 2px solid var(--ink) !important; background: #F1EBDC; color: var(--ink); }
@@ -733,6 +761,9 @@ a { color: inherit; }
 .st-top .icon-btn[hidden] { display: flex; visibility: hidden; }
 .st-top #stClose { order: -1; margin-left: 0; }
 .st-top #stClose[hidden] { display: none; }   /* 회차 화면(단계 밖)에서는 뒤로 버튼이 왼쪽 끝 */   /* 제목은 가운데 고정, 닫기는 오른쪽 */
+.st-body > .st-kick2:first-child { margin-top: 14px; }
+.st-ttl.prog { left: 64px; right: 64px; display: flex; align-items: center; gap: 10px; }
+.st-ttl.prog .pr-bar { flex: 1; } .st-ttl.prog .pr-count { flex: none; line-height: 1; }
 .st-ttl { position: absolute; left: 68px; right: 68px; bottom: 10px; height: 44px; line-height: 44px; min-width: 0; text-align: center; font-size: 14px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .st-body { flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; padding: 6px 16px calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
 .st-body::-webkit-scrollbar { display: none; }
@@ -855,7 +886,10 @@ a { color: inherit; }
 .st-opt { min-height: 54px; padding: 12px 16px; border-radius: 18px; border: 2.5px solid var(--ink); background: var(--white); box-shadow: 0 4px 0 var(--ink); font-family: var(--f-body); font-size: 15px; font-weight: 800; color: var(--ink); line-height: 1.45; text-align: left; cursor: pointer; transition: transform .12s, box-shadow .12s, background-color .2s; }
 .st-opt:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 .st-opt.right { background: var(--yellow); }
-.st-opt.wrong { background: #F6D3DC; border-style: dashed; box-shadow: none; color: #8A6170; }
+.st-opt.wrong { background: #F6D3DC; border-style: dashed; box-shadow: none; color: #8A6170; transform: translateY(4px); animation: optNo .45s cubic-bezier(.3, .7, .4, 1); }
+/* 틀린 보기: 다른 학습 코너처럼 눌리며 좌우로 흔들려요 */
+@keyframes optNo { 0% { transform: translateY(0); } 20% { transform: translate(-7px, 4px); } 40% { transform: translate(7px, 4px); } 60% { transform: translate(-4px, 4px); } 80% { transform: translate(4px, 4px); } 100% { transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .st-opt.wrong { animation: none; } }
 .st-opt[disabled] { cursor: default; }
 .st-rx { display: flex; align-items: center; gap: 12px; }
 .st-rx img { width: 74px; flex-shrink: 0; transform-origin: 50% 100%; animation: reactHop .7s cubic-bezier(.3, 1.5, .5, 1); }
@@ -1063,6 +1097,8 @@ a { color: inherit; }
 .m3-lv { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 4px 10px 5px; border-radius: 12px; border: 2px solid var(--ink); background: var(--white); text-align: center; white-space: nowrap; pointer-events: none; line-height: 1.15; box-shadow: 2px 2px 0 var(--ink); }
 .m3-lv b { display: block; font-family: var(--f-display); font-size: 11px; font-weight: 800; } .m3-lv small { display: block; font-size: 10px; font-weight: 800; color: var(--sub); }
 .m3-lv.cur { background: var(--yellow); } .m3-lv.soon { border-style: dashed; border-color: #9A93A6; color: #6F6880; background: rgba(255,255,255,.9); box-shadow: none; }
+.m3-me { position: absolute; z-index: 2; transform: translate(-50%, -100%); pointer-events: none; }
+.m3-me-i { transform-origin: 50% 100%; } .m3-me .av-char { position: relative; left: 0; bottom: auto; width: 100%; }
 .m3-zp { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 6; display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; border-radius: 18px; border: 2px solid var(--ink); background: var(--white); box-shadow: 3px 4px 0 var(--ink); transform: translateY(140%); transition: transform .35s cubic-bezier(.2,.9,.3,1.2); }
 .m3-zp.on { transform: none; }
 .m3-zp .t { flex: 1; min-width: 0; } .m3-zp small { display: block; font-size: 11px; font-weight: 900; color: var(--purple); } .m3-zp b { font-size: 16px; font-weight: 900; }
@@ -1121,7 +1157,6 @@ a { color: inherit; }
 .st-foot .st-bigmic { width: 100%; }
 #stBody > .st-done, #stBody > .st-row2 { position: sticky; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 5; margin-top: auto; }
 .st-qfoot .st-opts.done .st-opt:not(.right):not(.wrong) { display: none; }
-.st-qfoot .st-opt { min-height: 50px; padding: 10px 14px; }
 .st-foot .st-fb { margin: 2px -16px calc(-16px - env(safe-area-inset-bottom, 0px)); padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
 .st-fb .ls-mk { background: var(--white); }
 .st-fb .ls-mk[aria-pressed="true"] { background: var(--yellow); }
@@ -1187,6 +1222,14 @@ a { color: inherit; }
 .ls-bub { position: relative; flex: 1; min-width: 0; margin-bottom: 28px; padding: 12px 14px; border: 2px solid var(--ink); border-radius: 20px; background: var(--white); box-shadow: 3px 3px 0 var(--ink); }
 .ls-bub::before { content: ""; position: absolute; left: -9px; bottom: 16px; width: 14px; height: 14px; background: var(--white); border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); }
 .ls-q { display: flex; align-items: flex-start; gap: 8px; }
+.ls-bub:has(.ls-q .ls-spk) { padding-right: 52px; }
+.ls-q .ls-spk { position: absolute; top: 10px; right: 10px; }
+/* 모든 코너 대화 말풍선: 소리 버튼은 말풍선 안 오른쪽 위 → 영어 · 한국어 줄 시작이 맞아요 (AI 대화 · 프리토킹 · 단어 대화 등) */
+.st-msg > div:has(> .b + [data-say]) { position: relative; }
+.st-msg > div > .b:has(+ [data-say]) { padding-right: 48px; }
+.st-msg > div > .b + [data-say] { position: absolute; top: 8px; right: 8px; margin: 0; width: 32px; height: 32px; padding: 0; border-radius: 16px; border: 2px solid var(--ink); background: #BFE4EC; color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 0; gap: 0; cursor: pointer; }
+.st-msg > div:has(> .who) > .b + [data-say] { top: 25px; }
+.st-msg > div > .b + [data-say] svg { width: 15px; height: 15px; }
 .ls-q b { font-size: 17px; font-weight: 900; line-height: 1.4; letter-spacing: -.2px; }
 .ls-bub small { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--sub); line-height: 1.45; }
 .ls-bg { margin: 0 0 8px; font-size: 12.5px; font-weight: 600; line-height: 1.55; color: var(--sub); }
@@ -2465,6 +2508,7 @@ s.fee0 { color: #A39C8E; font-weight: 700; margin-left: 4px; }
 .lg-fl { display: flex; flex-direction: column; gap: 6px; }
 .lg-fl > label, .lg-fl > .lb { font-size: 12.5px; font-weight: 900; }
 .lg-fl input, .lg-fl textarea[rows="1"] { height: 46px; border-radius: 14px; border: 2px solid var(--ink); padding: 0 14px; font: inherit; font-size: 14px; font-weight: 700; background: #fff; box-sizing: border-box; width: 100%; color: var(--ink); }
+.lg-fl textarea[rows="1"] { height: auto; min-height: 46px; max-height: 40vh; padding: 11px 14px; line-height: 1.5; resize: none; overflow-x: hidden; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; display: block; width: 100%; max-width: 100%; field-sizing: content; }
 .lg-fl2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .lg-pills { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 2px 18px 4px; scroll-padding: 0 18px; -webkit-overflow-scrolling: touch; }
 .lg-pills::-webkit-scrollbar { display: none; }
@@ -2925,7 +2969,8 @@ article.lg-new .lg-ch { animation: lgNew 1.5s cubic-bezier(.3,1.4,.5,1); }
 .lg-det .dmem .lg-avs .lg-av:first-child { margin-left: 0; }
 .lg-det .dnote { margin-top: 14px; font-size: 12.5px; font-weight: 700; color: var(--sub); display: flex; gap: 6px; line-height: 1.5; }
 .lg-dcta { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--cream); border-top: 2px solid var(--ink); z-index: 4; }
-.lg-det .lg-dcta { position: sticky; bottom: 0; flex-shrink: 0; }
+.lg-det .lg-dcta { position: sticky; bottom: 0; flex-shrink: 0; margin-top: auto; }
+.lg-dcta .lg-btn.wh.main { width: auto; padding: 0 14px; }
 .lg-dcta .lg-btn { height: 54px; font-size: 15.5px; }
 .lg-dcta .main { flex: 1; }
 .lg-dcta .lg-btn.wh { width: 54px; padding: 0; }
@@ -3872,7 +3917,29 @@ article.lg-new .lg-ch { animation: lgNew 1.5s cubic-bezier(.3,1.4,.5,1); }
 #lesson .st-chip.on { background: var(--yellow); }
 #lesson .st-wline { border-bottom-width: 3px; }
 /* 피드백: 색 띠 대신 퀘스트처럼 바탕 그대로 + 보라 큰 글씨 */
-#lesson .ls-fb, #lesson .ls-fb.ls-fb-no, #lesson .ls-fb-end { background: transparent; border-top: 0; }
+#lesson .ls-fb, #lesson .ls-fb.ls-fb-no, #lesson .ls-fb-end, #study .ls-fb, #study .ls-fb.ls-fb-no { background: transparent; border-top: 0; }
+#study .ls-fb .ls-fb-t { align-items: flex-end; gap: 12px; }
+#study .ls-fb .ls-ok { width: 88px; height: 82px; border: 0; border-radius: 0; background: url(assets/c-upright-yellow.png) center bottom / contain no-repeat; animation: reactHop .7s cubic-bezier(.3, 1.5, .5, 1); }
+#study .ls-fb.ls-fb-no .ls-ok { background-image: url(assets/c-upright-purple.png); }
+#study .ls-fb .ls-ok svg { display: none; }
+#study .ls-fb-t b { font-size: 22px; line-height: 1.2; letter-spacing: -.4px; color: var(--purple); }
+#study .ls-fb.ls-fb-no .ls-fb-t b { color: #C2416B; }
+#study .ls-fb { padding-top: 8px; animation: none; }
+#study .ls-fb > * { animation: lsFbIn .34s cubic-bezier(.2, .8, .3, 1) both; } #study .ls-fb > * + * { animation-delay: .07s; }
+@media (prefers-reduced-motion: reduce) { #study .ls-fb > * { animation: none; } }
+.st-qfoot:empty { display: none; }
+/* 장면 롤플레이 */
+.fl-trk { display: flex; gap: 6px; } .fl-trk span { flex: 1; display: flex; flex-direction: column; gap: 5px; } .fl-trk i { height: 8px; border-radius: 4px; background: #E2D9C7; } .fl-trk span.on i { background: var(--ink); } .fl-trk span.now i { background: var(--pink); }
+.fl-trk b { font-size: 11px; font-weight: 800; color: var(--sub); text-align: center; } .fl-trk span.now b { color: var(--ink); }
+.fl-tw { font-size: 13px; font-weight: 900; color: #C2416B; }
+.fl-bub { display: flex; gap: 10px; align-items: flex-start; } .fl-bub .ppl-av { border-radius: 50%; border: 2px solid var(--ink); flex: none; object-fit: cover; }
+.fl-say { position: relative; flex: 1; min-width: 0; background: var(--white); border: 2.5px solid var(--ink); border-radius: 4px 18px 18px 18px; box-shadow: 0 4px 0 var(--ink); padding: 10px 50px 12px 14px; display: flex; flex-direction: column; gap: 3px; }
+.fl-say .who { font-size: 11px; font-weight: 800; color: var(--sub); } .fl-say b { font-size: 16px; font-weight: 800; line-height: 1.4; } .fl-say b.hid { color: var(--purple); font-size: 14px; }
+.fl-say .ko { font-size: 12.5px; font-weight: 700; color: var(--sub); } .fl-say .ls-spk { position: absolute; top: 10px; right: 10px; }
+.fl-lv { margin-left: 8px; color: var(--purple); }
+.st-hrow:has(.ft-endb) { justify-content: space-between; align-items: center; } .ft-endb { font-size: 13px; }
+.st-mish { display: flex; align-items: center; justify-content: space-between; gap: 8px; } .st-mish .st-link { font-size: 12px; }
+.st-opt .ko { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 700; color: #5A5368; line-height: 1.4; animation: lsFbIn .3s ease both; }
 #lesson .ls-fb-t b { font-size: 22px; letter-spacing: -.4px; }
 #lesson .pr-bar i { background: var(--yellow); }
 /* 상단 패턴 영역 (C 시안): 형광펜 패턴 + 점선으로 문제와 나누기 */
@@ -4415,7 +4482,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
 
         <h1 class="greet rise" style="animation-delay:.04s">Hey Tammy,<br>let’s <mark>talk!</mark></h1>
 
-        <div class="card notice rise" role="region" aria-label="Notice board" style="animation-delay:.06s">
+        <div class="card notice rise" id="noticeStrip" role="button" tabindex="0" aria-label="공지 보기" style="animation-delay:.06s">
           <div class="notice-tag">Notice<br>board</div>
           <div class="notice-view"><div class="notice-track" id="noticeTrack"></div></div>
           <span class="notice-idx" id="noticeIdx">1/3</span>
@@ -4732,6 +4799,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         <button aria-pressed="false" data-season="summer">여름</button>
         <button aria-pressed="false" data-season="autumn">가을</button>
         <button aria-pressed="false" data-season="winter">겨울</button>
+        <button aria-pressed="false" data-season="xmas">크리스마스</button>
       </div>
       <div class="hint">실제 앱에서는 날짜에 따라 자동으로 바뀌어요. 봄 벚꽃 · 여름 풀잎 · 가을 단풍 · 겨울 눈.</div>
     </div>
@@ -4849,13 +4917,93 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     autumn: { name: '가을 시즌 · 단풍', count: 20, kind: 'fall', size: [26, 40], make: (i) => LEAF([['#F47B3B', '#B94A1E'], ['#E2483C', '#9E2A22'], ['#F6B12B', '#B37A0E'], ['#D9643A', '#9A3E1E']][i % 4]) },
     winter: { name: '겨울 시즌 · 눈', count: 22, kind: 'snow', size: [16, 28], make: () => FLAKE() }
   };
-  const seasonOf = (d = new Date()) => { const m = d.getMonth() + 1; return m >= 3 && m <= 5 ? 'spring' : m >= 6 && m <= 8 ? 'summer' : m >= 9 && m <= 11 ? 'autumn' : 'winter'; };
+  // 계절 장식 스타일: A 수채 소프트(테두리 없는 파스텔 · 가까운 건 크고 흐리게) · C 반짝 빛(은은한 빛 · 반딧불이 · 반짝임)
+  const SF = {
+    petal: (c1, c2) => { const id = 'sfp' + Math.random().toString(36).slice(2, 7); return `<svg viewBox="0 0 24 24"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M12 5 L10.4 2 C5.6 4.4 3.4 11 6.8 17.6 C9 21.8 15 21.8 17.2 17.6 C20.6 11 18.4 4.4 13.6 2 Z" fill="url(#${id})"/><path d="M12 7 Q12.5 13 12 19" stroke="#fff" stroke-opacity=".6" stroke-width="1" fill="none"/></svg>`; },
+    blossom: (c) => `<svg viewBox="0 0 24 24">${[0, 72, 144, 216, 288].map((r) => `<ellipse cx="12" cy="6.5" rx="3.6" ry="5" transform="rotate(${r} 12 12)" fill="${c}"/>`).join('')}<circle cx="12" cy="12" r="2.4" fill="#FFE27A"/></svg>`,
+    maple: (c1, c2) => `<svg viewBox="0 0 48 48"><path d="M24 2.5l3.2 7.6 4.6-2.6-.9 8.3 7.2-3.7-1.6 6.1 7.6.3-5.5 5.8 2.9 2.4-8.6 4.6 1.7 4.4-9.2-1.8-.6 10.6h-1.6l-.6-10.6-9.2 1.8 1.7-4.4-8.6-4.6 2.9-2.4-5.5-5.8 7.6-.3-1.6-6.1 7.2 3.7-.9-8.3 4.6 2.6z" fill="${c1}" stroke="${c2}" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 9v37M24 31l-11-8M24 31l11-8" stroke="${c2}" stroke-opacity=".7" stroke-width="1.2" fill="none"/></svg>`,
+    ginkgo: (c) => `<svg viewBox="0 0 24 24"><path d="M12 22 L12 14" stroke="#B3861A" stroke-width="1.4"/><path d="M12 14 C4 13.5 1.5 7 4.5 3 C7.5 5 10 4.2 12 2.2 C14 4.2 16.5 5 19.5 3 C22.5 7 20 13.5 12 14 Z" fill="${c}"/><path d="M12 14 L9 6 M12 14 L12 4 M12 14 L15 6" stroke="#fff" stroke-opacity=".45" stroke-width=".8"/></svg>`,
+    flake: (c) => `<svg viewBox="0 0 24 24"><g stroke="${c}" stroke-width="1.8" stroke-linecap="round">${[0, 60, 120].map((r) => `<g transform="rotate(${r} 12 12)"><path d="M12 2 V22 M12 5 L9.5 3 M12 5 L14.5 3 M12 19 L9.5 21 M12 19 L14.5 21"/></g>`).join('')}</g></svg>`,
+    dot: (c, o = 1) => `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="${c}" opacity="${o}"/></svg>`,
+    leaf: (c1, c2) => `<svg viewBox="0 0 40 40"><path d="M20 3 C31 10 33 25 20 37 C7 25 9 10 20 3 Z" fill="${c1}"/><path d="M20 7 Q21 22 20 34" fill="none" stroke="${c2}" stroke-width="1.6"/></svg>`,
+    seed: () => `<svg viewBox="0 0 24 24"><path d="M12 22 L12 11" stroke="#BCA98A" stroke-width="1"/>${Array.from({ length: 9 }, (_, k) => { const a = -Math.PI + k * Math.PI / 8; return `<path d="M12 11 L${(12 + Math.cos(a) * 9).toFixed(2)} ${(11 + Math.sin(a) * 9).toFixed(2)}" stroke="#C9BC9F" stroke-width="1"/><circle cx="${(12 + Math.cos(a) * 9).toFixed(2)}" cy="${(11 + Math.sin(a) * 9).toFixed(2)}" r="1.3" fill="#DCE8B8"/>`; }).join('')}<ellipse cx="12" cy="22" rx="1.2" ry="2" fill="#9C7A5C"/></svg>`,
+    firefly: () => `<svg viewBox="0 0 24 24"><defs><radialGradient id="sfff"><stop offset="0" stop-color="#FFFBD0"/><stop offset=".45" stop-color="#FFE45C" stop-opacity=".9"/><stop offset="1" stop-color="#FFE45C" stop-opacity="0"/></radialGradient></defs><circle cx="12" cy="12" r="11" fill="url(#sfff)"/><circle cx="12" cy="12" r="2.6" fill="#FFFDE8"/></svg>`,
+    star: (c) => `<svg viewBox="0 0 24 24"><path d="M12 1 C12.8 8 16 11.2 23 12 C16 12.8 12.8 16 12 23 C11.2 16 8 12.8 1 12 C8 11.2 11.2 8 12 1 Z" fill="${c}"/></svg>`,
+    // E 종이 컷아웃 · H 컨페티 모양
+    D_PETAL: 'M12 5 L10.4 2 C5.6 4.4 3.4 11 6.8 17.6 C9 21.8 15 21.8 17.2 17.6 C20.6 11 18.4 4.4 13.6 2 Z',
+    D_LEAF: 'M12 1.5 C19 6 20.5 15 12 22.5 C3.5 15 5 6 12 1.5 Z',
+    D_MAPLE: 'M12 1.2l1.6 3.8 2.3-1.3-.45 4.15 3.6-1.85-.8 3.05 3.8.15-2.75 2.9 1.45 1.2-4.3 2.3.85 2.2-4.6-.9-.3 5.3h-.8l-.3-5.3-4.6.9.85-2.2-4.3-2.3 1.45-1.2-2.75-2.9 3.8-.15-.8-3.05 3.6 1.85-.45-4.15 2.3 1.3z',
+    D_GINKGO: 'M12 14 C4 13.5 1.5 7 4.5 3 C7.5 5 10 4.2 12 2.2 C14 4.2 16.5 5 19.5 3 C22.5 7 20 13.5 12 14 Z',
+    G_FLAKE: [0, 60, 120].map((r) => `<g transform="rotate(${r} 12 12)"><path d="M12 2 V22 M12 5.5 L9.5 3.3 M12 5.5 L14.5 3.3 M12 18.5 L9.5 20.7 M12 18.5 L14.5 20.7"/></g>`).join(''),
+    G_BLOSSOM: [0, 72, 144, 216, 288].map((r) => `<ellipse cx="12" cy="6.6" rx="3.5" ry="4.9" transform="rotate(${r} 12 12)"/>`).join(''),
+    paper: (d, c, inner = '') => `<svg viewBox="0 0 24 24"><path d="${d}" fill="${c}" stroke="#FFFDF7" stroke-width="1.6" stroke-linejoin="round"/>${inner}</svg>`,
+    paperBlossom: (c) => `<svg viewBox="0 0 24 24"><g fill="${c}" stroke="#FFFDF7" stroke-width="1.4">${SF.G_BLOSSOM}</g><circle cx="12" cy="12" r="2.3" fill="#FFE27A" stroke="#FFFDF7" stroke-width="1"/></svg>`,
+    paperFlake: (c) => `<svg viewBox="0 0 24 24"><g stroke="#FFFDF7" stroke-width="4.2" stroke-linecap="round" fill="none">${SF.G_FLAKE}</g><g stroke="${c}" stroke-width="2.2" stroke-linecap="round" fill="none">${SF.G_FLAKE}</g></svg>`,
+    sym: (c) => `<svg viewBox="0 0 426.31 377.94"><path d="${SYMBOL}" fill="${c}"/></svg>`,
+    rect: (c) => `<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5" fill="${c}"/></svg>`,
+    disc: (c) => `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="${c}"/></svg>`
+  };
+  const VEIN = '<path d="M12 4 V20" stroke="#FFFDF7" stroke-width="1"/>';
+  const PW = 'stroke="#FFFDF7" stroke-width="1.6" stroke-linejoin="round"';
+  const XM = {
+    star: (c) => `<svg viewBox="0 0 24 24"><path d="M12 1.8l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 16.9l-6 3.3 1.3-6.7-5-4.7 6.8-.8z" fill="${c}" ${PW}/></svg>`,
+    ball: (c) => `<svg viewBox="0 0 24 24"><rect x="9.5" y="2.5" width="5" height="3.6" rx="1" fill="#E8C24A" ${PW}/><circle cx="12" cy="14" r="8" fill="${c}" ${PW}/><path d="M5.5 12.5 Q12 15.5 18.5 12.5" fill="none" stroke="#FFFDF7" stroke-width="1.4" opacity=".85"/><circle cx="9" cy="10.6" r="1.4" fill="#fff" opacity=".7"/></svg>`,
+    holly: () => `<svg viewBox="0 0 24 24"><path d="M12 13 C9 8 4 8 2.5 9.5 C4 10.5 3.5 12 2.6 13 C4.5 13.6 5 15.5 4.6 16.8 C7.5 16 10 15.5 12 13 Z" fill="#3FA65A" ${PW}/><path d="M12 13 C15 8 20 8 21.5 9.5 C20 10.5 20.5 12 21.4 13 C19.5 13.6 19 15.5 19.4 16.8 C16.5 16 14 15.5 12 13 Z" fill="#5BBE6E" ${PW}/><circle cx="10.4" cy="13.6" r="2.3" fill="#E5414B" ${PW}/><circle cx="13.6" cy="13.6" r="2.3" fill="#E5414B" ${PW}/><circle cx="12" cy="11" r="2.3" fill="#F0565E" ${PW}/></svg>`,
+    cane: () => `<svg viewBox="0 0 24 24"><path d="M9 22 V8 a4 4 0 0 1 8 0 v1.5" fill="none" stroke="#FFFDF7" stroke-width="6" stroke-linecap="round"/><path d="M9 22 V8 a4 4 0 0 1 8 0 v1.5" fill="none" stroke="#E5414B" stroke-width="3.6" stroke-linecap="round"/><path d="M9 22 V8 a4 4 0 0 1 8 0 v1.5" fill="none" stroke="#FFFDF7" stroke-width="3.6" stroke-dasharray="2 2.6"/></svg>`,
+    gift: (c, r) => `<svg viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="12" rx="1.6" fill="${c}" ${PW}/><rect x="2.5" y="6.5" width="19" height="4" rx="1.2" fill="${c}" ${PW}/><path d="M12 6.5 V21" stroke="${r}" stroke-width="2.6"/><path d="M12 6.5 C9 2 5.5 4 8 6.5 Z M12 6.5 C15 2 18.5 4 16 6.5 Z" fill="${r}" ${PW}/></svg>`
+  };
+  const sfPick = (a) => a[Math.floor(Math.random() * a.length)];
+  const SFX_STY = {
+    a: { spring: () => sfPick([SF.petal('#FBD9E3', '#F2A8BA'), SF.petal('#FCE6EC', '#F7C3D2'), SF.blossom('#FBD3DF')]), summer: () => sfPick([SF.seed(), SF.seed(), SF.leaf('#CDEFB0', '#9BD486')]),
+      autumn: () => sfPick([SF.maple('#F6A06B', '#E0784A'), SF.maple('#F28B7E', '#D85C50'), SF.ginkgo('#F7D46A')]), winter: () => sfPick([SF.dot('#CFE3F7', .95), SF.dot('#B9D6F2', .9), SF.flake('#A9CBEB')]) },
+    c: { spring: () => sfPick([SF.petal('#FFD0DE', '#F59BB6'), SF.blossom('#FFE0EA')]), summer: null,
+      autumn: () => sfPick([SF.maple('#FFB15C', '#E0784A'), SF.ginkgo('#FFD86B')]), winter: () => sfPick([SF.flake('#BFDCF5'), SF.dot('#CFE3F7')]) },
+    e: { xmas: () => sfPick([XM.ball('#E5414B'), XM.ball('#E5414B'), XM.ball('#D8303C'), XM.ball('#F0565E'), XM.gift('#E5414B', '#FFD23F'), XM.gift('#D8303C', '#FFFDF7'), XM.gift('#E5414B', '#3FA65A'), XM.cane(), XM.cane(), XM.holly(), XM.holly(), XM.star('#E5414B'), XM.star('#FFD23F'), XM.ball('#3FA65A'), XM.gift('#3FA65A', '#E5414B'), SF.paperFlake('#B7D5F2')]),
+      spring: () => sfPick([SF.paper(SF.D_PETAL, '#F59BB6'), SF.paper(SF.D_PETAL, '#F8BFD0'), SF.paperBlossom('#F7A9C0')]), summer: () => sfPick([SF.paper(SF.D_LEAF, '#7CCB6B', VEIN), SF.paper(SF.D_LEAF, '#A9DC74', VEIN)]),
+      autumn: () => sfPick([SF.paper(SF.D_MAPLE, '#EF7B3C'), SF.paper(SF.D_MAPLE, '#E0503F'), SF.paper(SF.D_GINKGO, '#F3BC2E')]), winter: () => sfPick([SF.paperFlake('#8FBFEA'), SF.paperFlake('#B7D5F2')]) },
+    h: { spring: () => sfPick([SF.sym('#F7A9C0'), SF.sym('#FFE200'), SF.rect('#FBD0DC'), SF.paperBlossom('#F7B6C9')]), summer: () => sfPick([SF.sym('#8FD07A'), SF.sym('#FFE200'), SF.rect('#BDE8A0'), SF.disc('#7FD3E8')]),
+      autumn: () => sfPick([SF.sym('#F08A4B'), SF.sym('#FFE200'), SF.rect('#F6C35A'), SF.paper(SF.D_MAPLE, '#E0603F')]), winter: () => sfPick([SF.sym('#9CC7EE'), SF.sym('#FFE200'), SF.rect('#D4E6F8'), SF.disc('#FFFFFF')]) }
+  };
+  ['a', 'c', 'h'].forEach((k) => { SFX_STY[k].xmas = SFX_STY[k].winter; });
+  SEASONS.xmas = { ...SEASONS.winter, name: '크리스마스' };
+  const SFX_GLOW = { xmas: '#FFD23F', spring: '#FFB6CB', summer: '#FFE45C', autumn: '#FFC46B', winter: '#9CC7EE' };
+  const SFX_SPARK = { xmas: '#FFE27A', spring: '#FFD0DE', summer: '#FFF3A0', autumn: '#FFD27A', winter: '#BFDCF5' };
+  const SFXK = 'e';   // 계절 장식: E 종이 컷아웃 (a 수채 · c 반짝 · h 컨페티 코드는 남겨 둠)
+  // 크리스마스 맵: 11월 22일부터 12월 31일까지 기본 (그 뒤 1 · 2월은 겨울)
+  const seasonOf = (d = new Date()) => { const m = d.getMonth() + 1, dd = d.getDate(); if (m === 12 || (m === 11 && dd >= 22)) return 'xmas'; return m >= 3 && m <= 5 ? 'spring' : m >= 6 && m <= 8 ? 'summer' : m >= 9 && m <= 11 ? 'autumn' : 'winter'; };
   let SEASON = seasonOf();
   const rnd = (a, b) => a + Math.random() * (b - a);
   function renderSeason() {
     const cfg = SEASONS[SEASON];
     const box = $('#season');
     box.style.setProperty('--h', ($('#qmapCard').offsetHeight + 60) + 'px');
+    box.className = 'season sfx-' + SFXK + (SEASON === 'xmas' ? ' xm' : ''); $('#qmapCard').classList.toggle('xm-bg', SEASON === 'xmas');
+    const sty = SFX_STY[SFXK];
+    if (sty) {
+      const n = SFXK === 'a' ? 26 : SFXK === 'h' ? 20 : SEASON === 'xmas' ? 30 : 24; let h = '';
+      for (let i = 0; i < n; i++) {
+        const sw = rnd(1.8, 3.2).toFixed(1);
+        if (SFXK === 'c' && SEASON === 'summer') { const sz = Math.round(rnd(10, 20)), d = rnd(9, 15); h += `<span class="pt up gl" style="--g:#FFE45C;left:${rnd(3, 92).toFixed(1)}%;--s:${sz}px;--dx:${Math.round(rnd(-40, 40))}px;animation-duration:${d.toFixed(1)}s;animation-delay:-${rnd(0, d).toFixed(1)}s"><span class="sw" style="animation-duration:${sw}s">${SF.firefly()}</span></span>`; continue; }
+        const near = SFXK === 'a' && i % 4 === 0, sz = Math.round(near ? rnd(30, 42) : SFXK === 'a' ? rnd(13, 22) : SFXK === 'e' || SFXK === 'h' ? rnd(18, 28) : rnd(16, 28));
+        const d = SFXK === 'a' ? rnd(16, 24) : SFXK === 'h' ? rnd(9, 14) : rnd(12, 18);
+        const leafy = (SFXK === 'a' || SFXK === 'c') && (SEASON === 'autumn' || (SEASON === 'summer' && SFXK === 'a'));
+        const cls = 'pt' + (near ? ' near' : '') + (SFXK === 'c' ? ' gl' : '') + (leafy ? ' leaf' : SEASON === 'winter' && SFXK !== 'e' && SFXK !== 'h' ? ' snow' : '');
+        h += `<span class="${cls}" style="--g:${SFX_GLOW[SEASON]};left:${rnd(2, 92).toFixed(1)}%;--s:${sz}px;z-index:${near ? 3 : 1};animation-duration:${d.toFixed(1)}s;animation-delay:-${rnd(0, d).toFixed(1)}s"><span class="sw" style="animation-duration:${sw}s">${sty[SEASON]()}</span></span>`;
+      }
+      if (SFXK === 'c') for (let i = 0; i < 14; i++) { const sz = Math.round(rnd(6, 12)); h += `<span class="sp" style="--x:${rnd(3, 93).toFixed(1)}%;--y:${rnd(3, 95).toFixed(1)}%;--s:${sz}px;--d:${rnd(1.4, 2.6).toFixed(1)}s;--dl:-${rnd(0, 2).toFixed(1)}s">${SF.star(SFX_SPARK[SEASON])}</span>`; }
+      if (SEASON === 'xmas') {
+        const cols = ['#E5414B', '#FFD23F', '#3FA65A', '#5B8FE0', '#F7A9C0'], N = 13;
+        let wire = 'M0 4', bulbs = '';
+        for (let k = 0; k < N; k++) { const x0 = k * 100 / N, x1 = (k + 1) * 100 / N, xm = (x0 + x1) / 2; wire += ` Q${xm.toFixed(2)} 22 ${x1.toFixed(2)} 4`; const bx = xm, by = 13;
+          bulbs += `<g class="xm-bulb" style="animation-delay:-${(k * .37 % 1.6).toFixed(2)}s"><rect x="${(bx - .7).toFixed(2)}" y="${by - 1}" width="1.4" height="2.6" rx=".3" fill="#5C5470"/><ellipse cx="${bx.toFixed(2)}" cy="${by + 6}" rx="1.7" ry="5" fill="${cols[k % cols.length]}" stroke="#FFFDF7" stroke-width=".5"/></g>`; }
+        h += `<div class="xm-garland"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="${wire}" fill="none" stroke="#3E7D4E" stroke-width="1.1" vector-effect="non-scaling-stroke"/>${bulbs}</svg></div>`;
+        for (let k = 0; k < 16; k++) { const sz = Math.round(rnd(7, 13)); h += `<span class="xm-star" style="--x:${rnd(3, 94).toFixed(1)}%;--y:${rnd(2, 96).toFixed(1)}%;--s:${sz}px;--d:${rnd(1.6, 3).toFixed(1)}s;--dl:-${rnd(0, 3).toFixed(1)}s">${SF.star(k % 3 ? '#FFF3C4' : '#FFD23F')}</span>`; }
+        const tree = (x, w, hgt, c1, c2) => { const y = 130 - hgt; return `<g transform="translate(${x} ${y})"><path d="M${w / 2} 0 L${w * .82} ${hgt * .36} L${w * .66} ${hgt * .36} L${w} ${hgt * .72} L${w * .58} ${hgt * .72} L${w * .58} ${hgt} L${w * .42} ${hgt} L${w * .42} ${hgt * .72} L0 ${hgt * .72} L${w * .34} ${hgt * .36} L${w * .18} ${hgt * .36} Z" fill="${c1}" stroke="#FFFDF7" stroke-width="2" stroke-linejoin="round"/><path d="M${w * .28} ${hgt * .34} L${w * .72} ${hgt * .34} M${w * .14} ${hgt * .7} L${w * .86} ${hgt * .7}" stroke="${c2}" stroke-width="3" stroke-linecap="round"/></g>`; };
+        const forest = [[-6, 44, 82, '#2E7A55', '#FFFDF7'], [26, 36, 64, '#3C9A68', '#FFFDF7'], [58, 50, 96, '#2A6E4D', '#FFFDF7'], [262, 42, 76, '#3C9A68', '#FFFDF7'], [292, 54, 104, '#2E7A55', '#FFFDF7'], [334, 38, 66, '#2A6E4D', '#FFFDF7']].map((t) => tree(...t)).join('');
+        h += `<div class="xm-drift big"><svg viewBox="0 0 370 130" preserveAspectRatio="xMidYMax slice">${forest}<path d="M0 98 Q40 78 92 94 T190 90 T290 88 T370 94 V130 H0 Z" fill="#FFFFFF" stroke="#DCE7F3" stroke-width="2"/><path d="M0 112 Q60 98 128 110 T260 106 T370 110 V130 H0 Z" fill="#EAF2FB"/></svg></div>`;
+      }
+      box.innerHTML = h; $$('#seasonSel button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.season === SEASON)); return;
+    }
     box.innerHTML = Array.from({ length: cfg.count }, (_, i) => {
       const s = Math.round(rnd(cfg.size[0], cfg.size[1]));
       const dur = cfg.kind === 'fly' ? rnd(14, 22) : cfg.kind === 'snow' ? rnd(16, 26) : rnd(11, 19);
@@ -5018,6 +5166,11 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#nbTrack').innerHTML = NOTICES.map((n) => `<div class="nb-slide" style="background:${n.bg};color:${n.ink}"><svg class="deco" width="190" height="168" viewBox="0 0 426.31 377.94" aria-hidden="true"><path fill="${n.ink}" d="${SYMBOL}"/></svg><span class="pill" style="position:relative;align-self:flex-start;background:${n.chip};color:#1E1A2B;border:1.5px solid #1E1A2B">${n.tag}</span><h3>${n.title}</h3><div class="meta"><span>${n.sub}</span><span>자세히 →</span></div></div>`).join('');
     $('#nbDots').innerHTML = NOTICES.map((n, i) => `<button aria-label="${i + 1}번째 소식 보기" data-dot="${i}"><span></span></button>`).join('');
     $$('#nbDots button').forEach((b) => b.addEventListener('click', () => setNotice(+b.dataset.dot)));
+    // 작은 공지 띠: 누르면 지금 보이는 게시물로 (공지 · 이벤트 · 새 소식 모두)
+    const strip = $('#noticeStrip');
+    const openStrip = () => myPush('noticeD', { ni: S.notice });
+    strip.addEventListener('click', openStrip);
+    strip.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStrip(); } });
     // 좌우로 밀어서 넘기기
     let x0 = null;
     const view = $('#nbView');
@@ -5507,7 +5660,10 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   }
   // 그림 보고 말하기 사진 · 인물 얼굴은 앱을 열 때 미리 받아 둬요 (들어가자마자 바로 보이게)
   const PHOTO_OK = {};
+  window.__charPre = ['c-upright-yellow', 'c-upright-purple', 'c-tilted-yellow', 'c-tilted-yellow-flip', 'c-tilted-purple-flip', 'c-upright-yellow-flip', 'c-purple-standard-3d', 'c-purple-jump-3d', 'c-purple-tilt-3d', 'c-purple-lash-3d', 'c-corner-yellow'].map((n) => { const im = new Image(); im.src = `assets/${n}.png`; if (im.decode) im.decode().catch(() => {}); return im; });
   setTimeout(() => ['assets/lv1-01-lobby.jpg', 'assets/ppl/lily.jpg', 'assets/ppl/sonya.jpg', 'assets/ppl/logan.jpg', 'assets/ppl/aiden.jpg'].forEach((src) => { const im = new Image(); im.decoding = 'async'; im.onload = () => { PHOTO_OK[src] = 1; }; im.src = src; }), 600);
+  // 라이브러리 3D 맵도 마이 캐릭터 그대로 (멤버면 항상 · 몸 색 · 헤어 · 옷 · 소품)
+  window.__palloAvHTML = () => { try { if (S.member !== false && MYAV) return avCharHTML(MYAV, false); } catch (e) {} return null; };
   // 맵 위에서 뛰는 팔로: 마이에서 꾸민 캐릭터가 있으면 그 모습 그대로, 아니면 기본 노랑 팔로
   function rideHTML(x, y) {
     let me = null;
@@ -6990,6 +7146,168 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   const SIT_CAMPUS = { id: 'campus', lv: 'campus', title: '캠퍼스', series: 'CAMPUS', c: '#5EA35A', kind: 'situation', about: '수업 · 질문 · 조별 과제 · 동아리',
     lessons: [sc('첫 수업 자기소개', 'First class', 'book', null), sc('수업 중 질문', 'Asking in class', 'chat', null), sc('조별 과제', 'Group project', 'group', null), sc('도서관', 'Library', 'lib', null), sc('동아리 가입', 'Joining a club', 'star', null), sc('기숙사 생활', 'Dorm life', 'dorm', null)].map((x, i) => ({ no: i + 1, ...x })) };
   const SITS = [SIT_TRAVEL, SIT_BIZ, SIT_CAFE, SIT_CAMPUS];
+  // ---- 상황 맵 장면 학습 데이터: 오늘의 패턴 · 대화문 · Word Bank · AI 프리토킹 (교재 코너와 같은 모양) ----
+  const SIT_LEARN = {
+    '공항 체크인': {
+      patterns: [
+        { id: 'p1', p: 'Can I have + 명사?', short: 'Can I have', m: '~을 받을 수 있을까요?', re: 'can i (have|get)', ex: [['Can I have a window seat?', '창가 자리로 주실 수 있나요?'], ['Can I have an aisle seat, please?', '통로 자리로 주시겠어요?'], ['Can I have a seat near the front?', '앞쪽 자리로 주실 수 있나요?']], adv: [['Could I have two seats together?', '두 자리 붙여서 주실 수 있나요?'], ['Can I get an upgrade?', '업그레이드할 수 있을까요?']] },
+        { id: 'p2', p: "I'd like to + 동사", short: "I'd like to", m: '~하고 싶어요', re: "i'?d like to|i would like to", ex: [["I'd like to check this bag.", '이 가방을 부치고 싶어요.'], ["I'd like to check in for my flight.", '비행기 체크인하고 싶어요.'], ["I'd like to change my seat.", '자리를 바꾸고 싶어요.']], adv: [["I'd like to pay for extra baggage.", '추가 수하물 요금을 내고 싶어요.'], ["We'd like to sit together.", '저희는 같이 앉고 싶어요.']] },
+        { id: 'p3', p: 'What time + 질문?', short: 'What time', m: '몇 시에 ~?', re: 'what time', ex: [['What time is boarding?', '탑승은 몇 시예요?'], ['What time does the flight leave?', '비행기는 몇 시에 출발해요?'], ['What time should I be at the gate?', '게이트에 몇 시까지 가야 해요?']], adv: [['How long is the flight?', '비행시간이 얼마나 돼요?'], ['Which gate do I go to?', '몇 번 게이트로 가요?']] }
+      ],
+      dialogue: { title: 'Check-in Counter', cast: ['Logan', 'Sonya'], roles: { Logan: '항공사 직원', Sonya: '여행객' },
+        lines: [['Logan', 'Good morning. Can I see your passport, please?', '안녕하세요. 여권 보여 주시겠어요?'], ['Sonya', "Here you go. I'd like to check in for my flight to Sydney.", '여기요. 시드니행 비행기 체크인하고 싶어요.', "I'd like to"], ['Logan', 'Sure. Do you have a seat preference?', '네. 원하시는 자리 있으세요?'], ['Sonya', 'Can I have a window seat, please?', '창가 자리로 주실 수 있나요?', 'Can I have'], ['Logan', 'No problem. Are you checking any bags today?', '그럼요. 오늘 부치실 짐 있으세요?'], ['Sonya', "Yes, I'd like to check this bag.", '네, 이 가방을 부치고 싶어요.', "I'd like to"], ['Logan', "All set. Here's your boarding pass.", '다 됐습니다. 탑승권 여기 있어요.'], ['Sonya', 'Thank you. What time is boarding?', '감사합니다. 탑승은 몇 시예요?', 'What time']],
+        blank: { sp: 'Logan', ko: 'Logan(직원)이 되어 탑승 시간과 게이트를 알려 주세요.', sample: 'Boarding starts at 9:30 at Gate 12.' } },
+      bank: [['Can I see your passport, please?', 'passport', '___ 보여 주시겠어요?', '여권'], ['Here is your boarding pass.', 'boarding pass', '___ 여기 있어요.', '탑승권'], ['Can I have an aisle seat?', 'aisle seat', '___로 주실 수 있나요?', '통로 자리'], ['Your bag is overweight.', 'overweight', '가방이 ___예요.', '무게 초과'], ['Is this my carry-on?', 'carry-on', '이건 ___인가요?', '기내용 가방'], ['Boarding starts at Gate 12.', 'gate', '12번 ___에서 탑승해요.', '게이트'], ['The flight is delayed.', 'delayed', '비행기가 ___.', '지연됐어요'], ['Do you have any liquids?', 'liquids', '___ 있으세요?', '액체류'], ['Please put your bag on the scale.', 'scale', '가방을 ___에 올려 주세요.', '저울'], ['My final destination is Sydney.', 'destination', '최종 ___는 시드니예요.', '목적지']],
+      talk: { who: 'Logan', c: '#2F4E8C', title: 'AI 프리토킹 · 공항 이야기',
+        lines: [['Where are you flying to on your next trip?', '다음 여행은 어디로 가요?'], ['Nice! Do you like a window seat or an aisle seat?', '좋네요! 창가 자리가 좋아요, 통로 자리가 좋아요?'], ['What time do you usually get to the airport?', '보통 공항에 몇 시에 도착해요?'], ['Thanks for chatting! You used today’s patterns really well.', '이야기해 줘서 고마워요! 오늘 패턴을 잘 썼어요.', 1]],
+        replies: [["I'd like to go to Sydney.", "I'm flying to Tokyo next month.", "I'd like to visit Paris someday."], ['I like a window seat. I can see the sky.', 'An aisle seat is better for me.', 'Can I have a window seat? I always ask that!'], ['I get there two hours early.', 'About three hours before.', "I always ask, 'What time is boarding?'"]] } },
+    '기내 주문': {
+      patterns: [
+        { id: 'p1', p: 'Could I get + 명사?', short: 'Could I get', m: '~ 좀 주시겠어요?', re: 'could i (get|have)', ex: [['Could I get some water?', '물 좀 주시겠어요?'], ['Could I get a pillow?', '베개 좀 주시겠어요?'], ['Could I get some coffee, please?', '커피 좀 주시겠어요?']], adv: [['Could I get another one later?', '이따가 하나 더 주실 수 있나요?'], ['Could you bring me a menu?', '메뉴 좀 가져다주시겠어요?']] },
+        { id: 'p2', p: "I'll have + 명사", short: "I'll have", m: '~로 할게요', re: "i'?ll have|i will have", ex: [["I'll have the chicken, please.", '치킨으로 할게요.'], ["I'll have orange juice.", '오렌지 주스로 할게요.'], ["I'll have the same, please.", '같은 걸로 할게요.']], adv: [["I'll have the beef this time.", '이번엔 소고기로 할게요.'], ["We'll have two coffees.", '커피 두 잔으로 할게요.']] },
+        { id: 'p3', p: 'Can I have another + 명사?', short: 'another', m: '~ 하나 더 주시겠어요?', re: 'another|one more', ex: [['Can I have another blanket?', '담요 하나 더 주시겠어요?'], ['Can I have another cup of water?', '물 한 잔 더 주시겠어요?'], ['Could I get another napkin?', '냅킨 하나 더 주시겠어요?']], adv: [['Can I have one more, please?', '하나 더 주시겠어요?'], ['Can I have some more bread?', '빵 좀 더 주시겠어요?']] }
+      ],
+      dialogue: { title: 'On the Plane', cast: ['Aiden', 'Sonya'], roles: { Aiden: '승무원', Sonya: '승객' },
+        lines: [['Aiden', 'Hi there! Would you like something to drink?', '안녕하세요! 음료 드시겠어요?'], ['Sonya', 'Could I get some water, please?', '물 좀 주시겠어요?', 'Could I get'], ['Aiden', 'Of course. For dinner, we have chicken or beef.', '물론이죠. 저녁은 치킨과 소고기가 있어요.'], ['Sonya', "I'll have the chicken, please.", '치킨으로 할게요.', "I'll have"], ['Aiden', 'Here you go. Is there anything else I can get you?', '여기 있어요. 더 필요한 거 있으세요?'], ['Sonya', "It's a bit cold. Can I have another blanket?", '좀 추워요. 담요 하나 더 주시겠어요?', 'another'], ['Aiden', "Sure. I'll bring one right away.", '네. 바로 가져다드릴게요.'], ['Sonya', 'Thank you so much.', '정말 감사해요.']],
+        blank: { sp: 'Aiden', ko: 'Aiden(승무원)이 되어 담요를 건네며 한마디 해 주세요.', sample: "Here's your blanket. Let me know if you need anything else." } },
+      bank: [['Please fasten your seat belt.', 'seat belt', '___를 매 주세요.', '안전벨트'], ['Could I get a pillow?', 'pillow', '___ 좀 주시겠어요?', '베개'], ['Would you like something to drink?', 'drink', '___ 드시겠어요?', '음료'], ['We have chicken or beef.', 'beef', '치킨과 ___가 있어요.', '소고기'], ['Please put your bag in the overhead bin.', 'overhead bin', '가방을 ___에 넣어 주세요.', '머리 위 짐칸'], ['Can I use the restroom now?', 'restroom', '지금 ___ 써도 될까요?', '화장실'], ['We will land in thirty minutes.', 'land', '30분 후에 ___해요.', '착륙'], ['Could I get an arrival card?', 'arrival card', '___ 한 장 주시겠어요?', '입국 신고서'], ['There is some turbulence.', 'turbulence', '___이 조금 있어요.', '난기류'], ['Can I have another blanket?', 'blanket', '___ 하나 더 주시겠어요?', '담요']],
+      talk: { who: 'Aiden', c: '#3F6B3A', title: 'AI 프리토킹 · 기내 이야기',
+        lines: [['What do you usually do on a long flight?', '긴 비행에서 보통 뭐 해요?'], ['Do you usually eat the plane food?', '기내식은 보통 먹어요?'], ['What do you always ask for on a plane?', '비행기에서 항상 부탁하는 게 있어요?'], ['Thanks for chatting! You used today’s patterns really well.', '이야기해 줘서 고마워요! 오늘 패턴을 잘 썼어요.', 1]],
+        replies: [['I usually watch movies.', 'I sleep the whole time.', 'I read a book and listen to music.'], ["Yes. I'll have the chicken most of the time.", 'Not really. I bring snacks.', 'Yes, I love plane food!'], ['Could I get some water? I always ask for water.', "I ask for another blanket. It's cold.", 'Could I get a pillow?']] } },
+    '입국 심사': {
+      patterns: [
+        { id: 'p1', p: "I'm here + 목적", short: "I'm here", m: '~(으)로 왔어요', re: "i'?m here|i am here|we'?re here", ex: [["I'm here on vacation.", '휴가로 왔어요.'], ["I'm here for a business trip.", '출장으로 왔어요.'], ["I'm here to visit my friend.", '친구를 만나러 왔어요.']], adv: [["We're here on our honeymoon.", '신혼여행으로 왔어요.'], ["I'm here for a conference.", '학회 때문에 왔어요.']] },
+        { id: 'p2', p: "I'm staying + 기간 / 장소", short: "I'm staying", m: '~ 동안 / ~에 머물러요', re: "i'?m staying|i am staying|we'?re staying|be staying", ex: [["I'm staying for five days.", '5일 동안 있을 거예요.'], ["I'm staying at a hotel downtown.", '시내 호텔에 묵어요.'], ["I'm staying with my cousin.", '사촌 집에 머물러요.']], adv: [["I'll be staying until Sunday.", '일요일까지 있을 거예요.'], ["We're staying near the beach.", '해변 근처에 묵어요.']] },
+        { id: 'p3', p: "It's my first time + 장소/동사-ing", short: "It's my first time", m: '~은 처음이에요', re: "(it'?s|it is) my first time|first time", ex: [["It's my first time here.", '여기 처음이에요.'], ["It's my first time in Australia.", '호주는 처음이에요.'], ["It's my first time traveling alone.", '혼자 여행은 처음이에요.']], adv: [['This is my second time here.', '여기는 두 번째예요.'], ['Is it your first time here?', '여기 처음이세요?']] }
+      ],
+      dialogue: { title: 'Immigration', cast: ['Logan', 'Sonya'], roles: { Logan: '입국 심사관', Sonya: '여행객' },
+        lines: [['Logan', "Hello. What's the purpose of your visit?", '안녕하세요. 방문 목적이 뭐예요?'], ['Sonya', "I'm here on vacation.", '휴가로 왔어요.', "I'm here"], ['Logan', 'How long are you staying?', '얼마나 머무르시나요?'], ['Sonya', "I'm staying for five days.", '5일 동안 있을 거예요.', "I'm staying"], ['Logan', 'Where are you staying?', '어디에 묵으시나요?'], ['Sonya', "I'm staying at a hotel downtown.", '시내 호텔에 묵어요.', "I'm staying"], ['Logan', 'Is this your first time here?', '여기 처음이세요?'], ['Sonya', "Yes, it's my first time here.", '네, 처음이에요.', "It's my first time"]],
+        blank: { sp: 'Logan', ko: 'Logan(심사관)이 되어 여권을 돌려주며 인사해 주세요.', sample: "Okay. Here's your passport. Enjoy your stay!" } },
+      bank: [['What is the purpose of your visit?', 'purpose', '방문 ___이 뭐예요?', '목적'], ["I'm here on vacation.", 'vacation', '___로 왔어요.', '휴가'], ['Do you have a return ticket?', 'return ticket', '___ 있으세요?', '돌아가는 표'], ['Please look at the camera.', 'camera', '___를 봐 주세요.', '카메라'], ['Put your fingers on the scanner.', 'fingers', '스캐너에 ___을 올려 주세요.', '손가락'], ['Do you have anything to declare?', 'declare', '___할 물건 있으세요?', '신고'], ["I'm here for a business trip.", 'business trip', '___으로 왔어요.', '출장'], ['How long are you staying?', 'how long', '___ 머무르시나요?', '얼마나'], ['Where is the baggage claim?', 'baggage claim', '___은 어디예요?', '짐 찾는 곳'], ['Enjoy your stay!', 'stay', '즐거운 ___ 되세요!', '여행(머무름)']],
+      talk: { who: 'Logan', c: '#2F2D3A', title: 'AI 프리토킹 · 입국 이야기',
+        lines: [['Why do you usually travel?', '보통 왜 여행해요?'], ['How long do you like to stay in one city?', '한 도시에 보통 얼마나 머무는 걸 좋아해요?'], ['Where did you go for the first time recently?', '최근 처음 가 본 곳은 어디예요?'], ['Thanks for chatting! You used today’s patterns really well.', '이야기해 줘서 고마워요! 오늘 패턴을 잘 썼어요.', 1]],
+        replies: [["I'm usually there on vacation.", 'Mostly for business trips.', 'I travel to visit my family.'], ["I'm staying for about a week.", 'Just three days is enough.', 'I like staying for a month!'], ["It was my first time in Japan last year.", "It's my first time in Busan this summer.", 'I went to a new café for the first time.']] } },
+    '첫 미팅 자기소개': {
+      patterns: [
+        { id: 'p1', p: 'Nice to + 동사', short: 'Nice to', m: '~해서 반가워요', re: "nice to|good to|great to", ex: [['Nice to finally meet you.', '드디어 뵙네요.'], ['Nice to see you again.', '다시 뵈어 반가워요.'], ['Nice to meet you in person.', '직접 뵈어 반가워요.']], adv: [["It's great to finally meet you.", '드디어 만나서 정말 반가워요.'], ['Good to see you again.', '다시 봐서 반가워요.']] },
+        { id: 'p2', p: "I'm in charge of + 명사", short: "I'm in charge of", m: '~을 맡고 있어요', re: 'in charge of', ex: [["I'm in charge of marketing.", '마케팅을 맡고 있어요.'], ["I'm in charge of the new project.", '새 프로젝트를 맡고 있어요.'], ["I'm in charge of sales in Asia.", '아시아 영업을 맡고 있어요.']], adv: [["Who's in charge of the budget?", '예산은 누가 맡고 있나요?'], ["She's in charge of design.", '그녀가 디자인을 맡고 있어요.']] },
+        { id: 'p3', p: 'Shall we + 동사?', short: 'Shall we', m: '~할까요?', re: 'shall we|shall i', ex: [['Shall we get started?', '시작할까요?'], ['Shall we take a short break?', '잠깐 쉴까요?'], ['Shall we meet again next week?', '다음 주에 다시 만날까요?']], adv: [['Shall I share my screen?', '제 화면을 공유할까요?'], ["Why don't we start with the agenda?", '안건부터 시작하면 어때요?']] }
+      ],
+      dialogue: { title: 'First Meeting', cast: ['Lily', 'Aiden'], roles: { Lily: '협력사 담당자', Aiden: '팔로 직원' },
+        lines: [['Lily', "Hi, you must be from PALLO. I'm Lily Park.", '안녕하세요, 팔로에서 오셨죠? 릴리 박이에요.'], ['Aiden', "Nice to finally meet you. I'm Aiden.", '드디어 뵙네요. 에이든이에요.', 'Nice to'], ['Lily', 'Nice to meet you too. What do you do at PALLO?', '저도 반가워요. 팔로에서 어떤 일을 하세요?'], ['Aiden', "I'm in charge of marketing for the Asia team.", '아시아팀 마케팅을 맡고 있어요.', "I'm in charge of"], ['Lily', "Interesting! I've heard a lot about your project.", '흥미롭네요! 프로젝트 얘기 많이 들었어요.'], ['Aiden', "Thank you. Everyone's here. Shall we get started?", '감사해요. 다 오셨네요. 시작할까요?', 'Shall we'], ['Lily', "Sure. Here's today's agenda.", '네. 오늘 안건이에요.'], ['Aiden', "Great. Let's start with the timeline.", '좋아요. 일정부터 볼까요.']],
+        blank: { sp: 'Lily', ko: 'Lily(담당자)가 되어 회의를 마치며 인사해 주세요.', sample: "It was great talking to you. Let's keep in touch." } },
+      bank: [['Here is my business card.', 'business card', '제 ___이에요.', '명함'], ["Let's look at the agenda.", 'agenda', '___을 볼까요.', '안건'], ["I'm in charge of the budget.", 'budget', '___을 맡고 있어요.', '예산'], ['What is the deadline?', 'deadline', '___이 언제예요?', '마감'], ['Can you share your screen?', 'share', '화면을 ___해 주실 수 있나요?', '공유'], ['Let me introduce my team.', 'introduce', '저희 팀을 ___할게요.', '소개'], ["I'll send you the details by email.", 'details', '___을 메일로 보내 드릴게요.', '자세한 내용'], ['Our client is happy with it.', 'client', '___가 만족해요.', '고객사'], ["Let's set up a follow-up meeting.", 'follow-up', '___ 회의를 잡아요.', '후속'], ["Let's keep in touch.", 'keep in touch', '계속 ___.', '연락해요']],
+      talk: { who: 'Lily', c: '#493087', title: 'AI 프리토킹 · 일 이야기',
+        lines: [['What do you do at work?', '회사에서 무슨 일을 해요?'], ['How do you usually start a meeting?', '회의는 보통 어떻게 시작해요?'], ['What makes a good first meeting?', '좋은 첫 미팅은 어떤 거예요?'], ['Thanks for chatting! You used today’s patterns really well.', '이야기해 줘서 고마워요! 오늘 패턴을 잘 썼어요.', 1]],
+        replies: [["I'm in charge of marketing.", 'I work in sales.', "I'm a designer on the app team."], ["I say, 'Shall we get started?'", 'We check the agenda first.', 'We talk about the weekend for a minute.'], ["Saying 'Nice to finally meet you' with a smile.", 'Being on time.', 'Sharing a clear agenda.']] } },
+    '주문 바꾸기': {
+      patterns: [
+        { id: 'p1', p: 'Can I change + 명사?', short: 'Can I change', m: '~을 바꿀 수 있을까요?', re: 'can i change|could i change|switch', ex: [['Can I change my order?', '주문을 바꿀 수 있을까요?'], ['Can I change the size to large?', '사이즈를 라지로 바꿀 수 있을까요?'], ['Can I change it to a hot one?', '따뜻한 걸로 바꿀 수 있을까요?']], adv: [['Is it too late to change my order?', '주문 바꾸기엔 너무 늦었나요?'], ['Could I switch to decaf?', '디카페인으로 바꿀 수 있을까요?']] },
+        { id: 'p2', p: 'Could I get it with + 명사?', short: 'Could I get it', m: '~(으)로 해 주실 수 있나요?', re: 'could i get it|can i get it', ex: [['Could I get it with oat milk?', '오트밀크로 해 주실 수 있나요?'], ['Could I get it with less ice?', '얼음 적게 해 주실 수 있나요?'], ['Could I get it with an extra shot?', '샷 추가해 주실 수 있나요?']], adv: [['Could I get it without whipped cream?', '휘핑크림 빼고 주실 수 있나요?'], ['Can I get it to go?', '포장해 주실 수 있나요?']] },
+        { id: 'p3', p: 'Can you make it + 형용사?', short: 'Can you make it', m: '~하게 해 주실 수 있나요?', re: 'can you make it|could you make it', ex: [['Can you make it less sweet?', '덜 달게 해 주실 수 있나요?'], ['Can you make it extra hot?', '아주 뜨겁게 해 주실 수 있나요?'], ['Can you make it a little weaker?', '조금 연하게 해 주실 수 있나요?']], adv: [['Could you make it a bit stronger?', '조금 진하게 해 주실 수 있나요?'], ['Can you make two of these?', '이거 두 잔 만들어 주실 수 있나요?']] }
+      ],
+      dialogue: { title: 'Change My Order', cast: ['Lily', 'Sonya'], roles: { Lily: '바리스타', Sonya: '손님' },
+        lines: [['Lily', 'Hi! One iced latte, right?', '안녕하세요! 아이스 라테 하나 맞죠?'], ['Sonya', 'Sorry, can I change my order?', '죄송한데, 주문 바꿀 수 있을까요?', 'Can I change'], ['Lily', 'Sure, no problem. What would you like?', '그럼요. 뭘로 드릴까요?'], ['Sonya', 'Could I get it with oat milk instead?', '대신 오트밀크로 해 주실 수 있나요?', 'Could I get it'], ['Lily', 'Of course. Anything else?', '물론이죠. 더 필요한 거 있으세요?'], ['Sonya', 'Can you make it less sweet, please?', '덜 달게 해 주실 수 있나요?', 'Can you make it'], ['Lily', 'Got it. For here or to go?', '알겠습니다. 드시고 가세요, 가져가세요?'], ['Sonya', 'For here, please. Is there a free table?', '먹고 갈게요. 빈자리 있나요?']],
+        blank: { sp: 'Lily', ko: 'Lily(바리스타)가 되어 음료를 건네며 자리를 알려 주세요.', sample: "Here you go. There's a free table by the window!" } },
+      bank: [['Can I get a large size?', 'large', '___ 사이즈로 주세요.', '큰'], ['Could I get it with less ice?', 'less ice', '___으로 해 주세요.', '얼음 적게'], ["I'd like an extra shot.", 'extra shot', '___을 추가하고 싶어요.', '샷'], ['Is it decaf?', 'decaf', '___인가요?', '디카페인'], ['Can I have a straw?', 'straw', '___ 하나 주시겠어요?', '빨대'], ['Here is your receipt.', 'receipt', '___ 여기 있어요.', '영수증'], ['Can you make it less sweet?', 'sweet', '덜 ___ 해 주세요.', '달게'], ['For here or to go?', 'to go', '드시고 가세요, ___?', '가져가세요'], ['Can I pay by card?', 'card', '___로 계산할 수 있나요?', '카드'], ['Is there a free table?', 'free table', '___ 있나요?', '빈자리']],
+      talk: { who: 'Lily', c: '#138A9E', title: 'AI 프리토킹 · 카페 이야기',
+        lines: [['What do you usually order at a café?', '카페에서 보통 뭐 주문해요?'], ['How do you like your coffee?', '커피는 어떻게 마시는 걸 좋아해요?'], ['Do you usually drink it there or take it to go?', '보통 매장에서 마셔요, 가져가요?'], ['Thanks for chatting! You used today’s patterns really well.', '이야기해 줘서 고마워요! 오늘 패턴을 잘 썼어요.', 1]],
+        replies: [['I usually get an iced latte.', 'I always order a hot americano.', 'I like green tea lattes.'], ["Could I get it with oat milk? That's my style.", 'Can you make it less sweet? I always say that.', 'I like it extra hot.'], ["For here, please. I like to relax.", "To go. I'm always busy.", 'It depends on the day.']] } }
+  };
+  SITS.forEach((L) => L.lessons.forEach((ls) => { const X = ls.data && SIT_LEARN[ls.title]; if (X) Object.assign(ls.data, X, { bankName: 'Word Bank' }); }));
+  // ---- 상황 맵 미션 · 장면 흐름 (레벨 0~4 문장 · 모든 레벨이 같은 장면을 해요) ----
+  // mis: 미션 3개 [제목 · 상황 · 뜻 · 미션 확인 정규식 · 직원 말 · 레벨별 문장 5개], arrive: 첫 인사, twist: 돌발 상황, end: 마지막 직원 말
+  const SIT_MIS = {
+    '공항 체크인': { who: 'Logan', role: '항공사 직원', c: '#2F4E8C',
+      arrive: { staff: ['Good morning. Can I see your passport, please?', '안녕하세요. 여권 보여 주시겠어요?'], ko: '여권을 건네요', lv: ['Here.', 'Here you go.', "Sure, here's my passport.", "Of course. Here's my passport and my booking number.", 'Sure, here you go. I checked in online, but I still need to drop off a bag.'] },
+      mis: [
+        { t: '창가 자리 받기', sit: '직원이 원하는 자리를 물어봐요', ko: '창가 자리로 주세요', re: 'window', staff: ['Do you have a seat preference?', '원하시는 자리 있으세요?'], lv: ['Window, please.', 'Can I have a window seat?', 'Can I have a window seat, please? I like to look outside.', 'Would it be possible to get a window seat near the front?', "I'd prefer a window seat if there's one left, ideally not too far back."] },
+        { t: '가방 부치기', sit: '직원이 부칠 짐을 물어봐요', ko: '이 가방을 부치고 싶어요', re: 'bag|check', staff: ['Are you checking any bags today?', '오늘 부치실 짐 있으세요?'], lv: ['Bag, please.', "I'd like to check this bag.", "Yes, I'd like to check this bag. It's about 20 kilos.", 'Could I check this one and carry the small one on?', 'Just this one. It might be a little overweight — is there any way to avoid the fee?'] },
+        { t: '탑승 시간 묻기', sit: '탑승권을 받았어요', ko: '탑승은 몇 시예요?', re: 'what time|when|boarding|gate', staff: ["All set. Here's your boarding pass.", '다 됐습니다. 탑승권 여기 있어요.'], lv: ['Boarding time?', 'What time is boarding?', 'Thank you. What time is boarding, and which gate?', 'Thanks. What time should I be at the gate?', 'Thanks a lot. Roughly when does boarding start, and is the gate far from security?'] }
+      ],
+      twist: { k: '돌발 상황! 가방 무게가 초과됐어요', staff: ['Your bag is three kilos over the limit.', '가방이 3킬로 초과예요.'], ko: '짐을 빼거나 요금을 물어봐요', lv: ['Oh. How much?', 'Oh no. How much is the fee?', 'Oh, I see. Can I take some things out?', 'Could I move a few things into my carry-on instead?', "I'd rather not pay the fee. Would it be okay if I repacked it quickly over there?"] },
+      end: ['Boarding starts at 9:30 at Gate 12. Have a nice flight!', '탑승은 9시 30분, 12번 게이트예요. 좋은 비행 되세요!'] },
+    '기내 주문': { who: 'Aiden', role: '승무원', c: '#3F6B3A',
+      arrive: { staff: ['Hi there! Can I get you something to drink?', '안녕하세요! 음료 드릴까요?'], ko: '물을 부탁해요', lv: ['Water, please.', 'Could I get some water?', 'Could I get some water, please? No ice.', 'Could I have some sparkling water, if you have it?', "I'd love some water, and maybe a coffee a bit later, if that's okay."] },
+      mis: [
+        { t: '식사 고르기', sit: '승무원이 식사를 물어봐요', ko: '치킨으로 할게요', re: "chicken|beef|i'?ll have|go with", staff: ['For dinner, we have chicken or beef.', '저녁은 치킨과 소고기가 있어요.'], lv: ['Chicken, please.', "I'll have the chicken, please.", "I'll have the chicken, please. Thank you.", "I'll go with the chicken. Does it come with rice?", "I'll have the chicken, please — and could I swap the bread for some fruit?"] },
+        { t: '담요 부탁하기', sit: '조금 추워요', ko: '담요 하나 더 주시겠어요?', re: 'blanket', staff: ['Is there anything else I can get you?', '더 필요한 거 있으세요?'], lv: ['Blanket, please.', 'Can I have another blanket?', "It's a bit cold. Can I have another blanket?", "Would you mind bringing me another blanket? It's quite cold.", "It's freezing back here — could I get another blanket, or is there any way to turn the air down?"] },
+        { t: '화장실 묻기', sit: '식사가 끝났어요', ko: '지금 화장실 써도 되나요?', re: 'restroom|bathroom|toilet', staff: ['Here you go. Enjoy your meal!', '여기 있어요. 맛있게 드세요!'], lv: ['Restroom?', 'Can I use the restroom now?', 'Thank you. Can I use the restroom now?', 'Thanks. Is it okay to use the restroom during the meal service?', 'Thank you. Before you go — is the restroom free right now, or should I wait until the carts are gone?'] }
+      ],
+      twist: { k: '돌발 상황! 치킨이 다 떨어졌어요', staff: ["I'm so sorry, we just ran out of chicken.", '죄송해요, 치킨이 방금 다 떨어졌어요.'], ko: '다른 메뉴로 바꿔요', lv: ['Beef, then.', "That's okay. I'll have the beef.", "No problem. I'll have the beef, then.", "That's fine. Is there a vegetarian option, or just beef?", 'No worries. Do you happen to have anything lighter? If not, the beef is fine.'] },
+      end: ["Sure, it's right behind you. Let me know if you need anything!", '네, 바로 뒤에 있어요. 필요한 거 있으면 말씀하세요!'] },
+    '입국 심사': { who: 'Logan', role: '입국 심사관', c: '#2F2D3A',
+      arrive: { staff: ['Hello. Passport, please.', '안녕하세요. 여권 주세요.'], ko: '여권을 건네요', lv: ['Here.', 'Here you go.', "Here's my passport.", "Sure. Here's my passport and my return ticket.", "Of course. Here's my passport — I also have my hotel booking if you need it."] },
+      mis: [
+        { t: '방문 목적 말하기', sit: '방문 목적을 물어봐요', ko: '휴가로 왔어요', re: 'vacation|holiday|trip|here', staff: ["What's the purpose of your visit?", '방문 목적이 뭐예요?'], lv: ['Vacation.', "I'm here on vacation.", "I'm here on vacation with my friend.", "I'm here on vacation, mostly to see Sydney and the coast.", "Mainly a vacation, though I'll also meet a client for one afternoon."] },
+        { t: '기간 · 숙소 말하기', sit: '얼마나, 어디에 묵는지 물어봐요', ko: '5일 동안 시내 호텔에 묵어요', re: 'stay|days|nights|hotel|week', staff: ['How long are you staying, and where?', '얼마나, 어디에 머무르세요?'], lv: ['Five days. Hotel.', "I'm staying for five days at a hotel.", "I'm staying for five days at a hotel downtown.", "I'm staying for five days at the Grand Hotel downtown.", 'Five nights in total — the first three downtown, then two near the beach.'] },
+        { t: '첫 방문 말하기', sit: '여기 처음인지 물어봐요', ko: '여기 처음이에요', re: 'first', staff: ['Is this your first time here?', '여기 처음이세요?'], lv: ['Yes, first time.', "Yes, it's my first time here.", "Yes, it's my first time in Australia.", "Yes, it's my first time here, so I'm really excited.", "It's my first time in Sydney, although I visited Melbourne a few years ago."] }
+      ],
+      twist: { k: '돌발 상황! 돌아가는 표를 보여 달래요', staff: ['Do you have a return ticket?', '돌아가는 표 있으세요?'], ko: '돌아가는 표를 보여 줘요', lv: ['Yes. Here.', 'Yes. Here it is.', "Yes, it's on my phone. Here you go.", "Yes, I'm flying back on Sunday. Here's the e-ticket.", "Yes, I'm leaving on the twelfth — I can show you the booking on my phone."] },
+      end: ["Okay. Here's your passport. Enjoy your stay!", '여권 여기 있어요. 즐거운 여행 되세요!'] },
+    '첫 미팅 자기소개': { who: 'Lily', role: '협력사 담당자', c: '#493087',
+      arrive: { staff: ["Hi, you must be from PALLO. I'm Lily Park.", '안녕하세요, 팔로에서 오셨죠? 릴리 박이에요.'], ko: '반갑게 인사해요', lv: ['Hi. Nice to meet you.', 'Nice to finally meet you.', "Nice to finally meet you. I'm from PALLO.", "It's great to finally meet you in person.", 'Great to finally put a face to the name — thanks for having us.'] },
+      mis: [
+        { t: '내 역할 소개하기', sit: '어떤 일을 하는지 물어봐요', ko: '마케팅을 맡고 있어요', re: 'in charge|marketing|lead|team|responsible', staff: ['So, what do you do at PALLO?', '팔로에서 어떤 일을 하세요?'], lv: ['Marketing.', "I'm in charge of marketing.", "I'm in charge of marketing for the Asia team.", "I'm in charge of marketing in Asia, mainly social media and events.", 'I lead marketing for Asia — basically anything from campaigns to partnerships like this one.'] },
+        { t: '회의 시작하기', sit: '다들 모였어요', ko: '시작할까요?', re: 'shall we|start|begin|kick off', staff: ["Everyone's here now.", '이제 다 모였네요.'], lv: ['Start?', 'Shall we get started?', 'Great. Shall we get started?', "Great, everyone's here. Shall we start with the agenda?", 'Perfect timing. Shall we kick off with a quick round of introductions and then go through the agenda?'] },
+        { t: '연락 이어 가기', sit: '회의가 끝났어요', ko: '계속 연락해요', re: 'keep in touch|email|follow up|talk soon|call', staff: ['Thanks for coming today.', '오늘 와 주셔서 감사해요.'], lv: ['Thank you. Bye.', "Thank you. Let's keep in touch.", "Thank you. It was great talking to you. Let's keep in touch.", "Thanks for your time. I'll send you the details by email. Let's keep in touch.", "Thanks so much. I'll follow up with a summary by Friday, and let's set up the next call then."] }
+      ],
+      twist: { k: '돌발 상황! 매니저가 늦는대요', staff: ['Sorry, my manager is running ten minutes late.', '죄송해요, 매니저가 10분 늦는대요.'], ko: '괜찮다고 하고 다른 걸 먼저 해요', lv: ['Okay. No problem.', "That's okay. We can wait.", 'No problem. Shall we start with small talk?', 'No worries. Shall we go over the timeline while we wait?', "Not a problem at all. Why don't we cover the smaller points first and save the budget for when she arrives?"] },
+      end: ['Sounds great. Talk soon!', '좋아요. 또 연락해요!'] },
+    '주문 바꾸기': { who: 'Lily', role: '바리스타', c: '#138A9E',
+      arrive: { staff: ['Hi! One iced latte, right?', '안녕하세요! 아이스 라테 하나 맞죠?'], ko: '내 주문이 맞다고 해요', lv: ['Yes.', "Yes, that's right.", "Yes, that's mine.", "Yes, that's mine. Thank you.", "Yes, that's mine — thanks for being so quick."] },
+      mis: [
+        { t: '주문 바꾸기', sit: '음료가 나오기 전이에요', ko: '주문을 바꿀 수 있을까요?', re: 'change|switch', staff: ["It's almost ready.", '거의 다 됐어요.'], lv: ['Change, please.', 'Can I change my order?', 'Sorry, can I change my order?', 'Sorry, is it too late to change my order?', "I'm really sorry — if it's not too much trouble, could I still change my order?"] },
+        { t: '우유 바꾸기', sit: '뭘로 바꿀지 물어봐요', ko: '오트밀크로 해 주세요', re: 'oat', staff: ['Sure. What would you like?', '그럼요. 뭘로 드릴까요?'], lv: ['Oat milk, please.', 'Could I get it with oat milk?', 'Could I get it with oat milk instead?', 'Could I get it with oat milk instead of regular milk?', 'Could you make it with oat milk instead, and maybe a little less ice?'] },
+        { t: '자리 묻기', sit: '음료를 받았어요', ko: '빈자리 있나요?', re: 'table|seat|sit', staff: ['Here you go. For here or to go?', '여기 있어요. 드시고 가세요?'], lv: ['Here. Table?', 'For here. Is there a free table?', 'For here, please. Is there a free table?', 'For here, please. Is there a free table by the window?', 'For here, thanks. Is there anywhere quiet to sit? I need to make a call.'] }
+      ],
+      twist: { k: '돌발 상황! 오트밀크가 떨어졌어요', staff: ["Oh, sorry. We're out of oat milk today.", '아, 죄송해요. 오늘 오트밀크가 떨어졌어요.'], ko: '다른 우유로 바꿔요', lv: ['Soy milk, then.', "That's okay. Do you have soy milk?", 'No problem. Could I get it with soy milk?', "That's fine. What other milk do you have?", 'Ah, no worries. Which non-dairy option would you recommend instead?'] },
+      end: ["Sure! There's a free table by the window.", '네! 창가에 빈자리 있어요.'] }
+  };
+  // 레벨별 문장 그대로의 한국어 번역 (arrive · mis[0..2] · twist) — 영어 문장과 1:1
+  const SIT_KO = {
+    '공항 체크인': {
+      arrive: ['여기요.', '여기 있어요.', '네, 여기 제 여권이요.', '물론이죠. 여기 제 여권이랑 예약 번호예요.', '네, 여기요. 온라인으로 체크인했는데, 가방은 아직 부쳐야 해요.'],
+      mis: [['창가요.', '창가 자리로 주실 수 있나요?', '창가 자리로 주실 수 있나요? 밖을 보는 걸 좋아해서요.', '앞쪽 창가 자리로 받을 수 있을까요?', '남아 있다면 창가 자리가 좋아요. 되도록 너무 뒤쪽은 아니었으면 해요.'],
+        ['가방이요.', '이 가방을 부치고 싶어요.', '네, 이 가방을 부치고 싶어요. 20킬로쯤 돼요.', '이건 부치고, 작은 건 기내에 들고 타도 될까요?', '이거 하나예요. 무게가 조금 넘을 수도 있는데, 요금을 안 낼 방법이 있을까요?'],
+        ['탑승 시간이요?', '탑승은 몇 시예요?', '감사합니다. 탑승은 몇 시고, 게이트는 어디예요?', '감사해요. 게이트에 몇 시까지 가야 하나요?', '정말 감사해요. 탑승은 대략 언제 시작하고, 게이트가 보안 검색대에서 멀어요?']],
+      twist: ['아. 얼마예요?', '이런. 요금이 얼마예요?', '아, 그렇군요. 짐을 좀 빼도 될까요?', '대신 몇 가지를 기내용 가방으로 옮겨도 될까요?', '요금은 안 내고 싶어요. 저쪽에서 얼른 다시 싸도 괜찮을까요?'] },
+    '기내 주문': {
+      arrive: ['물이요.', '물 좀 주시겠어요?', '물 좀 주시겠어요? 얼음은 빼고요.', '탄산수 있으면 좀 주시겠어요?', '물 주시면 좋겠어요. 괜찮으면 이따가 커피도 한 잔 부탁드려요.'],
+      mis: [['치킨이요.', '치킨으로 할게요.', '치킨으로 할게요. 감사합니다.', '치킨으로 할게요. 밥이 같이 나오나요?', '치킨으로 할게요. 그리고 빵 대신 과일로 바꿔 주실 수 있나요?'],
+        ['담요요.', '담요 하나 더 주시겠어요?', '좀 추워요. 담요 하나 더 주시겠어요?', '담요 하나 더 가져다주실 수 있을까요? 꽤 추워서요.', '여기 뒤쪽이 너무 추워요. 담요를 하나 더 주시거나, 에어컨을 좀 줄여 주실 수 있을까요?'],
+        ['화장실이요?', '지금 화장실 써도 되나요?', '감사합니다. 지금 화장실 써도 되나요?', '감사해요. 식사 서비스 중에 화장실 써도 괜찮나요?', '감사해요. 가시기 전에요, 지금 화장실 비어 있어요? 아니면 카트가 지나갈 때까지 기다릴까요?']],
+      twist: ['그럼 소고기요.', '괜찮아요. 소고기로 할게요.', '문제없어요. 그럼 소고기로 할게요.', '괜찮아요. 채식 메뉴도 있나요, 아니면 소고기만 있나요?', '괜찮아요. 혹시 좀 가벼운 메뉴 있어요? 없으면 소고기도 좋아요.'] },
+    '입국 심사': {
+      arrive: ['여기요.', '여기 있어요.', '여기 제 여권이에요.', '네. 여기 제 여권이랑 돌아가는 표예요.', '물론이죠. 여기 여권이요. 필요하시면 호텔 예약 내역도 있어요.'],
+      mis: [['휴가요.', '휴가로 왔어요.', '친구랑 휴가로 왔어요.', '휴가로 왔어요. 주로 시드니랑 해안을 보려고요.', '주로 휴가예요. 그래도 하루 오후는 고객사도 만나요.'],
+        ['5일이요. 호텔이요.', '호텔에서 5일 동안 묵어요.', '시내 호텔에서 5일 동안 묵어요.', '시내 그랜드 호텔에서 5일 동안 묵어요.', '총 5박이에요. 처음 3박은 시내에서, 2박은 해변 근처에서요.'],
+        ['네, 처음이요.', '네, 여기 처음이에요.', '네, 호주는 처음이에요.', '네, 여기 처음이라 정말 설레요.', '시드니는 처음이에요. 몇 년 전에 멜버른은 가 봤어요.']],
+      twist: ['네. 여기요.', '네. 여기 있어요.', '네, 휴대폰에 있어요. 여기요.', '네, 일요일에 돌아가요. 여기 전자 항공권이에요.', '네, 12일에 떠나요. 휴대폰으로 예약 내역을 보여 드릴게요.'] },
+    '첫 미팅 자기소개': {
+      arrive: ['안녕하세요. 반가워요.', '드디어 뵙네요.', '드디어 뵙네요. 팔로에서 왔어요.', '드디어 직접 뵙게 돼서 정말 반가워요.', '드디어 얼굴을 뵙네요. 초대해 주셔서 감사해요.'],
+      mis: [['마케팅이요.', '마케팅을 맡고 있어요.', '아시아팀 마케팅을 맡고 있어요.', '아시아 마케팅을 맡고 있어요. 주로 SNS랑 행사예요.', '아시아 마케팅을 이끌고 있어요. 캠페인부터 이번 같은 협업까지 다 해요.'],
+        ['시작해요?', '시작할까요?', '좋아요. 시작할까요?', '좋아요, 다 오셨네요. 안건부터 시작할까요?', '딱 맞춰 오셨네요. 간단히 서로 소개하고 나서 안건을 살펴볼까요?'],
+        ['감사합니다. 안녕히 계세요.', '감사합니다. 계속 연락해요.', '감사합니다. 이야기 나눠서 정말 좋았어요. 계속 연락해요.', '시간 내 주셔서 감사해요. 자세한 내용은 메일로 보내 드릴게요. 계속 연락해요.', '정말 감사해요. 금요일까지 요약본을 보내 드릴 테니, 그때 다음 통화를 잡아요.']],
+      twist: ['네. 괜찮아요.', '괜찮아요. 기다릴 수 있어요.', '괜찮아요. 가볍게 이야기부터 할까요?', '괜찮아요. 기다리는 동안 일정을 먼저 볼까요?', '전혀 문제없어요. 작은 것부터 다루고, 예산은 그분이 오시면 이야기할까요?'] },
+    '주문 바꾸기': {
+      arrive: ['네.', '네, 맞아요.', '네, 제 거예요.', '네, 제 거예요. 감사합니다.', '네, 제 거예요. 빨리 만들어 주셔서 감사해요.'],
+      mis: [['바꿀게요.', '주문 바꿀 수 있을까요?', '죄송한데, 주문 바꿀 수 있을까요?', '죄송한데, 주문 바꾸기엔 너무 늦었나요?', '정말 죄송해요. 번거롭지 않으시면 아직 주문을 바꿀 수 있을까요?'],
+        ['오트밀크요.', '오트밀크로 해 주실 수 있나요?', '대신 오트밀크로 해 주실 수 있나요?', '일반 우유 대신 오트밀크로 해 주실 수 있나요?', '대신 오트밀크로 만들어 주시고, 얼음도 조금 적게 해 주실 수 있나요?'],
+        ['여기서요. 자리요?', '먹고 갈게요. 빈자리 있나요?', '먹고 갈게요, 감사합니다. 빈자리 있나요?', '먹고 갈게요. 창가에 빈자리 있나요?', '먹고 갈게요, 감사해요. 조용히 앉을 곳 있을까요? 전화를 해야 해서요.']],
+      twist: ['그럼 두유요.', '괜찮아요. 두유 있어요?', '괜찮아요. 두유로 해 주실 수 있나요?', '괜찮아요. 다른 우유는 뭐가 있어요?', '아, 괜찮아요. 대신 어떤 식물성 우유를 추천하세요?'] }
+  };
+  // 미션 3개 다음 이어지는 직원 질문 [영어, 한국어, 추천 답 3개] — AI 미션 대화가 계속 이어져요
+  const SIT_MORE = {
+    '공항 체크인': [["Is this your first trip to Sydney?", '시드니는 처음 가세요?', ["Yes, it's my first time.", "No, I've been there once.", "Yes! I'm so excited."]], ['What are you planning to do there?', '거기서 뭐 할 계획이에요?', ["I'm going to visit the Opera House.", 'I want to go to the beach.', "I'm meeting my friends."]], ['How long is your trip?', '여행은 얼마나 해요?', ['About a week.', 'Ten days.', 'Just four days.']], ['Are you traveling alone?', '혼자 여행하세요?', ["Yes, I'm traveling alone.", 'No, with my friend.', "I'm traveling with my family."]], ['Do you like long flights?', '긴 비행 좋아하세요?', ["Not really. They're tiring.", 'Yes, I like watching movies.', "They're okay."]], ['Do you need anything else today?', '오늘 더 필요한 거 있으세요?', ["No, that's all. Thank you.", 'Where is the security check?', 'Is there a café near the gate?']]],
+    '기내 주문': [['Is this your first time flying with us?', '저희 항공 처음 이용하세요?', ['Yes, it is.', 'No, I fly with you often.', "It's my second time."]], ['Are you traveling for work or for fun?', '일로 가세요, 여행으로 가세요?', ["For fun. I'm on vacation.", 'For work.', 'Both, actually.']], ['Would you like some tea or coffee later?', '이따가 차나 커피 드릴까요?', ['Coffee, please.', 'Tea would be great.', 'No, thank you.']], ['Do you need anything to help you sleep?', '주무시는 데 필요한 거 있으세요?', ['Could I get an eye mask?', 'Earplugs, please.', "I'm fine, thanks."]], ['Are you enjoying the movies?', '영화는 재미있게 보고 계세요?', ['Yes, there are many good ones.', 'Not really.', "I haven't checked yet."]], ["We'll land in about two hours. Anything else?", '두 시간 후에 착륙해요. 더 필요한 거 있으세요?', ["No, I'm good. Thanks.", 'Could I get some water?', "What's the weather like there?"]]],
+    '입국 심사': [['What do you do for work?', '무슨 일 하세요?', ["I'm an office worker.", "I'm a student.", 'I work in marketing.']], ['Who are you traveling with?', '누구랑 여행하세요?', ["I'm traveling alone.", 'With my friend.', 'With my family.']], ['How much cash are you carrying?', '현금은 얼마나 가지고 계세요?', ['About 300 dollars.', 'Not much. I use my card.', 'Around 500 dollars.']], ['Are you bringing any food?', '음식 가지고 오셨어요?', ["No, I'm not.", 'Just some snacks.', 'Only some chocolate.']], ['What places will you visit?', '어디어디 가세요?', ['The Opera House and Bondi Beach.', 'Mostly the city.', "I'll visit some museums."]], ['Have you been to other countries recently?', '최근 다른 나라에 가 보셨어요?', ['Yes, Japan last year.', 'No, not recently.', 'I went to Vietnam in spring.']]],
+    '첫 미팅 자기소개': [['How was your trip here today?', '오늘 오시는 길은 어땠어요?', ['It was easy. Thanks.', 'There was a lot of traffic.', 'It was fine, thank you.']], ['How long have you been at PALLO?', '팔로에서 일하신 지 얼마나 됐어요?', ['About two years.', 'I joined last year.', 'Almost five years.']], ["What's your team working on these days?", '요즘 팀에서 뭐 하세요?', ["We're working on a new app.", "We're planning a campaign.", "We're opening an office in Japan."]], ['What do you think of our proposal?', '저희 제안 어떻게 생각하세요?', ['It looks great.', 'I like it, but I have a few questions.', 'Can we talk about the budget?']], ['When would be a good time for the next meeting?', '다음 미팅은 언제가 좋을까요?', ['How about next Tuesday?', 'Any time next week is fine.', 'Can I check my schedule and email you?']], ['Do you have any other questions for us?', '더 궁금한 거 있으세요?', ["No, that's all for now.", 'Who should I contact for details?', 'When is the deadline?']]],
+    '주문 바꾸기': [['Is this your first time here?', '여기 처음 오셨어요?', ['Yes, it is.', 'No, I come here often.', "I've been here once."]], ['Would you like anything to eat with that?', '같이 드실 거 있으세요?', ['Can I get a muffin?', 'No, just the drink.', 'What do you recommend?']], ["How's your drink?", '음료 어떠세요?', ["It's perfect. Thank you.", "It's a little sweet.", "It's great!"]], ['Do you need the Wi-Fi password?', '와이파이 비밀번호 필요하세요?', ['Yes, please.', "No, I'm fine.", 'Is it on the receipt?']], ['Are you working or just relaxing today?', '오늘 일하세요, 쉬세요?', ["I'm working on my laptop.", 'Just relaxing.', "I'm meeting a friend."]], ['Can I get you anything else?', '더 필요한 거 있으세요?', ['No, thank you.', 'Can I get some water?', 'Could I get a refill later?']]]
+  };
+  Object.entries(SIT_KO).forEach(([k, v]) => { const X = SIT_MIS[k]; if (!X) return; X.arrive.kos = v.arrive; X.twist.kos = v.twist; X.mis.forEach((m, i) => { m.kos = v.mis[i]; }); });
+  SITS.forEach((L) => L.lessons.forEach((ls) => { const X = ls.data && SIT_MIS[ls.title]; if (!X) return; ls.data.flow = X;
+    ls.data.patterns = X.mis.map((m, i) => ({ id: 'm' + (i + 1), p: m.t, short: m.t, m: m.sit, re: m.re, ex: m.lv.map((e, k) => [e, m.kos ? m.kos[k] : m.ko]), adv: [] })); }));
   const SIT_SOON = [{ id: 'next', title: '새 맵', when: '커밍순' }];
   // ---- 상황 맵 퀴즈 (장면마다 15문항 · 멤버 레벨에 따라 문제 방식과 보기 난이도가 달라져요) ----
   // [상황(한국어), 상대가 하는 말(없으면 null), 정답 문장, 정답 뜻, 빈칸 단어(없으면 null), [그럴듯하지만 틀린 말 2개], 어색한 직역 표현, [빈칸 오답 2개]]
@@ -7196,9 +7514,11 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     });
   }
   STUDY_STEPS.situation = { pre: [], post: [], main: [
-    { id: 'expr', type: 'cards', t: '표현 익히기', d: '표현 하나씩 듣고 익힌 뒤 바로 문제', min: 3, xp: 5 },
+    { id: 'mis', type: 'cards', t: '미션 익히기', d: '미션 3개 · 내 레벨 문장 듣고 따라 말하기', min: 5, xp: 10 },
+    { id: 'flow', type: 'flow', t: '장면 롤플레이', d: '도착 → 요청 → 돌발 → 마무리 · 직원 말에 대답하기', min: 5, xp: 15 },
+    { id: 'bank', type: 'choice', t: 'Word Bank', d: '이 장면 단어 10개 · 30초 타임어택', min: 3, xp: 5 },
     { id: 'exq', type: 'choice', t: '상황 퀴즈', d: '실제 상황 15문제 · 내 레벨에 맞춘 난이도', min: 6, xp: 10 },
-    { id: 'rp', type: 'chat', t: '롤플레이', d: 'AI와 실제 상황처럼 대화하기', min: 5, xp: 15 }
+    { id: 'talk', type: 'chat', t: 'AI 미션 대화', d: 'AI 직원과 대화하며 미션 3개 해내기', min: 6, xp: 15 }
   ] };
   const ALL_L = [...STUDY_LV, ...SITS];
   const stagesOf = (L) => ORDER3.filter((k) => (STUDY_STEPS[L.kind][k] || []).length);
@@ -7762,7 +8082,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     { const SMK = +(new URLSearchParams(location.search).get('studymap') || 2);
       if (M.kind === 'curr' && SMK && LIB[M.lang].length) { const books = LIB[M.lang];
         const SC4 = books.map((b, i) => { const L = b.study, total = L ? (L.total || L.lessons.length) : 0, dn = L ? L.lessons.filter((ls) => ls.data && lessonDone(L, ls)).length : 0;
-          return [`${b.lab || b.l} ${b.jp ? '' : ({ 'HELLO ENGLISH': 'HELLO', 'EVERYDAY ENGLISH': 'EVERYDAY', 'REAL ENGLISH': 'REAL', 'TOPIC TALK': 'TOPIC TALK', 'FREE TALK & DEBATE': 'DEBATE' }[b.s] || '')}`.trim(), L ? `${dn}/${total}${L.kind === 'pattern' ? '과' : '회'}` : '커밍순', !L ? 'soon' : b.mine ? 'cur' : 'open']; });
+          return [`${b.lab || b.l} ${b.jp ? '' : ({ 'HELLO ENGLISH': 'HELLO', 'EVERYDAY ENGLISH': 'EVERYDAY', 'REAL ENGLISH': 'REAL', 'TOPIC TALK': 'TOPIC TALK', 'FREE TALK & DEBATE': 'DEBATE' }[b.s] || '')}`.trim(), L ? `${dn}/${total}${L.kind === 'pattern' ? '과' : '회'}` : '커밍순', !L ? 'soon' : b.mine ? 'cur' : 'open']; }); SC4.sel = ST.bi;
         const goS = () => { if (ST.sitMode || !window.PALLO3D) return; const el = $('#stWorld'); try { el.classList.add('w3d'); window.PALLO3D.mount(el, 'study' + SMK, SC4, (no) => { ST.bi = no - 1; ST.all = false; renderStudyLib(); }); } catch (e) { el.classList.remove('w3d'); } };
         if (window.PALLO3D) goS(); else window.addEventListener('pallo3d-ready', goS, { once: true }); } }
     if (M.kind === 'sit') {
@@ -7803,6 +8123,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     if (L.kind === 'situation') { ST.map = L.id; ST.sitMode = true; ST.lang = sitLang(L); } else { ST.map = 'lang0'; ST.lang = 0; ST.sitMode = false; ST.bi = LIB[0].findIndex((b) => b.study && b.study.lv === lv); }
     ST.all = false;
     showHub();
+    if (L.kind === 'situation' && ls.data.flow && !(ST.qPicked || {})[ls.title]) sitLvPick(null, () => { SV.t = {}; showHub(); });   // 장면에 처음 들어오면 레벨부터
     const el = $('#study'); el.classList.add('open'); el.setAttribute('aria-hidden', 'false');
   }
   function closeStudy() {
@@ -7857,7 +8178,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     });
   }
   function setStudyTop(title, inStep) {
-    $('#stTtl').classList.remove('hub'); $('#study .stc-sh')?.remove();
+    $('#stTtl').classList.remove('hub', 'prog'); $('#study .stc-sh')?.remove();
     $('#stTtl').textContent = title;
     $('#stClose').hidden = !inStep;
     $('#stBack').hidden = !!inStep;
@@ -7872,7 +8193,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const { L, ls, D } = SV, st = stepsOf(L);
     setStudyTop(`Lv.${L.lv} · ${L.series}`, false); setStudyHubTop();
     let sum = '';
-    if (L.kind === 'situation') sum = `<h3>이 장면에서 쓰는 표현</h3>${D.expr.slice(0, 3).map((e, i) => `<div class="st-pl"><i>${i + 1}</i><div><b lang="en">${stEsc(e[0])}</b><span>${stEsc(e[1])}</span></div></div>`).join('')}`;
+    if (L.kind === 'situation' && D.flow) { const Q = sitQLv(); sum = `<h3 class="st-mish">오늘의 미션 · Lv.${Q}<button type="button" class="st-link" data-lvchg>레벨 바꾸기</button></h3>${D.flow.mis.map((m, i) => `<div class="st-pl"><i>${i + 1}</i><div><b>${stEsc(m.t)}</b><span lang="en">${stEsc(m.lv[Q])}</span></div></div>`).join('')}`; }
+    else if (L.kind === 'situation') sum = D.patterns ? `<h3>오늘의 패턴</h3>${D.patterns.map((p, i) => `<div class="st-pl"><i>${i + 1}</i><div><b lang="en">${stEsc(p.p)}</b><span>${stEsc(p.m)}</span></div></div>`).join('')}` : `<h3>이 장면에서 쓰는 표현</h3>${D.expr.slice(0, 3).map((e, i) => `<div class="st-pl"><i>${i + 1}</i><div><b lang="en">${stEsc(e[0])}</b><span>${stEsc(e[1])}</span></div></div>`).join('')}`;
     if (L.kind === 'pattern') sum = `<h3>오늘의 패턴</h3>${D.patterns.map((p, i) => `<div class="st-pl"><i>${i + 1}</i><div><b lang="en">${stEsc(p.p)}</b><span>${stEsc(p.m)}</span></div></div>`).join('')}`;
     if (L.kind === 'topic') sum = `<h3>이번 회차</h3><div class="st-pl"><i>1</i><div><b>DAILY TOPIC · ${stEsc(ls.title)}</b><span>질문 6개 · 키워드 12개</span></div></div><div class="st-pl"><i>2</i><div><b>TOPIC · ${stEsc(D.topic.title)}</b><span>지문 낭독 · USEFUL EXPRESSIONS 6개</span></div></div>${D.pdf ? `<button type="button" class="st-pdf" data-pdf="${D.pdf.path}" data-name="${stEsc(D.pdf.name)}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span><b>자료 다운받기</b><small>PDF · ${D.pdf.size}</small></span></button>` : ''}`;
     if (L.kind === 'debate') sum = `<h3>이번 회차</h3><div class="st-pl"><i>1</i><div><b>FREE TALK · ${stEsc(ls.title)}</b><span>질문 5 · SAY IT BETTER 5</span></div></div><div class="st-pl"><i>2</i><div><b lang="en">${stEsc(D.debate.q)}</b><span>${stEsc(D.debate.qKo)}</span></div></div>${D.pdf ? `<button type="button" class="st-pdf" data-pdf="${D.pdf.path}" data-name="${stEsc(D.pdf.name)}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span><b>자료 다운받기</b><small>PDF · ${D.pdf.size}</small></span></button>` : ''}`;
@@ -7886,7 +8208,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="card st-sum">${sum}</div>
       <button class="card st-lrbtn press" id="stLR"><span class="st-lr-ic">${ICO_HP}</span><span class="st-rt"><b>리스닝 룸</b><small>이 ${L.kind === 'situation' ? '장면' : L.kind === 'pattern' ? '과' : '회차'} 문장 ${lrItemsOf(L, ls).length}개 · 영어→뜻 · 따라 말하기</small></span>${ICO.chev}</button>
       ${stagesOf(L).length < 2 ? '' : `<div class="segtabs st-stagetabs" role="tablist" aria-label="예습 본학습 복습">${stagesOf(L).map((k) => `<button role="tab" aria-selected="${SV.stage === k}" data-ststage="${k}">${STAGE_KO[k]}<em>${doneCount(L, ls, k)}/${st[k].length}</em></button>`).join('')}</div>`}
-      <p class="st-note">${L.kind === 'situation' ? '실제 상황처럼 표현을 익히고, AI와 롤플레이해요. 끝내면 지도에 도장이 찍혀요.' : { pre: '스터디 전에 해요. 수업에서 바로 말할 수 있게 표현과 내 답을 미리 준비해요.', main: '스터디에서 하는 활동이에요. 못 온 날이나 앱 구독자는 AI와 같은 활동을 해요.', post: '스터디가 끝난 뒤 해요. 예습 때 답과 비교해서 얼마나 늘었는지 보여줘요.' }[SV.stage]}</p>
+      <p class="st-note">${L.kind === 'situation' ? '미션 → 롤플레이 → 단어 → 퀴즈 → AI 대화. 레벨마다 문장이 달라요.' : { pre: '스터디 전에 해요. 수업에서 바로 말할 수 있게 표현과 내 답을 미리 준비해요.', main: '스터디에서 하는 활동이에요. 못 온 날이나 앱 구독자는 AI와 같은 활동을 해요.', post: '스터디가 끝난 뒤 해요. 예습 때 답과 비교해서 얼마나 늘었는지 보여줘요.' }[SV.stage]}</p>
       <div class="st-steps">${steps.map((s, i) => {
         const dn = stIsDone(s.id), resume = ST.pos[stKey(s.id)];
         return `<button class="card st-step press${dn ? ' done' : ''}${s.id === nextId ? ' next' : ''}" data-ststep="${s.id}" style="--c:${col}">
@@ -7917,7 +8239,6 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     setStudyTop(stepTitle(s), true);
     const run = (RUN34[SV.L.kind] || {})[s.id];   // Lv.3 · 4 코너는 전체 화면 진행기로
     if (run) { showHub(); run(s); return; }
-    if (SV.L.kind === 'situation' && SIT_QUIZ[SV.ls.title] && !(ST.qPicked || {})[SV.ls.title] && !ST.pos[stKey(s.id)]) { sitLvPick(s, () => { SV.t = {}; STEP_VIEW[s.type](s); }); $('#stBody').scrollTop = 0; stNav('nav-fwd'); return; }
     STEP_VIEW[s.type](s);
     $('#stBody').scrollTop = 0;
     stNav('nav-fwd');
@@ -8064,6 +8385,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   // data-enter="send": Enter = 보내기(폼 제출), Shift+Enter = 줄바꿈 · data-enter="block": Enter로 줄바꿈하지 않아요(제목 · 짧은 답)
   function taFit(t) {
     if (!t || t.tagName !== 'TEXTAREA' || !t.isConnected) return;
+    if (getComputedStyle(t).fieldSizing === 'content') { if (t.style.height) t.style.height = ''; return; }   // 브라우저가 글자에 맞춰 칸 크기를 바꿔요 → 겹치면 칸이 커졌다 줄었다 해요
     const max = Math.round(window.innerHeight * 0.4);
     t.style.height = 'auto';
     const b = t.offsetHeight - t.clientHeight, h = t.scrollHeight + b;
@@ -8307,7 +8629,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     function bindCards() {
       $$('#shPool [data-shw]').forEach((b) => b.addEventListener('click', () => {
         const i = +b.dataset.shw;
-        if (shKey(words[i]) !== shKey(words[st.lk])) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); clearTimeout(b._sh); b._sh = setTimeout(() => b.classList.remove('shake'), 900); sfx('wrong'); st.miss = (st.miss || 0) + 1; if (st.miss === 1 || st.miss % 3 === 0) lsPeek(pick(REACT_BY[0].bad)); st.mh = (st.mh || 0) + 1; if (st.mh >= 3) { st.hintK = st.lk; hint(); } return; }
+        if (shKey(words[i]) !== shKey(words[st.lk])) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); clearTimeout(b._sh); b._sh = setTimeout(() => b.classList.remove('shake'), 900); sfx('wrong'); st.miss = (st.miss || 0) + 1; if (st.miss === 1 || st.miss % 3 === 0) lsPeek(pick(REACT_BY[0].bad)); if (st.mhK !== st.lk) { st.mhK = st.lk; st.mh = 0; } st.mh = (st.mh || 0) + 1; if (st.mh >= 3) { st.hintK = st.lk; hint(); } return; }
         st.used.push(i); st.lk += 1; st.mh = 0; sfx('tap');
         if (st.lk >= N) { finish(); return; }
         paint();
@@ -8335,7 +8657,12 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       if (!TK || TK.tasks[TK.i] !== t) return;
       st.tries = (st.tries || 0) + 1;
       if (st.lk >= N) { finish(); return; }
-      if (v) sfx('wrong');
+      if (v) {
+        sfx('wrong');
+        // 말로 틀린 것도 같은 칸에서 3번이면 정답 카드가 반짝여요 (카드를 잘못 누른 것과 같은 규칙 · 칸이 바뀌면 다시 0번부터)
+        if (st.mhK !== st.lk) { st.mhK = st.lk; st.mh = 0; }
+        st.mh = (st.mh || 0) + 1; if (st.mh >= 3) st.hintK = st.lk;
+      }
       tkRender();
     } }));
     $('#tkSkip')?.addEventListener('click', tkNext);
@@ -8526,8 +8853,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   TKV.role = (t) => {
     $('#lsBody').innerHTML = `<p class="tk-msg" style="margin:0"><b>내 역할을 골라요</b></p>
       <div class="tk-roles">${t.cast.map((c) => { const f1 = t.lines.find((l) => l[0] === c); return `<div class="tk-role" data-role="${c}" role="button" tabindex="0" aria-label="${c} 역할 고르기"><button type="button" class="tk-rsay" data-rsay="${stEsc(f1 ? f1[1] : c)}" aria-label="${c} 목소리 듣기">${pplAv(c, 92) || `<span class="st-av" style="background:${t.colors[c] || 'var(--sky)'};color:#fff;width:52px;height:52px;font-size:18px">${c[0]}</span>`}<i>${ICO.spk}</i></button><b class="nm" style="--pc:${pplC(c)}">${c}</b>${(t.roles || {})[c] ? `<span class="rl">${t.roles[c]}</span>` : ''}<small>대사 ${t.lines.filter((l) => l[0] === c).length}줄</small></div>`; }).join('')}</div>`;
-    $('#lsFoot').innerHTML = noSpeakHTML() + '<button class="ls-skip" type="button" id="tkSkip" style="width:100%">연기는 건너뛰기</button>';
-    $('#tkSkip')?.addEventListener('click', tkNext);
+    $('#lsFoot').innerHTML = noSpeakHTML();
     $$('#lsBody [data-rsay]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); const r = b.closest('.tk-role'); r.classList.remove('hop'); void r.offsetWidth; r.classList.add('hop'); sayEn(b.dataset.rsay, .92); }));
     $$('#lsBody [data-role]').forEach((b) => b.addEventListener('click', () => {
       const me = b.dataset.role, add = [];
@@ -8776,7 +9102,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const [w, m, ex] = E[t.i];
     if (t.ph === 'learn') {
       $('#stBody').innerHTML = `${bar(t.i / n)}<div class="st-kick2">표현 ${t.i + 1} · 듣고 익혀요</div>
-        <div class="card ex-learn"><small>이럴 때</small><span class="ko">${stEsc(m)}</span><div class="en"><b lang="en">${stEsc(w)}</b>${saySpan(w)}${markSpan(w, m)}</div>${ex && ex !== w ? `<div class="exl" lang="en">${hlw(ex, w.replace(/[.?!,]+$/, ''))}</div>` : ''}</div>${dots}
+        <div class="card ex-learn"><small>이럴 때</small><span class="ko">${stEsc(m)}</span><div class="en"><b lang="en">${stEsc(w)}</b>${saySpan(w)}${markSpan(w, m)}</div>${ex && ex !== w ? `<div class="exl" lang="en">${hlw(ex, w.replace(/[.?!,]+$/, ''))}</div>` : ''}</div>
         <div class="st-foot"><button class="btn wide yellow press" id="exGo">문제 풀기</button></div>`;
       if (!noListen()) setTimeout(() => sayEn(w, .9), 300);
       $('#exGo').addEventListener('click', () => { t.ph = 'quiz'; t.opts = null; t.miss = null; sfx('tap'); runExprLearn(s); $('#stBody').scrollTop = 0; });
@@ -8790,13 +9116,14 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const opts = t.opts || (t.opts = stShuffle([ans, ...pool]));
     const prompt = blankOk ? stEsc(ex).replace(new RegExp('\\b' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b'), '<span class="st-blank">___</span>') : stEsc(m);
     $('#stBody').innerHTML = `${bar((t.i + .5) / n)}<div class="st-kick2">${blankOk ? '빈칸에 들어갈 말을 골라요' : '뜻에 맞는 표현을 골라요'}</div>
-      <div class="card st-qc"><div class="st-qc-top"><span class="st-prompt"${blankOk ? ' lang="en"' : ''}>${prompt}</span></div>${blankOk ? `<div class="st-qc-q">${stEsc(m)}</div>` : ''}</div>${dots}
+      <div class="card st-qc"><div class="st-qc-top"><span class="st-prompt"${blankOk ? ' lang="en"' : ''}>${prompt}</span></div>${blankOk ? `<div class="st-qc-q">${stEsc(m)}</div>` : ''}</div>
+      <div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" lang="en">${stEsc(o)}</button>`).join('')}</div>
       <div id="stFb" role="status"></div>
-      <div class="st-foot st-qfoot"><div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" lang="en">${stEsc(o)}</button>`).join('')}</div></div>`;
+      <div class="st-foot st-qfoot"></div>`;
     $$('#stBody [data-opt]').forEach((b) => b.addEventListener('click', () => {
       if (t.picked) return; const pick = opts[+b.dataset.opt], ok = pick === ans;
       if (!ok && !t.miss) { t.miss = pick; b.classList.add('wrong'); b.disabled = true; sfx('wrong'); oopsPop('한 번 더 골라 봐요<br>기회가 한 번 남았어요!'); return; }
-      t.picked = true; $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === ans) x.classList.add('right'); }); $('#stBody .st-qfoot .st-opts').classList.add('done'); if (!ok) b.classList.add('wrong');
+      t.picked = true; $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === ans) x.classList.add('right'); }); $('#stBody .st-opts').classList.add('done'); if (!ok) b.classList.add('wrong');
       sfx(ok ? 'correct' : 'wrong'); if (ok && !t.miss) t.right += 1; t.res[t.i] = ok && !t.miss;
       const rx = REACT_BY[0][ok ? 'good' : 'bad'][Math.floor(Math.random() * REACT_BY[0][ok ? 'good' : 'bad'].length)];
       $('#stBody .st-qfoot').insertAdjacentHTML('beforeend', qFootFB(ok, rx, ok ? '' : '정답 · ' + w, w, m, t.i < n - 1 ? '다음 표현' : '결과 보기'));
@@ -8804,7 +9131,13 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       $('#stNext').addEventListener('click', () => { t.i += 1; t.ph = 'learn'; t.picked = false; t.opts = null; t.miss = null; runExprLearn(s); $('#stBody').scrollTop = 0; });
     }));
   }
+  function runMission(s) {   // 상황 맵 미션 익히기: 미션마다 내 레벨 문장 듣고 따라 말하기
+    const X = SV.D.flow, L = sitQLv(), pool = X.mis.flatMap((m) => m.lv.join(' ').split(/\s+/)), tasks = [];
+    X.mis.forEach((m, i) => { tasks.push({ type: 'shadow', en: m.lv[L], ko: m.kos ? m.kos[L] : m.ko, pass: 1, head: { k: `미션 ${i + 1} / ${X.mis.length} · Lv.${L}`, p: m.t, m: m.sit }, kick: `미션 익히기 · ${m.t}`, pool }); });
+    openTasks('미션 익히기', tasks, () => finishStep(s));
+  }
   STEP_VIEW.cards = (s) => {
+    if (s.id === 'mis' && SV.D.flow) { runMission(s); showHub(); return; }
     if (s.id === 'pat') { runPattern(s); showHub(); return; }
     if (s.id === 'expr' && SV.L.kind === 'situation') return runExprLearn(s);
     const D = SV.D;
@@ -8842,6 +9175,42 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $('#stDone').addEventListener('click', () => finishStep(s));
   };
 
+  // 장면 롤플레이: 도착 → 요청 → 요청 → 돌발 → 마무리. 레벨마다 자막 · 듣기 도움이 달라요 (Lv.0 · 1 한국어 자막 / Lv.2 영어 / Lv.3 · 4 자막 없이 듣고)
+  STEP_VIEW.flow = (s) => {
+    const X = SV.D.flow, L = sitQLv(), t = SV.t;
+    const M = [{ k: '도착', ...X.arrive }, { k: '요청', ...X.mis[0] }, { k: '요청', ...X.mis[1] }, { ...X.twist, k2: X.twist.k, k: '돌발', tw: 1 }, { k: '마무리', ...X.mis[2] }];
+    if (t.i == null) { t.i = 0; t.right = 0; t.res = []; }
+    const trk = `<div class="fl-trk" aria-hidden="true">${M.map((x, k) => `<span class="${k < t.i ? 'on' : k === t.i ? 'now' : ''}"><i></i><b>${x.k}</b></span>`).join('')}</div>`;
+    const bub = (en, ko, show) => `<div class="fl-bub">${pplAv(X.who, 46) || `<span class="st-av" style="background:${X.c};color:#fff;width:46px;height:46px">${X.who[0]}</span>`}<div class="fl-say"><small class="who">${X.who} · ${X.role}</small>${show ? `<b lang="en">${stEsc(en)}</b>` : '<b class="hid">듣고 대답해요</b>'}${L <= 1 || !show ? `<span class="ko"${!show && L > 1 ? ' hidden' : ''}>${stEsc(ko)}</span>` : ''}<button class="ls-spk" type="button" data-say="${stEsc(en)}" aria-label="다시 듣기">${ICO.spk}</button></div></div>`;
+    if (t.i >= M.length) { t.finished = true;
+      $('#stBody').innerHTML = `<div class="pr-top"><div class="pr-bar" aria-hidden="true"><i style="width:100%"></i></div><span class="pr-count">${M.length}/${M.length}</span></div>${trk}${bub(X.end[0], X.end[1], true)}
+        <div class="card st-score"><span class="st-kick2">한 번에 맞힌 대답</span><b>${t.right}<small> / ${M.length}</small></b></div>
+        <div style="display:flex;flex-direction:column;gap:8px">${M.map((x, k) => `<div class="card st-res${t.res[k] ? '' : ' no'}"><span class="st-ok">${t.res[k] ? ICO.check : ICO.x}</span><div class="t"><small>${x.k}${x.t ? ' · ' + stEsc(x.t) : ''}</small><b lang="en">${stEsc(x.lv[L])}</b><span class="ko">${stEsc(x.kos ? x.kos[L] : x.ko || '')}</span></div>${saySpan(x.lv[L])}${markSpan(x.lv[L], x.kos ? x.kos[L] : x.ko || '')}</div>`).join('')}</div>
+        <div class="st-foot">${doneBtn()}</div>`;
+      if (!noListen()) setTimeout(() => sayEn(X.end[0], .92), 300);
+      $('#stDone').addEventListener('click', () => finishStep(s, { right: t.right, total: M.length })); return; }
+    const m = M[t.i], ans = m.lv[L], show = L <= 2 || noListen();
+    const opts = t.opts || (t.opts = stShuffle([ans, ...stShuffle(M.filter((_, k) => k !== t.i).map((x) => x.lv[L])).slice(0, 2)]));
+    $('#stBody').innerHTML = `<div class="pr-top"><div class="pr-bar" aria-hidden="true"><i style="width:${t.i / M.length * 100}%"></i></div><span class="pr-count">${t.i + 1}/${M.length}</span></div>
+      ${trk}${m.tw ? `<div class="fl-tw">${stEsc(m.k2 || X.twist.k)}</div>` : ''}${bub(m.staff[0], m.staff[1], show)}
+      <div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" lang="en">${stEsc(o)}</button>`).join('')}</div>
+      <div id="stFb" role="status"></div>
+      <div class="st-foot st-qfoot"></div>`;
+    if (!noListen()) setTimeout(() => sayEn(m.staff[0], L >= 3 ? .98 : .88), 350);
+    $$('#stBody [data-opt]').forEach((b) => b.addEventListener('click', () => {
+      if (t.picked) return; const pick = opts[+b.dataset.opt], ok = pick === ans;
+      if (!ok && !t.miss) { t.miss = pick; b.classList.add('wrong'); b.disabled = true; sfx('wrong'); oopsPop('한 번 더 골라 봐요<br>기회가 한 번 남았어요!'); return; }
+      const ansKo = m.kos ? m.kos[L] : m.ko || '';
+      t.picked = true; $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === ans) { x.classList.add('right'); if (ansKo) x.insertAdjacentHTML('beforeend', `<small class="ko" lang="ko">${stEsc(ansKo)}</small>`); } }); if (!ok) b.classList.add('wrong');
+      const first = ok && !t.miss;
+      sfx(ok ? 'correct' : 'wrong'); if (first) t.right += 1; t.res[t.i] = first;
+      const say = $('#stBody .fl-say'); if (say && !show) { say.querySelector('.hid').outerHTML = `<b lang="en">${stEsc(m.staff[0])}</b>`; const k = say.querySelector('.ko'); if (k) k.hidden = false; }
+      const rx = REACT_BY[0][ok ? 'good' : 'bad'][Math.floor(Math.random() * REACT_BY[0][ok ? 'good' : 'bad'].length)];
+      $('#stBody .st-qfoot').insertAdjacentHTML('beforeend', qFootFB(ok, rx, ok ? '' : '정답 · ' + ans, ans, m.kos ? m.kos[L] : m.ko || '', t.i < M.length - 1 ? '다음 상황' : '결과 보기'));
+      if (!noListen()) setTimeout(() => sayEn(ans, .92), 250);
+      $('#stNext').addEventListener('click', () => { t.i += 1; t.picked = false; t.opts = null; t.miss = null; STEP_VIEW.flow(s); $('#stBody').scrollTop = 0; });
+    }));
+  };
   // 3) 줄 단위로 듣고 읽기 (대화문 · TOPIC 지문)
   STEP_VIEW.lines = (s) => {
     if (s.id === 'dlg') { runDialogue(s); showHub(); return; }
@@ -8930,8 +9299,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         ${it.big ? `<div class="st-qc-top"><span class="st-big" lang="en">${stEsc(it.big)}</span>${saySpan(it.say)}</div>` : `<div class="st-qc-top"><span class="st-prompt" lang="en">${it.top}</span>${it.en || !it.say ? '' : saySpan(it.say)}</div>`}
         ${it.q ? `<div class="st-qc-q">${it.q}</div>` : ''}
       </div>
+      <div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" ${it.en || it.ol ? 'lang="en"' : ''}>${stEsc(o)}</button>`).join('')}</div>
       <div id="stFb" role="status"></div>
-      <div class="st-foot st-qfoot"><div class="st-opts" role="group" aria-label="보기">${opts.map((o, k) => `<button class="st-opt" data-opt="${k}" ${it.en || it.ol ? 'lang="en"' : ''}>${stEsc(o)}</button>`).join('')}</div></div>`;
+      <div class="st-foot st-qfoot"></div>`;
     if (it.auto) setTimeout(() => sayEn(it.auto, .92), 300);
     $$('#stBody [data-opt]').forEach((b) => b.addEventListener('click', () => {
       if (t.picked) return;
@@ -8942,18 +9312,18 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         return;
       }
       t.picked = true;
-      $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === it.ans) x.classList.add('right'); }); $('#stBody .st-qfoot .st-opts').classList.add('done');
+      $$('#stBody [data-opt]').forEach((x) => { x.disabled = true; if (opts[+x.dataset.opt] === it.ans) x.classList.add('right'); }); $('#stBody .st-opts').classList.add('done');
       if (!ok) b.classList.add('wrong');
       sfx(ok ? 'correct' : 'wrong');
       if (ok && !t.miss) t.right += 1;
       t.res[t.order[t.i]] = ok && !t.miss;
       const rx = REACT_BY[0][ok ? 'good' : 'bad'][Math.floor(Math.random() * REACT_BY[0][ok ? 'good' : 'bad'].length)];
       $('#stFb').innerHTML = `${it.tip ? `<div class="sq-tip"><b>문법 팁</b><span>${stEsc(it.tip)}</span></div>` : ''}
-        ${ok ? '' : it.en ? ansCardsHTML(it.ans) : `<div class="cp" style="margin-top:12px"><div class="cp-b cp-mine"><small>내가 고른 답</small><b style="font-size:15px">${stEsc(pick)}</b></div><div class="cp-ar">${ICO.arrow}</div><div class="cp-b cp-ans"><small>정답</small><b style="font-size:15px">${stEsc(it.ans)}</b></div></div>${ansCardsHTML(it.mk[0], '정답 문장 · 카드로 맞춰 볼게요')}`}
+        ${ok || SV.L.kind === 'situation' ? '' : it.en ? ansCardsHTML(it.ans) : `<div class="cp" style="margin-top:12px"><div class="cp-b cp-mine"><small>내가 고른 답</small><b style="font-size:15px">${stEsc(pick)}</b></div><div class="cp-ar">${ICO.arrow}</div><div class="cp-b cp-ans"><small>정답</small><b style="font-size:15px">${stEsc(it.ans)}</b></div></div>${ansCardsHTML(it.mk[0], '정답 문장 · 카드로 맞춰 볼게요')}`}
 `;
       $('#stBody .st-qfoot').insertAdjacentHTML('beforeend', qFootFB(ok, rx, ok ? '' : '정답 · ' + (it.en ? it.ans : it.mk[0]), it.mk[0], it.mk[1], t.i < t.order.length - 1 ? '다음 문제' : '결과 보기'));
       if ($('#stFb').innerHTML.trim()) stReveal($('#stFb'));
-      if (!ok) ansCardsSay(it.en ? it.ans : it.mk[0]);
+      if (!ok && SV.L.kind !== 'situation') ansCardsSay(it.en ? it.ans : it.mk[0]);
       $('#stNext').addEventListener('click', () => { t.i += 1; t.opts = null; t.miss = null; STEP_VIEW.choice(s); $('#stBody').scrollTop = 0; });
     }));
   };
@@ -8971,8 +9341,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const draw = () => {
       $('#stBody').innerHTML = `
         <div class="st-kick2">${stEsc(SV.ls.title)} · ${then ? '시작하기 전에' : '상황 퀴즈 15문제'}</div>
-        <h2 class="sq-pt">어떤 난이도로 할까요?</h2>
-        <p class="st-intro" style="margin:0">${mine.length > 1 ? `<b>${mine.map((n) => 'Lv.' + n).join(' · ')}</b>를 함께 듣고 있어요. 두 레벨 모두 풀어 보면 좋아요.` : '같은 상황 15개를 레벨마다 다른 방식으로 물어요. 다 풀고 다른 난이도로 다시 풀 수 있어요.'}</p>
+        <h2 class="sq-pt">${then ? '내 레벨을 골라요' : '어떤 난이도로 할까요?'}</h2>
+        <p class="st-intro" style="margin:0">${then ? '미션 문장 · 롤플레이 자막 · 퀴즈 난이도가 이 레벨로 맞춰져요. 장면 화면에서 언제든 바꿀 수 있어요.' : mine.length > 1 ? `<b>${mine.map((n) => 'Lv.' + n).join(' · ')}</b>를 함께 듣고 있어요. 두 레벨 모두 풀어 보면 좋아요.` : '같은 상황 15개를 레벨마다 다른 방식으로 물어요. 다 풀고 다른 난이도로 다시 풀 수 있어요.'}</p>
         <div class="sq-pick" role="radiogroup" aria-label="난이도">${SITQ_PICK.map(([n, nm, d, ex]) => `<button type="button" class="sq-pc${sel === n ? ' on' : ''}" role="radio" aria-checked="${sel === n}" data-lvp="${n}">
           <span class="h"><b>Lv.${n}</b><em>${nm}</em>${mine.includes(n) ? '<i>내 레벨</i>' : ''}${best[n] != null ? `<u>최고 ${best[n]}/15</u>` : ''}</span><span class="d">${d}</span><span class="ex" lang="en">${stEsc(ex)}</span></button>`).join('')}</div>
         <div class="st-foot"><button class="btn wide yellow press" id="sqGo">Lv.${sel} ${SITQ_PICK.find((x) => x[0] === sel)[1]}으로 시작하기</button></div>`;
@@ -9267,6 +9637,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   }
   function chatCfg(s) {
     const D = SV.D;
+    if (s.id === 'talk' && SV.L.kind === 'situation' && D.flow) { const X = D.flow, L = sitQLv(); const MO = SIT_MORE[SV.ls.title] || [];
+      return { who: X.who, c: X.c, title: `AI 미션 대화 · ${X.role}`, open: true, nMis: X.mis.length, lines: [...X.mis.map((m) => m.staff), ...MO.map((q) => [q[0], q[1]]), [...X.end, 1]], replies: [...X.mis.map((m) => [...new Set([m.lv[L], m.lv[L < 4 ? L + 1 : L - 1], m.lv[Math.max(0, L - 1)], m.lv[Math.max(0, L - 2)]])].slice(0, 3)), ...MO.map((q) => q[2])] }; }
     if (s.id === 'talk') return D.talk;
     if (s.id === 'rp') return D.rp;
     if (s.id === 'act') return D.act;
@@ -9492,7 +9864,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   const ftUsed = (txt) => (SV.D.patterns || []).map((p) => new RegExp(p.re, 'i').test(String(txt).replace(/[’]/g, "'")));
 
   function talkView(s, C) {
-    const t = SV.t, N = Math.min(3, C.replies.length);
+    const t = SV.t, N = C.open ? C.replies.length : Math.min(3, C.replies.length), NM = C.nMis || 3;
     if (!t.ft) {
       t.ft = { i: 0, log: [], mode: noSpeak() ? 'write' : 'say', ex: false, said: -1, draft: '' };
       t.ft.log.push({ who: 1, k: 0 });
@@ -9506,7 +9878,10 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       if (m.who) { const L = m.say || Q(m.k); return `<div class="st-msg ft-lily">${pplAv(C.who, 40) || `<span class="st-av" style="${AVC(C.c)}">${C.who[0]}</span>`}<div><div class="b"><span lang="en">${stEsc(L[0])}</span><small>${stEsc(L[1])}</small></div><button type="button" class="ft-say" data-say="${stEsc(L[0])}" data-who="${C.who}" aria-label="다시 듣기">${ICO.spk}</button></div></div>`; }
       return `<div class="st-msg me ft-me"><div class="b" lang="en">${ftHTML(m.en, C, false).html}</div></div>`;
     };
-    const head = `<div class="ft-head">${pplAv(C.who, 36) || `<span class="st-av" style="${AVC(C.c)}">${C.who[0]}</span>`}<b>${done ? `${stEsc(C.who)}와 이야기를 마쳤어요` : `${stEsc(C.who)}와 ${N}번 이야기해요`}</b>
+    const head = C.open
+      ? `<div class="ft-head">${pplAv(C.who, 36) || `<span class="st-av" style="${AVC(C.c)}">${C.who[0]}</span>`}<b>${done ? `${stEsc(C.who)}와 이야기를 마쳤어요` : F.i < NM ? `${stEsc(C.who)}와 미션 대화` : `${stEsc(C.who)}와 계속 이야기해요`}</b>
+        <span class="ft-dots" aria-label="미션 ${Math.min(F.i, NM)}/${NM}">${Array.from({ length: NM }, (_, k) => `<i class="${k < F.i ? 'on' : k === F.i ? 'now' : ''}"></i>`).join('')}<em>${F.i < NM ? `미션 ${F.i + 1}/${NM}` : `자유 대화 ${F.i - NM + 1}`}</em></span></div>`
+      : `<div class="ft-head">${pplAv(C.who, 36) || `<span class="st-av" style="${AVC(C.c)}">${C.who[0]}</span>`}<b>${done ? `${stEsc(C.who)}와 이야기를 마쳤어요` : `${stEsc(C.who)}와 ${N}번 이야기해요`}</b>
       <span class="ft-dots" aria-label="${Math.min(F.i + 1, N)}/${N}">${Array.from({ length: N }, (_, k) => `<i class="${k < F.i ? 'on' : k === F.i ? 'now' : ''}"></i>`).join('')}<em>${Math.min(F.i + (done ? 0 : 1), N)}/${N}</em></span></div>`;
     const chips = `<div class="ft-pats">${P.map((p, k) => `<span class="ft-chip${used[k] ? ' on' : ''}" lang="en">${used[k] ? FT_ICO.chk : ''}${stEsc(p.short)}</span>`).join('')}</div>`;
     if (done) {
@@ -9523,15 +9898,21 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       NS_RE = () => talkView(s, C);
       return;
     }
-    const ex = (C.replies[F.i] || []).slice(0, 2);
+    const ex = (C.replies[F.i] || []).slice(0, 2), sitHint = SV.L.kind === 'situation';
+    // 상황 맵: 힌트 문장에서 뜻이 담긴 가장 긴 단어 하나를 빈칸으로 (나머지는 보여 줘요)
+    const misRe = (SV.D.patterns || [])[F.i] ? new RegExp('^(' + SV.D.patterns[F.i].re + ')', 'i') : null;
+    const blankOne = (x) => { const STOP = /^(please|would|could|there|thanks|thank|about|really|maybe|right|sorry)$/i; const w = x.split(' '); let bi = -1, bl = 0;
+      if (misRe && w.some((t) => misRe.test(t.replace(/[^A-Za-z'’-]/g, '')))) return w.map((t) => (misRe.test(t.replace(/[^A-Za-z'’-]/g, '')) ? t.replace(/[A-Za-z'’-]+/, '____') : t)).join(' ');   // 미션 핵심 단어를 빈칸으로
+      w.forEach((t, k) => { const core = t.replace(/[^A-Za-z'’-]/g, ''); if (core.length > bl && !STOP.test(core) && !/['’]/.test(core)) { bl = core.length; bi = k; } });
+      if (bi < 0) return x; w[bi] = w[bi].replace(/[A-Za-z'’-]+/, '____'); return w.join(' '); };
     $('#stBody').classList.add('ft-on');
     $('#stBody').innerHTML = `${head}${chips}
       <div class="ft-chat">${F.log.map(bub).join('')}
         <div class="ft-wait" aria-label="내 차례"><span class="bub"><i></i><i></i><i></i></span><img src="assets/c-upright-yellow.png" alt=""></div>
       </div>
       <div class="ft-bar">
-        ${F.ex ? `<div class="ft-exs">${ex.map((x, k) => `<button type="button" class="ft-ex" data-ftex="${k}" lang="en">${stEsc(x)}</button>`).join('')}</div>` : ''}
-        <div class="st-hrow"><button type="button" class="ft-bulb${F.ex ? ' on' : ''}" id="ftBulb" aria-pressed="${F.ex}" aria-label="예시 보기">${FT_ICO.bulb}</button></div>
+        ${F.ex ? `<div class="ft-exs">${ex.map((x, k) => `<button type="button" class="ft-ex" data-ftex="${k}" lang="en">${stEsc(sitHint ? blankOne(x) : x)}</button>`).join('')}</div>` : ''}
+        <div class="st-hrow">${C.open && F.i >= NM ? '<button type="button" class="st-link ft-endb" id="ftEnd">대화 끝내기</button>' : ''}<button type="button" class="ft-bulb${F.ex ? ' on' : ''}" id="ftBulb" aria-pressed="${F.ex}" aria-label="예시 보기">${FT_ICO.bulb}</button></div>
         <div class="ft-trow"><div class="ft-tabs" role="tablist"><button type="button" role="tab" class="ft-tab${F.mode === 'say' ? ' on' : ''}" data-ftmode="say" aria-selected="${F.mode === 'say'}">${FT_ICO.mic}말하기</button><button type="button" role="tab" class="ft-tab${F.mode === 'write' ? ' on' : ''}" data-ftmode="write" aria-selected="${F.mode === 'write'}">${FT_ICO.kbd}쓰기</button></div></div>
         ${F.mode === 'say'
           ? `<button type="button" class="ft-mic" id="ftMic">${FT_ICO.mic}<span>눌러서 말하기</span></button><input type="hidden" id="ftIn">`
@@ -9560,7 +9941,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     };
     $$('#stBody [data-ftmode]').forEach((b) => b.addEventListener('click', () => { F.mode = b.dataset.ftmode; sfx('tap'); talkView(s, C); if (F.mode === 'write') $('#ftIn')?.focus(); }));
     $('#ftBulb').addEventListener('click', () => { F.ex = !F.ex; sfx(F.ex ? 'pick' : 'tap'); talkView(s, C); });
-    $$('#stBody [data-ftex]').forEach((b) => b.addEventListener('click', () => { F.draft = ex[+b.dataset.ftex]; F.mode = 'write'; sayEn(F.draft, .92); talkView(s, C); }));
+    $('#ftEnd')?.addEventListener('click', () => { sfx('correct'); F.i = N; ST.talk = ST.talk || {}; ST.talk[stKey(s.id)] = F.log.filter((m) => !m.who && !m.react && !m.retry).map((m) => m.en); talkView(s, C); });
+    $$('#stBody [data-ftex]').forEach((b) => b.addEventListener('click', () => { F.draft = sitHint ? blankOne(ex[+b.dataset.ftex]) : ex[+b.dataset.ftex]; F.mode = 'write'; if (!sitHint) sayEn(F.draft, .92); talkView(s, C); }));
     $('#ftIn')?.addEventListener('input', (e) => { F.draft = e.target.value; });
     $('#ftIn')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); send(e.target.value); } });
     $('#ftSend')?.addEventListener('click', () => send($('#ftIn').value));
@@ -11692,7 +12074,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   // ---- 만들기 시트 (번개 · 동아리 · 동행 · 해외 카드) ----
   const lgPills = (grp, opts, on, multi) => `<div class="lg-pills" data-grp="${grp}"${multi ? ' data-multi="1"' : ''}>${opts.map((o) => `<button type="button" data-pv="${o}" aria-pressed="${Array.isArray(on) ? on.includes(o) : o === on}">${o}</button>`).join('')}</div>`;
   const lgPv = (grp) => $$(`#lgSheet [data-grp="${grp}"] [aria-pressed="true"]`).map((b) => b.dataset.pv);
-  const lgFld = (id, l, ph, v = '', type = 'text') => `<div class="lg-fl"><label for="${id}">${l}</label>${type === 'text' ? `<textarea id="${id}" rows="1" data-enter="block" placeholder="${ph}" autocomplete="off">${v}</textarea>` : `<input id="${id}" type="${type}" placeholder="${ph}" value="${v}" autocomplete="off">`}</div>`;
+  const lgFld = (id, l, ph, v = '', type = 'text') => `<div class="lg-fl"><label for="${id}">${l}</label>${type === 'text' ? `<textarea id="${id}" rows="1" data-enter="block" placeholder="${ph}" autocomplete="off" spellcheck="false">${v}</textarea>` : `<input id="${id}" type="${type}" placeholder="${ph}" value="${v}" autocomplete="off" spellcheck="false">`}</div>`;
   const lgVal = (id) => (($('#' + id) || {}).value || '').trim();   // 없는 칸이면 빈 값
   const lgEsc = (s) => s.replace(/[<&"]/g, (c) => ({ '<': '&lt;', '&': '&amp;', '"': '&quot;' })[c]);
   const LG_ISO = (d) => d.toISOString().slice(0, 10);
@@ -13397,6 +13779,13 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       if (mb) { markEn(mb.dataset.mk, mb.dataset.ko, LR ? '리스닝 룸 · ' + LR.title : '', LR ? { k: 'listen', t: LR.title } : null); const on = S.marks.some((m) => m.t === mb.dataset.mk); mb.setAttribute('aria-pressed', on); mb.innerHTML = ICO.mark(on); }
     });
     $('#stBack').addEventListener('click', stBack);
+    // 정답 반응(띠)이 아래에 올라오면 본문을 끝까지 올려요 → 정답 카드 · 문장이 가리지 않게 (레슨 · 스터디 화면 모두)
+    const fbScroll = (watch, body) => new MutationObserver(() => { const fb = watch.querySelector('.ls-fb'); if (!fb || fb.dataset.sc) return; fb.dataset.sc = 1;
+      [80, 420].forEach((ms) => setTimeout(() => { const b = body(); if (b) b.scrollTo({ top: b.scrollHeight, behavior: reduced() ? 'auto' : 'smooth' }); }, ms)); }).observe(watch, { childList: true, subtree: true });
+    fbScroll($('#lsFoot'), () => $('#lsBody')); fbScroll($('#stBody'), () => $('#stBody'));
+    $('#stBody').addEventListener('click', (e) => { if (!e.target.closest('[data-lvchg]') || !SV || SV.step) return; sfx('tap'); SV.t = { lvSel: sitQLv() }; sitLvPick(null, () => { SV.t = {}; showHub(); }); $('#stBody').scrollTop = 0; });
+    // 스터디 맵 문제 화면처럼: 본문 맨 위 진행 막대(.pr-top)를 위 줄(X · 막대 · 숫자 · 소리)로 옮겨요
+    new MutationObserver(() => { const b = $('#stBody'), pt = b && b.querySelector(':scope > .pr-top'); if (!pt || !(SV && SV.step)) return; const t = $('#stTtl'); t.classList.add('prog'); t.innerHTML = pt.innerHTML; pt.remove(); }).observe($('#stBody'), { childList: true });
     $('#stClose').addEventListener('click', () => (SV && SV.step ? stQuitAsk() : closeStudy()));   // 학습 중 X = 그만하고 과 화면으로
     $$('#study [data-snd]').forEach((b) => b.addEventListener('click', () => setNoListen(!noListen())));
     // 듣기 · 저장 버튼은 어느 화면이든 같은 방식
@@ -14089,8 +14478,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const i = MP.ni || 0, n = NOTICE_D[i]; NREAD.add(i);
     return mpTop('공지', `<button class="icon-btn press" data-mpx="share" aria-label="공유">${lgI('send', 19)}</button>`, MP.from === 'list' ? 'ncback' : 'close') +
       `<article class="nc-det"><span class="tg">${NOTICE_TAG[i]} · ${n.to}</span><h1>${NOTICE_T[i]}</h1><small>${n.date} · ${n.who}</small>${n.body.map((x) => `<p>${x}</p>`).join('')}
-      ${n.cta ? `<button class="lg-btn" data-mpx="nccta:${n.cta[1]}" style="height:50px;width:100%;margin-top:6px">${n.cta[0]}</button>` : ''}
-      <button class="lg-link nc-all" data-mpx="ncall">공지 전체 보기 ›</button></article>`;
+      <button class="lg-link nc-all" data-mpx="ncall">공지 전체 보기 ›</button></article>
+      ${n.cta ? `<div class="lg-dcta"><button class="lg-btn main" data-mpx="nccta:${n.cta[1]}">${n.cta[0]}</button></div>` : ''}`;
   }
   // --- 이용권 · 남은 세션 ---
   const PASS_LOG = Array.from({ length: 12 }, (_, i) => { const d = new Date(2026, 10, 13 - i * 3); return { d: `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, '0')} ${'일월화수목금토'[d.getDay()]}`, br: i % 4 === 2 ? '잠실점' : '영등포점', ls: `Lv.1 · ${Math.max(1, 6 - Math.floor(i / 2))}과`, ok: i !== 5 }; });
@@ -14101,9 +14490,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="card ps-card"><small>${MS.plan}</small><div class="big"><b>${left}</b><span>/ ${MS.total}회 남았어요</span></div><p class="ps-pf">유료 <b>${MS.paidL}</b> · 무료 <b>${MS.freeL}</b> 남음 · 유료분부터 써요</p><div class="bar"><i style="width:${Math.round(MS.used / MS.total * 100)}%"></i></div>
         <div class="row"><span>${MS.period}</span><b>D-${dd}</b></div>${PASSH ? `<p class="hold">${lgI('clock', 14)} 홀딩 신청됨 · ${PASSH} · 매니저 확인 중</p>` : ''}</div>
       <h3 class="ps-h">내 이용권</h3><div class="card ps-info">${[['총 기간', `${MS.P.mo}개월 <small>유료 ${MS.P.paid}개월 + 무료 ${MS.P.free}개월</small>`], ['총 횟수', `${MS.total}회 <small>유료 ${MS.paidN}회 + 무료 ${MS.freeN}회</small>`], ['남은 횟수', `${left}회 <small>유료 ${MS.paidL}회 · 무료 ${MS.freeL}회</small>`], ['주 참여', MS.P.wkT || `주 ${MS.wk}회`], ['연기 · 변경', MS.pp === Infinity ? '무제한' : `${MS.pp}번 남음 <small>${MS.ppMax}번 중</small>`], ['만료일', `${ymd(MS.exp)} <small>남은 ${left}회를 주 ${MS.wk}회로 들으면 · 연기하면 밀려요</small>`]].map(([k, v]) => `<div class="r"><span>${k}</span><b>${v}</b></div>`).join('')}</div>
-      <div class="ps-btns"><button class="lg-btn wh" data-mpx="chggo" style="flex:1">연기 · 변경 신청</button></div>
       <h3 class="ps-h">사용 내역</h3><div class="card ps-log">${PASS_LOG.slice(0, more ? 12 : 6).map((x) => `<div class="r"><span class="d">${x.d}</span><span class="t">${x.ls}<small>${x.br}</small></span><b class="${x.ok ? '' : 'no'}">${x.ok ? '출석' : '결석'}</b></div>`).join('')}</div>
-      ${more ? '' : `<button class="lg-link ps-more" data-mpx="psmore">사용 내역 더 보기 ›</button>`}<button class="lg-link ps-more" data-mpx="paygo">결제 내역 ›</button></div>`;
+      ${more ? '' : `<button class="lg-link ps-more" data-mpx="psmore">사용 내역 더 보기 ›</button>`}<button class="lg-link ps-more" data-mpx="paygo">결제 내역 ›</button></div>
+      <div class="lg-dcta"><button class="lg-btn main" data-mpx="chggo">연기 · 변경 신청</button></div>`;
   }
   // --- 약관 ---
   const TERMS = [
@@ -14140,9 +14529,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const tab = MP.at || 'new';
     return mpTop('1:1 문의', '', MP.from === 'help' ? 'help' : 'close') + `<div class="nt-tabs" role="tablist"><button role="tab" data-mpx="at:new" aria-selected="${tab === 'new'}">문의하기</button><button role="tab" data-mpx="at:list" aria-selected="${tab === 'list'}">내 문의 ${ASKS.length}</button></div><div class="nc-body">${tab === 'new'
       ? `<div class="lg-fl" style="margin-top:14px"><span class="lb">어떤 문의인가요?</span><div class="lg-pills" data-mpgrp="aty">${['수업 · 예약', '결제 · 환불', '앱 오류', '기타'].map((k, i) => `<button type="button" data-mpx="aty:${k}" aria-pressed="${(MP.aty || '수업 · 예약') === k}">${k}</button>`).join('')}</div></div>
-        <div class="lg-fl"><label for="askIn">내용</label><textarea id="askIn" class="ch-first" placeholder="언제, 어떤 화면에서, 무엇이 문제였는지 적어 주세요">${stEsc(MP.ad || '')}</textarea></div>
-        <button class="lg-btn" data-mpx="asksend" style="height:50px;width:100%;margin-top:6px">보내기</button>`
-      : ASKS.map((x) => `<details class="hp-q"><summary><span class="tg">${x.t} · ${x.d}</span><b>${x.q}</b><em class="${x.st === '답변 완료' ? 'ok' : ''}">${x.st}</em></summary><p>${x.a || '답변을 기다리고 있어요. 답이 오면 알림으로 알려 드려요.'}</p></details>`).join('')}</div>`;
+        <div class="lg-fl"><label for="askIn">내용</label><textarea id="askIn" class="ch-first" placeholder="언제, 어떤 화면에서, 무엇이 문제였는지 적어 주세요">${stEsc(MP.ad || '')}</textarea></div>`
+      : ASKS.map((x) => `<details class="hp-q"><summary><span class="tg">${x.t} · ${x.d}</span><b>${x.q}</b><em class="${x.st === '답변 완료' ? 'ok' : ''}">${x.st}</em></summary><p>${x.a || '답변을 기다리고 있어요. 답이 오면 알림으로 알려 드려요.'}</p></details>`).join('')}</div>${tab === 'new' ? `<div class="lg-dcta"><button class="lg-btn main" data-mpx="asksend">보내기</button></div>` : ''}`;
   }
   // --- 결제 내역 ---
   const PAYS = [
@@ -14158,8 +14546,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   function langlvHTML() {
     return mpTop('학습 언어 · 레벨') + `<div class="nc-body">
       <div class="card ps-card"><small>지금 배우는 중</small><div class="big"><b>${SET.lang}</b><span>Lv.1 · EVERYDAY ENGLISH</span></div><div class="row"><span>2026.07.01 시작 · 지금 3과</span><b>12주째</b></div>${LVREQ ? `<p class="hold">${lgI('clock', 14)} 레벨 변경 요청됨 · ${LVREQ} · 프로님 확인 중</p>` : ''}</div>
-      <div class="ps-btns"><button class="lg-btn wh" data-mpx="lvtest">레벨 테스트 결과</button><button class="lg-btn" data-mpx="lvreq">레벨 변경 요청</button></div>
-      <h3 class="ps-h">다른 언어도 배우기</h3><div class="card hp-go">${[['일본어', '레벨 0부터 · 영등포 · 잠실'], ['중국어', '입문반 · 연신내'], ['스페인어', '기초반 · 대구 달서']].map(([l, d]) => `<button data-mpx="addlang:${l}"><span><b>${l}</b><small>${d}</small></span>체험 신청 ›</button>`).join('')}</div></div>`;
+      <h3 class="ps-h">다른 언어도 배우기</h3><div class="card hp-go">${[['일본어', '레벨 0부터 · 영등포 · 잠실'], ['중국어', '입문반 · 연신내'], ['스페인어', '기초반 · 대구 달서']].map(([l, d]) => `<button data-mpx="addlang:${l}"><span><b>${l}</b><small>${d}</small></span>체험 신청 ›</button>`).join('')}</div></div>
+      <div class="lg-dcta"><button class="lg-btn wh main" data-mpx="lvtest">레벨 테스트 결과</button><button class="lg-btn main" data-mpx="lvreq">레벨 변경 요청</button></div>`;
   }
   // --- 로그인 계정 ---
   const LOGINS = { 카카오: true, 애플: false, 구글: false };
@@ -14174,7 +14562,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     return mpTop(`${b.l} 교재`) + `<div class="nc-body"><div class="bk-hero"><div class="mini-cover" style="background:${b.c}"><div class="n${jp ? ' jp' : ''}" ${jp ? 'lang="ja"' : ''}>${b.n}</div><div class="l" ${jp ? 'lang="ja"' : ''}>${b.l}</div>${b.s ? `<div class="s">${b.s}</div>` : ''}</div>
       <div class="tx"><b>${jp ? '일본어' : '영어'} ${b.l.replace('レベル', 'Lv.')}</b><p>${jp ? '히라가나부터 시작해 짧은 대화까지. 한 과에 30분 예습, 50분 세션.' : '알파벳 · 기초 표현부터. 처음 배우는 분을 위한 레벨이에요.'}</p><small>20과 · 예습 · 본학습 · 복습</small></div></div>
       <h3 class="ps-h">목차 미리 보기</h3><div class="card ps-log">${toc.map((t, i) => `<div class="r"><span class="d">${i + 1}과</span><span class="t">${t}</span>${i ? `<b class="no">${lgI('shield', 13)}</b>` : '<b>미리 보기</b>'}</div>`).join('')}</div>
-      <div class="ps-btns"><button class="lg-btn wh" data-mpx="bkpre">1과 미리 보기</button><button class="lg-btn" data-mpx="bkreq">이 레벨 상담 신청</button></div></div>`;
+      </div>
+      <div class="lg-dcta"><button class="lg-btn wh main" data-mpx="bkpre">1과 미리 보기</button><button class="lg-btn main" data-mpx="bkreq">이 레벨 상담 신청</button></div>`;
   }
   // --- 신고함 (매니저) ---
   const REPORTS = [
@@ -14883,28 +15272,69 @@ function stage(el, { half, pos, target, bg, az, fog }) {
   const draw = () => { if (intro && !intro.base) { const off = cam.position.clone().sub(ctl.target); intro.base = off.clone(); off.applyAxisAngle(new THREE.Vector3(0, 1, 0), intro.a); cam.position.copy(ctl.target).add(off); cam.zoom = .78; cam.updateProjectionMatrix(); }
     ticks.forEach((f) => f(0)); r.render(sc, cam); placeLabels(); };
   raf = requestAnimationFrame(loop);
-  const api = { sc, label, ticks, focus, el, draw, onFocus: null }; return api;
+  const v2 = new THREE.Vector3();
+  const api = { sc, label, ticks, focus, el, draw, onFocus: null, cam, proj: (p) => { v2.copy(p).project(cam); return [(v2.x + 1) / 2 * w, (1 - v2.y) / 2 * h]; }, ppu: () => h * cam.zoom / (cam.top - cam.bottom) }; return api;
 }
 const loader = new THREE.TextureLoader();
 function pallo(sc, x, y, z, hgt = 1.45) { const H = { s: null, w: 0, h: hgt }; loader.load('assets/c-upright-yellow.png', (t) => { t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false })); s.renderOrder = 10; H.w = hgt * t.image.width / t.image.height; s.scale.set(H.w, hgt, 1); s.center.set(.5, 0); s.position.set(x, y, z); sc.add(s); H.s = s; }); return H; }
 // 장면을 누르면 팔로가 그 정류장 옆으로 콩콩 뛰어가요 (거리만큼 여러 번 · 착지할 때 살짝 눌림 · 가는 방향으로 좌우 반전)
-function palloRun(S, H, TOP) { let run = null; const RIGHT = new THREE.Vector3(13, 0, -11).normalize(), RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  S.onFocus = (info) => { if (!H.s) return; const p0 = H.s.position.clone(); if (H.base != null) p0.y = H.base; const p1 = new THREE.Vector3(info.at.x + (info.st === 'cur' ? 1.65 : 1.0), TOP + .02, info.at.z + (info.st === 'cur' ? -.8 : -.55)), d = p0.distanceTo(p1);
+function palloRun(S, H, TOP, opt = {}) { let run = null; if (opt.home) H.follow = opt.home;
+  const avH = window.__palloAvHTML && window.__palloAvHTML();
+  if (avH && S.proj) { const me = document.createElement('div'); me.className = 'm3-me'; me.innerHTML = `<div class="m3-me-i">${avH}</div>`; S.el.appendChild(me);
+    S.ticks.push(() => { if (!H.s) { me.style.opacity = 0; return; } H.s.visible = false; const [x, y] = S.proj(H.s.position), u = S.ppu(), hh = H.h * u * 1.05, ww = hh * 520 / 332;
+      const sx = H.w ? Math.abs(H.s.scale.x) / H.w : 1, sy = H.h ? H.s.scale.y / H.h : 1, fl = H.s.scale.x < 0 ? -1 : 1;
+      me.style.opacity = 1; me.style.width = ww + 'px'; me.style.left = x + 'px'; me.style.top = y + 'px'; me.firstChild.style.transform = `scale(${fl * sx}, ${sy})`; }); } const RIGHT = new THREE.Vector3(13, 0, -11).normalize(), RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  S.onFocus = (info) => { if (!H.s) return;
+    if (opt.land) { const get = opt.land(info); if (!get) return; const p0 = H.s.position.clone(); if (H.follow) p0.y = H.follow().y; const p1 = get(), d = p0.distanceTo(p1);
+      if (RM) { H.follow = get; H.s.position.copy(p1); return; }
+      const dx = p1.clone().sub(p0).dot(RIGHT); if (Math.abs(dx) > .05) H.s.scale.x = dx < 0 ? -H.w : H.w;
+      run = { jump: true, p0, get, t0: null, dur: d < .1 ? .5 : Math.min(1.25, .6 + d * .06), arc: d < .1 ? .45 : Math.min(1.5, .7 + d * .1) }; return; }
+    const p0 = H.s.position.clone(); if (H.base != null) p0.y = H.base; const p1 = new THREE.Vector3(info.at.x + (info.st === 'cur' ? 1.65 : 1.0), TOP + .02, info.at.z + (info.st === 'cur' ? -.8 : -.55)), d = p0.distanceTo(p1);
     if (RM) { H.s.position.copy(p1); return; }
     const dx = p1.clone().sub(p0).dot(RIGHT); if (Math.abs(dx) > .05) H.s.scale.x = dx < 0 ? -H.w : H.w;
     run = { p0, p1, t0: null, dur: d < .05 ? .45 : Math.max(.5, d * .17), hops: d < .05 ? 1 : Math.max(2, Math.round(d / 1.0)) }; };
   // 가만히 있을 때: 2.6초마다 제자리에서 콩 (착지 때 살짝 눌림)
-  S.ticks.push((t) => { if (run || !H.s || RM) return; const base = H.base == null ? (H.base = H.s.position.y) : H.base, c = (t + .8) % 2.6;
+  S.ticks.push((t) => { if (run || !H.s || RM) return; const base = H.follow ? H.follow().y : H.base == null ? (H.base = H.s.position.y) : H.base, c = (t + .8) % 2.6;
     if (c < .5) { const k = c / .5, air = Math.sin(k * Math.PI); H.s.position.y = base + air * .38; const sq = k < .12 || k > .88 ? .9 : 1 + air * .05; H.s.scale.y = H.h * sq; H.s.scale.x = Math.sign(H.s.scale.x || 1) * H.w * (2 - sq); }
     else if (H.s.position.y !== base) { H.s.position.y = base; H.s.scale.y = H.h; H.s.scale.x = Math.sign(H.s.scale.x || 1) * H.w; } });
-  S.ticks.push((t) => { if (!run || !H.s) return; if (run.t0 == null) run.t0 = t; const k = Math.min(1, (t - run.t0) / run.dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, ph = (k * run.hops) % 1, air = Math.sin(ph * Math.PI);
+  S.ticks.push((t) => { if (!run || !H.s || !run.jump) return; if (run.t0 == null) run.t0 = t; const T = (t - run.t0), pre = .14, post = .18, fl = run.dur, p1 = run.get(), sgn = Math.sign(H.s.scale.x || 1);
+    if (T < pre) { const q = T / pre, sq = 1 - Math.sin(q * Math.PI) * .22; H.s.position.copy(run.p0); H.s.scale.set(sgn * H.w * (2 - sq), H.h * sq, 1); return; }
+    if (T < pre + fl) { const k = (T - pre) / fl, e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; H.s.position.lerpVectors(run.p0, p1, e); H.s.position.y = run.p0.y + (p1.y - run.p0.y) * e + 4 * k * (1 - k) * run.arc; const st = 1 + Math.sin(k * Math.PI) * .1; H.s.scale.set(sgn * H.w / st, H.h * st, 1); return; }
+    if (T < pre + fl + post) { const q = (T - pre - fl) / post, sq = 1 - Math.sin(q * Math.PI) * .25; H.s.position.copy(p1); H.s.scale.set(sgn * H.w * (2 - sq), H.h * sq, 1); return; }
+    H.s.position.copy(p1); H.s.scale.set(sgn * H.w, H.h, 1); H.follow = run.get; run = null; });
+  S.ticks.push((t) => { if (!run || !H.s || run.jump) return; if (run.t0 == null) run.t0 = t; const k = Math.min(1, (t - run.t0) / run.dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, ph = (k * run.hops) % 1, air = Math.sin(ph * Math.PI);
     H.s.position.lerpVectors(run.p0, run.p1, e); H.s.position.y = run.p0.y + Math.abs(Math.sin(k * run.hops * Math.PI)) * .6;
     const sq = air < .25 ? 1 - (.25 - air) * .7 : 1 + air * .06; H.s.scale.y = H.h * sq; H.s.scale.x = Math.sign(H.s.scale.x || 1) * H.w * (2 - sq);
     if (k >= 1) { H.s.position.copy(run.p1); H.base = run.p1.y; H.s.scale.y = H.h; H.s.scale.x = Math.sign(H.s.scale.x) * H.w; run = null; } }); }
 const tree = (x, z, y = 0, s = 1, c = 0x6DBE6A) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.1 * s, .14 * s, .6 * s, 8), 0xB9824F, { line: .03 }), 0, .3 * s, 0)); g.add(at(mesh(new THREE.IcosahedronGeometry(.48 * s, 1), c), 0, .85 * s, 0)); return at(g, x, y, z); };
 const cloud = (x, y, z, s = 1) => { const g = new THREE.Group(); [[0, 0, .6], [.6, -.1, .45], [-.6, -.12, .45], [.25, .25, .45]].forEach(([a, b, r]) => g.add(at(mesh(new THREE.IcosahedronGeometry(r * s, 2), 0xffffff, { line: .03, cast: false }), a * s, b * s, 0))); return at(g, x, y, z); };
 const flag = (x, y, z, c) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.05, .05, 1.8, 8), 0xffffff, { line: .03 }), 0, .9, 0)); g.add(at(mesh(new THREE.BoxGeometry(.8, .45, .05), c, { line: .03 }), .42, 1.55, 0)); return at(g, x, y, z); };
-const boat = (S, x, z, c) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.BoxGeometry(1.3, .32, .55), c), 0, .16, 0)); g.add(at(mesh(new THREE.ConeGeometry(.42, 1, 3), 0xffffff, { line: .03 }), .1, .8, 0)); S.sc.add(at(g, x, 0, z)); S.ticks.push((t) => { g.rotation.z = Math.sin(t * 2) * .06; g.position.y = Math.sin(t * 2) * .05; }); };
+const boatMesh = (S, c) => { const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  // 선체: 옆모습(뱃머리가 들린 곡선)을 두께 있게 · 둥근 모서리
+  const hs = new THREE.Shape(); hs.moveTo(-.78, .34); hs.lineTo(.62, .34); hs.quadraticCurveTo(1.02, .38, 1.06, .46); hs.quadraticCurveTo(.86, .02, .42, -.04); hs.lineTo(-.62, -.04); hs.quadraticCurveTo(-.82, .02, -.78, .34);
+  const hg = new THREE.ExtrudeGeometry(hs, { depth: .52, bevelEnabled: true, bevelThickness: .08, bevelSize: .06, bevelSegments: 4, curveSegments: 16 }); hg.translate(0, 0, -.26);
+  body.add(mesh(hg, c, { line: .03 }));
+  const band = new THREE.ExtrudeGeometry(hs, { depth: .54, bevelEnabled: true, bevelThickness: .085, bevelSize: .065, bevelSegments: 4, curveSegments: 16 }); band.translate(0, 0, -.27); band.scale(1.001, .22, 1); const bm = mesh(band, 0xFFFFFF, { line: 0 }); bm.position.y = .2; body.add(bm);
+  body.add(at(mesh(new THREE.BoxGeometry(1.42, .05, .56), 0xE9D3AE, { line: .02 }), .1, .37, 0));   // 갑판
+  for (let k = -3; k <= 3; k++) body.add(at(mesh(new THREE.BoxGeometry(.02, .051, .5), 0xC9AE86, { line: 0 }), .1 + k * .18, .372, 0));
+  // 선실 · 창 · 지붕
+  body.add(at(mesh(new THREE.BoxGeometry(.46, .24, .4), 0xFFFFFF, { line: .025 }), -.32, .51, 0)); body.add(at(mesh(new THREE.BoxGeometry(.52, .05, .46), c, { line: .02 }), -.32, .65, 0));
+  [-.44, -.32, -.2].forEach((wx) => { const w = new THREE.Mesh(new THREE.CircleGeometry(.04, 12), new THREE.MeshBasicMaterial({ color: 0x5FA8D3 })); w.position.set(wx, .52, .205); body.add(w); });
+  // 돛대 · 붐 · 큰돛 · 앞돛
+  body.add(at(mesh(new THREE.CylinderGeometry(.025, .03, 1.7, 8), 0xF4EDE0, { line: .015 }), .12, 1.22, 0));
+  const boom = mesh(new THREE.CylinderGeometry(.02, .02, .7, 8), 0xF4EDE0, { line: .012 }); boom.rotation.z = Math.PI / 2; body.add(at(boom, -.2, .62, 0));
+  const sailTex = canvasTex(128, 256, (gg, W, H) => { gg.fillStyle = '#FFFFFF'; gg.fillRect(0, 0, W, H); gg.fillStyle = '#' + new THREE.Color(c).getHexString(); [.62, .74].forEach((y) => gg.fillRect(0, H * y, W, H * .05)); gg.strokeStyle = 'rgba(30,26,43,.12)'; gg.lineWidth = 2; for (let y = 30; y < H; y += 34) { gg.beginPath(); gg.moveTo(0, y); gg.lineTo(W, y + 10); gg.stroke(); } });
+  const ms = new THREE.Shape(); ms.moveTo(0, 0); ms.lineTo(-.62, 0); ms.quadraticCurveTo(-.36, .7, 0, 1.45); ms.lineTo(0, 0);
+  const sg = new THREE.ShapeGeometry(ms, 12); const sp = sg.attributes.position, uv = sg.attributes.uv; for (let k = 0; k < sp.count; k++) { const sx = sp.getX(k), sy = sp.getY(k); sp.setZ(k, Math.sin((sy / 1.45) * Math.PI) * (-sx) * .18); uv.setXY(k, (sx + .62) / .62, sy / 1.45); }
+  sg.computeVertexNormals(); const sail = new THREE.Mesh(sg, new THREE.MeshToonMaterial({ map: sailTex, gradientMap: grad, side: THREE.DoubleSide })); sail.position.set(.1, .66, 0); body.add(sail);
+  const js = new THREE.Shape(); js.moveTo(0, 0); js.lineTo(.62, 0); js.lineTo(0, 1.2); js.lineTo(0, 0); const jib = new THREE.Mesh(new THREE.ShapeGeometry(js), new THREE.MeshToonMaterial({ color: 0xFFF6E6, gradientMap: grad, side: THREE.DoubleSide })); jib.position.set(.16, .5, 0); body.add(jib);
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(.26, .14, 4, 1), new THREE.MeshToonMaterial({ color: 0xFFE200, gradientMap: grad, side: THREE.DoubleSide })); fl.geometry.translate(-.13, 0, 0); fl.position.set(.12, 2.02, 0); body.add(fl);
+  // 물결 자국 (배 뒤로 퍼지는 흰 물결)
+  const wakes = []; for (let k = 0; k < 4; k++) { const w = new THREE.Mesh(new THREE.RingGeometry(.18, .26, 24, 1, Math.PI * .6, Math.PI * .8), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, side: THREE.DoubleSide })); w.rotation.x = -Math.PI / 2; g.add(w); wakes.push(w); }
+  S.ticks.push((t) => { body.rotation.z = Math.sin(t * 1.6) * .05; body.rotation.x = Math.sin(t * 1.1 + 1) * .035; body.position.y = .04 + Math.sin(t * 1.6) * .05; sail.rotation.y = Math.sin(t * .8) * .06; fl.rotation.y = Math.sin(t * 5) * .4;
+    wakes.forEach((w, k) => { const q = (t * .35 + k / 4) % 1; w.position.set(-.8 - q * 1.2, .03, 0); w.scale.setScalar(1 + q * 2.2); w.material.opacity = (1 - q) * .8; }); });
+  return g; };
+const boat = (S, x, z, c) => { const g = boatMesh(S, c); g.rotation.y = .5; g.scale.setScalar(.95); S.sc.add(at(g, x, 0, z)); };
 function building(x, y, z, w, h, d, c, roof, lit = 0xFFF3C4, rows = .55) {
   const g = new THREE.Group(); g.add(at(mesh(new THREE.BoxGeometry(w, h, d), c), 0, h / 2, 0)); g.add(at(mesh(new THREE.BoxGeometry(w + .12, .18, d + .12), roof), 0, h + .09, 0));
   const wm = new THREE.MeshBasicMaterial({ color: lit });
@@ -14925,7 +15355,8 @@ function stops(S, P, TOP, SC, roadCol = 0xF3EBDD, tail = null) {
     top.rotation.x = -Math.PI / 2; top.position.set(x, TOP + h + .01, z); top.userData.info = it; sc.add(top);
     if (cur) S.label(new THREE.Vector3(x, TOP, z + r + .2), n, 'm3-tag cur', 2);
     else S.label(new THREE.Vector3(x, TOP, z + r + .05), `<span class="s">${i + 1}</span><span class="f">${n}</span>`, 'm3-tag min' + (soon ? ' soon' : ''), 0);
-    if (cur) { palloRun(S, pallo(sc, x + 1.65, TOP + .02, z - .8), TOP); S.label(new THREE.Vector3(x, TOP + h + 1.05, z), 'START', 'm3-here'); }
+    if (cur) { const spot = (it) => () => new THREE.Vector3(it.at.x + (it.st === 'cur' ? 1.65 : 1.0), TOP + .02, it.at.z + (it.st === 'cur' ? -.8 : -.55));   // 장면 옆 자리
+      palloRun(S, pallo(sc, x + 1.65, TOP + .02, z - .8), TOP, { land: (info) => spot(info), home: spot(it) });   /* 스터디 맵처럼 포물선 점프로 넘어가요 */ S.label(new THREE.Vector3(x, TOP + h + 1.05, z), 'START', 'm3-here'); }
   });
   return info;
 }
@@ -14989,6 +15420,14 @@ BUILD.biz = (EL, SC) => {
   for (let i = 0; i < 14; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(.9 + rnd(), .02, .08), new THREE.MeshBasicMaterial({ color: i % 3 ? 0xFFE27A : 0xF6B9A0 })); f.position.set(-6 + rnd() * 12, .03, (i % 2 ? 6.0 : -6.2) + rnd() * .4); sc.add(f); }
   }
   layer(sc, SHAPES.squircle, 6.2, .7, 0, 0xB7AECD); layer(sc, SHAPES.squircle, 5.6, .5, .7, 0xE3DEEE);
+  { // 바닥 타일 모자이크: 보라 타일 바탕에 노랑 타일로 PALLO (5×7 픽셀 글자)
+    const F = { P: ['1110', '1001', '1001', '1110', '1000', '1000', '1000'], A: ['0110', '1001', '1001', '1111', '1001', '1001', '1001'], L: ['1000', '1000', '1000', '1000', '1000', '1000', '1111'], O: ['0110', '1001', '1001', '1001', '1001', '1001', '0110'] };
+    const word = 'PALLO', cols = word.length * 5 + 3, rows = 11, ts = 24;
+    const mos = canvasTex(cols * ts, rows * ts, (g) => { g.clearRect(0, 0, cols * ts, rows * ts);
+      [...word].forEach((ch, k) => F[ch].forEach((row, r) => [...row].forEach((b, c) => { if (b !== '1') return; const x = (2 + k * 5 + c) * ts, y = (2 + r) * ts; g.fillStyle = (r + c) % 3 ? '#D2CAE4' : '#CBC2DF'; g.fillRect(x, y, ts, ts); g.fillStyle = 'rgba(255,255,255,.3)'; g.fillRect(x + 3, y + 3, ts - 10, 4); })));
+      [...word].forEach((ch, k) => F[ch].forEach((row, r) => [...row].forEach((b, c) => { if (b !== '1') return; g.strokeStyle = 'rgba(120,106,160,.35)'; g.lineWidth = 2; g.strokeRect((2 + k * 5 + c) * ts + 1, (2 + r) * ts + 1, ts - 2, ts - 2); }))); });
+    const mw = 9, mh = mw * rows / cols, pm = new THREE.Mesh(new THREE.PlaneGeometry(mw, mh), new THREE.MeshBasicMaterial({ map: mos, transparent: true })); pm.rotation.set(-Math.PI / 2, 0, ROW);
+    const [x, z] = along(7.9, 7.9, -.6); pm.position.set(x, .02, z); sc.add(bgs(pm)); }
   // 뒤쪽 높은 층 (빌딩 숲)
   const back = mesh(islandGeo(SHAPES.squircle, 2.5, .8), 0xCFC8E2, { line: .05 }); back.position.set(-2.6, 1.2 + .4, -2.6); sc.add(back);
   const TOP = 1.32;
@@ -15509,6 +15948,16 @@ function travelBeach(S) { const sc = S.sc;
   const sh = new THREE.Mesh(new THREE.CircleGeometry(8.6, 64), new THREE.MeshBasicMaterial({ color: 0x8FDCEB, transparent: true, opacity: .7 })); sh.rotation.x = -Math.PI / 2; sh.scale.y = 1.15; sh.position.y = -.03; sc.add(bgs(sh));
   const sand = std(new THREE.BoxGeometry(110, .6, 9), { color: 0xEFD9A6, roughness: .95 }); sand.rotation.y = ROW; sand.position.set(-14, -.1, -14); sc.add(bgs(sand));
   rowDash(sc, -10.8, -10.8, 100, 0xFFFFFF, .02, 2.4, 1.6, .16);
+  const SAND_L = +(new URLSearchParams(location.search).get('sandl') || 44), SAND_C = +(new URLSearchParams(location.search).get('sandc') || -13.6);
+  { // 모래에 쓴 PALLO (손가락으로 판 홈처럼: 밝은 테두리 + 어두운 홈)
+    const sandW = canvasTex(2048, 240, (g, W, H) => { g.clearRect(0, 0, W, H); const txt = 'PALLO'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineCap = 'round'; g.lineJoin = 'round';
+      const SK = -.24; let fs = 260; g.font = `900 ${fs}px Lexend, sans-serif`;
+      while (fs > 40 && (g.measureText(txt).width + fs * .3 > W * .94 || fs * .78 + 34 > H * .9)) { fs -= 4; g.font = `900 ${fs}px Lexend, sans-serif`; }
+      const draw = (dx, dy, col, lw) => { g.save(); g.translate(W / 2 + dx, H / 2 + dy); g.transform(1, 0, SK, 1, 0, 0); g.font = `900 ${fs}px Lexend, sans-serif`; g.lineWidth = lw; g.strokeStyle = col; g.strokeText(txt, 0, 0); g.restore(); };
+      draw(5, 6, 'rgba(255,250,236,.85)', 26); draw(0, 0, 'rgba(190,152,98,.7)', 18); draw(-1, -1, 'rgba(160,122,74,.45)', 7);
+      for (let i = 0; i < 200; i++) { g.fillStyle = `rgba(180,146,96,${rnd() * .15})`; g.fillRect(rnd() * W, rnd() * H, 4, 4); } });
+    const pw = new THREE.Mesh(new THREE.PlaneGeometry(SAND_L, SAND_L / 8.5), new THREE.MeshBasicMaterial({ map: sandW, transparent: true, depthWrite: false })); pw.rotation.set(-Math.PI / 2, 0, ROW);
+    const [x, z] = along(SAND_C, SAND_C, 1.6); pw.position.set(x, .205, z); sc.add(bgs(pw)); }
   for (let t = -24; t <= 24; t += 4) { const [x, z] = along(-12.2, -12.2, t); sc.add(palmT(x, z, .2, 1.3)); }
   const umb = (x, z, c) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.04, .04, 1.8, 6), { color: 0xF7F7F8 }), 0, .9, 0)); const tx = canvasTex(128, 32, (gg, W, H) => { for (let i = 0; i < 8; i++) { gg.fillStyle = i % 2 ? c : '#FFFFFF'; gg.fillRect(i * 16, 0, 16, H); } }); g.add(at(std(new THREE.ConeGeometry(1.1, .45, 16), { map: tx }), 0, 1.9, 0)); g.add(at(std(new THREE.BoxGeometry(1.4, .12, .55), { color: 0xFFFFFF }), .6, .2, .6)); return at(g, x, .2, z); };
   [-10, -6, -2, 2, 6, 10].forEach((t, i) => { const [x, z] = along(-10.6, -10.6, t); sc.add(umb(x, z, ['#E9536A', '#3F5BA9', '#FFC93C'][i % 3])); });
@@ -15558,7 +16007,7 @@ function travelBeach(S) { const sc = S.sc;
   if (document.fonts && document.fonts.load) document.fonts.load(`italic 40px ${SERIF}`).then(() => shopTexs.forEach(([t, sp]) => { drawShop(t.image.getContext('2d'), t.image.width, t.image.height, sp); t.needsUpdate = true; })).catch(() => {});
   [[-30, -6, 7], [-6, -30, 6]].forEach(([x, z, r]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, r * 1.2, 8), new THREE.MeshLambertMaterial({ color: 0x5E9C6A, flatShading: true })); m.position.set(x, r * .4, z); sc.add(m); });
   const sail = (c) => { const g = new THREE.Group(); g.add(at(std(new THREE.BoxGeometry(1.6, .3, .5), { color: 0xFFFFFF }), 0, .1, 0)); const s = new THREE.Shape(); s.moveTo(0, 0); s.lineTo(1.1, 0); s.lineTo(0, 2); s.lineTo(0, 0); const sg = std(new THREE.ShapeGeometry(s), { color: c, side: THREE.DoubleSide }); sg.position.set(-.3, .3, 0); g.add(sg); return g; };
-  [[9, 2, 0xFFFFFF], [3, 10, 0xE9536A]].forEach(([x, z, c], i) => { const b = sail(c); b.rotation.y = .8; sc.add(b); S.ticks.push((t) => { b.position.set(x + Math.sin(t * .2 + i) * 2, Math.sin(t * 1.5 + i) * .05, z + Math.cos(t * .2 + i) * 1.2); }); });
+  [[9, 2, 0x3F5BA9], [3, 10, 0xE9536A]].forEach(([x, z, c], i) => { const b = boatMesh(S, c); b.rotation.y = .8; b.scale.setScalar(1.25); sc.add(b); S.ticks.push((t) => { b.position.set(x + Math.sin(t * .2 + i) * 2, Math.sin(t * 1.5 + i) * .05, z + Math.cos(t * .2 + i) * 1.2); }); });
   return { noSea: true }; }
 // 비즈니스 · 낮 도심 (고층 빌딩 · 택시 · 횡단보도 · PALLO 타워)
 const taxi = (c = 0xF2C230) => { const g = new THREE.Group(); g.add(at(std(new THREE.BoxGeometry(1.5, .4, .7), { color: c, roughness: .35 }), 0, .35, 0)); g.add(at(std(new THREE.BoxGeometry(.8, .3, .62), { color: 0x2B2F44, roughness: .2 }), -.1, .68, 0)); [-.5, .5].forEach((x) => [-.33, .33].forEach((z) => g.add(at(std(new THREE.CylinderGeometry(.14, .14, .1, 12), { color: 0x1E1A2B }), x, .14, z)))); g.children.slice(2).forEach((w) => { w.rotation.x = Math.PI / 2; }); return g; };
@@ -15619,13 +16068,50 @@ BUILD.cafe = (EL, SC) => {
   const TOP = 1.55;
   for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, x = Math.cos(a) * 4.6, z = -Math.sin(a) * 4.6; if (a > 4.9 && a < 6.0) continue; const s = at(mesh(new THREE.SphereGeometry(.26, 16, 12), i % 2 ? 0xE9536A : 0xFFFFFF, { line: .03 }), x, TOP - .05, z); s.scale.y = .8; sc.add(s); }
   const info = stops(S, [[-2.0, 2.6], [1.0, 3.4], [3.0, .8]], TOP, SC, 0xE8C9A6, [.6, -1.2]);
-  // 카페 건물
-  const cf = new THREE.Group(); cf.add(at(mesh(new THREE.BoxGeometry(3.0, 1.8, 1.8), 0xFFF7E6), 0, .9, 0));
-  for (let i = 0; i < 6; i++) { const a = mesh(new THREE.BoxGeometry(.5, .08, .8), i % 2 ? 0xffffff : 0x138A9E, { line: .02 }); a.position.set(-1.25 + i * .5, 1.45, 1.25); a.rotation.x = .45; cf.add(a); }
-  cf.add(at(mesh(new THREE.BoxGeometry(3.2, .22, 2.0), 0x138A9E), 0, 1.91, 0)); cf.add(at(mesh(new THREE.BoxGeometry(.6, 1.0, .08), 0x138A9E, { line: .02 }), 0, .5, .92));
-  cf.add(at(mesh(new THREE.BoxGeometry(.7, .55, .06), 0xBFE4EC, { line: .02 }), -.95, .9, .92)); cf.add(at(mesh(new THREE.BoxGeometry(.7, .55, .06), 0xBFE4EC, { line: .02 }), .95, .9, .92));
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .5), new THREE.MeshBasicMaterial({ map: textTex('CAFÉ', '#1E1A2B', '#FFE200'), transparent: true })); sign.position.set(0, 2.35, .6); cf.add(sign);
-  sc.add(at(cf, .2, TOP, -2.4));
+  // 카페 건물: CAFÉ PALLO
+  const cf = new THREE.Group(), GRN = 0x1F5A4A, CRM = 0xFFF4DE;
+  const brick = canvasTex(256, 128, (g, W, H) => { g.fillStyle = '#B8644A'; g.fillRect(0, 0, W, H); g.fillStyle = 'rgba(255,230,210,.55)'; for (let y = 0; y < H; y += 16) { g.fillRect(0, y, W, 2); for (let x = (y / 16 % 2) * 16; x < W; x += 32) g.fillRect(x, y, 2, 16); } for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(90,30,20,${rnd() * .2})`; g.fillRect(rnd() * W, rnd() * H, 14, 6); } });
+  const shopIn = canvasTex(512, 256, (g, W, H) => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#FFD996'); gr.addColorStop(1, '#F2A85C'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#7A4A2C'; g.fillRect(0, H * .62, W, H * .38); g.fillStyle = '#5C3620'; g.fillRect(0, H * .6, W, 10);   // 카운터
+    g.fillStyle = '#2B2B2E'; g.fillRect(W * .58, H * .08, W * .3, H * .3); g.fillStyle = '#F3E8D2'; g.font = '700 22px Lexend, sans-serif'; ['MENU', 'Latte  5.0', 'Flat W  4.8', 'Mocha  5.5'].forEach((t2, k) => g.fillText(t2, W * .6, H * (.15 + k * .07)));   // 메뉴판
+    [.12, .3, .46].forEach((x) => { g.strokeStyle = '#3A2A20'; g.lineWidth = 3; g.beginPath(); g.moveTo(W * x, 0); g.lineTo(W * x, H * .2); g.stroke(); g.fillStyle = '#FFF3C4'; g.beginPath(); g.arc(W * x, H * .24, 14, 0, 7); g.fill(); });   // 펜던트 조명
+    [[.1, '#E9536A'], [.22, '#FFFFFF'], [.34, '#3F5BA9']].forEach(([x, c]) => { g.fillStyle = c; g.fillRect(W * x, H * .48, 26, 30); });   // 컵 · 병
+    g.fillStyle = 'rgba(255,255,255,.28)'; g.beginPath(); g.moveTo(W * .05, 0); g.lineTo(W * .22, 0); g.lineTo(W * .06, H); g.lineTo(0, H); g.fill(); });
+  // 아래 벽돌 · 위 크림 벽 · 몰딩
+  const wB = 3.2, wD = 2.0;
+  cf.add(at(faceBox(wB, .5, wD, { map: brick }, { color: 0xB8644A }), 0, .25, 0));
+  cf.add(at(mesh(new THREE.BoxGeometry(wB, 1.5, wD), CRM, { line: .04 }), 0, 1.25, 0));
+  cf.add(at(mesh(new THREE.BoxGeometry(wB + .1, .08, wD + .1), GRN, { line: .02 }), 0, .52, 0));
+  // 지붕: 처마 + 난간 + 굴뚝(김)
+  cf.add(at(mesh(new THREE.BoxGeometry(wB + .3, .16, wD + .3), GRN, { line: .03 }), 0, 2.06, 0));
+  cf.add(at(mesh(new THREE.BoxGeometry(wB + .1, .26, .08), CRM, { line: .02 }), 0, 2.27, wD / 2 + .05));
+  cf.add(at(mesh(new THREE.BoxGeometry(.32, .62, .32), 0xB8644A, { line: .02 }), -1.05, 2.4, -.4));
+  const cfSteam = []; for (let k = 0; k < 3; k++) { const p = sph(.12, 0xFFFFFF, 0); p.material.transparent = true; cf.add(p); cfSteam.push(p); }
+  // 쇼윈도 2개 (초록 틀) + 가운데 초록 문
+  [-.95, .95].forEach((wx) => { cf.add(at(mesh(new THREE.BoxGeometry(1.0, .96, .06), GRN, { line: .02 }), wx, 1.12, wD / 2 + .01)); const gl = new THREE.Mesh(new THREE.PlaneGeometry(.86, .82), new THREE.MeshBasicMaterial({ map: shopIn })); gl.position.set(wx, 1.12, wD / 2 + .05); cf.add(gl);
+    cf.add(at(mesh(new THREE.BoxGeometry(.04, .82, .03), GRN, { line: 0 }), wx, 1.12, wD / 2 + .06));
+    // 꽃상자
+    cf.add(at(mesh(new THREE.BoxGeometry(1.0, .16, .22), 0x8A5A36, { line: .02 }), wx, .6, wD / 2 + .14)); for (let k = 0; k < 7; k++) cf.add(at(sph(.065, [0xE8505B, 0xFFE200, 0xF28CB1, 0xFFFFFF][k % 4], .01), wx - .42 + k * .14, .72, wD / 2 + .16)); });
+  cf.add(at(mesh(new THREE.BoxGeometry(.56, 1.12, .06), GRN, { line: .02 }), 0, .56, wD / 2 + .02));
+  const dg = new THREE.Mesh(new THREE.PlaneGeometry(.36, .5), new THREE.MeshBasicMaterial({ map: shopIn })); dg.position.set(0, .74, wD / 2 + .06); cf.add(dg);
+  cf.add(at(sph(.035, 0xE2B84E, .005), .2, .56, wD / 2 + .07));
+  // 물결 차양 (청록 · 흰 줄 · 끝이 둥근 물결)
+  for (let i = 0; i < 8; i++) { const a = mesh(new THREE.BoxGeometry(.4, .06, .7), i % 2 ? 0xFFFFFF : 0x138A9E, { line: .015 }); a.position.set(-1.4 + i * .4, 1.74, wD / 2 + .3); a.rotation.x = .5; cf.add(a);
+    const sc2 = mesh(new THREE.CylinderGeometry(.2, .2, .05, 16, 1, false, 0, Math.PI), i % 2 ? 0xFFFFFF : 0x138A9E, { line: .012 }); sc2.rotation.set(Math.PI / 2, 0, 0); sc2.position.set(-1.4 + i * .4, 1.56, wD / 2 + .62); cf.add(sc2); }
+  // 전구 줄 (차양 아래)
+  for (let k = 0; k < 13; k++) { const u = k / 12, b = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0xFFE7A0 })); b.position.set(-1.5 + u * 3.0, 1.5 - Math.sin(u * Math.PI) * .12, wD / 2 + .66); cf.add(b); }
+  // 간판: CAFÉ PALLO (초록 바탕 · 금색 글씨 · 컵 아이콘)
+  const signT = canvasTex(1024, 256, () => {}); const drawSign = () => { const c = signT.image, g = c.getContext('2d'), W = c.width, H = c.height; g.clearRect(0, 0, W, H); g.fillStyle = '#1F5A4A'; g.beginPath(); g.roundRect(6, 6, W - 12, H - 12, 40); g.fill(); g.lineWidth = 10; g.strokeStyle = '#E2B84E'; g.stroke();
+    g.fillStyle = '#F3D98A'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '400 118px "DM Serif Display", Georgia, serif'; g.fillText('CAFÉ PALLO', W / 2, H * .54); signT.needsUpdate = true; };
+  drawSign(); if (document.fonts && document.fonts.load) document.fonts.load('118px "DM Serif Display"').then(drawSign).catch(() => {});
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), new THREE.MeshBasicMaterial({ map: signT, transparent: true })); sign.position.set(0, 2.0, wD / 2 + .17); cf.add(sign);
+  // 옆 돌출 간판 (동그란 컵)
+  const blade = new THREE.Group(); blade.add(at(mesh(new THREE.BoxGeometry(.5, .04, .04), 0x2B2B2E, { line: 0 }), .25, 0, 0)); const bd = new THREE.Mesh(new THREE.CircleGeometry(.26, 24), new THREE.MeshBasicMaterial({ map: textTex('P', '#FFE200', '#1E1A2B', 160, 160, 'Lexend', 110) })); bd.position.set(.45, -.3, 0); bd.rotation.y = Math.PI / 2; blade.add(bd); blade.position.set(wB / 2, 1.6, wD / 2 - .2); cf.add(blade);
+  // 화분 · 칠판 입간판
+  [-.45, .45].forEach((px) => { cf.add(at(mesh(new THREE.CylinderGeometry(.13, .1, .24, 12), 0xC8704A, { line: .015 }), px, .12, wD / 2 + .3)); cf.add(at(sph(.2, 0x5DAA5E), px, .4, wD / 2 + .3)); });
+  const cb = new THREE.Group(); [-1, 1].forEach((k) => { const p = mesh(new THREE.BoxGeometry(.44, .6, .04), 0x2B2B2E, { line: .015 }); p.rotation.x = k * .22; p.position.z = k * .07; cb.add(p); }); const cbt = new THREE.Mesh(new THREE.PlaneGeometry(.36, .5), new THREE.MeshBasicMaterial({ map: canvasTex(128, 176, (g, W, H) => { g.fillStyle = '#2B2B2E'; g.fillRect(0, 0, W, H); g.fillStyle = '#F3E8D2'; g.font = '700 20px Lexend'; g.textAlign = 'center'; g.fillText('TODAY', W / 2, 40); g.font = '600 16px Lexend'; g.fillText('Flat white', W / 2, 80); g.fillText('Oat latte', W / 2, 106); g.fillStyle = '#FFE200'; g.fillText('♥ PALLO', W / 2, 146); }) })); cbt.position.set(0, 0, .1); cbt.rotation.x = -.22; cb.add(cbt); cb.position.set(1.05, .3, wD / 2 + .7); cb.rotation.y = -.3; cf.add(cb);
+  S.ticks.push((t) => cfSteam.forEach((p, k) => { const q = (t * .3 + k / 3) % 1; p.position.set(-1.05 + Math.sin(t + k) * .06, 2.75 + q * .9, -.4); p.scale.setScalar(.6 + q * 1.3); p.material.opacity = (1 - q) * .7; }));
+  cf.rotation.y = .45; sc.add(at(cf, .2, TOP, -2.4));   // 정면 · 간판이 카메라 쪽을 보게
   const para = (x, z, c) => { const g = new THREE.Group(); g.add(at(mesh(new THREE.CylinderGeometry(.04, .04, 1.4, 8), 0xffffff, { line: .02 }), 0, .7, 0)); g.add(at(mesh(new THREE.ConeGeometry(.9, .45, 10), c, { line: .03 }), 0, 1.5, 0)); g.add(at(mesh(new THREE.CylinderGeometry(.42, .42, .06, 20), 0xffffff, { line: .02 }), 0, .55, 0));
     [-.65, .65].forEach((k) => g.add(at(mesh(new THREE.BoxGeometry(.3, .35, .3), 0xFFF7E6, { line: .02 }), k, .18, 0))); return at(g, x, TOP, z); };
   sc.add(para(-2.8, -.6, 0xE9789B)); sc.add(para(3.2, -1.8, 0xFFE200));
@@ -15996,7 +16482,8 @@ BUILD.study2 = (EL, SC) => {
   [[-4.8, -2.6, 1.2, .5], [4.6, 1.0, 2.4, .45], [-4.4, 4.4, 3.4, .42], [4.2, 7.2, 4.4, .38], [-3.6, 8.8, 5.6, .35]].forEach(([a, b, y, k], i) => { const [x, z] = SX(a, b), c = puffCloud(x, y, z, k, i + 50); c.userData.bg = 1; sc.add(c); drift.push([c, x, i + 30]); });
   S.ticks.push((t) => drift.forEach(([c, x, i]) => { c.position.x = x + Math.sin(t * .15 + i) * .5; c.scale.y = 1 + Math.sin(t * .6 + i) * .03; }));
   const SP = [[-3.1, -9.6], [3.3, -4.9], [-3.3, -.3], [3.1, 4.3], [-2.2, 8.6]], H = [0, 1.4, 2.8, 4.2, 5.6], SH = [SHAPES.peanut, SHAPES.bean, SHAPES.squircle, SHAPES.scallop, SHAPES.bean], RAD = [1.4, 1.9, 1.8, 1.8, 1.8], tops = [];
-  const ISV = +(new URLSearchParams(location.search).get('isle') || 9);
+  const ISV = +(new URLSearchParams(location.search).get('isle') || 9); const ISL = [], OFF = ISV === 9 ? [1.25, .25] : [.4, .4];
+  const landOn = (k) => { const e = ISL[k]; if (!e) return null; return () => new THREE.Vector3(e.g.position.x + OFF[0], e.g.position.y + e.top, e.g.position.z + OFF[1]); };
   SP.forEach(([a, b], i) => { const [x, z] = SX(a, b), y = H[i], st = (SC[i] || [])[2]; let g, ty;
     if (ISV) { [g, ty] = isle2(sc, SH[i], RAD[i], x, z, y, LV_COL[i], ISV, i); const mg = new THREE.Group(); mg.position.y = ty - y; mg.scale.setScalar(1.3); g.add(mg); if (ISV >= 5) { if (ISV === 9) { lvParkMark(S, mg, i, 0); parkDeco(S, g, i, ty - y, SH[i], RAD[i]); } else { lvMark3(S, mg, i, 0, ISV); isleDeco2(S, g, i, ty - y, ISV, SH[i], RAD[i]); } if (st === 'soon') g.traverse((o) => { if (o.isMesh && o.material && !Array.isArray(o.material) && o.material !== inkMat && o.material.color && !o.material.map && !o.userData.dim) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(0xDDD8CE), .65); o.userData.dim = 1; } }); }
       else { lvMark2(S, mg, i, 0, ISV, st === 'soon'); isleDeco(S, g, i, ty - y, ISV, SH[i], RAD[i], st === 'soon'); } }
@@ -16005,7 +16492,8 @@ BUILD.study2 = (EL, SC) => {
     lvMark(g, i, ty - y, .8, st === 'soon'); } tagIt(g, lvInfo(S, SC, i, new THREE.Vector3(x, ty, z))); tops.push(new THREE.Vector3(x, ty, z));
     for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + i, c = puffCloud(Math.cos(a) * RAD[i] * .8, -1.35 - (k % 2) * .2, Math.sin(a) * RAD[i] * .6, .32, i * 10 + k); g.add(c); }   // 섬 밑 구름 고리
     if (st === 'soon') { g.add(puffCloud(-.6, ty - y + .3, .4, .35, 77)); g.add(puffCloud(.8, ty - y + .1, -.3, .3, 78)); }
-    if (st === 'cur') palloRun(S, pallo(sc, x + (ISV === 9 ? 1.25 : .4), ty, z + (ISV === 9 ? .25 : .4), 1.15), ty);
+    ISL[i] = { g, top: ty - y };
+    if (i === (SC.sel != null && SC[SC.sel] ? SC.sel : SC.findIndex((q) => q[2] === 'cur'))) palloRun(S, pallo(sc, x + OFF[0], ty, z + OFF[1], 1.15), ty, { land: (info) => landOn(info.no - 1), home: landOn(i) });   // 캐릭터는 지금 고른 섬에
     tagUnder(S, SC, i, x, y - .2, z, RAD[i] * .95, 6);
     S.ticks.push((t) => { g.position.y = y + Math.sin(t * 1.1 + i * 1.7) * .1; }); });
   return S; };
