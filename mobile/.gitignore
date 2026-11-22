@@ -41,3 +41,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Finder 가 겹쳐 만든 복사본 (예: index 2.tsx) — 올리지 않아요
+* 2.ts
+* 2.tsx
