@@ -292,3 +292,206 @@ export function shuffled(n: number) {
   if (n > 1 && a.every((v, i) => v === i)) a.reverse();
   return a;
 }
+
+/* ───────────── 스피킹 퀴즈 · My Story · AI 프리토킹 채점 (프로토타입 gradeWords · kwCheck · ftGrade · ftFix) ───────────── */
+
+/** 두 낱말의 편집 거리 (밖에서도 써요) */
+export const levenshtein = (a: string, b: string) => editDistance(a, b);
+
+/** 축약형은 펼쳐서 비교 (프로토타입 CONTR) */
+const CONTR: Record<string, string> = {
+  "i'm": 'i am', "i'd": 'i would', "it's": 'it is', "don't": 'do not', "doesn't": 'does not', "isn't": 'is not', "can't": 'can not', cannot: 'can not',
+  "i've": 'i have', "i'll": 'i will', "won't": 'will not', "didn't": 'did not', "couldn't": 'could not', "wasn't": 'was not', "let's": 'let us',
+  "what's": 'what is', "that's": 'that is', "there's": 'there is', "you're": 'you are', "we're": 'we are', "they're": 'they are', "she'd": 'she would',
+  "he's": 'he is', "she's": 'she is', "aren't": 'are not', "haven't": 'have not', "shouldn't": 'should not', "wouldn't": 'would not', "it'll": 'it will', "we'll": 'we will',
+};
+const normW = (w: string) => {
+  const x = w.toLowerCase().replace(/[’‘]/g, "'").replace(/[^a-z0-9']/g, '');
+  return (CONTR[x] ?? x).split(' ').filter(Boolean);
+};
+
+export type WordGrade = { words: string[]; ok: boolean[]; score: number; perfect: boolean };
+
+/** 스피킹 퀴즈: 정답 낱말마다 내 답에 순서대로 있는지 (빠진 낱말은 분홍 칸) */
+export function gradeWords(answer: string, key: string): WordGrade {
+  const user = answer.split(/\s+/).flatMap(normW);
+  const kw = key.split(/\s+/).filter(Boolean);
+  let p = 0;
+  const ok = kw.map((w) => {
+    const parts = normW(w);
+    if (!parts.length) return true;
+    const at = user.indexOf(parts[0], p);
+    if (at < 0) return false;
+    if (parts.every((x, k) => user[at + k] === x)) {
+      p = at + parts.length;
+      return true;
+    }
+    return false;
+  });
+  const score = ok.filter(Boolean).length / kw.length;
+  return { words: kw, ok, score, perfect: ok.every(Boolean) };
+}
+
+/** My Story 키워드 오타 후보에 쓰는 자주 나오는 낱말 (프로토타입 KW_COMMON) */
+const KW_COMMON = (
+  'home house hotel room office work school cafe coffee shop store mall market restaurant station airport street park gym hospital bank ' +
+  'last this next yesterday today tonight morning afternoon evening night week weekend month year monday tuesday wednesday thursday friday saturday sunday lunch dinner breakfast ' +
+  'my friend friends family mom dad brother sister boss team online phone laptop order ordered delivery food chicken pizza burger shirt shoes jacket bag ticket tickets seat seats ' +
+  'concert movie show train bus taxi flight plane trip travel book booked buy bought get got send sent call called ask asked want wanted return refund exchange change fix broken wrong late ' +
+  'cold hot new old big small size color money price free help desk staff manager receipt key password wifi charger battery remote water air how what when where why who'
+).split(' ');
+
+const lettersOnly = (w: string) => w.toLowerCase().replace(/[^a-z']/g, '');
+
+/** 아는 낱말과 한두 글자 다르면 오타로 보고 후보 두 개 (없으면 null) */
+export function typoSuggest(word: string, extra: string[]) {
+  const lw = lettersOnly(word);
+  if (lw.length < 3) return null;
+  const pool = [...new Set([...extra.map(lettersOnly), ...KW_COMMON])].filter((d) => d.length > 1);
+  if (pool.includes(lw)) return null;
+  const lim = lw.length > 6 ? 2 : 1;
+  const near = pool
+    .map((d, k) => ({ d, k, dist: editDistance(d, lw), n: editDistance(d, lw) + (d.startsWith(lw) || lw.startsWith(d) ? -0.5 : 0) + (d[0] === lw[0] ? 0 : 0.3) }))
+    .filter((x) => x.dist <= lim)
+    .sort((a, b) => a.n - b.n || a.k - b.k)
+    .slice(0, 2)
+    .map((x) => x.d);
+  return near.length ? near : null;
+}
+
+export type KeywordCheck =
+  | { kind: 'ok' }
+  /** 한글 · 영어 낱말이 아닌 것 → 고칠 말 하나 */
+  | { kind: 'bad'; msg: string; fix?: string }
+  /** 오타 같아요 → 후보 두 개 */
+  | { kind: 'typo'; word: string; options: { word: string; value: string }[] };
+
+/**
+ * My Story 키워드 검사 (프로토타입 kwCheck). examples: 이 질문 예시 키워드 · allExamples: 주제 상관없이 이 질문의 모든 예시
+ */
+export function checkKeyword(value: string, examples: string[], allExamples: string[]): KeywordCheck {
+  const v = value.trim();
+  if (!v) return { kind: 'ok' };
+  if (/[ㄱ-ㅎ가-힣]/.test(v)) return { kind: 'bad', msg: '영어로 적어요', fix: examples[0] };
+  const bad = v
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => {
+      const x = w.replace(/[^a-z']/g, '');
+      return x && x !== 'a' && x !== 'i' && (x.length < 2 || !/[aeiouy]/.test(x) || /^(.)\1+$/.test(x));
+    });
+  if (bad.length) {
+    const near = allExamples.flatMap((e) => e.split(' ')).find((w) => editDistance(w.toLowerCase(), bad[0]) <= 1 && bad[0].length > 2);
+    return { kind: 'bad', msg: `‘${bad[0]}’는 영어 단어가 아닌 것 같아요`, fix: near ? v.replace(bad[0], near) : examples[0] };
+  }
+  const exWords = allExamples.flatMap((e) => e.split(' '));
+  for (const w of v.split(/\s+/)) {
+    const c = typoSuggest(w, exWords);
+    if (!c) continue;
+    const cap = /[A-Z]/.test(w[0]);
+    return { kind: 'typo', word: w, options: c.map((d) => ({ word: d, value: v.replace(w, cap ? d[0].toUpperCase() + d.slice(1) : d) })) };
+  }
+  return { kind: 'ok' };
+}
+
+/* AI 프리토킹 리액션: 답에 맞춰요 (아무 답에나 칭찬하지 않아요) */
+const FT_FILLER = new Set(['haha', 'hahaha', 'hah', 'lol', 'lmao', 'hehe', 'ok', 'okay', 'yes', 'yeah', 'yep', 'no', 'nope', 'hmm', 'hm', 'um', 'uh', 'idk', 'sure', 'maybe', 'thanks', 'thank', 'wow', 'oh', 'cool', 'nice', 'good', 'fine']);
+
+export type TalkGrade = { k: 'weak' | 'ok' | 'good'; why: string; reason: boolean; pattern: boolean; words: number };
+
+/**
+ * 약함: 2단어 이하 · haha / ok / yes 같은 말뿐 · 영어가 아님 → 칭찬 없이 다시 물어요
+ * 보통: 짧은 한 문장 → 'I see.' + 이유를 붙여 보라는 한 줄
+ * 좋음: 이유(because · so …)나 오늘의 패턴을 넣었거나 7단어 이상
+ * patterns: 오늘의 패턴 정규식 글자 (프로토타입 p.re)
+ */
+export function gradeTalk(v: string, patterns: string[]): TalkGrade {
+  const t = String(v || '').toLowerCase().replace(/[’]/g, "'");
+  const ws = t.match(/[a-z']+/g) || [];
+  const real = ws.filter((w) => !FT_FILLER.has(w));
+  const base = { reason: false, pattern: false, words: ws.length };
+  if (/[가-힣]/.test(t) && ws.length < 3) return { ...base, k: 'weak', why: '영어로 답해 볼까요?' };
+  if (ws.length < 3 || real.length < 2) return { ...base, k: 'weak', why: '한 문장으로 답해 볼까요?' };
+  const reason = /\b(because|so|since|that's why|and|but|when|if)\b/.test(t);
+  const pattern = patternsUsed(v, patterns).some(Boolean);
+  if (pattern) return { ...base, reason, pattern, k: 'good', why: '오늘의 패턴을 썼어요' };
+  if (reason) return { ...base, reason, pattern, k: 'good', why: '이유까지 말했어요' };
+  if (ws.length >= 7) return { ...base, reason, pattern, k: 'good', why: '' };
+  return { ...base, reason, pattern, k: 'ok', why: 'because로 이유를 붙여 보면 더 좋아요' };
+}
+
+/** 오늘의 패턴마다 썼는지 */
+export const patternsUsed = (text: string, patterns: string[]) => patterns.map((re) => new RegExp(re, 'i').test(String(text).replace(/[’]/g, "'")));
+
+/** 고치기 사전 (프로토타입 FT_WORDS) — 여기에 없는 낱말은 한두 글자 차이 나는 아는 낱말로 고쳐 보여요 */
+const FT_WORDS = (
+  'i you he she it we they me my your his her our their this that these those a an the and but or so because if when what where why how who which do does did done have has had having be is am are was were been being can could will would should may might must not no yes to of in on at for with from by about as up down out over into than then there here very really just too also only more most some any all every each many much one two three good bad big small new old hot cold nice great quiet loud soft hard window bed room hotel view city night ocean mountain coffee machine food pizza pasta package order ordered wrong right store call called ask asked send sent new one refund back usually say said something politely let go small it depends situation like want get got make made eat ate drink went go going come came see saw look looks looked work works worked working wifi wi-fi phone charger password key water air conditioner problem staff front desk please thanks thank sorry okay ok sure think know feel tired busy happy sad today tonight yesterday weekend week time day morning lunch dinner home office cafe shop friend friends family lucky never ever always sometimes often first last next people place thing things kind favorite best better well again still alone sister brother motivation recharge sleep sleeping walk walking weather mood loud places cooking calls guitar lessons blog start try'
+).split(' ');
+
+export type FixPart = { t: string; fix?: string; spelling?: boolean };
+
+/**
+ * 고치기 (프로토타입 ftFix): 스펠링(아는 낱말과 한두 글자 차이) + 자주 틀리는 문법 몇 가지
+ * (don't ↔ doesn't, he have → has, a + 모음 → an, 소문자 i → I). 실제 앱은 AI 교정으로 바꿔요.
+ * known: 이 대화에 나온 낱말 (질문 · 예시 답 · 오늘의 패턴)
+ */
+export function fixSentence(text: string, known: string[]): FixPart[] {
+  const dict = new Set(FT_WORDS);
+  known.forEach((x) =>
+    String(x || '')
+      .toLowerCase()
+      .replace(/[’]/g, "'")
+      .split(/[^a-z'-]+/)
+      .forEach((w) => w && dict.add(w.replace(/^'+|'+$/g, ''))),
+  );
+  const parts: FixPart[] = String(text)
+    .replace(/[’]/g, "'")
+    .split(/(\s+)/)
+    .map((t) => ({ t }));
+  const W = parts.filter((p) => p.t.trim());
+  const core = (p: FixPart) => p.t.replace(/^[^A-Za-z']+|[^A-Za-z']+$/g, '');
+  const setFix = (p: FixPart, word: string) => {
+    const c = core(p);
+    if (c) p.fix = p.t.replace(c, word);
+  };
+  W.forEach((p, k) => {
+    const c = core(p);
+    const lc = c.toLowerCase();
+    const prev = W[k - 1] ? core(W[k - 1]).toLowerCase() : '';
+    const prev2 = W[k - 2] ? core(W[k - 2]).toLowerCase() : '';
+    if (!c) return;
+    if (lc === 'i' && c === 'i') return setFix(p, 'I');
+    if (lc === "don't" && (/^(it|he|she|this|that)$/.test(prev) || /^(the|my|your|his|her|our|this|that)$/.test(prev2))) return setFix(p, "doesn't");
+    if (lc === "doesn't" && /^(i|you|we|they)$/.test(prev)) return setFix(p, "don't");
+    if (lc === 'have' && /^(he|she|it)$/.test(prev)) return setFix(p, 'has');
+    if (lc === 'has' && /^(i|you|we|they)$/.test(prev)) return setFix(p, 'have');
+    const nx = W[k + 1] ? core(W[k + 1]) : '';
+    if (lc === 'a' && nx && /^[aeiou]/i.test(nx) && !/^(uni|use|one|eu)/i.test(nx)) return setFix(p, 'an');
+    if (lc.length < 3 || dict.has(lc) || (/^[A-Z]/.test(c) && k > 0) || /\d/.test(c)) return;
+    const lim = lc.length > 6 ? 2 : 1;
+    let best = '';
+    let bd = 9;
+    for (const d of dict) {
+      if (Math.abs(d.length - lc.length) > lim) continue;
+      const v = editDistance(d, lc);
+      if (v <= lim && (v < bd || (v === bd && d[0] === lc[0]))) {
+        bd = v;
+        best = d;
+      }
+    }
+    const b = best;
+    if (b) {
+      setFix(p, c[0] === c[0].toUpperCase() ? b[0].toUpperCase() + b.slice(1) : b);
+      p.spelling = true;
+    }
+  });
+  return parts;
+}
+
+/** 고친 문장 한 줄 (저장용) */
+export const fixedText = (parts: FixPart[]) =>
+  parts
+    .map((p) => p.fix ?? p.t)
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim();

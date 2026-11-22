@@ -6,16 +6,22 @@ import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
+import { AskBubble, MyTurnBubble } from '@/components/lesson/bubbles';
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Peek } from '@/components/lesson/peek';
+import { say } from '@/components/lesson/voice';
 import { WordCard } from '@/components/lesson/word-card';
 import { Appear } from '@/components/ui/appear';
 import { PText } from '@/components/ui/text';
+import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { BAD_REACTIONS, GOOD_REACTIONS, type ShadowTask as Task } from '@/data/lessons';
+import { haptic, sfx } from '@/lib/feedback';
 import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
 import { matchSpeech, shuffled, wordKey } from '@/lib/words';
+import { toggleExpression, useIsSaved } from '@/state/expressions';
+import { useLearnPrefs } from '@/state/learn-prefs';
 
 const PURPLE = Colors.purple;
 const PINK = Colors.rosePink;
@@ -30,9 +36,35 @@ type Mode = 'card' | 'voice';
  * - 말하기: 말한 단어 카드가 차례로 빛나고 줄에 이어져요. 중간에 막히면 남은 카드부터 이어서 말해요.
  * - 단어 카드(말하기 어려울 때): 다음 단어 카드를 눌러 이어요. 3번 틀리면 정답 카드가 반짝여요.
  * - 소리 끄기: 듣기 버튼이 사라지고 정답을 읽어 주지 않아요.
+ * - 말하기가 어려워요: 처음부터 단어 카드로 (같은 문장 · 같은 규칙)
+ * - 대화문 역할 연기(ctx · me): 앞사람 대사는 왼쪽 흰 말풍선(먼저 읽어 줘요), 내 대사는 오른쪽 노랑 말풍선에 뜻만
+ * - My Story 따라 읽기(para): 맞춘 문장만 글자로, 지금 문장은 빈칸, 남은 문장은 회색 점선
  */
-export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; soundOff: boolean; onNext: () => void; nextLabel: string }) {
+export function ShadowTask({
+  task,
+  soundOff,
+  onNext,
+  nextLabel,
+  noSpeak: noSpeakProp,
+  onMark,
+  onFootHeight,
+  source = '레슨',
+}: {
+  task: Task;
+  soundOff: boolean;
+  onNext: () => void;
+  nextLabel: string;
+  /** 말하기가 어려워요 — 안 넘기면 학습 설정(15분)을 따라요 */
+  noSpeak?: boolean;
+  /** 다 이으면 한 번: 3번 넘게 틀렸으면 false (오답으로 기록) */
+  onMark?: (ok: boolean) => void;
+  onFootHeight?: (h: number) => void;
+  /** 표현 저장 출처 */
+  source?: string;
+}) {
   const insets = useSafeAreaInsets();
+  const prefs = useLearnPrefs();
+  const noSpeak = noSpeakProp ?? prefs.noSpeak;
   const words = task.en.split(/\s+/);
   const N = words.length;
   const focus = focusFlags(task.en, task.focus);
@@ -63,7 +95,7 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
   const [missHere, setMissHere] = useState(0);
   const [shake, setShake] = useState<{ i: number; n: number } | null>(null);
   const [tries, setTries] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const saved = useIsSaved(task.en);
   const [reaction] = useState(() => GOOD_REACTIONS[Math.floor(Math.random() * GOOD_REACTIONS.length)]);
   const linked = used.length;
   const done = linked >= N;
@@ -97,17 +129,30 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
       judgeVoice(text);
     },
   });
-  const [mode, setMode] = useState<Mode>(speech.available ? 'voice' : 'card');
+  const [mode, setMode] = useState<Mode>(speech.available && !noSpeak ? 'voice' : 'card');
 
-  // 다 이으면 문장을 한 번 읽어 줘요 (소리 끄기면 안 읽어요)
+  // 다 이으면 문장을 한 번 읽어 줘요 (소리 끄기면 안 읽어요) · 3번 넘게 틀렸으면 오답으로 기록
+  const sayAll = () => say(task.para && task.para.k === task.para.ss.length - 1 ? task.para.all : task.en);
   useEffect(() => {
     if (!done) return;
     speech.stop();
+    sfx('correct');
+    haptic('success');
+    onMark?.(misses.current < 3);
     if (soundOff) return;
-    const t = setTimeout(() => Tts.speak(task.en, { language: 'en-US', rate: 0.92 }), 250);
+    const t = setTimeout(sayAll, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
+
+  // 앞사람 대사는 처음에 한 번 읽어 줘요 (내 답 문장은 다 이은 뒤에만)
+  useEffect(() => {
+    if (!task.ctx || soundOff) return;
+    const ctx = task.ctx;
+    const t = setTimeout(() => say(ctx.en, 0.92, ctx.who), 380);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => () => void Tts.stop(), []);
 
@@ -159,7 +204,12 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
     }
     busy.current = true;
     pendingTo.current = n;
-    picks.forEach((i, j) => setTimeout(() => setSaid((s) => [...s, i]), j * GLOW_STEP));
+    picks.forEach((i, j) =>
+      setTimeout(() => {
+        setSaid((s) => [...s, i]);
+        sfx('card');
+      }, j * GLOW_STEP),
+    );
     setTimeout(
       () => {
         busy.current = false;
@@ -200,11 +250,14 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
 
   function tapCard(i: number) {
     if (wordKey(words[i]) !== wordKey(words[usedRef.current.length])) {
+      sfx('wrong');
+      haptic('error');
       setShake((s) => ({ i, n: (s?.n ?? 0) + 1 }));
       addMiss(usedRef.current.length);
       oops();
       return;
     }
+    sfx('card');
     setUsed([...usedRef.current, i]);
     clearMissBefore(usedRef.current.length);
   }
@@ -233,6 +286,14 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
     return () => void Reflect.deleteProperty(globalThis, '__palloSay');
   });
 
+  const save = () => {
+    const on = toggleExpression({ en: task.en, ko: task.para ? '' : task.ko, source });
+    if (on) {
+      sfx('save');
+      showToast('내 표현함에 문장을 저장했어요');
+    } else showToast('표현함에서 뺐어요');
+  };
+
   const hintCard = missHere >= 3 && !done ? cardFor(linked, used) : undefined;
   const pool = mix.filter((i) => !used.includes(i));
   const startVoice = () => {
@@ -252,9 +313,11 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
 
   return (
     <View style={styles.flex}>
-      <ScrollView style={styles.flex} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        <PatternHead head={task.head} />
-        <PText style={styles.ko}>{task.ko}</PText>
+      <ScrollView style={styles.flex} contentContainerStyle={StyleSheet.flatten([styles.body, !task.head && styles.bodyNoHead])} showsVerticalScrollIndicator={false}>
+        {task.head && <PatternHead head={task.head} />}
+        {task.ctx && <AskBubble who={task.ctx.who} en={task.ctx.en} ko={task.ctx.ko} soundOff={soundOff} onSay={() => task.ctx && say(task.ctx.en, 0.92, task.ctx.who)} />}
+        {task.me ? <MyTurnBubble me={task.me} ko={task.ko} /> : <PText style={StyleSheet.flatten([styles.ko, !task.head && styles.koNoHead])}>{task.ko}</PText>}
+        {task.para && <Para para={task.para} done={done} soundOff={soundOff} saved={saved} onSave={() => save()} onSay={sayAll} />}
 
         <Chain words={words} used={used} focus={focus} done={done} />
         {!done && <View style={styles.rule} />}
@@ -290,7 +353,7 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
           </PText>
         )}
 
-        {done && (
+        {done && !task.para && (
           <Appear kind="tkRise" style={styles.sent}>
             <View style={styles.flex}>
               <PText style={styles.sentEn}>{task.en}</PText>
@@ -298,7 +361,7 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
             </View>
             {!soundOff && (
               <Pressable
-                onPress={() => Tts.speak(task.en, { language: 'en-US', rate: 0.92 })}
+                onPress={() => say(task.en)}
                 accessibilityRole="button"
                 accessibilityLabel="문장 듣기"
                 style={StyleSheet.flatten([styles.round, styles.listen])}>
@@ -306,7 +369,7 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
               </Pressable>
             )}
             <Pressable
-              onPress={() => setSaved((v) => !v)}
+              onPress={save}
               accessibilityRole="button"
               accessibilityLabel="표현 저장"
               accessibilityState={{ selected: saved }}
@@ -319,7 +382,12 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
 
       {/* 아래 고정: 모드 탭 · 말하기 버튼 / 다 이으면 반응 · 다음 */}
       {!done && <Peek n={peek?.n ?? 0} line={peek?.line ?? null} bottom={footH + 12} />}
-      <View style={StyleSheet.flatten([styles.foot, { paddingBottom: 16 + insets.bottom }])} onLayout={(e) => setFootH(e.nativeEvent.layout.height)}>
+      <View
+        style={StyleSheet.flatten([styles.foot, { paddingBottom: 16 + insets.bottom }])}
+        onLayout={(e) => {
+          setFootH(e.nativeEvent.layout.height);
+          onFootHeight?.(e.nativeEvent.layout.height);
+        }}>
         {done ? (
           <>
             <View style={styles.react}>
@@ -337,7 +405,14 @@ export function ShadowTask({ task, soundOff, onNext, nextLabel }: { task: Task; 
                 </PText>
               </View>
             </View>
-            <BigButton label={nextLabel} color={Colors.yellow} onPress={onNext} />
+            <BigButton
+              label={nextLabel}
+              color={Colors.yellow}
+              onPress={() => {
+                sfx('big');
+                onNext();
+              }}
+            />
           </>
         ) : (
           <>
@@ -374,32 +449,47 @@ const tailTokens = (t: string) => {
 };
 
 /** 문장에서 패턴 부분에 걸친 단어들 (보라 밑줄) */
-function focusFlags(en: string, re: RegExp) {
-  const m = en.replace(/[’]/g, "'").match(re);
+function focusFlags(en: string, re?: RegExp | null) {
+  const m = re ? en.replace(/[’]/g, "'").match(re) : null;
   const toks = [...en.matchAll(/\S+/g)];
   if (!m || m.index == null) return toks.map(() => false);
   const [a, b] = [m.index, m.index + m[0].length];
   return toks.map((t) => (t.index ?? 0) < b && (t.index ?? 0) + t[0].length > a);
 }
 
-/** 위 머리: 패턴(노란 형광) + 뜻, 아래 점선 */
-function PatternHead({ head }: { head: Task['head'] }) {
-  const rest = head.pattern.slice(head.short.length);
+/**
+ * 위 머리: 패턴(노란 형광) + 뜻, 아래 점선 (프로토타입 .tk-head · headHL — ' + ' 앞 패턴 부분에 형광펜).
+ * ' + ' 가 없거나 short 가 비면(상황 장면 표현 등) 형광펜 없이, 위에 작은 안내(kicker) 줄을 보여 줘요.
+ */
+function PatternHead({ head }: { head: NonNullable<Task['head']> }) {
+  const cut = head.pattern.indexOf(' + ');
+  const hl = head.short && cut > 0;
   return (
     <View accessibilityLabel={`${head.kicker}. ${head.pattern}, ${head.meaning}`}>
-      <View style={styles.headRow}>
-        <View>
-          <View style={styles.marker} />
+      {!hl && (
+        <PText style={styles.headKick} color={Colors.inkSub}>
+          {head.kicker}
+        </PText>
+      )}
+      {hl ? (
+        <View style={styles.headRow}>
+          <View>
+            <View style={styles.marker} />
+            <PText variant="title" style={styles.headText}>
+              {head.pattern.slice(0, cut)}
+            </PText>
+          </View>
           <PText variant="title" style={styles.headText}>
-            {head.short}
+            {head.pattern.slice(cut)}
           </PText>
         </View>
-        <PText variant="title" style={styles.headText}>
-          {rest}
+      ) : (
+        <PText variant="title" style={StyleSheet.flatten([styles.headText, styles.headPlain])}>
+          {head.pattern}
         </PText>
-      </View>
+      )}
       <PText style={styles.meaning} color={Colors.inkSub}>
-        {head.meaning}.
+        {head.meaning}
       </PText>
       <Svg height={2} width="100%" style={styles.dash}>
         <Line x1={0} y1={1} x2="100%" y2={1} stroke="#D6CEBF" strokeWidth={2} strokeDasharray="6 5" />
@@ -425,6 +515,41 @@ function Chain({ words, used, focus, done }: { words: string[]; used: number[]; 
         </Appear>
       ))}
       {!done && <View style={styles.slot} />}
+    </View>
+  );
+}
+
+/** My Story 문단: 맞춘 문장만 글자로 · 지금 문장은 낱말 수만큼 빈칸 · 남은 문장은 회색 점선 (프로토타입 .sh-para) */
+function Para({ para, done, soundOff, saved, onSave, onSay }: { para: NonNullable<Task['para']>; done: boolean; soundOff: boolean; saved: boolean; onSave: () => void; onSay: () => void }) {
+  return (
+    <View style={styles.para} accessibilityLabel="내 문단">
+      <View style={styles.paraText}>
+        {para.ss.map((x, k) =>
+          k < para.k || (k === para.k && done) ? (
+            <PText key={k} style={k === para.k ? styles.paraNow : styles.paraOk}>
+              {x}
+            </PText>
+          ) : (
+            <View key={k} style={styles.paraGap} accessibilityLabel={k === para.k ? '지금 맞출 문장' : '다음 문장'}>
+              {x.split(/\s+/).map((_, j) => (
+                <View key={j} style={k === para.k ? styles.paraDot : styles.paraDim} />
+              ))}
+            </View>
+          ),
+        )}
+      </View>
+      {done && (
+        <View style={styles.paraTools}>
+          <Pressable onPress={onSave} accessibilityRole="button" accessibilityLabel="표현 저장" accessibilityState={{ selected: saved }} style={StyleSheet.flatten([styles.round, saved && styles.saved])}>
+            <BookmarkIcon filled={saved} />
+          </Pressable>
+          {!soundOff && (
+            <Pressable onPress={onSay} accessibilityRole="button" accessibilityLabel="듣기" style={StyleSheet.flatten([styles.round, styles.listen])}>
+              <SpeakerIcon size={17} />
+            </Pressable>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -503,9 +628,21 @@ function BigButton({ label, color, onPress }: { label: string; color: string; on
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   body: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 24 },
+  bodyNoHead: { paddingTop: 2, gap: 14 },
+  koNoHead: { marginTop: 0, fontSize: 20, lineHeight: 28 },
+  para: { padding: 14, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, gap: 10 },
+  paraText: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: 6 },
+  paraOk: { fontFamily: Font.body700, fontSize: 15, lineHeight: 22, color: Colors.inkSub },
+  paraNow: { fontFamily: Font.body900, fontSize: 15, lineHeight: 22, color: Colors.ink, backgroundColor: Colors.yellow },
+  paraGap: { flexDirection: 'row', gap: 4, alignItems: 'center', height: 22 },
+  paraDot: { width: 18, height: 6, borderRadius: 3, backgroundColor: '#D7CFBF' },
+  paraDim: { width: 18, height: 6, borderRadius: 3, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#CFC6B4' },
+  paraTools: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   headRow: { flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap' },
   marker: { position: 'absolute', left: -2, right: -2, bottom: 1, height: 11, backgroundColor: Colors.yellow },
   headText: { fontSize: 23, lineHeight: 30 },
+  headKick: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, marginBottom: 6 },
+  headPlain: { fontSize: 22 },
   meaning: { marginTop: 2, fontFamily: Font.body800, fontSize: 13.5, lineHeight: 19 },
   dash: { marginTop: 14 },
   ko: { marginTop: 14, fontFamily: Font.body900, fontSize: 19, lineHeight: 27 },

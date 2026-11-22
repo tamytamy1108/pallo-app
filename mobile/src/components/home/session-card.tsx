@@ -3,33 +3,20 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Pattern, Rect, Stop } from 'react-native-svg';
+import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Pattern, Rect, Stop } from 'react-native-svg';
 
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { TODAY_SESSION } from '@/data/mock';
+import { QR_BEFORE, SLOTS } from '@/data/home';
 import { kf, SPRING, useLoop } from '@/lib/motion';
+
+import { countOf, fmtMin, heroOf, useAttend, useClock, type Hero } from './attendance';
+import { ARROW_PATH, CHECK_PATH, LineIcon, QR_PATH } from './icons';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 const pad = (n: number) => String(n).padStart(2, '0');
-
-/** 세션 시작까지 남은 시간 (1초마다 다시 계산). 시작한 뒤엔 null. */
-function useCountdown(hour: number, minute: number) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const start = new Date(now);
-  start.setHours(hour, minute, 0, 0);
-  const left = Math.floor((start.getTime() - now) / 1000);
-  if (left <= 0) return null;
-  const h = Math.floor(left / 3600);
-  const m = Math.floor((left % 3600) / 60);
-  return h > 0 ? `${pad(h)}:${pad(m)}` : `${pad(m)}:${pad(left % 60)}`;
-}
 
 /** 클래퍼보드 줄무늬 팔 */
 function ClapperArm() {
@@ -59,8 +46,7 @@ function ClapperArm() {
 const STAGE_LINES = ['Take the stage.', 'Your stage is ready.', 'The stage is yours.'];
 let stageTurn = -1;
 
-export function SessionCard({ onCheckIn }: { onCheckIn: () => void }) {
-  const { startHour, startMinute } = TODAY_SESSION;
+export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
   const [stage, setStage] = useState(0);
   useFocusEffect(
     useCallback(() => {
@@ -68,8 +54,12 @@ export function SessionCard({ onCheckIn }: { onCheckIn: () => void }) {
       setStage(stageTurn);
     }, []),
   );
-  const countdown = useCountdown(startHour, startMinute);
-  const today = new Date();
+  const now = useClock();
+  const attend = useAttend();
+  const hero = heroOf(attend, now);
+  const count = countOf(attend, now);
+  // 출석하고 스터디가 시작되면 제목이 바뀌어요 (포즈는 그대로)
+  const title = hero.kind === 'onair' ? "You're on stage." : STAGE_LINES[stage];
 
   return (
     <View style={styles.wrap}>
@@ -78,36 +68,79 @@ export function SessionCard({ onCheckIn }: { onCheckIn: () => void }) {
         <View style={styles.shadow} />
         <View style={styles.body}>
           <View style={styles.fields}>
-            <Field label="스터디" value={`${pad(startHour)}:${pad(startMinute)}`} big />
-            <Field label={countdown ? '시작까지' : '지금'} value={countdown ?? '진행 중'} big={!!countdown} divider />
-            <Field label="DATE" value={`${today.getMonth() + 1}.${pad(today.getDate())}`} divider narrow />
+            <Field label="스터디" value={count.time} big />
+            <Field label={count.label} value={count.value} big divider />
+            <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider narrow />
           </View>
           <View style={styles.main}>
             <HeroChar pose={POSES[stage]} />
             <View style={styles.live}>
-              <LiveDot />
-              <PText style={styles.liveText}>ACTION!</PText>
+              <LiveDot live={hero.live} />
+              <PText style={styles.liveText}>{hero.badge}</PText>
             </View>
-            <SwapTitle text={STAGE_LINES[stage]} />
-            <Pressable onPress={onCheckIn} accessibilityRole="button" accessibilityLabel="출석체크 하기" style={styles.btnWrap}>
-              {({ pressed }) => (
-                <View style={StyleSheet.flatten([styles.btn, pressed && styles.btnPressed])}>
-                  <Shine />
-                  <View style={styles.qr}>
-                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={Colors.white} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                      <Path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8" />
-                    </Svg>
-                  </View>
-                  <PText style={styles.btnText}>출석체크 하기</PText>
-                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-                    <Path d="M5 12h14M13 6l6 6-6 6" />
-                  </Svg>
-                </View>
-              )}
-            </Pressable>
+            <SwapTitle text={title} />
+            <HeroActions hero={hero} slot={attend.slot} onOpen={onOpen} />
           </View>
         </View>
       </View>
+    </View>
+  );
+}
+
+/** 상태마다 버튼 (프로토타입 #heroActions: .hero-btn · .go · [disabled] · .done · .hero-link) */
+function HeroActions({ hero, slot, onOpen }: { hero: Hero; slot: number; onOpen: (mode: 'rsvp' | 'checkin') => void }) {
+  if (hero.kind === 'onair' || hero.kind === 'entered') {
+    const label = hero.kind === 'onair' ? '입장 완료 · 무대 위' : '입장 완료!';
+    return (
+      <View style={styles.actions} accessible accessibilityLabel={label}>
+        <View style={StyleSheet.flatten([styles.btn, styles.btnWhite])}>
+          <QrBadge d={CHECK_PATH} />
+          <PText style={styles.btnText}>{label}</PText>
+        </View>
+      </View>
+    );
+  }
+  if (hero.kind === 'rsvp') {
+    const from = `${fmtMin(SLOTS[slot].start - QR_BEFORE)}부터 출석`;
+    return (
+      <View style={styles.actions}>
+        <View style={StyleSheet.flatten([styles.btn, styles.btnWhite, styles.btnFlat])} accessible accessibilityLabel={from} accessibilityState={{ disabled: true }}>
+          <QrBadge d={QR_PATH} />
+          <PText style={styles.btnText}>{from}</PText>
+        </View>
+        <Pressable onPress={() => onOpen('rsvp')} accessibilityRole="button" accessibilityLabel="사전 출석 변경" hitSlop={4}>
+          {({ pressed }) => (
+            <View style={StyleSheet.flatten([styles.link, pressed && styles.linkPressed])}>
+              <PText style={styles.linkText}>변경</PText>
+            </View>
+          )}
+        </Pressable>
+      </View>
+    );
+  }
+  const go = hero.kind === 'action';
+  const label = go ? '출석체크 하기' : hero.kind === 'off' ? '그래도 갈래요' : '사전 출석체크';
+  return (
+    <View style={styles.actions}>
+      <Pressable onPress={() => onOpen(go ? 'checkin' : 'rsvp')} accessibilityRole="button" accessibilityLabel={label}>
+        {({ pressed }) => (
+          <View style={StyleSheet.flatten([styles.btn, pressed && styles.btnPressed])}>
+            {go && <Shine />}
+            <QrBadge d={QR_PATH} />
+            <PText style={styles.btnText}>{label}</PText>
+            <LineIcon d={ARROW_PATH} size={20} width={2.4} />
+          </View>
+        )}
+      </Pressable>
+    </View>
+  );
+}
+
+/** 버튼 왼쪽 보라 동그라미 아이콘 (.qi) */
+function QrBadge({ d }: { d: string }) {
+  return (
+    <View style={styles.qr}>
+      <LineIcon d={d} size={20} width={2.2} color={Colors.white} />
     </View>
   );
 }
@@ -140,16 +173,18 @@ const liveRing = css.keyframes({
   '0%': { opacity: 0.7, transform: [{ scale: 1 }] },
   '70%, 100%': { opacity: 0, transform: [{ scale: 2.6 }] },
 });
-function LiveDot() {
+function LiveDot({ live }: { live: Hero['live'] }) {
   const still = useReducedMotion();
+  // 대기: 흰 점 · 출석 가능 / 스터디 중: 빨간 점 + 퍼지는 빛 · 입장 완료: 잉크 점 (.hero-live · .on · .done)
+  const fill = live === 'on' ? '#FF4D4D' : live === 'done' ? Colors.ink : Colors.white;
   return (
     <View>
-      {!still && (
+      {live === 'on' && !still && (
         <Animated.View
           style={[styles.liveRing, { opacity: 0, animationName: liveRing, animationDuration: '1.4s', animationIterationCount: 'infinite', animationTimingFunction: 'ease-out' }]}
         />
       )}
-      <View style={styles.liveDot} />
+      <View style={StyleSheet.flatten([styles.liveDot, { backgroundColor: fill }])} />
     </View>
   );
 }
@@ -279,9 +314,15 @@ const styles = StyleSheet.create({
   liveDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.ink, backgroundColor: '#FF4D4D' },
   liveText: { fontFamily: Font.display, fontSize: 13, lineHeight: 16, letterSpacing: 1.5 },
   heroTitle: { marginTop: 6, fontSize: 22, lineHeight: 25, letterSpacing: -0.8 },
-  btnWrap: { marginTop: 14, alignSelf: 'flex-start' },
+  actions: { marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
   btn: { height: 52, paddingLeft: 6, paddingRight: 18, borderRadius: 28, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.cream, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 6 },
   btnPressed: { transform: [{ translateY: 4 }], borderBottomWidth: 2.5 },
+  // 입장 완료 · 출석 전(잠김): 흰 바탕 (.hero-btn.done · [disabled] 는 그림자도 없이)
+  btnWhite: { backgroundColor: Colors.white },
+  btnFlat: { borderBottomWidth: 2.5 },
+  link: { height: 36, paddingHorizontal: 14, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, justifyContent: 'center', boxShadow: '2px 2px 0 #1E1A2B' },
+  linkPressed: { transform: [{ translateX: 2 }, { translateY: 2 }], boxShadow: '0 0 0 #1E1A2B' },
+  linkText: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 18 },
   qr: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.purple, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
 });

@@ -1,5 +1,5 @@
 import { Children, type ReactNode } from 'react';
-import { StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
+import { Platform, StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -43,13 +43,16 @@ function mixKorean(children: ReactNode, hangulFont: string, letterSpacing: numbe
 
 type Props = TextProps & { variant?: TextVariant; color?: string };
 
+// 웹: 프로토타입처럼 한글을 낱말 단위로 줄바꿈 (word-break: keep-all). RN 스타일 타입에는 없는 웹 전용 값이라 따로 둬요.
+const WEB_KEEP_ALL = Platform.OS === 'web' ? ({ wordBreak: 'keep-all', overflowWrap: 'break-word' } as unknown as TextStyle) : undefined;
+
 /** PALLO 글자. variant 로 크기 · 글꼴을 골라요. */
 export function PText({ variant = 'body', color = Colors.ink, style, children, ...rest }: Props) {
-  const flat: TextStyle = StyleSheet.flatten([VARIANTS[variant] as TextStyle, { color }, style]) ?? {};
+  const flat: TextStyle = StyleSheet.flatten([VARIANTS[variant] as TextStyle, WEB_KEEP_ALL, { color }, style]) ?? {};
   // 글꼴이 Unbounded 면 (variant 든 style 이든) 한글만 Noto 로 나눠요. 안 그러면 한글이 기기 기본 글꼴로 나와요
   const hangulFont = flat.fontFamily ? HANGUL_FONT[flat.fontFamily] : undefined;
   return (
-    // hangul-word: 한글을 낱말 단위로 줄바꿈 (iOS). 안드로이드 · 웹은 기본 동작을 따라요.
+    // hangul-word: 한글을 낱말 단위로 줄바꿈 (iOS). 웹은 WEB_KEEP_ALL, 안드로이드는 기본 동작을 따라요.
     <Text lineBreakStrategyIOS="hangul-word" {...rest} style={flat}>
       {hangulFont ? mixKorean(children, hangulFont, flat.letterSpacing ?? 0) : children}
     </Text>

@@ -1,20 +1,34 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, type Href } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, Path, Pattern, Rect } from 'react-native-svg';
 
 import { XmasBackLayer, XmasGarland } from '@/components/home/christmas';
 import { CurrentFx, NodeHop, Rider } from '@/components/home/map-current';
+import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
+import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
 import { Colors } from '@/constants/theme';
+import { TODAY_GOAL } from '@/data/home';
 import { LESSON_STEPS, MY_BOOK, STAGES } from '@/data/mock';
+import { sfx } from '@/lib/feedback';
+import { clearPos, isDone, markDone, stepKey, useDoneCount } from '@/state/progress';
+
+import { devSeason } from './dev';
+import { ARROW_PATH, CHECK_PATH, LineIcon } from './icons';
+import { OPEN_UNITS, setLastStep, useLastStep, useStopAsk } from './map-state';
+import { SeasonLayer } from './season-deco';
+import { SkipSheet } from './skip-sheet';
+import { StopPopup, type StartMode } from './stop-popup';
 
 const NODE = 64;
 const NODE_CUR = 78;
 const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
+const LV = 1; // 홈 맵은 지금 내 교재 (Lv.1) — 프로토타입 mapLk '1-과'
 
 type Point = { x: number; y: number };
 
@@ -22,13 +36,12 @@ type Point = { x: number; y: number };
 function layout(width: number) {
   const amp = width / 2 - 52;
   let y = 26;
-  const zones: { y: number; stage: (typeof STAGES)[number]; num: number }[] = [];
+  const zones: { y: number; si: number }[] = [];
   const nodes: (Point & { i: number })[] = [];
   LESSON_STEPS.forEach((s, i) => {
     const first = i === 0 || LESSON_STEPS[i - 1].stage !== s.stage;
     if (first) {
-      const si = STAGES.findIndex((g) => g.key === s.stage);
-      zones.push({ y: y + (i ? 6 : 0), stage: STAGES[si], num: si + 1 });
+      zones.push({ y: y + (i ? 6 : 0), si: STAGES.findIndex((g) => g.key === s.stage) });
       y += 106;
     }
     nodes.push({ x: Math.round(width / 2 + ZIG[i % 4] * amp), y, i });
@@ -44,24 +57,118 @@ function layout(width: number) {
 /** 정류장을 잇는 부드러운 곡선 */
 const curve = (p: Point[]) => p.map((q, i) => (i === 0 ? `M${q.x},${q.y}` : `C${p[i - 1].x},${(p[i - 1].y + q.y) / 2} ${q.x},${(p[i - 1].y + q.y) / 2} ${q.x},${q.y}`)).join(' ');
 
-/** 홈 스터디 맵 카드: 지금 과 · 챕터 줄 · 진도 · 꼬불꼬불 퀘스트 길 */
+/** 과의 단계마다 끝냈는지. count 는 다시 읽을 때를 알리는 값이에요 (끝낸 수가 바뀌면 새로 읽어요) */
+const readDone = (unit: number, count: number) => LESSON_STEPS.map((s) => count > 0 && isDone(stepKey(LV, unit, s.id)));
+const stageOf = (i: number) => STAGES.findIndex((g) => g.key === LESSON_STEPS[i].stage);
+const stepHref = (unit: number, step: string) => (LV <= 2 ? `/lesson/${step}?lv=${LV}&unit=${unit}` : `/lesson34/${step}?lv=${LV}&unit=${unit}`);
+
+/** 홈 스터디 맵 카드: 지금 과 · 챕터 줄 · 진도 · 꼬불꼬불 퀘스트 길 · 정류장 팝업 · 구간 건너뛰기 */
 export function StudyMap() {
   const [lesson, setLesson] = useState(1);
   const [width, setWidth] = useState(0);
-  // 11월 22일 ~ 12월 31일은 크리스마스 맵
-  const [xmas] = useState(() => seasonOf() === 'xmas');
+  const [popIdx, setPopIdx] = useState<number | null>(null);
+  const [skipStage, setSkipStage] = useState<number | null>(null);
+  const [cele, setCele] = useState<CelebrateResult | null>(null);
+  // 11월 22일 ~ 12월 31일은 크리스마스 맵 · 나머지는 기기 날짜의 계절
+  const [season] = useState(() => devSeason() ?? seasonOf());
+  const xmas = season === 'xmas';
   const onDark = xmas ? XMAS.cream : Colors.ink;
-  const done = MY_BOOK.doneSteps;
-  const current = LESSON_STEPS.findIndex((s) => !done.includes(s.id));
+
+  // 진도: 라이브러리와 같은 기록 (state/progress). 끝낸 수가 바뀔 때마다 다시 읽어요
+  const doneCount = useDoneCount(`${LV}:${lesson}:`);
+  const done = readDone(lesson, doneCount);
+  const all = done.every(Boolean);
+  const last = useLastStep(LV, lesson);
+  const lastIdx = last ? LESSON_STEPS.findIndex((s) => s.id === last) : -1;
+  const current = lastIdx >= 0 ? lastIdx : done.findIndex((d) => !d);
   const title = MY_BOOK.titles[lesson] ?? '';
   const next = MY_BOOK.titles[lesson + 1];
   const map = width ? layout(width) : null;
-  const soon = (what: string) => Alert.alert(what, '학습 화면은 다음 단계에서 만들어요.');
+
+  // 챕터 줄: 칩 자리 기억 → 고른 과 · 이번 주 과를 가운데로
+  const chipRow = useRef<ScrollViewInstance>(null);
+  const chipXs = useRef<Record<number, { x: number; w: number }>>({});
+  const rowW = useRef(0);
+  const [bounce, setBounce] = useState(0);
+  const [chestShake, setChestShake] = useState(0);
+  const still = useReducedMotion();
+
+  /** 고른 과가 칩 줄 밖으로 잘리지 않게 가운데로 */
+  const reveal = (n: number) => {
+    const c = chipXs.current[n];
+    if (c) chipRow.current?.scrollTo({ x: Math.max(0, c.x + c.w / 2 - rowW.current / 2), animated: !still });
+  };
+  /** 이번 주 진도 칩: 5과 · 6과가 가운데로 오고 통통 (프로토타입 weekChip 클릭) */
+  const showWeek = () => {
+    const bs = MY_BOOK.weekLessons.map((n) => chipXs.current[n]).filter(Boolean);
+    if (!bs.length) return;
+    const mid = (bs[0].x + bs[bs.length - 1].x + bs[bs.length - 1].w) / 2;
+    chipRow.current?.scrollTo({ x: Math.max(0, mid - rowW.current / 2), animated: !still });
+    sfx('tap');
+    setBounce((b) => b + 1);
+  };
+
+  // 오늘의 목표 카드 [이어서 하기] → 맵으로 내려간 뒤 지금 정류장 팝업
+  const ask = useStopAsk();
+  useEffect(() => {
+    if (!ask) return;
+    const t = setTimeout(() => setPopIdx(current >= 0 ? current : null), 550);
+    return () => clearTimeout(t);
+    // 부탁이 왔을 때만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ask]);
+
+  const pickLesson = (n: number) => {
+    setLesson(n);
+    reveal(n);
+  };
+
+  const go = (i: number, mode: StartMode) => {
+    const step = LESSON_STEPS[i];
+    setPopIdx(null);
+    if (!(OPEN_UNITS[LV] ?? []).includes(lesson)) {
+      showToast(`${lesson}과는 교재가 들어오면 열려요`);
+      return;
+    }
+    if (mode === 'restart') clearPos(stepKey(LV, lesson, step.id));
+    setLastStep(LV, lesson, step.id);
+    // 팝업에서 이미 이어서 / 처음부터를 골랐으면 레슨이 다시 묻지 않게 넘겨요
+    const resume = mode === 'start' ? '' : `&resume=${mode}`;
+    router.push(`${stepHref(lesson, step.id)}${resume}` as Href);
+  };
+
+  const pass = useCallback(
+    (si: number) => {
+      let gained = 0;
+      LESSON_STEPS.forEach((s, i) => {
+        if (stageOf(i) <= si && markDone(stepKey(LV, lesson, s.id))) gained += 1;
+      });
+      setSkipStage(null);
+      const allNow = LESSON_STEPS.every((s) => isDone(stepKey(LV, lesson, s.id)));
+      sfx('fanfare');
+      // 프로토타입: '테스트 통과!' · 'STAGE n까지 건너뛰었어요' · 단계마다 +10P
+      setCele({ correct: 0, total: 0, points: gained * 10, goalDone: Math.min(TODAY_GOAL.total, gained), goalTotal: TODAY_GOAL.total, unitComplete: allNow });
+    },
+    [lesson],
+  );
+
+  const chestTap = () => {
+    if (!all) {
+      setChestShake((v) => v + 1);
+      showToast(`${LESSON_STEPS.length}단계를 모두 끝내면 열려요`);
+      return;
+    }
+    showToast('보상 상자를 열었어요! +[보상]');
+  };
+
+  const popStep = popIdx !== null ? LESSON_STEPS[popIdx] : null;
+  const skipLeft = skipStage !== null ? LESSON_STEPS.filter((_, i) => stageOf(i) <= skipStage && !done[i]).length : 0;
 
   return (
     <Raised radius={26}>
       <View style={StyleSheet.flatten([styles.card, xmas && { backgroundColor: XMAS.bg }])}>
         {xmas ? <XmasBackLayer /> : <DotPattern />}
+        {season !== 'xmas' && <SeasonLayer season={season} />}
         {/* 가랜드는 버튼 · 알약 뒤에 깔려요 */}
         {xmas && <XmasGarland />}
 
@@ -74,11 +181,13 @@ export function StudyMap() {
                   스터디 맵 · {MY_BOOK.level}
                 </PText>
               </View>
-              <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }])}>
-                <PText style={styles.weekText}>이번 주 진도 {MY_BOOK.weekLessons.join(' & ')}챕터</PText>
-              </View>
+              <Pressable onPress={showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${MY_BOOK.weekLessons.join(', ')}과 보기`} hitSlop={6}>
+                <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }])}>
+                  <PText style={styles.weekText}>이번 주 진도 {MY_BOOK.weekLessons.join(' & ')}챕터</PText>
+                </View>
+              </Pressable>
             </View>
-            <Pressable onPress={() => soon('전체 보기')} accessibilityRole="button" accessibilityLabel="전체 보기">
+            <Pressable onPress={() => router.push(`/unit/${lesson}?lv=${LV}` as Href)} accessibilityRole="button" accessibilityLabel="전체 보기">
               {({ pressed }) => (
                 <Raised radius={16} pressed={pressed}>
                   <View style={styles.allBtn}>
@@ -93,97 +202,75 @@ export function StudyMap() {
             {lesson}과 {title}
           </PText>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow}>
-            {Array.from({ length: MY_BOOK.lessonCount }, (_, k) => k + 1).map((n) => {
-              const on = n === lesson;
-              const week = MY_BOOK.weekLessons.includes(n);
-              return (
-                <Pressable
-                  key={n}
-                  onPress={() => setLesson(n)}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={`${n}과${week ? ', 이번 주 진도' : ''}`}
-                  style={StyleSheet.flatten([styles.chap, week && styles.chapWeek, on && styles.chapOn])}>
-                  <PText style={styles.chapText} color={on ? Colors.white : Colors.ink}>
-                    {n}과
-                  </PText>
-                </Pressable>
-              );
-            })}
+          <ScrollView ref={chipRow} horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow} onLayout={(e) => (rowW.current = e.nativeEvent.layout.width)}>
+            {Array.from({ length: MY_BOOK.lessonCount }, (_, k) => k + 1).map((n) => (
+              <ChapChip key={n} n={n} on={n === lesson} week={MY_BOOK.weekLessons.includes(n)} bounce={bounce} onPress={() => pickLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
+            ))}
           </ScrollView>
 
           <View style={styles.prog}>
             <View style={styles.track}>
-              <View style={StyleSheet.flatten([styles.fill, { width: `${(done.length / LESSON_STEPS.length) * 100}%` }])} />
+              <View style={StyleSheet.flatten([styles.fill, { width: `${(doneCount / LESSON_STEPS.length) * 100}%` }])} />
             </View>
             <PText style={styles.progText} color={onDark}>
-              {done.length}/{LESSON_STEPS.length}
+              {doneCount}/{LESSON_STEPS.length}
             </PText>
           </View>
 
           <View style={StyleSheet.flatten([styles.map, { height: map?.height ?? 900 }])} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
             {map && (
               <>
-                <Svg width={width} height={map.height} style={StyleSheet.absoluteFill}>
-                  <Path d={curve([...map.nodes, map.chest])} fill="none" stroke="#C9C2B3" strokeWidth={6} strokeLinecap="round" strokeDasharray="2 12" />
-                </Svg>
+                <MapPath map={map} done={done} all={all} width={width} />
 
-                {map.zones.map((z) => (
-                  <View key={z.stage.key} style={StyleSheet.flatten([styles.zoneWrap, { top: z.y }])}>
-                    <View style={StyleSheet.flatten([styles.zone, { backgroundColor: z.stage.color }])}>
-                      <View style={styles.zoneNum}>
-                        <PText style={styles.zoneNumText}>{z.num}</PText>
+                {map.zones.map((z) => {
+                  const stage = STAGES[z.si];
+                  const stageDone = LESSON_STEPS.every((s, i) => s.stage !== stage.key || done[i]);
+                  return (
+                    <View key={stage.key} style={StyleSheet.flatten([styles.zoneWrap, { top: z.y }])}>
+                      <View style={StyleSheet.flatten([styles.zone, { backgroundColor: stage.color }])}>
+                        <View style={styles.zoneNum}>
+                          {stageDone ? <LineIcon d={CHECK_PATH} size={13} width={3.6} /> : <PText style={styles.zoneNumText}>{z.si + 1}</PText>}
+                        </View>
+                        <PText style={styles.zoneLabel}>{stage.label}</PText>
+                        {!stageDone && (
+                          <Pressable onPress={() => setSkipStage(z.si)} accessibilityRole="button" accessibilityLabel={`${stage.label}까지 건너뛰기`} style={({ pressed }) => StyleSheet.flatten([styles.skip, pressed && styles.skipPressed])}>
+                            <PText style={styles.skipText}>건너뛰기</PText>
+                          </Pressable>
+                        )}
                       </View>
-                      <PText style={styles.zoneLabel}>{z.stage.label}</PText>
-                      <Pressable onPress={() => soon(`${z.stage.label} 건너뛰기`)} accessibilityRole="button" accessibilityLabel={`${z.stage.label}까지 건너뛰기`} style={styles.skip}>
-                        <PText style={styles.skipText}>건너뛰기</PText>
-                      </Pressable>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
 
                 {map.nodes.map((n) => {
                   const step = LESSON_STEPS[n.i];
-                  const color = STAGES.find((g) => g.key === step.stage)!.color;
+                  const stage = STAGES[stageOf(n.i)];
                   const isCur = n.i === current;
+                  const isDoneStep = done[n.i];
                   const size = isCur ? NODE_CUR : NODE;
                   return (
-                    <View
-                      key={step.id}
-                      style={StyleSheet.flatten([
-                        styles.nodeWrap,
-                        {
-                          left: n.x - size / 2,
-                          top: n.y - size / 2,
-                          width: size,
-                        },
-                      ])}>
+                    <View key={step.id} style={StyleSheet.flatten([styles.nodeWrap, { left: n.x - size / 2, top: n.y - size / 2, width: size }])}>
                       {isCur && (
                         <View style={{ position: 'absolute', left: size / 2, top: size / 2 }}>
                           <CurrentFx />
                         </View>
                       )}
-                      <Pressable
-                        onPress={() => (step.id === 'pat' ? router.push('/lesson/pat') : soon(step.title))}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${STAGES.find((g) => g.key === step.stage)!.label} ${step.title}`}>
+                      <Pressable onPress={() => setPopIdx(n.i)} accessibilityRole="button" accessibilityLabel={`${stage.label} ${step.title}${isDoneStep ? ', 완료' : ''}`}>
                         {({ pressed }) => (
                           <NodeHop on={isCur && !pressed} style={{ width: size, height: size + 5 }}>
                             <View
                               style={StyleSheet.flatten([
                                 styles.node,
-                                {
-                                  width: size,
-                                  height: size,
-                                  borderRadius: size / 2,
-                                  backgroundColor: isCur ? color : Colors.white,
-                                },
+                                { width: size, height: size, borderRadius: size / 2, backgroundColor: isCur || isDoneStep ? stage.color : Colors.white },
                                 pressed && styles.nodePressed,
                               ])}>
-                              <PText style={isCur ? styles.nodeNumCur : styles.nodeNum} color={isCur ? Colors.ink : '#A39C8E'}>
-                                {n.i + 1}
-                              </PText>
+                              {isDoneStep ? (
+                                <LineIcon d={CHECK_PATH} size={28} width={3.2} />
+                              ) : (
+                                <PText style={isCur ? styles.nodeNumCur : styles.nodeNum} color={isCur ? Colors.ink : '#A39C8E'}>
+                                  {n.i + 1}
+                                </PText>
+                              )}
                             </View>
                           </NodeHop>
                         )}
@@ -198,25 +285,20 @@ export function StudyMap() {
                   );
                 })}
 
-                <View style={StyleSheet.flatten([styles.chestWrap, { left: map.chest.x - 36, top: map.chest.y - 34 }])}>
-                  <Chest />
-                  <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, xmas && styles.labelXmas])}>{lesson}과 보상</PText>
-                </View>
+                <ChestNode x={map.chest.x} y={map.chest.y} open={all} lesson={lesson} xmas={xmas} shake={chestShake} onPress={chestTap} />
               </>
             )}
           </View>
 
           {next && (
-            <Pressable onPress={() => setLesson(lesson + 1)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${lesson + 1}과 ${next}`}>
+            <Pressable onPress={() => pickLesson(lesson + 1)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${lesson + 1}과 ${next}`}>
               {({ pressed }) => (
                 <Raised radius={20} pressed={pressed}>
                   <View style={styles.nextBtn}>
                     <PText style={styles.nextText} numberOfLines={1}>
                       다음 챕터 · {lesson + 1}과 {next}
                     </PText>
-                    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-                      <Path d="M5 12h14M13 6l6 6-6 6" />
-                    </Svg>
+                    <LineIcon d={ARROW_PATH} size={22} width={2.4} />
                   </View>
                 </Raised>
               )}
@@ -224,45 +306,191 @@ export function StudyMap() {
           )}
         </View>
       </View>
+
+      <StopPopup
+        step={popStep}
+        kicker={popIdx !== null ? `${STAGES[stageOf(popIdx)].label} · ${stageOf(popIdx) + 1}-${LESSON_STEPS.slice(0, popIdx).filter((s) => s.stage === LESSON_STEPS[popIdx].stage).length + 1}` : ''}
+        stepKeyText={popStep ? stepKey(LV, lesson, popStep.id) : ''}
+        onClose={() => setPopIdx(null)}
+        onGo={(mode) => popIdx !== null && go(popIdx, mode)}
+      />
+      <SkipSheet stage={skipStage} left={skipLeft} onClose={() => setSkipStage(null)} onPass={pass} />
+      {cele && <Celebrate visible result={cele} onHome={() => setCele(null)} />}
     </Raised>
   );
 }
 
-/** 카드 바탕의 옅은 점 무늬 */
-function DotPattern() {
+/* ───────── 길: 끝낸 구간은 잉크 실선 · 남은 구간은 점선 ───────── */
+
+function MapPath({ map, done, all, width }: { map: ReturnType<typeof layout>; done: boolean[]; all: boolean; width: number }) {
+  const pts: Point[] = [...map.nodes, map.chest];
+  const doneIdx = done.reduce((m, d, i) => (d ? i : m), -1);
+  const split = all ? pts.length : Math.max(1, doneIdx + 2);
+  const solid = pts.slice(0, split);
+  const dashed = pts.slice(Math.max(0, split - 1));
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Defs>
-        <Pattern id="dots" width={18} height={18} patternUnits="userSpaceOnUse">
-          <Circle cx={9} cy={9} r={1.2} fill="#ECE5D3" />
-        </Pattern>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#dots)" />
+    <Svg width={width} height={map.height} style={StyleSheet.absoluteFill} pointerEvents="none">
+      {dashed.length > 1 && <Path d={curve(dashed)} fill="none" stroke="#C9C2B3" strokeWidth={6} strokeLinecap="round" strokeDasharray="2 12" />}
+      {solid.length > 1 && <Path d={curve(solid)} fill="none" stroke={Colors.ink} strokeWidth={6} strokeLinecap="round" />}
     </Svg>
   );
 }
 
-/** 잠긴 보상 상자 (프로토타입 .tchest 와 같은 그림) */
-function Chest() {
-  const b = '#E4DED2',
-    l = '#EFEAE0',
-    s = '#D6CFC0',
-    k = '#9A93A6';
+/* ───────── 챕터 줄: 이번 주 진도 보기 · 고른 과 보이게 ───────── */
+
+const WK_EASE = cubicBezier(0.3, 1.6, 0.5, 1);
+/** wkBounce .8초: 이번 주 과 칩이 통통 */
+const wkBounce = css.keyframes({
+  '0%': { transform: [{ translateY: 0 }, { scale: 1 }] },
+  '30%': { transform: [{ translateY: -10 }, { scale: 1.06 }] },
+  '55%': { transform: [{ translateY: 0 }, { scale: 0.97 }] },
+  '75%': { transform: [{ translateY: -4 }, { scale: 1 }] },
+  '100%': { transform: [{ translateY: 0 }, { scale: 1 }] },
+});
+
+const wkAnim = css.create({
+  0: { animationName: wkBounce, animationDuration: '800ms', animationDelay: '280ms', animationTimingFunction: WK_EASE },
+  1: { animationName: wkBounce, animationDuration: '800ms', animationDelay: '370ms', animationTimingFunction: WK_EASE },
+});
+
+function ChapChip({ n, on, week, bounce, onPress, onLayout }: { n: number; on: boolean; week: boolean; bounce: number; onPress: () => void; onLayout: (x: number, w: number) => void }) {
+  const still = useReducedMotion();
+  const count = useDoneCount(`${LV}:${n}:`);
+  const full = count >= LESSON_STEPS.length;
+  const part = count > 0 && !full;
+  const k = MY_BOOK.weekLessons.indexOf(n);
+  const anim = week && bounce > 0 && !still ? wkAnim[k === 0 ? 0 : 1] : null;
   return (
-    <Svg width={72} height={64} viewBox="0 0 84 74">
-      <Rect x={7} y={38} width={70} height={32} rx={7} fill="#CFC8BA" />
+    // 이번 주 칩은 누를 때마다 key 를 바꿔 처음부터 다시 통통
+    <Animated.View key={week ? bounce : 0} style={anim} onLayout={(e) => onLayout(e.nativeEvent.layout.x, e.nativeEvent.layout.width)}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: on }}
+        accessibilityLabel={`${n}과 ${MY_BOOK.titles[n] ?? ''}, ${count}/${LESSON_STEPS.length}${week ? ', 이번 주 스터디 진도' : ''}`}
+        style={({ pressed }) => StyleSheet.flatten([styles.chap, week && styles.chapWeek, full && styles.chapDone, on && styles.chapOn, pressed && styles.chapPressed])}>
+        <PText style={styles.chapText} color={on ? Colors.white : Colors.ink}>
+          {n}과
+        </PText>
+        {full && <LineIcon d={CHECK_PATH} size={12} width={3.6} color={on ? Colors.yellow : Colors.ink} />}
+        {part && !on && <View style={styles.chapDot} />}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+/* ───────── 보상 상자 (.node.chest · .tchest) ───────── */
+
+/** chestShake 2.4초: 열 수 있는 상자가 가끔 들썩 */
+const chestShakeKf = css.keyframes({
+  '0%, 52%, 100%': { transform: [{ translateY: 0 }, { rotate: '0deg' }] },
+  '58%': { transform: [{ translateY: -6 }, { rotate: '-7deg' }] },
+  '64%': { transform: [{ translateY: -6 }, { rotate: '6deg' }] },
+  '70%': { transform: [{ translateY: -3 }, { rotate: '-4deg' }] },
+  '76%': { transform: [{ translateY: 0 }, { rotate: '2deg' }] },
+  '82%': { transform: [{ translateY: 0 }, { rotate: '0deg' }] },
+});
+/** chestLid: 뚜껑이 살짝 들썩 */
+const chestLidKf = css.keyframes({
+  '0%, 55%, 85%, 100%': { transform: [{ translateY: 0 }, { rotate: '0deg' }] },
+  '62%': { transform: [{ translateY: -5 }, { rotate: '-4deg' }] },
+  '70%': { transform: [{ translateY: -3 }, { rotate: '3deg' }] },
+});
+/** shake .4초: 잠긴 상자를 누르면 도리도리 */
+const lockedShake = css.keyframes({
+  '0%, 100%': { transform: [{ translateX: 0 }] },
+  '20%, 60%': { transform: [{ translateX: -6 }] },
+  '40%, 80%': { transform: [{ translateX: 6 }] },
+});
+
+function ChestNode({ x, y, open, lesson, xmas, shake, onPress }: { x: number; y: number; open: boolean; lesson: number; xmas: boolean; shake: number; onPress: () => void }) {
+  const still = useReducedMotion();
+  const W = open ? 80 : 72;
+  const H = open ? 70 : 64;
+  const loop = (name: typeof chestShakeKf) =>
+    open && !still ? { animationName: name, animationDuration: '2400ms', animationIterationCount: 'infinite' as const, animationTimingFunction: 'ease-in-out' as const } : null;
+  const nudge = !open && shake > 0 && !still ? { animationName: lockedShake, animationDuration: '400ms' } : null;
+  return (
+    <View style={StyleSheet.flatten([styles.chestWrap, { left: x - W / 2, top: y - (open ? 37 : 34), width: W }])}>
+      {open && (
+        <View style={{ position: 'absolute', left: W / 2, top: H / 2 }}>
+          <CurrentFx chest />
+        </View>
+      )}
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${lesson}과 보상 상자${open ? ', 열 수 있어요' : ', 잠김'}`}>
+        {({ pressed }) => (
+          <Animated.View key={shake} style={[{ width: W, height: H }, nudge, open && pressed && styles.chestPressed]}>
+            <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: '50% 90%' }, loop(chestShakeKf)]}>
+              <ChestBody open={open} />
+              <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: `50% ${(38 / 74) * 100}%` }, loop(chestLidKf)]}>
+                <ChestLid open={open} />
+              </Animated.View>
+              <ChestLock open={open} />
+            </Animated.View>
+          </Animated.View>
+        )}
+      </Pressable>
+      <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, open && styles.chestLabelOpen, xmas && styles.labelXmas])}>{lesson}과 보상</PText>
+    </View>
+  );
+}
+
+// 잠김: 회색 · 열림: 보라 몸 + 노랑 띠 (--tc-b · --tc-l · --tc-s · --tc-k)
+const tc = (open: boolean) => (open ? { b: '#4A2F9E', l: '#6C4FD0', s: Colors.yellow, k: Colors.ink, floor: Colors.ink } : { b: '#E4DED2', l: '#EFEAE0', s: '#D6CFC0', k: '#9A93A6', floor: '#CFC8BA' });
+
+function ChestBody({ open }: { open: boolean }) {
+  const c = tc(open);
+  return (
+    <Svg width="100%" height="100%" viewBox="0 0 84 74" style={StyleSheet.absoluteFill}>
+      <Rect x={7} y={38} width={70} height={32} rx={7} fill={c.floor} />
       <G>
-        <Rect x={7} y={34} width={70} height={32} rx={7} fill={b} stroke={k} strokeWidth={2.5} />
-        <Rect x={17} y={34} width={8} height={32} fill={s} stroke={k} strokeWidth={2} />
-        <Rect x={59} y={34} width={8} height={32} fill={s} stroke={k} strokeWidth={2} />
+        <Rect x={7} y={34} width={70} height={32} rx={7} fill={c.b} stroke={c.k} strokeWidth={2.5} />
+        <Rect x={17} y={34} width={8} height={32} fill={c.s} stroke={c.k} strokeWidth={2} />
+        <Rect x={59} y={34} width={8} height={32} fill={c.s} stroke={c.k} strokeWidth={2} />
       </G>
-      <Path d="M7 36V24C7 11 22 6 42 6s35 5 35 18v12Z" fill={l} stroke={k} strokeWidth={2.5} strokeLinejoin="round" />
-      <Path d="M17 36V12.5c2.4-1.2 5-2.1 8-2.8V36Z M59 36V9.7c3 .7 5.6 1.6 8 2.8V36Z" fill={s} stroke={k} strokeWidth={2} strokeLinejoin="round" />
-      <Rect x={5} y={31} width={74} height={7} rx={3.5} fill={s} stroke={k} strokeWidth={2.5} />
-      <Rect x={33.5} y={30} width={17} height={19} rx={4} fill={s} stroke={k} strokeWidth={2.5} />
-      <Circle cx={42} cy={37.5} r={2.6} fill={k} />
-      <Path d="M42 39v5" stroke={k} strokeWidth={2.6} strokeLinecap="round" />
     </Svg>
+  );
+}
+
+function ChestLid({ open }: { open: boolean }) {
+  const c = tc(open);
+  return (
+    <Svg width="100%" height="100%" viewBox="0 0 84 74" style={StyleSheet.absoluteFill}>
+      <Path d="M7 36V24C7 11 22 6 42 6s35 5 35 18v12Z" fill={c.l} stroke={c.k} strokeWidth={2.5} strokeLinejoin="round" />
+      <Path d="M17 36V12.5c2.4-1.2 5-2.1 8-2.8V36Z M59 36V9.7c3 .7 5.6 1.6 8 2.8V36Z" fill={c.s} stroke={c.k} strokeWidth={2} strokeLinejoin="round" />
+      {open && <Path d="M30 14c4-1.4 9-2 14-2" stroke="#fff" strokeOpacity={0.7} strokeWidth={3.5} strokeLinecap="round" fill="none" />}
+      <Rect x={5} y={31} width={74} height={7} rx={3.5} fill={c.s} stroke={c.k} strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function ChestLock({ open }: { open: boolean }) {
+  const c = tc(open);
+  return (
+    <Svg width="100%" height="100%" viewBox="0 0 84 74" style={StyleSheet.absoluteFill}>
+      <Rect x={33.5} y={30} width={17} height={19} rx={4} fill={c.s} stroke={c.k} strokeWidth={2.5} />
+      <Circle cx={42} cy={37.5} r={2.6} fill={c.k} />
+      <Path d="M42 39v5" stroke={c.k} strokeWidth={2.6} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** 카드 바탕의 옅은 점 무늬 (웹에서는 크기를 직접 줘야 카드 전체에 깔려요) */
+function DotPattern() {
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      {size.w > 0 && (
+        <Svg width={size.w} height={size.h}>
+          <Defs>
+            <Pattern id="dots" width={18} height={18} patternUnits="userSpaceOnUse">
+              <Circle cx={9} cy={9} r={1.2} fill="#ECE5D3" />
+            </Pattern>
+          </Defs>
+          <Rect width="100%" height="100%" fill="url(#dots)" />
+        </Svg>
+      )}
+    </View>
   );
 }
 
@@ -324,12 +552,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.ink,
     backgroundColor: Colors.white,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 5,
   },
   chapWeek: { backgroundColor: '#F1EBDC' },
+  chapDone: { backgroundColor: Colors.yellow },
   chapOn: { backgroundColor: Colors.ink },
+  chapPressed: { transform: [{ scale: 0.94 }] },
   chapText: { fontFamily: Font.display, fontSize: 13, lineHeight: 16 },
+  // .chap.part::after: 진행 중인 과는 노란 점
+  chapDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
   prog: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
   track: {
     flex: 1,
@@ -387,6 +621,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.7)',
     justifyContent: 'center',
   },
+  // .z2s:active: 하얗게 · 살짝 작게
+  skipPressed: { backgroundColor: Colors.white, transform: [{ scale: 0.95 }] },
   skipText: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 15 },
   nodeWrap: { position: 'absolute', alignItems: 'center', zIndex: 3 },
   // 사탕 같은 볼록 동전: 위쪽 반달 광택 · 아래로 갈수록 살짝 어둡게 · 안쪽 아래 그늘 · 잉크 바닥 그림자 (프로토타입 #qmapInner .node)
@@ -415,11 +651,12 @@ const styles = StyleSheet.create({
   },
   chestWrap: {
     position: 'absolute',
-    width: 72,
     alignItems: 'center',
     zIndex: 3,
   },
+  chestPressed: { transform: [{ translateY: 3 }] },
   chestLabel: { color: '#9A93A6', marginTop: 2 },
+  chestLabelOpen: { color: Colors.ink },
   labelXmas: {
     color: XMAS.cream,
     textShadowColor: XMAS.top,

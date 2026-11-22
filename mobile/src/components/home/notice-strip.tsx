@@ -5,7 +5,7 @@ import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { NOTICE_TAG_STYLE, NOTICES } from '@/data/mock';
+import { BOARD_NOTICES as NOTICES, NOTICE_TAG_STYLE } from '@/data/mock';
 
 const ROTATE_MS = 3200;
 const HEIGHT = 48;

@@ -1,8 +1,10 @@
-import { Image } from 'expo-image';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion, type CSSKeyframesRule } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+
+import { AvatarChar } from '@/components/character/avatar';
+import { useMyAvatar } from '@/state/avatar';
 
 /*
  * 지금 할 정류장 꾸밈 (프로토타입 .cur-fx · .node.current · #qmapInner .ride).
@@ -86,8 +88,8 @@ const onBeat = (lead = 0) => `-${(Date.now() + lead) % BEAT}ms`;
 /** 재 보니 캐릭터가 정류장보다 40ms 늦게 웅크려서, 프로토타입처럼 정류장이 튀어 오르는 순간 웅크리게 40ms 앞당겨요 */
 const RIDER_LEAD = 40;
 
-/** 정류장 뒤: 노란 스포트라이트(숨 쉬듯) · 천천히 도는 빛살 · 바닥 그림자 */
-export function CurrentFx() {
+/** 정류장 뒤: 노란 스포트라이트(숨 쉬듯) · 천천히 도는 빛살 · 바닥 그림자. chest: 열 수 있는 보상 상자 뒤 (조금 작게 · 바닥 그림자 없이 · .chest-fx) */
+export function CurrentFx({ chest = false }: { chest?: boolean }) {
   const still = useReducedMotion();
   const [beat] = useState(() => onBeat());
   // repeating-conic-gradient: 30도마다 12도 폭 빛살. CSS 의 radial-gradient(circle …) 는 반지름이 상자 '모서리'까지라 66√2 ≈ 93px
@@ -98,7 +100,7 @@ export function CurrentFx() {
     return `M66 66 L${66 + R * Math.cos(a0)} ${66 + R * Math.sin(a0)} A${R} ${R} 0 0 1 ${66 + R * Math.cos(a1)} ${66 + R * Math.sin(a1)} Z`;
   });
   return (
-    <View style={styles.origin} pointerEvents="none">
+    <View style={[styles.origin, chest && styles.chestFx]} pointerEvents="none">
       <Animated.View style={[styles.spot, loop(spotGlow, '2s', 'ease-in-out', still)]}>
         <Svg width={120} height={120}>
           {/* radial-gradient(circle, …) 는 상자 모서리까지가 100% → 반지름 60√2 */}
@@ -128,7 +130,7 @@ export function CurrentFx() {
           ))}
         </Svg>
       </Animated.View>
-      <Animated.View style={[styles.floor, loop(floorShrink, '1.4s', 'linear', still, beat)]} />
+      {!chest && <Animated.View style={[styles.floor, loop(floorShrink, '1.4s', 'linear', still, beat)]} />}
     </View>
   );
 }
@@ -144,38 +146,40 @@ export function NodeHop({ on, style, children }: { on: boolean; style: ViewStyle
 
 /*
  * 맵 위에서 뛰는 '내 캐릭터' (프로토타입 rideHTML · .ride.me.tall).
- * 마이 꾸미기를 만들기 전이라, 프로토타입 기본 캐릭터(노랑 · 비니 · 나비넥타이 · 깃발 · 보라 신발)를 그린 이미지를 써요.
- * 이미지는 캐릭터 몸(520×332)보다 모자 · 깃발만큼 커요 → 몸 기준으로 자리를 맞춰요.
+ * 마이 › 꾸미기에서 저장한 모습(AvatarChar · useMyAvatar)을 그대로 올려요. 기본 모습은 노랑 · 비니 · 나비넥타이 · 깃발 · 보라 신발.
+ * 몸 상자(520×332) 폭을 58px 로 정해요 — 모자 · 깃발은 몸 상자 밖으로 나와요. 눈 깜빡임도 몸 색으로 그 안에서 해요.
  */
 const BODY_W = 58; // .ride.me.tall: 모자처럼 위로 솟는 아이템이면 58px
-const K = BODY_W / 520;
-const BODY_H = 332 * K;
-const IMG = { w: 543.4 * K, h: 448.2 * K, top: -116.2 * K };
+const BODY_H = (332 * BODY_W) / 520;
 
 /** 정류장 앞의 내 캐릭터: 통통 뛰어올라요 + 바닥 그림자 (rideJump · rideSh 1.4초) · 가끔 공중에서 좌우로 홱 */
 export function Rider() {
   const still = useReducedMotion();
+  const av = useMyAvatar();
   const [beat] = useState(() => onBeat(RIDER_LEAD));
   const [flip, setFlip] = useState(false);
   // 프로토타입과 똑같이: 점프 한 번이 끝날 때마다(animationiteration) 35% 확률로,
   // 다음 점프의 0.42초(1.4초 × 0.3 · 막 뛰어올라 공중에 있을 때) 뒤에 좌우를 홱 바꿔요
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
-  const chance = () => {
+  const chance = useCallback(() => {
     if (Math.random() < 0.35) timer.current = setTimeout(() => setFlip((f) => !f), 1400 * 0.3);
-  };
-  // 프로토타입에선 캐릭터 눈꺼풀 두 개의 깜빡임(3초)도 같은 이벤트로 올라와서, 깜빡일 때마다 눈마다 한 번씩 더 기회가 있어요
-  const onBlink = () => {
-    chance();
-    chance();
-  };
+  }, []);
+  // 프로토타입에선 캐릭터 눈꺼풀 두 개의 깜빡임(3초)도 같은 이벤트로 올라와서, 3초마다 눈마다 한 번씩 더 기회가 있어요
+  useEffect(() => {
+    if (still) return;
+    const t = setInterval(() => {
+      chance();
+      chance();
+    }, 3000);
+    return () => clearInterval(t);
+  }, [still, chance]);
   return (
     <View style={styles.origin} pointerEvents="none">
-      <Animated.View style={[styles.rideSh, loop(rideSh, '1.4s', 'ease', still, beat)]} />
+      <Animated.View style={[styles.rideSh, loop(rideSh, '1.4s', 'linear', still, beat)]} />
       <Animated.View style={[styles.ride, { transform: [{ scaleX: flip ? -1 : 1 }] }, flipEase]}>
-        <Animated.View style={[styles.body, styles.bottomOrigin, loop(rideJump, '1.4s', 'ease', still, beat)]} onCSSAnimationIteration={chance}>
-          <Image source={require('@/assets/characters/my-default.png')} style={styles.rideImg} contentFit="contain" />
-          {!still && <AvatarBlink onBlink={onBlink} />}
+        <Animated.View style={[styles.body, styles.bottomOrigin, loop(rideJump, '1.4s', 'linear', still, beat)]} onCSSAnimationIteration={chance}>
+          <AvatarChar av={av} width={BODY_W} blink={!still} />
         </Animated.View>
       </Animated.View>
     </View>
@@ -185,59 +189,16 @@ export function Rider() {
 // 좌우 반전은 .38초 동안 cubic-bezier(.4,0,.2,1) 로
 const flipEase = css.create({ t: { transitionProperty: 'transform', transitionDuration: '380ms', transitionTimingFunction: cubicBezier(0.4, 0, 0.2, 1) } }).t;
 
-/*
- * 내 캐릭터 눈 깜빡임 (프로토타입 avBlink · avLids): 3초마다 눈꺼풀이 위에서 내려왔다 올라가요.
- * 좌표는 캐릭터 몸 그림(520×332) 기준 · 노랑 몸 색 눈꺼풀 + 아래 속눈썹 선.
- */
-const AV_EYES = [258.5, 339.5].map((x, i) => ({ x, y: [64, 65.5][i], ix: [260, 341][i], iy: [64.5, 65.5][i] }));
-const LID_H = 16; // 눈 위 끝 ~ 눈꺼풀 아래 끝 (몸 상자 px)
-const avBlink = css.keyframes({ '0%, 90%, 100%': { height: 0 }, '93%, 95%': { height: LID_H } });
-function AvatarBlink({ onBlink }: { onBlink: () => void }) {
-  const [delay] = useState(() => `${Math.round(Math.random() * 3000)}ms`);
-  return (
-    <Animated.View
-      style={[styles.lidBox, { animationName: avBlink, animationDuration: '3s', animationDelay: delay, animationIterationCount: 'infinite', animationTimingFunction: 'linear' }]}
-      onCSSAnimationIteration={onBlink}
-      pointerEvents="none">
-      <Svg width={BODY_W} height={BODY_H} viewBox="0 0 520 332">
-        <Defs>
-          <LinearGradient id="avLid" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#FFEA47" />
-            <Stop offset="0.7" stopColor="#FFE200" />
-            <Stop offset="1" stopColor="#E0C606" />
-          </LinearGradient>
-          {AV_EYES.map((e, i) => (
-            <ClipPath key={i} id={`avEye${i}`}>
-              <Ellipse cx={e.ix} cy={e.iy} rx={25.5} ry={44} />
-            </ClipPath>
-          ))}
-        </Defs>
-        {AV_EYES.map((e, i) => {
-          const t = e.y - 57.5 - 3;
-          const b = e.y - 57.5 + 2 * 57.5 * 1.04;
-          return (
-            <G key={i} clipPath={`url(#avEye${i})`}>
-              <Path d={`M${e.x - 42} ${t} L${e.x + 42} ${t} L${e.x + 42} ${b} Q${e.x} ${b + 12} ${e.x - 42} ${b}Z`} fill="url(#avLid)" />
-              <Path d={`M${e.x + 42} ${b} Q${e.x} ${b + 12} ${e.x - 42} ${b}`} fill="none" stroke="#1E1A2B" strokeWidth={7} />
-            </G>
-          );
-        })}
-      </Svg>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
   origin: { position: 'absolute', left: 0, top: 0, width: 0, height: 0 },
   bottomOrigin: { transformOrigin: 'center bottom' },
   spot: { position: 'absolute', left: -60, top: -60, width: 120, height: 120 },
   rays: { position: 'absolute', left: -66, top: -66, width: 132, height: 132 },
+  // .chest-fx: 스포트라이트 112 · 빛살 124 (정류장보다 조금 작게)
+  chestFx: { transform: [{ scale: 112 / 120 }] },
   floor: { position: 'absolute', left: -35, top: 44, width: 70, height: 12, borderRadius: 35, backgroundColor: 'rgba(30, 26, 43, 0.16)' },
   // 프로토타입 .ride-sh: filter blur(1.5px) — 가장자리가 흐린 그림자
   rideSh: { position: 'absolute', left: -23, top: 13, width: 46, height: 10, borderRadius: 23, backgroundColor: 'rgba(30, 26, 43, 0.28)', filter: 'blur(1.5px)' },
   ride: { position: 'absolute', left: -BODY_W / 2, top: -20, width: BODY_W, height: BODY_H },
   body: { width: BODY_W, height: BODY_H },
-  rideImg: { position: 'absolute', left: 0, top: IMG.top, width: IMG.w, height: IMG.h },
-  // 눈꺼풀은 위에서부터 드러나요 (높이 0 → 16)
-  lidBox: { position: 'absolute', left: 0, top: 0, width: BODY_W, height: 0, overflow: 'hidden' },
 });

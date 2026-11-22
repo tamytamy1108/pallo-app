@@ -1,6 +1,6 @@
 /**
  * 가짜 데이터 (Mock). 백엔드 API가 나오면 이 값을 서버에서 받아 와요.
- * 값은 프로토타입(prototype/index.html 의 NOTICES · NOTICE_D)과 같아요.
+ * 값은 프로토타입(prototype/index.html 의 NOTICES · NOTICE_D 5개)과 같아요. Notice board 띠는 앞의 3개(BOARD_NOTICES)만 돌아요.
  * 맞는 API: docs/appendix/api-inventory.md — 3 `/me` · 8 `/me/sessions/today` · 12 `/notices`
  */
 import { Colors } from '@/constants/theme';
@@ -17,6 +17,8 @@ export type Notice = {
   body: string[];
   /** 아래 고정 바에 들어가는 행동 버튼 */
   cta?: { label: string; action: 'schedule' | 'event' | 'library' };
+  /** 목록 맨 위 고정 (압정) */
+  pinned?: boolean;
 };
 
 /** 공지 띠 태그 색 (프로토타입과 같아요) */
@@ -40,6 +42,7 @@ export const NOTICES: Notice[] = [
       '새 시간표는 마이 > 연기 · 팀 · 지점 변경에서 바로 신청할 수 있어요.',
     ],
     cta: { label: '시간표 보고 신청하기', action: 'schedule' },
+    pinned: true,
   },
   {
     id: 'n2',
@@ -64,7 +67,28 @@ export const NOTICES: Notice[] = [
     body: ['Lv.1 교재가 4교로 바뀌었어요. 1과 ~ 6과 예문과 대화문이 새로 들어왔어요.', '라이브러리에서 바뀐 교재로 예습 · 복습을 할 수 있어요.'],
     cta: { label: '라이브러리 열기', action: 'library' },
   },
+  {
+    id: 'n4',
+    tag: '공지',
+    title: '라운지 이용 규칙 안내',
+    date: '2026.10.27',
+    author: 'PALLO 본사',
+    audience: '전 지점',
+    body: ['라운지 이용 규칙을 정리했어요. 광고 · 연락처 공유 · 무례한 말은 신고되면 매니저가 24시간 안에 확인해요.'],
+  },
+  {
+    id: 'n5',
+    tag: '공지',
+    title: '잠실점 세션 장소 변경',
+    date: '2026.10.15',
+    author: '잠실점',
+    audience: '잠실점',
+    body: ['잠실점 라운지 공사로 10월 20일 ~ 22일 세션은 3층 B룸에서 진행해요.'],
+  },
 ];
+
+/** 홈 Notice board 띠에 도는 공지 (앞의 3개 · 프로토타입 NOTICES) */
+export const BOARD_NOTICES = NOTICES.slice(0, 3);
 
 export const ME = { name: 'Tammy' };
 
@@ -76,16 +100,17 @@ export const STAGES: { key: Stage; label: string; color: string }[] = [
   { key: 'post', label: '복습', color: Colors.sky },
 ];
 
-/** 한 과의 단계 (프로토타입 STUDY_STEPS.pattern). 맞는 API: 18 `/lessons/:id` · 19 `/me/progress` */
-export const LESSON_STEPS: { id: string; stage: Stage; title: string }[] = [
-  { id: 'pat', stage: 'pre', title: '오늘의 패턴' },
-  { id: 'dlg', stage: 'pre', title: '대화문' },
-  { id: 'bank', stage: 'pre', title: 'Bank 퀴즈' },
-  { id: 'sit', stage: 'main', title: '상황 활동' },
-  { id: 'story', stage: 'main', title: 'My Story' },
-  { id: 'talk', stage: 'main', title: 'AI 프리토킹' },
-  { id: 'quiz', stage: 'post', title: '스피킹 퀴즈' },
-  { id: 'chal', stage: 'post', title: '30초 말하기 챌린지' },
+/** 한 과의 단계 (프로토타입 STUDY_STEPS.pattern). 맞는 API: 18 `/lessons/:id` · 19 `/me/progress`
+ * min: 걸리는 시간(분) · xp: 처음 끝내면 받는 포인트 */
+export const LESSON_STEPS: { id: string; stage: Stage; title: string; min: number; xp: number }[] = [
+  { id: 'pat', stage: 'pre', title: '오늘의 패턴', min: 5, xp: 5 },
+  { id: 'dlg', stage: 'pre', title: '대화문', min: 6, xp: 10 },
+  { id: 'bank', stage: 'pre', title: 'Bank 퀴즈', min: 3, xp: 5 },
+  { id: 'sit', stage: 'main', title: '상황 활동', min: 8, xp: 15 },
+  { id: 'story', stage: 'main', title: 'My Story', min: 7, xp: 15 },
+  { id: 'talk', stage: 'main', title: 'AI 프리토킹', min: 6, xp: 15 },
+  { id: 'quiz', stage: 'post', title: '스피킹 퀴즈', min: 5, xp: 10 },
+  { id: 'chal', stage: 'post', title: '30초 말하기 챌린지', min: 3, xp: 10 },
 ];
 
 /** 내 교재 · 진도 (예시) */

@@ -1,19 +1,33 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { useEffect } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { BottomBar } from '@/components/bottom-bar';
+import { ICON_PATH, LineIcon } from '@/components/home/icons';
+import { markNoticeRead } from '@/components/home/noti-state';
 import { Button } from '@/components/ui/button';
 import { PText } from '@/components/ui/text';
+import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { NOTICES, type Notice } from '@/data/mock';
+
+/** 공지 행동 버튼이 여는 곳 (프로토타입 nccta: 변경 신청 · 이벤트 탭 · 라이브러리 탭) */
+const CTA_HREF: Record<NonNullable<Notice['cta']>['action'], Href> = {
+  schedule: '/me/change' as Href,
+  event: '/event',
+  library: '/library',
+};
 
 /** 공지 · 이벤트 · 새 소식 상세. 행동 버튼은 아래 고정 바에. */
 export default function NoticeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const notice = NOTICES.find((n) => n.id === id);
+  useEffect(() => {
+    if (notice) markNoticeRead(notice.id);
+  }, [notice]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -26,6 +40,12 @@ export default function NoticeDetailScreen() {
         <PText variant="bodyStrong" style={styles.topTitle}>
           공지
         </PText>
+        <View style={styles.sp} />
+        {notice && (
+          <Pressable onPress={() => showToast('공지 링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={styles.back}>
+            <LineIcon d={ICON_PATH.send} size={19} />
+          </Pressable>
+        )}
       </View>
 
       {notice ? <Detail notice={notice} /> : <PText style={styles.missing}>게시물을 찾을 수 없어요.</PText>}
@@ -49,7 +69,7 @@ function Detail({ notice }: { notice: Notice }) {
             {p}
           </PText>
         ))}
-        <Pressable onPress={() => Alert.alert('공지 전체 보기', '공지 목록은 다음 단계에서 만들어요.')} accessibilityRole="link" style={styles.all}>
+        <Pressable onPress={() => router.push('/notice' as Href)} accessibilityRole="link" style={styles.all}>
           <PText variant="bodyStrong" color={Colors.purple}>
             공지 전체 보기 ›
           </PText>
@@ -57,7 +77,7 @@ function Detail({ notice }: { notice: Notice }) {
       </ScrollView>
       {notice.cta && (
         <BottomBar>
-          <Button label={notice.cta.label} wide onPress={() => Alert.alert(notice.cta!.label, '이 기능은 다음 단계에서 이어 붙여요.')} />
+          <Button label={notice.cta.label} wide onPress={() => notice.cta && router.push(CTA_HREF[notice.cta.action])} />
         </BottomBar>
       )}
     </>
@@ -69,6 +89,7 @@ const styles = StyleSheet.create({
   top: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderBottomWidth: 1.5, borderColor: Colors.line },
   back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   topTitle: { fontFamily: Font.body900, fontSize: 16 },
+  sp: { flex: 1 },
   body: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 40, gap: 4 },
   title: { marginTop: 4, fontFamily: Font.body900, fontSize: 22, lineHeight: 30, letterSpacing: -0.4 },
   meta: { marginBottom: 10 },
