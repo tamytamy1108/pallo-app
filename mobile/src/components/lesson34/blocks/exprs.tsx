@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { CheckIcon } from '@/components/lesson/icons';
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
@@ -15,7 +15,7 @@ import { FootRow, GoBtn, Msg, SUB } from '../ui';
 
 /**
  * 표현마다 칸 하나 · 그 표현을 넣어 내 예문 만들기 (프로토타입 TKV.exprs · v503).
- * 칸에 표현이 들어가고 4단어 이상이면 노랗게 · 체크. need 개 이상이면 아래 버튼이 켜져요.
+ * 칸에 표현이 들어가고 4단어 이상이면 노랗게 (두 줄일 필요는 없어요). need 개 이상이면 아래 버튼이 켜져요.
  */
 export function ExprsBlock({ task: t }: { task: ExprsTask }) {
   const rt = useRunner();
@@ -44,13 +44,12 @@ export function ExprsBlock({ task: t }: { task: ExprsTask }) {
           {t.items.map(([w, m, ex], i) => (
             <View key={w} style={StyleSheet.flatten([styles.box, ok(i) && styles.boxOn])}>
               <View style={styles.head}>
-                <View style={StyleSheet.flatten([styles.ok, ok(i) && styles.okOn])}>{ok(i) ? <CheckIcon size={12} /> : null}</View>
                 <PText style={styles.w}>{w}</PText>
                 <PText style={styles.m} color={SUB}>
                   {m}
                 </PText>
               </View>
-              <TextInput
+              <GrowInput
                 value={v[i] ?? ''}
                 onChangeText={(x) => type(i, x)}
                 placeholder={`${w} 를 넣어 한 문장`}
@@ -90,8 +89,6 @@ const styles = StyleSheet.create({
   box: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, paddingVertical: 12, paddingHorizontal: 14, gap: 8, boxShadow: `3px 3px 0 ${Colors.ink}` },
   boxOn: { backgroundColor: '#FFF6BF' },
   head: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  ok: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#C9C2B3', alignItems: 'center', justifyContent: 'center' },
-  okOn: { backgroundColor: Colors.yellow, borderColor: Colors.ink },
   w: { fontSize: 16, lineHeight: 22, fontWeight: '900' },
   m: { fontSize: 12.5, lineHeight: 18, fontWeight: '700' },
   input: { minHeight: 52, borderWidth: 1.5, borderColor: Colors.line, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 11, fontSize: 14.5, lineHeight: 21, fontWeight: '600', color: Colors.ink, backgroundColor: Colors.cream, textAlignVertical: 'top' },

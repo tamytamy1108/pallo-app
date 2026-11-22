@@ -59,7 +59,7 @@ export function FeedbackBand({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 12, paddingTop: 8 },
+  wrap: { gap: 18, paddingTop: 8 },
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   char: { width: 88, height: 70, marginBottom: -2 },
   t: { flex: 1, minWidth: 0, paddingBottom: 2 },

@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
+import { offerChallenge } from '@/lib/chal-offer';
 import { Avatar, pplColor, SaveButton, SpeakerButton } from '@/components/lesson/lesson-ui';
 import { showToast } from '@/components/ui/toast';
 import { PText } from '@/components/ui/text';
@@ -73,7 +74,7 @@ export function saveExpressionToggle(e: { en: string; ko: string; source: string
   const on = toggleExpression(e);
   if (on) {
     sfx('save');
-    showToast('내 표현함에 저장했어요');
+    offerChallenge(e.en);
   } else showToast('표현함에서 뺐어요');
 }
 

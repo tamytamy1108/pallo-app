@@ -1,8 +1,9 @@
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
@@ -22,10 +23,20 @@ import type { PageApi } from './study-shell';
 
 type P = { ctx: StepCtx; D: Lv3Unit; api: PageApi };
 
-/** 예습 ② TOPIC 지문 읽기 (프로토타입 STEP_VIEW.tread · 말하지 않아요 · 듣고 읽기만) */
+/** 읽기 속도 [이름, 말 빠르기] */
+const SPEEDS: [string, number][] = [
+  ['느리게', 0.7],
+  ['보통', 0.92],
+  ['빠르게', 1.15],
+];
+
+/** 예습 ② JOURNAL 지문 읽기 (프로토타입 STEP_VIEW.tread · 말하지 않아요 · 듣고 읽기만) */
 export function TopicRead({ D, api }: P) {
   const T = D.topic;
   const [noKo, setNoKo] = useState(false);
+  // 읽기 속도: 느리게 · 보통 · 빠르게 (누를 때마다 바뀌어요 · 다음 줄부터 적용)
+  const [speed, setSpeed] = useState(1);
+  const speedRef = useRef(1);
   const [now, setNow] = useState<number | null>(null);
   const tok = useRef(0);
   useEffect(
@@ -51,7 +62,7 @@ export function TopicRead({ D, api }: P) {
         return;
       }
       setNow(i);
-      sayEn(T.lines[i][0], api.soundOff, 0.92, () => {
+      sayEn(T.lines[i][0], api.soundOff, SPEEDS[speedRef.current][1], () => {
         setTimeout(() => step(i + 1), 250);
       });
     };
@@ -62,7 +73,7 @@ export function TopicRead({ D, api }: P) {
     <>
       <ScrollView style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false}>
         <View style={st.sit}>
-          <PText style={st.sitK}>TOPIC</PText>
+          <PText style={st.sitK}>JOURNAL</PText>
           <PText style={st.sitB}>{T.title}</PText>
           <PText style={st.sitS}>천천히 듣고 읽어요 · 표현 6개가 나와요</PText>
         </View>
@@ -80,6 +91,17 @@ export function TopicRead({ D, api }: P) {
             />
           ) : null}
           <Tool label="한국어" on={!noKo} onPress={() => setNoKo((v) => !v)} />
+          {!api.soundOff ? (
+            <Tool
+              label={`속도 · ${SPEEDS[speed][0]}`}
+              on={speed !== 1}
+              onPress={() => {
+                const n = (speed + 1) % SPEEDS.length;
+                speedRef.current = n;
+                setSpeed(n);
+              }}
+            />
+          ) : null}
         </View>
         <PCard style={st.read}>
           {T.lines.map(([e, k], i) => (
@@ -221,7 +243,7 @@ export function BeforeAfter({ ctx, D, api }: P) {
             </View>
             <PText style={st.qb}>{qs[i].en}</PText>
             {before[i] ? <CmpBox label="BEFORE · 예습 때" text={before[i] ?? ''} /> : null}
-            <TextInput value={after[i] ?? ''} onChangeText={(v) => write(i, v)} multiline placeholder="지금 다시 답해 보세요" placeholderTextColor="#B9B2A3" style={st.ta} accessibilityLabel={`Q${i + 1} 다시 답하기`} />
+            <GrowInput value={after[i] ?? ''} onChangeText={(v) => write(i, v)} multiline placeholder="지금 다시 답해 보세요" placeholderTextColor="#B9B2A3" style={st.ta} accessibilityLabel={`Q${i + 1} 다시 답하기`} />
           </PCard>
         ))}
         {out && view ? (

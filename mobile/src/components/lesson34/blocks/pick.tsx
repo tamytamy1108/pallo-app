@@ -182,7 +182,7 @@ function PickInner({ t, from }: { t: PickTask; from?: SayTask }) {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 10 },
+  card: { gap: 10, marginBottom: 14 },
   big: { fontFamily: 'Unbounded_800ExtraBold', fontSize: 24, lineHeight: 30, paddingTop: 6, paddingBottom: 2 },
   ex: { backgroundColor: '#F6F1E4', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, gap: 3, marginTop: 6 },
   exEn: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 21.75 },

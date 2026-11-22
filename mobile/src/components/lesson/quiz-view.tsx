@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { SentenceCard } from '@/components/lesson/bubbles';
 import { CheckIcon } from '@/components/lesson/icons';
@@ -375,7 +376,7 @@ function Question({
               </View>
             ) : null
           ) : (
-            <TextInput value={draft} onChangeText={setDraft} multiline placeholder="영어로 적거나 마이크로 말해 보세요" placeholderTextColor="#A39C8E" style={styles.ta} accessibilityLabel="내 답" />
+            <GrowInput value={draft} onChangeText={setDraft} multiline placeholder="영어로 적거나 마이크로 말해 보세요" placeholderTextColor="#A39C8E" style={styles.ta} accessibilityLabel="내 답" />
           )}
         </>
       )}

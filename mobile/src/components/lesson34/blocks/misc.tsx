@@ -2,8 +2,9 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { WordCard } from '@/components/lesson/word-card';
 import { Appear } from '@/components/ui/appear';
@@ -347,7 +348,7 @@ export function DuoBlock({ task: t }: { task: DuoTask }) {
           </View>
         ) : null}
         {!fin ? (
-          <TextInput value={draft} onChangeText={setDraft} multiline placeholder={t.ph || '영어로 답해요 · 마이크를 눌러 말해도 돼요'} placeholderTextColor="#B9B2A3" style={styles.ta} accessibilityLabel="영어로 답하기" />
+          <GrowInput value={draft} onChangeText={setDraft} multiline placeholder={t.ph || '영어로 답해요 · 마이크를 눌러 말해도 돼요'} placeholderTextColor="#B9B2A3" style={styles.ta} accessibilityLabel="영어로 답하기" />
         ) : null}
       </Body>
       <Foot>

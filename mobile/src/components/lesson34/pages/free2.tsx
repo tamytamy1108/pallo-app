@@ -1,9 +1,10 @@
 import { Image } from "expo-image";
 import * as Tts from "expo-speech";
 import { useEffect, useRef, useState } from "react";
-import { FlatList, StyleSheet, TextInput, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
+import { GrowInput } from "@/components/ui/grow-input";
 import { MicIcon, SpeakerIcon } from "@/components/lesson/icons";
 import { Pressable } from "@/components/ui/pressable";
 import { PText } from "@/components/ui/text";
@@ -368,7 +369,7 @@ export function FreeTalk1({
               </Pressable>
             ) : (
               <View style={st.inp}>
-                <TextInput
+                <GrowInput
                   value={draft}
                   onChangeText={setDraft}
                   multiline

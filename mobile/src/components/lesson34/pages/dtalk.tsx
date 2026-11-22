@@ -5,10 +5,10 @@ import {
   FlatList,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 
+import { GrowInput } from "@/components/ui/grow-input";
 import { CheckIcon, MicIcon } from "@/components/lesson/icons";
 import { Pressable } from "@/components/ui/pressable";
 import { PText } from "@/components/ui/text";
@@ -23,11 +23,10 @@ import { isDone, stepKey } from "@/state/progress";
 
 import { leave34, type StepCtx } from "../finish";
 import { answers, setAns } from "../store";
-import { aiFix, bitOf, nrm, NUDGE, sentN, wordRe, words } from "../text";
+import { aiFix, bitOf, notEnglish, nrm, NUDGE, sentN, wordRe, words } from "../text";
 import {
   GoBtn,
   IMG,
-  MarkBtn,
   ModeTabs,
   Spk,
   SUB,
@@ -251,14 +250,6 @@ export function DailyTalk({
   // ---- 대화 끝 · 정리 ----
   if (done) {
     const mine = log.filter((m) => m.me);
-    const best = mine
-      .slice()
-      .sort(
-        (a, b) =>
-          Object.keys(b.kw ?? {}).length - Object.keys(a.kw ?? {}).length ||
-          words(b.en) - words(a.en),
-      )[0];
-    const bestEn = best ? best.fixed || best.en : "";
     const usedW = D.keywords.filter(([w]) => used[w]).map(([w]) => w);
     const tip = D.keywords.find(([w]) => !used[w]);
     const qa = Q.map((qq, i) => ({ qq, i, raw: (ans[i] ?? []).join(" "), fixed: (fxAns[i] ?? []).join(" ") })).filter((x) => x.raw);
@@ -279,9 +270,26 @@ export function DailyTalk({
           />
           {/* AI 피드백: 잘했어요 · 아쉬워요 · 이렇게 해 봐요 (프로토타입 v503 · 실제 앱은 AI 가 써요) */}
           <PCard style={st.fb}>
-            <View style={st.fbH}>
+            {/* 머리: 보라 띠 · 팔로 · 제목 · 오늘 대화 요약 숫자 */}
+            <View style={st.fbHead}>
+              <View style={st.fbHeadT}>
+                <PText style={st.fbKick} color="#D9CCF5">
+                  {`TODAY’S REPORT · ${new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric" })}`}
+                </PText>
+                <PText style={st.fbT} color={Colors.white}>
+                  AI 피드백
+                </PText>
+                <View style={st.fbChips}>
+                  {[`질문 ${answered}/6`, `키워드 ${usedW.length}`, `교정 ${fixes.length}`].map((c) => (
+                    <View key={c} style={st.fbChip}>
+                      <PText style={st.fbChipT} color={Colors.white}>
+                        {c}
+                      </PText>
+                    </View>
+                  ))}
+                </View>
+              </View>
               <Image source={IMG.yellow} style={st.fbImg} contentFit="contain" />
-              <PText style={st.fbT}>AI 피드백</PText>
             </View>
             <FbPart label="잘했어요" color="#2F6B2A" bar="#6BBF59" items={good} />
             {weak.length ? <FbPart label="아쉬워요" color="#C2416B" bar="#E59AAE" items={weak} /> : null}
@@ -291,18 +299,6 @@ export function DailyTalk({
               bar={Colors.purple}
               items={["선택 → 이유(Because) → 예시(For example), 3문장으로 답해요", ...(tip ? [`안 쓴 키워드 ${tip[0]} 넣어 보기 · ${tip[2]}`] : [])]}
             />
-            {best ? (
-              <View style={st.best}>
-                <View style={st.flex}>
-                  <PText style={st.bestK} color={SUB}>
-                    오늘의 내 문장
-                  </PText>
-                  <PText style={st.bestB}>{bestEn}</PText>
-                </View>
-                <Spk text={bestEn} soundOff={api.soundOff} />
-                <MarkBtn en={bestEn} ko="" source={ctx.source} />
-              </View>
-            ) : null}
           </PCard>
           <PText style={st.qaH} color={SUB}>
             질문별 내 답
@@ -345,6 +341,16 @@ export function DailyTalk({
       showToast(
         cm === "voice" ? "마이크를 누르고 말해 보세요" : "영어로 적어 주세요",
       );
+      return;
+    }
+    // 한국어로 답했거나 알아볼 수 없는 말이면 답으로 치지 않고 다시 물어요
+    const bad = notEnglish(v);
+    if (bad) {
+      setLog((l) => [...l, { me: true, en: v }]);
+      setDraft("");
+      sfx("send");
+      if (bad === "ko") ai(`Could you try that in English? Even one short sentence is okay! ${q.en}`, "영어로 다시 말해 볼까요? 짧아도 괜찮아요");
+      else ai(`Sorry, I didn’t quite get that. Could you say it again? ${q.en}`, "잘 못 알아들었어요. 다시 말해 줄래요?");
       return;
     }
     const x = nrm(v);
@@ -576,7 +582,7 @@ export function DailyTalk({
           }}
         />
         <View style={st.compose}>
-          <TextInput
+          <GrowInput
             value={draft}
             onChangeText={setDraft}
             editable={cm === "write"}
@@ -706,10 +712,15 @@ const st = StyleSheet.create({
   kxB: { fontFamily: Font.body900, fontSize: 14, lineHeight: 19 },
   kxM: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18 },
   kxE: { fontFamily: Font.body600, fontSize: 13.5, lineHeight: 19.5 },
-  fb: { padding: 16, gap: 12 },
-  fbH: { flexDirection: "row", alignItems: "center", gap: 8 },
-  fbImg: { width: 40, height: 34 },
-  fbT: { fontFamily: Font.display, fontSize: 16, lineHeight: 20 },
+  fb: { paddingBottom: 16, paddingHorizontal: 16, gap: 12, overflow: "hidden" },
+  fbHead: { flexDirection: "row", alignItems: "flex-end", marginHorizontal: -16, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 14, backgroundColor: Colors.purple, borderBottomWidth: 2, borderColor: Colors.ink },
+  fbHeadT: { flex: 1, gap: 4 },
+  fbKick: { fontFamily: Font.display, fontSize: 10, lineHeight: 13, letterSpacing: 0.4 },
+  fbT: { fontFamily: Font.display, fontSize: 22, lineHeight: 27, letterSpacing: -0.4 },
+  fbChips: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
+  fbChip: { borderRadius: 999, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.55)", paddingHorizontal: 9, paddingVertical: 2 },
+  fbChipT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17 },
+  fbImg: { width: 78, height: 66, marginBottom: -14, marginRight: -4 },
   fbPart: { gap: 4, paddingLeft: 12, borderLeftWidth: 3 },
   fbK: { fontFamily: Font.body900, fontSize: 12, lineHeight: 17 },
   fbP: { fontFamily: Font.body700, fontSize: 13.5, lineHeight: 20 },

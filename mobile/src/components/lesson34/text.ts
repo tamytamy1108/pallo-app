@@ -224,7 +224,12 @@ const AI_TYPO: [RegExp, string][] = [
   [/\bdont\b/gi, "don't"], [/\bdoesnt\b/gi, "doesn't"], [/\bdidnt\b/gi, "didn't"], [/\bcant\b/gi, "can't"], [/\bwont\b/gi, "won't"], [/\bisnt\b/gi, "isn't"],
   [/\bim\b/gi, "I'm"], [/\bive\b/gi, "I've"], [/\bthats\b/gi, "that's"], [/\bu\b/g, 'you'], [/\bur\b/g, 'your'], [/\bvirall\b/gi, 'viral'], [/\bthier\b/gi, 'their'],
   [/\b(beacuse|becuase|becasue)\b/gi, 'because'], [/\bdefinately\b/gi, 'definitely'], [/\bwierd\b/gi, 'weird'], [/\brecieve\b/gi, 'receive'], [/\buntill\b/gi, 'until'], [/\btommorow\b/gi, 'tomorrow'],
+  [/\b(alway)\b/gi, 'always'], [/\bbecause of i\b/gi, 'because I'], [/\bfavourit\b|\bfavorit\b/gi, 'favorite'], [/\bbeautiful\b/gi, 'beautiful'], [/\bthru\b/gi, 'through'], [/\btho\b/gi, 'though'],
+  [/\bpls\b|\bplz\b/gi, 'please'], [/\bidk\b/gi, "I don't know"], [/\bsth\b/gi, 'something'], [/\bppl\b/gi, 'people'], [/\bfreind\b/gi, 'friend'], [/\bwich\b/gi, 'which'], [/\balright\b/gi, 'all right'],
+  [/\bdoesnt\b/gi, "doesn't"], [/\bwasnt\b/gi, "wasn't"], [/\bwouldnt\b/gi, "wouldn't"], [/\bcouldnt\b/gi, "couldn't"], [/\bshouldnt\b/gi, "shouldn't"], [/\barent\b/gi, "aren't"], [/\bhavent\b/gi, "haven't"], [/\btheyre\b/gi, "they're"], [/\byoure\b/gi, "you're"], [/\bwhats\b/gi, "what's"],
 ];
+/** -ing 붙이기: e 빼기 · 짧은 자음+모음+자음은 끝 자음 두 번 (swim → swimming) */
+const ingOf = (v: string) => (/^[^aeiou]*[aeiou][^aeiouwxy]$/i.test(v) && v.length <= 4 ? `${v}${v.slice(-1)}ing` : `${v.replace(/([^e])e$/, '$1')}ing`);
 const third = (v: string) => (v === 'have' ? 'has' : v === 'do' ? 'does' : v === 'go' ? 'goes' : `${v}s`);
 const AI_GRAM: [RegExp, string | ((...m: string[]) => string), string][] = [
   [/\b(he|she|it|this|that)\s+don't\b/gi, (_m, a) => `${a} doesn't`, 'he · she · it 뒤엔 doesn’t'],
@@ -237,7 +242,30 @@ const AI_GRAM: [RegExp, string | ((...m: string[]) => string), string][] = [
   [/\bin\s+(weekend|weekends)\b/gi, 'on weekends', 'on weekends'],
   [/\ba\s+(?=[aeio]\w)/gi, 'an ', '모음 앞엔 an'],
   [/\b(\w{2,})\s+\1\b/gi, '$1', '같은 단어가 두 번'],
+  [/\bits\s+(?=(so|very|really|a|an|the|not|just|kind|pretty|too|getting|been|hard|easy|fun|okay|ok|good|bad|nice|great|boring|annoying|weird|funny|crazy|my|your)\b)/gi, "it's ", 'it is 줄임 → it’s'],
+  [/\bthere\s+is\s+(many|lots|a lot|so many|some)\b/gi, (_m, w) => `there are ${w}`, '여럿이면 there are'],
+  [/\b(people|they|we|my friends|my parents)\s+is\b/gi, (_m, w) => `${w} are`, '여럿이면 are'],
+  [/\b(everyone|everybody|someone|nobody)\s+are\b/gi, (_m, w) => `${w} is`, 'everyone 은 is'],
+  [/\bI\s+has\b/g, 'I have', 'I 뒤엔 have'],
+  [/\b(didn't|did not|don't|doesn't|can't|cannot|will|would|should|could|to)\s+(went|goes|ate|eats|saw|sees|took|takes|made|makes|got|gets|came|comes)\b/gi,
+    (_m, a, v) => `${a} ${({ went: 'go', goes: 'go', ate: 'eat', eats: 'eat', saw: 'see', sees: 'see', took: 'take', takes: 'take', made: 'make', makes: 'make', got: 'get', gets: 'get', came: 'come', comes: 'come' } as Record<string, string>)[v.toLowerCase()]}`, '조동사 · to 뒤엔 동사 원형'],
+  [/\b(yesterday|last (?:night|week|weekend|month|year|sunday|saturday|friday)|ago)\b([^.!?]*?)\bI\s+(go|eat|see|have|do|come|take|make|buy|watch|play|meet|visit)\b|\bI\s+(go|eat|see|have|do|come|take|make|buy|watch|play|meet|visit)\b([^.!?]*?)\b(yesterday|last (?:night|week|weekend|month|year)|ago)\b/gi,
+    (m) => m.replace(/\bI\s+(go|eat|see|have|do|come|take|make|buy|watch|play|meet|visit)\b/i, (_x, v: string) => `I ${({ go: 'went', eat: 'ate', see: 'saw', have: 'had', do: 'did', come: 'came', take: 'took', make: 'made', buy: 'bought', watch: 'watched', play: 'played', meet: 'met', visit: 'visited' } as Record<string, string>)[v.toLowerCase()]}`), '지난 일은 과거형'],
+  [/\bmore\s+(easy|happy|busy|big|fast|cheap|hard)\b/gi, (_m, w) => `${({ easy: 'easier', happy: 'happier', busy: 'busier', big: 'bigger', fast: 'faster', cheap: 'cheaper', hard: 'harder' } as Record<string, string>)[w.toLowerCase()]}`, '짧은 말은 -er'],
+  [/\bgo\s+to\s+home\b/gi, 'go home', 'go home (to 없이)'],
+  [/\bmakes?\s+me\s+to\b/gi, (m) => m.replace(/\s+to$/i, ''), 'make me + 동사 원형'],
+  [/\bdiscuss\s+about\b/gi, 'discuss', 'discuss 는 about 없이'],
+  [/\bexplain\s+me\b/gi, 'explain to me', 'explain to me'],
+  [/\bmarried\s+with\b/gi, 'married to', 'married to'],
+  [/\b(enjoy|finish|stop|keep|mind)\s+to\s+(\w+)\b/gi, (_m, a, v) => `${a} ${ingOf(v)}`, `enjoy · finish 뒤엔 -ing`],
 ];
+/** 영어가 아닌 답 (한국어로 답했거나 알아볼 수 없는 말) — AI 가 다시 물어요 */
+export function notEnglish(v: string) {
+  if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(v)) return 'ko' as const;
+  const w = nrm(v).trim().split(/\s+/).filter(Boolean);
+  if (!w.length || w.every((x) => !/[aeiouy]/i.test(x)) || /^(.)\1{3,}$/.test(w.join(''))) return 'junk' as const;
+  return null;
+}
 /** 답 교정: 맞춤법 · 자주 틀리는 문법 · 대문자 · 마침표. why 는 고친 까닭 목록 */
 export function aiFix(v: string, live: LiveFix[]) {
   let out = nrm(v).trim();

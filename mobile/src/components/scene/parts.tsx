@@ -6,6 +6,7 @@ import { Modal, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-n
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { offerChallenge } from '@/lib/chal-offer';
 import { Pressable } from '@/components/ui/pressable';
 import { Appear } from '@/components/ui/appear';
 import { PText } from '@/components/ui/text';
@@ -135,6 +136,7 @@ export function SaveBtn({ en, ko, source, shape = 'round' }: { en: string; ko: s
   const toggle = () => {
     const saved = toggleExpression({ en, ko, source });
     sfx(saved ? 'save' : 'tap');
+    if (saved) offerChallenge(en);
     haptic('select');
   };
   return (

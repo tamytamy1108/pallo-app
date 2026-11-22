@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { offerChallenge } from '@/lib/chal-offer';
 import { Pressable } from '@/components/ui/pressable';
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Appear } from '@/components/ui/appear';
@@ -62,6 +63,7 @@ export function MarkBtn({ en, ko, source }: { en: string; ko: string; source: st
       onPress={() => {
         const now = toggleExpression({ en, ko, source });
         sfx(now ? 'save' : 'tap');
+        if (now) offerChallenge(en);
         haptic('select');
       }}
       accessibilityRole="button"
@@ -421,7 +423,7 @@ export const s = StyleSheet.create({
   pavT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
   bubWrap: { flex: 1, minWidth: 0, marginBottom: 28 },
   bub: { paddingVertical: 12, paddingLeft: 14, paddingRight: 52, borderWidth: 2, borderColor: Colors.ink, borderRadius: 20, backgroundColor: Colors.white, boxShadow: `3px 3px 0px ${Colors.ink}` },
-  tail: { position: 'absolute', left: -8, bottom: 16, width: 14, height: 14, backgroundColor: Colors.white, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: Colors.ink, transform: [{ rotate: '45deg' }] },
+  tail: { position: 'absolute', zIndex: 2, left: -9, bottom: 18, width: 16, height: 16, backgroundColor: Colors.white, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: Colors.ink, borderBottomLeftRadius: 2, transform: [{ rotate: '45deg' }] },
   bubEn: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23.8, letterSpacing: -0.2 },
   bubKo: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.1, marginTop: 6 },
   bubSpk: { position: 'absolute', top: 10, right: 10 },
@@ -459,7 +461,7 @@ export const s = StyleSheet.create({
   mkT: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22 },
   mkCombo: { fontFamily: Font.display, fontSize: 12, lineHeight: 16, marginLeft: 'auto' },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  end: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, marginBottom: 12 },
+  end: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, marginBottom: 18 },
   endImg: { width: 88, height: 82 },
   endMsg: { fontFamily: Font.body800, fontSize: 15, lineHeight: 21.75 },
   endBold: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },

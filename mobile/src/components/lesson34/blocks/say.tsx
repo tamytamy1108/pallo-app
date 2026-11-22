@@ -1,7 +1,8 @@
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -12,7 +13,7 @@ import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
 import { Body, Foot, useRunner } from '../frame';
 import { AnsCards, ExtraView, FollowBubble, Marked, ModelCard, SplitView, TopPart, UpgradeCard } from '../parts';
 import { Ring, RING_PURPLE, useCountdown } from '../ring';
-import { MIN_SENT, nrm, pickOne, sentN, splitAnswer, upgradeOf, words, type Split } from '../text';
+import { aiFix, MIN_SENT, nrm, pickOne, sentN, splitAnswer, upgradeOf, words, type Split } from '../text';
 import type { SayExtra, SayTask } from '../types';
 import { CardHead, CmpBox, EndMsg, EndNote, FootRow, GoBtn, MicKey, ModeTabs, Msg, NoSpeakToggle, SkipBtn, Spk, Stars, SUB, UsedList, sayEn } from '../ui';
 import { PickBlock } from './pick';
@@ -311,7 +312,7 @@ function SayInner({ task }: { task: SayTask }) {
                 : `${t.prompt || '영어로 내 생각을 써요'}${needSent(t) ? ` · ${MIN_SENT}문장 이상` : ''}${rt.noSpeak ? ' · 시간 제한 없이 풀어요' : ''}`
             }
           />
-          <TextInput
+          <GrowInput
             value={st.draft}
             onChangeText={(draft) => setSt((s) => ({ ...s, draft }))}
             multiline
@@ -444,6 +445,7 @@ function SayResult({ t, st, res, top, sIn, onAgain }: { t: SayTask; st: St; res:
   const miss = res.missing;
   const n = res.ok ? (res.late ? 2 : 3) : res.nOn > 0 || (res.split && res.split.got) ? 1 : 0;
   const re = miss.length > 0 && st.tries < 3;
+  const fix = aiFix(res.v, []);
   const tail = ` · 단어 ${words(res.v)}개${t.combo && rt.combo ? ` · 콤보 x${rt.combo}` : ''}`;
   let bold: string | undefined;
   let rest: string;
@@ -456,7 +458,7 @@ function SayResult({ t, st, res, top, sIn, onAgain }: { t: SayTask; st: St; res:
     const sl = miss.filter((x) => !/^문장 \d/.test(x));
     if (sl.length) {
       bold = `${sl.join(' · ')} 문장이 빠졌어요`;
-      rest = `그 문장만 이어서 말해요${tail}`;
+      rest = `빠진 걸 넣어 다시 답해 봐요${tail}`;
     } else {
       bold = (more ?? '').split(' · ')[0];
       rest = ((more ?? '').split(' · ')[1] || '') + tail;
@@ -472,6 +474,15 @@ function SayResult({ t, st, res, top, sIn, onAgain }: { t: SayTask; st: St; res:
             <Spk text={res.v} soundOff={soundOff} label="내 말 듣기" />
           </CardHead>
           <Marked text={res.v} marks={t.marks} />
+          {/* 오타 · 문법을 고쳐 보여 줘요 (AI 대화와 같은 규칙 · 실제 앱은 AI) */}
+          {fix.changed ? (
+            <View style={styles.fix}>
+              <PText style={styles.fixK} color="#2F6B2A">
+                {`AI 교정 · ${fix.why.join(' / ') || '문장 다듬기'}`}
+              </PText>
+              <PText style={styles.fixB}>{fix.text}</PText>
+            </View>
+          ) : null}
         </View>
         {res.split ? <SplitView split={res.split} /> : null}
         {res.checks.length ? <UsedList items={res.checks} /> : null}
@@ -489,7 +500,7 @@ function SayResult({ t, st, res, top, sIn, onAgain }: { t: SayTask; st: St; res:
           {re ? (
             <>
               <SkipBtn label="그냥 넘어가기" onPress={rt.next} />
-              <GoBtn label="빠진 칸 채우기" onPress={() => onAgain({ mode: st.mode, append: { base: res.v, missing: miss }, tries: st.tries, topic: st.topic, ph: 'go', goT: true })} />
+              <GoBtn label="다시 답변하기" onPress={() => onAgain({ mode: st.mode, tries: st.tries, topic: st.topic, ph: 'go', goT: true })} />
             </>
           ) : t.follow && res.ok ? (
             <>
@@ -517,6 +528,9 @@ function SayResult({ t, st, res, top, sIn, onAgain }: { t: SayTask; st: St; res:
 const styles = StyleSheet.create({
   card: { gap: 10 },
   mine: { fontFamily: Font.body800, fontSize: 16, lineHeight: 24.8 },
+  fix: { marginTop: 8, paddingVertical: 9, paddingHorizontal: 12, borderRadius: 12, backgroundColor: '#EAF6E7', gap: 2 },
+  fixK: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16 },
+  fixB: { fontFamily: Font.body800, fontSize: 15, lineHeight: 22 },
   msg: { fontFamily: Font.body800, fontSize: 13, lineHeight: 20.15, textAlign: 'center' },
   msgB: { fontFamily: Font.body900, fontSize: 13, lineHeight: 20.15 },
   retryEn: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },

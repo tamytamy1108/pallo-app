@@ -94,9 +94,17 @@ export const LV3_101: Lv3Unit = {
       ['How did the coworker know the writer’s name?', '동료는 글쓴이 이름을 어떻게 알았나요?', 'He read it off the writer’s coffee mug.', ['He checked the writer’s ID card at lunch.', 'A friend told him the writer’s name.']]
     ]
   },
-  journal: { title: 'JOURNAL', q: 'What does your life look like these days?', ko: '요즘 내 일상은 어떤가요? 현재형 · 현재진행형으로 써 봐요',
+  journal: { title: 'JOURNAL', q: 'What does your life look like these days?', ko: '요즘 내 일상은 어떤가요?',
     use: ['hooked on', 'daily grind', 'slow down', 'grow on', 'breathing room', 'the norm'],
-    sample: 'These days, I’m working on a big project, so the daily grind feels heavy. I usually wake up at seven and do my commute on autopilot. Lately, yoga has really grown on me, and it helps me slow down.' },
+    sample: 'These days, I’m working on a big project, so the daily grind feels heavy. I usually wake up at seven and do my commute on autopilot. Lately, yoga has really grown on me, and it helps me slow down.',
+    fill: [
+      ['These days, I’m totally ___ a new drama.', 'hooked on', '요즘 새 드라마에 푹 빠져 있어요.'],
+      ['After work, I watch an episode to escape the ___.', 'daily grind', '퇴근하면 지루한 일상을 잊으려고 한 편씩 봐요.'],
+      ['On weekends, I try to ___ and take long walks.', 'slow down', '주말에는 여유를 갖고 오래 걸으려고 해요.'],
+      ['My new neighborhood is starting to ___ me.', 'grow on', '새 동네가 점점 좋아지고 있어요.'],
+      ['I keep Sunday mornings free for some ___.', 'breathing room', '숨 돌릴 틈이 필요해서 일요일 아침은 비워 둬요.'],
+      ['Working from home is ___ for me now.', 'the norm', '이제 재택근무가 저에겐 당연한 일이에요.'],
+    ] },
   live: LIVE,
 };
 

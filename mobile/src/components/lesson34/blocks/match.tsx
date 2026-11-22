@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
@@ -16,7 +15,8 @@ import { Body, Foot, useRunner } from '../frame';
 import { answers, setBest } from '../store';
 import { shuffle } from '../text';
 import type { MatchTask } from '../types';
-import { EndMsg, EndNote, FootRow, GoBtn, IMG, Msg, SkipBtn, Stars, SUB } from '../ui';
+import { EndMsg, EndNote, FootRow, GoBtn, Msg, SkipBtn, SUB } from '../ui';
+import { HopStage, PopStars, useCountUp } from './match-result-fx';
 
 /**
  * 짝 맞추기 타임어택 (프로토타입 TKV.match): 왼쪽 영어 → 오른쪽 뜻. 30초 · 콤보 · 최고 기록.
@@ -173,22 +173,24 @@ function MatchResult({ task, nDone, used, best, miss, onAgain }: { task: MatchTa
     sfx(all ? 'correct' : 'wrong');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const count = useCountUp(nDone, 150, 600);
   const msg = all && prev && sec < prev ? `지난 기록 ${prev}초를 깼어요!` : prev ? `내 최고 기록 ${Math.min(prev, all ? sec : prev)}초` : all ? '첫 기록이에요! 한 번 더 하면 더 빨라져요' : '시간이 끝났어요 · 한 번 더 해 볼까요?';
   return (
     <>
       <Body>
         <View style={styles.res}>
-          <Appear kind="reactHop">
-            <Image source={all ? IMG.yellow : IMG.tilted} style={styles.resImg} contentFit="contain" />
+          <Appear kind="tkRise">
+            <HopStage good={all} />
           </Appear>
-          <PText style={styles.rn}>
-            {nDone} / {N}
-          </PText>
-          <Stars n={stars} />
+          <View style={styles.score} accessibilityLabel={`${N}짝 중 ${nDone}짝`}>
+            <PText style={styles.rn}>{count}</PText>
+            <PText style={styles.rnOf} color={SUB}>{`/ ${N}`}</PText>
+          </View>
+          <PopStars n={stars} delay={350} />
           <View style={styles.rs}>
-            <ResTile tone={styles.t1} icon={<ClockIc />} value={all ? `${sec}초` : '시간 끝'} label="걸린 시간" delay={450} />
-            <ResTile tone={styles.t2} icon={<BoltIc />} value={`x${best}`} label="최고 콤보" delay={570} tilt />
-            <ResTile tone={styles.t3} icon={<MissIc />} value={String(miss)} label="틀린 짝" delay={690} />
+            <ResTile tone={styles.t1} icon={<ClockIc />} value={all ? sec : null} unit="초" label="걸린 시간" delay={900} />
+            <ResTile tone={styles.t2} icon={<BoltIc />} value={best} prefix="x" label="최고 콤보" delay={1020} tilt />
+            <ResTile tone={styles.t3} icon={<MissIc />} value={miss} label="틀린 짝" delay={1140} />
           </View>
         </View>
       </Body>
@@ -204,12 +206,14 @@ function MatchResult({ task, nDone, used, best, miss, onAgain }: { task: MatchTa
     </>
   );
 }
-function ResTile({ tone, icon, value, label, delay, tilt }: { tone: object; icon: ReactNode; value: string; label: string; delay: number; tilt?: boolean }) {
+/** 결과 칸 하나: 아래에서 솟아오르고, 숫자는 0부터 올라가요. value 가 null 이면 '시간 끝' */
+function ResTile({ tone, icon, value, prefix = '', unit = '', label, delay, tilt }: { tone: object; icon: ReactNode; value: number | null; prefix?: string; unit?: string; label: string; delay: number; tilt?: boolean }) {
+  const n = useCountUp(value ?? 0, delay + 200, 650);
   return (
     <Appear kind="tkRise" delay={delay} style={styles.rtWrap}>
       <View style={StyleSheet.flatten([styles.rt, tone, tilt && { transform: [{ rotate: '-2deg' }] }])}>
         <View style={StyleSheet.flatten([styles.ic, tilt && { backgroundColor: Colors.ink }])}>{icon}</View>
-        <PText style={styles.rtB}>{value}</PText>
+        <PText style={styles.rtB}>{value == null ? '시간 끝' : `${prefix}${n}${unit}`}</PText>
         <PText style={styles.rtS}>{label}</PText>
       </View>
     </Appear>
@@ -248,10 +252,11 @@ const styles = StyleSheet.create({
   tileEn: { fontFamily: Font.display, fontSize: 15, lineHeight: 19.5, textAlign: 'center' },
   tileKo: { fontFamily: Font.body800, fontSize: 15, lineHeight: 19.5, textAlign: 'center' },
   footMsg: { paddingBottom: 8 },
-  res: { flex: 1, alignItems: 'center', gap: 8, paddingTop: 30 },
-  resImg: { width: 130, height: 112 },
-  rn: { fontFamily: Font.display, fontSize: 44, lineHeight: 50, letterSpacing: -1 },
-  rs: { flexDirection: 'row', gap: 10, width: '100%', marginTop: 10 },
+  res: { flex: 1, alignItems: 'center', gap: 6, paddingTop: 6 },
+  score: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 10 },
+  rn: { fontFamily: Font.display, fontSize: 52, lineHeight: 58, letterSpacing: -1, fontVariant: ['tabular-nums'] },
+  rnOf: { fontFamily: Font.display, fontSize: 26, lineHeight: 32 },
+  rs: { flexDirection: 'row', gap: 10, width: '100%', marginTop: 14 },
   rtWrap: { flex: 1 },
   rt: { alignItems: 'center', gap: 4, paddingTop: 14, paddingBottom: 12, paddingHorizontal: 6, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, boxShadow: `3px 3px 0px ${Colors.ink}` },
   t1: { backgroundColor: '#E3EAF8' },

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { SparkIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { LessonModal } from '@/components/lesson/lesson-modal';
@@ -285,7 +286,7 @@ export function StoryView({ D, skey, onParagraph, onLeave }: { D: LessonData; sk
                 </Pressable>
               )}
             </View>
-            <TextInput
+            <GrowInput
               value={sv.para}
               onChangeText={(v) => setSv((s) => ({ ...s, para: v }))}
               onContentSizeChange={(e) => setTaH(Math.max(160, Math.ceil(e.nativeEvent.contentSize.height) + 4))}

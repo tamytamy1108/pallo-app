@@ -6,6 +6,7 @@ import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useShare
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
+import { offerChallenge } from '@/lib/chal-offer';
 import { Pressable } from '@/components/ui/pressable';
 import { AskBubble, MyTurnBubble } from '@/components/lesson/bubbles';
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
@@ -291,7 +292,7 @@ export function ShadowTask({
     const on = toggleExpression({ en: task.en, ko: task.para ? '' : task.ko, source });
     if (on) {
       sfx('save');
-      showToast('내 표현함에 문장을 저장했어요');
+      offerChallenge(task.en, '내 표현함에 문장을 저장했어요');
     } else showToast('표현함에서 뺐어요');
   };
 

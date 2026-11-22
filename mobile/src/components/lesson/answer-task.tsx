@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { AskBubble } from '@/components/lesson/bubbles';
 import { FeedbackBand } from '@/components/lesson/feedback-band';
 import { MicButton, ModeTabs, NoSpeakToggle, YellowButton, type AnswerMode } from '@/components/lesson/lesson-ui';
@@ -94,7 +95,7 @@ export function AnswerTask({ task }: { task: Task }) {
             <PText style={styles.saidText}>{text}</PText>
           </View>
         ) : (
-          <TextInput value={draft} onChangeText={setDraft} multiline placeholder="영어로 내 이야기를 적어 보세요" placeholderTextColor="#A39C8E" style={styles.ta} autoCapitalize="sentences" accessibilityLabel="내 답" />
+          <GrowInput value={draft} onChangeText={setDraft} multiline placeholder="영어로 내 이야기를 적어 보세요" placeholderTextColor="#A39C8E" style={styles.ta} autoCapitalize="sentences" accessibilityLabel="내 답" />
         )}
       </View>
     </TaskLayout>

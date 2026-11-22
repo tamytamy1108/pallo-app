@@ -1,6 +1,6 @@
 /*
  * Lv.3 · 4 레슨 문제(블록) 모양 — 프로토타입 TKV.* 에 넘기던 객체를 그대로 데이터로.
- * 블록: say · pick · match · explain · choose · blind · duo · score · read(다듬은 글 다시 읽기) · exprs(표현 칸 예문)
+ * 블록: say · pick · match · explain · choose · blind · duo · score · read(다듬은 글 다시 읽기) · exprs(표현 칸 예문) · fill(일기 빈칸)
  */
 import type { SlotKey } from './text';
 
@@ -115,7 +115,10 @@ export type ExprsTask = { type: 'exprs'; kick: string; items: [string, string, s
 /** 다듬은 글을 다시 소리 내어 읽기 (프로토타입 journal ② · TKV.shadow pass) */
 export type ReadTask = { type: 'read'; kick: string; en: string; ko: string; label: string };
 
-export type Task34 = SayTask | PickTask | MatchTask | ExplainTask | ChooseTask | BlindTask | DuoTask | ScoreTask | ReadTask | ExprsTask;
+/** 써 둔 일기 빈칸 채우기 (JOURNAL): lines [문장(___ 하나), 정답, 뜻] · 단어 칩을 눌러 넣어요 · 한 번 다시 · done(완성 글, 처음에 다 맞혔나) */
+export type FillTask = { type: 'fill'; kick: string; head?: Head; lines: [string, string, string][]; date: string; done?: (text: string, firstTry: boolean) => void };
+
+export type Task34 = SayTask | PickTask | MatchTask | ExplainTask | ChooseTask | BlindTask | DuoTask | ScoreTask | ReadTask | ExprsTask | FillTask;
 
 /** 문제마다 쌓는 기록 (디베이트 점수 · 콤보) */
 export type LogItem = { k: string; v: string; ok: boolean; late?: boolean; deb?: boolean };

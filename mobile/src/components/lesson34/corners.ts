@@ -6,7 +6,7 @@ import type { Lv3Unit, Lv4Unit, Unit34 } from '@/data/lessons34';
 import { saveExpression } from '@/state/expressions';
 
 import { answers, setAfter, setAns, setSide } from './store';
-import { escRe, gradeWords, phraseRe, polishLive, sentences, wordRe } from './text';
+import { escRe, gradeWords, phraseRe, sentences } from './text';
 import type { CheckRule, SayTask, Task34 } from './types';
 
 export type CornerEnv = {
@@ -125,38 +125,21 @@ const ttalk = (D: Lv3Unit): Corner => {
 };
 
 /** 복습 JOURNAL: 3칸 순서(요즘 하는 일 → 좋은 점 · 힘든 점 → 요즘 느끼는 것)를 보고 1분 말하기 → AI가 일기로 정리 + 오늘 단어 + 고칠 문장 */
+/** JOURNAL: 미리 써 둔 요즘 일기 · 넣어 볼 단어 6개를 빈칸에 채워요 → 완성 글은 답으로 저장 · 표현함에 */
 const journal = (D: Lv3Unit, env: CornerEnv): Corner => {
   const J = D.journal;
-  const kwRes = [...J.use, ...D.keywords.map((k) => k[0])].map(wordRe);
   return {
     kick: 'JOURNAL',
     build: () => [
       {
-        type: 'say',
-        kick: 'JOURNAL · 1분 말하기',
+        type: 'fill',
+        kick: 'JOURNAL · 빈칸 채우기',
         head: { k: J.title, p: J.q, m: J.ko },
-        limit: 60,
-        need: 0,
-        minWords: 15,
-        marks: kwRes,
-        card: {
-          kind: 'guide',
-          steps: [
-            ['요즘 하는 일', 'These days, I’m …'],
-            ['좋은 점 · 힘든 점', 'I like … / It’s hard to …'],
-            ['요즘 느끼는 것', 'Lately, … has grown on me.'],
-          ],
-          chips: { label: '넣어 볼 단어', items: J.use },
-        },
-        prompt: '위 순서대로 한 문장씩 · AI가 일기로 정리해요',
-        ph: 'These days, I’m ___. I like ___. Lately, ___.',
-        noMsg: '15단어 이상 말해 봐요',
-        save: (v) => {
-          const P = polishLive(v, D.live);
-          const used = J.use.filter((w) => wordRe(w).test(P.text));
-          setAns(env.key, [P.text]);
-          saveExpression({ en: P.text, ko: `JOURNAL · ${today()}`, source: `${env.source} · JOURNAL` });
-          return { extra: { kind: 'journal', date: today(), text: P.text, marks: kwRes, use: J.use, used, fixes: P.fixes } };
+        lines: J.fill,
+        date: today(),
+        done: (text) => {
+          setAns(env.key, [text]);
+          saveExpression({ en: text, ko: `JOURNAL · ${today()}`, source: `${env.source} · JOURNAL` });
         },
       },
     ],
