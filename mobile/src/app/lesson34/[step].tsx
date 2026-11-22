@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SCREEN } from '@/lib/transitions';
 import { corner34 } from '@/components/lesson34/corners';
@@ -11,7 +11,7 @@ import { Screen } from '@/components/screen';
 import { PText } from '@/components/ui/text';
 import { findStep34, findUnit34, unitName34 } from '@/data/lessons34';
 import { useLearnPrefs } from '@/state/learn-prefs';
-import { stepKey } from '@/state/progress';
+import { setLastStep, stepKey } from '@/state/progress';
 
 /**
  * Lv.3 · 4 레슨 (프로토타입 RUN34 진행기 · STEP_VIEW 단계 화면). 주소: /lesson34/[단계 id]?lv=3|4&unit=회차
@@ -26,6 +26,11 @@ export default function Lesson34Screen() {
   const { noSpeak } = useLearnPrefs();
   // 문제 목록은 처음 열 때 한 번만 만들어요 (말하기가 어려워요를 켜고 끄면 문제 안에서 바뀌어요)
   const [env] = useState(() => (u && found ? { uk: `${lv}:${unit}`, key: stepKey(lv, unit, p.step), source: `Lv.${lv} ${unitName34(u)} · ${found.step.t}`, noSpeak } : null));
+
+  // 홈 스터디 맵이 여기서 시작해요 (프로토타입 openStep 의 ST.last)
+  useEffect(() => {
+    if (found) setLastStep(lv, unit, p.step);
+  }, [found, lv, unit, p.step]);
 
   const screen = <Stack.Screen options={SCREEN.rise} />;
   if (!u || !found || !env) {

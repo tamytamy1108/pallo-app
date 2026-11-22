@@ -17,11 +17,11 @@ import { Colors } from '@/constants/theme';
 import { TODAY_GOAL } from '@/data/home';
 import { LESSON_STEPS, MY_BOOK, STAGES } from '@/data/mock';
 import { sfx } from '@/lib/feedback';
-import { clearPos, isDone, markDone, stepKey, useDoneCount } from '@/state/progress';
+import { clearPos, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
 
 import { devSeason } from './dev';
 import { ARROW_PATH, CHECK_PATH, LineIcon } from './icons';
-import { OPEN_UNITS, setLastStep, useLastStep, useStopAsk } from './map-state';
+import { OPEN_UNITS, useStopAsk } from './map-state';
 import { SeasonLayer } from './season-deco';
 import { SkipSheet } from './skip-sheet';
 import { StopPopup, type StartMode } from './stop-popup';
@@ -65,7 +65,16 @@ const stepHref = (unit: number, step: string) => (LV <= 2 ? `/lesson/${step}?lv=
 
 /** 홈 스터디 맵 카드: 지금 과 · 챕터 줄 · 진도 · 꼬불꼬불 퀘스트 길 · 정류장 팝업 · 구간 건너뛰기 */
 export function StudyMap() {
-  const [lesson, setLesson] = useState(1);
+  // 마지막으로 연 단계 — 라이브러리 · 홈 맵 · 레슨이 같은 기록을 써요 (프로토타입 ST.last).
+  // 맵은 그 과로 열리고, 캐릭터는 그 단계 위에 서요
+  const last = useLastStep();
+  const [lesson, setLesson] = useState(() => (last?.lv === LV ? last.unit : 1));
+  const [seenAt, setSeenAt] = useState(last?.at);
+  if (last && last.at !== seenAt) {
+    // 다른 곳(라이브러리)에서 새 단계를 열었으면 맵도 그 과로 옮겨요
+    setSeenAt(last.at);
+    if (last.lv === LV) setLesson(last.unit);
+  }
   const [width, setWidth] = useState(0);
   const [popIdx, setPopIdx] = useState<number | null>(null);
   const [skipStage, setSkipStage] = useState<number | null>(null);
@@ -79,8 +88,7 @@ export function StudyMap() {
   const doneCount = useDoneCount(`${LV}:${lesson}:`);
   const done = readDone(lesson, doneCount);
   const all = done.every(Boolean);
-  const last = useLastStep(LV, lesson);
-  const lastIdx = last ? LESSON_STEPS.findIndex((s) => s.id === last) : -1;
+  const lastIdx = last?.lv === LV && last.unit === lesson ? LESSON_STEPS.findIndex((s) => s.id === last.step) : -1;
   const current = lastIdx >= 0 ? lastIdx : done.findIndex((d) => !d);
   const title = MY_BOOK.titles[lesson] ?? '';
   const next = MY_BOOK.titles[lesson + 1];
