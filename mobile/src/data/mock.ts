@@ -66,6 +66,31 @@ export const NOTICES: Notice[] = [
   },
 ];
 
+/** 공지 목록 (설정 › 공지사항 · Notice board 의 '공지 전체 보기'). 띠에는 위 3개만 돌아요 (프로토타입 NOTICE_D) */
+export const ALL_NOTICES: (Notice & { pinned?: boolean })[] = [
+  { ...NOTICES[0], pinned: true },
+  NOTICES[1],
+  NOTICES[2],
+  {
+    id: 'n4',
+    tag: '공지',
+    title: '라운지 이용 규칙 안내',
+    date: '2026.10.27',
+    author: 'PALLO 본사',
+    audience: '전 지점',
+    body: ['라운지 이용 규칙을 정리했어요. 광고 · 연락처 공유 · 무례한 말은 신고되면 매니저가 24시간 안에 확인해요.'],
+  },
+  {
+    id: 'n5',
+    tag: '공지',
+    title: '잠실점 세션 장소 변경',
+    date: '2026.10.15',
+    author: '잠실점',
+    audience: '잠실점',
+    body: ['잠실점 라운지 공사로 10월 20일 ~ 22일 세션은 3층 B룸에서 진행해요.'],
+  },
+];
+
 export const ME = { name: 'Tammy' };
 
 /** 스터디 맵 구역 (예습 · 본학습 · 복습) — 프로토타입 MAP_STAGE */
@@ -76,16 +101,17 @@ export const STAGES: { key: Stage; label: string; color: string }[] = [
   { key: 'post', label: '복습', color: Colors.sky },
 ];
 
-/** 한 과의 단계 (프로토타입 STUDY_STEPS.pattern). 맞는 API: 18 `/lessons/:id` · 19 `/me/progress` */
-export const LESSON_STEPS: { id: string; stage: Stage; title: string }[] = [
-  { id: 'pat', stage: 'pre', title: '오늘의 패턴' },
-  { id: 'dlg', stage: 'pre', title: '대화문' },
-  { id: 'bank', stage: 'pre', title: 'Bank 퀴즈' },
-  { id: 'sit', stage: 'main', title: '상황 활동' },
-  { id: 'story', stage: 'main', title: 'My Story' },
-  { id: 'talk', stage: 'main', title: 'AI 프리토킹' },
-  { id: 'quiz', stage: 'post', title: '스피킹 퀴즈' },
-  { id: 'chal', stage: 'post', title: '30초 말하기 챌린지' },
+/** 한 과의 단계 (프로토타입 STUDY_STEPS.pattern). 맞는 API: 18 `/lessons/:id` · 19 `/me/progress`
+ * min: 걸리는 시간(분) · xp: 처음 끝내면 받는 포인트 */
+export const LESSON_STEPS: { id: string; stage: Stage; title: string; min: number; xp: number }[] = [
+  { id: 'pat', stage: 'pre', title: '오늘의 패턴', min: 5, xp: 5 },
+  { id: 'dlg', stage: 'pre', title: '대화문', min: 6, xp: 10 },
+  { id: 'bank', stage: 'pre', title: 'Bank 퀴즈', min: 3, xp: 5 },
+  { id: 'sit', stage: 'main', title: '상황 활동', min: 8, xp: 15 },
+  { id: 'story', stage: 'main', title: 'My Story', min: 7, xp: 15 },
+  { id: 'talk', stage: 'main', title: 'AI 프리토킹', min: 6, xp: 15 },
+  { id: 'quiz', stage: 'post', title: '스피킹 퀴즈', min: 5, xp: 10 },
+  { id: 'chal', stage: 'post', title: '30초 말하기 챌린지', min: 3, xp: 10 },
 ];
 
 /** 내 교재 · 진도 (예시) */

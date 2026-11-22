@@ -1,8 +1,9 @@
-import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion, type CSSKeyframesRule } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+
+import { MyCharacter } from '@/components/character/my-character';
 
 /*
  * 지금 할 정류장 꾸밈 (프로토타입 .cur-fx · .node.current · #qmapInner .ride).
@@ -86,8 +87,8 @@ const onBeat = (lead = 0) => `-${(Date.now() + lead) % BEAT}ms`;
 /** 재 보니 캐릭터가 정류장보다 40ms 늦게 웅크려서, 프로토타입처럼 정류장이 튀어 오르는 순간 웅크리게 40ms 앞당겨요 */
 const RIDER_LEAD = 40;
 
-/** 정류장 뒤: 노란 스포트라이트(숨 쉬듯) · 천천히 도는 빛살 · 바닥 그림자 */
-export function CurrentFx() {
+/** 정류장 뒤: 노란 스포트라이트(숨 쉬듯) · 천천히 도는 빛살 · 바닥 그림자. chest: 열 수 있는 보상 상자 뒤 (조금 작게 · 바닥 그림자 없이 · .chest-fx) */
+export function CurrentFx({ chest = false }: { chest?: boolean }) {
   const still = useReducedMotion();
   const [beat] = useState(() => onBeat());
   // repeating-conic-gradient: 30도마다 12도 폭 빛살. CSS 의 radial-gradient(circle …) 는 반지름이 상자 '모서리'까지라 66√2 ≈ 93px
@@ -98,7 +99,7 @@ export function CurrentFx() {
     return `M66 66 L${66 + R * Math.cos(a0)} ${66 + R * Math.sin(a0)} A${R} ${R} 0 0 1 ${66 + R * Math.cos(a1)} ${66 + R * Math.sin(a1)} Z`;
   });
   return (
-    <View style={styles.origin} pointerEvents="none">
+    <View style={[styles.origin, chest && styles.chestFx]} pointerEvents="none">
       <Animated.View style={[styles.spot, loop(spotGlow, '2s', 'ease-in-out', still)]}>
         <Svg width={120} height={120}>
           {/* radial-gradient(circle, …) 는 상자 모서리까지가 100% → 반지름 60√2 */}
@@ -128,7 +129,7 @@ export function CurrentFx() {
           ))}
         </Svg>
       </Animated.View>
-      <Animated.View style={[styles.floor, loop(floorShrink, '1.4s', 'linear', still, beat)]} />
+      {!chest && <Animated.View style={[styles.floor, loop(floorShrink, '1.4s', 'linear', still, beat)]} />}
     </View>
   );
 }
@@ -144,8 +145,8 @@ export function NodeHop({ on, style, children }: { on: boolean; style: ViewStyle
 
 /*
  * 맵 위에서 뛰는 '내 캐릭터' (프로토타입 rideHTML · .ride.me.tall).
- * 마이 꾸미기를 만들기 전이라, 프로토타입 기본 캐릭터(노랑 · 비니 · 나비넥타이 · 깃발 · 보라 신발)를 그린 이미지를 써요.
- * 이미지는 캐릭터 몸(520×332)보다 모자 · 깃발만큼 커요 → 몸 기준으로 자리를 맞춰요.
+ * 마이 › 꾸미기에서 꾸민 모습(MyCharacter)을 그대로 올려요. 기본 모습은 노랑 · 비니 · 나비넥타이 · 깃발 · 보라 신발.
+ * 그림은 캐릭터 몸(520×332)보다 모자 · 깃발만큼 커요 → 몸 기준으로 자리를 맞춰요.
  */
 const BODY_W = 58; // .ride.me.tall: 모자처럼 위로 솟는 아이템이면 58px
 const K = BODY_W / 520;
@@ -174,7 +175,8 @@ export function Rider() {
       <Animated.View style={[styles.rideSh, loop(rideSh, '1.4s', 'ease', still, beat)]} />
       <Animated.View style={[styles.ride, { transform: [{ scaleX: flip ? -1 : 1 }] }, flipEase]}>
         <Animated.View style={[styles.body, styles.bottomOrigin, loop(rideJump, '1.4s', 'ease', still, beat)]} onCSSAnimationIteration={chance}>
-          <Image source={require('@/assets/characters/my-default.png')} style={styles.rideImg} contentFit="contain" />
+          {/* MyCharacter 는 정사각 칸에 그림을 맞춰 넣어요 → 가로 폭에 맞추고, 남는 위아래만큼 올려 그림 자리를 예전과 같게 */}
+          <MyCharacter size={IMG.w} style={styles.rideImg} />
           {!still && <AvatarBlink onBlink={onBlink} />}
         </Animated.View>
       </Animated.View>
@@ -232,12 +234,14 @@ const styles = StyleSheet.create({
   bottomOrigin: { transformOrigin: 'center bottom' },
   spot: { position: 'absolute', left: -60, top: -60, width: 120, height: 120 },
   rays: { position: 'absolute', left: -66, top: -66, width: 132, height: 132 },
+  // .chest-fx: 스포트라이트 112 · 빛살 124 (정류장보다 조금 작게)
+  chestFx: { transform: [{ scale: 112 / 120 }] },
   floor: { position: 'absolute', left: -35, top: 44, width: 70, height: 12, borderRadius: 35, backgroundColor: 'rgba(30, 26, 43, 0.16)' },
   // 프로토타입 .ride-sh: filter blur(1.5px) — 가장자리가 흐린 그림자
   rideSh: { position: 'absolute', left: -23, top: 13, width: 46, height: 10, borderRadius: 23, backgroundColor: 'rgba(30, 26, 43, 0.28)', filter: 'blur(1.5px)' },
   ride: { position: 'absolute', left: -BODY_W / 2, top: -20, width: BODY_W, height: BODY_H },
   body: { width: BODY_W, height: BODY_H },
-  rideImg: { position: 'absolute', left: 0, top: IMG.top, width: IMG.w, height: IMG.h },
+  rideImg: { position: 'absolute', left: 0, top: IMG.top - (IMG.w - IMG.h) / 2 },
   // 눈꺼풀은 위에서부터 드러나요 (높이 0 → 16)
   lidBox: { position: 'absolute', left: 0, top: 0, width: BODY_W, height: 0, overflow: 'hidden' },
 });
