@@ -1,7 +1,7 @@
 /**
  * 리스닝 룸 문장 — 가짜 데이터. 프로토타입 lrItemsOf 가 과 데이터에서 모은 결과 그대로예요
- * (Lv.1 · 2 패턴 예문 · 대화문 · Bank / Lv.3 키워드 예문 · 지문 / Lv.4 FREE TALK · SAY IT BETTER · KEY / 상황 맵 표현 · 롤플레이 대사).
- * 맞는 API: 24 `/lessons/:id/listen-items`. 키 = '레벨-과 번호' (상황 맵은 '맵 id-장면 번호' = 장면 id).
+ * (Lv.1 · 2 패턴 예문 · 대화문 · Bank / Lv.3 키워드 예문 · 지문 / Lv.4 FREE TALK · SAY IT BETTER · KEY).
+ * 맞는 API: 24 `/lessons/:id/listen-items`. 키 = '레벨-과 번호'. 상황 장면 문장은 @/data/situation 의 sceneListenItems 에서 와요.
  */
 import type { ListenItem } from './library';
 
@@ -171,62 +171,5 @@ export const LISTEN_ITEMS: Record<string, ListenItem[]> = {
     {"en":"Everyone should have equitable access to transplants.","ko":"공평한 접근(기회)","tag":"KEY EXPRESSIONS"},
     {"en":"Debt could jeopardize a person’s free choice.","ko":"위태롭게 하다","tag":"KEY EXPRESSIONS"},
     {"en":"The system may shift the risk onto the poor.","ko":"위험을 ~에게 떠넘기다","tag":"KEY EXPRESSIONS"},
-  ],
-  "travel-1": [
-    {"en":"Can I have a window seat, please?","ko":"창가 자리로 주실 수 있나요?","tag":"공항 체크인 표현"},
-    {"en":"I’d like to check this bag. It’s about 20 kilos.","ko":"이 가방을 부치고 싶어요.","tag":"공항 체크인 표현"},
-    {"en":"Can I take this as my carry-on?","ko":"이건 기내용인가요?","tag":"공항 체크인 표현"},
-    {"en":"What time is boarding, and which gate?","ko":"탑승은 몇 시예요?","tag":"공항 체크인 표현"},
-    {"en":"Excuse me, is the flight on time?","ko":"비행기가 제시간에 뜨나요?","tag":"공항 체크인 표현"},
-    {"en":"Good morning. Can I see your passport, please?","ko":"안녕하세요. 여권 보여 주시겠어요?","tag":"공항 체크인 대화"},
-    {"en":"Thank you. Do you have a seat preference?","ko":"감사합니다. 원하시는 자리가 있나요?","tag":"공항 체크인 대화"},
-    {"en":"Sure. Are you checking any bags today?","ko":"네. 오늘 부치실 짐이 있나요?","tag":"공항 체크인 대화"},
-    {"en":"All set. Here’s your boarding pass. Any questions?","ko":"다 됐습니다. 탑승권 여기 있어요. 궁금한 점 있나요?","tag":"공항 체크인 대화"},
-    {"en":"Boarding starts at 10:40 at Gate 23. Have a nice flight!","ko":"탑승은 10시 40분, 23번 게이트예요. 좋은 여행 되세요!","tag":"공항 체크인 대화"},
-  ],
-  "travel-2": [
-    {"en":"Excuse me, could I get some water?","ko":"물 좀 주시겠어요?","tag":"기내 주문 표현"},
-    {"en":"I’ll have the chicken, please. Thank you.","ko":"치킨으로 할게요.","tag":"기내 주문 표현"},
-    {"en":"It’s a bit cold. Can I have another blanket?","ko":"담요 하나 더 주시겠어요?","tag":"기내 주문 표현"},
-    {"en":"Do you have any snacks left?","ko":"간식 있나요?","tag":"기내 주문 표현"},
-    {"en":"Could you wake me up for the meal, please?","ko":"식사 때 깨워 주실 수 있나요?","tag":"기내 주문 표현"},
-    {"en":"Hi there! Would you like something to drink?","ko":"안녕하세요! 음료 드시겠어요?","tag":"기내 주문 대화"},
-    {"en":"Of course. And for dinner, we have chicken or beef.","ko":"물론이죠. 저녁은 치킨과 소고기가 있어요.","tag":"기내 주문 대화"},
-    {"en":"Great choice. Is there anything else I can get you?","ko":"좋아요. 더 필요한 거 있으세요?","tag":"기내 주문 대화"},
-    {"en":"No problem. I’ll bring it right away. Enjoy your meal!","ko":"그럼요. 바로 가져다드릴게요. 맛있게 드세요!","tag":"기내 주문 대화"},
-  ],
-  "travel-3": [
-    {"en":"I’m here on vacation for a week.","ko":"휴가로 왔어요.","tag":"입국 심사 표현"},
-    {"en":"I’m staying for five days.","ko":"5일 동안 있을 거예요.","tag":"입국 심사 표현"},
-    {"en":"I’m staying at the Grand Hotel downtown.","ko":"시내 호텔에 묵어요.","tag":"입국 심사 표현"},
-    {"en":"It’s my first time here, so I’m excited.","ko":"여기는 처음이에요.","tag":"입국 심사 표현"},
-    {"en":"Here’s my return ticket, if you need it.","ko":"돌아가는 표 여기 있어요.","tag":"입국 심사 표현"},
-    {"en":"Hello. What’s the purpose of your visit?","ko":"안녕하세요. 방문 목적이 뭐예요?","tag":"입국 심사 대화"},
-    {"en":"How long are you staying?","ko":"얼마나 머무르시나요?","tag":"입국 심사 대화"},
-    {"en":"Where are you staying?","ko":"어디에 묵으시나요?","tag":"입국 심사 대화"},
-    {"en":"Is this your first time here?","ko":"여기 처음 오셨어요?","tag":"입국 심사 대화"},
-    {"en":"Okay. Enjoy your stay!","ko":"좋아요. 즐거운 여행 되세요!","tag":"입국 심사 대화"},
-  ],
-  "biz-1": [
-    {"en":"Nice to finally meet you in person.","ko":"드디어 뵙네요.","tag":"첫 미팅 자기소개 표현"},
-    {"en":"I’m in charge of marketing for the Asia team.","ko":"마케팅을 맡고 있어요.","tag":"첫 미팅 자기소개 표현"},
-    {"en":"I’ve heard a lot about your project.","ko":"말씀 많이 들었어요.","tag":"첫 미팅 자기소개 표현"},
-    {"en":"Everyone’s here. Shall we get started?","ko":"시작할까요?","tag":"첫 미팅 자기소개 표현"},
-    {"en":"It was great talking to you. Let’s keep in touch.","ko":"계속 연락해요.","tag":"첫 미팅 자기소개 표현"},
-    {"en":"Hi, you must be from PALLO. I’m Grace Kim.","ko":"안녕하세요, 팔로에서 오셨죠? 그레이스 김이에요.","tag":"첫 미팅 자기소개 대화"},
-    {"en":"Nice to meet you too. What do you do at PALLO?","ko":"저도 반가워요. 팔로에서 어떤 일을 하세요?","tag":"첫 미팅 자기소개 대화"},
-    {"en":"Interesting! How long have you been on that team?","ko":"흥미롭네요! 그 팀에는 얼마나 계셨어요?","tag":"첫 미팅 자기소개 대화"},
-    {"en":"Great. Shall we get started? Here’s today’s agenda.","ko":"좋아요. 시작할까요? 오늘 안건이에요.","tag":"첫 미팅 자기소개 대화"},
-  ],
-  "cafe-1": [
-    {"en":"Sorry, can I change my order?","ko":"주문을 바꿀 수 있을까요?","tag":"주문 바꾸기 표현"},
-    {"en":"Could I get it with oat milk instead?","ko":"오트밀크로 해 주실 수 있나요?","tag":"주문 바꾸기 표현"},
-    {"en":"Can you make it less sweet, please?","ko":"덜 달게 해 주실 수 있나요?","tag":"주문 바꾸기 표현"},
-    {"en":"For here, please. Thanks.","ko":"먹고 갈게요.","tag":"주문 바꾸기 표현"},
-    {"en":"Is there a free table by the window?","ko":"빈자리 있나요?","tag":"주문 바꾸기 표현"},
-    {"en":"Hi! One iced latte, right?","ko":"안녕하세요! 아이스 라테 하나 맞죠?","tag":"주문 바꾸기 대화"},
-    {"en":"Sure, no problem. Anything else?","ko":"네, 그럼요. 더 필요한 거 있으세요?","tag":"주문 바꾸기 대화"},
-    {"en":"Got it. For here or to go?","ko":"알겠습니다. 드시고 가세요, 가져가세요?","tag":"주문 바꾸기 대화"},
-    {"en":"Here you go. There’s a free table by the window!","ko":"여기 있어요. 창가에 빈자리 있어요!","tag":"주문 바꾸기 대화"},
   ],
 };

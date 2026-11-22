@@ -29,12 +29,15 @@ const blockStore = createStore<string[]>([]);
 export type MyReport = { id: string; kind: ReportTarget['kind']; name: string; reason: string; at: string };
 const reportStore = createStore<MyReport[]>([]);
 
-export const useBlockedNames = () => blockStore.use();
-export const useIsBlocked = (name: string) => blockStore.use((s) => s.includes(name));
+// React Compiler 가 x.use() 를 React use() 로 보지 않게 useXxx 이름으로 꺼내 써요
+const useBlockStore = blockStore.use;
+const useReportStore = reportStore.use;
+export const useBlockedNames = () => useBlockStore();
+export const useIsBlocked = (name: string) => useBlockStore((s) => s.includes(name));
 export const isBlocked = (name: string) => blockStore.get().includes(name);
 export const blockMember = (name: string) => blockStore.set((s) => (s.includes(name) ? s : [...s, name]));
 export const unblockMember = (name: string) => blockStore.set((s) => s.filter((x) => x !== name));
-export const useMyReports = () => reportStore.use();
+export const useMyReports = () => useReportStore();
 
 /**
  * 신고 · 차단 시트 (프로토타입 lgMore → lgReport · lgBlockSheet). 한 시트 안에서 메뉴 → 사유 고르기로 넘어가요.

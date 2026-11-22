@@ -1,6 +1,6 @@
 import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState, PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
@@ -28,13 +28,15 @@ type Props = {
   swapDir: number;
   /** 아래 카드의 버튼 (교재 보기 · 장면 열기) */
   onOpen: (no: number) => void;
+  /** false 면 그리기를 멈춰요 (스크롤해서 지도가 화면 밖일 때) */
+  visible?: boolean;
 };
 
 /**
  * 3D 섬 지도 한 장 (프로토타입 .m3-layer): GL 그림 + 이름표 · 내 캐릭터 · 확대 카드(.m3-zp).
  * 크기는 부모가 정해요. 화면을 떠나면(탭 이동 · 앱 내려감) 그리기를 멈춰요.
  */
-export function WorldView({ id, sc, swapDir, onOpen }: Props) {
+export function WorldView({ id, sc, swapDir, onOpen, visible = true }: Props) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const reduced = useReducedMotion();
   const focused = useIsFocused();
@@ -56,10 +58,10 @@ export function WorldView({ id, sc, swapDir, onOpen }: Props) {
     const set = (active: boolean) => {
       if (host.current) host.current.paused = !active;
     };
-    set(focused && AppState.currentState === 'active');
-    const sub = AppState.addEventListener('change', (st) => set(focused && st === 'active'));
+    set(focused && visible && AppState.currentState === 'active');
+    const sub = AppState.addEventListener('change', (st) => set(focused && visible && st === 'active'));
     return () => sub.remove();
-  }, [focused]);
+  }, [focused, visible]);
   useEffect(() => () => stage.current?.dispose(), []);
 
   const onContextCreate = (gl: ExpoWebGLRenderingContext) => {
@@ -92,31 +94,31 @@ export function WorldView({ id, sc, swapDir, onOpen }: Props) {
   };
 
   // 짧게 누르면 확대 · 옆으로 끌면 빙 돌기 (세로로 끌면 페이지 스크롤에 양보)
-  const pan = useMemo(() => {
-    let start = { x: 0, y: 0 };
-    let lastDx = 0;
-    return PanResponder.create({
+  const drag = useRef({ x: 0, y: 0, lastDx: 0 });
+  // ref 는 손가락 이벤트가 올 때만 읽어요 (그리는 중엔 안 읽어요) — 컴파일러가 이걸 구분하지 못해서 이 줄만 규칙을 꺼요
+  // eslint-disable-next-line react-hooks/refs
+  const [pan] = useState(() =>
+    PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderTerminationRequest: (_, g) => Math.abs(g.dy) > Math.abs(g.dx),
       onPanResponderGrant: (e) => {
-        start = { x: e.nativeEvent.locationX, y: e.nativeEvent.locationY };
-        lastDx = 0;
+        drag.current = { x: e.nativeEvent.locationX, y: e.nativeEvent.locationY, lastDx: 0 };
       },
       onPanResponderMove: (_, g) => {
-        stage.current?.drag(g.dx - lastDx);
-        lastDx = g.dx;
+        stage.current?.drag(g.dx - drag.current.lastDx);
+        drag.current.lastDx = g.dx;
       },
       onPanResponderRelease: (_, g) => {
-        if (Math.hypot(g.dx, g.dy) <= 6) stage.current?.tap(start.x, start.y);
+        if (Math.hypot(g.dx, g.dy) <= 6) stage.current?.tap(drag.current.x, drag.current.y);
         stage.current?.release();
       },
-    });
-  }, []);
+    }),
+  );
 
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      {size && <GLView style={styles.fill} onContextCreate={onContextCreate} msaaSamples={4} />}
+      {size && <GLView style={styles.fill} onContextCreate={onContextCreate} msaaSamples={2} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />
@@ -187,25 +189,21 @@ function LabelBody({ spec, zoomed }: { spec: LabelSpec; zoomed: boolean }) {
   );
 }
 
-/** 내 캐릭터 (프로토타입 .m3-me): 아래 가운데가 3D 점에 오고, 콩콩 뛸 때 눌림 · 방향 반전을 따라가요 */
+/** 내 캐릭터 (프로토타입 .m3-me): 아래 가운데가 3D 점에 오고, 콩콩 뛸 때 눌림 · 방향 반전을 따라가요.
+ * 그림은 정해진 크기(RIDER_W × RIDER_H, 프로토타입 .av-char 520:332)로 그리고 크기는 scale 로 맞춰요 */
+const RIDER_H = 64;
+const RIDER_W = (RIDER_H * 520) / 332;
 function RiderView({ rider }: { rider: SharedValue<number[]> }) {
   const box = useAnimatedStyle(() => {
     const r = rider.value;
     if (r.length < 6) return { opacity: 0 };
-    const [x, y, hh] = r;
-    const ww = (hh * 520) / 332;
-    return { opacity: 1, width: ww, height: hh, transform: [{ translateX: x - ww / 2 }, { translateY: y - hh }] };
-  });
-  const inner = useAnimatedStyle(() => {
-    const r = rider.value;
-    if (r.length < 6) return {};
-    return { transform: [{ scaleX: r[3] * r[4] }, { scaleY: r[5] }] };
+    const [x, y, hh, fl, sx, sy] = r;
+    const k = hh / RIDER_H;
+    return { opacity: 1, transform: [{ translateX: x - RIDER_W / 2 }, { translateY: y - RIDER_H }, { scaleX: k * fl * sx }, { scaleY: k * sy }] };
   });
   return (
     <Animated.View style={[styles.rider, box]}>
-      <Animated.View style={[styles.riderIn, inner]}>
-        <MyCharacter style={styles.riderImg} />
-      </Animated.View>
+      <MyCharacter style={styles.riderImg} />
     </Animated.View>
   );
 }
@@ -217,8 +215,9 @@ function FocusCard({ info, onGo, onClose }: { info: FocusInfo | null; onGo: (no:
   const [shown, setShown] = useState<FocusInfo | null>(info);
   const p = useSharedValue(0);
   const reduced = useReducedMotion();
+  // 닫히는 동안에도 마지막 카드를 보여 줘요 (그리는 중에 바로 기억)
+  if (info && info !== shown) setShown(info);
   useEffect(() => {
-    if (info) setShown(info);
     p.set(reduced ? (info ? 1 : 0) : withTiming(info ? 1 : 0, { duration: 350, easing: ZP_EASE }));
   }, [info, p, reduced]);
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - p.value) * 110 }] }));
@@ -248,7 +247,7 @@ function FocusCard({ info, onGo, onClose }: { info: FocusInfo | null; onGo: (no:
 }
 
 const styles = StyleSheet.create({
-  fill: { ...StyleSheet.absoluteFillObject },
+  fill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   labelBox: { position: 'absolute', left: 0, top: 0, width: BOX, alignItems: 'center' },
   // .m3-lv
   lv: { paddingTop: 4, paddingBottom: 5, paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', boxShadow: `2px 2px 0 ${Colors.ink}` },
@@ -266,9 +265,8 @@ const styles = StyleSheet.create({
   // .m3-here
   here: { height: HERE_H, paddingHorizontal: 9, borderRadius: 10, backgroundColor: Colors.ink, justifyContent: 'center' },
   hereText: { fontFamily: Font.display, fontSize: 10, lineHeight: 12, color: Colors.yellow },
-  rider: { position: 'absolute', left: 0, top: 0 },
-  riderIn: { width: '100%', height: '100%', transformOrigin: 'bottom' },
-  riderImg: { width: '100%', height: '100%' },
+  rider: { position: 'absolute', left: 0, top: 0, width: RIDER_W, height: RIDER_H, transformOrigin: 'bottom' },
+  riderImg: { width: RIDER_W, height: RIDER_H },
   // .m3-zp
   zp: { position: 'absolute', left: 12, right: 12, bottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingRight: 12, paddingLeft: 16, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, boxShadow: `3px 4px 0 ${Colors.ink}` },
   zpT: { flex: 1, minWidth: 0 },

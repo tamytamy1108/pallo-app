@@ -53,12 +53,7 @@ export function LgButton({
         return (
           <View style={[styles.wrap, { marginRight: shadow, marginBottom: shadow }, wide && styles.wide]}>
             {!disabled && !pressed && shadow > 0 ? <View style={[styles.plate, { top: shadow, left: shadow, right: -shadow, bottom: -shadow }]} /> : null}
-            <View
-              style={[
-                styles.body,
-                { height, backgroundColor: disabled ? '#E3DDD0' : BG[tone], transform: [{ translateX: down }, { translateY: down }] },
-                disabled && styles.off,
-              ]}>
+            <View style={[styles.body, { height, backgroundColor: disabled ? '#E3DDD0' : BG[tone], transform: [{ translateX: down }, { translateY: down }] }, disabled && styles.off]}>
               {icon}
               <PText style={{ fontFamily: Font.body900, fontSize, lineHeight: fontSize * 1.35, color: disabled ? '#8C8597' : FG[tone] }} numberOfLines={1}>
                 {label}

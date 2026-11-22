@@ -56,7 +56,8 @@ export default function EventScreen() {
         </ScrollView>
         <View style={styles.feed}>
           <ProposalCards />
-          <EventBanner list={up.slice(0, 5)} />
+          {/* 칩 · 지점을 바꾸면 배너를 처음(1 / n)부터 */}
+          <EventBanner key={up.slice(0, 5).map((e) => e.id).join()} list={up.slice(0, 5)} />
           <View style={styles.tabs} accessibilityRole="tablist">
             <TabBtn on={!isPastTab} label="다가오는 이벤트" n={up.length} onPress={() => setTab('up')} />
             <TabBtn on={isPastTab} label="지난 이벤트" onPress={() => setTab('past')} />

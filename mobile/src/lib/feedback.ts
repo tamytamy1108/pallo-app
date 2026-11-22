@@ -51,7 +51,9 @@ const SOUND_KEY = 'pallo-sound';
 
 /** 효과음 켜고 끄기 (설정 › 효과음). 웹은 프로토타입처럼 기기에 저장해요 */
 const soundStore = createStore({ on: readSaved() });
-export const useSfxOn = () => soundStore.use((s) => s.on);
+// React Compiler 가 x.use() 를 React use() 로 보지 않게 useXxx 이름으로 꺼내 써요
+const useSoundStore = soundStore.use;
+export const useSfxOn = () => useSoundStore((s) => s.on);
 export const setSfxOn = (on: boolean) => {
   soundStore.set({ on });
   if (Platform.OS === 'web') {

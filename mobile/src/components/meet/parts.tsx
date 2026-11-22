@@ -37,11 +37,14 @@ type BtnProps = {
   paddingH?: number;
   accessibilityLabel?: string;
   pressedState?: boolean;
+  /** 둥글기 (기본 높이의 반 — 알약) */
+  radius?: number;
 };
 
 /** 노랑 알약 버튼 (프로토타입 .lg-btn: 높이 40 · 잉크 2px · 그림자 3px · 누르면 그림자 자리로) */
-export function LgButton({ label, onPress, variant = 'y', height = 40, fontSize = 13, shadow = 3, icon, grow, width, paddingH = 14, accessibilityLabel, pressedState }: BtnProps) {
+export function LgButton({ label, onPress, variant = 'y', height = 40, fontSize = 13, shadow = 3, icon, grow, width, paddingH = 14, accessibilityLabel, pressedState, radius }: BtnProps) {
   const off = variant === 'off';
+  const r = radius ?? height / 2;
   return (
     <Pressable
       onPress={onPress}
@@ -53,17 +56,17 @@ export function LgButton({ label, onPress, variant = 'y', height = 40, fontSize 
       style={grow ? styles.grow : width ? { width } : styles.inline}>
       {({ pressed }) => (
         <View style={{ height, marginRight: off ? 0 : shadow, marginBottom: off ? 0 : shadow }}>
-          {off || pressed ? null : <View pointerEvents="none" style={[styles.shadow, { borderRadius: height / 2, top: shadow, left: shadow, right: -shadow, bottom: -shadow }]} />}
+          {off || pressed ? null : <View pointerEvents="none" style={[styles.shadow, { borderRadius: r, top: shadow, left: shadow, right: -shadow, bottom: -shadow }]} />}
           <View
             style={StyleSheet.flatten([
               styles.btn,
-              { height, borderRadius: height / 2, backgroundColor: BG[variant], paddingHorizontal: paddingH },
+              { height, borderRadius: r, backgroundColor: BG[variant], paddingHorizontal: paddingH },
               off && styles.btnOff,
               pressed && !off && { transform: [{ translateX: shadow }, { translateY: shadow }] },
             ])}>
             {icon}
             {label ? (
-              <PText numberOfLines={1} style={{ fontFamily: Font.body900, fontSize, lineHeight: fontSize * 1.3, color: FG[variant] }}>
+              <PText numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1, fontFamily: Font.body900, fontSize, lineHeight: fontSize * 1.3, color: FG[variant] }}>
                 {label}
               </PText>
             ) : null}

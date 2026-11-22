@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
@@ -18,12 +19,13 @@ import { C, hashId, POSTER_MORE, POSTER_WORDS, type PosterWords } from '@/data/m
 const ACC: Record<string, string> = { [C.pk]: '#fff', [C.pu]: C.pk, [C.y]: C.pk, [C.sky]: C.y, [C.lpu]: C.pu };
 export const isDarkBg = (bg: string) => bg === C.pu || bg === C.pk;
 /** 포스터 위 글자색: 어두운 바탕이면 흰색 (프로토타입 lgCardFg · lgPstFg) */
-export const posterFg = (bg: string) => (isDarkBg(bg) ? '#fff' : C.ink);
+export const posterFg = (bg: string) => (isDarkBg(bg) || bg === C.ink ? '#fff' : C.ink);
 
-export type Slide = { words: string[]; bg: string; v: number };
+export type Slide = { words: string[]; bg: string; v: number; /** 올린 포스터 사진 */ uri?: string };
 
 /** 한 모임의 포스터 장들 (첫 장 = 대표, 프로토타입 lgSlides · LG_PW2) */
-export function posterSlides(id: string, club = false): Slide[] {
+export function posterSlides(id: string, club = false, posters?: string[]): Slide[] {
+  if (posters?.length) return posters.map((uri, v) => ({ words: [], bg: C.ink, v, uri }));
   const first: PosterWords = POSTER_WORDS[id] ?? EVENT_POSTER_WORDS[id] ?? [club ? ['NEW', 'CLUB'] : ['NEW', 'MEET'], club ? C.lpu : C.pk];
   const more = POSTER_MORE[id] ?? EVENT_POSTER_MORE[id] ?? [];
   return [{ words: first[0], bg: first[1], v: 0 }, ...more.map(([w, bg], i) => ({ words: w, bg, v: i + 1 }))];
@@ -49,6 +51,15 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
   const acc = ACC[bg] ?? C.y;
   const v = (hashId(id) + slide.v) % 4;
   const wc = isDarkBg(bg) ? C.y : C.ink;
+  if (slide.uri)
+    return (
+      <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: C.ink, height, aspectRatio }, style])}>
+        <Image source={{ uri: slide.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        {/* 내가 올린 포스터는 위쪽에 그늘 (프로토타입 .lg-pst.ph::before) */}
+        <LinearGradient colors={['rgba(20,17,30,0.45)', 'rgba(20,17,30,0)']} style={styles.shade} pointerEvents="none" />
+        {children}
+      </View>
+    );
   return (
     <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: bg, height, aspectRatio }, style])}>
       {v === 0 ? (
@@ -101,5 +112,6 @@ const styles = StyleSheet.create({
   circle: { position: 'absolute', borderWidth: 2, borderColor: C.ink },
   band: { position: 'absolute', left: -20, right: -20, top: '42%', height: 54, borderTopWidth: 2, borderBottomWidth: 2, borderColor: C.ink, transform: [{ rotate: '-6deg' }] },
   char: { position: 'absolute', right: 6, bottom: -14, width: '38%', maxWidth: 150, aspectRatio: 480 / 306, zIndex: 1 },
+  shade: { position: 'absolute', left: 0, right: 0, top: 0, height: 64, zIndex: 1 },
   words: { position: 'absolute', left: 16, right: 16, bottom: 16, zIndex: 2 },
 });

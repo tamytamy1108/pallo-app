@@ -16,6 +16,8 @@ type ToastMsg = { message: string; action?: ToastAction; key: number };
 
 /** 지금 토스트 (shown=false 여도 사라지는 움직임 동안 글은 남겨 둬요) */
 const toastStore = createStore<{ msg: ToastMsg | null; shown: boolean }>({ msg: null, shown: false });
+// React Compiler 가 x.use() 를 React use() 로 보고 건너뛰지 않게, 저장소 훅은 useXxx 이름으로 불러요
+const useToastState = toastStore.use;
 let seq = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -39,6 +41,7 @@ export function showToast(message: string, action?: ToastAction) {
  * 모달이 열려 있으면 맨 위 모달 안에 토스트를 그려요 (showToast 쓰는 쪽은 신경 쓰지 않아도 돼요).
  */
 const layerStore = createStore<number[]>([]);
+const useLayers = layerStore.use;
 let layerSeq = 0;
 
 /** 모달(Sheet · ConfirmDialog)이 부르는 훅: 떠 있는 동안 등록하고, 맨 위면 true → 그 안에 <ToastView /> 를 그려요 */
@@ -49,12 +52,12 @@ export function useToastLayer(visible: boolean) {
     layerStore.set((s) => [...s, id]);
     return () => layerStore.set((s) => s.filter((x) => x !== id));
   }, [visible, id]);
-  return layerStore.use((s) => s.length > 0 && s[s.length - 1] === id);
+  return useLayers((s) => s.length > 0 && s[s.length - 1] === id);
 }
 
 /** 맨 바깥(_layout)에 한 번만 — 열린 모달이 없을 때 여기서 그려요 */
 export function ToastHost() {
-  const free = layerStore.use((s) => s.length === 0);
+  const free = useLayers((s) => s.length === 0);
   return free ? <ToastView /> : null;
 }
 
@@ -63,7 +66,7 @@ const HIDDEN_Y = -120;
 /** 토스트 모양 (프로토타입 .toast · .toast-go · 왼쪽 노랑 동그라미 체크) */
 export function ToastView() {
   const insets = useSafeAreaInsets();
-  const { msg, shown } = toastStore.use();
+  const { msg, shown } = useToastState();
   const still = useReducedMotion();
   // 이미 떠 있는 토스트를 다른 층(모달 ↔ 바깥)에서 이어 그릴 땐 처음부터 보이게
   const y = useSharedValue(shown ? 0 : HIDDEN_Y);

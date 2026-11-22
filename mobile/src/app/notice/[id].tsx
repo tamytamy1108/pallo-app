@@ -12,7 +12,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { ALL_NOTICES, type Notice } from '@/data/mock';
+import { NOTICES, type Notice } from '@/data/mock';
 
 /** 공지 행동 버튼이 여는 곳 (프로토타입 nccta: 변경 신청 · 이벤트 탭 · 라이브러리 탭) */
 const CTA_HREF: Record<NonNullable<Notice['cta']>['action'], Href> = {
@@ -24,7 +24,7 @@ const CTA_HREF: Record<NonNullable<Notice['cta']>['action'], Href> = {
 /** 공지 · 이벤트 · 새 소식 상세. 행동 버튼은 아래 고정 바에. */
 export default function NoticeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const notice = ALL_NOTICES.find((n) => n.id === id);
+  const notice = NOTICES.find((n) => n.id === id);
   useEffect(() => {
     if (notice) markNoticeRead(notice.id);
   }, [notice]);
@@ -69,7 +69,7 @@ function Detail({ notice }: { notice: Notice }) {
             {p}
           </PText>
         ))}
-        <Pressable onPress={() => router.push('/notice')} accessibilityRole="link" style={styles.all}>
+        <Pressable onPress={() => router.push('/notice' as Href)} accessibilityRole="link" style={styles.all}>
           <PText variant="bodyStrong" color={Colors.purple}>
             공지 전체 보기 ›
           </PText>

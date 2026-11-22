@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { CommentsSheet } from '@/components/common/comments-sheet';
-import { ReportSheet } from '@/components/common/report-sheet';
+import { type ReportMenuItem, ReportSheet } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -12,13 +12,14 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { type Abroad, LANG_COLOR, LG_C, LG_LIKERS, memberLangs, nameHash, type Post } from '@/data/lounge';
-import { addPostComment, blockMember, likeOn, postComments, toggleLike, toggleSave, unblockMember, useLounge } from '@/data/lounge-store';
+import { addPostComment, hideMember, likeOn, postComments, toggleLike, toggleSave, unhideMember, useLounge } from '@/data/lounge-store';
 import { SPRING } from '@/lib/motion';
 import { useMe } from '@/state/me';
 
 import { Face } from './face';
 import { LgIcon } from './icons';
 import { LgButton } from './lg-button';
+import { go } from './nav';
 import { PIC_BG, PostArt } from './pics';
 
 /** 글 머리: 프로필 · 이름 · 역할 · 학습 언어 · 지점 · 시간 · ⋯ (프로토타입 lgWho) */
@@ -27,28 +28,30 @@ export function Who({ who, av, role, sub, onMore, dark = false }: { who: string;
   const langs = memberLangs(who, me.name);
   return (
     <View style={styles.who}>
-      <Face name={who} bg={av} />
-      <View style={styles.nm}>
+      <Pressable onPress={() => go(`/me/profile/${encodeURIComponent(who)}`)} accessibilityRole="button" accessibilityLabel={`${who} 프로필`}>
+        <Face name={who} bg={av} />
+      </Pressable>
+      <Pressable onPress={() => go(`/me/profile/${encodeURIComponent(who)}`)} accessibilityRole="button" accessibilityLabel={`${who} 프로필`} style={styles.nm}>
         <View style={styles.nmRow}>
           <PText style={[styles.name, dark && { color: '#fff' }]} numberOfLines={1}>
             {who}
           </PText>
           {role ? <PText style={[styles.role, dark && { color: LG_C.y }]}>{role}</PText> : null}
           {langs.length ? (
-            <View style={styles.langs} accessibilityLabel={`학습 언어 ${langs.join(' · ')}`}>
+            <PText style={styles.langs} accessibilityLabel={`학습 언어 ${langs.join(' · ')}`}>
               {langs.map((l, i) => (
-                <PText key={l} style={[styles.lang, { color: LANG_COLOR[l] }]}>
+                <PText key={l}>
                   {i ? <PText style={styles.langDot}> · </PText> : null}
-                  {l}
+                  <PText style={[styles.lang, { color: LANG_COLOR[l] }]}>{l}</PText>
                 </PText>
               ))}
-            </View>
+            </PText>
           ) : null}
         </View>
         <PText style={[styles.sub, dark && { color: 'rgba(255,255,255,.75)' }]} numberOfLines={1}>
           {sub}
         </PText>
-      </View>
+      </Pressable>
       {onMore ? (
         <Pressable onPress={onMore} accessibilityRole="button" accessibilityLabel={`${who} 글 더보기`} hitSlop={4} style={styles.ib}>
           <LgIcon name="more" size={22} />
@@ -81,12 +84,7 @@ function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number;
         <LgIcon name="send" size={23} />
       </Pressable>
       <View style={styles.sp} />
-      <Pressable
-        onPress={() => showToast(toggleSave(id) ? '라운지 저장함에 담았어요' : '저장을 취소했어요')}
-        accessibilityRole="button"
-        accessibilityLabel="저장"
-        accessibilityState={{ selected: saved }}
-        style={styles.ib}>
+      <Pressable onPress={() => showToast(toggleSave(id) ? '라운지 저장함에 담았어요' : '저장을 취소했어요')} accessibilityRole="button" accessibilityLabel="저장" accessibilityState={{ selected: saved }} style={styles.ib}>
         <LgIcon name="save" size={23} fill={saved ? LG_C.y : 'none'} />
       </Pressable>
     </View>
@@ -187,7 +185,7 @@ function Pic({ p }: { p: Post }) {
 export function PostCard({ p }: { p: Post }) {
   const me = useMe();
   const cmts = useLounge((s) => postComments(s, p));
-  const [sheet, setSheet] = useState<null | 'cmt' | 'more' | 'likers' | 'report'>(null);
+  const [sheet, setSheet] = useState<null | 'cmt' | 'more' | 'likers'>(null);
   return (
     <View>
       <Who who={p.who} av={p.av} role={p.role} sub={`${p.br}${p.club ? ` · ${p.club}` : ''} · ${p.time}`} onMore={() => setSheet('more')} />
@@ -197,10 +195,9 @@ export function PostCard({ p }: { p: Post }) {
         <PText style={styles.captWho}>{p.who} </PText>
         {p.text}
       </PText>
-      <CommentsSheet open={sheet === 'cmt'} onClose={() => setSheet(null)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t))} />
-      <PostMoreSheet open={sheet === 'more'} who={p.who} onClose={() => setSheet(null)} onReport={() => setSheet('report')} />
+      <CommentsSheet open={sheet === 'cmt'} onClose={() => setSheet(null)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t), '댓글을 달려면')} />
+      <PostMenu open={sheet === 'more'} who={p.who} onClose={() => setSheet(null)} />
       <LikersSheet open={sheet === 'likers'} id={p.id} who={p.who} likes={p.likes} onClose={() => setSheet(null)} />
-      <ReportSheet open={sheet === 'report'} onClose={() => setSheet(null)} target={{ kind: 'post', name: p.who }} onBlocked={() => blockWithUndo(p.who)} />
     </View>
   );
 }
@@ -209,7 +206,7 @@ export function PostCard({ p }: { p: Post }) {
 export function AbroadCard({ p }: { p: Abroad }) {
   const me = useMe();
   const cmts = useLounge((s) => postComments(s, p));
-  const [sheet, setSheet] = useState<null | 'cmt' | 'more' | 'likers' | 'report' | 'ask'>(null);
+  const [sheet, setSheet] = useState<null | 'cmt' | 'more' | 'likers' | 'ask'>(null);
   return (
     <View>
       <Who who={p.who} av={p.av} sub={`${p.br} · ${p.time}`} onMore={() => setSheet('more')} />
@@ -224,62 +221,39 @@ export function AbroadCard({ p }: { p: Abroad }) {
           </View>
           <PText style={styles.abBd}>{p.body}</PText>
           <View style={styles.abRow}>
-            <LgButton label={`${p.who}에게 질문하기`} height={40} onPress={() => guardMember(() => setSheet('ask'))} />
+            <LgButton label={`${p.who}에게 질문하기`} height={40} onPress={() => guardMember(() => setSheet('ask'), '질문하려면')} />
           </View>
         </View>
       </View>
       <Acts id={p.id} likes={p.likes} cmts={cmts.length} onCmt={() => setSheet('cmt')} onLikers={() => setSheet('likers')} />
-      <CommentsSheet open={sheet === 'cmt'} onClose={() => setSheet(null)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t))} />
-      <PostMoreSheet open={sheet === 'more'} who={p.who} onClose={() => setSheet(null)} onReport={() => setSheet('report')} />
+      <CommentsSheet open={sheet === 'cmt'} onClose={() => setSheet(null)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t), '댓글을 달려면')} />
+      <PostMenu open={sheet === 'more'} who={p.who} onClose={() => setSheet(null)} />
       <LikersSheet open={sheet === 'likers'} id={p.id} who={p.who} likes={p.likes} onClose={() => setSheet(null)} />
-      <ReportSheet open={sheet === 'report'} onClose={() => setSheet(null)} target={{ kind: 'post', name: p.who }} onBlocked={() => blockWithUndo(p.who)} />
       <AskSheet open={sheet === 'ask'} who={p.who} sub={p.br} onClose={() => setSheet(null)} />
     </View>
   );
 }
 
-const blockWithUndo = (who: string) => {
-  blockMember(who);
-  showToast(`${who}님을 차단했어요`, { label: '되돌리기', onPress: () => unblockMember(who) });
-};
-
-/** ⋯ 글 메뉴 (프로토타입 lgMore): 링크 복사 · (리더 · 매니저) 공지 고정 · 숨기기 · 신고 · 차단 */
-export function PostMoreSheet({ open, who, onClose, onReport }: { open: boolean; who: string; onClose: () => void; onReport: () => void }) {
+/** ⋯ 글 메뉴 (프로토타입 lgMore): 링크 복사 · (리더 · 매니저) 공지 고정 · 숨기기 · 신고 · 차단 — 공통 신고 · 차단 시트 */
+function PostMenu({ open, who, onClose }: { open: boolean; who: string; onClose: () => void }) {
   const me = useMe();
   const staff = me.role === 'leader' || me.role === 'manager';
-  const opts: { k: string; label: string; sub?: string; bad?: boolean; run: () => void }[] = [
-    { k: 'link', label: '링크 복사', run: () => (onClose(), showToast('링크를 복사했어요')) },
-    ...(staff
-      ? [
-          { k: 'pin', label: '공지로 고정', sub: '리더 · 매니저 도구', run: () => (onClose(), showToast('공지로 고정했어요')) },
-          {
-            k: 'hide',
-            label: '이 글 숨기기',
-            sub: '작성자에게 알림이 가요',
-            run: () => {
-              onClose();
-              blockMember(who, 'hide');
-              showToast('글을 숨겼어요', { label: '되돌리기', onPress: () => unblockMember(who) });
-            },
+  const extra: ReportMenuItem[] = staff
+    ? [
+        { key: 'pin', label: '공지로 고정', sub: '리더 · 매니저 도구', onPress: () => (onClose(), showToast('공지로 고정했어요')) },
+        {
+          key: 'hide',
+          label: '이 글 숨기기',
+          sub: '작성자에게 알림이 가요',
+          onPress: () => {
+            onClose();
+            hideMember(who);
+            showToast('글을 숨겼어요', { label: '되돌리기', onPress: () => unhideMember(who) });
           },
-        ]
-      : []),
-    { k: 'report', label: '신고하기', sub: '매니저가 24시간 안에 확인해요', bad: true, run: () => (onClose(), onReport()) },
-    { k: 'block', label: `${who} 차단하기`, sub: '서로의 글이 더 이상 보이지 않아요', bad: true, run: () => (onClose(), onReport()) },
-  ];
-  return (
-    <Sheet open={open} onClose={onClose} title={`${who}의 글`}>
-      <View style={styles.opts}>
-        {opts.map((o, i) => (
-          <Pressable key={o.k} onPress={o.run} accessibilityRole="button" style={({ pressed }) => [styles.opt, i > 0 && styles.optLine, pressed && { backgroundColor: Colors.cream }]}>
-            <PText style={[styles.optText, o.bad && { color: '#B23A5A' }]}>{o.label}</PText>
-            {o.sub ? <PText style={styles.optSub}>{o.sub}</PText> : null}
-          </Pressable>
-        ))}
-      </View>
-      <LgButton label="닫기" tone="white" wide height={50} onPress={onClose} style={{ marginTop: 12 }} />
-    </Sheet>
-  );
+        },
+      ]
+    : [];
+  return <ReportSheet open={open} onClose={onClose} target={{ kind: 'post', name: who }} extra={extra} />;
 }
 
 /** 좋아요 누른 사람 (30명까지 · 내가 눌렀으면 맨 위에 나) — 프로토타입 lgLikers */
@@ -300,19 +274,21 @@ export function LikersSheet({ open, id, who, likes, onClose }: { open: boolean; 
   return (
     <Sheet open={open} onClose={onClose} title={`좋아요 ${n}개`}>
       <PText style={styles.ds}>{who}님의 글</PText>
-      {L.map(([x, c, b, mine], i) => (
-        <View key={`${x}${i}`} style={[styles.mrow, i > 0 && styles.mrowLine]}>
-          <Face name={x.replace(/\d+$/, '')} bg={c} />
-          <PText style={styles.mName}>{x}</PText>
-          {mine ? <PText style={styles.mMe}>나</PText> : null}
-          <PText style={styles.mBr} numberOfLines={1}>
-            {b}
-          </PText>
-          <View style={styles.sp} />
-          <LgIcon name="heart" size={16} fill={LG_C.pk} color={LG_C.pk} />
-        </View>
-      ))}
-      {n > show ? <PText style={[styles.ds, { textAlign: 'center', marginTop: 10 }]}>외 {n - show}명이 좋아해요</PText> : null}
+      <View>
+        {L.map(([x, c, b, mine], i) => (
+          <View key={`${x}${i}`} style={[styles.mrow, i > 0 && styles.mrowLine]}>
+            <Face name={x.replace(/\d+$/, '')} bg={c} />
+            <PText style={styles.mName}>{x}</PText>
+            {mine ? <PText style={styles.mMe}>나</PText> : null}
+            <PText style={styles.mBr} numberOfLines={1}>
+              {b}
+            </PText>
+            <View style={styles.sp} />
+            <LgIcon name="heart" size={16} fill={LG_C.pk} color={LG_C.pk} />
+          </View>
+        ))}
+      </View>
+      {n > show ? <PText style={[styles.ds, { textAlign: 'center' }]}>외 {n - show}명이 좋아해요</PText> : null}
     </Sheet>
   );
 }
@@ -332,7 +308,7 @@ export function AskSheet({ open, who, sub, onClose }: { open: boolean; who: stri
         {sub}
         {'\n'}답이 오면 알림으로 알려 드려요.
       </PText>
-      <TextInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#9A93A6" style={styles.ta} accessibilityLabel="질문 입력" />
+      <TextInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="질문 입력" />
     </Sheet>
   );
 }
@@ -343,9 +319,9 @@ const styles = StyleSheet.create({
   nmRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'nowrap' },
   name: { fontFamily: Font.body900, fontSize: 14, lineHeight: 16.8, flexShrink: 1 },
   role: { fontFamily: Font.body900, fontSize: 11, lineHeight: 13.2, color: Colors.purple, marginLeft: 5 },
-  langs: { flexDirection: 'row', marginLeft: 6 },
+  langs: { marginLeft: 6, fontFamily: Font.body900, fontSize: 11.5, lineHeight: 13.8 },
   lang: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 13.8 },
-  langDot: { color: Colors.inkSub },
+  langDot: { fontFamily: Font.body900, fontSize: 11.5, color: Colors.inkSub },
   sub: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 13.8, color: Colors.inkSub, marginTop: 2 },
   ib: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   picShadow: { borderRadius: 20, boxShadow: `4px 4px 0px ${Colors.ink}` },
@@ -367,20 +343,47 @@ const styles = StyleSheet.create({
   abTop: { backgroundColor: LG_C.sky, borderBottomWidth: 2, borderColor: Colors.ink, paddingTop: 14, paddingBottom: 14, paddingLeft: 16, paddingRight: 76 },
   kick: { fontFamily: Font.display, fontSize: 11, lineHeight: 16, letterSpacing: 0.3 },
   abT: { fontFamily: Font.body900, fontSize: 17, lineHeight: 22.95, marginTop: 6 },
-  stamp: { position: 'absolute', right: 14, top: 13, width: 58, height: 58, borderRadius: 29, backgroundColor: LG_C.y, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-12deg' }] },
+  stamp: {
+    position: 'absolute',
+    right: 14,
+    top: 13,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: LG_C.y,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: Colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '-12deg' }],
+  },
   stampText: { fontFamily: Font.display, fontSize: 11, lineHeight: 14 },
   abBd: { fontFamily: Font.body600, fontSize: 13, lineHeight: 20.8, paddingVertical: 12, paddingHorizontal: 16 },
   abRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 16, paddingBottom: 14 },
-  ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 22.4, color: Colors.inkSub, marginBottom: 10 },
+  ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 22.4, color: Colors.inkSub },
   opts: { backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, overflow: 'hidden' },
   opt: { minHeight: 54, paddingHorizontal: 16, paddingVertical: 10, justifyContent: 'center' },
   optLine: { borderTopWidth: 1, borderColor: Colors.line },
   optText: { fontFamily: Font.body800, fontSize: 15, lineHeight: 21 },
   optSub: { fontFamily: Font.body600, fontSize: 12, lineHeight: 17, color: Colors.inkSub, marginTop: 2 },
-  mrow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  mrow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, minHeight: 57 },
   mrowLine: { borderTopWidth: 1, borderColor: Colors.line },
   mName: { fontFamily: Font.body900, fontSize: 14, lineHeight: 19 },
   mMe: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15, color: Colors.purple },
   mBr: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub, flexShrink: 1 },
-  ta: { minHeight: 110, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, padding: 14, fontFamily: Font.body600, fontSize: 14, lineHeight: 21, color: Colors.ink, textAlignVertical: 'top' },
+  ta: {
+    minHeight: 110,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: Colors.ink,
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    fontFamily: Font.body600,
+    fontSize: 14,
+    lineHeight: 21,
+    color: Colors.ink,
+    textAlignVertical: 'top',
+  },
 });

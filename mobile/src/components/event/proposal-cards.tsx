@@ -31,6 +31,8 @@ export function ProposalCards() {
               <PText style={styles.st}>매니저 검토 중 · 2~3일 안에 문자로 연락드려요</PText>
             </View>
             <LgLink
+              color={Colors.inkSub}
+              size={12.5}
               label="취소"
               onPress={() => {
                 removeProposal(q.id);
@@ -46,10 +48,10 @@ export function ProposalCards() {
 
 const styles = StyleSheet.create({
   wrap: { gap: 10 },
-  card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white },
-  th: { width: 56, height: 56, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.ink },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.purple, borderRadius: 18, backgroundColor: '#FBF9FF' },
+  th: { width: 58, height: 58, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.ink },
   tx: { flex: 1, minWidth: 0, gap: 2 },
-  t: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
+  t: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20 },
   s: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   st: { fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: Colors.purple },
 });

@@ -119,12 +119,16 @@ export function Lift({ children, radius, dx = 4, dy = 4, color = Colors.ink, pre
   );
 }
 
-/** 흰 카드 (프로토타입 .card: 잉크 2px · 22 · 4px 그림자) */
+/** 흰 카드 (프로토타입 .card: 잉크 2px · 22 · 4px 그림자). style 의 바깥 여백(margin)은 그림자째 옮겨요 */
 export function Box({ children, style, color = Colors.white, onPress, label }: { children: ReactNode; style?: ViewStyle; color?: string; onPress?: () => void; label?: string }) {
+  const { margin, marginTop, marginBottom, marginLeft, marginRight, marginHorizontal, marginVertical, ...inner } = StyleSheet.flatten(style) ?? {};
+  const outer = { margin, marginTop, marginBottom, marginLeft, marginRight, marginHorizontal, marginVertical };
   const body = (pressed: boolean) => (
-    <Lift radius={22} pressed={pressed}>
-      <View style={[styles.box, { backgroundColor: color }, style]}>{children}</View>
-    </Lift>
+    <View style={outer}>
+      <Lift radius={22} pressed={pressed}>
+        <View style={[styles.box, { backgroundColor: color }, inner]}>{children}</View>
+      </Lift>
+    </View>
   );
   if (!onPress) return body(false);
   return (

@@ -7,12 +7,12 @@ import { createStore } from '@/lib/store';
 
 const store = createStore<Record<string, boolean>>(Object.fromEntries(NOTIS.map((n) => [n.id, n.read])));
 
-export const useNotiRead = store.use;
-export const useUnreadCount = () => store.use((s) => NOTIS.filter((n) => !s[n.id]).length);
+export const useNotiRead = store.useStore;
+export const useUnreadCount = () => store.useStore((s) => NOTIS.filter((n) => !s[n.id]).length);
 export const markNotiRead = (id: string) => store.set((s) => (s[id] ? s : { ...s, [id]: true }));
 export const markAllNotiRead = () => store.set(() => Object.fromEntries(NOTIS.map((n) => [n.id, true])));
 
 /* 공지 새 글 점 (프로토타입 NREAD): 상세를 열면 읽음 */
 const noticeStore = createStore<Record<string, boolean>>({});
-export const useNoticeRead = (id: string) => noticeStore.use((s) => !!s[id]);
+export const useNoticeRead = (id: string) => noticeStore.useStore((s) => !!s[id]);
 export const markNoticeRead = (id: string) => noticeStore.set((s) => (s[id] ? s : { ...s, [id]: true }));

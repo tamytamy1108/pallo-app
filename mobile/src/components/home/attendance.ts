@@ -65,7 +65,7 @@ export type Attend = {
 };
 
 const store = createStore<Attend>({ rsvp: null, slot: MY_SLOT, lang: MY_LANG, checked: false, week: 0 });
-export const useAttend = store.use;
+export const useAttend = store.useStore;
 export const getAttend = store.get;
 
 /** 사전 출석 (POST /sessions/:id/rsvp · lang 필수) */

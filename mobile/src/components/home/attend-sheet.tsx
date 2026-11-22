@@ -38,19 +38,22 @@ export function AttendSheet({
   const [lang, setLang] = useState<number | null>(null);
   const [m, setM] = useState(() => minuteOf(nowDate()));
   const [shown, setShown] = useState<AttendSheetMode>(mode ?? 'rsvp');
+  const [seen, setSeen] = useState<AttendSheetMode | null>(null);
 
-  useEffect(() => {
-    if (!mode) return;
-    setShown(mode);
-    if (mode === 'done') return;
-    const now = minuteOf(nowDate());
-    setM(now);
-    const f = firstSelectable(a.slot, mode, now);
-    setSlot(f >= 0 ? f : a.slot);
-    setLang(mode === 'checkin' && a.rsvp === 'yes' ? a.lang : null);
-    // a 는 열 때 한 번만 읽어요
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  // 시트가 새로 열리면(모드가 바뀌면) 처음 값으로 — 렌더 중에 바로 맞춰요 (React: 이전 값과 비교해 상태 고치기)
+  if (mode !== seen) {
+    setSeen(mode);
+    if (mode) {
+      setShown(mode);
+      if (mode !== 'done') {
+        const now = minuteOf(nowDate());
+        const f = firstSelectable(a.slot, mode, now);
+        setM(now);
+        setSlot(f >= 0 ? f : a.slot);
+        setLang(mode === 'checkin' && a.rsvp === 'yes' ? a.lang : null);
+      }
+    }
+  }
 
   return (
     <HomeSheet open={!!mode} onClose={onClose} label={shown === 'done' ? '출석 완료' : shown === 'checkin' ? '출석체크' : '사전 출석체크'}>
@@ -180,7 +183,7 @@ function FormView({
 /** 못 고르는 시간 칩의 빗금 (repeating-linear-gradient(-45deg, #EFEAE0 0 6px, #F7F3EA 6px 12px)) */
 function Stripes() {
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <Pattern id="slotOff" width={12 * Math.SQRT2} height={12 * Math.SQRT2} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <Rect width={6 * Math.SQRT2} height={12 * Math.SQRT2} fill="#EFEAE0" />
@@ -207,12 +210,10 @@ const jumpIn = css.keyframes({
   '60%': { opacity: 1, transform: [{ translateY: -12 }, { scale: 1 }] },
   '100%': { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
 });
-const once = (name: typeof stampIn, ms: number, delay: number) => ({
-  animationName: name,
-  animationDuration: `${ms}ms`,
-  animationDelay: `${delay}ms`,
-  animationTimingFunction: SPRING_CSS,
-  animationFillMode: 'both' as const,
+// 한 번만 (--spring · 끝난 모양 그대로)
+const once = css.create({
+  stamp: { animationName: stampIn, animationDuration: '600ms', animationDelay: '150ms', animationTimingFunction: SPRING_CSS, animationFillMode: 'both' },
+  hop: { animationName: jumpIn, animationDuration: '800ms', animationDelay: '450ms', animationTimingFunction: SPRING_CSS, animationFillMode: 'both' },
 });
 
 function DoneView({ summaryText, week, onClose }: { summaryText: string; week: number; onClose: () => void }) {
@@ -226,7 +227,7 @@ function DoneView({ summaryText, week, onClose }: { summaryText: string; week: n
   return (
     <View style={styles.done} accessibilityLiveRegion="polite">
       <View style={styles.art} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Animated.View style={[styles.stamp, still ? { transform: [{ rotate: '-8deg' }] } : once(stampIn, 600, 150)]}>
+        <Animated.View style={[styles.stamp, still ? { transform: [{ rotate: '-8deg' }] } : once.stamp]}>
           <View style={styles.stampRing} />
           <PText style={styles.stampSmall} color={Colors.purple}>
             PALLO
@@ -238,7 +239,7 @@ function DoneView({ summaryText, week, onClose }: { summaryText: string; week: n
             {date}
           </PText>
         </Animated.View>
-        <Animated.View style={[styles.hop, still ? null : once(jumpIn, 800, 450)]}>
+        <Animated.View style={[styles.hop, still ? null : once.hop]}>
           <Image source={require('@/assets/characters/c-upright-yellow-flip.png')} style={styles.hopImg} contentFit="contain" />
         </Animated.View>
       </View>

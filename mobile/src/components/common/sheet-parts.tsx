@@ -1,5 +1,5 @@
 import { useContext, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 import { SheetFooterContext } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -11,6 +11,9 @@ import { sfx, type Sfx } from '@/lib/feedback';
  * 시트 안에서 자주 쓰는 조각들 (프로토타입 라운지 시트 #lgSheet 의 .lg-btn · .lg-opts · p.ds · .lg-pills · .lg-link).
  * 여러 담당이 같이 써요 — 모양을 바꿀 땐 프로토타입 CSS 를 먼저 봐요.
  */
+
+/** 낱말 단위 줄바꿈 (CSS word-break: keep-all) — iOS 는 PText 가 해 주고, 웹은 이 스타일로 */
+export const keepAll = (Platform.OS === 'web' ? { wordBreak: 'keep-all', overflowWrap: 'break-word' } : {}) as TextStyle;
 
 /** 설명 한 줄 (p.ds — 14px · 600 · 보조색) */
 export function SheetDesc({ children, center = false }: { children: ReactNode; center?: boolean }) {
@@ -195,9 +198,9 @@ export function SheetLink({ label, onPress, color = Colors.purple }: { label: st
 }
 
 const styles = StyleSheet.create({
-  ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 14 * 1.6, color: Colors.inkSub },
+  ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 14 * 1.6, color: Colors.inkSub, ...keepAll },
   center: { textAlign: 'center' },
-  note: { marginTop: 12, marginBottom: 14, marginHorizontal: 2, fontFamily: Font.body700, fontSize: 13, lineHeight: 13 * 1.5, color: Colors.inkSub },
+  note: { marginTop: 12, marginBottom: 14, marginHorizontal: 2, fontFamily: Font.body700, fontSize: 13, lineHeight: 13 * 1.5, color: Colors.inkSub, ...keepAll },
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
   btnWrap: { alignSelf: 'stretch', paddingRight: 3, paddingBottom: 3 },
   dimmed: { opacity: 0.45 },
@@ -212,7 +215,7 @@ const styles = StyleSheet.create({
   optOn: { backgroundColor: '#F3EEFB' },
   optPressed: { backgroundColor: '#F7F3EA' },
   optText: { flex: 1, minWidth: 0 },
-  optLabel: { fontFamily: Font.body800, fontSize: 15, lineHeight: 15 * 1.45 },
+  optLabel: { fontFamily: Font.body800, fontSize: 15, lineHeight: 15 * 1.45, ...keepAll },
   optSub: { marginTop: 2, fontFamily: Font.body600, fontSize: 12, lineHeight: 12 * 1.45, color: Colors.inkSub },
   optSubStrong: { fontFamily: Font.body700 },
   ck: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },

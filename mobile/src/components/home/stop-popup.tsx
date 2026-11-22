@@ -42,9 +42,11 @@ export function StopPopup({
   const pos = useSavedPos(stepKeyText);
   const resume = pos !== undefined;
 
+  // 팝업에 보일 단계: 닫히는 동안에도 그대로 남겨요
+  if (step && step !== shown) setShown(step);
+
   useEffect(() => {
     if (step) {
-      setShown(step);
       p.set(0);
       p.set(withTiming(1, { duration: still ? 0 : 250 }));
     }

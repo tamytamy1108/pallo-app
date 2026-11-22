@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { LgIcon } from '@/components/common/icons';
-import { FieldLabel, SheetButton, SheetButtons, SheetDesc, SheetLink, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
+import { FieldLabel, keepAll, SheetButton, SheetButtons, SheetDesc, SheetLink, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
 import { Checkbox, TextField } from '@/components/ui/field';
 import { Raised } from '@/components/ui/raised';
 import { Sheet } from '@/components/ui/sheet';
@@ -33,8 +33,8 @@ export type TrialStart = { why?: string; lang?: TrialLang; level?: TrialLevel };
 type Step = 0 | 1 | 2 | 3 | 4;
 type Form = { branch: string | null; lang: TrialLang; day: string | null; time: string | null; level: TrialLevel; name: string; phone: string; agree: boolean };
 
-/** 개인정보 처리방침 (마이 B 설정 화면) */
-const PRIVACY_HREF = '/me/settings/privacy' as Href;
+/** 개인정보 처리방침 (마이 B 약관 본문 — 프로토타입 myPush('termD', { ti: 1 })) */
+const PRIVACY_HREF: Href = { pathname: '/me/settings/term', params: { i: '1' } };
 
 const fresh = (s: TrialStart): Form => ({
   branch: null,
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   stepOn: { backgroundColor: Colors.purple },
   // .lg-trial { padding: 16px 120px 16px 16px; min-height: 120px; border-radius: 20px }
   trial: { minHeight: 120, paddingTop: 16, paddingBottom: 16, paddingLeft: 16, paddingRight: 120, borderWidth: 2, borderColor: Colors.ink, borderRadius: 20, backgroundColor: Colors.yellow, overflow: 'hidden' },
-  trialHead: { fontFamily: Font.display, fontSize: 19, lineHeight: 19 * 1.25, letterSpacing: -0.5 },
+  trialHead: { fontFamily: Font.display, fontSize: 19, lineHeight: 19 * 1.25, letterSpacing: -0.5, ...keepAll },
   ul: { marginTop: 8 },
   li: { flexDirection: 'row' },
   liDot: { width: 17, fontFamily: Font.body700, fontSize: 13, lineHeight: 13 * 1.7 },

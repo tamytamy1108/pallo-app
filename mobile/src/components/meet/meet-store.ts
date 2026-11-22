@@ -57,7 +57,7 @@ const store = createStore<State>({
   myClubs: [],
 });
 
-export const useMeetStore = store.use;
+export const useMeetStore = store.useStore;
 export const getMeetStore = store.get;
 
 type Rec = 'joined' | 'saved' | 'vac' | 'att' | 'bliked';

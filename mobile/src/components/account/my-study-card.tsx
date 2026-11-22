@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
@@ -43,11 +43,10 @@ export function MyStudyCard({ title = true }: { title?: boolean }) {
       <Box style={styles.card}>
         <View style={styles.top}>
           <View style={styles.ring} accessibilityLabel={`남은 횟수 ${ms.left}회`}>
-            <Svg width={104} height={104} viewBox="0 0 104 104">
+            {/* 원이 모두 같은 중심이라 그림 전체를 -90° 돌려 12시에서 시작해요 (프로토타입 rotate(-90 52 52)) */}
+            <Svg width={104} height={104} viewBox="0 0 104 104" style={styles.ringSvg}>
               <Circle cx={52} cy={52} r={44} fill="none" stroke="#EFE9DC" strokeWidth={10} />
-              <G rotation={-90} origin="52, 52">
-                <Circle cx={52} cy={52} r={44} fill="none" stroke={Colors.yellow} strokeWidth={10} strokeLinecap="round" strokeDasharray={`${RING_C}`} strokeDashoffset={RING_C * (1 - ms.left / ms.total)} />
-              </G>
+              <Circle cx={52} cy={52} r={44} fill="none" stroke={Colors.yellow} strokeWidth={10} strokeLinecap="round" strokeDasharray={`${RING_C}`} strokeDashoffset={RING_C * (1 - ms.left / ms.total)} />
               <Circle cx={52} cy={52} r={49.5} fill="none" stroke={Colors.ink} strokeWidth={1.5} />
               <Circle cx={52} cy={52} r={38.5} fill="none" stroke={Colors.ink} strokeWidth={1.5} />
             </Svg>
@@ -169,6 +168,7 @@ const styles = StyleSheet.create({
   card: { padding: 18 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   ring: { width: 104, height: 104 },
+  ringSvg: { transform: [{ rotate: '-90deg' }] },
   ringIn: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   ringNum: { fontFamily: Font.display, fontSize: 24, lineHeight: 26 },
   ringLabel: { marginTop: 4, fontFamily: Font.body800, fontSize: 11, lineHeight: 15, color: Colors.inkSub },

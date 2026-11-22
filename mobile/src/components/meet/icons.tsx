@@ -33,6 +33,7 @@ const IC = {
   x: 'M6 6l12 12M18 6 6 18',
   save: 'M6 3h12v18l-6-4.5L6 21z',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
+  map: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14',
 } as const;
 
 export type IconName = keyof typeof IC;

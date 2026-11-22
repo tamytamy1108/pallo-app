@@ -38,12 +38,7 @@ export function BranchSelect({ value, onChange }: { value: string; onChange: (br
   const label = !brs.length ? '전체 지점' : brs.length === 1 ? brs[0] : `${brs[0]} 외 ${brs.length - 1}`;
   return (
     <>
-      <Pressable
-        onPress={() => setOpen(true)}
-        accessibilityRole="button"
-        accessibilityLabel={`지점 선택 · ${label}`}
-        hitSlop={7}
-        style={({ pressed }) => [styles.br, brs.length > 0 && styles.brOn, pressed && styles.pressed]}>
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={`지점 선택 · ${label}`} hitSlop={7} style={({ pressed }) => [styles.br, brs.length > 0 && styles.brOn, pressed && styles.pressed]}>
         <LgIcon name="pin" size={13} sw={2.4} />
         <PText style={styles.brText}>{label} ▾</PText>
       </Pressable>
@@ -76,13 +71,35 @@ function BranchSheet({ initial, onClose, onApply }: { initial: string[]; onClose
     <Sheet open onClose={onClose} title="어느 지점 글을 볼까요?" footer={<LgButton label="적용하기" wide height={52} fontSize={15.5} onPress={apply} />}>
       <PText style={styles.ds}>권역이나 지점을 여러 개 함께 고를 수 있어요. 전 지점 행사는 늘 보여요.</PText>
       <View style={styles.box} accessibilityRole="list">
-        <Row kind="all" label="전체 지점" count={LG_BRS.length} on={all} onPress={() => set(LG_BRS.map((x) => x[0]), !all)} />
+        <Row
+          kind="all"
+          label="전체 지점"
+          count={LG_BRS.length}
+          on={all}
+          onPress={() =>
+            set(
+              LG_BRS.map((x) => x[0]),
+              !all,
+            )
+          }
+        />
         {regs.map((r) => {
           const L = LG_BRS.filter((x) => x[1] === r).sort((a, b) => Number(myB.includes(b[0])) - Number(myB.includes(a[0])));
           const rOn = L.every((x) => has(x[0]));
           return (
             <View key={r}>
-              <Row kind="rg" label={r} count={L.length} on={rOn} onPress={() => set(L.map((x) => x[0]), !rOn)} />
+              <Row
+                kind="rg"
+                label={r}
+                count={L.length}
+                on={rOn}
+                onPress={() =>
+                  set(
+                    L.map((x) => x[0]),
+                    !rOn,
+                  )
+                }
+              />
               {L.map(([b]) => (
                 <Row key={b} kind="sub" label={b} mine={myB.includes(b)} on={has(b)} onPress={() => set([b], !has(b))} />
               ))}
@@ -111,7 +128,7 @@ const styles = StyleSheet.create({
   brOn: { backgroundColor: Colors.yellow },
   brText: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
   pressed: { transform: [{ scale: 0.96 }] },
-  ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 22.4, color: Colors.inkSub, marginBottom: 12 },
+  ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 22.4, color: Colors.inkSub },
   box: { backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 14, minHeight: 50 },
   rg: { backgroundColor: Colors.cream, borderTopWidth: 2, borderColor: Colors.ink },

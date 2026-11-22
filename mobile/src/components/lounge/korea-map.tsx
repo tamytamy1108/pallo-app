@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 
@@ -34,6 +35,15 @@ export function MiniMapCard() {
   const tot = LG_REG.reduce((a, [r]) => a + cnt(r), 0);
   const totM = LG_REG.reduce((a, [r]) => a + c[r][0], 0);
   const totC = LG_REG.reduce((a, [r]) => a + c[r][1], 0);
+  const [box, setBox] = useState(204);
+  // 지도를 누르면 가장 가까운 지역으로 (프로토타입 lgZoomMaps 클릭 · 34 안쪽)
+  const pickNear = (lx: number, ly: number) => {
+    const s = (box - 4) / 166;
+    const px = (lx - 2) / s + 46;
+    const py = (ly - 2) / s;
+    const near = LG_REG.map(([r, x, y]) => [r, Math.hypot(x - px, y - py)] as const).sort((a, b) => a[1] - b[1])[0];
+    if (near && near[1] <= 34) openRegion(near[0]);
+  };
   const list: [string | undefined, string, number][] = [[undefined, '전체', tot], ...LG_REG.filter(([r]) => cnt(r)).map(([r]): [string, string, number] => [r, r, cnt(r)])];
   return (
     <View style={styles.cardShadow}>
@@ -49,7 +59,7 @@ export function MiniMapCard() {
           </Pressable>
         </View>
         <View style={styles.kr}>
-          <View style={styles.svgBox}>
+          <Pressable onLayout={(e) => setBox(e.nativeEvent.layout.width)} onPress={(e) => pickNear(e.nativeEvent.locationX, e.nativeEvent.locationY)} accessibilityLabel="번개 · 동아리 지도 · 지역을 누르면 그 지역만" style={styles.svgBox}>
             <Svg width="100%" height="100%" viewBox={`46 0 166 ${KOREA_MAP.h}`}>
               <Rect width={KOREA_MAP.w} height={KOREA_MAP.h} fill={Colors.cream} />
               <Path d={KOREA_MAP.near} fill="#F0E9D9" />
@@ -64,19 +74,18 @@ export function MiniMapCard() {
               <Path d={KOREA_MAP.kr} fill="none" stroke={Colors.ink} strokeWidth={2.4} strokeLinejoin="round" />
               {LG_REG.map(([r, x, y]) => {
                 const [m, k] = c[r];
-                const label = `${r} 번개 ${m}개 · 동아리 ${k}개`;
-                if (!m && !k) return <SparkPin key={r} x={x} y={y} n={0} color="#fff" label={label} onPress={() => openRegion(r)} />;
+                if (!m && !k) return <SparkPin key={r} x={x} y={y} n={0} color="#fff" />;
                 const both = m > 0 && k > 0;
                 const dx = both ? 10 : 0;
                 return (
                   <G key={r}>
-                    {m ? <SparkPin x={x - dx} y={y} n={m} color={LG_C.pk} sm={both} label={label} onPress={() => openRegion(r)} /> : null}
-                    {k ? <SparkPin x={x + dx} y={y + (both ? 4 : 0)} n={k} color={LG_C.pu} sm={both} label={label} onPress={() => openRegion(r)} /> : null}
+                    {m ? <SparkPin x={x - dx} y={y} n={m} color={LG_C.pk} sm={both} /> : null}
+                    {k ? <SparkPin x={x + dx} y={y + (both ? 4 : 0)} n={k} color={LG_C.pu} sm={both} /> : null}
                   </G>
                 );
               })}
             </Svg>
-          </View>
+          </Pressable>
           <View style={styles.rl}>
             {list.map(([v, l, n]) => (
               <Pressable key={l} onPress={() => openRegion(v)} accessibilityRole="button" accessibilityLabel={`${l} ${n}개`} style={({ pressed }) => [styles.rb, pressed && { transform: [{ scale: 0.96 }] }]}>

@@ -127,7 +127,8 @@ export default function PhoneLoginScreen() {
               textContentType="oneTimeCode"
               maxLength={CODE_LENGTH}
               accessibilityLabel="인증번호"
-              style={styles.code}
+              // 안내 글은 본문 글꼴, 숫자를 넣으면 Unbounded · 넓은 자간
+              style={[styles.code, code ? styles.codeFilled : null]}
             />
             <View style={styles.resend}>
               <SheetLink label="인증번호 다시 받기" color={Colors.inkSub} onPress={send} />
@@ -162,10 +163,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.ink,
     backgroundColor: Colors.white,
-    fontFamily: Font.display,
-    fontSize: 22,
-    letterSpacing: 8,
+    fontFamily: Font.body700,
+    fontSize: 15,
     color: Colors.ink,
   },
+  codeFilled: { fontFamily: Font.display, fontSize: 22, letterSpacing: 8 },
   resend: { alignItems: 'flex-start' },
 });

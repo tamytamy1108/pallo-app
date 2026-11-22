@@ -469,17 +469,17 @@ export function fixSentence(text: string, known: string[]): FixPart[] {
     if (lc === 'a' && nx && /^[aeiou]/i.test(nx) && !/^(uni|use|one|eu)/i.test(nx)) return setFix(p, 'an');
     if (lc.length < 3 || dict.has(lc) || (/^[A-Z]/.test(c) && k > 0) || /\d/.test(c)) return;
     const lim = lc.length > 6 ? 2 : 1;
-    let best: string | null = null;
+    let best = '';
     let bd = 9;
-    dict.forEach((d) => {
-      if (Math.abs(d.length - lc.length) > lim) return;
+    for (const d of dict) {
+      if (Math.abs(d.length - lc.length) > lim) continue;
       const v = editDistance(d, lc);
       if (v <= lim && (v < bd || (v === bd && d[0] === lc[0]))) {
         bd = v;
         best = d;
       }
-    });
-    const b: string | null = best;
+    }
+    const b = best;
     if (b) {
       setFix(p, c[0] === c[0].toUpperCase() ? b[0].toUpperCase() + b.slice(1) : b);
       p.spelling = true;

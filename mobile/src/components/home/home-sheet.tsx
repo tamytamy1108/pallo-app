@@ -21,10 +21,12 @@ export function HomeSheet({ open, onClose, label, children }: { open: boolean; o
   const p = useSharedValue(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 열리면 바로 그려요 (닫힐 때는 내려가는 움직임이 끝난 뒤 지워요)
+  if (open && !mounted) setMounted(true);
+
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
     if (open) {
-      setMounted(true);
       p.set(withTiming(1, { duration: still ? 0 : 550, easing: EASE }));
     } else {
       p.set(withTiming(0, { duration: still ? 0 : 350, easing: EASE }));

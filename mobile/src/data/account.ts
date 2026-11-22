@@ -256,6 +256,8 @@ export const SETTINGS_DEFAULT = {
   bio: '',
   /** 광고 수신 동의 날짜 (켜면 기록) */
   mktAt: '',
+  /** 내 지점 변경 요청 (매니저가 확인하면 바뀌어요 · 최대 2곳). 비어 있으면 지금 지점 */
+  branches: [] as string[],
 };
 export type Settings = typeof SETTINGS_DEFAULT;
 export const PROFILE_SCOPES = ['전체 공개', '같은 지점만', '함께한 모임 멤버만'];

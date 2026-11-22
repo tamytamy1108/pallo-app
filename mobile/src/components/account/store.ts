@@ -11,7 +11,7 @@ import { createStore } from '@/lib/store';
 
 export type ChangeRequest = { label: string; txt: string; msg: string; at: number };
 const changeStore = createStore<ChangeRequest | null>(null);
-export const useChangeRequest = () => changeStore.use();
+export const useChangeRequest = () => changeStore.useStore();
 export const submitChangeRequest = (r: Omit<ChangeRequest, 'at'>) => changeStore.set({ ...r, at: Date.now() });
 export const cancelChangeRequest = () => changeStore.set(null);
 
@@ -25,7 +25,7 @@ type NoteState = {
   diary: Record<string, Diary>;
 };
 const noteStore = createStore<NoteState>({ read: {}, thanks: {}, msgs: {}, diary: {} });
-export const useNoteState = () => noteStore.use();
+export const useNoteState = () => noteStore.useStore();
 export const markNoteRead = (id: string) => noteStore.set((s) => (s.read[id] ? s : { ...s, read: { ...s.read, [id]: true } }));
 export const toggleNoteThanks = (id: string) => {
   const on = !noteStore.get().thanks[id];
@@ -38,11 +38,16 @@ export const saveDiary = (id: string, d: Diary) => noteStore.set((s) => ({ ...s,
 // ---------- 설정 ----------
 
 const settingsStore = createStore<Settings>({ ...SETTINGS_DEFAULT });
-export const useSettings = () => settingsStore.use();
+export const useSettings = () => settingsStore.useStore();
 export const updateSettings = (patch: Partial<Settings>) => settingsStore.set((s) => ({ ...s, ...patch }));
+/** 이벤트 · 혜택 정보(광고) 수신: 켜면 동의 날짜를 기록해요 */
+export const setMarketing = (on: boolean) => {
+  const t = new Date();
+  settingsStore.set((s) => ({ ...s, nMkt: on, mktAt: on ? `${t.getFullYear()}.${t.getMonth() + 1}.${t.getDate()}` : '' }));
+};
 
 const loginStore = createStore<Record<string, boolean>>({ ...LOGINS_DEFAULT });
-export const useLogins = () => loginStore.use();
+export const useLogins = () => loginStore.useStore();
 /** 연결 ↔ 해제. 마지막 하나는 해제 못 해요 → false */
 export function toggleLogin(name: string) {
   const L = loginStore.get();
@@ -53,10 +58,15 @@ export function toggleLogin(name: string) {
 }
 
 const askStore = createStore<Ask[]>([...ASKS_DEFAULT]);
-export const useAsks = () => askStore.use();
+export const useAsks = () => askStore.useStore();
 export const addAsk = (a: Ask) => askStore.set((L) => [a, ...L]);
 
 /** 레벨 변경 요청 (예: '한 단계 위로 · 수업이 쉬워요') */
 const levelReqStore = createStore<string | null>(null);
-export const useLevelRequest = () => levelReqStore.use();
+export const useLevelRequest = () => levelReqStore.useStore();
 export const requestLevelChange = (v: string) => levelReqStore.set(v);
+
+/** 공지 읽음 (프로토타입 NREAD — 안 읽은 공지는 제목 옆 분홍 점) */
+const noticeReadStore = createStore<Record<string, boolean>>({});
+export const useNoticeRead = () => noticeReadStore.useStore();
+export const markNoticeRead = (id: string) => noticeReadStore.set((s) => ({ ...s, [id]: true }));

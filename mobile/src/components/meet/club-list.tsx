@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -15,16 +16,17 @@ import { isDarkBg, posterSlides } from './poster';
 /** 동아리 한 줄 (프로토타입 lgClubRow · .lg-cr): 포스터 썸네일 · 이름 · 한 줄 소개 · 카테고리 · 지점 · 멤버 수 · 최근 대화 */
 export function ClubRow({ c, first }: { c: Club; first?: boolean }) {
   const inC = useMeetStore((s) => s.club[c.id] === 'in');
-  const { words, bg } = posterSlides(c.id, true)[0];
-  const w0 = words[0];
+  const { words, bg, uri } = posterSlides(c.id, true, c.posters)[0];
+  const w0 = words[0] ?? '';
   const fs = w0.length <= 4 ? 13 : w0.length <= 6 ? 10.5 : 8.5;
   const x = clubX(c);
   const cat = clubCat(c);
   return (
     <Pressable onPress={() => router.push(`/club/${c.id}`)} accessibilityRole="button" accessibilityLabel={`${c.name} 자세히 보기`} style={({ pressed }) => [styles.row, !first && styles.rowLine, pressed && { opacity: 0.7 }]}>
       <View style={[styles.th, { backgroundColor: bg }]}>
+        {uri ? <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
         <PText style={{ width: 200, fontFamily: Font.display, fontSize: fs, lineHeight: fs, color: isDarkBg(bg) ? C.y : C.ink }}>
-          {w0}
+          {uri ? '' : w0}
         </PText>
       </View>
       <View style={styles.tx}>

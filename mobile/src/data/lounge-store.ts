@@ -41,8 +41,8 @@ type LoungeState = {
   feed: FeedItem[];
   liked: Record<string, boolean>;
   saved: Record<string, boolean>;
-  /** 차단(true) · 숨김('hide')한 사람 */
-  blocked: Record<string, true | 'hide'>;
+  /** 리더 · 매니저가 '이 글 숨기기' 한 사람 (차단 목록은 공통 report-sheet) */
+  hidden: Record<string, true>;
   cmts: Record<string, Comment[]>;
   stories: Story[];
   seen: Record<string, boolean>;
@@ -61,7 +61,7 @@ const store = createStore<LoungeState>({
   feed: FEED,
   liked: {},
   saved: {},
-  blocked: {},
+  hidden: {},
   cmts: {},
   stories: STORIES,
   seen: {},
@@ -71,7 +71,7 @@ const store = createStore<LoungeState>({
   people: LG_PEOPLE,
 });
 
-export const useLounge = store.use;
+export const useLounge = store.useStore;
 export const getLounge = store.get;
 const patch = (p: Partial<LoungeState> | ((s: LoungeState) => Partial<LoungeState>)) => store.set((s) => ({ ...s, ...(typeof p === 'function' ? p(s) : p) }));
 
@@ -90,21 +90,27 @@ export const toggleSave = (id: string) => {
   patch((s) => ({ saved: { ...s.saved, [id]: !s.saved[id] } }));
   return !!getLounge().saved[id];
 };
-export const blockMember = (who: string, how: true | 'hide' = true) => patch((s) => ({ blocked: { ...s.blocked, [who]: how } }));
-export const unblockMember = (who: string) =>
+export const hideMember = (who: string) => patch((s) => ({ hidden: { ...s.hidden, [who]: true } }));
+export const unhideMember = (who: string) =>
   patch((s) => {
-    const next = { ...s.blocked };
+    const next = { ...s.hidden };
     delete next[who];
-    return { blocked: next };
+    return { hidden: next };
   });
 
 export const findItem = (id: string) => getLounge().feed.find((p) => p.id === id);
-export const useItem = (id: string) => store.use((s) => s.feed.find((p) => p.id === id));
+export const useItem = (id: string) => store.useStore((s) => s.feed.find((p) => p.id === id));
 
 // ---- 댓글: 글마다 예시 두 개 (새 글은 0개) + 내가 단 것 ----
 const seedCmts = (p: { id: string; c0?: 0 }): Comment[] =>
   (p.c0 === 0 ? [] : LG_CMTS.slice(0, 2)).map(([author, , text], i) => ({ id: `${p.id}-c${i}`, author, text, time: LG_CTIME[(nameHash(author) + i) % LG_CTIME.length], likes: nameHash(author + text) % 5 === 0 ? 0 : nameHash(text) % 9 }));
-export const postComments = (s: LoungeState, p: { id: string; c0?: 0 }) => s.cmts[p.id] ?? seedCmts(p);
+// 예시 댓글은 한 번 만든 배열을 다시 써요 (구독 값이 매번 새 배열이면 화면이 끝없이 다시 그려져요)
+const seedCache = new Map<string, Comment[]>();
+const cached = (key: string, make: () => Comment[]) => {
+  if (!seedCache.has(key)) seedCache.set(key, make());
+  return seedCache.get(key) as Comment[];
+};
+export const postComments = (s: LoungeState, p: { id: string; c0?: 0 }) => s.cmts[p.id] ?? cached(`p:${p.id}`, () => seedCmts(p));
 export const addPostComment = (p: { id: string; c0?: 0 }, author: string, text: string) =>
   patch((s) => ({ cmts: { ...s.cmts, [p.id]: [...postComments(s, p), { id: `${p.id}-${Date.now()}`, author, text, time: '방금', mine: true, likes: 0 }] } }));
 
@@ -131,7 +137,7 @@ export type StoryGroup = { id: string; kind: 'u' | 'c'; mine?: boolean; who?: st
 export function userGroups(s: LoungeState, ok: (x: Story) => boolean): StoryGroup[] {
   const m = new Map<string, Story[]>();
   s.stories
-    .filter((x) => !s.blocked[x.who] && isRecent(x) && ok(x))
+    .filter((x) => !s.hidden[x.who] && isRecent(x) && ok(x))
     .sort((a, b) => a.h - b.h)
     .forEach((x) => {
       const k = x.mine ? '__me' : x.who;
@@ -142,8 +148,7 @@ export function userGroups(s: LoungeState, ok: (x: Story) => boolean): StoryGrou
   return [...G.filter((g) => g.mine), ...G.filter((g) => !g.mine && un(g)), ...G.filter((g) => !g.mine && !un(g))];
 }
 /** 카테고리 하이라이트 = 24시간 지난 스토리 + 매니저 고정 (고정 → 최근 순) — 프로토타입 lgHlList */
-export const highlightList = (s: LoungeState, k: StoryCat, ok: (x: Story) => boolean) =>
-  s.stories.filter((x) => !s.blocked[x.who] && x.cat === k && !isRecent(x) && ok(x)).sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || a.h - b.h);
+export const highlightList = (s: LoungeState, k: StoryCat, ok: (x: Story) => boolean) => s.stories.filter((x) => !s.hidden[x.who] && x.cat === k && !isRecent(x) && ok(x)).sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || a.h - b.h);
 /** 새 글 있는 하이라이트가 앞 (이벤트는 늘 맨 앞) — 프로토타입 lgHlCats */
 export function highlightCats(s: LoungeState, ok: (x: Story) => boolean, cats: StoryCat[]) {
   const ks = cats.filter((k) => highlightList(s, k, ok).length);
@@ -155,9 +160,17 @@ export const markSeen = (id: string) => {
 };
 export const toggleStoryLike = (id: string) => patch((s) => ({ sliked: { ...s.sliked, [id]: !s.sliked[id] } }));
 export const storyComments = (s: LoungeState, id: string): Comment[] =>
-  s.scmts[id] ?? (STORY_CMTS[id] ?? []).map(([author, , text], i) => ({ id: `${id}-c${i}`, author, text, time: LG_CTIME[(nameHash(author) + i) % LG_CTIME.length], likes: nameHash(author + text) % 5 === 0 ? 0 : nameHash(text) % 9 }));
-export const addStoryComment = (id: string, author: string, text: string) =>
-  patch((s) => ({ scmts: { ...s.scmts, [id]: [...storyComments(s, id), { id: `${id}-${Date.now()}`, author, text, time: '방금', mine: true, likes: 0 }] } }));
+  s.scmts[id] ??
+  cached(`s:${id}`, () =>
+    (STORY_CMTS[id] ?? []).map(([author, , text], i) => ({ id: `${id}-c${i}`, author, text, time: LG_CTIME[(nameHash(author) + i) % LG_CTIME.length], likes: nameHash(author + text) % 5 === 0 ? 0 : nameHash(text) % 9 })),
+  );
+export const addStoryComment = (id: string, author: string, text: string) => patch((s) => ({ scmts: { ...s.scmts, [id]: [...storyComments(s, id), { id: `${id}-${Date.now()}`, author, text, time: '방금', mine: true, likes: 0 }] } }));
 export const addStory = (x: Story) => patch((s) => ({ stories: [x, ...s.stories], tab: 'all', sub: { ...s.sub, all: 'all' } }));
 export const dropStory = (id: string) => patch((s) => ({ stories: s.stories.filter((x) => x.id !== id) }));
 export const restoreStory = (x: Story) => patch((s) => ({ stories: [x, ...s.stories] }));
+/** 매니저 고정 · 풀기 (고정하면 하이라이트 맨 앞에 계속 남아요) */
+export const setStoryPin = (id: string, pin: boolean) => patch((s) => ({ stories: s.stories.map((x) => (x.id === id ? { ...x, pin } : x)) }));
+/** 스토리 보기에서 넘겨 볼 묶음: 사람별 → 하이라이트 순 (프로토타입 lgGroups) */
+export function storyGroups(s: LoungeState, ok: (x: Story) => boolean, cats: StoryCat[]): StoryGroup[] {
+  return [...userGroups(s, ok), ...highlightCats(s, ok, cats).map((k): StoryGroup => ({ id: `c:${k}`, kind: 'c', cat: k, list: highlightList(s, k, ok) }))];
+}

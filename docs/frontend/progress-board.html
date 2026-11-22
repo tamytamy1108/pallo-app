@@ -157,15 +157,17 @@ pre code { background: none; padding: 0; }
 
 <script>
 /* ───── 데이터: Claude가 작업할 때마다 이 부분을 고쳐요 ───── */
-const UPDATED = '2026-11-22';
+const UPDATED = '2026-11-22 · 일괄 구현';
 const NOW = {
-  doing: '가장 어려운 부분(말하기) 시험 통과 — 아이폰 사파리에서 동작',
-  next: '다음: git 에 올리기 → 출석 · QR. 진짜 앱 빌드는 Apple 개발자 계정이 생기면',
+  doing: '프로토타입 미구현 화면 일괄 구현 끝 — 11개 영역을 나눠 동시에 만들고 웹에서 프로토타입과 나란히 비교',
+  next: '다음: 이번 작업 git 에 올리기 → 결정 6가지 → 개발 빌드로 폰에서 확인(3D 지도 · 카메라 · 소리 · 진동)',
   blocked: '백엔드 첫 회의 전이라 API 주소 · 로그인 방식 · 에러 모양이 아직 안 정해졌어요. 그 전까지는 가짜 데이터로 화면을 먼저 만들어요.'
 };
 
 // who: 'me' = 내가(프론트 담당) · 'claude' = Claude · 'both' = 같이 · 'back' = 백엔드
 const MY_TODO = [
+  { t: '일괄 구현에서 나온 결정 6가지', why: '프로토타입 · 스펙 · 예전 메모가 서로 달라서 작업자가 프로토타입 쪽으로 만들어 둔 것들이에요.',
+    how: '① 저장 표현으로 챌린지 열 때 1개 이상 vs 하나만(프로토타입) ② 상황 장면 5단계(v480) 그대로? ③ Lv.3 은 지금 프로토타입 단계대로(IMPROVEMENT · ACTIVITY 등 스펙 표 코너는 빠짐)? ④ 로그인 · 휴대폰 확인 화면을 프로토타입에서 확정 ⑤ 1시간 넘게 남은 카운트다운 04:59 vs 4시간 59분 ⑥ 맨 위로 버튼을 모든 탭에?' },
   { t: '폰에서 지금 앱 보기', why: '웹 미리보기로만 확인했어요. 폰에서 글꼴 · 애니메이션 · 아래 탭이 다르게 보일 수 있어요.',
     how: '폰에 Expo Go 설치 → 터미널에서 아래 실행 → QR 찍기 (컴퓨터와 같은 와이파이)', cmd: 'cd mobile && npx expo start' },
   { t: '지금까지 한 것 git에 올리기', why: '아직 커밋하지 않았어요. 컴퓨터에만 있으면 잃어버릴 수 있어요.', how: '채팅에 "커밋해줘"라고 하면 Claude가 정리해서 올려요. 처음엔 같이 보면서 git 사용법도 익혀요.' },
@@ -187,7 +189,7 @@ const PHASES = [
     { t: '글꼴 (Unbounded · Noto Sans KR)', s: 'done', who: 'claude', n: 'Unbounded 에 한글이 없어서 한글만 Noto로 나눠 그려요' },
     { t: '색 · 둥글기 · 간격 토큰', s: 'done', who: 'claude', n: 'mobile/src/constants/theme.ts — DESIGN.md 와 같은 값' },
     { t: '웹 미리보기 설정', s: 'done', who: 'claude', n: '.claude/launch.json "mobile-web" · 8081 포트' },
-    { t: 'app.json 정리 (이름 · 번들 ID · 아이콘 · 라이트 모드 고정)', s: 'next', who: 'both', n: '지금 이름이 "mobile", 다크 모드 자동. PALLO 디자인은 밝은 화면 하나라 light 로 고정할 예정' },
+    { t: 'app.json 정리 (이름 · 번들 ID · 아이콘 · 라이트 모드 고정)', s: 'next', who: 'both', n: '카메라 · 사진 권한 문구는 넣었어요. 이름 "mobile" · 다크 모드 자동은 그대로' },
     { t: '폰 Expo Go 확인', s: 'next', who: 'me' },
     { t: 'git 첫 커밋 · 브랜치 규칙', s: 'done', who: 'both', n: '작업 브랜치에 자동 커밋 · 푸시, main 합치기는 물어보고' }
   ]},
@@ -197,11 +199,11 @@ const PHASES = [
     { t: '아래 탭 바 (5개)', s: 'done', who: 'claude' },
     { t: '아래 고정 바 (행동 버튼 자리)', s: 'done', who: 'claude' },
     { t: '부품 모음 화면 (마이 → 디자인 부품 보기)', s: 'done', who: 'claude', n: '개발용. 출시 전에 빼요' },
-    { t: '시트(아래에서 올라오는 창) · 확인 창', s: 'todo', who: 'claude', n: '출석 · 신청 · 설정에서 같이 써요' },
-    { t: '토스트 (잠깐 뜨는 알림)', s: 'todo', who: 'claude' },
-    { t: '입력칸 · 체크 · 스위치', s: 'todo', who: 'claude' },
-    { t: '빈 화면 · 불러오는 중 · 오류 화면', s: 'todo', who: 'claude', n: 'API 연결 때 꼭 필요' },
-    { t: '효과음 · 진동', s: 'todo', who: 'claude' }
+    { t: '시트(아래에서 올라오는 창) · 확인 창', s: 'done', who: 'claude', n: '공통 부품: 끌어 닫기 · 키보드 · 아래 고정 버튼. 시트 위에서도 토스트가 보여요' },
+    { t: '토스트 (잠깐 뜨는 알림)', s: 'done', who: 'claude' },
+    { t: '입력칸 · 체크 · 스위치', s: 'done', who: 'claude' },
+    { t: '빈 화면 · 불러오는 중 · 오류 화면', s: 'done', who: 'claude', n: 'API 연결 때 꼭 필요' },
+    { t: '효과음 · 진동', s: 'done', who: 'claude', n: '프로토타입 소리 공식으로 WAV 27개. 폰에서 소리 · 진동은 아직 확인 전' }
   ]},
   { n: 2, name: '홈', items: [
     { t: '로고 · 알림 버튼 · 인사', s: 'done', who: 'claude' },
@@ -209,65 +211,66 @@ const PHASES = [
     { t: '공지 · 이벤트 상세 (누르면 지금 보이는 글로)', s: 'done', who: 'claude', n: '행동 버튼은 아래 고정 바' },
     { t: '오늘 스터디 카드 (카운트다운)', s: 'done', who: 'claude' },
     { t: '스터디 맵 (과 고르기 · 진도 · 퀘스트 길 · 보상 상자)', s: 'done', who: 'claude' },
-    { t: '크리스마스 맵 (11/22~12/31)', s: 'done', who: 'claude', n: '봄 · 여름 · 가을 · 겨울 장식은 아직' },
-    { t: '계절 장식 봄 · 여름 · 가을 · 겨울', s: 'todo', who: 'claude' },
-    { t: '스터디 카드 상태들 (오늘 없음 · 사전 출석 · 출석 완료 등)', s: 'todo', who: 'claude', n: 'docs/pages/01-home.md 상태 표' },
-    { t: '출석 시트 · QR 스캐너 · 출석 완료', s: 'todo', who: 'claude', n: 'expo-camera 사용' },
-    { t: '정류장 누르기 → 가운데 팝업', s: 'todo', who: 'claude' },
-    { t: '구간 건너뛰기 테스트', s: 'todo', who: 'claude' },
-    { t: '맵 위 캐릭터를 내 캐릭터로', s: 'todo', who: 'claude', n: '마이 꾸미기 만든 뒤' },
-    { t: '라운지 미리보기', s: 'todo', who: 'claude' },
-    { t: '알림함', s: 'todo', who: 'claude' }
+    { t: '크리스마스 맵 (11/22~12/31)', s: 'done', who: 'claude', n: '' },
+    { t: '계절 장식 봄 · 여름 · 가을 · 겨울', s: 'done', who: 'claude', n: '기기 날짜로 봄 · 여름 · 가을 · 겨울' },
+    { t: '스터디 카드 상태들 (오늘 없음 · 사전 출석 · 출석 완료 등)', s: 'done', who: 'claude', n: '6가지 상태 · 출석 규칙(QR 시작 30분 전 ~ 20분 후)' },
+    { t: '출석 시트 · QR 스캐너 · 출석 완료', s: 'done', who: 'claude', n: '폰은 실제 카메라(expo-camera), 웹은 1.8초 뒤 인식. 폰 확인 전' },
+    { t: '정류장 누르기 → 가운데 팝업', s: 'done', who: 'claude' },
+    { t: '구간 건너뛰기 테스트', s: 'done', who: 'claude' },
+    { t: '맵 위 캐릭터를 내 캐릭터로', s: 'done', who: 'claude', n: '꾸민 모습 그대로' },
+    { t: '라운지 미리보기', s: 'done', who: 'claude' },
+    { t: '알림함', s: 'done', who: 'claude' }
   ]},
   { n: 3, name: '레슨 (학습 화면)', items: [
     { t: '문제 화면 틀 (위 진행 · 아래 버튼 고정)', s: 'done', who: 'claude', n: 'mobile/src/app/lesson/[step].tsx' },
     { t: '따라 말하기 (오늘의 패턴) — 음성 인식 · 단어 카드 · 소리 끄기', s: 'done', who: 'both', n: '아이폰 사파리에서 말하기 · 오답 반응 확인 완료 (11-22). 진짜 앱(개발 빌드)에서 다시 확인 · 제한 시간 칩은 아직' },
     { t: '개발 빌드 만들어 내 폰에 깔기', s: 'next', who: 'both', n: '음성 인식은 Expo Go 에 없어서 필요해요. 아이폰 / 안드로이드에 따라 방법이 달라요' },
-    { t: '문제 방식 블록 (고르기 · 순서 맞추기 · 말하기 …)', s: 'todo', who: 'claude', n: 'docs/pages/03-lesson.md' },
-    { t: 'Lv.1 · 2 코너 (패턴 · 대화문 · Bank 퀴즈 · 상황 활동 · My Story · AI 프리토킹 · 스피킹 퀴즈 · 30초 챌린지)', s: 'todo', who: 'claude' },
-    { t: 'Lv.3 · 4 코너', s: 'todo', who: 'claude' },
-    { t: '말하기 어려움 · 소리 끄기 대체 흐름', s: 'todo', who: 'claude', n: '모든 문제에 같이. 소리 끄기 때 정답을 글로 보여 주지 않기' },
-    { t: '정답 · 오답 · 그만두기 · 이어서 하기', s: 'todo', who: 'claude' },
-    { t: '완료(축하) 화면 · 포인트', s: 'todo', who: 'claude' },
+    { t: '문제 방식 블록 (고르기 · 순서 맞추기 · 말하기 …)', s: 'done', who: 'claude', n: 'shadow · match · order · build · answer · role · pick · say · score …' },
+    { t: 'Lv.1 · 2 코너 (패턴 · 대화문 · Bank 퀴즈 · 상황 활동 · My Story · AI 프리토킹 · 스피킹 퀴즈 · 30초 챌린지)', s: 'done', who: 'claude', n: 'Lv.1 전부 끝까지 · Lv.2 1과' },
+    { t: 'Lv.3 · 4 코너', s: 'done', who: 'claude', n: '지금 프로토타입 단계대로 (스펙 표와 다른 부분은 결정 필요). 문제별 시간 알약 · 속도 보너스는 아직' },
+    { t: '말하기 어려움 · 소리 끄기 대체 흐름', s: 'done', who: 'claude', n: '모든 문제에 같이. 소리 끄기 때 정답을 글로 보여 주지 않기' },
+    { t: '정답 · 오답 · 그만두기 · 이어서 하기', s: 'done', who: 'claude' },
+    { t: '완료(축하) 화면 · 포인트', s: 'done', who: 'claude', n: '포인트는 처음 끝낼 때만' },
     { t: '녹음 · 음성 인식 · AI 대화', s: 'wait', who: 'back', n: '엔진이 정해져야 해요 (Q-T4 · Q-T5)' }
   ]},
   { n: 4, name: '라이브러리', items: [
-    { t: '맵 칩 (커리큘럼 · 상황 · 곧 열릴 맵)', s: 'todo', who: 'claude' },
-    { t: '커리큘럼 섬 지도 · 상황 섬 지도', s: 'todo', who: 'claude', n: '맵은 계속 늘어나니 데이터 한 줄로 추가되게' },
-    { t: '과 화면 · 교재 소개(잠김)', s: 'todo', who: 'claude' },
-    { t: '리스닝 룸', s: 'todo', who: 'claude' }
+    { t: '맵 칩 (커리큘럼 · 상황 · 곧 열릴 맵)', s: 'done', who: 'claude' },
+    { t: '커리큘럼 섬 지도 · 상황 섬 지도', s: 'done', who: 'claude', n: 'three.js 를 expo-gl 로 옮김. 폰에서는 간판 글씨가 비어 보일 수 있어요(확인 전)' },
+    { t: '과 화면 · 교재 소개(잠김)', s: 'done', who: 'claude' },
+    { t: '리스닝 룸', s: 'done', who: 'claude' },
+    { t: '상황 맵 장면 (미션 익히기 · 롤플레이 · Word Bank · 상황 퀴즈 · AI 미션 대화 · 도장)', s: 'done', who: 'claude', n: '최신 프로토타입(v480) 5단계대로 — 스펙의 3단계와 달라요' }
   ]},
   { n: 5, name: '라운지', items: [
-    { t: '탭 · 서브 칩 · 지점 선택 시트', s: 'todo', who: 'claude' },
-    { t: '스토리 보기 · 올리기', s: 'todo', who: 'claude' },
-    { t: '커뮤니티 사진 글 · 글쓰기 2단계', s: 'todo', who: 'claude', n: '사진 올리기는 백엔드 업로드 방식 필요 (Q-T7)' },
-    { t: '번개 · 동아리 지도 · 상세 · 참여', s: 'todo', who: 'claude' },
-    { t: '해외 동행', s: 'todo', who: 'claude' },
-    { t: '댓글 창 · 신고 · 차단', s: 'todo', who: 'claude' },
-    { t: '동아리 채팅 (실시간)', s: 'wait', who: 'back', n: 'Q-T6' }
+    { t: '탭 · 서브 칩 · 지점 선택 시트', s: 'done', who: 'claude', n: '/lounge?tab=chal 처럼 주소로 탭 열기' },
+    { t: '스토리 보기 · 올리기', s: 'done', who: 'claude' },
+    { t: '커뮤니티 사진 글 · 글쓰기 2단계', s: 'done', who: 'claude', n: '사진 줄이기 · 올리기는 백엔드 업로드 방식 필요 (Q-T7)' },
+    { t: '번개 · 동아리 지도 · 상세 · 참여', s: 'done', who: 'claude' },
+    { t: '해외 동행', s: 'done', who: 'claude' },
+    { t: '댓글 창 · 신고 · 차단', s: 'done', who: 'claude' },
+    { t: '동아리 채팅 (실시간)', s: 'wait', who: 'back', n: '화면은 있어요(기기 안 가짜 메시지). 실시간은 Q-T6' }
   ]},
   { n: 6, name: '챌린지', items: [
-    { t: '챌린지 탭 · 카드', s: 'todo', who: 'claude' },
-    { t: '챌린지 상세 · 열기', s: 'todo', who: 'claude' },
-    { t: '저장 표현 → 챌린지 불러오기', s: 'todo', who: 'claude', n: '표현 카드 1개 이상 골라서' }
+    { t: '챌린지 탭 · 카드', s: 'done', who: 'claude' },
+    { t: '챌린지 상세 · 열기', s: 'done', who: 'claude' },
+    { t: '저장 표현 → 챌린지 불러오기', s: 'done', who: 'claude', n: '지금은 프로토타입처럼 하나만 — 1개 이상으로 바꿀지 결정 필요' }
   ]},
   { n: 7, name: '이벤트', items: [
-    { t: '이벤트 목록', s: 'todo', who: 'claude' },
-    { t: '이벤트 상세 · 신청 시트 · 내 신청 카드', s: 'todo', who: 'claude' },
-    { t: '이벤트 제안 (회원)', s: 'todo', who: 'claude' }
+    { t: '이벤트 목록', s: 'done', who: 'claude' },
+    { t: '이벤트 상세 · 신청 시트 · 내 신청 카드', s: 'done', who: 'claude' },
+    { t: '이벤트 제안 (회원)', s: 'done', who: 'claude' }
   ]},
   { n: 8, name: '마이', items: [
-    { t: '마이 화면 · 숫자 4칸', s: 'todo', who: 'claude' },
-    { t: '꾸미기 (스파크 상점)', s: 'todo', who: 'claude', n: '캐릭터는 원본 3D 그대로 · 색 교체 · 좌우 반전만' },
-    { t: '내 스터디 · 연기 · 팀 · 지점 변경 신청', s: 'todo', who: 'claude' },
-    { t: '프로 노트 · 랭킹 · 내 표현함', s: 'todo', who: 'claude' },
-    { t: '설정 · 이용권 · 결제 내역 · 고객센터', s: 'todo', who: 'claude' },
-    { t: '계정 삭제', s: 'todo', who: 'claude', n: '애플 심사 필수' }
+    { t: '마이 화면 · 숫자 4칸', s: 'done', who: 'claude' },
+    { t: '꾸미기 (스파크 상점)', s: 'done', who: 'claude', n: '아이템은 프로토타입 SVG 를 그대로 떠서 원본 PNG 위에. 앱을 다시 켜면 처음 모습(기기 저장 전)' },
+    { t: '내 스터디 · 연기 · 팀 · 지점 변경 신청', s: 'done', who: 'claude' },
+    { t: '프로 노트 · 랭킹 · 내 표현함', s: 'done', who: 'claude' },
+    { t: '설정 · 이용권 · 결제 내역 · 고객센터', s: 'done', who: 'claude' },
+    { t: '계정 삭제', s: 'done', who: 'claude', n: '프로토타입은 확인 시트 하나라 이유 → 확인 → 끝을 더함. 지금은 가짜' }
   ]},
   { n: 9, name: '로그인 · 처음 시작', items: [
-    { t: '로그인 화면 (카카오 · 애플 · 구글)', s: 'todo', who: 'claude' },
-    { t: '휴대폰 확인', s: 'todo', who: 'claude' },
-    { t: '비회원 체험 안내 · 체험 신청 3단계', s: 'todo', who: 'claude' },
+    { t: '로그인 화면 (카카오 · 애플 · 구글)', s: 'next', who: 'claude', n: '프로토타입에 없어서 최소판으로 만듦 — 프로토타입에서 먼저 확정' },
+    { t: '휴대폰 확인', s: 'next', who: 'claude', n: '위와 같아요' },
+    { t: '비회원 체험 안내 · 체험 신청 3단계', s: 'done', who: 'claude' },
     { t: '소셜 로그인 앱 등록 · 키', s: 'wait', who: 'both', n: '내 할 일 9번' }
   ]},
   { n: 10, name: 'API 연결', items: [
@@ -286,7 +289,7 @@ const PHASES = [
     { t: '딥링크 (공지 · 이벤트 바로 열기)', s: 'todo', who: 'claude', n: 'Q-T9' },
     { t: '접근성 (화면 읽기 · 글자 크기 · 터치 44px)', s: 'todo', who: 'claude' },
     { t: '오류 추적 · 사용 통계', s: 'todo', who: 'both', n: '예: Sentry' },
-    { t: '자동 테스트 (중요 흐름: 로그인 · 출석 · 레슨 완료)', s: 'doing', who: 'claude', n: 'jest 설치 · 말하기 채점 · 듣기 흐름 44개 완료. npm test' },
+    { t: '자동 테스트 (중요 흐름: 로그인 · 출석 · 레슨 완료)', s: 'doing', who: 'claude', n: 'jest 182개 통과 (말하기 채점 · 듣기 흐름 · 레슨 채점). npm test' },
     { t: 'EAS 빌드 → TestFlight · 내부 테스트', s: 'todo', who: 'both' },
     { t: '스토어 스크린샷 · 설명 · 심사 제출', s: 'todo', who: 'me' },
     { t: '출시 뒤 빠른 수정 (EAS Update)', s: 'todo', who: 'claude' },
@@ -326,6 +329,7 @@ const FOUND = [
 ];
 
 const LOG = [
+  { d: '11-22', t: '<b>프로토타입 미구현 화면 일괄 구현</b> — 11개 영역을 나눠 동시에 만듦: 공통 부품(시트 · 토스트 · 확인 창 · 입력칸 · 효과음 · 댓글 · 신고 · 체험 신청 · 로그인 최소판) · 홈 나머지 · 레슨 Lv.1·2 와 Lv.3·4 · 상황 장면 · 라이브러리 3D 섬 지도 · 과 화면 · 리스닝 룸 · 라운지 · 번개 · 동아리 · 이벤트 · 챌린지 · 마이(꾸미기 · 표현함 · 랭킹 · 설정 · 프로 노트 · 계정 삭제). 타입 0 · 코드 검사 0 · 테스트 182. 웹에서 화면마다 프로토타입과 나란히 비교 · 24개 화면 콘솔 오류 없음. 폰 확인은 개발 빌드 뒤.' },
   { d: '11-22', t: '<b>git 에 올림</b> — 브랜치 frontend/expo-app-start 에 커밋 3개(프로토타입 v477~v502 · 앱 · 문서)를 푸시. 앞으로 작업이 끝나면 자동으로 커밋 · 푸시해요.' },
   { d: '11-22', t: '<b>애니메이션</b> — 프로토타입 효과를 그대로: 홈 칸 차례로 올라오기 · ACTION! 빨간 점 퍼짐 · 출석 버튼 흰 빛 · 보라 팔로 숨쉬기 · 눈 깜빡임 · 제목 문구 · 포즈 바꾸기 · 지금 정류장 스포트라이트 · 빛살 · 통통 · 노랑 팔로 점프와 그림자 · 탭 아이콘 톡 · 레슨 카드 등장 · 줄로 올라가기 · 완성 파도 · 반응 캐릭터 통 · 보라 팔로 팔 흔들기. 프로토타입: 말로 3번 틀려도 힌트 (v502)' },
   { d: '11-22', t: '<b>음성 인식 시험 준비</b> — 흔한 문제 20가지를 조사해 대응하고, 자동 테스트 44개(채점 25 · 듣기 흐름 19) 를 만들어 모두 통과. 폰에서 직접 할 시험 목록: docs/frontend/speech-test-plan.md' },

@@ -22,14 +22,17 @@ type Progress = {
   today: { day: string; n: number };
   /** 최고 기록 (짝 맞추기 걸린 초 · 빠른 답 보너스 등) */
   best: Record<string, number>;
+  /** 마지막으로 연 단계 — 홈 스터디 맵이 여기서 시작해요 (프로토타입 ST.last) */
+  last: LastStep | null;
 };
-const store = createStore<Progress>({ done: {}, pos: {}, posOf: {}, today: { day: '', n: 0 }, best: {} });
+export type LastStep = { lv: number; unit: number; step: string; at: number };
+const store = createStore<Progress>({ done: {}, pos: {}, posOf: {}, today: { day: '', n: 0 }, best: {}, last: null });
 
 const dayOf = (t = Date.now()) => new Date(t).toDateString();
 
-export const useIsDone = (key: string) => store.use((s) => key in s.done);
+export const useIsDone = (key: string) => store.useStore((s) => key in s.done);
 /** 키 앞부분이 같은 것 중 끝낸 개수 (예: '1:1:' → 1과에서 끝낸 단계 수) */
-export const useDoneCount = (prefix: string) => store.use((s) => Object.keys(s.done).filter((k) => k.startsWith(prefix)).length);
+export const useDoneCount = (prefix: string) => store.useStore((s) => Object.keys(s.done).filter((k) => k.startsWith(prefix)).length);
 export const isDone = (key: string) => key in store.get().done;
 
 /** 끝냈다고 기록해요. 처음 끝낸 거면 true (포인트 · 오늘 목표는 처음일 때만) */
@@ -52,8 +55,8 @@ export function markDone(key: string) {
 /** 그만둘 때 멈춘 문제 번호를 남겨요 → 다시 열면 '이어서 할까요?'. total: 전체 문제 수 */
 export const savePos = (key: string, index: number, total?: number) =>
   store.set((s) => ({ ...s, pos: { ...s.pos, [key]: index }, posOf: total == null ? s.posOf : { ...s.posOf, [key]: total } }));
-export const useSavedPos = (key: string) => store.use((s) => s.pos[key]);
-export const useSavedTotal = (key: string) => store.use((s) => s.posOf[key]);
+export const useSavedPos = (key: string) => store.useStore((s) => s.pos[key]);
+export const useSavedTotal = (key: string) => store.useStore((s) => s.posOf[key]);
 export const getSavedPos = (key: string) => store.get().pos[key];
 export function clearPos(key: string) {
   store.set((s) => ({ ...s, pos: omit(s.pos, key), posOf: omit(s.posOf, key) }));
@@ -61,11 +64,16 @@ export function clearPos(key: string) {
 }
 
 /** 오늘 처음 끝낸 단계 수 */
-export const useTodayDone = () => store.use((s) => (s.today.day === dayOf() ? s.today.n : 0));
+export const useTodayDone = () => store.useStore((s) => (s.today.day === dayOf() ? s.today.n : 0));
 export const getTodayDone = () => {
   const t = store.get().today;
   return t.day === dayOf() ? t.n : 0;
 };
+
+/** 단계를 열 때 남겨요 → 홈 스터디 맵 · 라이브러리 '이어서' */
+export const setLastStep = (lv: number, unit: number, step: string) => store.set((s) => ({ ...s, last: { lv, unit, step, at: Date.now() } }));
+export const useLastStep = () => store.useStore((s) => s.last);
+export const getLastStep = () => store.get().last;
 
 export const getBest = (key: string): number | undefined => store.get().best[key];
 export const setBest = (key: string, v: number) => store.set((s) => ({ ...s, best: { ...s.best, [key]: v } }));

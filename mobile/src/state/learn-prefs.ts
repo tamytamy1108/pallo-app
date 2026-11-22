@@ -40,8 +40,8 @@ export function setNoListen(on: boolean) {
 
 /** 지금 켜져 있는지 (15분이 지나면 저절로 꺼져요) */
 export function useLearnPrefs() {
-  const noSpeak = store.use((s) => s.noSpeak);
-  const noListen = store.use((s) => s.noListen);
+  const noSpeak = store.useStore((s) => s.noSpeak);
+  const noListen = store.useStore((s) => s.noListen);
   return { noSpeak, noListen };
 }
 

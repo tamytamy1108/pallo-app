@@ -38,6 +38,11 @@ export type Meet = {
   max: number;
   mine?: boolean;
   closed?: boolean;
+  /** 내가 올린 포스터 사진 (첫 장이 대표) */
+  posters?: string[];
+  /** 상세 주소 · 직접 적은 것 */
+  addr?: string;
+  addr2?: string;
 };
 
 /** 동아리 (매주 만나요). days: 모이는 요일 (0 = 일). wait: 매니저 승인 대기 */
@@ -57,6 +62,7 @@ export type Club = {
   mine?: boolean;
   wait?: boolean;
   memo?: string;
+  posters?: string[];
 };
 
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];

@@ -1,5 +1,5 @@
 /**
- * 나(로그인한 회원) — 가짜 데이터. 맞는 API: 3 `/me`.
+ * 나(로그인한 회원) — 가짜 데이터. 맞는 API: 3 `/me` · 32 `/me/summary`.
  * 담당: 마이 A. 다른 화면은 읽기만 해요 (useMe). 필드는 늘릴 수 있지만 이름 · 뜻은 바꾸지 않아요.
  */
 import { ME } from '@/data/mock';
@@ -23,6 +23,20 @@ export type Me = {
   sparks: number;
   /** 이번 주 포인트 */
   weekPoints: number;
+  /** 한 줄 소개 (없으면 '한 줄 소개를 남겨 보세요') */
+  bio: string;
+  /** 연속 학습 일수 (오늘 퀘스트를 1개 이상 하면 이어져요) */
+  streak: number;
+  /** 참여 중인 모임 (번개 · 동아리) 수 */
+  joinedMeets: number;
+  /** 찜한 모임 수 */
+  savedMeets: number;
+  /** 내가 쓴 글 수 */
+  postCount: number;
+  /** 내가 팔로우하는 멤버 (이름 → true) */
+  following: Record<string, boolean>;
+  /** 지금 듣는 레벨 · 두 레벨 병행이면 두 개 (프로토타입 ME.lvs) */
+  lvs: number[];
 };
 
 const meStore = createStore<Me>({
@@ -35,8 +49,27 @@ const meStore = createStore<Me>({
   plan: 'study',
   sparks: 1250,
   weekPoints: 0,
+  bio: '',
+  streak: 0,
+  joinedMeets: 0,
+  savedMeets: 0,
+  postCount: 0,
+  following: {},
+  lvs: [1, 2],
 });
 
-export const useMe = meStore.use;
+export const useMe = meStore.useStore;
 export const getMe = meStore.get;
 export const updateMe = (patch: Partial<Me>) => meStore.set((s) => ({ ...s, ...patch }));
+
+/** 팔로우 ↔ 취소. 팔로우하게 되면 true */
+export function toggleFollow(name: string) {
+  const on = !meStore.get().following[name];
+  meStore.set((s) => {
+    const following = { ...s.following };
+    if (on) following[name] = true;
+    else delete following[name];
+    return { ...s, following };
+  });
+  return on;
+}

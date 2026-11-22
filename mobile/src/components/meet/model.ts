@@ -22,11 +22,14 @@ import {
   REGIONS,
   SESSION_THEME,
   WEEK,
+  type AlbumArt,
   type Club,
   type ClubPost,
   type Meet,
   type Region,
 } from '@/data/meet';
+import { branchMatches } from '@/components/lounge/branch-select';
+
 import { useMeetStore } from './meet-store';
 
 export const useAllMeets = () => {
@@ -40,8 +43,8 @@ export const useAllClubs = () => {
 export const findMeet = (id: string, mine: Meet[]) => mine.find((m) => m.id === id) ?? MEETS.find((m) => m.id === id);
 export const findClub = (id: string, mine: Club[]) => mine.find((c) => c.id === id) ?? CLUBS.find((c) => c.id === id);
 
-/** 고른 지점의 것만 · '전 지점' 행사는 늘 (프로토타입 lgBrOk) */
-export const branchOk = (br: string, branch: string) => branch === '전체' || !br || br.includes('전 지점') || br.includes(branch);
+/** 고른 지점의 것만 · '전 지점' 행사는 늘 (프로토타입 lgBrOk — 여러 지점이면 '가산,연신내' 처럼 쉼표로) */
+export const branchOk = (br: string, branch: string) => branchMatches(branch, br);
 
 /** 모집 중인 번개 (닫지 않았고 · 지나지 않음) */
 export const isOpenMeet = (m: Meet) => !m.closed && !isPast(m);
@@ -143,7 +146,7 @@ export function clubContent(c: Club) {
   const fill = (t: string) => t.replace(/\{(\w+)\}/g, (all, k: string) => V[k] ?? all);
   const R = CLUB_CONTENT[c.cc] || CLUB_CONTENT.study;
   const posts = R.posts.map(([k, w, ti, bd, t, lk, cm]): ClubPost => [k, w, fill(ti), fill(bd), t, lk, cm.map(([cw, ct]) => [cw, fill(ct)])]);
-  const album = R.album.map(([k, cap]) => [k, fill(cap)] as const);
+  const album = R.album.map(([k, cap]): [AlbumArt, string] => [k, fill(cap)]);
   return { posts, album, chat: R.chat, name: (k: string) => who[k][0], color: (k: string) => who[k][1], fill };
 }
 

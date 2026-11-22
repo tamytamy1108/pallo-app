@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance, type TextStyle } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LgIcon } from '@/components/common/icons';
 import { MemberFace } from '@/components/common/member-face';
-import { SheetButton, SheetDesc } from '@/components/common/sheet-parts';
+import { keepAll, SheetButton, SheetDesc } from '@/components/common/sheet-parts';
 import { guardMember } from '@/components/common/trial-guide';
 import { TextField } from '@/components/ui/field';
 import { Sheet } from '@/components/ui/sheet';
@@ -387,9 +387,6 @@ export function StoryReplySheet({ open, onClose, who, onSend }: { open: boolean;
   );
 }
 
-// 낱말 단위 줄바꿈: iOS 는 PText 가, 웹은 word-break: keep-all 로
-const KEEP_ALL = (Platform.OS === 'web' ? { wordBreak: 'keep-all', overflowWrap: 'break-word' } : {}) as TextStyle;
-
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 0 },
   // .cst { text-align: center; padding: 2px 0 10px; border-bottom: 1.5px solid line } h2 16px 900
@@ -407,7 +404,7 @@ const styles = StyleSheet.create({
   ch: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   chName: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19 },
   chTime: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  ct: { marginTop: 2, fontFamily: Font.body600, fontSize: 14.5, lineHeight: 14.5 * 1.5, ...KEEP_ALL },
+  ct: { marginTop: 2, fontFamily: Font.body600, fontSize: 14.5, lineHeight: 14.5 * 1.5, ...keepAll },
   ca: { flexDirection: 'row', gap: 12, marginTop: 4 },
   caText: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   cmore: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, alignSelf: 'flex-start' },

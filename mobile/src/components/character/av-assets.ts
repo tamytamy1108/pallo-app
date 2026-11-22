@@ -4,7 +4,6 @@
  * 위치 r: item = 아이템 상자 폭 기준 [x, y, 폭, 높이] · box = 캐릭터 상자 기준 · stage = 무대 기준. a = SVG 상자 높이 / 폭.
  * 헤어는 머리 색을 마음대로 바꾸도록 두 장: 바탕(빛 · 그림자 · 선) + 색칠 자리(tintColor 로 머리 색).
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
 
 export type AvGeo = { k: 'item' | 'box' | 'stage'; r: readonly [number, number, number, number]; a?: number };
 

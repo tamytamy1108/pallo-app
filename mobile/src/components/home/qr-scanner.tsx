@@ -40,11 +40,17 @@ export function QrScanner({ open, summaryText, onClose, onChange, onScanned }: {
     timers.current = [];
   };
 
-  // 열 때: 처음 상태로 · 페이드 인(.35초) + 살짝 큰 데서 제자리로(.45초)
+  // 열 때: 처음 상태로 (렌더 중에 이전 값과 비교해 맞춰요)
+  const [seen, setSeen] = useState(open);
+  if (open !== seen) {
+    setSeen(open);
+    if (open) setFound(false);
+  }
+
+  // 페이드 인(.35초) + 살짝 큰 데서 제자리로(.45초)
   useEffect(() => {
     clear();
     if (!open) return;
-    setFound(false);
     p.set(0);
     p.set(withTiming(1, { duration: still ? 0 : 450, easing: EASE }));
     if (!native) {

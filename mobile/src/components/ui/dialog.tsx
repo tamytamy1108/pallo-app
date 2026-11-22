@@ -133,7 +133,8 @@ const styles = StyleSheet.create({
   cardWrap: { marginBottom: 6 },
   cardShadow: { position: 'absolute', left: 0, right: 0, top: 6, bottom: -6, borderRadius: 26, backgroundColor: Colors.ink },
   card: { alignItems: 'center', gap: 6, paddingHorizontal: 18, paddingBottom: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: 26, backgroundColor: Colors.white },
-  img: { width: 104, height: 104, marginTop: -52 },
+  // .ls-mc img { width: 104px; margin-top: -52px } — 캐릭터 PNG 비율 480×335
+  img: { width: 104, height: 104 * (335 / 480), marginTop: -52 },
   title: { fontFamily: Font.body900, fontSize: 20, lineHeight: 28, textAlign: 'center' },
   msg: { marginBottom: 10, fontFamily: Font.body700, fontSize: 14, lineHeight: 21, color: Colors.inkSub, textAlign: 'center' },
   full: { alignSelf: 'stretch' },

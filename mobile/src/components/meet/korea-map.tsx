@@ -112,15 +112,18 @@ export function KoreaMap({ counts, mode, region, onRegion }: Props) {
                     const on = region === r;
                     const both = !!(m && k);
                     const dx = both ? 10 : 0;
-                    const pin = (px: number, py: number, n: number, col: string, sm: boolean, key: string) => {
-                      const [sx, sy] = toScreen(px, py);
+                    // 두 핀의 간격도 핀 크기만큼만 커져요 (프로토타입 .lg-pz 는 지역 가운데를 기준으로 줄여요)
+                    const [cx, cy] = toScreen(x, y);
+                    const pin = (ox: number, oy: number, n: number, col: string, sm: boolean, key: string) => {
+                      const sx = cx + ox * ps * s;
+                      const sy = cy + oy * ps * s;
                       return <Pin key={key} x={sx} y={sy} n={n} col={col} on={on} sm={sm} scale={ps * s} onPress={() => onRegion(on ? null : r)} label={`${r} 번개 ${counts[r][0]}개 · 동아리 ${counts[r][1]}개`} />;
                     };
-                    if (!m && !k) return pin(x, y, 0, '#fff', false, r);
+                    if (!m && !k) return pin(0, 0, 0, '#fff', false, r);
                     return (
                       <View key={r} pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-                        {m ? pin(x - dx, y, m, C.pk, both, r + 'm') : null}
-                        {k ? pin(x + dx, y + (both ? 4 : 0), k, C.pu, both, r + 'c') : null}
+                        {m ? pin(-dx, 0, m, C.pk, both, r + 'm') : null}
+                        {k ? pin(dx, both ? 4 : 0, k, C.pu, both, r + 'c') : null}
                       </View>
                     );
                   })

@@ -1,13 +1,14 @@
 /**
- * 라이브러리 — 가짜 데이터 (맵 칩 · 교재 · 상황 맵 · 단계 구성). 값은 프로토타입 LANGS · LIB · SITS · SIT_SOON · STUDY_STEPS 그대로예요.
+ * 라이브러리 — 가짜 데이터 (맵 칩 · 교재 · 단계 구성). 값은 프로토타입 LANGS · LIB · STUDY_STEPS 그대로예요.
  * 맞는 API: 16 `/library/maps` (맵 칩) · 17 `/library/books/:id/lessons` (과 목록) · 18 `/lessons/:id` · 24 `/lessons/:id/listen-items`
- * - 새 상황 맵 = SITUATION_MAPS 에 한 줄. 칩 · 3D 지도 · 장면 목록이 저절로 생겨요 (지도 모양은 components/library/world 의 BUILD 에 같은 id 가 있으면 그걸, 없으면 여행 모양).
- * - 열리기 전 맵 = SOON_MAPS 에 한 줄.
+ * - 상황 맵 · 장면은 상황 담당 @/data/situation 한 곳에서 와요 (SITUATION_MAPS 에 한 줄 = 칩 · 3D 지도 · 장면 목록이 저절로).
+ *   3D 지도 모양은 components/library/world 의 BUILD 에 같은 id 가 있으면 그걸, 없으면 여행 모양.
  */
 import { Colors } from '@/constants/theme';
 
 import { STUDY_LEVELS } from './library-lessons';
 import { LISTEN_ITEMS } from './library-listen';
+import { SITUATION_MAPS, SITUATION_SOON, findScene, sceneIdOf, sceneListenItems, type Scene, type SituationMap } from './situation';
 
 export type StageKey = 'pre' | 'main' | 'post';
 export type StudyKind = 'pattern' | 'topic' | 'debate';
@@ -32,33 +33,8 @@ export type Book = { id: string; n: string; l: string; s?: string; c: string; jp
 
 export type ListenItem = { en: string; ko: string; tag: string };
 
-export type SceneIcon =
-  | 'plane'
-  | 'seat'
-  | 'pass'
-  | 'taxi'
-  | 'hotel'
-  | 'food'
-  | 'bag'
-  | 'map'
-  | 'brief'
-  | 'chat'
-  | 'mail'
-  | 'deal'
-  | 'mic'
-  | 'coffee'
-  | 'book'
-  | 'group'
-  | 'star'
-  | 'dorm'
-  | 'lib';
-
-/** 상황 맵 장면: open = 데이터가 있어 열 수 있는 장면 */
-export type Scene = { no: number; title: string; sub: string; icon: SceneIcon; open: boolean };
-
-/** 상황 맵 하나 (lang 없으면 영어) */
-export type SituationMap = { id: string; title: string; series: string; c: string; about: string; isNew?: boolean; lang?: number; scenes: Scene[] };
 export type SoonMap = { id: string; title: string; when: string; lang?: number };
+export type { Scene, SituationMap };
 
 /** 공부하는 언어 (프로토타입 LANGS) */
 export const LANGS = [
@@ -90,73 +66,16 @@ export const findBook = (id: string) => BOOKS.flat().find((b) => b.id === id);
 const SHORT: Record<string, string> = { 'HELLO ENGLISH': 'HELLO', 'EVERYDAY ENGLISH': 'EVERYDAY', 'REAL ENGLISH': 'REAL', 'TOPIC TALK': 'TOPIC TALK', 'FREE TALK & DEBATE': 'DEBATE' };
 export const bookTag = (b: Book) => `${b.lab ?? b.l} ${b.jp ? '' : (SHORT[b.s ?? ''] ?? '')}`.trim();
 
-const scene = (no: number, title: string, sub: string, icon: SceneIcon, open = false): Scene => ({ no, title, sub, icon, open });
-
-/** 상황 맵 (프로토타입 SITS) — 장면 데이터(표현 · 롤플레이 · 퀴즈)는 상황 담당 /scene/[id] 가 가져요 */
-export const SITUATION_MAPS: SituationMap[] = [
-  {
-    id: 'travel',
-    title: '여행',
-    series: 'TRAVEL',
-    c: '#D0798E',
-    about: '공항부터 길 묻기까지 · 장면마다 표현 + 롤플레이',
-    scenes: [
-      scene(1, '공항 체크인', 'Check-in counter', 'plane', true),
-      scene(2, '기내 주문', 'On the plane', 'seat', true),
-      scene(3, '입국 심사', 'Immigration', 'pass', true),
-      scene(4, '택시 타기', 'Taxi', 'taxi'),
-      scene(5, '호텔 체크인', 'Hotel', 'hotel'),
-      scene(6, '식당 주문', 'Restaurant', 'food'),
-      scene(7, '쇼핑 · 환불', 'Shopping', 'bag'),
-      scene(8, '길 묻기', 'Directions', 'map'),
-    ],
-  },
-  {
-    id: 'biz',
-    title: '비즈니스',
-    series: 'BUSINESS',
-    c: '#493087',
-    about: '자기소개부터 회의 · 메일 · 협상까지',
-    scenes: [
-      scene(1, '첫 미팅 자기소개', 'Introductions', 'brief', true),
-      scene(2, '회의에서 의견 말하기', 'Meetings', 'chat'),
-      scene(3, '메일 · 메신저', 'Email', 'mail'),
-      scene(4, '가격 협상', 'Negotiation', 'deal'),
-      scene(5, '발표 Q&A', 'Presentation', 'mic'),
-    ],
-  },
-  {
-    id: 'cafe',
-    title: '카페',
-    series: 'CAFÉ',
-    c: '#138A9E',
-    about: '주문 · 변경 · 자리 찾기 · 컴플레인',
-    isNew: true,
-    scenes: [scene(1, '주문 바꾸기', 'Change my order', 'coffee', true), scene(2, '자리 찾기', 'Find a seat', 'seat'), scene(3, '컴플레인', 'Complaint', 'chat')],
-  },
-  {
-    id: 'campus',
-    title: '캠퍼스',
-    series: 'CAMPUS',
-    c: '#5EA35A',
-    about: '수업 · 질문 · 조별 과제 · 동아리',
-    scenes: [
-      scene(1, '첫 수업 자기소개', 'First class', 'book'),
-      scene(2, '수업 중 질문', 'Asking in class', 'chat'),
-      scene(3, '조별 과제', 'Group project', 'group'),
-      scene(4, '도서관', 'Library', 'lib'),
-      scene(5, '동아리 가입', 'Joining a club', 'star'),
-      scene(6, '기숙사 생활', 'Dorm life', 'dorm'),
-    ],
-  },
-];
-
+export { SITUATION_MAPS };
 /** 곧 열릴 맵 (프로토타입 SIT_SOON) */
-export const SOON_MAPS: SoonMap[] = [{ id: 'next', title: '새 맵', when: '커밍순' }];
+export const SOON_MAPS: SoonMap[] = SITUATION_SOON;
 
-export const mapLang = (m: { lang?: number }) => m.lang ?? 0;
+/** 맵의 언어 (없으면 영어) */
+export const mapLang = (m: SituationMap | SoonMap) => ('lang' in m && typeof m.lang === 'number' ? m.lang : 0);
 /** 장면 id = '맵 id-장면 번호' (프로토타입 lkOf). /scene/[id] · sceneKey(id) 에 그대로 써요 */
-export const sceneId = (mapId: string, no: number) => `${mapId}-${no}`;
+export const sceneId = sceneIdOf;
+/** 콘텐츠가 있는 장면만 열려요 */
+export const sceneOpen = (s: Scene) => !!s.content;
 
 /**
  * 레벨 구성마다 단계 (프로토타입 STUDY_STEPS). 아이스브레이킹은 모든 레벨에서 뺐어요.
@@ -216,9 +135,6 @@ export const STUDY_STEPS: Record<StudyKind, Record<StageKey, Step[]>> = {
   },
 };
 
-/** 상황 맵 장면 연습 5단계 (프로토타입 STUDY_STEPS.situation) — 목록의 '연습' 점 개수 */
-export const SCENE_STEP_COUNT = 5;
-
 export const STAGES: StageKey[] = ['pre', 'main', 'post'];
 export const STAGE_KO: Record<StageKey, string> = { pre: '예습', main: '본학습', post: '복습' };
 export const STAGE_COLOR: Record<StageKey, string> = { pre: Colors.yellow, main: Colors.rosePink, post: Colors.sky };
@@ -244,6 +160,10 @@ export const stepTitle = (s: Step, d?: LessonSummary) => (d?.kind === 'pattern' 
 /** 리스닝 룸 문장 (프로토타입 lrItemsOf · lrItemsOfLevel) */
 export const listenItemsOf = (key: string) => LISTEN_ITEMS[key] ?? [];
 export const listenItemsOfLevel = (L: StudyLevel) => L.lessons.filter((ls) => ls.data).flatMap((ls) => listenItemsOf(unitId(L.lv, ls.no)));
-export const listenItemsOfMap = (m: SituationMap) => m.scenes.filter((s) => s.open).flatMap((s) => listenItemsOf(sceneId(m.id, s.no)));
+export const listenItemsOfMap = (m: SituationMap) => m.scenes.flatMap(sceneListenItems);
+export const listenItemsOfScene = (id: string) => {
+  const f = findScene(id);
+  return f ? sceneListenItems(f.scene) : [];
+};
 
 export { STUDY_LEVELS };

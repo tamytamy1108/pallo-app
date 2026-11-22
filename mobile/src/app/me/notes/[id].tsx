@@ -241,7 +241,7 @@ function ThanksSheet({ n, open, onClose }: { n: ProNote; open: boolean; onClose:
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   missing: { padding: 20 },
-  all: { paddingHorizontal: 4 },
+  all: { alignSelf: 'center', paddingHorizontal: 4 },
   body: { paddingTop: 8, paddingBottom: 30, gap: 12 },
   dh: { gap: 2, paddingVertical: 4, paddingHorizontal: 2 },
   dhB: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },

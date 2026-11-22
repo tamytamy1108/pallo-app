@@ -89,17 +89,11 @@ export function RecMeetCard({ p }: { p: RecMeet }) {
               <CapBar cur={p.cur} max={p.max} color={past ? gray(Colors.purple) : Colors.purple} />
             </View>
             <View style={styles.sp} />
-            {past ? (
-              <LgButton label="후기 보기" tone="white" onPress={() => setCmtOpen(true)} />
-            ) : full ? (
-              <LgButton label="빈자리 알림 받기" tone="white" onPress={open} />
-            ) : (
-              <LgButton label="참여하기" onPress={open} />
-            )}
+            {past ? <LgButton label="후기 보기" tone="white" onPress={() => setCmtOpen(true)} /> : full ? <LgButton label="빈자리 알림 받기" tone="white" onPress={open} /> : <LgButton label="참여하기" onPress={open} />}
           </View>
         </View>
       </View>
-      <CommentsSheet open={cmtOpen} onClose={() => setCmtOpen(false)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t))} />
+      <CommentsSheet open={cmtOpen} onClose={() => setCmtOpen(false)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t), '댓글을 달려면')} />
     </View>
   );
 }
@@ -111,30 +105,32 @@ export function RecChalCard({ p }: { p: RecChal }) {
   return (
     <View style={styles.chShadow}>
       <View style={styles.ch}>
-        <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${p.hl} 챌린지 자세히 보기`} style={styles.exh}>
-          <Face name={p.who} bg={p.av} size={38} />
-          <View style={styles.tx}>
-            <PText style={styles.chWho} numberOfLines={1}>
-              <PText style={styles.chMs}>나만의 문장 완성하기</PText> · {p.who} · <PText style={styles.chLeft}>{p.left}일 남음</PText>
-            </PText>
-            <PText style={styles.chE}>{p.hl}</PText>
-            <PText style={styles.chMean}>{p.ko}</PText>
-            <View style={styles.chSrc}>
-              <LgIcon name="book" size={13} color={Colors.inkSub} />
-              <PText style={styles.chSrcText}>{p.src}</PText>
+        <View style={styles.exh}>
+          <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${p.hl} 챌린지 자세히 보기`} style={styles.exhIn}>
+            <Face name={p.who} bg={p.av} size={38} />
+            <View style={styles.tx}>
+              <PText style={styles.chWho} numberOfLines={1}>
+                <PText style={styles.chMs}>나만의 문장 완성하기</PText> · {p.who} · <PText style={styles.chLeft}>{p.left}일 남음</PText>
+              </PText>
+              <PText style={styles.chE}>{p.hl}</PText>
+              <PText style={styles.chMean}>{p.ko}</PText>
+              <View style={styles.chSrc}>
+                <LgIcon name="book" size={13} color={Colors.inkSub} />
+                <PText style={styles.chSrcText}>{p.src}</PText>
+              </View>
             </View>
-          </View>
+          </Pressable>
           <Pressable onPress={() => Speech.speak(p.q, { language: p.lang, rate: 0.95 })} accessibilityRole="button" accessibilityLabel="표현 듣기" style={styles.say}>
             <LgIcon name="spk" size={18} />
           </Pressable>
-        </Pressable>
-        <Pressable onPress={open} accessibilityRole="button" accessibilityLabel="문장 모두 보기" style={styles.chxc}>
-          <View style={styles.pv}>
+        </View>
+        <View style={styles.chxc}>
+          <Pressable onPress={open} accessibilityRole="button" accessibilityLabel="문장 모두 보기" style={styles.pv}>
             <Face name={p.last[0]} bg={LG_C.lpu} size={26} />
             <PText style={styles.pvText} numberOfLines={1}>
               <PText style={styles.pvWho}>{p.last[0]}</PText> {p.last[1]}
             </PText>
-          </View>
+          </Pressable>
           <View style={styles.ft}>
             <View style={styles.avs}>
               {shown.map((x, i) => (
@@ -150,9 +146,9 @@ export function RecChalCard({ p }: { p: RecChal }) {
               {p.people.length}명 · 문장 {p.lines}
             </PText>
             <View style={styles.sp} />
-            <LgButton label="문장 쓰기" icon={<LgIcon name="edit" size={15} />} onPress={() => guardMember(open)} />
+            <LgButton label="문장 쓰기" icon={<LgIcon name="edit" size={15} />} onPress={() => guardMember(open, '문장을 쓰려면')} />
           </View>
-        </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -182,6 +178,7 @@ const styles = StyleSheet.create({
   chShadow: { borderRadius: 18, boxShadow: `4px 4px 0px ${Colors.ink}` },
   ch: { backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, overflow: 'hidden' },
   exh: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF8CC', borderBottomWidth: 2, borderColor: Colors.ink, paddingTop: 10, paddingRight: 10, paddingBottom: 10, paddingLeft: 12 },
+  exhIn: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   tx: { flex: 1, minWidth: 0 },
   chWho: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   chMs: { fontFamily: Font.body900, color: Colors.ink },

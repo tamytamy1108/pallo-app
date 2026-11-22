@@ -19,11 +19,15 @@ export function SkipSheet({ stage, left, onClose, onPass }: { stage: number | nu
   const [grading, setGrading] = useState(false);
   const [shown, setShown] = useState(stage ?? 0);
 
-  useEffect(() => {
-    if (stage === null) return;
-    setShown(stage);
-    setGrading(false);
-  }, [stage]);
+  // 새로 열리면 처음 상태로 (렌더 중에 이전 값과 비교해 맞춰요)
+  const [seen, setSeen] = useState<number | null>(null);
+  if (stage !== seen) {
+    setSeen(stage);
+    if (stage !== null) {
+      setShown(stage);
+      setGrading(false);
+    }
+  }
 
   useEffect(() => {
     if (!grading) return;

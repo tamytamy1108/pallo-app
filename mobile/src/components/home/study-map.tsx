@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, Path, Pattern, Rect } from 'react-native-svg';
 
@@ -20,7 +20,7 @@ import { clearPos, isDone, markDone, stepKey, useDoneCount } from '@/state/progr
 
 import { devSeason } from './dev';
 import { ARROW_PATH, CHECK_PATH, LineIcon } from './icons';
-import { OPEN_UNITS, setLastStep, useLastStep } from './map-state';
+import { OPEN_UNITS, setLastStep, useLastStep, useStopAsk } from './map-state';
 import { SeasonLayer } from './season-deco';
 import { SkipSheet } from './skip-sheet';
 import { StopPopup, type StartMode } from './stop-popup';
@@ -85,11 +85,42 @@ export function StudyMap() {
   const next = MY_BOOK.titles[lesson + 1];
   const map = width ? layout(width) : null;
 
-  const chips = useChipRow();
+  // 챕터 줄: 칩 자리 기억 → 고른 과 · 이번 주 과를 가운데로
+  const chipRow = useRef<ScrollViewInstance>(null);
+  const chipXs = useRef<Record<number, { x: number; w: number }>>({});
+  const rowW = useRef(0);
+  const [bounce, setBounce] = useState(0);
+  const [chestShake, setChestShake] = useState(0);
+  const still = useReducedMotion();
+
+  /** 고른 과가 칩 줄 밖으로 잘리지 않게 가운데로 */
+  const reveal = (n: number) => {
+    const c = chipXs.current[n];
+    if (c) chipRow.current?.scrollTo({ x: Math.max(0, c.x + c.w / 2 - rowW.current / 2), animated: !still });
+  };
+  /** 이번 주 진도 칩: 5과 · 6과가 가운데로 오고 통통 (프로토타입 weekChip 클릭) */
+  const showWeek = () => {
+    const bs = MY_BOOK.weekLessons.map((n) => chipXs.current[n]).filter(Boolean);
+    if (!bs.length) return;
+    const mid = (bs[0].x + bs[bs.length - 1].x + bs[bs.length - 1].w) / 2;
+    chipRow.current?.scrollTo({ x: Math.max(0, mid - rowW.current / 2), animated: !still });
+    sfx('tap');
+    setBounce((b) => b + 1);
+  };
+
+  // 오늘의 목표 카드 [이어서 하기] → 맵으로 내려간 뒤 지금 정류장 팝업
+  const ask = useStopAsk();
+  useEffect(() => {
+    if (!ask) return;
+    const t = setTimeout(() => setPopIdx(current >= 0 ? current : null), 550);
+    return () => clearTimeout(t);
+    // 부탁이 왔을 때만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ask]);
 
   const pickLesson = (n: number) => {
     setLesson(n);
-    chips.reveal(n);
+    reveal(n);
   };
 
   const go = (i: number, mode: StartMode) => {
@@ -101,7 +132,9 @@ export function StudyMap() {
     }
     if (mode === 'restart') clearPos(stepKey(LV, lesson, step.id));
     setLastStep(LV, lesson, step.id);
-    router.push(stepHref(lesson, step.id) as Href);
+    // 팝업에서 이미 이어서 / 처음부터를 골랐으면 레슨이 다시 묻지 않게 넘겨요
+    const resume = mode === 'start' ? '' : `&resume=${mode}`;
+    router.push(`${stepHref(lesson, step.id)}${resume}` as Href);
   };
 
   const pass = useCallback(
@@ -121,7 +154,7 @@ export function StudyMap() {
 
   const chestTap = () => {
     if (!all) {
-      chips.shakeChest();
+      setChestShake((v) => v + 1);
       showToast(`${LESSON_STEPS.length}단계를 모두 끝내면 열려요`);
       return;
     }
@@ -148,7 +181,7 @@ export function StudyMap() {
                   스터디 맵 · {MY_BOOK.level}
                 </PText>
               </View>
-              <Pressable onPress={chips.showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${MY_BOOK.weekLessons.join(', ')}과 보기`} hitSlop={6}>
+              <Pressable onPress={showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${MY_BOOK.weekLessons.join(', ')}과 보기`} hitSlop={6}>
                 <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }])}>
                   <PText style={styles.weekText}>이번 주 진도 {MY_BOOK.weekLessons.join(' & ')}챕터</PText>
                 </View>
@@ -169,9 +202,9 @@ export function StudyMap() {
             {lesson}과 {title}
           </PText>
 
-          <ScrollView ref={chips.ref} horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow} onLayout={chips.onRowLayout}>
+          <ScrollView ref={chipRow} horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow} onLayout={(e) => (rowW.current = e.nativeEvent.layout.width)}>
             {Array.from({ length: MY_BOOK.lessonCount }, (_, k) => k + 1).map((n) => (
-              <ChapChip key={n} n={n} on={n === lesson} week={MY_BOOK.weekLessons.includes(n)} bounce={chips.bounce} onPress={() => pickLesson(n)} onLayout={chips.onChipLayout} />
+              <ChapChip key={n} n={n} on={n === lesson} week={MY_BOOK.weekLessons.includes(n)} bounce={bounce} onPress={() => pickLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
             ))}
           </ScrollView>
 
@@ -252,7 +285,7 @@ export function StudyMap() {
                   );
                 })}
 
-                <ChestNode x={map.chest.x} y={map.chest.y} open={all} lesson={lesson} xmas={xmas} shake={chips.chestShake} onPress={chestTap} />
+                <ChestNode x={map.chest.x} y={map.chest.y} open={all} lesson={lesson} xmas={xmas} shake={chestShake} onPress={chestTap} />
               </>
             )}
           </View>
@@ -315,54 +348,21 @@ const wkBounce = css.keyframes({
   '100%': { transform: [{ translateY: 0 }, { scale: 1 }] },
 });
 
-function useChipRow() {
-  const ref = useRef<ScrollView>(null);
-  const xs = useRef<Record<number, { x: number; w: number }>>({});
-  const rowW = useRef(0);
-  const [bounce, setBounce] = useState(0);
-  const [chestShake, setChestShake] = useState(0);
-  const still = useReducedMotion();
-  return {
-    ref,
-    bounce,
-    chestShake,
-    onRowLayout: (e: { nativeEvent: { layout: { width: number } } }) => {
-      rowW.current = e.nativeEvent.layout.width;
-    },
-    onChipLayout: (n: number, x: number, w: number) => {
-      xs.current[n] = { x, w };
-    },
-    /** 고른 과가 칩 줄 밖으로 잘리지 않게 가운데로 */
-    reveal: (n: number) => {
-      const c = xs.current[n];
-      if (c) ref.current?.scrollTo({ x: Math.max(0, c.x + c.w / 2 - rowW.current / 2), animated: !still });
-    },
-    /** 이번 주 진도 칩: 5과 · 6과가 가운데로 오고 통통 (프로토타입 weekChip 클릭) */
-    showWeek: () => {
-      const bs = MY_BOOK.weekLessons.map((n) => xs.current[n]).filter(Boolean);
-      if (!bs.length) return;
-      const mid = (bs[0].x + bs[bs.length - 1].x + bs[bs.length - 1].w) / 2;
-      ref.current?.scrollTo({ x: Math.max(0, mid - rowW.current / 2), animated: !still });
-      sfx('tap');
-      setBounce((b) => b + 1);
-    },
-    shakeChest: () => setChestShake((s) => s + 1),
-  };
-}
+const wkAnim = css.create({
+  0: { animationName: wkBounce, animationDuration: '800ms', animationDelay: '280ms', animationTimingFunction: WK_EASE },
+  1: { animationName: wkBounce, animationDuration: '800ms', animationDelay: '370ms', animationTimingFunction: WK_EASE },
+});
 
-function ChapChip({ n, on, week, bounce, onPress, onLayout }: { n: number; on: boolean; week: boolean; bounce: number; onPress: () => void; onLayout: (n: number, x: number, w: number) => void }) {
+function ChapChip({ n, on, week, bounce, onPress, onLayout }: { n: number; on: boolean; week: boolean; bounce: number; onPress: () => void; onLayout: (x: number, w: number) => void }) {
   const still = useReducedMotion();
   const count = useDoneCount(`${LV}:${n}:`);
   const full = count >= LESSON_STEPS.length;
   const part = count > 0 && !full;
   const k = MY_BOOK.weekLessons.indexOf(n);
-  const anim =
-    week && bounce > 0 && !still
-      ? { animationName: wkBounce, animationDuration: '800ms', animationDelay: `${280 + k * 90}ms`, animationTimingFunction: WK_EASE, animationFillMode: 'none' as const }
-      : null;
+  const anim = week && bounce > 0 && !still ? wkAnim[k === 0 ? 0 : 1] : null;
   return (
     // 이번 주 칩은 누를 때마다 key 를 바꿔 처음부터 다시 통통
-    <Animated.View key={week ? bounce : 0} style={anim} onLayout={(e) => onLayout(n, e.nativeEvent.layout.x, e.nativeEvent.layout.width)}>
+    <Animated.View key={week ? bounce : 0} style={anim} onLayout={(e) => onLayout(e.nativeEvent.layout.x, e.nativeEvent.layout.width)}>
       <Pressable
         onPress={onPress}
         accessibilityRole="tab"
@@ -475,17 +475,22 @@ function ChestLock({ open }: { open: boolean }) {
   );
 }
 
-/** 카드 바탕의 옅은 점 무늬 */
+/** 카드 바탕의 옅은 점 무늬 (웹에서는 크기를 직접 줘야 카드 전체에 깔려요) */
 function DotPattern() {
+  const [size, setSize] = useState({ w: 0, h: 0 });
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Defs>
-        <Pattern id="dots" width={18} height={18} patternUnits="userSpaceOnUse">
-          <Circle cx={9} cy={9} r={1.2} fill="#ECE5D3" />
-        </Pattern>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#dots)" />
-    </Svg>
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      {size.w > 0 && (
+        <Svg width={size.w} height={size.h}>
+          <Defs>
+            <Pattern id="dots" width={18} height={18} patternUnits="userSpaceOnUse">
+              <Circle cx={9} cy={9} r={1.2} fill="#ECE5D3" />
+            </Pattern>
+          </Defs>
+          <Rect width="100%" height="100%" fill="url(#dots)" />
+        </Svg>
+      )}
+    </View>
   );
 }
 

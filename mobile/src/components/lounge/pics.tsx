@@ -15,18 +15,11 @@ import { LG_C, type PicKey } from '@/data/lounge';
 
 const I = Colors.ink;
 
-/** 프로토타입 .lg-pic .w — Unbounded · 줄 간격 1 */
+/** 프로토타입 .lg-pic .w — Unbounded · 줄 간격 1. outline = -webkit-text-stroke 1px (잉크 그림자로 비슷하게) */
 function W({ children, size, color, style, outline }: { children: string; size: number; color: string; style: ViewStyle; outline?: boolean }) {
-  const text = (c: string, dx = 0, dy = 0) => (
-    <PText key={`${dx}${dy}`} style={[styles.w, { fontSize: size, lineHeight: size, color: c }, dx || dy ? { position: 'absolute', left: dx, top: dy } : null]}>
-      {children}
-    </PText>
-  );
   return (
     <View style={[styles.abs, style]} pointerEvents="none">
-      {/* -webkit-text-stroke 1px: 잉크 글씨를 네 방향으로 1px 깔아 테두리처럼 */}
-      {outline ? [text(I, -1, 0), text(I, 1, 0), text(I, 0, -1), text(I, 0, 1)] : null}
-      {text(color)}
+      <PText style={[styles.w, { fontSize: size, lineHeight: size, color }, outline ? styles.stroke : null]}>{children}</PText>
     </View>
   );
 }
@@ -38,7 +31,7 @@ const Circle = ({ size, bg, style, shadow }: { size: number; bg: string; style: 
 /** 사선 줄무늬 (repeating-linear-gradient(-45deg, transparent 0 18px, rgba(255,255,255,a) 18px 36px)) */
 export function Stripes({ alpha = 0.18, id }: { alpha?: number; id: string }) {
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <Pattern id={id} width={36 * Math.SQRT2} height={36 * Math.SQRT2} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <Rect x={18 * Math.SQRT2} y={0} width={18 * Math.SQRT2} height={36 * Math.SQRT2} fill={`rgba(255,255,255,${alpha})`} />
@@ -57,10 +50,14 @@ export function PostArt({ pic, uid }: { pic: PicKey; uid: string }): ReactNode {
     case 'party':
       return (
         <>
-          <W size={36} color={LG_C.y} style={{ left: 18, bottom: 20 }}>{'HALLO\nWEEN\nNIGHT'}</W>
+          <W size={36} color={LG_C.y} style={{ left: 18, bottom: 20 }}>
+            {'HALLO\nWEEN\nNIGHT'}
+          </W>
           <Circle size={170} bg={LG_C.pk} style={{ right: -30, top: -30 }} />
           <Circle size={62} bg="#fff" style={{ right: 40, top: 62 }} />
-          <W size={11} color="#fff" style={{ right: 16, bottom: 22 }}>영등포 · 10.31</W>
+          <W size={11} color="#fff" style={{ right: 16, bottom: 22 }}>
+            영등포 · 10.31
+          </W>
         </>
       );
     case 'ramen':
@@ -69,7 +66,9 @@ export function PostArt({ pic, uid }: { pic: PicKey; uid: string }): ReactNode {
           <Stripes id={`st-${uid}`} />
           <View style={[styles.abs, styles.bowl]} />
           <View style={[styles.abs, styles.rim]} />
-          <W size={26} color="#fff" outline style={{ left: 18, bottom: 20 }}>{'RAMEN\nIN FUKUOKA'}</W>
+          <W size={26} color="#fff" outline style={{ left: 18, bottom: 20 }}>
+            {'RAMEN\nIN FUKUOKA'}
+          </W>
         </>
       );
     case 'book':
@@ -78,15 +77,21 @@ export function PostArt({ pic, uid }: { pic: PicKey; uid: string }): ReactNode {
           <View style={[styles.abs, styles.book, { left: '12%', top: '16%', height: '52%', backgroundColor: LG_C.y, transform: [{ rotate: '-8deg' }] }]} />
           <View style={[styles.abs, styles.book, { left: '37%', top: '12%', height: '56%', backgroundColor: '#fff' }]} />
           <View style={[styles.abs, styles.book, { left: '61%', top: '17%', height: '50%', backgroundColor: LG_C.pk, transform: [{ rotate: '7deg' }] }]} />
-          <W size={22} color={I} style={{ left: 18, bottom: 20 }}>{'BOOK CLUB\nTHE LITTLE PRINCE'}</W>
+          <W size={22} color={I} style={{ left: 18, bottom: 20 }}>
+            {'BOOK CLUB\nTHE LITTLE PRINCE'}
+          </W>
         </>
       );
     case 'run':
       return (
         <>
           <View style={[styles.abs, styles.band, { left: -20, right: -20, top: '46%', height: 64, backgroundColor: LG_C.lsky }]} />
-          <W size={26} color={I} style={{ left: 18, top: 46 }}>{'5K RUN &\nENGLISH'}</W>
-          <W size={12} color={LG_C.pu} style={{ right: 16, bottom: 20 }}>석촌호수 · SUN 08:00</W>
+          <W size={26} color={I} style={{ left: 18, top: 46 }}>
+            {'5K RUN &\nENGLISH'}
+          </W>
+          <W size={12} color={LG_C.pu} style={{ right: 16, bottom: 20 }}>
+            석촌호수 · SUN 08:00
+          </W>
         </>
       );
     case 'trip':
@@ -94,7 +99,9 @@ export function PostArt({ pic, uid }: { pic: PicKey; uid: string }): ReactNode {
         <>
           <Circle size={86} bg={LG_C.y} style={{ right: 28, top: 26 }} />
           <View style={[styles.abs, styles.band, { left: -10, right: -10, bottom: 70, height: 46, backgroundColor: '#fff' }]} />
-          <W size={30} color={I} style={{ left: 18, bottom: 18 }}>{'OSAKA\nDAY 2'}</W>
+          <W size={30} color={I} style={{ left: 18, bottom: 18 }}>
+            {'OSAKA\nDAY 2'}
+          </W>
         </>
       );
     case 'cafe':
@@ -106,7 +113,9 @@ export function PostArt({ pic, uid }: { pic: PicKey; uid: string }): ReactNode {
           <View style={styles.center}>
             <Circle size={64} bg="#C49A6C" style={{ position: 'relative' }} />
           </View>
-          <W size={15} color={LG_C.pu} style={{ left: 18, bottom: 18 }}>I’M ON THE FENCE.</W>
+          <W size={15} color={LG_C.pu} style={{ left: 18, bottom: 18 }}>
+            I’M ON THE FENCE.
+          </W>
         </>
       );
   }
@@ -119,7 +128,13 @@ export const isDarkBg = (bg: string) => bg === LG_C.pu || bg === LG_C.pk;
 /** 지난 번개 카드: filter grayscale(.9) 를 색마다 직접 섞어요 (안드로이드 · iOS 는 CSS filter 가 없어서) */
 export function gray(hex: string, k = 0.9) {
   const n = hex.replace('#', '');
-  const f = n.length === 3 ? n.split('').map((c) => c + c).join('') : n;
+  const f =
+    n.length === 3
+      ? n
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : n;
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(f.slice(i, i + 2), 16));
   const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   const m = (v: number) => Math.round(v + (l - v) * k);
@@ -145,7 +160,13 @@ export function PosterArt({ id, word, bg, past = false, wordSize = 36 }: { id: s
           <View style={[styles.abs, styles.band, { left: -20, right: -20, top: '42%', height: 54, backgroundColor: acc, transform: [{ rotate: '-6deg' }] }]} />
         </>
       ) : v === 2 ? (
-        ([[62, 30, 46], [128, 58, 30], [30, 70, 22]] as const).map(([r, t, z]) => <Circle key={r} size={z * 2} bg={acc} style={{ right: r, top: t }} />)
+        (
+          [
+            [62, 30, 46],
+            [128, 58, 30],
+            [30, 70, 22],
+          ] as const
+        ).map(([r, t, z]) => <Circle key={r} size={z * 2} bg={acc} style={{ right: r, top: t }} />)
       ) : (
         <>
           <Circle size={220} bg={acc} style={{ right: -30, bottom: -60 }} />
@@ -160,8 +181,9 @@ export function PosterArt({ id, word, bg, past = false, wordSize = 36 }: { id: s
 const styles = StyleSheet.create({
   abs: { position: 'absolute' },
   w: { fontFamily: Font.display, letterSpacing: -0.6 },
+  stroke: { textShadowColor: I, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 1.5 },
   hard4: { boxShadow: `4px 4px 0px ${I}` },
-  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', bottom: '8%' },
+  center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', bottom: '8%' },
   bowl: { left: '21%', width: '58%', top: '42%', marginTop: -48, height: 96, borderBottomLeftRadius: 100, borderBottomRightRadius: 100, backgroundColor: '#fff', borderWidth: 2, borderColor: I },
   rim: { left: '17%', width: '66%', top: '27%', height: 15, borderRadius: 8, backgroundColor: LG_C.y, borderWidth: 2, borderColor: I },
   book: { width: '26%', borderRadius: 6, borderWidth: 2, borderColor: I },
