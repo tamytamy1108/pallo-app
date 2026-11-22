@@ -6,6 +6,8 @@
  */
 import type { SavedExpression } from '@/state/expressions';
 
+import { AV_BG, AV_ITEMS } from './av-items';
+
 // ---------------------------------------------------------------- 꾸미기 (스파크 상점)
 
 export type AvCat = 'hair' | 'eye' | 'mitt' | 'shoe' | 'hat' | 'face' | 'wear' | 'hand' | 'acc';
@@ -22,11 +24,12 @@ export type AvItem = {
   lock?: string;
   layer: AvLayer;
   hat?: boolean;
+  /** 머리를 덮는 모자: 같이 쓰면 헤어는 모자 속을 빼고 옆머리만 clipY(모자 아랫선, 캐릭터 좌표) 아래로 보여요 */
+  cover?: boolean;
+  clipY?: number;
   hair?: boolean;
-  /** 위치 [가운데 x%, 위 y%, 너비%] (캐릭터 상자 기준) */
-  p?: readonly [number, number, number];
-  /** 졸린 · 느긋한 눈: 눈꺼풀이 덮는 정도 */
-  lid?: number;
+  /** 몸 색 눈꺼풀: t = 위에서 덮는 정도 · b = 아래에서 (웃는 눈) · only = 한쪽 눈만 (0 왼 · 1 오른) */
+  lid?: { t?: number; b?: number; only?: number };
 };
 export type AvBg = { id: string; name: string; price: number; rare: AvRare; lock?: string; /** 동그란 프로필 바탕색 (프로토타입 lgFace) */ face: string };
 
@@ -42,108 +45,9 @@ export type Avatar = {
   eq: Record<AvCat, string | null>;
 };
 
-/** 프로토타입 AV_ITEMS (모자는 눈 뒤 · 조금 크게 · 위로 옮긴 뒤 값 · 헤어 · 칠하는 옷 · 눈까지 같은 순서) */
-export const AV_ITEMS: AvItem[] = [
-  { id: 'h-beanie', cat: 'hat', name: '털 비니', price: 0, rare: '기본', layer: 'back', hat: true, p: [58, -35, 40] },
-  { id: 'h-cap', cat: 'hat', name: '야구 모자', price: 120, rare: '일반', layer: 'back', hat: true, p: [58, -35, 40] },
-  { id: 'h-beret', cat: 'hat', name: '화가 베레모', price: 120, rare: '일반', layer: 'back', hat: true, p: [58, -24, 42] },
-  { id: 'h-straw', cat: 'hat', name: '밀짚모자', price: 180, rare: '일반', layer: 'back', hat: true, p: [58, -34, 51] },
-  { id: 'h-party', cat: 'hat', name: '파티 고깔', price: 150, rare: '일반', layer: 'back', hat: true, p: [58, -44, 29] },
-  { id: 'h-ribbon', cat: 'hat', name: '큰 리본', price: 150, rare: '일반', layer: 'back', hat: true, p: [58, -22, 37] },
-  { id: 'h-bunny', cat: 'hat', name: '토끼 귀', price: 300, rare: '레어', layer: 'back', hat: true, p: [58, -46, 37] },
-  { id: 'h-phones', cat: 'hat', name: '헤드폰', price: 300, rare: '레어', layer: 'back', hat: true, p: [58, -30, 55] },
-  { id: 'h-grad', cat: 'hat', name: '학사모', price: 400, rare: '레어', layer: 'back', hat: true, p: [58, -36, 44] },
-  { id: 'h-witch', cat: 'hat', name: '마녀 모자', price: 500, rare: '에픽', layer: 'back', hat: true, p: [58, -52, 48] },
-  { id: 'h-santa', cat: 'hat', name: '산타 모자', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', layer: 'back', hat: true, p: [56, -38, 48] },
-  { id: 'h-crown', cat: 'hat', name: '황금 왕관', price: 0, rare: '시즌', lock: '주간 랭킹 TOP 3 보상', layer: 'back', hat: true, p: [58, -34, 37] },
-  { id: 'f-patch', cat: 'face', name: '해적 안대', price: 200, rare: '일반', layer: 'front', p: [50, -2, 17] },
-  { id: 'f-cheek', cat: 'face', name: '발그레 볼', price: 0, rare: '기본', layer: 'front', p: [58, 39, 46] },
-  { id: 'f-cheek2', cat: 'face', name: '복숭아 볼', price: 80, rare: '일반', layer: 'front', p: [58, 39, 46] },
-  { id: 'f-cheek3', cat: 'face', name: '하트 볼', price: 150, rare: '일반', layer: 'front', p: [58, 39, 46] },
-  { id: 'f-cheek4', cat: 'face', name: '수줍은 볼', price: 120, rare: '일반', layer: 'front', p: [58, 39, 46] },
-  { id: 'f-cheek5', cat: 'face', name: '반짝 볼', price: 200, rare: '레어', layer: 'front', p: [58, 39, 46] },
-  { id: 'f-stache', cat: 'face', name: '콧수염', price: 120, rare: '일반', layer: 'front', p: [58, 39, 20] },
-  { id: 'f-stache2', cat: 'face', name: '꼬불 수염', price: 150, rare: '일반', layer: 'front', p: [58, 38, 30] },
-  { id: 'f-stache3', cat: 'face', name: '팔자 수염', price: 150, rare: '일반', layer: 'front', p: [58, 39, 28] },
-  { id: 'f-stache4', cat: 'face', name: '하얀 콧수염', price: 120, rare: '일반', layer: 'front', p: [58, 39, 20] },
-  { id: 'f-beard', cat: 'face', name: '산타 수염', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', layer: 'front', p: [58, 38, 34] },
-  { id: 'f-freck', cat: 'face', name: '주근깨', price: 80, rare: '일반', layer: 'front', p: [58, 39, 46] },
-  { id: 'w-bow', cat: 'wear', name: '나비넥타이', price: 0, rare: '기본', layer: 'front', p: [58, 40, 18] },
-  { id: 'w-tie', cat: 'wear', name: '넥타이', price: 120, rare: '일반', layer: 'front', p: [58, 40, 8] },
-  { id: 'w-scarf', cat: 'wear', name: '줄무늬 목도리', price: 180, rare: '일반', layer: 'front', p: [57, 38, 40] },
-  { id: 'w-lei', cat: 'wear', name: '꽃목걸이', price: 200, rare: '레어', layer: 'front', p: [58, 38, 40] },
-  { id: 'w-medal', cat: 'wear', name: '금메달', price: 0, rare: '시즌', lock: '지점 대항전 우승 보상', layer: 'front', p: [58, 39, 13] },
-  { id: 'w-bib', cat: 'wear', name: '러닝 배번표', price: 150, rare: '일반', layer: 'front', p: [57, 50, 18] },
-  { id: 'w-apron', cat: 'wear', name: '카페 앞치마', price: 200, rare: '일반', layer: 'paint' },
-  { id: 'w-hanbok', cat: 'wear', name: '한복 저고리', price: 350, rare: '레어', layer: 'paint' },
-  { id: 'd-book', cat: 'hand', name: '원서 책', price: 0, rare: '기본', layer: 'front', p: [91, 18, 23] },
-  { id: 'd-mic', cat: 'hand', name: '마이크', price: 150, rare: '일반', layer: 'front', p: [92, 9, 13] },
-  { id: 'd-coffee', cat: 'hand', name: '테이크아웃 커피', price: 120, rare: '일반', layer: 'front', p: [92, 14, 17] },
-  { id: 'd-flag', cat: 'hand', name: 'PALLO 깃발', price: 0, rare: '기본', layer: 'front', p: [93, 0, 23] },
-  { id: 'd-balloon', cat: 'hand', name: '하트 풍선', price: 180, rare: '일반', layer: 'front', p: [93, -8, 22] },
-  { id: 'd-flower', cat: 'hand', name: '꽃다발', price: 250, rare: '레어', layer: 'front', p: [92, 11, 22] },
-  { id: 'd-racket', cat: 'hand', name: '배드민턴 라켓', price: 200, rare: '일반', layer: 'front', p: [92, -2, 20] },
-  { id: 'd-passport', cat: 'hand', name: '여권', price: 200, rare: '일반', layer: 'front', p: [91, 16, 17] },
-  { id: 'd-mega', cat: 'hand', name: '확성기', price: 300, rare: '레어', layer: 'front', p: [95, 20, 25] },
-  { id: 'd-brush', cat: 'hand', name: '그림 붓', price: 150, rare: '일반', layer: 'front', p: [92, 0, 12] },
-  { id: 'a-wings', cat: 'acc', name: '천사 날개', price: 700, rare: '에픽', layer: 'back', p: [54, -14, 108] },
-  { id: 'a-watch', cat: 'acc', name: '손목시계', price: 150, rare: '일반', layer: 'paint' },
-  { id: 'a-umbrella', cat: 'hand', name: '노랑 우산', price: 300, rare: '레어', layer: 'front', p: [95, -18, 44] },
-  { id: 'a-spark', cat: 'acc', name: '반짝반짝 효과', price: 400, rare: '에픽', layer: 'fx' },
-  { id: 'a-hearts', cat: 'acc', name: '하트 뿅뿅', price: 400, rare: '에픽', layer: 'fx' },
-  { id: 'a-notes', cat: 'acc', name: '음표 둥둥', price: 300, rare: '레어', layer: 'fx' },
-  { id: 'hr-sprout', cat: 'hair', name: '한 가닥', price: 0, rare: '기본', layer: 'back', hair: true, p: [58, -25, 30] },
-  { id: 'hr-spiky', cat: 'hair', name: '삐죽 머리', price: 0, rare: '기본', layer: 'back', hair: true, p: [58, -32, 52] },
-  { id: 'hr-bun', cat: 'hair', name: '똥머리', price: 100, rare: '일반', layer: 'back', hair: true, p: [58, -32, 50] },
-  { id: 'hr-swoop', cat: 'hair', name: '바람 머리', price: 100, rare: '일반', layer: 'back', hair: true, p: [58, -32, 52] },
-  { id: 'hr-bob', cat: 'hair', name: '단발', price: 120, rare: '일반', layer: 'back', hair: true, p: [58, -26, 60] },
-  { id: 'hr-pig', cat: 'hair', name: '양갈래', price: 150, rare: '일반', layer: 'back', hair: true, p: [58, -30, 80] },
-  { id: 'hr-pony', cat: 'hair', name: '포니테일', price: 150, rare: '일반', layer: 'back', hair: true, p: [64, -26, 64] },
-  { id: 'hr-curly', cat: 'hair', name: '뽀글 펌', price: 150, rare: '일반', layer: 'back', hair: true, p: [58, -34, 54] },
-  { id: 'hr-mohawk', cat: 'hair', name: '모히칸', price: 200, rare: '레어', layer: 'back', hair: true, p: [58, -28, 40] },
-  { id: 'hr-afro', cat: 'hair', name: '아프로', price: 250, rare: '레어', layer: 'back', hair: true, p: [58, -43, 62] },
-  { id: 'w-vest', cat: 'wear', name: '단추 조끼', price: 200, rare: '일반', layer: 'paint' },
-  { id: 'w-vest2', cat: 'wear', name: '하늘 조끼', price: 200, rare: '일반', layer: 'paint' },
-  { id: 'w-vest3', cat: 'wear', name: '보라 니트 조끼', price: 350, rare: '레어', layer: 'paint' },
-  { id: 'w-apron2', cat: 'wear', name: '핑크 앞치마', price: 200, rare: '일반', layer: 'paint' },
-  { id: 'g-red', cat: 'mitt', name: '빨강 벙어리장갑', price: 0, rare: '기본', layer: 'paint' },
-  { id: 'g-purple', cat: 'mitt', name: '보라 벙어리장갑', price: 120, rare: '일반', layer: 'paint' },
-  { id: 'g-mint', cat: 'mitt', name: '민트 벙어리장갑', price: 120, rare: '일반', layer: 'paint' },
-  { id: 'g-white', cat: 'mitt', name: '하얀 장갑', price: 150, rare: '일반', layer: 'paint' },
-  { id: 'g-box', cat: 'mitt', name: '복싱 글러브', price: 300, rare: '레어', layer: 'paint' },
-  { id: 's-purple', cat: 'shoe', name: '보라 운동화', price: 0, rare: '기본', layer: 'paint' },
-  { id: 's-red', cat: 'shoe', name: '빨강 운동화', price: 120, rare: '일반', layer: 'paint' },
-  { id: 's-black', cat: 'shoe', name: '검정 구두', price: 150, rare: '일반', layer: 'paint' },
-  { id: 's-stripe', cat: 'shoe', name: '줄무늬 양말', price: 150, rare: '일반', layer: 'paint' },
-  { id: 's-boot', cat: 'shoe', name: '빨강 장화', price: 250, rare: '레어', layer: 'paint' },
-  { id: 's-snow', cat: 'shoe', name: '털 부츠', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', layer: 'paint' },
-  { id: 'e-sparkle', cat: 'eye', name: '반짝 눈', price: 0, rare: '기본', layer: 'eye' },
-  { id: 'e-lash', cat: 'eye', name: '속눈썹', price: 120, rare: '일반', layer: 'eye' },
-  { id: 'e-liner', cat: 'eye', name: '아이라인', price: 120, rare: '일반', layer: 'eye' },
-  { id: 'e-sleepy', cat: 'eye', name: '졸린 눈', price: 100, rare: '일반', layer: 'eye', lid: 0.44 },
-  { id: 'e-calm', cat: 'eye', name: '느긋한 눈', price: 100, rare: '일반', layer: 'eye', lid: 0.26 },
-  { id: 'e-heart', cat: 'eye', name: '하트 눈', price: 250, rare: '레어', layer: 'eye' },
-  { id: 'e-star', cat: 'eye', name: '별 눈', price: 250, rare: '레어', layer: 'eye' },
-];
+export { AV_BG, AV_ITEMS };
 export const AV_ITEM: Record<string, AvItem> = Object.fromEntries(AV_ITEMS.map((i) => [i.id, i]));
 export const HAIR = AV_ITEMS.filter((i) => i.hair);
-
-/** 배경 (그림은 assets/characters/av/bg-*.png) */
-export const AV_BG: AvBg[] = [
-  { id: 'cream', name: '크림 룸', price: 0, rare: '기본', face: '#FBF6EA' },
-  { id: 'yellow', name: '팔로 옐로', price: 0, rare: '기본', face: '#FFE200' },
-  { id: 'sky', name: '맑은 하늘', price: 100, rare: '일반', face: '#BFE0F2' },
-  { id: 'sea', name: '여름 바다', price: 150, rare: '일반', face: '#BFE0F2' },
-  { id: 'sunset', name: '노을', price: 150, rare: '일반', face: '#FFB36B' },
-  { id: 'cherry', name: '벚꽃길', price: 200, rare: '레어', face: '#FCE4EC' },
-  { id: 'library', name: '도서관', price: 200, rare: '레어', face: '#E8D9BF' },
-  { id: 'cafe', name: '단골 카페', price: 200, rare: '레어', face: '#D9B48F' },
-  { id: 'track', name: '러닝 트랙', price: 200, rare: '레어', face: '#5CBF8A' },
-  { id: 'party', name: '파티 조명', price: 300, rare: '레어', face: '#493087' },
-  { id: 'snow', name: '눈 오는 밤', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', face: '#3D4B85' },
-  { id: 'night', name: '서울 야경', price: 400, rare: '에픽', face: '#1E1A2B' },
-  { id: 'space', name: '우주 정거장', price: 500, rare: '에픽', face: '#120F24' },
-];
 
 /** 추천 몸 색 [이름, 표시 이름, 가격] — 원본 PNG 가 색마다 따로 있어요 */
 export const AVC_LIST: readonly (readonly [string, string, number])[] = [
@@ -189,14 +93,14 @@ export const SPARK_EARN: readonly (readonly [string, string])[] = [
   ['주간 랭킹 TOP 3', '+300 · 왕관'],
 ];
 
-/** 처음 모습 (프로토타입 avFresh: 털 비니 · 나비넥타이 · 깃발 · 보라 운동화) */
+/** 처음 모습: 털 비니 · 줄무늬 티 · 나비넥타이 · 깃발 · 보라 운동화 */
 export const avFresh = (): Avatar => ({
   color: 'yellow',
   flip: false,
   bg: 'cream',
   hc: '#3B2A20',
   say: '',
-  eq: { hair: null, eye: null, mitt: null, shoe: 's-purple', hat: 'h-beanie', face: null, wear: 'w-bow', hand: 'd-flag', acc: null },
+  eq: { hair: null, eye: null, mitt: null, shoe: 's-purple', hat: 'h-beanie', face: null, wear: 'w-tee', hand: 'd-flag', acc: 'a-bow' },
 });
 /** 처음부터 가진 것: 기본 등급 아이템 · 배경 */
 export const AV_OWN0 = ['yellow', 'purple', 'cream', 'yellow-bg', ...AV_ITEMS.filter((i) => i.rare === '기본').map((i) => i.id), ...AV_BG.filter((b) => b.rare === '기본').map((b) => 'bg:' + b.id)];

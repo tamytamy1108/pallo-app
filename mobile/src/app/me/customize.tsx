@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 
 import { BottomBar } from '@/components/bottom-bar';
-import { AvatarStage, BodyArt, ItemArt, MiniWear, StageArt } from '@/components/character/avatar';
+import { AvatarStage, BodyArt, ItemArt, StageArt } from '@/components/character/avatar';
 import { ColorPick } from '@/components/my/color-pick';
 import { LgIcon, SparkIcon } from '@/components/my/icons';
 import { Lift } from '@/components/my/lift';
@@ -149,23 +149,13 @@ export default function CustomizeScreen() {
     );
   };
   const itemArt = (i: AvItem) => {
-    if (i.layer === 'paint') return <MiniWear it={i} width={artW * 0.92} />;
-    if (i.layer === 'eye') {
-      const w = artW * 1.35;
-      const h = w * (332 / 520);
-      return (
-        <View style={{ position: 'absolute', left: (artW - w) / 2 - w * 0.076, top: (64 - h) / 2 + h * 0.3 }}>
-          <MiniWear it={i} width={w} />
-        </View>
-      );
-    }
     if (i.layer === 'fx')
       return (
         <View style={styles.fxsw}>
           <StageArt it={i} width={64 * (300 / 220)} height={64} />
         </View>
       );
-    return <ItemArt it={i} maxW={artW * 0.76} maxH={60} hc={d.hc} />;
+    return <ItemArt it={i} width={artW} height={64} hc={d.hc} />;
   };
   const sub = (t: string) => (
     <PText key={`s-${t}`} style={styles.sub}>
