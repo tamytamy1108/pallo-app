@@ -52,7 +52,13 @@ export default function LoungeScreen() {
   const scroll = useRef<ScrollViewInstance>(null);
   const tabsY = useRef(0);
   const [scrolled, setScrolled] = useState(false);
-  const [sheet, setSheet] = useState<null | 'create' | 'trip' | 'abroad'>(null);
+  const [sheet, setSheetRaw] = useState<null | 'create' | 'trip' | 'abroad'>(null);
+  // 동행 · 해외 시트는 열 때마다 입력칸을 새로 비우려고 새로 그려요. 닫히는 움직임이 끝날 때까지는 남겨 둬요
+  const [kept, setKept] = useState<null | 'trip' | 'abroad'>(null);
+  const setSheet = useCallback((k: null | 'create' | 'trip' | 'abroad') => {
+    setSheetRaw(k);
+    if (k === 'trip' || k === 'abroad') setKept(k);
+  }, []);
   const branch = branchValue(brs);
   const branchBtn = <BranchSelect value={branch} onChange={(v) => setBranches(branchList(v))} />;
 
@@ -107,8 +113,8 @@ export default function LoungeScreen() {
       </Pressable>
 
       <CreateSheet open={sheet === 'create'} tab={tab} onClose={() => setSheet(null)} onPick={onCreate} />
-      {sheet === 'trip' ? <TripMakeSheet open onClose={() => setSheet(null)} /> : null}
-      {sheet === 'abroad' ? <AbroadRegSheet open onClose={() => setSheet(null)} /> : null}
+      {kept === 'trip' ? <TripMakeSheet open={sheet === 'trip'} onClose={() => setSheet(null)} onClosed={() => setKept(null)} /> : null}
+      {kept === 'abroad' ? <AbroadRegSheet open={sheet === 'abroad'} onClose={() => setSheet(null)} onClosed={() => setKept(null)} /> : null}
     </SafeAreaView>
   );
 }

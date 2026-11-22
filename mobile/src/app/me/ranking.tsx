@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { router, Stack, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { css, cubicBezier } from 'react-native-reanimated';
+import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
@@ -83,6 +83,8 @@ const POD = [
  * 프로토타입은 탭 화면이라 아래 탭 바가 보여요 — 앱은 마이 위로 쌓이는 화면이에요.
  */
 export default function RankingScreen() {
+  // 움직임 줄이기면 시상대 · 막대 · 순위 줄이 바로 다 보여요
+  const still = useReducedMotion();
   const insets = useSafeAreaInsets();
   const me = useMe();
   const marks = useSavedExpressions();
@@ -106,7 +108,7 @@ export default function RankingScreen() {
   };
 
   const row = (p: RankRow, no: number, k: number) => (
-    <Animated.View key={`${p.n}-${no}`} style={{ animationName: rise, animationDuration: '500ms', animationDelay: `${50 * k}ms`, animationFillMode: 'both', animationTimingFunction: SPRING }}>
+    <Animated.View key={`${p.n}-${no}`} style={still ? undefined : { animationName: rise, animationDuration: '500ms', animationDelay: `${50 * k}ms`, animationFillMode: 'both', animationTimingFunction: SPRING }}>
       <View style={[styles.rkRow, p.me && styles.rkMe]}>
         <PText style={styles.no}>{no}</PText>
         <Pressable onPress={() => openProfile(p.n, p.me)} accessibilityRole="button" accessibilityLabel={`${p.n} 프로필`}>
@@ -212,7 +214,7 @@ export default function RankingScreen() {
                             style={[
                               styles.blk,
                               { height: POD[i].h, backgroundColor: POD[i].bg },
-                              { animationName: grow, animationDuration: '700ms', animationDelay: `${100 + i * 80}ms`, animationFillMode: 'both', animationTimingFunction: SPRING },
+                              still ? null : { animationName: grow, animationDuration: '700ms', animationDelay: `${100 + i * 80}ms`, animationFillMode: 'both', animationTimingFunction: SPRING },
                             ]}>
                             <PText style={styles.blkT}>{i + 1}</PText>
                           </Animated.View>
@@ -255,7 +257,7 @@ export default function RankingScreen() {
                               style={[
                                 styles.barFill,
                                 { width: `${Math.round((pt / max) * 100)}%`, backgroundColor: us ? Colors.ink : RANK_COLORS[k % RANK_COLORS.length] },
-                                { animationName: barIn, animationDuration: '800ms', animationDelay: `${100 + 60 * k}ms`, animationFillMode: 'both', animationTimingFunction: EASE },
+                                still ? null : { animationName: barIn, animationDuration: '800ms', animationDelay: `${100 + 60 * k}ms`, animationFillMode: 'both', animationTimingFunction: EASE },
                               ]}
                             />
                           </View>

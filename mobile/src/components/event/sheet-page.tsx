@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SheetFooterContext } from '@/components/ui/sheet';
@@ -21,7 +21,16 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
     y.set(withTiming(0, { duration: still ? 0 : 550, easing: EASE }));
   }, [still, y]);
   const st = useAnimatedStyle(() => ({ transform: [{ translateY: `${y.value * 100}%` }] }));
-  const close = () => (router.canGoBack() ? router.back() : router.replace('/event'));
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/event'));
+  // 닫을 때도 시트가 아래로 내려간 뒤 화면을 닫아요 (.sheet { transition: transform .55s var(--ease) })
+  const close = () => {
+    if (still) return leave();
+    y.set(
+      withTiming(1, { duration: 550, easing: EASE }, (done) => {
+        if (done) runOnJS(leave)();
+      }),
+    );
+  };
   return (
     <View style={styles.root}>
       <Stack.Screen options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />

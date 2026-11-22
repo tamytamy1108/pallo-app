@@ -199,10 +199,6 @@ function MatchResult({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const msg = all && rec && sec < rec ? `지난 기록 ${rec}초를 깼어요!` : rec ? `내 최고 기록 ${Math.min(rec, all ? sec : rec)}초` : all ? '첫 기록이에요! 한 번 더 하면 더 빨라져요' : '시간이 끝났어요 · 한 번 더 해 볼까요?';
-  const n = useCount(nDone, 350);
-  const cSec = useCount(sec, 470);
-  const cBest = useCount(best, 590);
-  const cMiss = useCount(miss, 710);
   return (
     <TaskLayout
       foot={
@@ -220,7 +216,7 @@ function MatchResult({
       <View style={styles.res}>
         <Image source={all ? require('@/assets/characters/c-upright-yellow.png') : require('@/assets/characters/c-tilted-yellow.png')} style={all ? styles.resChar : styles.resCharTilt} contentFit="contain" />
         <PText style={styles.rn} accessibilityLabel={`${nDone} / ${N}`}>
-          {n} / {N}
+          <Count to={nDone} delay={350} /> / {N}
         </PText>
         <View style={styles.stars} accessibilityLabel={`별 ${stars}개`}>
           {[0, 1, 2].map((i) => (
@@ -228,9 +224,9 @@ function MatchResult({
           ))}
         </View>
         <View style={styles.rs}>
-          <Tile cls="t1" delay={450} icon={<ClockIcon size={22} />} value={all ? `${cSec}초` : '시간 끝'} label="걸린 시간" />
-          <Tile cls="t2" delay={570} icon={<Bolt />} value={`x${cBest}`} label="최고 콤보" />
-          <Tile cls="t3" delay={690} icon={<XIcon size={22} color="#C2416B" w={2.6} />} value={String(cMiss)} label="틀린 짝" />
+          <Tile cls="t1" delay={450} icon={<ClockIcon size={22} />} value={all ? <><Count to={sec} delay={470} />초</> : '시간 끝'} label="걸린 시간" />
+          <Tile cls="t2" delay={570} icon={<Bolt />} value={<>x<Count to={best} delay={590} /></>} label="최고 콤보" />
+          <Tile cls="t3" delay={690} icon={<XIcon size={22} color="#C2416B" w={2.6} />} value={<Count to={miss} delay={710} />} label="틀린 짝" />
         </View>
       </View>
     </TaskLayout>
@@ -261,6 +257,11 @@ function useCount(to: number, delay: number) {
   return still || !to ? to : n;
 }
 
+/** 세어 올라가는 숫자. 이 글자만 다시 그려지도록 따로 떼었어요 (결과 화면 전체가 매 프레임 다시 그려지지 않게) */
+function Count({ to, delay }: { to: number; delay: number }) {
+  return <>{useCount(to, delay)}</>;
+}
+
 function Star({ on, delay }: { on: boolean; delay: number }) {
   const still = useReducedMotion();
   const p = useSharedValue(still ? 1 : 0);
@@ -277,9 +278,9 @@ function Star({ on, delay }: { on: boolean; delay: number }) {
   );
 }
 
-function Tile({ cls, delay, icon, value, label }: { cls: 't1' | 't2' | 't3'; delay: number; icon: React.ReactNode; value: string; label: string }) {
+function Tile({ cls, delay, icon, value, label }: { cls: 't1' | 't2' | 't3'; delay: number; icon: React.ReactNode; value: React.ReactNode; label: string }) {
   return (
-    <FadeUp delay={delay} style={StyleSheet.flatten([styles.rt, cls === 't1' && styles.t1, cls === 't2' && styles.t2, cls === 't3' && styles.t3])}>
+    <FadeUp delay={delay} rotate={cls === 't2' ? -2 : 0} style={StyleSheet.flatten([styles.rt, cls === 't1' && styles.t1, cls === 't2' && styles.t2, cls === 't3' && styles.t3])}>
       <View style={StyleSheet.flatten([styles.ic, cls === 't2' && styles.icInk])}>{icon}</View>
       <PText style={styles.rtNum}>{value}</PText>
       <PText style={styles.rtLabel}>{label}</PText>
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
   rs: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 10 },
   rt: { flex: 1, minWidth: 0, alignItems: 'center', gap: 4, paddingTop: 14, paddingBottom: 12, paddingHorizontal: 6, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, boxShadow: '3px 3px 0 #1E1A2B' },
   t1: { backgroundColor: '#E3EAF8' },
-  t2: { backgroundColor: Colors.yellow, transform: [{ rotate: '-2deg' }] },
+  t2: { backgroundColor: Colors.yellow }, // 기울기(-2deg)는 FadeUp rotate 로
   t3: { backgroundColor: '#FBE1E8' },
   ic: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   icInk: { backgroundColor: Colors.ink },

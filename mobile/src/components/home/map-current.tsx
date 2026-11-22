@@ -160,10 +160,22 @@ export function Rider() {
   const [flip, setFlip] = useState(false);
   // 프로토타입과 똑같이: 점프 한 번이 끝날 때마다(animationiteration) 35% 확률로,
   // 다음 점프의 0.42초(1.4초 × 0.3 · 막 뛰어올라 공중에 있을 때) 뒤에 좌우를 홱 바꿔요
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
+  // 한 박자에 기회가 여러 번 와서 타이머가 겹칠 수 있어요 → 모두 모아 두었다가 화면을 나가면 다 지워요
+  const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => {
+    const all = timers.current;
+    return () => {
+      all.forEach(clearTimeout);
+      all.clear();
+    };
+  }, []);
   const chance = useCallback(() => {
-    if (Math.random() < 0.35) timer.current = setTimeout(() => setFlip((f) => !f), 1400 * 0.3);
+    if (Math.random() >= 0.35) return;
+    const id = setTimeout(() => {
+      timers.current.delete(id);
+      setFlip((f) => !f);
+    }, 1400 * 0.3);
+    timers.current.add(id);
   }, []);
   // 프로토타입에선 캐릭터 눈꺼풀 두 개의 깜빡임(3초)도 같은 이벤트로 올라와서, 3초마다 눈마다 한 번씩 더 기회가 있어요
   useEffect(() => {
@@ -176,7 +188,7 @@ export function Rider() {
   }, [still, chance]);
   return (
     <View style={styles.origin} pointerEvents="none">
-      <Animated.View style={[styles.rideSh, loop(rideSh, '1.4s', 'linear', still, beat)]} />
+      <Animated.View style={[styles.rideSh, loop(rideSh, '1.4s', 'ease', still, beat)]} />
       <Animated.View style={[styles.ride, { transform: [{ scaleX: flip ? -1 : 1 }] }, flipEase]}>
         <Animated.View style={[styles.body, styles.bottomOrigin, loop(rideJump, '1.4s', 'linear', still, beat)]} onCSSAnimationIteration={chance}>
           <AvatarChar av={av} width={BODY_W} blink={!still} />

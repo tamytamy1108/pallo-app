@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { BookmarkIcon, BulbIcon, CardsIcon, KeyboardIcon, MicIcon, MicOffIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
@@ -139,11 +139,17 @@ function Wave() {
 }
 
 function WaveBar({ delay }: { delay: number }) {
-  const h = useSharedValue(6);
+  // 움직임 줄이기면 막대가 가만히 있어요 (프로토타입 .wv i { animation: none })
+  const still = useReducedMotion();
+  const h = useSharedValue(still ? 12 : 6);
   useEffect(() => {
-    const t = setTimeout(() => h.set(withRepeat(withTiming(20, { duration: 350 }), -1, true)), delay);
-    return () => clearTimeout(t);
-  }, [h, delay]);
+    if (still) {
+      h.set(12);
+      return;
+    }
+    h.set(withDelay(delay, withRepeat(withTiming(20, { duration: 350 }), -1, true)));
+    return () => cancelAnimation(h);
+  }, [h, delay, still]);
   const s = useAnimatedStyle(() => ({ height: h.get() }));
   return <Animated.View style={[styles.waveBar, s]} />;
 }
@@ -248,13 +254,13 @@ export function NoSpeakToggle({ on, onPress }: { on: boolean; onPress: () => voi
 
 /** 아래에서 살짝 떠오르며 나타나요 (프로토타입 lsFbIn .34s · 피드백 글씨 · 버튼이 차례로) */
 const FB_EASE = Easing.bezier(0.2, 0.8, 0.3, 1);
-export function FadeUp({ delay = 0, style, children }: { delay?: number; style?: StyleProp<ViewStyle>; children: ReactNode }) {
+export function FadeUp({ delay = 0, rotate = 0, style, children }: { delay?: number; /** 기울인 칸이면 각도(deg) — style 의 transform 은 움직임이 덮어써서 여기로 받아요 */ rotate?: number; style?: StyleProp<ViewStyle>; children: ReactNode }) {
   const still = useReducedMotion();
   const p = useSharedValue(still ? 1 : 0);
   useEffect(() => {
     if (!still) p.set(withDelay(delay, withTiming(1, { duration: 340, easing: FB_EASE })));
   }, [delay, still, p]);
-  const a = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ translateY: (1 - p.get()) * 10 }] }));
+  const a = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ translateY: (1 - p.get()) * 10 }, { rotate: `${rotate}deg` }] }));
   return <Animated.View style={[style, a]}>{children}</Animated.View>;
 }
 

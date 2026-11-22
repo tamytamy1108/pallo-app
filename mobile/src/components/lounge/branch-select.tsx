@@ -34,21 +34,26 @@ export function branchMatches(value: string, br: string | undefined) {
  */
 export function BranchSelect({ value, onChange }: { value: string; onChange: (branch: string) => void }) {
   const [open, setOpen] = useState(false);
+  // 열 때마다 고른 지점을 새로 읽으려고 새로 그려요. 닫히는 움직임이 끝날 때까지는 남겨 둬요
+  const [kept, setKept] = useState(false);
   const brs = branchList(value);
   const label = !brs.length ? '전체 지점' : brs.length === 1 ? brs[0] : `${brs[0]} 외 ${brs.length - 1}`;
   return (
     <>
-      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={`지점 선택 · ${label}`} hitSlop={7} style={({ pressed }) => [styles.br, brs.length > 0 && styles.brOn, pressed && styles.pressed]}>
+      <Pressable onPress={() => {
+          setOpen(true);
+          setKept(true);
+        }} accessibilityRole="button" accessibilityLabel={`지점 선택 · ${label}`} hitSlop={7} style={({ pressed }) => [styles.br, brs.length > 0 && styles.brOn, pressed && styles.pressed]}>
         <LgIcon name="pin" size={13} sw={2.4} />
         <PText style={styles.brText}>{label} ▾</PText>
       </Pressable>
-      {open ? <BranchSheet initial={brs} onClose={() => setOpen(false)} onApply={(next) => onChange(branchValue(next))} /> : null}
+      {kept ? <BranchSheet open={open} initial={brs} onClose={() => setOpen(false)} onClosed={() => setKept(false)} onApply={(next) => onChange(branchValue(next))} /> : null}
     </>
   );
 }
 
 /** 지점 고르기 시트: 전체 → 내 지점 권역 → 다른 권역. 전체를 누르면 모두 · 권역을 누르면 그 권역 모두 */
-function BranchSheet({ initial, onClose, onApply }: { initial: string[]; onClose: () => void; onApply: (brs: string[]) => void }) {
+function BranchSheet({ open, initial, onClose, onClosed, onApply }: { open: boolean; initial: string[]; onClose: () => void; onClosed: () => void; onApply: (brs: string[]) => void }) {
   const me = useMe();
   const myB = me.branch.split(' · ');
   const [on, setOn] = useState<Set<string>>(() => new Set(initial.length ? initial : LG_BRS.map((x) => x[0])));
@@ -68,7 +73,7 @@ function BranchSheet({ initial, onClose, onApply }: { initial: string[]; onClose
     onClose();
   };
   return (
-    <Sheet open onClose={onClose} title="어느 지점 글을 볼까요?" footer={<LgButton label="적용하기" wide height={52} fontSize={15.5} onPress={apply} />}>
+    <Sheet open={open} onClose={onClose} onClosed={onClosed} title="어느 지점 글을 볼까요?" footer={<LgButton label="적용하기" wide height={52} fontSize={15.5} onPress={apply} />}>
       <PText style={styles.ds}>권역이나 지점을 여러 개 함께 고를 수 있어요. 전 지점 행사는 늘 보여요.</PText>
       <View style={styles.box} accessibilityRole="list">
         <Row

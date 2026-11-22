@@ -2,13 +2,14 @@ import * as Speech from 'expo-speech';
 import { router } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { Easing, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useBlockedNames } from '@/components/common/report-sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { kfc } from '@/lib/motion';
 import {
   CH_BG,
   CH_C,
@@ -67,6 +68,9 @@ function Shell({ radius, children, flash }: { radius: number; children: ReactNod
 /**
  * 방금 연 챌린지: 노란 빛이 한 번 퍼졌다 사라져요 (@keyframes lgNew 1.5s cubic-bezier(.3,1.4,.5,1)).
  */
+/** lgNew cubic-bezier(.3,1.4,.5,1) */
+const NEW_EASE = Easing.bezierFn(0.3, 1.4, 0.5, 1);
+
 function FlashWrap({ on, radius, children }: { on: boolean; radius: number; children: ReactNode }) {
   const still = useReducedMotion();
   const t = useSharedValue(on && !still ? 0 : 1);
@@ -76,19 +80,21 @@ function FlashWrap({ on, radius, children }: { on: boolean; radius: number; chil
       clearFlash();
       return;
     }
-    t.set(withTiming(1, { duration: 1500, easing: Easing.bezier(0.3, 1.4, 0.5, 1) }));
+    t.set(0);
+    t.set(withTiming(1, { duration: 1500, easing: Easing.linear }));
     const id = setTimeout(clearFlash, 1600);
     return () => clearTimeout(id);
   }, [on, still, t]);
-  const box = useAnimatedStyle(() => ({ transform: [{ scale: interpolate(t.get(), [0, 0.3, 1], [0.94, 1.02, 1]) }] }));
+  // 시계는 선형 · 곡선은 키프레임 구간마다 (CSS 와 같게)
+  const box = useAnimatedStyle(() => ({ transform: [{ scale: kfc(t.get(), [0, 30, 100], [0.94, 1.02, 1], NEW_EASE) }] }));
   const ring = useAnimatedStyle(() => {
-    const spread = interpolate(t.get(), [0, 0.3, 1], [0, 10, 0]);
-    return { top: -spread, left: -spread, right: -spread, bottom: -spread, borderRadius: radius + spread, opacity: interpolate(t.get(), [0, 0.3, 1], [0.9, 0.55, 0]) };
+    const spread = Math.max(0, kfc(t.get(), [0, 30, 100], [0, 10, 0], NEW_EASE));
+    return { top: -spread, left: -spread, right: -spread, bottom: -spread, borderRadius: radius + spread, opacity: Math.max(0, kfc(t.get(), [0, 30, 100], [0.9, 0.55, 0], NEW_EASE)) };
   });
-  if (!on) return <View>{children}</View>;
+  // 빛이 꺼져도 같은 Animated.View 를 그대로 둬요 (바꿔 끼우면 카드 전체가 새로 그려져 이미지가 깜빡여요)
   return (
     <Animated.View style={box}>
-      <Animated.View pointerEvents="none" style={[styles.flashRing, ring]} />
+      {on ? <Animated.View pointerEvents="none" style={[styles.flashRing, ring]} /> : null}
       {children}
     </Animated.View>
   );

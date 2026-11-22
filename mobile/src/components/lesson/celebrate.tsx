@@ -23,7 +23,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { CEL_TITLE, pickOne } from '@/data/lessons';
 import { haptic, sfx } from '@/lib/feedback';
-import { kf } from '@/lib/motion';
+import { kfc } from '@/lib/motion';
 
 export type CelebrateResult = {
   /** 최종 점수: 맞힌 수 / 전체 (전체 0 이면 정확도 칸 없이) */
@@ -193,13 +193,13 @@ function BoxCell({ box, big, first, index }: { box: Box; big: boolean; first: bo
   useEffect(() => {
     if (still) return;
     g.set(withDelay(1050, withTiming(1, { duration: 900, easing: Easing.bezier(0.2, 0.8, 0.3, 1) })));
-    hop.set(withDelay(700 + index * 120, withTiming(1, { duration: 600, easing: Easing.bezier(0.3, 1.6, 0.5, 1) })));
+    hop.set(withDelay(700 + index * 120, withTiming(1, { duration: 600, easing: Easing.linear })));
   }, [still, g, hop, index]);
   const fill = useAnimatedStyle(() => ({ transform: [{ scaleX: g.get() }] }));
   // cbHop: 아래에서 작게 → 살짝 위로 → 제자리
   const emo = useAnimatedStyle(() => {
     const p = hop.get();
-    return { opacity: Math.min(1, p / 0.6), transform: [{ translateY: kf(p, [0, 60, 100], [14, -6, 0]) }, { scale: kf(p, [0, 60, 100], [0.4, 1.06, 1]) }] };
+    return { opacity: kfc(p, [0, 60, 100], [0, 1, 1], HOP_EASE), transform: [{ translateY: kfc(p, [0, 60, 100], [14, -6, 0], HOP_EASE) }, { scale: kfc(p, [0, 60, 100], [0.4, 1.06, 1], HOP_EASE) }] };
   });
   return (
     <View style={StyleSheet.flatten([styles.cb, { backgroundColor: bg }, !first && styles.cbLine])} accessibilityLabel={`${box.label} ${box.fmt(box.to)}`}>
@@ -220,6 +220,9 @@ function BoxCell({ box, big, first, index }: { box: Box; big: boolean; first: bo
     </View>
   );
 }
+
+/** cbHop cubic-bezier(.3,1.6,.5,1) — 구간마다 */
+const HOP_EASE = Easing.bezierFn(0.3, 1.6, 0.5, 1);
 
 /** 0부터 숫자를 세어 올려요 (delay 뒤 dur 동안 · 끝으로 갈수록 천천히) */
 function useCountUp(to: number, delay: number, dur: number) {
@@ -309,18 +312,10 @@ function Dancer({ move, pose, still }: { move: { m: Move | 'in'; n: number }; po
   useEffect(() => {
     if (still) return;
     const DUR: Record<Move | 'in', number> = { in: 800, hop: 600, twirl: 800, flip: 850, wiggle: 700, boing: 750, lean: 800 };
-    const EASE: Record<Move | 'in', [number, number, number, number]> = {
-      in: [0.3, 1.5, 0.5, 1],
-      hop: [0.3, 1.4, 0.5, 1],
-      twirl: [0.3, 1.2, 0.5, 1],
-      flip: [0.3, 1.1, 0.5, 1],
-      wiggle: [0.42, 0, 0.58, 1],
-      boing: [0.3, 1.6, 0.5, 1],
-      lean: [0.3, 1.4, 0.5, 1],
-    };
     kind.set(['in', ...MOVES].indexOf(move.m));
     p.set(0);
-    p.set(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: DUR[move.m], easing: Easing.bezier(...EASE[move.m]) })));
+    // 시계는 선형으로 돌리고, 곡선은 danceStyle 에서 키프레임 구간마다 걸어요 (CSS 와 같게)
+    p.set(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: DUR[move.m], easing: Easing.linear })));
   }, [move, still, p, kind]);
   const s = useAnimatedStyle(() => danceStyle(kind.get(), p.get()));
   return (
@@ -330,9 +325,22 @@ function Dancer({ move, pose, still }: { move: { m: Move | 'in'; n: number }; po
   );
 }
 
+/** 동작마다 구간 곡선 (순서: in, ...MOVES — hop · twirl · flip · wiggle · boing · lean) */
+const DANCE_EASE = [
+  Easing.bezierFn(0.3, 1.5, 0.5, 1),
+  Easing.bezierFn(0.3, 1.4, 0.5, 1),
+  Easing.bezierFn(0.3, 1.2, 0.5, 1),
+  Easing.bezierFn(0.3, 1.1, 0.5, 1),
+  Easing.bezierFn(0.42, 0, 0.58, 1),
+  Easing.bezierFn(0.3, 1.6, 0.5, 1),
+  Easing.bezierFn(0.3, 1.4, 0.5, 1),
+];
+
 function danceStyle(kind: number, t: number) {
   'worklet';
   const pct = t;
+  const e = DANCE_EASE[kind] ?? DANCE_EASE[0];
+  const kf = (x: number, stops: number[], values: number[]) => kfc(x, stops, values, e);
   if (kind === 0) {
     // celIn: 아래에서 작게 튀어나와 위로 → 착지
     return {
@@ -456,18 +464,20 @@ function Rise({ delay, style, children }: { delay: number; style?: object; child
   return <Animated.View style={[style, a]}>{children}</Animated.View>;
 }
 
+const NUDGE_EASE = Easing.bezierFn(0.42, 0, 0.58, 1);
+
 /** [이어서 하기]가 2.2초 뒤부터 2.4초마다 살짝 들썩 (nextNudge) */
 function Nudge({ style, children }: { style?: object; children: React.ReactNode }) {
   const still = useReducedMotion();
   const p = useSharedValue(0);
   useEffect(() => {
     if (still) return;
-    p.set(withDelay(2200, withRepeat(withTiming(1, { duration: 2400, easing: Easing.inOut(Easing.ease) }), -1, false)));
+    p.set(withDelay(2200, withRepeat(withTiming(1, { duration: 2400, easing: Easing.linear }), -1, false)));
     return () => cancelAnimation(p);
   }, [still, p]);
   const a = useAnimatedStyle(() => {
     const v = p.get();
-    return { transform: [{ translateY: kf(v, [0, 70, 80, 90, 100], [0, 0, -4, 0, 0]) }, { scale: kf(v, [0, 70, 80, 90, 100], [1, 1, 1.02, 1, 1]) }] };
+    return { transform: [{ translateY: kfc(v, [0, 70, 80, 90, 100], [0, 0, -4, 0, 0], NUDGE_EASE) }, { scale: kfc(v, [0, 70, 80, 90, 100], [1, 1, 1.02, 1, 1], NUDGE_EASE) }] };
   });
   return <Animated.View style={[style, a]}>{children}</Animated.View>;
 }
