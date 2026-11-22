@@ -224,7 +224,6 @@ export function BeforeAfter({ ctx, D, api }: P) {
             <TextInput value={after[i] ?? ''} onChangeText={(v) => write(i, v)} multiline placeholder="지금 다시 답해 보세요" placeholderTextColor="#B9B2A3" style={st.ta} accessibilityLabel={`Q${i + 1} 다시 답하기`} />
           </PCard>
         ))}
-        {!out ? <GoBtn label="비교하기" onPress={compare} /> : null}
         {out && view ? (
           <>
             <Stats
@@ -235,23 +234,40 @@ export function BeforeAfter({ ctx, D, api }: P) {
               ]}
             />
             {view.filled.map((i) => (
-              <View key={i} style={st.cmp}>
+              <View key={i} style={st.cmpOne}>
                 <CmpBox label="BEFORE" text={before[i] || '(예습 답변 없음)'} />
                 <CmpBox label="AFTER" text={out.a[i]} after />
               </View>
             ))}
-            <Intro
-              text={`${words(view.all) > words(view.old) ? '답이 더 길고 구체적이 됐어요! ' : ''}${view.used.length ? `쓴 키워드: ${view.used.join(', ')}` : '다음엔 키워드를 하나 넣어 말해 봐요.'}${view.sAvg >= 3 ? ' · 선택 + 이유 + 예시 기준을 채웠어요.' : ' · 이유와 예시를 붙여 3문장을 채워 봐요.'}`}
-            />
+            <BaNext longer={words(view.all) > words(view.old)} used={view.used} sAvg={view.sAvg} />
           </>
         ) : null}
       </ScrollView>
-      {out ? (
-        <PFoot>
-          <GoBtn label="완료하기" onPress={() => api.finish()} />
-        </PFoot>
-      ) : null}
+      <PFoot>{out ? <GoBtn label="완료하기" onPress={() => api.finish()} /> : <GoBtn label="비교하기" onPress={compare} />}</PFoot>
     </>
+  );
+}
+
+/** 비교 아래 한 줄: 쓴 키워드 · 다음엔 (프로토타입 .ba-next) */
+function BaNext({ longer, used, sAvg }: { longer: boolean; used: string[]; sAvg: number }) {
+  const tips = [used.length ? '' : '키워드 하나 넣기', sAvg < 3 ? '이유 · 예시로 3문장' : ''].filter(Boolean);
+  return (
+    <PText style={st.next} color={SUB}>
+      {longer ? '답이 더 길어졌어요! ' : ''}
+      {used.length ? (
+        <>
+          {'쓴 키워드 '}
+          <PText style={st.nextB}>{used.join(', ')}</PText>
+        </>
+      ) : null}
+      {tips.length ? (
+        <>
+          {used.length ? ' · ' : ''}
+          <PText style={st.nextB}>다음엔</PText>
+          {` ${tips.join(' · ')}`}
+        </>
+      ) : null}
+    </PText>
   );
 }
 
@@ -264,9 +280,9 @@ const st = StyleSheet.create({
   sitS: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19 },
   tools: { flexDirection: 'row', gap: 8 },
   read: { paddingVertical: 6, paddingHorizontal: 14 },
-  line: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 9, borderRadius: 14 },
+  line: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 11, paddingHorizontal: 12, marginHorizontal: -6 },
   lineTop: { borderTopWidth: 1, borderColor: Colors.line },
-  lineNow: { backgroundColor: '#FFF6BF' },
+  lineNow: { backgroundColor: '#FFF6BF', borderRadius: 14, borderTopColor: 'transparent' },
   e: { fontFamily: Font.body700, fontSize: 15, lineHeight: 23.25 },
   hl: { backgroundColor: Colors.yellow },
   k: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.75, marginTop: 2 },
@@ -285,5 +301,7 @@ const st = StyleSheet.create({
   baQ: { padding: 14, gap: 8 },
   baH: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   ta: { minHeight: 90, borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.cream, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Font.body500, fontSize: 15, lineHeight: 22.5, color: Colors.ink, textAlignVertical: 'top' },
-  cmp: { gap: 8 },
+  cmpOne: { gap: 10, marginTop: 8 },
+  next: { fontFamily: Font.body700, fontSize: 13.5, lineHeight: 20, textAlign: 'center', marginTop: 4 },
+  nextB: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 20, color: Colors.ink },
 });

@@ -23,14 +23,16 @@ export type Lv3Unit = {
   daily: DailyQ[];
   keywords: Keyword[];
   /** 지난주 단어: [단어, 뜻, 예문] */
-  prev: [string, string, string][];
+  /** [낱말, 뜻, 예문, 빈칸 예문 더…] — 지난주 단어 빈칸 채우기에 예문을 다 써요 */
+  prev: [string, string, string, ...string[]][];
   topic: {
     title: string;
     follow: [string, string];
     lines: [string, string][];
     expr: [string, string][];
     /** 독해 질문: [질문, 뜻, 모범 답] */
-    check: [string, string, string][];
+    /** [질문, 뜻, 정답, 오답 보기] — 독해 질문은 3개 중 고르기 */
+    check: [string, string, string, string[]?][];
   };
   journal: { title: string; q: string; ko: string; use: string[]; sample: string };
   live: LiveFix[];

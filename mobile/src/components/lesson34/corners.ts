@@ -41,41 +41,32 @@ const kwl = (D: Lv3Unit): Corner => ({
     })),
 });
 
-/** 예습 ③ USEFUL EXPRESSIONS: 30초 짝 맞추기 → 표현 하나로 질문 만들어 말하기 */
-const exprMatch = (D: Lv3Unit): Corner => {
-  const E = D.topic.expr;
-  const models = ['Have you ever been obsessed with a trend?', 'Do you like sharing your trips in real time?', 'What helps you live in the moment?'];
-  return {
-    kick: 'USEFUL EXPRESSIONS',
-    build: () => [
-      { type: 'match', id: 'expr', pairs: E, time: 30, kick: 'USEFUL EXPRESSIONS · ① 30초 타임어택' },
-      {
-        type: 'say',
-        kick: 'USEFUL EXPRESSIONS · ② 질문 만들기',
-        head: { k: 'READING CHECK 3', p: '표현 하나로 옆 사람에게 할 질문', m: '내가 직접 만든 질문을 말해요' },
-        need: 2,
-        card: { kind: 'chips', items: E.map(([w]) => w) },
-        checks: [
-          ['질문 형태 (Have you / Do you / What …?)', /^(have|do|does|did|what|why|how|when|where|would|is|are|can|if)\b|\?$/i],
-          ['USEFUL EXPRESSION 하나', (v) => E.some(([w]) => phraseRe(w).test(v))],
-        ],
-        marks: E.map(([w]) => phraseRe(w)),
-        model: models[0],
-        modelLabel: '이런 질문도 좋아요',
-        ph: 'Have you ever ___?',
-        alt: { type: 'pick', label: '표현을 바르게 쓴 질문은?', opts: [models[0], 'Have you ever obsessed a trend?', 'Do you obsessed with trends?'], ans: 0 },
-      },
-    ],
-  };
+/** 예습 ③ USEFUL EXPRESSIONS: 30초 짝 맞추기 (표현으로 예문 만들기는 TOPIC 이야기하기에서 해요 · 프로토타입 v503) */
+const exprMatch = (D: Lv3Unit): Corner => ({
+  kick: 'USEFUL EXPRESSIONS',
+  build: () => [{ type: 'match', id: 'expr', pairs: D.topic.expr, time: 30, kick: 'USEFUL EXPRESSIONS · 30초 타임어택' }],
+});
+
+/** 빈칸 문장: 예문에서 그 낱말(어미 변화 포함)을 _____ 로 */
+const blankOf = (ex: string, w: string) => ex.replace(new RegExp(`\\b${escRe(w.split(' ')[0].replace(/e$/, ''))}\\w*`, 'i'), '_____');
+const shuffled = <T,>(a: T[]) => {
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
 };
 
-/** 본학습 ① 지난주 단어로 말하기: 5초 안에 뜻 → 그 단어로 한 문장 */
+/** 본학습 ① 지난주 단어: 5초 안에 뜻 고르기 → 준비된 예문 빈칸에 알맞은 단어 넣기 */
 const warm = (D: Lv3Unit): Corner => ({
   kick: '지난주 단어',
-  build: () =>
-    D.prev.map(([w, m, ex], i, P) => ({
+  build: () => {
+    const P = D.prev;
+    const W = P.map((p) => p[0]);
+    const meaning: Task34[] = P.map(([w, m, ex], i) => ({
       type: 'pick',
-      kick: `지난주 단어 · ${i + 1}/${P.length}`,
+      kick: `지난주 단어 · 뜻 ${i + 1}/${P.length}`,
       label: '뜻을 골라요',
       q: { en: w, big: w },
       limit: 5,
@@ -83,17 +74,29 @@ const warm = (D: Lv3Unit): Corner => ({
       ans: 0,
       sayAns: ex,
       noCards: true,
+    }));
+    const items = shuffled(P.flatMap(([w, m, ...exs]) => exs.map((ex) => ({ w, m, ex }))));
+    const blanks: Task34[] = items.map(({ w, m, ex }, i) => ({
+      type: 'pick',
+      kick: `지난주 단어 · 빈칸 ${i + 1}/${items.length}`,
+      label: '빈칸에 알맞은 단어는?',
+      q: { en: ex, blank: blankOf(ex, w) },
+      keep: true,
+      opts: W,
+      ans: W.indexOf(w),
+      sayAns: ex,
+      noCards: true,
       mark: [ex, ''],
-      then: () => [
-        { type: 'say', kick: `지난주 단어 · ${w} 로 말하기`, ask: { en: `Tell me something using “${w}”.`, ko: `${w}(${m})로 내 이야기를 한 문장 말해요` }, checks: [[w, wordRe(w)]], model: ex, need: 1 },
-      ],
-    })),
+      explain: `${w} · ${m}`,
+    }));
+    return [...meaning, ...blanks];
+  },
 });
 
-/** 본학습 ③ TOPIC 이야기하기: 꼬리 질문 → 독해 질문 2개 → 표현으로 내 질문 만들기 */
+/** 본학습 ③ TOPIC 이야기하기: 꼬리 질문 → 독해 질문(답 3개 중 고르기) → 표현 칸마다 내 예문 만들기 */
 const ttalk = (D: Lv3Unit): Corner => {
   const T = D.topic;
-  const exRe = new RegExp(T.expr.map(([x]) => escRe(x).replace(/\bmy\b/, '\\w+')).join('|'), 'i');
+  const lineOf = (x: string) => T.lines.find(([e]) => phraseRe(x).test(e))?.[0] ?? '';
   return {
     kick: `TOPIC · ${T.title}`,
     build: () => [
@@ -106,51 +109,54 @@ const ttalk = (D: Lv3Unit): Corner => {
         model: 'Yes! I once forgot a new coworker’s name right after lunch. It was on the tip of my tongue, so I played it cool for a week.',
         prompt: '내 경험으로 3문장 이상 말해요',
       },
-      ...T.check.map(([en, ko, model], i): SayTask => ({ type: 'say', kick: `TOPIC · 독해 질문 ${i + 1}/${T.check.length}`, ask: { en, ko }, minWords: 6, need: 0, model, prompt: '지문을 떠올려 말해요' })),
-      {
-        type: 'say',
-        kick: 'TOPIC · 내 질문 만들기',
-        head: { k: 'MY QUESTION', p: T.expr.map(([x]) => x).join(' · '), m: '표현 하나를 넣어 멤버에게 물을 질문을 만들어 말해요' },
-        need: 2,
-        checks: [
-          ['표현 넣기', exRe],
-          ['질문으로', /\?\s*$|^\s*(do|did|have|has|what|how|why|when|where|who|is|are|can|could|would|will)\b/i],
-        ],
-        model: 'Have you ever had to play it cool when you forgot someone’s name?',
-      },
+      ...T.check.map(([en, ko, model, wrong = []], i): Task34 => ({
+        type: 'pick',
+        kick: `TOPIC · 독해 질문 ${i + 1}/${T.check.length}`,
+        label: '지문 내용에 맞는 답을 골라요',
+        q: { en, ko },
+        opts: [model, ...wrong],
+        ans: 0,
+        sayAns: model,
+        noCards: true,
+      })),
+      { type: 'exprs', kick: 'TOPIC · 표현으로 예문 만들기', items: T.expr.map(([w, m]) => [w, m, lineOf(w)]), need: 3 },
     ],
   };
 };
 
-/** 복습 JOURNAL: 1분 말하기 → AI가 문단 정리 + 오늘 단어 + 고칠 문장 2개 → 날짜와 저장 → 다시 읽기 */
+/** 복습 JOURNAL: 3칸 순서(요즘 하는 일 → 좋은 점 · 힘든 점 → 요즘 느끼는 것)를 보고 1분 말하기 → AI가 일기로 정리 + 오늘 단어 + 고칠 문장 */
 const journal = (D: Lv3Unit, env: CornerEnv): Corner => {
   const J = D.journal;
   const kwRes = [...J.use, ...D.keywords.map((k) => k[0])].map(wordRe);
   return {
-    kick: 'JOURNAL · 말하는 일기',
+    kick: 'JOURNAL',
     build: () => [
       {
         type: 'say',
-        kick: 'JOURNAL · ① 1분 말하기',
+        kick: 'JOURNAL · 1분 말하기',
         head: { k: J.title, p: J.q, m: J.ko },
         limit: 60,
         need: 0,
         minWords: 15,
         marks: kwRes,
-        card: { kind: 'chips', label: '넣어 볼 단어', items: J.use },
-        prompt: '1분 동안 말로 일기를 써요 · AI가 받아 적어 문단으로 정리해요',
-        ph: 'If I had a day without responsibilities, I would ___.',
+        card: {
+          kind: 'guide',
+          steps: [
+            ['요즘 하는 일', 'These days, I’m …'],
+            ['좋은 점 · 힘든 점', 'I like … / It’s hard to …'],
+            ['요즘 느끼는 것', 'Lately, … has grown on me.'],
+          ],
+          chips: { label: '넣어 볼 단어', items: J.use },
+        },
+        prompt: '위 순서대로 한 문장씩 · AI가 일기로 정리해요',
+        ph: 'These days, I’m ___. I like ___. Lately, ___.',
         noMsg: '15단어 이상 말해 봐요',
         save: (v) => {
           const P = polishLive(v, D.live);
           const used = J.use.filter((w) => wordRe(w).test(P.text));
           setAns(env.key, [P.text]);
           saveExpression({ en: P.text, ko: `JOURNAL · ${today()}`, source: `${env.source} · JOURNAL` });
-          const sents = P.text.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 4);
-          return {
-            extra: { kind: 'journal', date: today(), text: P.text, marks: kwRes, use: J.use, used, fixes: P.fixes },
-            next: [{ type: 'read', kick: 'JOURNAL · ② 다듬은 저널 다시 읽기', en: sents.join(' '), ko: '다듬은 문장으로 다시 읽어 녹음해요 · 날짜별로 표현함에 쌓여요', label: '다듬은 저널 읽기' }],
-          };
+          return { extra: { kind: 'journal', date: today(), text: P.text, marks: kwRes, use: J.use, used, fixes: P.fixes } };
         },
       },
     ],

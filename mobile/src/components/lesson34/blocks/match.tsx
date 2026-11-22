@@ -194,7 +194,7 @@ function MatchResult({ task, nDone, used, best, miss, onAgain }: { task: MatchTa
       </Body>
       <Foot>
         <EndNote good={all}>
-          <EndMsg rest={msg} />
+          <EndMsg rest={msg} good={all} />
         </EndNote>
         <FootRow>
           <SkipBtn label="한 번 더" onPress={onAgain} />

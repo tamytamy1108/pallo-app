@@ -55,6 +55,26 @@ export function CardView({ card, soundOff }: { card: CardBlock; soundOff: boolea
           <PText style={styles.plain}>{card.en}</PText>
         </View>
       );
+    case 'guide':
+      // JOURNAL 순서 안내: 번호 동그라미 · 할 말 · 시작 문장
+      return (
+        <View style={styles.guide}>
+          {card.steps.map(([k, en], i) => (
+            <View key={k} style={styles.gRow}>
+              <View style={styles.gNum}>
+                <PText style={styles.gNumT}>{i + 1}</PText>
+              </View>
+              <View style={styles.gText}>
+                <PText style={styles.gK}>{k}</PText>
+                <PText style={styles.gEn} color={SUB}>
+                  {en}
+                </PText>
+              </View>
+            </View>
+          ))}
+          {card.chips ? <ChkRow center label={card.chips.label} items={card.chips.items.map((t) => ({ t }))} /> : null}
+        </View>
+      );
     case 'useful':
       return (
         <View style={styles.ex}>
@@ -245,6 +265,13 @@ const FixLine = ({ a, b }: { a: string; b: string }) => (
 );
 
 const styles = StyleSheet.create({
+  guide: { gap: 6 },
+  gRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white },
+  gNum: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
+  gNumT: { fontFamily: Font.display, fontSize: 12, lineHeight: 16 },
+  gText: { flex: 1, minWidth: 0 },
+  gK: { fontSize: 14, lineHeight: 20, fontWeight: '900' },
+  gEn: { fontSize: 12.5, lineHeight: 18, fontWeight: '700' },
   card: { gap: 10 },
   kw2: { flexDirection: 'row', gap: 10 },
   kwCard: { flex: 1, paddingVertical: 14, paddingHorizontal: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, boxShadow: `3px 3px 0px ${Colors.ink}`, gap: 4 },

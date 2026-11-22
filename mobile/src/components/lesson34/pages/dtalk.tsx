@@ -3,14 +3,14 @@ import * as Tts from "expo-speech";
 import { useEffect, useState } from "react";
 import {
   FlatList,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
 
-import { MicIcon } from "@/components/lesson/icons";
+import { CheckIcon, MicIcon } from "@/components/lesson/icons";
+import { Pressable } from "@/components/ui/pressable";
 import { PText } from "@/components/ui/text";
 import { showToast } from "@/components/ui/toast";
 import { Font } from "@/constants/fonts";
@@ -23,16 +23,14 @@ import { isDone, stepKey } from "@/state/progress";
 
 import { leave34, type StepCtx } from "../finish";
 import { answers, setAns } from "../store";
-import { capFirst, nrm, sentN, wordRe, words } from "../text";
+import { aiFix, bitOf, nrm, NUDGE, sentN, wordRe, words } from "../text";
 import {
-  ChkRow,
   GoBtn,
   IMG,
   MarkBtn,
   ModeTabs,
   Spk,
   SUB,
-  UsedList,
   sayEn,
 } from "../ui";
 import { PCard, PFoot, Stats } from "./common";
@@ -47,6 +45,22 @@ type Msg = {
   kw?: Record<string, 1>;
 };
 type Mode = "voice" | "write";
+/** AI 피드백 한 칸 (왼쪽 색 줄 + 이름 + 문장들) */
+function FbPart({ label, color, bar, items }: { label: string; color: string; bar: string; items: string[] }) {
+  return (
+    <View style={StyleSheet.flatten([st.fbPart, { borderColor: bar }])}>
+      <PText style={st.fbK} color={color}>
+        {label}
+      </PText>
+      {items.map((x) => (
+        <PText key={x} style={st.fbP}>
+          {x}
+        </PText>
+      ))}
+    </View>
+  );
+}
+
 const L3_REACT = [
   "Oh, interesting!",
   "I see.",
@@ -102,6 +116,9 @@ export function DailyTalk({
   const [used, setUsed] = useState<Record<string, 1>>({});
   const [fixes, setFixes] = useState<[string, string, string][]>([]);
   const [ans, setAnsLocal] = useState<Record<number, string[]>>({});
+  // 질문별 교정한 답 (AI 교정 · 대화 끝 정리에 써요)
+  const [fxAns, setFxAns] = useState<Record<number, string[]>>({});
+  const [nk, setNk] = useState(0);
   const [all, setAll] = useState(false);
   const [extra, setExtra] = useState(false);
   const [done, setDone] = useState(false);
@@ -242,60 +259,77 @@ export function DailyTalk({
           words(b.en) - words(a.en),
       )[0];
     const bestEn = best ? best.fixed || best.en : "";
+    const usedW = D.keywords.filter(([w]) => used[w]).map(([w]) => w);
+    const tip = D.keywords.find(([w]) => !used[w]);
+    const qa = Q.map((qq, i) => ({ qq, i, raw: (ans[i] ?? []).join(" "), fixed: (fxAns[i] ?? []).join(" ") })).filter((x) => x.raw);
+    const shortN = qa.filter((x) => sentN(x.raw) < 3).length;
+    const longest = Math.max(0, ...qa.map((x) => words(x.raw)));
+    const whys = [...new Set(fixes.flatMap(([, , w]) => w.split(" / ")))].slice(0, 3);
+    const good = [`질문 ${answered}개에 끝까지 답했어요`, usedW.length ? `키워드 ${usedW.length}개를 자연스럽게 넣었어요 · ${usedW.slice(0, 3).join(", ")}` : "", longest >= 25 ? `가장 긴 답이 ${longest}단어예요 · 생각을 길게 이어 갔어요` : ""].filter(Boolean);
+    const weak = [shortN ? `짧게 끝난 답이 ${shortN}개 · 이유나 예시가 빠졌어요` : "", whys.length ? `자주 틀린 곳 · ${whys.join(" / ")}` : "", usedW.length < 2 ? "키워드를 거의 안 썼어요" : ""].filter(Boolean);
     return (
       <>
-        <ScrollView
-          style={st.flex}
-          contentContainerStyle={st.body}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false}>
           <Stats
             items={[
               [`${answered}/6`, "질문"],
               [String(mine.length), "내 발화"],
-              [`${usedN}/12`, "키워드"],
+              [String(fixes.length), "교정"],
             ]}
           />
-          <UsedList
-            title="질문별 내 답"
-            items={Q.flatMap((qq, i) =>
-              ans[i]
-                ? [
-                    {
-                      l: "",
-                      on: true,
-                      sub: <QAns ko={`Q${i + 1} · ${qq.ko}`} en={ans[i][0]} />,
-                    },
-                  ]
-                : [],
-            )}
-          />
-          <ChkRow
-            label="키워드"
-            items={D.keywords.map(([w]) => ({ t: w, on: !!used[w] }))}
-          />
-          {fixes.length ? (
-            <UsedList
-              title={`AI가 고쳐 준 문장 ${fixes.length}개`}
-              items={fixes.map(([a, b, why]) => ({
-                l: "",
-                on: true,
-                sub: <FixAns a={a} b={b} why={why} />,
-              }))}
-            />
-          ) : null}
-          {best ? (
-            <View style={st.best}>
-              <View style={st.flex}>
-                <PText style={st.bestK} color={SUB}>
-                  오늘의 내 문장
-                </PText>
-                <PText style={st.bestB}>{bestEn}</PText>
-              </View>
-              <Spk text={bestEn} soundOff={api.soundOff} />
-              <MarkBtn en={bestEn} ko="" source={ctx.source} />
+          {/* AI 피드백: 잘했어요 · 아쉬워요 · 이렇게 해 봐요 (프로토타입 v503 · 실제 앱은 AI 가 써요) */}
+          <PCard style={st.fb}>
+            <View style={st.fbH}>
+              <Image source={IMG.yellow} style={st.fbImg} contentFit="contain" />
+              <PText style={st.fbT}>AI 피드백</PText>
             </View>
-          ) : null}
+            <FbPart label="잘했어요" color="#2F6B2A" bar="#6BBF59" items={good} />
+            {weak.length ? <FbPart label="아쉬워요" color="#C2416B" bar="#E59AAE" items={weak} /> : null}
+            <FbPart
+              label="이렇게 해 봐요"
+              color={Colors.purple}
+              bar={Colors.purple}
+              items={["선택 → 이유(Because) → 예시(For example), 3문장으로 답해요", ...(tip ? [`안 쓴 키워드 ${tip[0]} 넣어 보기 · ${tip[2]}`] : [])]}
+            />
+            {best ? (
+              <View style={st.best}>
+                <View style={st.flex}>
+                  <PText style={st.bestK} color={SUB}>
+                    오늘의 내 문장
+                  </PText>
+                  <PText style={st.bestB}>{bestEn}</PText>
+                </View>
+                <Spk text={bestEn} soundOff={api.soundOff} />
+                <MarkBtn en={bestEn} ko="" source={ctx.source} />
+              </View>
+            ) : null}
+          </PCard>
+          <PText style={st.qaH} color={SUB}>
+            질문별 내 답
+          </PText>
+          {qa.map((x) => (
+            <PCard key={x.i} style={st.qa}>
+              <View style={st.qaHead}>
+                <View style={st.qPill}>
+                  <PText style={st.qPillT} color={Colors.white}>{`Q${x.i + 1}`}</PText>
+                </View>
+                <PText style={st.qaKo} color={SUB}>
+                  {x.qq.ko}
+                </PText>
+              </View>
+              <PText style={st.qaMine} color={SUB}>
+                {x.raw}
+              </PText>
+              {x.fixed && x.fixed !== x.raw ? (
+                <View style={st.qaFix}>
+                  <PText style={st.qaFixK} color="#2F6B2A">
+                    AI 교정
+                  </PText>
+                  <PText style={st.qaFixB}>{x.fixed}</PText>
+                </View>
+              ) : null}
+            </PCard>
+          ))}
         </ScrollView>
         <PFoot>
           <GoBtn label="대화 완료" onPress={() => api.finish()} />
@@ -322,22 +356,24 @@ export function DailyTalk({
         msg.kw = { ...msg.kw, [w]: 1 };
       }
     });
-    for (const [re, fx, why] of D.live)
-      if (re.test(x)) {
-        msg.fixed = capFirst(fx(x));
-        msg.why = why;
-        setFixes((f) => [...f, [v, msg.fixed ?? "", why]]);
-        break;
-      }
+    // 답 교정 (오타 · 문법 · 대문자 — 실제 앱은 AI)
+    const F = aiFix(v, D.live);
+    if (F.changed) {
+      msg.fixed = F.text;
+      msg.why = F.why.join(" / ") || "문장 다듬기";
+      setFixes((f) => [...f, [v, F.text, msg.why ?? ""]]);
+    }
     setUsed(nextUsed);
     setLog((l) => [...l, msg]);
     setAnsLocal((a) => ({ ...a, [qi]: [...(a[qi] ?? []), v] }));
+    setFxAns((a) => ({ ...a, [qi]: [...(a[qi] ?? []), msg.fixed ?? v] }));
     setDraft("");
     sfx("send");
     const shortA = sentN(v) < 3 && words(v) < 20;
     const offT =
       !q.tw.test(v) && !Object.keys(msg.kw ?? {}).length && words(v) >= 5;
-    const R = L3_REACT[(log.length + 1 + qi) % L3_REACT.length];
+    const kwHit = Object.keys(msg.kw ?? {})[0];
+    const R = kwHit ? `Nice use of “${kwHit}”!` : L3_REACT[(log.length + 1 + qi) % L3_REACT.length];
     if (offT && !steer[qi]) {
       setSteer({ ...steer, [qi]: 1 });
       ai(
@@ -346,17 +382,12 @@ export function DailyTalk({
       );
     } else if (shortA && !nudged[qi]) {
       setNudged({ ...nudged, [qi]: 1 });
+      // 방금 한 말을 짚어서 묻고, 질문마다 다른 말로 (같은 문장 반복 없이)
       const [w, , ex] = D.keywords[q.kw[0]];
-      if (prep)
-        ai(
-          "Tell me more — why? Can you give me an example?",
-          "조금 더 말해 줄래요? 왜요? 예를 들어 줄래요?",
-        );
-      else
-        ai(
-          `Tell me more! For example: “${ex}” Now your turn — try using “${w}”.`,
-          `예시를 보고 ‘${w}’를 넣어 3문장으로 말해 봐요`,
-        );
+      const [en, ko] = NUDGE[nk % NUDGE.length](bitOf(msg.fixed ?? v));
+      setNk(nk + 1);
+      if (prep) ai(en, ko);
+      else ai(`${en} Try using “${w}” — like: “${ex}”`, `${ko} · ‘${w}’를 넣어 봐요`);
     } else if (extra) {
       ai(
         `${R} Thanks for sharing more. Pick another question below, or finish the chat.`,
@@ -405,52 +436,55 @@ export function DailyTalk({
         <View style={st.stickyWrap}>
           <PCard style={st.qc}>
             <View style={st.hd}>
-              <PText
-                style={st.hdT}
-                color={SUB}
-              >{`${extra ? "더 이야기하기" : `질문 ${Math.min(p + 1, 6)}/6`} · DAILY TOPIC`}</PText>
-              <PText
-                style={st.hdT}
-                color={Colors.purple}
-              >{`키워드 ${usedN}/12`}</PText>
+              <View style={st.qPill}>
+                <PText style={st.qPillT} color={Colors.white}>
+                  {extra ? "MORE" : `Q${Math.min(p + 1, 6)}`}
+                </PText>
+              </View>
+              <PText style={st.hdT} color={SUB}>{`DAILY TOPIC · ${extra ? "더 이야기하기" : `${Math.min(p + 1, 6)}/6`}`}</PText>
+              <PText style={st.hdK} color={Colors.purple}>{`키워드 ${usedN}/12`}</PText>
             </View>
-            <PText style={st.qcB}>{q.en}</PText>
+            <View style={st.qt}>
+              <PText style={st.qcB}>{q.en}</PText>
+              <Spk text={q.en} soundOff={api.soundOff} />
+            </View>
             <PText style={st.qe} color={SUB}>
               {q.ko}
             </PText>
+            {/* 키워드 알약: 누르면 뜻 · 예문이 상자 안에 펼쳐져요 */}
+            <View style={st.kws}>
+              {q.kw.map((k) => {
+                const [w] = D.keywords[k];
+                const on = !!used[w];
+                const isOpen = open === w;
+                return (
+                  <Pressable
+                    key={w}
+                    onPress={() => setOpen(isOpen ? null : w)}
+                    sound="pick"
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isOpen }}
+                    style={StyleSheet.flatten([st.kc, on && st.kcOn, isOpen && st.kcOpen])}
+                  >
+                    {on ? <CheckIcon size={11} color="#2F6B2A" /> : null}
+                    <PText style={st.kcT} color={isOpen ? Colors.white : on ? "#2F6B2A" : Colors.purple}>
+                      {w}
+                    </PText>
+                  </Pressable>
+                );
+              })}
+            </View>
             {q.kw.map((k) => {
               const [w, m, ex] = D.keywords[k];
-              const on = !!used[w];
-              const isOpen = open === w;
-              return (
-                <Pressable
-                  key={w}
-                  onPress={() => setOpen(isOpen ? null : w)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: isOpen }}
-                  style={st.kw}
-                >
-                  <View style={st.kwRow}>
-                    <PText style={st.kwB} color={Colors.purple}>
-                      {on ? `✓ ${w}` : w}
-                    </PText>
-                    {!prep ? (
-                      <PText style={st.kwM}>{m}</PText>
-                    ) : (
-                      <View style={st.flex} />
-                    )}
-                    <PText style={st.kwI} color={SUB}>
-                      예문
-                    </PText>
-                  </View>
-                  {isOpen ? (
-                    <>
-                      {prep ? <PText style={st.kwM}>{m}</PText> : null}
-                      <PText style={st.kwEx}>{ex}</PText>
-                    </>
-                  ) : null}
-                </Pressable>
-              );
+              return open === w ? (
+                <View key={w} style={st.kx}>
+                  <PText style={st.kxB}>{w}</PText>
+                  <PText style={st.kxM} color={SUB}>
+                    {m}
+                  </PText>
+                  <PText style={st.kxE}>{ex}</PText>
+                </View>
+              ) : null;
             })}
           </PCard>
         </View>
@@ -594,26 +628,6 @@ export function DailyTalk({
 }
 
 const Gap = () => <View style={st.gap} />;
-const QAns = ({ ko, en }: { ko: string; en: string }) => (
-  <>
-    <PText style={st.sumK} color={SUB}>
-      {ko}
-    </PText>
-    <PText style={st.sumB}>{en}</PText>
-  </>
-);
-const FixAns = ({ a, b, why }: { a: string; b: string; why: string }) => (
-  <>
-    <PText style={StyleSheet.flatten([st.sumB, st.strike])} color={SUB}>
-      {a}
-    </PText>
-    <PText style={st.sumB}>{b}</PText>
-    <PText style={st.sumK} color={SUB}>
-      {why}
-    </PText>
-  </>
-);
-
 const st = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   flex2: { flex: 2 },
@@ -675,10 +689,38 @@ const st = StyleSheet.create({
   pinned: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4, gap: 10 },
   chatBody: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 10 },
   gap: { height: 10 },
-  qc: { paddingVertical: 12, paddingHorizontal: 14, gap: 4 },
-  hd: { flexDirection: "row", justifyContent: "space-between" },
-  hdT: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16 },
-  qcB: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22.5 },
+  qc: { paddingVertical: 14, paddingHorizontal: 16, gap: 6, borderRadius: 22 },
+  hd: { flexDirection: "row", alignItems: "center", gap: 8 },
+  qPill: { borderRadius: 999, backgroundColor: Colors.purple, paddingHorizontal: 9, paddingVertical: 3 },
+  qPillT: { fontFamily: Font.display, fontSize: 11, lineHeight: 14 },
+  hdT: { flex: 1, fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16 },
+  hdK: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16 },
+  qt: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  qcB: { flex: 1, fontFamily: Font.body900, fontSize: 17, lineHeight: 23.8, letterSpacing: -0.2 },
+  kws: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
+  kc: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1.5, borderColor: Colors.purple, backgroundColor: "#F1ECFB", borderRadius: 999, paddingHorizontal: 11, paddingVertical: 4 },
+  kcOn: { borderColor: "#2F6B2A", backgroundColor: "#EAF6E7" },
+  kcOpen: { backgroundColor: Colors.purple, borderColor: Colors.purple },
+  kcT: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18 },
+  kx: { marginTop: 2, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, backgroundColor: Colors.cream, gap: 2 },
+  kxB: { fontFamily: Font.body900, fontSize: 14, lineHeight: 19 },
+  kxM: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18 },
+  kxE: { fontFamily: Font.body600, fontSize: 13.5, lineHeight: 19.5 },
+  fb: { padding: 16, gap: 12 },
+  fbH: { flexDirection: "row", alignItems: "center", gap: 8 },
+  fbImg: { width: 40, height: 34 },
+  fbT: { fontFamily: Font.display, fontSize: 16, lineHeight: 20 },
+  fbPart: { gap: 4, paddingLeft: 12, borderLeftWidth: 3 },
+  fbK: { fontFamily: Font.body900, fontSize: 12, lineHeight: 17 },
+  fbP: { fontFamily: Font.body700, fontSize: 13.5, lineHeight: 20 },
+  qaH: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, marginTop: 6 },
+  qa: { padding: 14, gap: 8, boxShadow: "none" },
+  qaHead: { flexDirection: "row", alignItems: "center", gap: 8 },
+  qaKo: { flex: 1, fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17.5 },
+  qaMine: { fontFamily: Font.body700, fontSize: 14.5, lineHeight: 21.75 },
+  qaFix: { paddingVertical: 9, paddingHorizontal: 12, borderRadius: 12, backgroundColor: "#EAF6E7", gap: 2 },
+  qaFixK: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16 },
+  qaFixB: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 21.75 },
   kw: { paddingTop: 4 },
   kwRow: { flexDirection: "row", alignItems: "baseline", gap: 6 },
   kwB: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19 },

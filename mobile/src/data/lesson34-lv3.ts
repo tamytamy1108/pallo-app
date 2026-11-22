@@ -63,7 +63,7 @@ export const LV3_101: Lv3Unit = {
     ['peer pressure', '또래 압박', 'Many students feel peer pressure to go to expensive cram schools because all their friends go.', '친구들이 다 다니니까 많은 학생이 비싼 학원에 가야 한다는 또래 압박을 느껴요.'],
     ['the norm', '당연한 일, 보통', 'Working late used to be the norm in Korea, but that is slowly changing these days.', '한국에선 야근이 당연한 일이었지만 요즘은 조금씩 바뀌고 있어요.']
   ],
-  prev: [['reminisce', '추억하다, 옛일을 회상하다', 'My friends and I love to reminisce about our college days.'], ['rebellious', '반항적인', 'I was a bit rebellious as a teenager.'], ['curfew', '통금 시간', 'My parents gave me a 10 p.m. curfew in high school.'], ['romanticize', '미화하다', 'People often romanticize life in the countryside.']],
+  prev: [['reminisce', '추억하다, 옛일을 회상하다', 'My friends and I love to reminisce about our college days.', 'Old songs always make me reminisce about high school.'], ['rebellious', '반항적인', 'I was a bit rebellious as a teenager.', 'My little brother is going through a rebellious phase.'], ['curfew', '통금 시간', 'My parents gave me a 10 p.m. curfew in high school.', 'The dorm has a midnight curfew on weekdays.'], ['romanticize', '미화하다', 'People often romanticize life in the countryside.', 'It’s easy to romanticize the past when you miss it.']],
   topic: {
     title: 'Forgotten Name',
     follow: ['Have you ever forgotten someone’s name right after meeting them?', '누군가를 만나자마자 이름을 잊어버린 적이 있나요?'],
@@ -90,11 +90,11 @@ export const LV3_101: Lv3Unit = {
     ],
     expr: [['on the tip of my tongue', '생각날 듯 말 듯하다'], ['play it cool', '태연한 척하다'], ['sneak a peek', '몰래 보다'], ['dodge', '피하다'], ['come clean', '사실대로 털어놓다'], ['save face', '체면을 지키다']],
     check: [
-      ['How did the writer try to find out the coworker’s name?', '글쓴이는 동료 이름을 알아내려고 어떻게 했나요?', 'The writer tried to sneak a peek at his ID card and searched the company chat for hours.'],
-      ['How did the coworker know the writer’s name?', '동료는 글쓴이 이름을 어떻게 알았나요?', 'He read it off the writer’s coffee mug.']
+      ['How did the writer try to find out the coworker’s name?', '글쓴이는 동료 이름을 알아내려고 어떻게 했나요?', 'The writer tried to sneak a peek at his ID card and searched the company chat for hours.', ['The writer asked the manager to introduce him again.', 'The writer called him by a nickname until he said his name.']],
+      ['How did the coworker know the writer’s name?', '동료는 글쓴이 이름을 어떻게 알았나요?', 'He read it off the writer’s coffee mug.', ['He checked the writer’s ID card at lunch.', 'A friend told him the writer’s name.']]
     ]
   },
-  journal: { title: 'JOURNAL TOPIC', q: 'What does your life look like these days?', ko: '요즘 내 일상은 어떤가요? 현재형 · 현재진행형으로 써 봐요',
+  journal: { title: 'JOURNAL', q: 'What does your life look like these days?', ko: '요즘 내 일상은 어떤가요? 현재형 · 현재진행형으로 써 봐요',
     use: ['hooked on', 'daily grind', 'slow down', 'grow on', 'breathing room', 'the norm'],
     sample: 'These days, I’m working on a big project, so the daily grind feels heavy. I usually wake up at seven and do my commute on autopilot. Lately, yoga has really grown on me, and it helps me slow down.' },
   live: LIVE,

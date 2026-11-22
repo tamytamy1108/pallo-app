@@ -1,6 +1,6 @@
 /*
  * Lv.3 · 4 레슨 문제(블록) 모양 — 프로토타입 TKV.* 에 넘기던 객체를 그대로 데이터로.
- * 블록: say · pick · match · explain · choose · blind · duo · score · read(다듬은 글 다시 읽기)
+ * 블록: say · pick · match · explain · choose · blind · duo · score · read(다듬은 글 다시 읽기) · exprs(표현 칸 예문)
  */
 import type { SlotKey } from './text';
 
@@ -17,7 +17,9 @@ export type CardBlock =
   | { kind: 'bg'; text: string }
   | { kind: 'before'; label: string; text: string }
   | { kind: 'plain'; label: string; en: string }
-  | { kind: 'useful'; label: string; en: string };
+  | { kind: 'useful'; label: string; en: string }
+  /** 순서 안내 (JOURNAL: 1 요즘 하는 일 → 2 좋은 점 · 힘든 점 → 3 요즘 느끼는 것) + 넣어 볼 단어 */
+  | { kind: 'guide'; steps: [string, string][]; chips?: { label?: string; items: string[] } };
 
 /** 말한 뒤 결과 아래에 더 보여 줄 것 (저널 정리 · 질문 날카로움) */
 export type SayExtra =
@@ -108,10 +110,12 @@ export type ChooseTask = { type: 'choose'; kick: string; head?: Head; n: number;
 export type BlindTask = { type: 'blind'; kick: string; head?: Head; lines: [string, string][]; max?: number; go?: string };
 export type DuoTask = { type: 'duo'; kick: string; head?: Head; who: string; c: string; lines: [string, string, (1 | undefined)?][]; ph?: string; result?: { title: string; items: (mine: string[]) => string[] } };
 export type ScoreTask = { type: 'score'; kick: string; keys: string[] };
+/** 표현마다 칸 하나 · 내 예문 쓰기 [표현, 뜻, 지문 예문] (프로토타입 TKV.exprs) */
+export type ExprsTask = { type: 'exprs'; kick: string; items: [string, string, string][]; need: number };
 /** 다듬은 글을 다시 소리 내어 읽기 (프로토타입 journal ② · TKV.shadow pass) */
 export type ReadTask = { type: 'read'; kick: string; en: string; ko: string; label: string };
 
-export type Task34 = SayTask | PickTask | MatchTask | ExplainTask | ChooseTask | BlindTask | DuoTask | ScoreTask | ReadTask;
+export type Task34 = SayTask | PickTask | MatchTask | ExplainTask | ChooseTask | BlindTask | DuoTask | ScoreTask | ReadTask | ExprsTask;
 
 /** 문제마다 쌓는 기록 (디베이트 점수 · 콤보) */
 export type LogItem = { k: string; v: string; ok: boolean; late?: boolean; deb?: boolean };

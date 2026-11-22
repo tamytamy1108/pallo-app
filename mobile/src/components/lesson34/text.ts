@@ -217,3 +217,73 @@ export function gradeWords(ans: string, key: string) {
   const score = ok.filter(Boolean).length / kw.length;
   return { words: kw, ok, score, perfect: ok.every(Boolean) };
 }
+
+// ---- AI 대화 답 교정 (실제 앱은 AI 가 해요 · 프로토타입 v503 aiFix 와 같은 규칙) ----
+const AI_TYPO: [RegExp, string][] = [
+  [/\balot\b/gi, 'a lot'], [/\b(cuz|coz|cos|bc)\b/gi, 'because'], [/\bgonna\b/gi, 'going to'], [/\bwanna\b/gi, 'want to'], [/\bgotta\b/gi, 'have to'],
+  [/\bdont\b/gi, "don't"], [/\bdoesnt\b/gi, "doesn't"], [/\bdidnt\b/gi, "didn't"], [/\bcant\b/gi, "can't"], [/\bwont\b/gi, "won't"], [/\bisnt\b/gi, "isn't"],
+  [/\bim\b/gi, "I'm"], [/\bive\b/gi, "I've"], [/\bthats\b/gi, "that's"], [/\bu\b/g, 'you'], [/\bur\b/g, 'your'], [/\bvirall\b/gi, 'viral'], [/\bthier\b/gi, 'their'],
+  [/\b(beacuse|becuase|becasue)\b/gi, 'because'], [/\bdefinately\b/gi, 'definitely'], [/\bwierd\b/gi, 'weird'], [/\brecieve\b/gi, 'receive'], [/\buntill\b/gi, 'until'], [/\btommorow\b/gi, 'tomorrow'],
+];
+const third = (v: string) => (v === 'have' ? 'has' : v === 'do' ? 'does' : v === 'go' ? 'goes' : `${v}s`);
+const AI_GRAM: [RegExp, string | ((...m: string[]) => string), string][] = [
+  [/\b(he|she|it|this|that)\s+don't\b/gi, (_m, a) => `${a} doesn't`, 'he · she · it 뒤엔 doesn’t'],
+  [/\bI\s+(is|are)\b/g, 'I am', 'I 뒤엔 am'],
+  [/\bI\s+am\s+agree\b/gi, 'I agree', 'agree 는 am 없이'],
+  [/\bevery\s+(weekends|days|weeks|mornings|nights|months)\b/gi, (_m, w) => `every ${w.replace(/s$/, '')}`, 'every 뒤엔 단수'],
+  [/\b(he|she|it)\s+((?:just|really|always|never|also|usually)\s+)?(like|want|need|taste|look|feel|make|seem|work|get|have|do|go)\b/gi, (_m, a, adv, v) => `${a} ${adv || ''}${third(v)}`, 'he · she · it 뒤 동사엔 -s'],
+  [/\bmore\s+(better|easier|bigger|faster|happier|worse)\b/gi, '$1', '비교급엔 more 없이'],
+  [/\bvery\s+very\b/gi, 'really', 'very very → really'],
+  [/\bin\s+(weekend|weekends)\b/gi, 'on weekends', 'on weekends'],
+  [/\ba\s+(?=[aeio]\w)/gi, 'an ', '모음 앞엔 an'],
+  [/\b(\w{2,})\s+\1\b/gi, '$1', '같은 단어가 두 번'],
+];
+/** 답 교정: 맞춤법 · 자주 틀리는 문법 · 대문자 · 마침표. why 는 고친 까닭 목록 */
+export function aiFix(v: string, live: LiveFix[]) {
+  let out = nrm(v).trim();
+  const why: string[] = [];
+  for (const [re, fx, w] of live)
+    if (re.test(out)) {
+      out = fx(out);
+      why.push(w);
+      break;
+    }
+  let typo = false;
+  for (const [re, b] of AI_TYPO) {
+    const y = out.replace(re, b);
+    if (y !== out) {
+      out = y;
+      typo = true;
+    }
+  }
+  if (typo) why.push('맞춤법');
+  for (const [re, b, w] of AI_GRAM) {
+    const y = typeof b === 'string' ? out.replace(re, b) : out.replace(re, b as (...m: string[]) => string);
+    if (y !== out) {
+      out = y;
+      why.push(w);
+    }
+  }
+  const cap = capFirst(out).replace(/\bi\b/g, 'I');
+  if (cap !== out && !why.length) why.push('대문자');
+  out = /[.!?]$/.test(cap) ? cap : `${cap}.`;
+  const same = out.replace(/[.!?]$/, '').toLowerCase() === nrm(v).trim().replace(/[.!?]$/, '').toLowerCase();
+  return { text: out, why: [...new Set(why)], changed: !same || why.length > 0 };
+}
+
+/** 꼬리 질문에 짚을 말: 방금 답의 첫 문장 앞부분 (7단어까지) */
+export const bitOf = (v: string) => {
+  const first = nrm(v)
+    .split(/[.!?]/)[0]
+    .replace(/^\s*(yes|yeah|no|well|um+|uh+|so|i think|actually)[,\s]+/i, '')
+    .trim();
+  const w = first.split(/\s+/);
+  return (w.length > 7 ? `${w.slice(0, 7).join(' ')}…` : first).replace(/^./, (c) => c.toLowerCase());
+};
+/** 짧은 답 꼬리 질문 — 방금 한 말을 짚어서, 질문마다 다르게 돌아가며 */
+export const NUDGE: ((b: string) => [string, string])[] = [
+  (b) => [`You said “${b}” — why do you feel that way?`, `“${b}” — 왜 그렇게 느껴요?`],
+  (b) => [`“${b}” — can you tell me about one time that happened?`, '그런 일이 있었던 때를 하나 말해 줄래요?'],
+  (b) => [`Interesting! How does “${b}” change your day?`, '그게 하루를 어떻게 바꾸나요?'],
+  (b) => [`Tell me a bit more about “${b}”. What do you mean?`, '조금 더 자세히 말해 줄래요?'],
+];

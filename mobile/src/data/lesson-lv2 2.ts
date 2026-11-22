@@ -1,0 +1,161 @@
+/**
+ * Lv.2 · 1과 Not in the Mood (교재 1과 그대로) — 가짜 데이터. 값은 프로토타입 LV2_01 그대로예요.
+ * 맞는 API: 18 `/lessons/:id` (과 콘텐츠 한 덩어리). 실제 앱은 서버에서 받아요.
+ */
+import type { LessonData } from '@/data/lessons';
+
+export const LV2_01: LessonData = {
+  lv: 2,
+  unit: 1,
+  title: 'Not in the Mood',
+  ice: [
+    { en: 'What’s something everyone seems to love but you don’t?', ko: '모두가 좋아하는 것 같은데 나는 별로인 것이 있나요?', hint: 'Everyone seems to love camping, but I’m not in the mood for bugs and cold nights.' },
+    { en: 'What do you usually do when you’re in a bad mood?', ko: '기분이 안 좋을 때 보통 무엇을 하나요?', hint: 'I’m usually too tired to go out, so I stay home and watch a movie.' },
+  ],
+  patterns: [
+    {
+      id: 'p1',
+      p: 'I’m not in the mood for + 명사',
+      short: 'not in the mood for',
+      m: '~할 기분이 아니에요',
+      re: '(not (really )?)?in the mood( for| to)?',
+      ex: [
+        ['I’m not in the mood for coffee today.', '오늘은 커피를 마실 기분이 아니에요.'],
+        ['I’m not in the mood for jokes right now.', '지금 농담할 기분이 아니에요.'],
+        ['I’m not in the mood for a drink tonight.', '오늘 밤은 술을 마실 기분이 아니에요.'],
+        ['I’m not in the mood for phone calls at the moment.', '지금 전화 통화할 기분이 아니에요.'],
+        ['I’m not in the mood for an argument.', '말다툼을 할 기분이 아니에요.'],
+      ],
+    },
+    {
+      id: 'p2',
+      p: 'too + 형용사 + to + 동사',
+      short: 'too ~ to',
+      m: '~하기에는 너무 …해요',
+      re: 'too \\w+ to',
+      ex: [
+        ['It’s too hot to walk outside.', '밖에서 걷기에는 너무 더워요.'],
+        ['It’s too late to call him.', '그에게 전화하기에는 너무 늦었어요.'],
+        ['It’s too difficult to finish by myself.', '혼자 끝내기에는 너무 어려워요.'],
+        ['It’s too good to be true.', '너무 좋아서 믿기 어렵네요.'],
+        ['It’s too early to make a decision.', '결정을 내리기에는 너무 일러요.'],
+        ['It’s too complicated to explain in five minutes.', '5분 안에 설명하기에는 너무 복잡해요.'],
+      ],
+    },
+    {
+      id: 'p3',
+      p: 'not + 동사 … until + 명사/문장',
+      short: 'not … until',
+      m: '~할 때까지 …하지 않아요 / ~하고 나서야 …해요',
+      re: 'until',
+      ex: [
+        ['I didn’t go to bed until midnight.', '자정이 되어서야 잠자리에 들었어요.'],
+        ['She didn’t reply until the next morning.', '그녀는 다음 날 아침이 되어서야 답장을 했어요.'],
+        ['We won’t leave until the rain stops.', '우리는 비가 그칠 때까지 떠나지 않을 거예요.'],
+        ['I didn’t realize I was tired until I got home.', '집에 도착하고 나서야 피곤하다는 것을 깨달았어요.'],
+        ['I didn’t wake up until my phone rang.', '휴대폰이 울리고 나서야 잠에서 깼어요.'],
+      ],
+    },
+  ],
+  dialogue: {
+    title: 'Not in the Mood',
+    cast: ['Sonya', 'Lily'],
+    roles: { Sonya: '러닝 가자는 친구', Lily: '지친 친구' },
+    lines: [
+      ['Sonya', 'You ready for a run, Lily?', '러닝할 준비 됐어, 릴리?'],
+      ['Lily', 'Sorry, I’m not in the mood for a run today.', '미안한데, 오늘은 러닝할 기분이 아니야.', 'not in the mood for'],
+      ['Sonya', 'Why not? It’s perfect weather for a run.', '왜? 오늘 러닝하기 딱 좋은 날씨잖아.'],
+      ['Lily', 'I have a big presentation coming up, so I’ve been working late all week.', '곧 중요한 발표가 있어서 이번 주 내내 야근했어.'],
+      ['Sonya', 'All week? You must be tired.', '일주일 내내? 너 정말 피곤하겠다.'],
+      ['Lily', 'I am. I’m just too exhausted to go for a run.', '맞아. 지금은 너무 지쳐서 러닝하러 갈 수가 없어.', 'too exhausted to'],
+      ['Sonya', 'Hmm… Then what if I take you to that Thai restaurant you were talking about?', '음… 그러면 네가 이야기했던 그 태국 음식점에 내가 데려가면 어때?'],
+      ['Lily', 'Really? But you said you don’t really like spicy food.', '진짜? 그런데 너 매운 음식 별로 안 좋아한다고 했잖아.'],
+      ['Sonya', 'I don’t. But as long as it cheers you up, I’m down for it.', '안 좋아하긴 하지. 그래도 네 기분이 나아진다면, 난 좋아.'],
+      ['Lily', 'Then let’s go now. I can’t do anything else until I get some food in me.', '그럼 지금 가자. 뭐라도 먹기 전에는 아무것도 못 하겠어.', 'until'],
+    ],
+    blank: { sp: 'Sonya', ko: 'Sonya가 되어 마지막 대사를 직접 만들어 보세요.', sample: 'Okay, let’s go. But I’m not in the mood for anything too spicy!' },
+  },
+  bankName: 'Speaking Bank',
+  bank: [
+    ['Did you have a rough day?', 'rough', '___ 하루였나요?', '힘든'],
+    ['That works, but let’s keep it short.', 'keep it short', '그렇게 해도 좋아요, 하지만 ___ 끝내요.', '짧게'],
+    ['We can exercise for twenty minutes and call it a day.', 'call it a day', '20분 정도 운동하고 ___ 해요.', '마무리'],
+    ['Are you sore from yesterday?', 'sore', '어제 운동해서 ___?', '몸이 뻐근해요'],
+    ['I don’t think I’ll feel social.', 'feel social', '___ 기분은 아닐 것 같아요.', '사람들과 어울릴'],
+    ['Is something on your mind?', 'on your mind', '___ 있어요?', '신경 쓰이는 일'],
+    ['I’m completely drained.', 'drained', '저 완전히 ___.', '녹초가 됐어요'],
+    ['Let’s save the day trip for next weekend.', 'save', '당일치기 여행은 다음 주말로 ___.', '미뤄요'],
+    ['I’ll take some time to unwind.', 'unwind', '저는 좀 ___ 시간을 가지려고요.', '긴장을 풀'],
+    ['I appreciate you being flexible.', 'flexible', '이렇게 ___ 고마워요.', '맞춰 줘서'],
+  ],
+  chal: [
+    ['친구가 저녁에 매운 음식을 먹자는데, 오늘은 그럴 기분이 아니에요.', 'Thanks, but I’m not in the mood for spicy food tonight. Can we get something light?'],
+    ['너무 피곤해서 운동하러 갈 수 없다고 말해 보세요.', 'I’m too tired to work out today. I didn’t sleep until 2 a.m.'],
+    ['보고서를 끝내기 전까지는 쉴 수 없다고 동료에게 말해 보세요.', 'I can’t take a break until I finish this report. It’s too important to rush.'],
+    ['비가 너무 많이 와서 산책하기 어렵다고 말하고 다른 계획을 제안해요.', 'It’s raining too hard to go for a walk. What if we watch a movie instead?'],
+    ['숙제를 끝내고 나서야 잠자리에 들었던 날을 이야기해 보세요.', 'Last night I didn’t go to bed until I finished my homework. I was too tired to talk to anyone.'],
+  ],
+  actTitle: 'Not Today · 상황 역할극',
+  // 교재 상황 역할극: 차례마다 미션 하나 · 추천 답을 고르면 따라 말하고 보내요 (프로토타입 LV2_01.act · renderChat)
+  act: {
+    who: 'Sonya',
+    me: 'Lily',
+    title: 'Not Today',
+    intro: '소냐와 릴리는 오늘 저녁 계획이 있었지만, 소냐가 힘든 하루를 보내서 나갈 기분이 아니에요. 릴리가 되어 무슨 일인지 묻고, 덜 피곤한 활동을 제안하고, 새 계획을 정해요.',
+    opener: 'Hey, are we still going out tonight? You don’t seem to be in the mood.',
+    lines: [
+      ['I’ve had a really long day. Would you mind if we did something more relaxing instead?', '오늘 정말 길었어. 대신 좀 편한 걸 해도 괜찮을까?'],
+      ['Work was crazy. I’m completely drained, and I’m too tired to go somewhere loud.', '일이 정신없었어. 완전 녹초라 시끄러운 데 가기엔 너무 피곤해.'],
+      ['Maybe. But I don’t think I’ll feel social tonight.', '그럴 수도. 근데 오늘은 사람 만날 기분이 아닐 것 같아.'],
+      ['That sounds nice, as long as we keep it short.', '좋아, 짧게만 한다면.'],
+      ['Deal! Thanks for being so flexible. I really appreciate it.', '좋아! 맞춰 줘서 고마워. 정말 고마워.'],
+    ],
+    turns: [
+      { t: '공감하거나 이해하는 말 하기', re: "must be|rough|exhaust|tired|on your mind|sorry|understand|of course|not at all|no problem|sure" },
+      { t: '오늘 할 수 있는 다른 방법 제안하기', re: "what if|how about|let'?s|why don'?t we|we could|instead|save .* for" },
+      { t: '마음을 편하게 해 주고 둘이 할 계획 말하기', re: 'okay|ok\\b|no problem|understand|two of us|simple|relax|order|stay|just us' },
+      { t: '괜찮은 시간이나 조건을 말하고 계획 정하기', re: "as long as|by (ten|nine|eleven|\\d)|call it a day|deal|perfect|great|until|o'?clock" },
+    ],
+    replies: [
+      ['Not at all. Did you have a rough day?', 'Sure. You must be exhausted.', 'Of course. Is something on your mind?'],
+      ['What if we just stay home and watch a movie?', 'Then let’s save the club for next weekend.', 'How about a quiet walk by the river?'],
+      ['That’s okay. It can be just the two of us.', 'No problem. Let’s order Thai food and relax.', 'I understand. Let’s keep it simple tonight.'],
+      ['Deal. Let’s call it a day by ten.', 'Great. I’ll bring some snacks.', 'Perfect. I’m fine with that as long as we hang out.'],
+    ],
+  },
+  story: {
+    title: 'Facing a Fear or Letting It Go',
+    ask: '어렸을 때 무서워했거나 하지 못했던 일을 하나 골라요.',
+    options: ['수영 배우기', '거절하기', '남들 앞에서 노래하기', '혼자 해외여행하기', '처음 보는 사람과 대화하기', '나만의 도전'],
+    qs: [
+      ['Was there something you were afraid of or couldn’t do when you were younger?', '어렸을 때 무서워했거나 하지 못했던 것이 있었나요?'],
+      ['Why was it difficult or scary for you?', '왜 어렵거나 무서웠나요?'],
+      ['How did it affect your life at the time?', '당시 생활에 어떤 영향을 주었나요?'],
+      ['Did you overcome it, or did you decide to stop trying?', '극복했나요, 아니면 그만두기로 했나요?'],
+      ['Why did it turn out that way, and what did you do?', '왜 그렇게 됐고, 무엇을 했나요?'],
+      ['How did things turn out, and how did you feel?', '어떻게 됐고, 기분은 어땠나요?'],
+      ['What do you think about it now?', '지금은 그 일을 어떻게 생각하나요?'],
+      ['Is there another challenge you want to try?', '도전해 보고 싶은 다른 일이 있나요?'],
+    ],
+    template:
+      'When I was younger, I was afraid of ___. It was difficult or scary for me because ___. At the time, it affected my life because ___. In the end, I ___. This happened because ___, and I felt ___. Looking back, I think ___. Next, I want to try ___.',
+  },
+  talk: {
+    who: 'Logan',
+    lines: [
+      ['What usually makes you lose motivation?', '보통 무엇 때문에 의욕이 떨어지나요?'],
+      ['I see. What helps you recharge?', '그렇군요. 무엇이 다시 힘을 내게 해 줘요?'],
+      ['What are you usually not in the mood for when you’re stressed?', '스트레스 받을 때 보통 무엇을 하기 싫어요?'],
+      ['Do you prefer to be alone or talk to someone?', '혼자 있는 게 좋아요, 누군가와 이야기하는 게 좋아요?'],
+      ['Is there something you haven’t started because you don’t feel ready yet?', '아직 준비가 안 돼서 시작 못 한 일이 있어요?'],
+      ['Thanks! I loved hearing your stories. Great use of “not … until”!', '고마워요! 이야기 정말 좋았어요.'],
+    ],
+    replies: [
+      ['I lose motivation when I’m too tired.', 'Bad weather makes me lose motivation.', 'Too much work makes me lose motivation.'],
+      ['A long walk helps me recharge.', 'I recharge by sleeping in on weekends.', 'Talking to my friends helps me recharge.'],
+      ['I’m not in the mood for loud places.', 'I’m not in the mood for cooking.', 'I’m not in the mood for long calls.'],
+      ['I prefer to be alone for a while.', 'I like to talk to my sister.', 'It depends, but usually alone.'],
+      ['I won’t start guitar lessons until I have more time.', 'I’m too busy to start a blog right now.', 'Not really. I just try first.'],
+    ],
+  },
+};

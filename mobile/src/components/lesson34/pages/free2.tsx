@@ -1,10 +1,11 @@
 import { Image } from "expo-image";
 import * as Tts from "expo-speech";
 import { useEffect, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { FlatList, StyleSheet, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import { MicIcon, SpeakerIcon } from "@/components/lesson/icons";
+import { Pressable } from "@/components/ui/pressable";
 import { PText } from "@/components/ui/text";
 import { showToast } from "@/components/ui/toast";
 import { Font } from "@/constants/fonts";

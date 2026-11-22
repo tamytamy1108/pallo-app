@@ -273,6 +273,8 @@ function SayInner({ task }: { task: SayTask }) {
     />
   );
   const ns = <NoSpeakToggle on={rt.noSpeak} onPress={toggleNs} />;
+  // 말하기 · 쓰기 탭이 있으면 '말하기가 어려워요'는 따로 두지 않아요 (프로토타입 v503 · AI 대화 화면과 같게)
+  const nsIfNoTabs = modes ? null : ns;
 
   // ---- 결과 ----
   if (st.ph === 'res' && st.res) return <SayResult t={t} st={st} res={st.res} top={top} sIn={sIn} onAgain={reset} />;
@@ -321,7 +323,7 @@ function SayInner({ task }: { task: SayTask }) {
           />
         </Body>
         <Foot>
-          {ns}
+          {nsIfNoTabs}
           {modes}
           <FootRow>
             <GoBtn label="확인" disabled={!st.draft.trim()} onPress={() => evaluate(st.draft.trim(), null)} />
@@ -352,7 +354,7 @@ function SayInner({ task }: { task: SayTask }) {
         {speech.problem && speech.problem !== 'unavailable' ? <Msg text={SPEECH_PROBLEM_TEXT[speech.problem]} /> : null}
       </Body>
       <Foot>
-        {ns}
+        {nsIfNoTabs}
         {modes}
         {st.ph === 'ready' ? (
           <FootRow>

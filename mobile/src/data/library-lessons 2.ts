@@ -1,0 +1,93 @@
+/**
+ * 교재(레벨)별 과 목록 · 과 화면 요약 — 가짜 데이터. 값은 프로토타입 STUDY_LV · LESSON_INFO · LV2_TOC 그대로예요.
+ * 맞는 API: 17 `/library/books/:id/lessons` (과 목록) · 18 `/lessons/:id` (과 콘텐츠 — 여기는 과 화면에 쓰는 요약만).
+ * data 가 있는 과만 열려요. 없으면 '커밍순'. 과 하나 = 한 줄이라, 같은 모양으로 넣으면 목록 · 과 화면이 저절로 생겨요.
+ */
+import type { StudyLevel } from './library';
+
+export const STUDY_LEVELS: StudyLevel[] = [
+  {
+    lv: 1,
+    series: "EVERYDAY ENGLISH",
+    c: "#138A9E",
+    kind: "pattern",
+    total: 20,
+    about: "패턴 3개 · 대화문 · 상황 표현",
+    lessons: [
+      {"no":1,"title":"Cafe Complaint","sub":"Something’s wrong with the oat milk","pats":["I'd like to","Do you have","It doesn't / isn't"],"data":{"kind":"pattern","patterns":[{"p":"I'd like to + 동사","m":"~하고 싶어요"},{"p":"Do you have + 명사?","m":"~이/가 있나요?"},{"p":"It doesn't + 동사 / It isn't + 보어","m":"~하지 않아요 / ~이 아니에요"}],"bankName":"Word Bank","actTitle":"Look, Find & Choose"}},
+      {"no":2,"title":"Operation Cookbook","sub":"Looking for Lily’s birthday gift","pats":["Can you","When / Where should we","I have to"]},
+      {"no":3,"title":"Finding the Penguins","sub":"Aiden asks for directions at the aquarium","pats":["How can I","How long does it take to","There is / are"]},
+      {"no":4,"title":"Come Along","sub":"Lily invites Logan out on Saturday","pats":["Are you free","be going to","Let me"]},
+      {"no":5,"title":"Speaking of Hobbies","sub":"A hobby question leads to book club talk","pats":["Do you like","What is your","How often do you"]},
+      {"no":6,"title":"No Spoilers!","sub":"Aiden and Lily talk about Stranger Things","pats":["Did you","Tell me about","I’m / It’s"]},
+      {"no":7,"title":"Ordering In","sub":"Sonya and Logan decide on sushi tonight","pats":["I usually","I enjoy","It depends on"]},
+      {"no":8,"title":"Late Again","sub":"Sonya’s had enough of waiting for Aiden","pats":["I’m sorry that","I forgot to","(문장) because"]},
+      {"no":9,"title":"Back on Track","sub":"Logan and Aiden talk running","pats":["I’m planning to","I’ve been","I’m glad that"]},
+      {"no":10,"title":"Time to Wrap Up","sub":"Sonya tells Logan to call it a night","pats":["It’s / I’m getting","It’s time to","I think"]},
+      {"no":11,"title":"Let’s Make It One","sub":"Aiden and Lily push lunch back two hours","pats":["I have","What","(문장)"]},
+      {"no":12,"title":"Old Haunt","sub":"Sonya and Logan revisit the cafe where they met","pats":["Do you remember (that)","I used to","I will"]},
+      {"no":13,"title":"Trying It On","sub":"Lily compares two sweaters at the store","pats":["Is it okay to","How much","비교급"]},
+      {"no":14,"title":"Change of Plans","sub":"Lily and Sonya swap the night market for an art show","pats":["I heard","Let’s","I feel like"]},
+      {"no":15,"title":"Take Me Out to the Ball Game","sub":"Logan and Aiden plan a weekend at the ballpark","pats":["What kind of","I’m interested in","What do you like about"]},
+      {"no":16,"title":"Jeju Memories","sub":"Lily and Aiden swap stories","pats":["Have you ever","What / Where / When did you","How was / were"]},
+      {"no":17,"title":"Always On","sub":"Logan can’t escape his work chat","pats":["I’m done with","That’s why","Why don’t you"]},
+      {"no":18,"title":"Stage Fright","sub":"Aiden opens up about playing guitar in front of crowds","pats":["You’re good at","It’s easy / hard to","When I"]},
+      {"no":19,"title":"Can’t Wait","sub":"Sonya and Logan go to their favorite band’s concert","pats":["I’m about to","I can’t wait to","Before / After"]},
+      {"no":20,"title":"The First Solo Trip","sub":"Aiden gives Lily advice on traveling alone","pats":["I’m thinking of","I’m worried about","I think you should"]},
+    ],
+  },
+  {
+    lv: 2,
+    series: "REAL ENGLISH",
+    c: "#7B7FC9",
+    kind: "pattern",
+    about: "패턴 3개 · 대화문 · Speaking Bank",
+    lessons: [
+      {"no":1,"title":"Not in the Mood","sub":"Sonya skips her run for Thai food","pats":["I’m not in the mood for","too ~ to","not … until"],"data":{"kind":"pattern","patterns":[{"p":"I’m not in the mood for + 명사","m":"~할 기분이 아니에요"},{"p":"too + 형용사 + to + 동사","m":"~하기에는 너무 …해요"},{"p":"not + 동사 … until + 명사/문장","m":"~할 때까지 …하지 않아요 / ~하고 나서야 …해요"}],"bankName":"Speaking Bank","actTitle":"Not Today · 상황 역할극"}},
+      {"no":2,"title":"Home Brew","sub":"Logan tries Aiden’s homemade coffee","pats":["How long has it been since ~?","What made you ~?","I’m looking forward to"]},
+      {"no":3,"title":"Late Arrival","sub":"Lily’s flight delay pushes her check-in past midnight","pats":["be supposed to","I was wondering if I could","might be able to"]},
+      {"no":4,"title":"Packing Lunch","sub":"Logan tells Lily to stick to a few go-to meals","pats":["I’m struggling with","I can’t afford to","It takes ~ to"]},
+      {"no":5,"title":"Around the Corner","sub":"Sonya and Lily choose the closer table over the better one","pats":["A place where you can","be known for","As far as I know"]},
+      {"no":6,"title":"Off the Clock","sub":"Aiden can’t stop checking his work messages","pats":["I tend to","I can’t help ~ing","no matter + 의문사"]},
+      {"no":7,"title":"One More Episode","sub":"One episode turns into a weekend binge","pats":["ended up ~ing","It makes me","비교급 + than I expected"]},
+      {"no":8,"title":"Wrong Address","sub":"A package shows up with the wrong name on it","pats":["It seems like","must be","It turns out"]},
+      {"no":9,"title":"Medium or Hot","sub":"Aiden suggests they order one of each","pats":["Compared to","I prefer A to B","as ~ as"]},
+      {"no":10,"title":"Lights Out","sub":"Late-night scrolling is wrecking Lily’s sleep","pats":["I decided to / not to","The 비교급, the 비교급","As long as"]},
+      {"no":11,"title":"A Proper Korean Meal","sub":"Lily recommends the bulgogi set at Soban House","pats":["Can you tell me how to","Is there any ~ that","One of + 복수 명사"]},
+      {"no":12,"title":"Space or Commute","sub":"Lily weighs a bigger place against a shorter commute","pats":["If + 과거형, would","I’d rather","even if / even though"]},
+      {"no":13,"title":"Against the Clock","sub":"Aiden’s first escape room comes down to the wire","pats":["This is the first time I’ve","happen to","I find it ~ to"]},
+      {"no":14,"title":"A Bird in the Hand","sub":"Lily can’t afford to wait, so they move on","pats":["All (that) ~ is","It’s worth ~ing","It helps you (to)"]},
+      {"no":15,"title":"Penny Wise, Pound Foolish","sub":"Aiden’s cheap ride backfires","pats":["I could’ve + p.p.","I should’ve / shouldn’t have","The reason (why) ~ was"]},
+      {"no":16,"title":"Come Back Before We Leave","sub":"Sonya explores her first night market","pats":["It reminds me of","while","I wish I could"]},
+      {"no":17,"title":"Divide and Conquer","sub":"Sonya and Logan split up the housewarming prep","pats":["What I ~ is","It’s (not) necessary to","The best way to ~ is to"]},
+      {"no":18,"title":"In Your Pocket","sub":"The phone was in her pocket all along","pats":["hardly / hardly ever","to the point where","I want you to"]},
+      {"no":19,"title":"Missed the Last Train","sub":"Sonya misses the last train and asks to crash at Lily’s","pats":["Do you mind ~ing?","I’m willing to","Whatever / Whenever / Wherever"]},
+      {"no":20,"title":"Wrong Address","sub":"The food was delivered to Aiden’s old address","pats":["Don’t tell me that","What if","The point is"]},
+    ],
+  },
+  {
+    lv: 3,
+    series: "TOPIC TALK",
+    c: "#C77B3A",
+    kind: "topic",
+    about: "DAILY TOPIC · AI 대화 · 지문 · 표현",
+    lessons: [
+      {"no":101,"title":"The Present","sub":"DAILY TOPIC · 뒷면 TOPIC Forgotten Name","data":{"kind":"topic","topicTitle":"Forgotten Name","pdf":{"path":"assets/lv3-101-the-present.pdf","name":"PALLO Lv.3 #101 The Present.pdf","size":"748KB · 2쪽"}}},
+      {"no":54,"title":"Activities","sub":"뒷면 TOPIC · Digital detox"},
+      {"no":89,"title":"Hometowns","sub":"뒷면 TOPIC · Fan Culture"},
+      {"no":47,"title":"Health","sub":"DAILY TOPIC · Health"},
+    ],
+  },
+  {
+    lv: 4,
+    series: "FREE TALK & DEBATE",
+    c: "#3B3561",
+    kind: "debate",
+    about: "FREE TALK · 찬반 토론",
+    lessons: [
+      {"no":101,"title":"The Present","sub":"DEBATE · Should concerts go phone-free?","data":{"kind":"debate","q":"Should concerts go phone-free?","qKo":"콘서트는 휴대폰 금지여야 할까요?","pdf":{"path":"assets/lv4-101-the-present.pdf","name":"PALLO Lv.4 #101 The Present.pdf","size":"1.5MB · 2쪽"}}},
+      {"no":1,"title":"Behind the Mask","sub":"DEBATE · Should adults be allowed to sell an organ?","data":{"kind":"debate","q":"Should adults be allowed to sell an organ?","qKo":"성인의 장기 판매를 허용해야 할까요?"}},
+      {"no":2,"title":"Role Models and Heroes","sub":"DEBATE · Talent or Effort"},
+    ],
+  },
+];

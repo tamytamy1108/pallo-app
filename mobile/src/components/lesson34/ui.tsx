@@ -339,17 +339,37 @@ export function EndNote({ good, children }: { good: boolean; children: ReactNode
     </View>
   );
 }
-export const EndMsg = ({ bold, rest }: { bold?: string; rest: string }) => (
-  <PText style={s.endMsg}>
-    {bold ? (
-      <PText style={s.endBold} color={PINK_INK}>
-        {bold}
-        {'\n'}
+/**
+ * 결과 한 줄. bold 가 없으면 다른 피드백처럼 큰 제목 + 작은 한 줄로 나눠요 (프로토타입 v503 endFB)
+ * — '첫 기록이에요! 한 번 더 하면 더 빨라져요' → 제목 '첫 기록이에요!' · 아랫줄 '한 번 더 하면 더 빨라져요'
+ */
+export const EndMsg = ({ bold, rest, good }: { bold?: string; rest: string; good?: boolean }) => {
+  if (bold) {
+    return (
+      <PText style={s.endMsg}>
+        <PText style={s.endBold} color={PINK_INK}>
+          {bold}
+          {'\n'}
+        </PText>
+        {rest}
       </PText>
-    ) : null}
-    {rest}
-  </PText>
-);
+    );
+  }
+  const m = rest.match(/^(.+?[!?.])\s+(.+)$/) ?? rest.match(/^(.+?)\s·\s(.+)$/);
+  const [title, sub] = m ? [m[1], m[2]] : [rest, ''];
+  return (
+    <View>
+      <PText style={s.endBold} color={good ? Colors.purple : PINK_INK}>
+        {title}
+      </PText>
+      {sub ? (
+        <PText style={s.endSub} color={SUB}>
+          {sub}
+        </PText>
+      ) : null}
+    </View>
+  );
+};
 
 /** 아래 줄 단추: 테두리만(다시 하기 · 넘어가기) + 노랑 넓은 단추 */
 export function FootRow({ children }: { children: ReactNode }) {
@@ -443,6 +463,7 @@ export const s = StyleSheet.create({
   endImg: { width: 88, height: 82 },
   endMsg: { fontFamily: Font.body800, fontSize: 15, lineHeight: 21.75 },
   endBold: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },
+  endSub: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
   row: { flexDirection: 'row', gap: 10 },
   skip: { height: 54, paddingHorizontal: 20, borderRadius: 27, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', boxShadow: `0px 5px 0px ${Colors.ink}`, marginBottom: 5 },
   skipT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
