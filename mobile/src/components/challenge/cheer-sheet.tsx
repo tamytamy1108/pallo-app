@@ -1,16 +1,19 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle } from 'react-native-reanimated';
 
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { isPre, type Challenge } from '@/data/challenge';
-import { kf, useLoop } from '@/lib/motion';
+import { kfc, useLoop } from '@/lib/motion';
 
 import { Sparkle } from './icons';
 import { LgBtn, SUB } from './parts';
+
+/** chTw 1.8s ease-in-out — 키프레임 구간마다 */
+const TW_EASE = Easing.bezierFn(0.42, 0, 0.58, 1);
 
 /**
  * 참여하자마자 응원 시트 (프로토타입 chCheer): 팔로 + '챌린지 성공을 응원해요!' + 이름 → [나중에 할게요] [바로 인증하러 가기].
@@ -56,7 +59,7 @@ export function CheerSheet({ p, open, onClose, onGo, onClosed }: { p: Challenge;
 function Twinkle({ size, color, delay, style }: { size: number; color: string; delay: number; style: object }) {
   const t = useLoop(1800, { delay });
   const anim = useAnimatedStyle(() => ({
-    transform: [{ scale: kf(t.get(), [0, 50, 100], [1, 1.35, 1]) }, { rotate: `${kf(t.get(), [0, 50, 100], [0, 20, 0])}deg` }],
+    transform: [{ scale: kfc(t.get(), [0, 50, 100], [1, 1.35, 1], TW_EASE) }, { rotate: `${kfc(t.get(), [0, 50, 100], [0, 20, 0], TW_EASE)}deg` }],
   }));
   return (
     <Animated.View style={[styles.tw, style, anim]}>

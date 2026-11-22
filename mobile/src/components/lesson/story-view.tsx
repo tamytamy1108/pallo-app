@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
 import { SparkIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { LessonModal } from '@/components/lesson/lesson-modal';
@@ -337,15 +337,17 @@ function TopicChip({ label, on, onPress }: { label: string; on: boolean; onPress
 
 /** 문단 만들기 버튼: 다 채우기 전엔 흐리고, 다 채우면 노랗게 살아나요 */
 function BuildButton({ ready, onPress }: { ready: boolean; onPress: () => void }) {
+  const still = useReducedMotion();
   const s = useSharedValue(1);
   const was = useRef(ready);
   useEffect(() => {
     if (ready && !was.current) {
-      s.set(withSequence(withTiming(1.05, { duration: 200 }), withTiming(1, { duration: 300 })));
+      // 움직임 줄이기면 커지지 않고 색만 바뀌어요 (프로토타입 .kw-build.wake { animation: none })
+      if (!still) s.set(withSequence(withTiming(1.05, { duration: 200 }), withTiming(1, { duration: 300 })));
       sfx('toggle');
     }
     was.current = ready;
-  }, [ready, s]);
+  }, [ready, s, still]);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.get() }] }));
   return (
     <Animated.View style={a}>
@@ -407,12 +409,19 @@ function Fix({ c, onFix, onKeep }: { c: Exclude<KeywordCheck, { kind: 'ok' }>; o
 
 /** 빠진 칸 강조: 연보라로 두 번 깜빡여요 (kwNeed) */
 function Flash({ n, children }: { n: number; children: React.ReactNode }) {
+  const still = useReducedMotion();
   const v = useSharedValue(0);
   useEffect(() => {
     if (!n) return;
-    v.set(withSequence(withTiming(1, { duration: 200 }), withTiming(0.2, { duration: 300 }), withTiming(1, { duration: 300 }), withTiming(0, { duration: 800 })));
-  }, [n, v]);
-  const a = useAnimatedStyle(() => ({ boxShadow: v.get() > 0.01 ? `0 0 0 ${4 * v.get()}px rgba(156,139,219,${0.9 * v.get()})` : undefined, borderRadius: 22 }));
+    // 움직임 줄이기면 깜빡이지 않고 3px 테두리만 잠깐 (프로토타입 reduced-motion: outline 3px solid #9C8BDB)
+    if (still) v.set(withSequence(withTiming(1, { duration: 0 }), withDelay(1600, withTiming(0, { duration: 0 }))));
+    else v.set(withSequence(withTiming(1, { duration: 200 }), withTiming(0.2, { duration: 300 }), withTiming(1, { duration: 300 }), withTiming(0, { duration: 800 })));
+  }, [n, v, still]);
+  const a = useAnimatedStyle(() => {
+    const k = v.get();
+    if (k <= 0.01) return { boxShadow: undefined, borderRadius: 22 };
+    return { boxShadow: still ? '0 0 0 3px #9C8BDB' : `0 0 0 ${4 * k}px rgba(156,139,219,${0.9 * k})`, borderRadius: 22 };
+  });
   return <Animated.View style={a}>{children}</Animated.View>;
 }
 

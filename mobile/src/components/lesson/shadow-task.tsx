@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
@@ -604,11 +604,17 @@ function Wave() {
 }
 
 function WaveBar({ delay }: { delay: number }) {
-  const h = useSharedValue(6);
+  // 움직임 줄이기면 막대가 가만히 있어요 (프로토타입 .wv i { animation: none })
+  const still = useReducedMotion();
+  const h = useSharedValue(still ? 12 : 6);
   useEffect(() => {
-    const t = setTimeout(() => h.set(withRepeat(withTiming(20, { duration: 350 }), -1, true)), delay);
-    return () => clearTimeout(t);
-  }, [h, delay]);
+    if (still) {
+      h.set(12);
+      return;
+    }
+    h.set(withDelay(delay, withRepeat(withTiming(20, { duration: 350 }), -1, true)));
+    return () => cancelAnimation(h);
+  }, [h, delay, still]);
   const s = useAnimatedStyle(() => ({ height: h.get() }));
   return <Animated.View style={[styles.waveBar, s]} />;
 }

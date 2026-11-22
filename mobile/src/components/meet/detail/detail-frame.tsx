@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomBar } from '@/components/bottom-bar';
@@ -156,10 +156,15 @@ function PosterStack({ id, slides, height, onOpen }: { id: string; slides: Slide
   );
 }
 
+/** 새 포스터가 .35 → 1 로 떠올라요 (프로토타입 lgPfade .6s var(--ease)) */
 function FadeIn({ children }: { children: ReactNode }) {
   const still = useReducedMotion();
-  const st = useAnimatedStyle(() => ({ opacity: withTiming(1, { duration: still ? 0 : 600, easing: EASE }) }), []);
-  return <Animated.View style={[StyleSheet.absoluteFill, { opacity: still ? 1 : 0 }, st]}>{children}</Animated.View>;
+  const o = useSharedValue(still ? 1 : 0.35);
+  useEffect(() => {
+    if (!still) o.set(withTiming(1, { duration: 600, easing: EASE }));
+  }, [still, o]);
+  const st = useAnimatedStyle(() => ({ opacity: o.get() }));
+  return <Animated.View style={[StyleSheet.absoluteFill, st]}>{children}</Animated.View>;
 }
 
 /** 포스터 크게 보기: 옆으로 넘기며 전체 포스터 · '1 / 3' (프로토타입 lgPview) */

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { type ReportMenuItem, ReportSheet } from '@/components/common/report-sheet';
@@ -13,7 +13,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { type Abroad, LANG_COLOR, LG_C, LG_LIKERS, memberLangs, nameHash, type Post } from '@/data/lounge';
 import { addPostComment, hideMember, likeOn, postComments, toggleLike, toggleSave, unhideMember, useLounge } from '@/data/lounge-store';
-import { SPRING } from '@/lib/motion';
+import { kfc, SPRING } from '@/lib/motion';
 import { useMe } from '@/state/me';
 
 import { Face } from './face';
@@ -21,6 +21,9 @@ import { LgIcon } from './icons';
 import { LgButton } from './lg-button';
 import { go } from './nav';
 import { PIC_BG, PostArt } from './pics';
+
+/** lgBurst .8s var(--spring) — 키프레임 구간마다 */
+const BURST_EASE = Easing.bezierFn(0.2, 0.9, 0.3, 1.3);
 
 /** 글 머리: 프로필 · 이름 · 역할 · 학습 언어 · 지점 · 시간 · ⋯ (프로토타입 lgWho) */
 export function Who({ who, av, role, sub, onMore, dark = false }: { who: string; av: string; role?: string; sub: string; onMore?: () => void; dark?: boolean }) {
@@ -127,7 +130,7 @@ function Pic({ p }: { p: Post }) {
       lastTap.current = 0;
       clearTimeout(timer.current);
       likeOn(p.id);
-      if (!still) burst.set(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: 800 })));
+      if (!still) burst.set(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: 800, easing: Easing.linear })));
       return;
     }
     lastTap.current = now;
@@ -135,8 +138,8 @@ function Pic({ p }: { p: Post }) {
   };
   const burstStyle = useAnimatedStyle(() => {
     const t = burst.get();
-    const sc = t < 0.3 ? (t / 0.3) * 1.15 : t < 0.7 ? 1.15 - ((t - 0.3) / 0.4) * 0.15 : 1;
-    const op = t === 0 ? 0 : t < 0.3 ? t / 0.3 : t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
+    const sc = kfc(t, [0, 30, 70, 100], [0, 1.15, 1, 1], BURST_EASE);
+    const op = t === 0 ? 0 : kfc(t, [0, 30, 70, 100], [0, 1, 1, 0], BURST_EASE);
     return { opacity: op, transform: [{ scale: sc }] };
   });
   const img = p.imgs?.[i] ?? p.imgs?.[0];

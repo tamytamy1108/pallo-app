@@ -291,7 +291,7 @@ const addDays = (n: number) => {
 };
 
 /** 동행 구하기 (프로토타입 lgMkTrip) */
-export function TripMakeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function TripMakeSheet({ open, onClose, onClosed }: { open: boolean; onClose: () => void; onClosed?: () => void }) {
   const me = useMe();
   const cc0 = useLounge((s) => s.cc);
   const [cc, setCc] = useState(cc0 ? LG_CC[cc0][0] : '일본');
@@ -328,7 +328,7 @@ export function TripMakeSheet({ open, onClose }: { open: boolean; onClose: () =>
     showToast('동행 구하기를 올렸어요 · 신청이 오면 알려 드려요');
   };
   return (
-    <Sheet open={open} onClose={onClose} title="동행 구하기" footer={<LgButton label="동행 구하기 올리기" wide height={50} onPress={submit} />}>
+    <Sheet open={open} onClose={onClose} onClosed={onClosed} title="동행 구하기" footer={<LgButton label="동행 구하기 올리기" wide height={50} onPress={submit} />}>
       <PText style={styles.ds}>신청이 오면 내가 수락한 사람에게만 오픈채팅 링크가 가요.</PText>
       <View style={styles.fl}>
         <PText style={styles.lb}>나라</PText>
@@ -361,7 +361,7 @@ export function TripMakeSheet({ open, onClose }: { open: boolean; onClose: () =>
 }
 
 /** 나도 해외에 있어요 (프로토타입 lgRegAbroad) */
-export function AbroadRegSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AbroadRegSheet({ open, onClose, onClosed }: { open: boolean; onClose: () => void; onClosed?: () => void }) {
   const me = useMe();
   const [cc, setCc] = useState('호주');
   const [city, setCity] = useState('');
@@ -375,7 +375,7 @@ export function AbroadRegSheet({ open, onClose }: { open: boolean; onClose: () =
     showToast(`내 카드를 올렸어요 · ${LG_CC[code][0]}에 표시돼요`);
   };
   return (
-    <Sheet open={open} onClose={onClose} title="나도 해외에 있어요" footer={<LgButton label="내 카드 올리기" wide height={50} onPress={submit} />}>
+    <Sheet open={open} onClose={onClose} onClosed={onClosed} title="나도 해외에 있어요" footer={<LgButton label="내 카드 올리기" wide height={50} onPress={submit} />}>
       <PText style={styles.ds}>지도에 내 나라가 표시되고, PALLO 사람들이 질문을 보낼 수 있어요.</PText>
       <View style={styles.fl}>
         <PText style={styles.lb}>나라</PText>

@@ -53,6 +53,23 @@ export function kfe(t: number, stops: number[], values: number[], eases: ((x: nu
   return values[values.length - 1];
 }
 
+/**
+ * CSS 처럼 animation-timing-function 하나를 키프레임 구간마다 따로 적용해요.
+ * 시계 t 는 선형(Easing.linear)으로 돌려야 해요 — 곡선을 시계 전체에 걸면 정점 시점이 어긋나고 넘침이 사라져요.
+ */
+export function kfc(t: number, stops: number[], values: number[], ease: (x: number) => number) {
+  'worklet';
+  const x = Math.min(Math.max(t * 100, stops[0]), stops[stops.length - 1]);
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (x <= stops[i + 1]) {
+      const span = stops[i + 1] - stops[i];
+      const f = span === 0 ? 1 : (x - stops[i]) / span;
+      return values[i] + (values[i + 1] - values[i]) * ease(f);
+    }
+  }
+  return values[values.length - 1];
+}
+
 /*
  * 나타나는 움직임들 (@keyframes 를 0~1 진행값으로 옮긴 것). <Appear kind="…"> 로 써요.
  * Reanimated 의 entering(Keyframe)은 웹에서 끝난 뒤 자리가 틀어지는 문제가 있어서, 공유 값으로 직접 돌려요.

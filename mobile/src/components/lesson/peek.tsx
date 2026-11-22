@@ -7,13 +7,15 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { kf } from '@/lib/motion';
+import { kfc } from '@/lib/motion';
 
 /**
  * 보라 팔로가 오른쪽 옆에서 빼꼼 나와 한마디 하고 들어가요 (프로토타입 lsPeek · .cheer).
  * n 이 바뀔 때마다 한 번 나와요. 2.8초 뒤 들어가요. line[1] 이 비면 한 줄 응원('잘하고 있어요!')만.
  */
 const SLIDE = Easing.bezier(0.3, 1.4, 0.5, 1);
+/** cheerWave 1.1s ease-in-out — 키프레임 구간마다 */
+const WAVE_EASE = Easing.bezierFn(0.42, 0, 0.58, 1);
 
 export function Peek({ n, line, bottom }: { n: number; line: [string, string] | null; bottom: number }) {
   const still = useReducedMotion();
@@ -28,7 +30,7 @@ export function Peek({ n, line, bottom }: { n: number; line: [string, string] | 
     x.set(still ? 0 : withTiming(0, { duration: 550, easing: SLIDE }));
     bubble.set(still ? 1 : withDelay(300, withTiming(1, { duration: 450, easing: SLIDE })));
     wave.set(0);
-    if (!still) wave.set(withDelay(450, withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.ease) }), 2, false)));
+    if (!still) wave.set(withDelay(450, withRepeat(withTiming(1, { duration: 1100, easing: Easing.linear }), 2, false)));
     const t = setTimeout(() => {
       x.set(still ? 1 : withTiming(1, { duration: 380 }));
       bubble.set(withTiming(0, { duration: 150 }));
@@ -42,7 +44,8 @@ export function Peek({ n, line, bottom }: { n: number; line: [string, string] | 
   const wrap = useAnimatedStyle(() => ({ transform: [{ translateX: `${x.get() * 110}%` }] }));
   const arm = useAnimatedStyle(() => {
     const v = wave.get();
-    return { transform: [{ translateY: kf(v, [0, 30, 60, 100], [0, -10, 0, 0]) }, { rotate: `${kf(v, [0, 30, 60, 100], [-6, -16, 2, -6])}deg` }] };
+    // CSS 와 같은 순서: rotate(...) translateY(...)
+    return { transform: [{ rotate: `${kfc(v, [0, 30, 60, 100], [-6, -16, 2, -6], WAVE_EASE)}deg` }, { translateY: kfc(v, [0, 30, 60, 100], [0, -10, 0, 0], WAVE_EASE) }] };
   });
   const bub = useAnimatedStyle(() => ({ opacity: bubble.get(), transform: [{ scale: 0.6 + bubble.get() * 0.4 }] }));
 
