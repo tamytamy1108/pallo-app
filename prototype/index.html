@@ -9600,7 +9600,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         <div class="card st-q"><span class="st-qn">Now I think…</span>
           <div class="st-sides">${['A', 'B'].map((k) => `<button class="st-side" role="radio" aria-checked="${t.now === k}" data-now="${k}"><small>SIDE ${k}</small><b lang="en">${stEsc(deb[k].t)}</b><span>${stEsc(deb[k].ko)}</span></button>`).join('')}</div>
           <textarea class="st-ta" id="stAfter" lang="en" placeholder="${B && t.now && t.now !== B.side ? '○○’s point changed my mind because ___.' : 'I still think ___ because ___.'}">${stEsc(ST.after[SV.lk + ':final'] || '')}</textarea></div>
-        <button class="btn wide yellow press" id="stCmp">비교하기</button><div id="stCmpOut"></div>`;
+        <div id="stCmpOut"></div><div class="st-foot" id="baFoot"><button class="btn wide yellow press" id="stCmp">비교하기</button></div>`;
       $$('#stBody [data-now]').forEach((b) => b.addEventListener('click', () => { const v = $('#stAfter').value; ST.after[SV.lk + ':final'] = v; t.now = b.dataset.now; sfx('tap'); STEP_VIEW.ba(s); }));
       $('#stCmp').addEventListener('click', () => {
         const a = $('#stAfter').value.trim(); ST.after[SV.lk + ':final'] = a;
@@ -9611,7 +9611,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
             <div class="b before"><small>BEFORE</small><span lang="en">${B ? stEsc(B.text || '-') : '-'}</span></div>
             <div class="b after"><small>NOW</small><span lang="en">${stEsc(a)}</span></div></div>
           <div class="card st-stats"><span><b>${B ? (changed ? '바뀜' : '그대로') : '-'}</b>입장</span><span><b>${B ? words(B.text) : 0}→${words(a)}</b>단어 수</span><span><b>${keys.length}</b>KEY 표현</span></div>
-          <p class="st-intro">${changed ? '생각이 바뀐 이유를 말할 수 있다면 토론을 제대로 들은 거예요.' : '같은 입장이어도 이유가 더 단단해졌는지 비교해 보세요.'}${keys.length ? ` 쓴 표현: ${keys.join(', ')}` : ' 다음엔 KEY EXPRESSIONS를 하나 넣어 봐요.'}</p>${doneBtn()}`;
+          <p class="st-intro">${changed ? '생각이 바뀐 이유를 말할 수 있다면 토론을 제대로 들은 거예요.' : '같은 입장이어도 이유가 더 단단해졌는지 비교해 보세요.'}${keys.length ? ` 쓴 표현: ${keys.join(', ')}` : ' 다음엔 KEY EXPRESSIONS를 하나 넣어 봐요.'}</p>`;
+        $('#baFoot').innerHTML = doneBtn();
         stReveal($('#stCmpOut'), 'start');
         $('#stDone').addEventListener('click', () => finishStep(s));
       });
@@ -9629,7 +9630,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ${idx.map((i) => `<div class="card st-q"><div class="st-qh"><span class="st-qn">Q${i + 1}</span>${saySpan(qs[i].en)}</div><div class="st-qen" lang="en">${stEsc(qs[i].en)}</div>
         ${before[i] ? `<div class="st-cmp"><div class="b before"><small>BEFORE · 예습 때</small><span lang="en">${stEsc(before[i])}</span></div></div>` : ''}
         <textarea class="st-ta" data-after="${i}" lang="en" placeholder="지금 다시 답해 보세요">${stEsc(after[i] || '')}</textarea></div>`).join('')}
-      <button class="btn wide yellow press" id="stCmp">비교하기</button><div id="stCmpOut"></div>`;
+      <div id="stCmpOut"></div><div class="st-foot" id="baFoot"><button class="btn wide yellow press" id="stCmp">비교하기</button></div>`;
     const collect = () => { const a = []; $$('#stBody [data-after]').forEach((x) => { a[+x.dataset.after] = x.value.trim(); }); return a; };
     $$('#stBody [data-after]').forEach((x) => x.addEventListener('input', () => { ST.after[stKey(s.id)] = collect(); }));
     $('#stCmp').addEventListener('click', () => {
@@ -9645,7 +9646,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         ${idx.filter((i) => a[i]).map((i) => `<div class="st-cmp"><div class="b before"><small>BEFORE</small><span lang="en">${stEsc(before[i] || '(예습 답변 없음)')}</span></div><div class="b after"><small>AFTER</small><span lang="en">${stEsc(a[i])}</span></div></div>`).join('')}
         ${(() => { const tips = [used.length ? '' : `${useLabel} 하나 넣기`, L.kind === 'topic' && sAvg < 3 ? '이유 · 예시로 3문장' : ''].filter(Boolean);
           return `<p class="ba-next">${words(all) > words(old) ? '답이 더 길어졌어요! ' : ''}${used.length ? `쓴 ${useLabel} <b lang="en">${stEsc(used.join(', '))}</b>` : ''}${tips.length ? `${used.length ? ' · ' : ''}<b>다음엔</b> ${tips.join(' · ')}` : ''}</p>`; })()}
-        ${doneBtn()}`;
+        `;
+      $('#baFoot').innerHTML = doneBtn();
       stReveal($('#stCmpOut'), 'start');
       if (L.kind === 'pattern') $('#stDone').textContent = '짝 맞추기 1판으로 마무리';
       $('#stDone').addEventListener('click', () => (L.kind === 'pattern' ? runMatchFinish(s, 'Before / After') : finishStep(s)));
