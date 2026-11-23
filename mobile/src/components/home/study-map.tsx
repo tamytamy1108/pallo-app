@@ -61,7 +61,7 @@ function makeLevelMap(lvWanted: number) {
   const readDone = (unit: number, count: number) => steps.map((s) => count > 0 && isDone(stepKey(lv, unit, s.id)));
   const stageOf = (i: number) => STAGES.findIndex((g) => g.key === steps[i].stage);
   const stepHref = (unit: number, step: string) => (lv <= 2 ? `/lesson/${step}?lv=${lv}&unit=${unit}` : `/lesson34/${step}?lv=${lv}&unit=${unit}`);
-  /** 이번 주 반 진도 (과 번호들) · 칩 글자: 패턴형 '5 & 6챕터', 토픽 · 토론형 '#102' · '2회' */
+  /** 이번 주 반 진도 (과 번호들) · 칩 글자: 패턴형 '5 & 6챕터', 토픽 · 토론형 '#101 & #102' · '1회 & 2회' */
   const week = (lv === MY_LV ? MY_BOOK.weekLessons : MY_BOOK.weekByLevel[lv]) ?? [];
   const weekText = L.kind === 'pattern' ? `${week.join(' & ')}챕터` : week.map(chipLabel).join(' & ');
   return { lv, steps, units, unitName, chipLabel, readDone, stageOf, stepHref, week, weekText };
