@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Peek } from '@/components/lesson/peek';
+import { Peek, useStreakCheer } from '@/components/lesson/peek';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -10,7 +10,7 @@ import type { Scene } from '@/data/situation';
 import type { Flow, Moment } from '@/data/situation-content';
 import { useLearnPrefs } from '@/state/learn-prefs';
 
-import { Avatar, BigBtn, Drop, FeedbackFoot, Foot, Opt, PINK_INK, REACT_GOOD, ResultRow, ScoreCard, SpeakRound, SUB, pick, shuffle, useSay, type OptState } from './parts';
+import { Avatar, BigBtn, CHEER_BOTTOM, Drop, FeedbackFoot, Foot, Opt, PINK_INK, REACT_GOOD, ResultRow, ScoreCard, SpeakRound, SUB, pick, shuffle, useSay, type OptState } from './parts';
 import { useQuizLevel } from './scene-store';
 import { StepShell, useStepFinish } from './step-frame';
 
@@ -36,6 +36,7 @@ export function FlowStep({ sceneId, scene }: { sceneId: string; scene: Scene }) 
   const { finish, celebrate, finished } = useStepFinish(sceneId, 'flow');
   const [i, setI] = useState(0);
   const [res, setRes] = useState<boolean[]>([]);
+  const cheer = useStreakCheer();
   const right = res.filter(Boolean).length;
   const end = i >= M.length;
   return (
@@ -50,10 +51,14 @@ export function FlowStep({ sceneId, scene }: { sceneId: string; scene: Scene }) 
           i={i}
           L={L}
           scene={scene}
-          onAnswered={(first) => setRes((r) => [...r.slice(0, i), first])}
+          onAnswered={(first) => {
+            cheer.record(first);
+            setRes((r) => [...r.slice(0, i), first]);
+          }}
           onNext={() => setI(i + 1)}
         />
       )}
+      {!end ? <Peek n={cheer.peek?.n ?? 0} line={cheer.peek?.line ?? null} bottom={CHEER_BOTTOM} /> : null}
       {celebrate}
     </StepShell>
   );

@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { CHEER_STREAK, pickOne } from '@/data/lessons';
 import { sfx } from '@/lib/feedback';
 import { kfc } from '@/lib/motion';
 
@@ -89,3 +90,14 @@ const styles = StyleSheet.create({
   charBox: { transformOrigin: '80% 100%' },
   char: { width: 120, height: 100 },
 });
+
+/** 2문제 연속 처음에 맞히면 보라 팔로 응원 (프로토타입 CHEER.streak) — Lv.1·2 · Lv.3·4 · 상황 장면 같은 규칙 */
+export function useStreakCheer() {
+  const [peek, setPeek] = useState<{ n: number; line: [string, string] } | null>(null);
+  const streak = useRef(0);
+  const record = useCallback((ok: boolean) => {
+    streak.current = ok ? streak.current + 1 : 0;
+    if (ok && streak.current >= 2 && streak.current % 2 === 0) setTimeout(() => setPeek((p) => ({ n: (p?.n ?? 0) + 1, line: [pickOne(CHEER_STREAK), ''] })), 900);
+  }, []);
+  return { record, peek };
+}

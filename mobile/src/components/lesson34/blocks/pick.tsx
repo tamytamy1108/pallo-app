@@ -77,6 +77,7 @@ function PickInner({ t, from }: { t: PickTask; from?: SayTask }) {
     // 처음 틀리면 그 보기만 지우고 한 번 더 (시계는 계속 돌아요)
     if (!ok && !missRef.current.length) {
       setMiss([k]);
+      rt.peek(['한 번 더 골라 봐요', '기회가 한 번 남았어요!']);
       if (t.combo) rt.setCombo(0);
       sfx('wrong');
       haptic('error');

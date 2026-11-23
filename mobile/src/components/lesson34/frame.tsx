@@ -34,6 +34,8 @@ export type Runner = {
   source: string;
   /** 매치 최고 기록 열쇠 */
   bestKey: string;
+  /** 보라 팔로가 오른쪽 옆에서 빼꼼 나와 한마디 (첫 오답 안내 등) */
+  peek: (line: [string, string]) => void;
 };
 export const RunnerCtx = createContext<Runner | null>(null);
 export function useRunner() {

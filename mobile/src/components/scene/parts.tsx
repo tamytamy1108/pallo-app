@@ -207,6 +207,9 @@ export function Opt({ label, sub, state, onPress }: { label: string; sub?: strin
   );
 }
 
+/** 연속 정답 응원 팔로: 정답 띠 + 버튼(아래 고정 칸) 위에서 나와요 */
+export const CHEER_BOTTOM = 200;
+
 /* ---------- 정답 · 오답 반응 + 다음 버튼 (프로토타입 qFootFB · #study .ls-fb) ---------- */
 export function FeedbackFoot({ ok, title, sub, say, ko, source, next, onNext }: { ok: boolean; title: string; sub: string; say?: string; ko?: string; source: string; next: string; onNext: () => void }) {
   return (

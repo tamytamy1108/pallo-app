@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Peek } from '@/components/lesson/peek';
+import { Peek, useStreakCheer } from '@/components/lesson/peek';
 import { showToast } from '@/components/ui/toast';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -14,7 +14,7 @@ import { savePos } from '@/state/progress';
 import { Spk } from './icons';
 import { LevelPick } from './level-pick';
 import { optionsOf, quizItems, type QuizItem, type QuizPart } from './quiz-items';
-import { BigBtn, Drop, FeedbackFoot, Foot, Kick, Opt, PressDrop, REACT_GOOD, ResultRow, ScoreCard, SUB, pick, shuffle, useSay, type OptState } from './parts';
+import { BigBtn, CHEER_BOTTOM, Drop, FeedbackFoot, Foot, Kick, Opt, PressDrop, REACT_GOOD, ResultRow, ScoreCard, SUB, pick, shuffle, useSay, type OptState } from './parts';
 import { clearQuizPos, getBest, getQuizLevel, getQuizPos, pickLevel, saveBest, saveQuizPos, setQuizLevel, useLevelPicked } from './scene-store';
 import { StepShell, useStepFinish } from './step-frame';
 
@@ -41,6 +41,7 @@ export function QuizStep({ sceneId, scene }: { sceneId: string; scene: Scene }) 
   });
   const [phase, setPhase] = useState<'pick' | 'q' | 'result'>(picked ? 'q' : 'pick');
   const [pickFrom, setPickFrom] = useState<'first' | 'again'>('first');
+  const cheer = useStreakCheer();
 
   useEffect(() => {
     if (getQuizPos(sceneId)) {
@@ -91,6 +92,7 @@ export function QuizStep({ sceneId, scene }: { sceneId: string; scene: Scene }) 
           last={run.i >= N - 1}
           onAnswered={(first) => {
             setAnswered(true);
+            cheer.record(first);
             setRun((r) => {
               const res = [...r.res];
               res[r.order[r.i]] = first;
@@ -124,6 +126,7 @@ export function QuizStep({ sceneId, scene }: { sceneId: string; scene: Scene }) 
           onDone={() => finish({ right: run.right, total: N })}
         />
       )}
+      {phase === 'q' ? <Peek n={cheer.peek?.n ?? 0} line={cheer.peek?.line ?? null} bottom={CHEER_BOTTOM} /> : null}
       {celebrate}
     </StepShell>
   );

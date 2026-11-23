@@ -30,6 +30,7 @@ export function MatchBlock({ task }: { task: MatchTask }) {
 const since = (t0: number) => Math.max(1, Math.round((Date.now() - t0) / 1000));
 
 function MatchRound({ task, onAgain }: { task: MatchTask; onAgain: () => void }) {
+  const rt = useRunner();
   const P = task.pairs;
   const N = P.length;
   const [L] = useState(() => shuffle(P.map((_, i) => i)));
@@ -84,6 +85,7 @@ function MatchRound({ task, onAgain }: { task: MatchTask; onAgain: () => void })
         setTimeout(() => setEnd({ used }), 650);
       }
     } else {
+      if (miss === 0) rt.peek(['한 번 더 짝지어 봐요', '']);
       setMiss((m) => m + 1);
       setCombo(0);
       setBad((b) => ({ l: sel, r: j, n: (b?.n ?? 0) + 1 }));
