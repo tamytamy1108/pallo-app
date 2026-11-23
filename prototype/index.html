@@ -316,13 +316,20 @@ a { color: inherit; }
 @keyframes floorShrink { 45% { transform: scale(.7); opacity: .6; } }
 .node.locked { background: #EFEAE0; border-style: dashed; border-color: #B9B2A3; box-shadow: none; color: #9A93A6; }
 .node.chest { border-radius: 20px; width: 64px; height: 58px; margin-left: -32px; margin-top: -29px; background: var(--purple); color: var(--white); }
-.node.chest, #qmapInner .node.chest:not(.locked), .node.chest.locked { border: 0; border-radius: 0; background: none; box-shadow: none; width: 72px; height: 64px; margin-left: -36px; margin-top: -34px; overflow: visible;
-  --tc-b: #4A2F9E; --tc-l: #6C4FD0; --tc-s: var(--yellow); --tc-k: var(--ink); }
-.node.chest.locked { --tc-b: #E4DED2; --tc-l: #EFEAE0; --tc-s: #D6CFC0; --tc-k: #9A93A6; }
-.node.chest.locked .tchest > rect:first-child { fill: #CFC8BA; }
+.node.chest, #qmapInner .node.chest:not(.locked), .node.chest.locked { border: 0; border-radius: 0; background: none; box-shadow: none; width: 72px; height: 64px; margin-left: -36px; margin-top: -34px; overflow: visible; }
+/* 보석함 색 (지도 · 보상 화면이 같은 그림을 써요). 잠김은 회색 */
+.tchest { --tc-b: #5B3BC4; --tc-d: #4A2FA6; --tc-l: #7B5CE6; --tc-ld: #6847D6; --tc-s: var(--yellow); --tc-k: var(--ink); --tc-g: #FF7FB2; --tc-in: #2B1C5C; --tc-sh: var(--ink); }
+.node.chest.locked .tchest { --tc-b: #E4DED2; --tc-d: #DAD3C5; --tc-l: #EFEAE0; --tc-ld: #E6E0D4; --tc-s: #D6CFC0; --tc-k: #9A93A6; --tc-g: #E4DED2; --tc-sh: #CFC8BA; }
+.tchest .tc-inner { opacity: 0; transition: opacity .3s .1s; }
+.tchest .tc-lid, .tchest .tc-lock { transform-box: fill-box; }
+.tchest .tc-lid { transform-origin: 0% 89%; }
+/* 열린 상자: 뚜껑이 들리고 자물쇠는 떨어지고 안의 동전 · 보석이 보여요 */
+.tchest.is-open .tc-inner { opacity: 1; }
+.tchest.is-open .tc-lid { transform: translate(-6%, -51%) rotate(-14deg); }
+.tchest.is-open .tc-lock { opacity: 0; transform: translateY(145%) rotate(24deg); }
 .node.chest .tchest { width: 100%; height: 100%; overflow: visible; }
 .node.chest { -webkit-tap-highlight-color: transparent; } .node.chest:focus, .node.chest:focus-visible { outline: none; }   /* 보상 상자: 누른 뒤 테두리(포커스 링 · 탭 하이라이트) 없이 */
-.node.chest .tc-lid { transform-box: fill-box; transform-origin: 50% 100%; }
+.node.chest:not(.opened) .tc-lid { transform-origin: 50% 100%; }
 .node.chest .node-label { margin-top: 2px; }
 #qmapInner .node.chest:not(.locked):active { box-shadow: none; transform: translateY(3px); }
 /* 열 수 있는 보상: OPEN 글씨 없이 · 뒤 노란 빛 + 상자가 들썩 흔들리고 반짝이가 톡톡 */
@@ -334,6 +341,77 @@ a { color: inherit; }
 .chest-fx .spot { left: -56px; top: -56px; width: 112px; height: 112px; }
 .chest-fx .rays { left: -62px; top: -62px; width: 124px; height: 124px; }
 @media (prefers-reduced-motion: reduce) { .node.chest.current .tchest, .node.chest.current .tc-lid { animation: none; } }
+/* ───── 챕터 완료: 보상 상자 열기 (시안 C · XP 크게, prototype/celebration-chest-quick.html) ─────
+   한 번 눌러 열기 → 팔로가 튀어나오고 상자가 위로 작아짐 → +XP · 작은 칸 세 개. 2.5초 안에 끝
+   4초 동안 안 누르면 '눌러서 열기' 힌트만 · 움직임 줄이기면 처음부터 열린 모습 */
+.ccl { position: absolute; inset: 0; z-index: 72; background: var(--cream); display: flex; flex-direction: column; align-items: center; padding: 70px 20px 0; opacity: 0; visibility: hidden; transition: opacity .3s, visibility 0s .3s; overflow: hidden; }
+.ccl.show { opacity: 1; visibility: visible; transition: opacity .3s; }
+.ccl-kick { position: relative; z-index: 3; font-weight: 900; font-size: 12.5px; color: var(--purple); background: var(--lavender, #E5DDF6); border-radius: 12px; padding: 4px 10px; }
+.ccl-title { position: relative; z-index: 3; margin: 20px 0 0; font-family: var(--f-display); font-weight: 800; font-size: 26px; letter-spacing: -.6px; line-height: 1.15; text-align: center; text-shadow: 0 0 6px var(--cream), 0 0 2px var(--cream); }
+.ccl-stage { position: relative; width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 46px; }
+.ccl-slot { transform: translateY(var(--cy, 96px)) scale(1.5); transform-origin: 50% 50%; transition: transform .95s cubic-bezier(.45, 0, .15, 1) .35s; will-change: transform; }
+.ccl.go .ccl-slot { transform: none; }
+.ccl-chest { position: relative; display: block; width: 110px; height: 97px; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ccl-chest:focus-visible { outline: 3px solid var(--purple); outline-offset: 6px; border-radius: 12px; }
+.ccl-chest .tchest { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ccl-chest .tc-lid { transition: transform .6s cubic-bezier(.34, 1.35, .5, 1); }
+.ccl-chest .tc-lock { transition: transform .35s ease-in, opacity .3s; }
+.ccl-chest.idle .tchest { animation: cclBob 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes cclBob { 0%, 78%, 100% { transform: none; } 84% { transform: translateY(-3px) rotate(-3deg); } 90% { transform: translateY(-3px) rotate(3deg); } 95% { transform: none; } }
+.ccl-glow { position: absolute; left: 50%; top: 44%; width: 180px; height: 180px; margin: -90px 0 0 -90px; border-radius: 50%; background: radial-gradient(var(--yellow) 0 18%, rgba(255, 226, 0, .35) 40%, transparent 66%); opacity: 0; transform: scale(.3); transition: opacity .4s, transform .5s; pointer-events: none; z-index: -1; }
+.ccl-chest.open .ccl-glow { opacity: 1; transform: scale(1); }
+.ccl-spark { position: absolute; left: 50%; top: 44%; width: 10px; height: 10px; margin: -5px; pointer-events: none; }
+.ccl-spark i { position: absolute; inset: 0; background: var(--c); border: 1.5px solid var(--ink); border-radius: 2px; opacity: 0; animation: cclFly .7s cubic-bezier(.2, .7, .4, 1) forwards; }
+@keyframes cclFly { 0% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translate(var(--x), var(--y)) rotate(200deg); } }
+.ccl-xp { margin-top: 6px; font-family: var(--f-display); font-weight: 800; font-size: 64px; line-height: 1; letter-spacing: -2.5px; font-variant-numeric: tabular-nums; opacity: 0; transform: scale(.6); transition: transform .45s cubic-bezier(.3, 1.6, .5, 1) 1.05s, opacity .2s 1.05s; }
+.ccl-xp small { font-size: 22px; letter-spacing: -.5px; margin-left: 4px; }
+.ccl.go .ccl-xp { opacity: 1; transform: none; }
+.ccl-bar { width: 220px; height: 14px; margin-top: 12px; border: 2px solid var(--ink); border-radius: 8px; background: var(--white); overflow: hidden; opacity: 0; transition: opacity .2s 1.15s; }
+.ccl-bar i { display: block; height: 100%; width: var(--from, 38%); background: var(--purple); transition: width 1s cubic-bezier(.3, .8, .4, 1) 1.3s; }
+.ccl.go .ccl-bar { opacity: 1; } .ccl.go .ccl-bar i { width: var(--to, 82%); }
+.ccl-lv { margin-top: 6px; font-size: 12px; font-weight: 700; color: var(--ink-sub, #5A5366); opacity: 0; transition: opacity .2s 1.2s; }
+.ccl.go .ccl-lv { opacity: 1; }
+.ccl-mini { display: flex; gap: 8px; margin-top: 20px; }
+.ccl-mini > div { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 86px; padding: 10px 4px; border: 2px solid var(--ink); border-radius: 18px; background: var(--white); box-shadow: 3px 3px 0 var(--ink); opacity: 0; transform: translateY(16px); transition: transform .4s cubic-bezier(.3, 1.4, .5, 1), opacity .2s; }
+.ccl-mini > div b { font-weight: 900; font-size: 12.5px; text-align: center; line-height: 1.3; }
+.ccl-mini .ic { width: 36px; height: 36px; border-radius: 11px; border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-weight: 800; font-size: 13px; background: var(--c); }
+.ccl.go .ccl-mini > div { opacity: 1; transform: none; }
+.ccl.go .ccl-mini > div:nth-child(1) { transition-delay: 1.3s; } .ccl.go .ccl-mini > div:nth-child(2) { transition-delay: 1.38s; } .ccl.go .ccl-mini > div:nth-child(3) { transition-delay: 1.46s; }
+/* 팔로 (원본 PNG 그대로): 큰 상자에서 솟아올라 옆에 착지 → 콩콩 */
+.ccl-pallo { position: absolute; left: calc(50% + 50px); top: 52px; width: 70px; pointer-events: none; --r: 8deg; }
+.ccl-pallo img { display: block; width: 100%; transform-origin: 50% 92%; opacity: 0; }
+.ccl-pallo .shd { position: absolute; left: 18%; right: 18%; bottom: -4px; height: 9px; border-radius: 50%; background: rgba(30, 26, 43, .18); opacity: 0; }
+.ccl.go .ccl-pallo img { animation: cclPalloOut .9s .1s cubic-bezier(.3, .7, .4, 1) both, cclHop 1.7s 1.1s ease-in-out infinite; }
+.ccl.go .ccl-pallo .shd { animation: cclShdIn .9s .1s both, cclShdHop 1.7s 1.1s ease-in-out infinite; }
+@keyframes cclPalloOut { 0% { opacity: 0; transform: translate(-86px, calc(var(--cy, 96px) + 8px)) scale(.3); } 12% { opacity: 1; } 42% { transform: translate(-70px, -30px) scale(.95, 1.15) rotate(-12deg); } 68% { transform: scale(1.2, .8) rotate(var(--r)); } 82% { transform: translateY(-9px) scale(.95, 1.06) rotate(var(--r)); } 100% { opacity: 1; transform: rotate(var(--r)); } }
+@keyframes cclHop { 0%, 55%, 100% { opacity: 1; transform: rotate(var(--r)); } 63% { transform: scale(1.12, .88) rotate(var(--r)); } 76% { transform: translateY(-16px) scale(.94, 1.08) rotate(calc(var(--r) * -1.6)); } 88% { transform: scale(1.08, .92) rotate(var(--r)); } }
+@keyframes cclShdIn { 0%, 40% { opacity: 0; transform: scale(.4); } 66% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: none; } }
+@keyframes cclShdHop { 0%, 55%, 100% { opacity: 1; transform: none; } 63% { transform: scale(1.1); } 76% { opacity: .5; transform: scale(.6); } 88% { transform: scale(1.05); } }
+.ccl-hint { position: absolute; left: 50%; top: var(--hint-top, 60%); transform: translateX(-50%); font-weight: 900; font-size: 12.5px; background: var(--ink); color: #fff; border-radius: 14px; padding: 6px 12px; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+.ccl-hint.on { opacity: 1; animation: cclHint 1s ease-in-out infinite; }
+@keyframes cclHint { 50% { transform: translate(-50%, -4px); } }
+/* 버튼: 아래 고정. 상자가 열리면 '다음 코너로'가 켜지고 빛이 훑고 지나가요 */
+.ccl-foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 30px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(transparent, var(--cream) 22%); }
+.ccl-btn { height: 54px; border-radius: 27px; border: 2px solid var(--ink); font-weight: 900; font-size: 15px; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 4px 4px 0 var(--ink); background: var(--white); transition: opacity .25s, transform .1s; }
+.ccl-btn:active { transform: translate(4px, 4px); box-shadow: none; }
+.ccl-next { position: relative; overflow: hidden; isolation: isolate; background: var(--yellow); }
+.ccl-foot.locked .ccl-next { opacity: .35; pointer-events: none; }
+.ccl-next::before { content: ""; position: absolute; inset: -4px; border-radius: inherit; background: radial-gradient(60% 120% at 50% 50%, rgba(255, 255, 255, .85), transparent 70%); opacity: 0; z-index: -1; }
+.ccl-next::after { content: ""; position: absolute; top: -10%; bottom: -10%; left: -40%; width: 34%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .95) 45%, rgba(255, 255, 255, .95) 55%, transparent); transform: skewX(-18deg); pointer-events: none; }
+.ccl-foot:not(.locked) .ccl-next { animation: cclNudge 2.4s .4s ease-in-out infinite; }
+.ccl-foot:not(.locked) .ccl-next::after { animation: cclSweep 2.4s .4s ease-in-out infinite; }
+.ccl-foot:not(.locked) .ccl-next::before { animation: cclHalo 2.4s .4s ease-in-out infinite; }
+.ccl-foot:not(.locked) .ccl-next svg { animation: cclArrow 2.4s .4s ease-in-out infinite; }
+.ccl-foot:not(.locked) .ccl-next:active { animation: none; transform: translate(4px, 4px); box-shadow: none; }
+@keyframes cclSweep { 0%, 45% { transform: skewX(-18deg) translateX(0); } 75%, 100% { transform: skewX(-18deg) translateX(520%); } }
+@keyframes cclHalo { 0%, 40%, 100% { opacity: 0; } 60% { opacity: .7; } }
+@keyframes cclNudge { 0%, 8%, 26%, 100% { transform: none; box-shadow: 4px 4px 0 var(--ink); } 14% { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); } 20% { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); } }
+@keyframes cclArrow { 0%, 8%, 30%, 100% { transform: none; } 16% { transform: translateX(4px); } 24% { transform: translateX(-1px); } }
+/* 다시 그릴 때 · 움직임 줄이기: 전환 없이 곧바로 */
+.ccl.still *, .ccl.still *::before, .ccl.still *::after { transition: none !important; animation: none !important; }
+.ccl.still .ccl-pallo img, .ccl.still .ccl-pallo .shd { opacity: 1; }
+.ccl.still .ccl-pallo img { transform: rotate(var(--r)); }
+@media (prefers-reduced-motion: reduce) { .ccl *, .ccl *::before, .ccl *::after { transition: none !important; animation: none !important; } .ccl .ccl-pallo img, .ccl .ccl-pallo .shd { opacity: 1; } }
 #qmapInner .node { z-index: 3; }
 #qmapInner .node-label { text-shadow: 0 0 3px #FBF7EE, 0 0 3px #FBF7EE, 0 0 6px #FBF7EE; }
 .np-m { position: absolute; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(30,26,43,0); transition: background .2s; }
@@ -4695,6 +4773,24 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <!-- ============ 캐릭터 등장 (빼꼼) ============ -->
 
       <!-- ============ 축하 화면 ============ -->
+      <!-- 챕터 완료 보상 상자 (이슈 #7 · 시안 C) -->
+      <div class="ccl" id="chestCele" role="dialog" aria-modal="true" aria-labelledby="cclTitle" aria-hidden="true">
+        <span class="ccl-kick" id="cclKick">Cafe Complaint</span>
+        <h2 class="ccl-title" id="cclTitle">1과 끝!<br>상자를 열어 봐요</h2>
+        <div class="ccl-stage" id="cclStage">
+          <div class="ccl-slot" id="cclSlot"><button type="button" class="ccl-chest" id="cclChest" aria-label="보상 상자 열기"><span class="ccl-glow"></span></button></div>
+          <div class="ccl-xp" aria-live="polite"><span id="cclXp">+0</span><small>XP</small></div>
+          <div class="ccl-bar" aria-hidden="true"><i id="cclBar"></i></div>
+          <div class="ccl-lv" id="cclLv"></div>
+          <div class="ccl-mini" id="cclMini"></div>
+          <div class="ccl-pallo" aria-hidden="true"><i class="shd"></i><img src="assets/c-upright-yellow.png" alt=""></div>
+          <div class="ccl-hint" id="cclHint" aria-hidden="true">눌러서 열기</div>
+        </div>
+        <div class="ccl-foot locked" id="cclFoot">
+          <button type="button" class="ccl-btn ccl-next" id="cclNext"><span>다음 코너로</span><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10.5 5l5 5-5 5" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" class="ccl-btn" id="cclHome">홈으로</button>
+        </div>
+      </div>
       <div class="celebrate" id="celebrate" role="dialog" aria-modal="true" aria-labelledby="celTitle">
         <canvas id="confetti" aria-hidden="true"></canvas>
         <div class="cel-inner">
@@ -5755,8 +5851,9 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     });
     const cx = Math.round(W / 2 + [-1, 0, 1, 0][L.length % 4] * amp);
     pts.push([cx, y - 6]);
-    if (all) html += `<span class="cur-fx chest-fx" style="left:${cx}px;top:${y - 6}px" aria-hidden="true"><span class="spot"></span><span class="rays"></span></span>`;
-    html += `<button class="node chest${all ? ' current' : ' locked'}" style="left:${cx}px;top:${y - 6}px;--c:var(--purple)" data-chest aria-label="${S.lesson}과 보상 상자${all ? ', 열 수 있어요' : ', 잠김'}"><svg class="tchest" viewBox="0 0 84 74" aria-hidden="true"><rect x="7" y="38" width="70" height="32" rx="7" fill="var(--ink)"/><g class="tc-body"><rect x="7" y="34" width="70" height="32" rx="7" fill="var(--tc-b)" stroke="var(--tc-k)" stroke-width="2.5"/><rect x="17" y="34" width="8" height="32" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2"/><rect x="59" y="34" width="8" height="32" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2"/></g><g class="tc-lid"><path d="M7 36V24C7 11 22 6 42 6s35 5 35 18v12Z" fill="var(--tc-l)" stroke="var(--tc-k)" stroke-width="2.5" stroke-linejoin="round"/><path d="M17 36V12.5c2.4-1.2 5-2.1 8-2.8V36Z M59 36V9.7c3 .7 5.6 1.6 8 2.8V36Z" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2" stroke-linejoin="round"/><path d="M30 14c4-1.4 9-2 14-2" stroke="#fff" stroke-opacity=".7" stroke-width="3.5" stroke-linecap="round" fill="none"/><rect x="5" y="31" width="74" height="7" rx="3.5" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2.5"/></g><g class="tc-lock"><rect x="33.5" y="30" width="17" height="19" rx="4" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2.5"/><circle cx="42" cy="37.5" r="2.6" fill="var(--tc-k)"/><path d="M42 39v5" stroke="var(--tc-k)" stroke-width="2.6" stroke-linecap="round"/></g></svg><span class="node-label">${S.lesson}과 보상</span></button>`;
+    if (all && !(S.chestOpen || {})[S.lesson]) html += `<span class="cur-fx chest-fx" style="left:${cx}px;top:${y - 6}px" aria-hidden="true"><span class="spot"></span><span class="rays"></span></span>`;
+    const opened = all && !!(S.chestOpen || {})[S.lesson];
+    html += `<button class="node chest${opened ? ' opened' : all ? ' current' : ' locked'}" style="left:${cx}px;top:${y - 6}px;--c:var(--purple)" data-chest aria-label="${S.lesson}과 보상 상자${opened ? ', 받은 보상 보기' : all ? ', 열 수 있어요' : ', 잠김'}">${chestSVG(opened)}<span class="node-label">${S.lesson}과 보상</span></button>`;
     y += 70;
     zs.forEach((z, k) => { const y1 = k + 1 < zs.length ? zs[k + 1].y0 - 6 : y - 40; bands += `<div class="zband" style="top:${z.y0}px;height:${y1 - z.y0}px;--zc:${z.c}"><div class="zh">${z.h}</div></div>`; });
     const curve = (p) => p.map((q, i) => i === 0 ? `M${q[0]},${q[1]}` : `C${p[i - 1][0]},${(p[i - 1][1] + q[1]) / 2} ${q[0]},${(p[i - 1][1] + q[1]) / 2} ${q[0]},${q[1]}`).join(' ');
@@ -5787,7 +5884,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     $$('#qmapInner [data-skip]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); openSheet('skip', +b.dataset.skip); }));
     $('#qmapInner [data-chest]').addEventListener('click', (e) => {
       if (!all) { const b = e.currentTarget; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); toast(`${L.length}단계를 모두 끝내면 열려요`); return; }
-      toast('보상 상자를 열었어요! +[보상]');
+      openChestCele();
     });
     const n = mapCount();
     $('#mapFill').style.width = (n / L.length * 100) + '%';
@@ -6300,6 +6397,98 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     const fn = celDone; celDone = null;
     if (fn) setTimeout(fn, 260);
   }
+  // ---- 챕터 완료 보상 상자 (이슈 #7 · 시안 C) ----
+  // 보석함 그림 하나를 지도 노드와 보상 화면이 같이 써요: 몸 · 안(동전·보석) · 뚜껑 · 자물쇠 네 겹
+  function chestSVG(open) {
+    return `<svg class="tchest${open ? ' is-open' : ''}" viewBox="0 0 120 106" aria-hidden="true">`
+      + `<rect x="15" y="56" width="96" height="48" rx="11" fill="var(--tc-sh)"/>`
+      + `<g class="tc-body"><rect x="15" y="40" width="90" height="22" rx="8" fill="var(--tc-in)" stroke="var(--tc-k)" stroke-width="2.5"/></g>`
+      + `<g class="tc-inner"><ellipse cx="60" cy="50" rx="40" ry="9" fill="#FFE200" opacity=".55"/><g stroke="var(--tc-k)" stroke-width="2"><circle cx="34" cy="51" r="6" fill="#FFE200"/><circle cx="47" cy="47" r="6.5" fill="#FFE200"/><path d="M60 36L67 43L60 51L53 43Z" fill="#8FD3FF" stroke-linejoin="round"/><circle cx="74" cy="48" r="6.5" fill="#FFE200"/><circle cx="87" cy="51" r="6" fill="#FFE200"/></g><path d="M45 44.5l2-1.5M72 45.5l2-1.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g>`
+      + `<g class="tc-body"><rect x="12" y="52" width="96" height="48" rx="11" fill="var(--tc-b)" stroke="var(--tc-k)" stroke-width="2.5"/><path d="M13.3 82H106.7V89A9.7 9.7 0 0 1 97 98.7H23A9.7 9.7 0 0 1 13.3 89Z" fill="var(--tc-d)"/><path d="M14 70H106" stroke="var(--tc-k)" stroke-opacity=".18" stroke-width="2"/><path d="M19 59h7" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/><rect x="27" y="52" width="11" height="48" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2.2"/><rect x="82" y="52" width="11" height="48" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2.2"/><path d="M29.5 55v42M84.5 55v42" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><g fill="var(--tc-k)"><circle cx="32.5" cy="61" r="1.7"/><circle cx="32.5" cy="91" r="1.7"/><circle cx="87.5" cy="61" r="1.7"/><circle cx="87.5" cy="91" r="1.7"/></g></g>`
+      + `<g class="tc-lid"><path d="M12 54V38C12 22 30 13 60 13S108 22 108 38V54Z" fill="var(--tc-l)" stroke="var(--tc-k)" stroke-width="2.5" stroke-linejoin="round"/><path d="M13.3 46H106.7V52.7H13.3Z" fill="var(--tc-ld)"/><path d="M27 54V20.4C30.4 19 34 17.9 38 17.1V54Z M82 54V17.1C86 17.9 89.6 19 93 20.4V54Z" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2.2" stroke-linejoin="round"/><path d="M44 22c5-2 11-3 18-3" stroke="#fff" stroke-opacity=".7" stroke-width="4" stroke-linecap="round" fill="none"/><rect x="8" y="48" width="104" height="10" rx="5" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2.5"/><path d="M14 51.5h30" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/><path d="M60 25L69.5 33.5L60 45L50.5 33.5Z" fill="var(--tc-g)" stroke="var(--tc-k)" stroke-width="2.2" stroke-linejoin="round"/><path d="M50.5 33.5H69.5M55 29.3L60 33.5L65 29.3M60 33.5V45" stroke="var(--tc-k)" stroke-opacity=".45" stroke-width="1.3" fill="none"/><path d="M55.5 30.5l2.2-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></g>`
+      + `<g class="tc-lock"><path d="M50 54H70V66C70 71 65.5 74 60 76C54.5 74 50 71 50 66Z" fill="var(--tc-s)" stroke="var(--tc-k)" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="61.5" r="2.8" fill="var(--tc-k)"/><path d="M60 63v5" stroke="var(--tc-k)" stroke-width="2.8" stroke-linecap="round"/></g></svg>`;
+  }
+  // 보상 (예시 값: 실제 값은 진도 API 가 정해요)
+  const chestReward = (n) => ({ xp: 120, lv: 4, toNext: 180, from: 38, to: 82, badge: '카페 마스터', words: 8, streak: 5 });
+  let cclTimers = [];
+  const cclLater = (fn, ms) => cclTimers.push(setTimeout(fn, ms));
+  function openChestCele() {
+    const el = $('#chestCele'), n = S.lesson, R = chestReward(n);
+    const already = !!(S.chestOpen || {})[n];
+    cclTimers.forEach(clearTimeout); cclTimers = [];
+    el.classList.add('still'); el.classList.remove('go');
+    $('#cclKick').textContent = lessonTitle(n);
+    $('#cclTitle').innerHTML = already ? `${n}과 보상` : `${n}과 끝!<br>상자를 열어 봐요`;
+    $('#cclXp').textContent = '+' + (already ? R.xp : 0);
+    $('#cclLv').textContent = `Lv.${R.lv}까지 ${R.toNext} XP`;
+    el.style.setProperty('--from', R.from + '%'); el.style.setProperty('--to', R.to + '%');
+    $('#cclMini').innerHTML = [['#F6D9E0', '★', `${R.badge}<br>배지`], ['#E5DDF6', 'Aa', `새 표현<br>${R.words}개`], ['#FFF3B8', '🔥', `연속<br>${R.streak}일`]]
+      .map(([c, ic, t]) => `<div style="--c:${c}"><span class="ic" aria-hidden="true">${ic}</span><b>${t}</b></div>`).join('');
+    const chest = $('#cclChest');
+    chest.className = 'ccl-chest idle';
+    chest.innerHTML = '<span class="ccl-glow"></span>' + chestSVG(false);
+    chest.disabled = false;
+    const last = n >= LESSON_TOTAL;
+    $('#cclNext').hidden = last;
+    $('#cclFoot').classList.add('locked');
+    $('#cclHint').classList.remove('on');
+    el.setAttribute('aria-hidden', 'false');
+    el.classList.add('show');
+    // 큰 상자 자리: 제목 아래 ~ 버튼 위 빈 곳의 한가운데
+    const stage = $('#cclStage'), slot = $('#cclSlot');
+    const footTop = $('#cclFoot').getBoundingClientRect().top - stage.getBoundingClientRect().top + 14;
+    const target = footTop / 2, home = slot.offsetTop + slot.offsetHeight / 2;
+    el.style.setProperty('--cy', Math.round(target - home) + 'px');
+    stage.style.setProperty('--hint-top', Math.round(target + slot.offsetHeight * .75 + 14) + 'px');
+    void el.offsetWidth;
+    if (already || reduced()) { cclOpen(true); return; }
+    el.classList.remove('still');
+    cclLater(() => $('#cclHint').classList.add('on'), 4000);   // 저절로 열리지는 않아요
+    chest.focus({ preventScroll: true });
+  }
+  function cclOpen(instant) {
+    const el = $('#chestCele'), chest = $('#cclChest'), n = S.lesson, R = chestReward(n);
+    if (chest.disabled) return;
+    chest.disabled = true;
+    cclTimers.forEach(clearTimeout); cclTimers = [];
+    $('#cclHint').classList.remove('on');
+    chest.classList.remove('idle'); chest.classList.add('open');
+    chest.querySelector('.tchest').classList.add('is-open');
+    const first = !(S.chestOpen || {})[n];
+    S.chestOpen = S.chestOpen || {}; S.chestOpen[n] = true;
+    $('#cclTitle').textContent = first ? `${n}과 완료!` : `${n}과 보상`;
+    if (instant) {
+      el.classList.add('still', 'go');
+      $('#cclXp').textContent = '+' + R.xp;
+      $('#cclFoot').classList.remove('locked');
+      return;
+    }
+    // 반짝이 터지기
+    const COL = ['#FFE200', '#D0798E', '#8FA6DC', '#E5DDF6', '#FFFFFF'];
+    for (let i = 0; i < 14; i++) {
+      const a = (-160 + Math.random() * 140) * Math.PI / 180, d = 70 + Math.random() * 70;
+      const sp = document.createElement('span'); sp.className = 'ccl-spark';
+      sp.innerHTML = `<i style="--x:${Math.cos(a) * d}px;--y:${Math.sin(a) * d}px;--c:${COL[i % 5]};animation-delay:${Math.random() * .08}s"></i>`;
+      chest.appendChild(sp); setTimeout(() => sp.remove(), 900);
+    }
+    sfx('fanfare');   // 소리 끄기면 sfx 가 알아서 조용해요
+    cclLater(() => el.classList.add('go'), 220);
+    cclLater(() => {
+      const t0 = performance.now(), out = $('#cclXp');
+      (function tick(now) { const k = Math.min(1, (now - t0) / 900); out.textContent = '+' + Math.round(R.xp * (1 - Math.pow(1 - k, 3))); if (k < 1 && el.classList.contains('show')) requestAnimationFrame(tick); })(t0);
+    }, 220 + 1050);
+    cclLater(() => $('#cclFoot').classList.remove('locked'), 1600);
+  }
+  function closeChestCele(next) {
+    const el = $('#chestCele');
+    cclTimers.forEach(clearTimeout); cclTimers = [];
+    el.classList.remove('show'); el.setAttribute('aria-hidden', 'true');
+    if (next && S.lesson < LESSON_TOTAL) setLesson(S.lesson + 1); else refreshProgress();
+  }
+  $('#cclChest').addEventListener('click', () => cclOpen(false));
+  $('#cclNext').addEventListener('click', () => closeChestCele(true));
+  $('#cclHome').addEventListener('click', () => closeChestCele(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#chestCele').classList.contains('show')) closeChestCele(false); });
   // 완료한 정류장에서 별가루가 터지고, 진행 막대가 반짝여요
   function bumpProgress(i) {
     const fill = $('#mapFill');
