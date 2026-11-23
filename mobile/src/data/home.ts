@@ -29,6 +29,21 @@ export const ATTEND_POINTS = 30;
 /** 구간 건너뛰기(테스트 통과): 건너뛴 단계마다 +10P (프로토타입 xp: gained * 10) */
 export const SKIP_POINTS = 10;
 
+/** 챕터 완료 보상 상자에서 나오는 것 (이슈 #7) */
+export type ChestReward = {
+  xp: number;
+  /** 다음 레벨 · 남은 XP · 레벨 막대 (받기 전 → 받은 뒤, 0~1) */
+  nextLevel: number;
+  toNext: number;
+  barFrom: number;
+  barTo: number;
+  badge: string;
+  newWords: number;
+  streak: number;
+};
+/** 예시 값이에요. 실제 값은 진도 API 가 정해요 (챕터 완료 보상: XP · 배지 · 아이템) */
+export const chestReward = (_unit: number): ChestReward => ({ xp: 120, nextLevel: 4, toNext: 180, barFrom: 0.38, barTo: 0.82, badge: '카페 마스터', newWords: 8, streak: 5 });
+
 export const LANGS = [
   { key: 'en', ko: '영어', g: 'EN', color: Colors.langEn, ink: Colors.white },
   { key: 'ja', ko: '일본어', g: 'あ', color: Colors.langJa, ink: Colors.ink },

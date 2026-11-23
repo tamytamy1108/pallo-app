@@ -1,5 +1,5 @@
 /**
- * 라운지 화면 상태 (가짜 · 기기 메모리). 프로토타입 LG 객체를 옮겼어요 — 새로고침하면 처음으로 돌아가요.
+ * 라운지 화면 상태 (가짜). 프로토타입 LG 객체를 옮겼어요. 내가 한 일(글 · 댓글 · 좋아요 · 저장 · 스토리 · 동행 신청 등)은 기기에 남아요.
  * 맞는 API: 49 `/lounge/feed` · 50 `/posts` · 52 `/posts/:id/likes` · 53 `/:target/:id/comments` · 55 · 56 `/stories`
  * · 71 `/trips/:id/apply` · 73 `/abroad-profiles` · 77 `/blocks`. 백엔드가 생기면 서버 데이터로 바꿔요.
  * 탭 · 지점 · 서브 칩을 전역에 둬서 이벤트 탭에 갔다 와도 보던 탭으로 돌아와요.
@@ -52,7 +52,7 @@ type LoungeState = {
   people: AbroadPerson[];
 };
 
-const store = createStore<LoungeState>({
+const LOUNGE0: LoungeState = {
   tab: 'all',
   sub: { all: 'all', com: 'all', trip: 'live' },
   brs: [],
@@ -69,7 +69,44 @@ const store = createStore<LoungeState>({
   scmts: {},
   trip: {},
   people: LG_PEOPLE,
+};
+
+/*
+ * 기기 저장: 예시 글 · 스토리 · 사람은 코드에 있으니 남기지 않고, 내가 올린 것 · 바뀐 예시만 남겨요
+ * (예시 데이터를 고쳐도 다음 실행에 바로 보이게). 보던 탭 · 칩은 이번 실행 동안만.
+ */
+type SavedLounge = Omit<LoungeState, 'tab' | 'sub' | 'brs' | 'cc' | 'region' | 'feed' | 'stories' | 'people'> & {
+  feed: SeedDiff<FeedItem>;
+  stories: SeedDiff<Story>;
+  people: AbroadPerson[];
+};
+const saveLounge = ({ tab: _t, sub: _s, brs: _b, cc: _c, region: _r, feed, stories, people, ...rest }: LoungeState): SavedLounge => ({
+  ...rest,
+  feed: seedDiff(feed, FEED),
+  stories: seedDiff(stories, STORIES),
+  people: people.filter((p) => !LG_PEOPLE.includes(p)),
 });
+function loadLounge(saved: unknown, initial: LoungeState): LoungeState {
+  if (!saved || typeof saved !== 'object') return initial;
+  const s = saved as Partial<SavedLounge>;
+  const rec = <T,>(v: T | undefined, fb: T) => (v && typeof v === 'object' && !Array.isArray(v) ? v : fb);
+  return {
+    ...initial,
+    liked: rec(s.liked, initial.liked),
+    saved: rec(s.saved, initial.saved),
+    hidden: rec(s.hidden, initial.hidden),
+    cmts: rec(s.cmts, initial.cmts),
+    seen: rec(s.seen, initial.seen),
+    sliked: rec(s.sliked, initial.sliked),
+    scmts: rec(s.scmts, initial.scmts),
+    trip: rec(s.trip, initial.trip),
+    feed: seedMerge(s.feed, FEED),
+    stories: seedMerge(s.stories, STORIES),
+    people: [...(Array.isArray(s.people) ? s.people.filter((p) => p && typeof p.n === 'string') : []), ...LG_PEOPLE],
+  };
+}
+
+const store = createStore<LoungeState>(LOUNGE0, { persist: { key: 'lounge', save: saveLounge, load: loadLounge } });
 
 export const useLounge = store.useStore;
 export const getLounge = store.get;
@@ -173,4 +210,24 @@ export const setStoryPin = (id: string, pin: boolean) => patch((s) => ({ stories
 /** 스토리 보기에서 넘겨 볼 묶음: 사람별 → 하이라이트 순 (프로토타입 lgGroups) */
 export function storyGroups(s: LoungeState, ok: (x: Story) => boolean, cats: StoryCat[]): StoryGroup[] {
   return [...userGroups(s, ok), ...highlightCats(s, ok, cats).map((k): StoryGroup => ({ id: `c:${k}`, kind: 'c', cat: k, list: highlightList(s, k, ok) }))];
+}
+
+// ---- 예시 목록 + 내가 바꾼 것 (기기 저장용) ----
+/** mine: 예시에 없는 것(내가 올린 것 · 맨 앞) · changed: 바뀐 예시 · gone: 빠진 예시 id */
+type SeedDiff<T> = { mine: T[]; changed: T[]; gone: string[] };
+function seedDiff<T extends { id: string }>(list: T[], seed: readonly T[]): SeedDiff<T> {
+  const byId = new Map(seed.map((x) => [x.id, x]));
+  const ids = new Set(list.map((x) => x.id));
+  return {
+    mine: list.filter((x) => !byId.has(x.id)),
+    changed: list.filter((x) => byId.has(x.id) && byId.get(x.id) !== x),
+    gone: seed.filter((x) => !ids.has(x.id)).map((x) => x.id),
+  };
+}
+function seedMerge<T extends { id: string }>(d: SeedDiff<T> | undefined, seed: readonly T[]): T[] {
+  if (!d || !Array.isArray(d.mine) || !Array.isArray(d.changed) || !Array.isArray(d.gone)) return [...seed];
+  const changed = new Map(d.changed.map((x) => [x.id, x]));
+  const gone = new Set(d.gone);
+  const seedIds = new Set(seed.map((x) => x.id));
+  return [...d.mine.filter((x) => x && typeof x.id === 'string' && !seedIds.has(x.id)), ...seed.filter((x) => !gone.has(x.id)).map((x) => changed.get(x.id) ?? x)];
 }

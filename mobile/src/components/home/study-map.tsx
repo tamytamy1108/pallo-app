@@ -3,7 +3,7 @@ import { router, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
-import Svg, { Circle, Defs, G, Path, Pattern, Rect } from 'react-native-svg';
+import Svg, { Circle, Defs, Path, Pattern, Rect } from 'react-native-svg';
 
 import { bookShelfQuery } from '@/api/queries';
 import { setLib } from '@/components/library/library-state';
@@ -17,20 +17,23 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
 import { Colors } from '@/constants/theme';
-import { SKIP_POINTS } from '@/data/home';
+import { chestReward, SKIP_POINTS } from '@/data/home';
 import { lessonName, STUDY_STEPS } from '@/data/library';
 import { STUDY_LEVELS } from '@/data/library-lessons';
 import { MY_BOOK, STAGES } from '@/data/mock';
 import { sfx } from '@/lib/feedback';
 import { awardPoints } from '@/state/ledger';
+import { chestKey, markChestOpened, useChestOpened } from '@/state/chest';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
 
 import { devSeason } from './dev';
+import { ChestCelebrate } from './chest-celebrate';
 import { ARROW_PATH, CHECK_PATH, LineIcon } from './icons';
 import { OPEN_UNITS, useStopAsk } from './map-state';
 import { SeasonLayer } from './season-deco';
 import { SkipSheet } from './skip-sheet';
 import { StopPopup, type StartMode } from './stop-popup';
+import { TreasureChest } from './treasure-chest';
 
 const NODE = 64;
 const NODE_CUR = 78;
@@ -64,7 +67,9 @@ function makeLevelMap(lvWanted: number) {
   /** 이번 주 반 진도 (과 번호들) · 칩 글자: 패턴형 '5 & 6챕터', 토픽 · 토론형 '#101 & #102' · '1회 & 2회' */
   const week = (lv === MY_LV ? MY_BOOK.weekLessons : MY_BOOK.weekByLevel[lv]) ?? [];
   const weekText = L.kind === 'pattern' ? `${week.join(' & ')}챕터` : week.map(chipLabel).join(' & ');
-  return { lv, steps, units, unitName, chipLabel, readDone, stageOf, stepHref, week, weekText };
+  /** 과 제목만 (보상 화면) */
+  const unitTitle = (n: number) => L.lessons.find((x) => x.no === n)?.title ?? '';
+  return { lv, steps, units, unitName, unitTitle, chipLabel, readDone, stageOf, stepHref, week, weekText };
 }
 type LevelMap = ReturnType<typeof makeLevelMap>;
 const levelMaps = new Map<number, LevelMap>();
@@ -144,6 +149,8 @@ export function StudyMap() {
   const rowW = useRef(0);
   const [bounce, setBounce] = useState(0);
   const [chestShake, setChestShake] = useState(0);
+  const [chestOpen, setChestOpen] = useState(false);
+  const opened = useChestOpened(chestKey(LV, lesson));
   const still = useReducedMotion();
 
   /** 고른 과가 칩 줄 밖으로 잘리지 않게 가운데로 */
@@ -225,7 +232,7 @@ export function StudyMap() {
       showToast(`${M.steps.length}단계를 모두 끝내면 열려요`);
       return;
     }
-    showToast('보상 상자를 열었어요! +[보상]');
+    setChestOpen(true);
   };
 
   const popStep = popIdx !== null ? M.steps[popIdx] : null;
@@ -359,7 +366,7 @@ export function StudyMap() {
                   );
                 })}
 
-                <ChestNode M={M} x={map.chest.x} y={map.chest.y} open={all} lesson={lesson} xmas={xmas} shake={chestShake} onPress={chestTap} />
+                <ChestNode M={M} x={map.chest.x} y={map.chest.y} ready={all} opened={all && opened} lesson={lesson} xmas={xmas} shake={chestShake} onPress={chestTap} />
               </>
             )}
           </View>
@@ -390,6 +397,25 @@ export function StudyMap() {
       />
       <SkipSheet stage={skipStage} left={skipLeft} onClose={() => setSkipStage(null)} onPass={pass} />
       {cele && <Celebrate visible result={cele} onHome={() => setCele(null)} />}
+      {chestOpen && (
+        <ChestCelebrate
+          unit={lesson}
+          unitLabel={M.chipLabel(lesson)}
+          title={M.unitTitle(lesson)}
+          reward={chestReward(lesson)}
+          opened={opened}
+          onOpen={() => markChestOpened(chestKey(LV, lesson))}
+          onHome={() => setChestOpen(false)}
+          onNext={
+            next
+              ? () => {
+                  setChestOpen(false);
+                  pickLesson(nextNo);
+                }
+              : undefined
+          }
+        />
+      )}
     </Raised>
   );
 }
@@ -477,75 +503,36 @@ const lockedShake = css.keyframes({
   '40%, 80%': { transform: [{ translateX: 6 }] },
 });
 
-function ChestNode({ M, x, y, open, lesson, xmas, shake, onPress }: { M: LevelMap; x: number; y: number; open: boolean; lesson: number; xmas: boolean; shake: number; onPress: () => void }) {
+/**
+ * 맵 끝의 보상 상자 (보석함 · treasure-chest). 잠김: 회색 · 열 수 있음: 보라 + 들썩 + 빛 · 이미 연 상자: 열린 모습 그대로.
+ * 누르면 챕터 완료 보상 화면 (ChestCelebrate).
+ */
+function ChestNode({ M, x, y, ready, opened, lesson, xmas, shake, onPress }: { M: LevelMap; x: number; y: number; ready: boolean; opened: boolean; lesson: number; xmas: boolean; shake: number; onPress: () => void }) {
   const still = useReducedMotion();
-  const W = open ? 80 : 72;
-  const H = open ? 70 : 64;
+  const live = ready && !opened;
+  const W = ready ? 80 : 72;
+  const H = Math.round(W * (106 / 120));
   const loop = (name: typeof chestShakeKf) =>
-    open && !still ? { animationName: name, animationDuration: '2400ms', animationIterationCount: 'infinite' as const, animationTimingFunction: 'ease-in-out' as const } : null;
-  const nudge = !open && shake > 0 && !still ? { animationName: lockedShake, animationDuration: '400ms' } : null;
+    live && !still ? { animationName: name, animationDuration: '2400ms', animationIterationCount: 'infinite' as const, animationTimingFunction: 'ease-in-out' as const } : null;
+  const nudge = !ready && shake > 0 && !still ? { animationName: lockedShake, animationDuration: '400ms' } : null;
   return (
-    <View style={StyleSheet.flatten([styles.chestWrap, { left: x - W / 2, top: y - (open ? 37 : 34), width: W }])}>
-      {open && (
+    <View style={StyleSheet.flatten([styles.chestWrap, { left: x - W / 2, top: y - H / 2 - 3, width: W }])}>
+      {live && (
         <View style={{ position: 'absolute', left: W / 2, top: H / 2 }}>
           <CurrentFx chest />
         </View>
       )}
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${M.chipLabel(lesson)} 보상 상자${open ? ', 열 수 있어요' : ', 잠김'}`}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${M.chipLabel(lesson)} 보상 상자${opened ? ', 받은 보상 보기' : ready ? ', 열 수 있어요' : ', 잠김'}`}>
         {({ pressed }) => (
-          <Animated.View key={shake} style={[{ width: W, height: H }, nudge, open && pressed && styles.chestPressed]}>
+          <Animated.View key={shake} style={[{ width: W, height: H }, nudge, ready && pressed && styles.chestPressed]}>
             <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: '50% 90%' }, loop(chestShakeKf)]}>
-              <ChestBody open={open} />
-              <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: `50% ${(38 / 74) * 100}%` }, loop(chestLidKf)]}>
-                <ChestLid open={open} />
-              </Animated.View>
-              <ChestLock open={open} />
+              <TreasureChest width={W} locked={!ready} open={opened} lidLoop={loop(chestLidKf)} />
             </Animated.View>
           </Animated.View>
         )}
       </Pressable>
-      <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, open && styles.chestLabelOpen, xmas && styles.labelXmas])}>{M.chipLabel(lesson)} 보상</PText>
+      <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, ready && styles.chestLabelOpen, xmas && styles.labelXmas])}>{M.chipLabel(lesson)} 보상</PText>
     </View>
-  );
-}
-
-// 잠김: 회색 · 열림: 보라 몸 + 노랑 띠 (--tc-b · --tc-l · --tc-s · --tc-k)
-const tc = (open: boolean) => (open ? { b: '#4A2F9E', l: '#6C4FD0', s: Colors.yellow, k: Colors.ink, floor: Colors.ink } : { b: '#E4DED2', l: '#EFEAE0', s: '#D6CFC0', k: '#9A93A6', floor: '#CFC8BA' });
-
-function ChestBody({ open }: { open: boolean }) {
-  const c = tc(open);
-  return (
-    <Svg width="100%" height="100%" viewBox="0 0 84 74" style={StyleSheet.absoluteFill}>
-      <Rect x={7} y={38} width={70} height={32} rx={7} fill={c.floor} />
-      <G>
-        <Rect x={7} y={34} width={70} height={32} rx={7} fill={c.b} stroke={c.k} strokeWidth={2.5} />
-        <Rect x={17} y={34} width={8} height={32} fill={c.s} stroke={c.k} strokeWidth={2} />
-        <Rect x={59} y={34} width={8} height={32} fill={c.s} stroke={c.k} strokeWidth={2} />
-      </G>
-    </Svg>
-  );
-}
-
-function ChestLid({ open }: { open: boolean }) {
-  const c = tc(open);
-  return (
-    <Svg width="100%" height="100%" viewBox="0 0 84 74" style={StyleSheet.absoluteFill}>
-      <Path d="M7 36V24C7 11 22 6 42 6s35 5 35 18v12Z" fill={c.l} stroke={c.k} strokeWidth={2.5} strokeLinejoin="round" />
-      <Path d="M17 36V12.5c2.4-1.2 5-2.1 8-2.8V36Z M59 36V9.7c3 .7 5.6 1.6 8 2.8V36Z" fill={c.s} stroke={c.k} strokeWidth={2} strokeLinejoin="round" />
-      {open && <Path d="M30 14c4-1.4 9-2 14-2" stroke="#fff" strokeOpacity={0.7} strokeWidth={3.5} strokeLinecap="round" fill="none" />}
-      <Rect x={5} y={31} width={74} height={7} rx={3.5} fill={c.s} stroke={c.k} strokeWidth={2.5} />
-    </Svg>
-  );
-}
-
-function ChestLock({ open }: { open: boolean }) {
-  const c = tc(open);
-  return (
-    <Svg width="100%" height="100%" viewBox="0 0 84 74" style={StyleSheet.absoluteFill}>
-      <Rect x={33.5} y={30} width={17} height={19} rx={4} fill={c.s} stroke={c.k} strokeWidth={2.5} />
-      <Circle cx={42} cy={37.5} r={2.6} fill={c.k} />
-      <Path d="M42 39v5" stroke={c.k} strokeWidth={2.6} strokeLinecap="round" />
-    </Svg>
   );
 }
 

@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보상 상자 · 한 번에</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>
+/* 챕터 완료 보상 상자 시안 v3 — 한 번 누르면 끝 (이슈 #7)
+   규칙: 한 번 눌러 열기 · 보상은 한 화면에 한꺼번에 · 2~3초 안에 끝 · 버튼은 아래 고정
+         4초 동안 안 누르면 '눌러서 열기' 힌트만 · 움직임 줄이기면 바로 열린 모습 */
+:root{
+  --cream:#FBF6EA; --ink:#1E1A2B; --sub:#5A5366; --line:#E3DCCB; --white:#fff;
+  --yellow:#FFE200; --purple:#493087; --pink:#D0798E; --sky:#8FA6DC;
+  --lav:#E5DDF6; --mist:#E3EAF8;
+  --f-d:'Unbounded','Noto Sans KR',sans-serif; --f-b:'Noto Sans KR',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:#EDE6D6;font-family:var(--f-b);color:var(--ink);padding:28px 16px 60px}
+header{max-width:1180px;margin:0 auto 22px}
+header h1{font-family:var(--f-d);font-size:24px;letter-spacing:-.6px}
+header p{color:var(--sub);font-weight:600;font-size:14px;margin-top:6px;line-height:1.6}
+.row{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;max-width:1180px;margin:0 auto}
+.col{display:flex;flex-direction:column;align-items:center;gap:12px;width:340px;max-width:100%}
+.col h2{font-family:var(--f-d);font-size:16px;letter-spacing:-.3px}
+.col .desc{font-size:13px;font-weight:600;color:var(--sub);text-align:center;line-height:1.55;min-height:40px}
+.replay{font:900 12.5px var(--f-b);border:2px solid var(--ink);background:var(--white);border-radius:15px;height:30px;padding:0 14px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.replay:active{transform:translate(2px,2px);box-shadow:none}
+
+/* 폰 */
+.phone{position:relative;width:340px;max-width:100%;height:680px;border:2px solid var(--ink);border-radius:44px;background:var(--cream);overflow:hidden;box-shadow:6px 6px 0 var(--ink)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:64px 20px 0}
+.kicker{font:900 12.5px var(--f-b);color:var(--purple);background:var(--lav);border-radius:12px;padding:4px 10px}
+.kicker,.title{position:relative;z-index:3}
+.title{text-shadow:0 0 6px var(--cream),0 0 2px var(--cream);font-family:var(--f-d);font-weight:800;font-size:26px;letter-spacing:-.6px;margin-top:20px;text-align:center;line-height:1.15}
+.stage{position:relative;width:100%;flex:1;display:flex;align-items:center;justify-content:center}
+.foot{position:absolute;left:0;right:0;bottom:0;padding:14px 20px 30px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,var(--cream) 22%)}
+.btn{height:54px;border-radius:27px;border:2px solid var(--ink);font:900 15px var(--f-b);display:flex;align-items:center;justify-content:center;box-shadow:4px 4px 0 var(--ink);cursor:pointer;transition:opacity .25s,transform .1s}
+.btn.y{background:var(--yellow)} .btn.w{background:var(--white)}
+.btn:active{transform:translate(4px,4px);box-shadow:none}
+.foot.locked .btn.y{opacity:.35;pointer-events:none}
+/* 다음 코너로: 열리고 나면 빛이 훑고 지나가고, 버튼이 살짝 눌렸다 올라와요 */
+.go-next{position:relative;overflow:hidden;gap:6px;isolation:isolate}
+.go-next::before{content:"";position:absolute;inset:-4px;border-radius:inherit;background:radial-gradient(60% 120% at 50% 50%,rgba(255,255,255,.85),transparent 70%);opacity:0;z-index:-1}
+.go-next::after{content:"";position:absolute;top:-10%;bottom:-10%;left:-40%;width:34%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.95) 45%,rgba(255,255,255,.95) 55%,transparent);transform:skewX(-18deg) translateX(0);pointer-events:none}
+.go-next .arr{transition:transform .2s}
+.foot:not(.locked) .go-next{animation:nudge 2.4s .4s ease-in-out infinite}
+.foot:not(.locked) .go-next::after{animation:sweep 2.4s .4s ease-in-out infinite}
+.foot:not(.locked) .go-next::before{animation:halo 2.4s .4s ease-in-out infinite}
+.foot:not(.locked) .go-next .arr{animation:arrow 2.4s .4s ease-in-out infinite}
+.foot:not(.locked) .go-next:active{animation:none;transform:translate(4px,4px);box-shadow:none}
+@keyframes sweep{0%,45%{transform:skewX(-18deg) translateX(0)}75%,100%{transform:skewX(-18deg) translateX(520%)}}
+@keyframes halo{0%,40%,100%{opacity:0}60%{opacity:.7}}
+@keyframes nudge{0%,8%,26%,100%{transform:none;box-shadow:4px 4px 0 var(--ink)}14%{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}20%{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}}
+@keyframes arrow{0%,8%,30%,100%{transform:none}16%{transform:translateX(4px)}24%{transform:translateX(-1px)}}
+
+/* 상자 (앱 ChestNode 그림 그대로 · 몸 / 뚜껑 / 자물쇠 세 겹) */
+.chest{position:relative;width:150px;height:133px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.chest svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.chest .lid{transform-origin:7% 50%;transition:transform .6s cubic-bezier(.34,1.35,.5,1)}
+.chest .inner-light{opacity:0;transition:opacity .3s .1s}
+.chest.open .inner-light{opacity:1}
+.chest .lock{transition:transform .35s ease-in,opacity .3s}
+.chest.idle{animation:bob 2.4s ease-in-out infinite}
+.chest.open .lid{transform:translate(-5%,-22%) rotate(-14deg)}
+.chest.open .lock{transform:translateY(40px) rotate(24deg);opacity:0}
+.chest .glow{position:absolute;left:50%;top:44%;width:240px;height:240px;margin:-120px 0 0 -120px;border-radius:50%;
+  background:radial-gradient(var(--yellow) 0 18%,rgba(255,226,0,.35) 40%,transparent 66%);opacity:0;transform:scale(.3);transition:opacity .4s,transform .5s;pointer-events:none;z-index:-1}
+.chest.open .glow{opacity:1;transform:scale(1)}
+@keyframes bob{0%,78%,100%{transform:none}84%{transform:translateY(-3px) rotate(-3deg)}90%{transform:translateY(-3px) rotate(3deg)}95%{transform:none}}
+.hint{position:absolute;top:var(--hint-top,50%);font:900 12.5px var(--f-b);background:var(--ink);color:#fff;border-radius:14px;padding:6px 12px;opacity:0;transition:opacity .3s;pointer-events:none}
+.hint.on{opacity:1;animation:hintb 1s ease-in-out infinite}
+@keyframes hintb{50%{transform:translateY(-4px)}}
+
+/* 스파크 */
+.spark{position:absolute;left:50%;top:44%;width:10px;height:10px;margin:-5px;pointer-events:none}
+.spark i{position:absolute;inset:0;background:var(--c,var(--yellow));border:1.5px solid var(--ink);border-radius:2px;opacity:0}
+.burst .spark i{animation:fly .7s cubic-bezier(.2,.7,.4,1) forwards}
+@keyframes fly{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(200deg)}}
+
+/* 공통: 보상 줄 */
+.rw-ico{width:36px;height:36px;border-radius:11px;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font:800 13px var(--f-d);flex:none}
+
+/* ── A 상자 위로 톡 ── */
+.A .stage{flex-direction:column;justify-content:flex-start;padding-top:18px;--hint-top:150px}
+.A .chip-wrap{position:relative;width:100%;height:178px}
+.A .chip{position:absolute;left:50%;top:150px;width:144px;margin-left:-72px;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--white);border:2px solid var(--ink);border-radius:18px;box-shadow:3px 3px 0 var(--ink);
+  opacity:0;transform:scale(.3);transition:transform .5s cubic-bezier(.3,1.5,.5,1),opacity .2s,left .5s cubic-bezier(.3,1.5,.5,1),top .5s cubic-bezier(.3,1.5,.5,1)}
+.A .chip b{font:800 14px var(--f-d);letter-spacing:-.3px;display:block}
+.A .chip small{font:700 11px var(--f-b);color:var(--sub)}
+.A.go .chip{opacity:1;transform:none}
+.A.go .chip:nth-child(1){left:28%;top:6px;transition-delay:.05s}
+.A.go .chip:nth-child(2){left:72%;top:6px;transition-delay:.13s}
+.A.go .chip:nth-child(3){left:28%;top:74px;transition-delay:.21s}
+.A.go .chip:nth-child(4){left:72%;top:74px;transition-delay:.29s}
+.A .chest{margin-top:4px}
+
+/* ── B 요약 한 장 ── */
+.B .stage{flex-direction:column;justify-content:flex-start;padding-top:10px;--hint-top:226px}
+.B .chest{transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
+.B .chest-box{transition:transform .5s cubic-bezier(.3,1.3,.5,1);margin-top:70px}
+.B.go .chest-box{transform:translateY(-84px) scale(.62)}
+.B .sheet{position:absolute;left:0;right:0;top:150px;margin:0 2px;background:var(--white);border:2px solid var(--ink);border-radius:22px;box-shadow:4px 4px 0 var(--ink);padding:6px 14px;
+  opacity:0;transform:translateY(40px);transition:transform .5s cubic-bezier(.3,1.3,.5,1) .15s,opacity .3s .15s}
+.B.go .sheet{opacity:1;transform:none}
+.B .li{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1.5px dashed var(--line)}
+.B .li:last-child{border:0}
+.B .li .nm{flex:1;font:700 14px var(--f-b)}
+.B .li b{font:800 15px var(--f-d);letter-spacing:-.3px}
+
+/* ── C 숫자 하나 크게 ── */
+.C .stage{flex-direction:column;justify-content:flex-start;padding-top:46px}
+/* C: 처음엔 상자가 가운데 크게 → 팔로가 튀어나온 뒤 위로 작게 올라가요 */
+.C .chest-slot{transform:translateY(var(--cy,96px)) scale(1.5);transition:transform .95s cubic-bezier(.45,0,.15,1) .35s;transform-origin:50% 50%;will-change:transform}
+.C.go .chest-slot{transform:none}
+.C .xp{font:800 64px/1 var(--f-d);letter-spacing:-2.5px;margin-top:6px;opacity:0;transform:scale(.6);transition:transform .45s cubic-bezier(.3,1.6,.5,1) 1.05s,opacity .2s 1.05s;font-variant-numeric:tabular-nums}
+.C .xp small{font-size:22px;letter-spacing:-.5px;margin-left:4px}
+.C.go .xp{opacity:1;transform:none}
+.C .xp-bar{width:220px;height:14px;border:2px solid var(--ink);border-radius:8px;background:var(--white);margin-top:12px;overflow:hidden;opacity:0;transition:opacity .2s 1.15s}
+.C .xp-bar i{display:block;height:100%;width:38%;background:var(--purple);transition:width 1s cubic-bezier(.3,.8,.4,1) 1.3s}
+.C.go .xp-bar{opacity:1} .C.go .xp-bar i{width:82%}
+.C .lv{font:700 12px var(--f-b);color:var(--sub);margin-top:6px;opacity:0;transition:opacity .2s 1.2s}
+.C.go .lv{opacity:1}
+.C .mini{display:flex;gap:8px;margin-top:20px}
+.C .mini div{display:flex;flex-direction:column;align-items:center;gap:5px;width:86px;padding:10px 4px;border:2px solid var(--ink);border-radius:18px;background:var(--white);box-shadow:3px 3px 0 var(--ink);
+  opacity:0;transform:translateY(16px);transition:transform .4s cubic-bezier(.3,1.4,.5,1),opacity .2s}
+.C .mini div b{font:900 12.5px var(--f-b);text-align:center;line-height:1.3}
+.C .mini .rw-ico{background:var(--c)}
+.C.go .mini div{opacity:1;transform:none}
+.C.go .mini div:nth-child(1){transition-delay:1.3s} .C.go .mini div:nth-child(2){transition-delay:1.38s} .C.go .mini div:nth-child(3){transition-delay:1.46s}
+.C .chest{width:110px;height:97px}
+
+/* 팔로 (원본 PNG 그대로) */
+.pallo{position:absolute;width:96px;pointer-events:none;--r:0deg}
+.pallo img{display:block;width:100%;transform-origin:50% 92%;opacity:0}
+.pallo .shd{position:absolute;left:18%;right:18%;bottom:-4px;height:9px;border-radius:50%;background:rgba(30,26,43,.18);opacity:0;transform-origin:50% 50%}
+.A .pallo{right:14px;top:212px;width:80px;--r:6deg}
+.B .pallo{right:24px;top:40px;width:72px;--r:10deg}
+.C .pallo{right:28px;top:52px;width:70px;--r:8deg}
+.C.go .pallo img{animation:palloOut .9s .1s cubic-bezier(.3,.7,.4,1) both,palloHop 1.7s 1.1s ease-in-out infinite}
+.C.go .pallo .shd{animation:shdIn .9s .1s both,shdHop 1.7s 1.1s ease-in-out infinite}
+@keyframes palloOut{
+  0%{opacity:0;transform:translate(-86px,calc(var(--cy,96px) + 8px)) scale(.3)}
+  12%{opacity:1}
+  42%{transform:translate(-70px,-30px) scale(.95,1.15) rotate(-12deg)}
+  68%{transform:translate(0,0) scale(1.2,.8) rotate(var(--r))}
+  82%{transform:translateY(-9px) scale(.95,1.06) rotate(var(--r))}
+  100%{opacity:1;transform:rotate(var(--r))}}
+/* 상자에서 튀어나와 착지(찌그러졌다 펴짐) → 그다음엔 신나서 콩콩 */
+.go .pallo img{animation:palloIn .75s .28s cubic-bezier(.3,.7,.4,1) both,palloHop 1.7s 1.1s ease-in-out infinite}
+.go .pallo .shd{animation:shdIn .75s .28s both,shdHop 1.7s 1.1s ease-in-out infinite}
+@keyframes palloIn{
+  0%{opacity:0;transform:translate(-60px,70px) scale(.35) rotate(-40deg)}
+  20%{opacity:1}
+  48%{transform:translate(-14px,-34px) scale(.92,1.12) rotate(calc(var(--r) * -2))}
+  66%{transform:translate(0,0) scale(1.2,.8) rotate(var(--r))}
+  80%{transform:translateY(-9px) scale(.95,1.06) rotate(var(--r))}
+  100%{opacity:1;transform:rotate(var(--r))}}
+@keyframes palloHop{
+  0%,55%,100%{opacity:1;transform:rotate(var(--r))}
+  63%{transform:scale(1.12,.88) rotate(var(--r))}
+  76%{transform:translateY(-16px) scale(.94,1.08) rotate(calc(var(--r) * -1.6))}
+  88%{transform:scale(1.08,.92) rotate(var(--r))}}
+@keyframes shdIn{0%,40%{opacity:0;transform:scale(.4)}66%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:none}}
+@keyframes shdHop{0%,55%,100%{opacity:1;transform:none}63%{transform:scale(1.1)}76%{opacity:.5;transform:scale(.6)}88%{transform:scale(1.05)}}
+.reduced .pallo img,.reduced .pallo .shd{opacity:1!important;transform:rotate(var(--r))}
+.reduced .pallo .shd{transform:none}
+
+/* 끝난 뒤 제목 바뀌기 */
+.t-before,.t-after{transition:opacity .25s}
+.t-after{display:none}
+.go .t-before{display:none} .go .t-after{display:block}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+.reduced *,.reduced *::before,.reduced *::after{transition:none!important;animation:none!important}
+.opts{max-width:1180px;margin:0 auto 18px;display:flex;gap:14px;align-items:center;font:700 13px var(--f-b);color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <h1>보상 상자 · 한 번에 (시안 v3)</h1>
+  <p>한 번 누르면 상자가 열리고, 보상 다섯 가지가 한 화면에 한꺼번에 나와요. 2~3초면 끝나요. 카드 넘기기 · 뒤집기는 없어요.<br>
+  보상: +120 XP · 카페 마스터 배지 · 새 표현 8개 · 연속 5일 · 1과 완료 (숫자는 예시예요)</p>
+</header>
+<div class="opts"><label><input type="checkbox" id="rm"> 움직임 줄이기로 보기 (바로 열린 모습)</label></div>
+
+<div class="row">
+  <!-- A -->
+  <div class="col">
+    <h2>A · 상자 위로 톡</h2>
+    <div class="desc">상자가 열리면 보상 네 개가 상자 위로 튀어나와 자리를 잡아요.</div>
+    <div class="phone"><div class="screen A" data-v="A">
+      <span class="kicker">Cafe Complaint</span>
+      <div class="title"><span class="t-before">1과 끝!<br>상자를 열어 봐요</span><span class="t-after">1과 완료!<br>보상을 받았어요</span></div>
+      <div class="stage">
+        <div class="chip-wrap">
+          <div class="chip"><span class="rw-ico" style="background:var(--mist)">XP</span><span><b>+120</b><small>경험치</small></span></div>
+          <div class="chip"><span class="rw-ico" style="background:#F6D9E0">★</span><span><b>배지</b><small>카페 마스터</small></span></div>
+          <div class="chip"><span class="rw-ico" style="background:var(--lav)">Aa</span><span><b>8개</b><small>새 표현</small></span></div>
+          <div class="chip"><span class="rw-ico" style="background:#FFF3B8">🔥</span><span><b>5일</b><small>연속 학습</small></span></div>
+        </div>
+        <div class="chest-slot"></div>
+        <div class="pallo"><i class="shd"></i><img src="assets/c-upright-yellow.png" alt=""></div>
+      </div>
+      <div class="foot locked"><div class="btn y go-next"><span>다음 코너로</span><svg class="arr" viewBox="0 0 20 20" width="18" height="18"><path d="M4 10h11M10.5 5l5 5-5 5" stroke="#1E1A2B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="btn w">홈으로</div></div>
+    </div></div>
+    <button class="replay" data-for="A">다시 보기</button>
+  </div>
+
+  <!-- B -->
+  <div class="col">
+    <h2>B · 요약 한 장</h2>
+    <div class="desc">상자가 열리며 위로 작아지고, 받은 것이 한 장에 줄로 정리돼요.</div>
+    <div class="phone"><div class="screen B" data-v="B">
+      <span class="kicker">Cafe Complaint</span>
+      <div class="title"><span class="t-before">1과 끝!<br>상자를 열어 봐요</span><span class="t-after">1과 완료!</span></div>
+      <div class="stage">
+        <div class="chest-box"><div class="chest-slot"></div></div>
+        <div class="sheet">
+          <div class="li"><span class="rw-ico" style="background:var(--mist)">XP</span><span class="nm">경험치</span><b data-count="120">+120</b></div>
+          <div class="li"><span class="rw-ico" style="background:#F6D9E0">★</span><span class="nm">카페 마스터 배지</span><b>NEW</b></div>
+          <div class="li"><span class="rw-ico" style="background:var(--lav)">Aa</span><span class="nm">새 표현</span><b>8개</b></div>
+          <div class="li"><span class="rw-ico" style="background:#FFF3B8">🔥</span><span class="nm">연속 학습</span><b>5일</b></div>
+        </div>
+        <div class="pallo"><i class="shd"></i><img src="assets/c-upright-yellow.png" alt=""></div>
+      </div>
+      <div class="foot locked"><div class="btn y go-next"><span>다음 코너로</span><svg class="arr" viewBox="0 0 20 20" width="18" height="18"><path d="M4 10h11M10.5 5l5 5-5 5" stroke="#1E1A2B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="btn w">홈으로</div></div>
+    </div></div>
+    <button class="replay" data-for="B">다시 보기</button>
+  </div>
+
+  <!-- C -->
+  <div class="col">
+    <h2>C · XP 크게</h2>
+    <div class="desc">XP 숫자 하나를 크게 올리고, 나머지는 아래 작은 칸 세 개로.</div>
+    <div class="phone"><div class="screen C" data-v="C" data-unlock="1600" data-center data-count-delay="1050">
+      <span class="kicker">Cafe Complaint</span>
+      <div class="title"><span class="t-before">1과 끝!<br>상자를 열어 봐요</span><span class="t-after">1과 완료!</span></div>
+      <div class="stage">
+        <div class="chest-slot"></div>
+        <div class="xp"><span data-count="120">+120</span><small>XP</small></div>
+        <div class="xp-bar"><i></i></div>
+        <div class="lv">Lv.4까지 180 XP</div>
+        <div class="mini">
+          <div style="--c:#F6D9E0;--c2:#F2A9BF"><span class="rw-ico">★</span><b>카페 마스터<br>배지</b></div>
+          <div style="--c:#E5DDF6;--c2:#C3B2F0"><span class="rw-ico">Aa</span><b>새 표현<br>8개</b></div>
+          <div style="--c:#FFF3B8;--c2:#FFE45C"><span class="rw-ico">🔥</span><b>연속<br>5일</b></div>
+        </div>
+        <div class="pallo"><i class="shd"></i><img src="assets/c-upright-yellow.png" alt=""></div>
+      </div>
+      <div class="foot locked"><div class="btn y go-next"><span>다음 코너로</span><svg class="arr" viewBox="0 0 20 20" width="18" height="18"><path d="M4 10h11M10.5 5l5 5-5 5" stroke="#1E1A2B" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="btn w">홈으로</div></div>
+    </div></div>
+    <button class="replay" data-for="C">다시 보기</button>
+  </div>
+</div>
+
+<template id="chest-tpl">
+  <div class="chest idle" role="button" aria-label="보물 상자 열기">
+    <div class="glow"></div>
+    <!-- 몸: 그림자 · 안쪽(열리면 보이는 빛) · 앞판 · 금띠 · 징 -->
+    <svg viewBox="0 0 120 106" class="body">
+      <rect x="15" y="56" width="96" height="48" rx="11" fill="#1E1A2B"/>
+      <rect x="15" y="40" width="90" height="22" rx="8" fill="#2B1C5C" stroke="#1E1A2B" stroke-width="2.5"/>
+      <g class="inner-light">
+        <ellipse cx="60" cy="50" rx="40" ry="9" fill="#FFE200" opacity=".55"/>
+        <g stroke="#1E1A2B" stroke-width="2">
+          <circle cx="34" cy="51" r="6" fill="#FFE200"/><circle cx="47" cy="47" r="6.5" fill="#FFE200"/>
+          <path d="M60 36L67 43L60 51L53 43Z" fill="#8FD3FF" stroke-linejoin="round"/>
+          <circle cx="74" cy="48" r="6.5" fill="#FFE200"/><circle cx="87" cy="51" r="6" fill="#FFE200"/>
+        </g>
+        <path d="M45 44.5l2-1.5M72 45.5l2-1.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      </g>
+      <rect x="12" y="52" width="96" height="48" rx="11" fill="#5B3BC4" stroke="#1E1A2B" stroke-width="2.5"/>
+      <path d="M13.3 82H106.7V89A9.7 9.7 0 0 1 97 98.7H23A9.7 9.7 0 0 1 13.3 89Z" fill="#4A2FA6"/>
+      <path d="M14 70H106" stroke="#1E1A2B" stroke-opacity=".18" stroke-width="2"/>
+      <path d="M19 59h7" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>
+      <rect x="27" y="52" width="11" height="48" fill="#FFE200" stroke="#1E1A2B" stroke-width="2.2"/>
+      <rect x="82" y="52" width="11" height="48" fill="#FFE200" stroke="#1E1A2B" stroke-width="2.2"/>
+      <path d="M29.5 55v42" stroke="#fff" stroke-opacity=".55" stroke-width="2"/>
+      <path d="M84.5 55v42" stroke="#fff" stroke-opacity=".55" stroke-width="2"/>
+      <g fill="#1E1A2B"><circle cx="32.5" cy="61" r="1.7"/><circle cx="32.5" cy="91" r="1.7"/><circle cx="87.5" cy="61" r="1.7"/><circle cx="87.5" cy="91" r="1.7"/></g>
+    </svg>
+    <!-- 뚜껑: 둥근 지붕 · 금띠 · 테두리 · 가운데 보석 -->
+    <svg viewBox="0 0 120 106" class="lid">
+      <path d="M12 54V38C12 22 30 13 60 13S108 22 108 38V54Z" fill="#7B5CE6" stroke="#1E1A2B" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M13.3 46H106.7V52.7H13.3Z" fill="#6847D6"/>
+      <path d="M27 54V20.4C30.4 19 34 17.9 38 17.1V54Z M82 54V17.1C86 17.9 89.6 19 93 20.4V54Z" fill="#FFE200" stroke="#1E1A2B" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M44 22c5-2 11-3 18-3" stroke="#fff" stroke-opacity=".7" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <rect x="8" y="48" width="104" height="10" rx="5" fill="#FFE200" stroke="#1E1A2B" stroke-width="2.5"/>
+      <path d="M14 51.5h30" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>
+      <path d="M60 25L69.5 33.5L60 45L50.5 33.5Z" fill="#FF7FB2" stroke="#1E1A2B" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M50.5 33.5H69.5M55 29.3L60 33.5L65 29.3M60 33.5V45" stroke="#1E1A2B" stroke-opacity=".45" stroke-width="1.3" fill="none"/>
+      <path d="M55.5 30.5l2.2-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <!-- 자물쇠: 금판 + 열쇠 구멍 -->
+    <svg viewBox="0 0 120 106" class="lock">
+      <path d="M50 54H70V66C70 71 65.5 74 60 76C54.5 74 50 71 50 66Z" fill="#FFE200" stroke="#1E1A2B" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="60" cy="61.5" r="2.8" fill="#1E1A2B"/>
+      <path d="M60 63v5" stroke="#1E1A2B" stroke-width="2.8" stroke-linecap="round"/>
+    </svg>
+  </div>
+</template>
+
+<script>
+const reduced = () => document.getElementById('rm').checked || matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SPARK_COLORS = ['#FFE200','#D0798E','#8FA6DC','#E5DDF6','#FFFFFF'];
+
+function countUp(el, to, ms) {
+  if (!el) return;
+  if (reduced()) { el.textContent = '+' + to; return; }
+  const t0 = performance.now();
+  const tick = (t) => {
+    const p = Math.min(1, (t - t0) / ms);
+    el.textContent = '+' + Math.round(to * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function setup(screen) {
+  // 다시 보기: 거꾸로 흐르는 전환 없이 곧바로 처음 모습으로
+  screen.classList.add('reduced');
+  screen.classList.remove('go');
+  void screen.offsetWidth;
+  const slot = screen.querySelector('.chest-slot');
+  slot.innerHTML = '';
+  slot.appendChild(document.getElementById('chest-tpl').content.cloneNode(true));
+  const chest = slot.querySelector('.chest');
+  const foot = screen.querySelector('.foot');
+  foot.classList.add('locked');
+  if ('center' in screen.dataset) centerChest(screen, slot, foot);
+  screen.querySelectorAll('[data-count]').forEach((e) => (e.textContent = '+0'));
+
+  let hint = screen.querySelector('.hint');
+  if (!hint) { hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '눌러서 열기'; screen.querySelector('.stage').appendChild(hint); }
+  hint.classList.remove('on');
+  clearTimeout(screen._hintTimer);
+  screen._hintTimer = setTimeout(() => hint.classList.add('on'), 4000);
+
+  if (reduced()) {
+    // 움직임 줄이기: 바로 열린 모습, 효과음 없음
+    screen.classList.add('reduced');
+    open(screen, chest, hint, foot);
+    return;
+  }
+  void screen.offsetWidth;
+  screen.classList.remove('reduced');
+  chest.addEventListener('click', () => open(screen, chest, hint, foot), { once: true });
+}
+
+function centerChest(screen, slot, foot) {
+  // 크게 놓일 자리: 제목 아래부터 버튼 위까지 빈 곳의 한가운데 (transform 빼고 잰 값)
+  const stageEl = screen.querySelector('.stage');
+  const footTop = foot.getBoundingClientRect().top - stageEl.getBoundingClientRect().top + 14;
+  const home = slot.offsetTop + slot.offsetHeight / 2;
+  const target = footTop / 2;
+  screen.style.setProperty('--cy', Math.round(target - home) + 'px');
+  stageEl.style.setProperty('--hint-top', Math.round(target + slot.offsetHeight * 0.75 + 14) + 'px');
+}
+
+function open(screen, chest, hint, foot) {
+  clearTimeout(screen._hintTimer);
+  hint.classList.remove('on');
+  chest.classList.remove('idle');
+  chest.classList.add('open');
+  if (!reduced()) burst(chest);
+  setTimeout(() => {
+    screen.classList.add('go');
+    const wait = reduced() ? 0 : +(screen.dataset.countDelay || 0);
+    setTimeout(() => screen.querySelectorAll('[data-count]').forEach((e) => countUp(e, +e.dataset.count, 900)), wait);
+  }, reduced() ? 0 : 220);
+  setTimeout(() => foot.classList.remove('locked'), reduced() ? 0 : +(screen.dataset.unlock || 900));
+}
+
+function burst(chest) {
+  const wrap = document.createElement('div');
+  wrap.className = 'burst';
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('div');
+    s.className = 'spark';
+    const a = (-160 + Math.random() * 140) * Math.PI / 180, d = 70 + Math.random() * 70;
+    s.innerHTML = `<i style="--x:${Math.cos(a) * d}px;--y:${Math.sin(a) * d}px;--c:${SPARK_COLORS[i % 5]};animation-delay:${Math.random() * .08}s"></i>`;
+    wrap.appendChild(s);
+  }
+  chest.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 900);
+}
+
+document.querySelectorAll('.screen').forEach(setup);
+document.querySelectorAll('.replay').forEach((b) => b.addEventListener('click', () => setup(document.querySelector(`.screen[data-v="${b.dataset.for}"]`))));
+document.getElementById('rm').addEventListener('change', () => document.querySelectorAll('.screen').forEach(setup));
+</script>
+</body>
+</html>

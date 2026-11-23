@@ -29,7 +29,8 @@ export type RewardEvent = {
   at: number;
 };
 
-const store = createStore<{ events: RewardEvent[] }>({ events: [] });
+// 기기에 남아요 — 앱을 다시 켜도 같은 단계 · 출석으로 두 번 받지 않게
+const store = createStore<{ events: RewardEvent[] }>({ events: [] }, { persist: { key: 'ledger' } });
 
 export const useRewards = () => store.useStore((s) => s.events);
 export const listRewards = (currency?: Currency) => store.get().events.filter((e) => !currency || e.currency === currency);
