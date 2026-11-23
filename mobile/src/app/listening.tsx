@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
@@ -8,6 +9,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
 
+import { bookShelfQuery, situationMapsQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { LR_ORD, LR_SPD, NEXT, listenPrefs, setListenPrefs } from '@/components/library/listen-prefs';
@@ -19,8 +21,8 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { findLevel, findSituation, lessonName, listenItemsOf, listenItemsOfLevel, listenItemsOfMap, listenItemsOfScene, parseUnitId, type ListenItem } from '@/data/library';
-import { findScene } from '@/data/situation';
+import { findLevel, lessonName, listenItemsOf, listenItemsOfLevel, listenItemsOfMap, parseUnitId, type ListenItem } from '@/data/library';
+import { findScene, localSceneListenItems } from '@/data/situation';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
@@ -28,30 +30,33 @@ import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 /**
  * 리스닝 룸 (프로토타입 openListen · lrRender): 붙어 있는 보라 재생 카드 · 설정 칩 · 재생 목록 칩 · 문장 줄.
  * 주소: ?unit=1-1 (그 과) · ?level=1 (그 레벨 전체) · ?map=travel (상황 맵 전체) · ?key=travel-1 (그 장면 · 상황 장면 화면에서)
+ * 제목은 받아 둔 책장(17) · 맵(16)에서, 문장은 아직 앱에 든 값 (24 `/lessons/:id/listen-items` 를 옮기기 전)
  */
 function useSource() {
   const p = useLocalSearchParams<{ unit?: string; level?: string; map?: string; key?: string }>();
+  const shelf = useQuery(bookShelfQuery()).data;
+  const maps = useQuery(situationMapsQuery()).data?.maps;
   return useMemo(() => {
     if (p.unit) {
       const { lv, no } = parseUnitId(p.unit);
-      const L = findLevel(lv);
+      const L = shelf && findLevel(shelf, lv);
       const ls = L?.lessons.find((x) => x.no === no);
       return { title: L && ls ? lessonName(L, ls) : '', items: listenItemsOf(p.unit) };
     }
     if (p.level) {
-      const L = findLevel(Number(p.level));
+      const L = shelf && findLevel(shelf, Number(p.level));
       return { title: L ? `Lv.${L.lv} ${L.series}` : '', items: L ? listenItemsOfLevel(L) : [] };
     }
     if (p.map) {
-      const m = findSituation(p.map);
+      const m = maps?.find((x) => x.id === p.map);
       return { title: m ? `${m.title} 맵` : '', items: m ? listenItemsOfMap(m) : [] };
     }
     if (p.key) {
-      const f = findScene(p.key);
-      return { title: f ? `${f.map.title} · ${f.scene.title}` : '', items: listenItemsOfScene(p.key) };
+      const f = maps ? findScene(maps, p.key) : null;
+      return { title: f ? `${f.map.title} · ${f.scene.title}` : '', items: f ? localSceneListenItems(f.scene) : [] };
     }
     return { title: '', items: [] as ListenItem[] };
-  }, [p.unit, p.level, p.map, p.key]);
+  }, [p.unit, p.level, p.map, p.key, shelf, maps]);
 }
 
 /** 섞기: 같은 seed 면 늘 같은 순서 (그리는 중에도 · 재생 중에도 같은 목록이 되게) */

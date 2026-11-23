@@ -40,8 +40,10 @@ function charHTML(eq, hc = '#3B2A20', flip = false) {
   let h = '';
   for (const it of its) {
     if (it.hair) {
-      if (cover) { h += layerSvg(it.cap(hc), 'back'); h += layerSvg(`<clipPath id="lc"><rect x="-200" y="${cover.clipY}" width="900" height="600"/></clipPath><g clip-path="url(#lc)">${it.side(hc)}</g>`, 'front'); }
-      else { h += layerSvg(it.back(hc), 'back'); if (it.front) h += layerSvg(it.front(hc), 'front'); }
+      // 모자를 써도 헤어는 그대로: 뒷머리 위에 모자가 얹히고, 앞머리는 모자 아랫선(clipY) 아래만 보여요
+      h += layerSvg(it.back(hc), 'back');
+      // 모자 아래로 앞머리가 가는 띠만 남으면(앱 MIN_BANGS_BELOW_HAT) 숨겨요 — 미리 보기에서는 모든 앞머리를 그려요
+      if (it.front) h += layerSvg(cover ? `<clipPath id="lc"><rect x="-200" y="${cover.clipY}" width="900" height="600"/></clipPath><g clip-path="url(#lc)">${it.front(hc)}</g>` : it.front(hc), 'front');
       continue;
     }
     if (it.layer === 'fx') continue;

@@ -12,7 +12,7 @@
 | `api/errors.ts` | `ApiError { code, message, status }` · `errorMessage(e)` (화면에 띄울 한 줄) |
 | `api/token.ts` | 로그인 토큰 저장 (폰: expo-secure-store · 웹 미리보기: 메모리) |
 | `api/mock.ts` | 가짜 응답 · 늦추기 · 실패시키기 |
-| `api/auth.ts` · `me.ts` · `home.ts` | API 하나 = 함수 하나 (번호는 `api-inventory.md` · `api-additions.md`) |
+| `api/auth.ts` · `me.ts` · `home.ts` · `learn.ts` | API 하나 = 함수 하나 (번호는 `api-inventory.md` · `api-additions.md`) |
 | `api/queries.ts` | 화면이 쓰는 Query 키 · 옵션 (`meQuery()`, `noticesQuery()` …) |
 | `api/query-client.ts` | QueryClient 하나 · 앱으로 돌아오면 다시 받기 · 스플래시 동안 홈 데이터 미리 받기 |
 | `api/provider.tsx` | `ApiProvider` (app/_layout.tsx) · 받은 `/me` 를 `state/me` 에 넣는 `MeSync` |
@@ -32,7 +32,7 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 
 - `?mockDelay=1500` — 모든 가짜 응답을 1.5초 늦게 (불러오는 중 화면)
 - `?mockFail=notices` — 그 API 만 오류 (오류 화면 · 다시 시도). 여러 개는 `,` · 전부는 `all`
-- 이름은 각 api 함수의 `mock('이름', …)` 첫 글자 (`me` · `notices` · `notice` · `loungeHighlights` · `popups` · `sessionsToday` · `rsvp` · `attendance` · `login` …)
+- 이름은 각 api 함수의 `mock('이름', …)` 첫 글자 (`me` · `notices` · `notice` · `loungeHighlights` · `popups` · `sessionsToday` · `rsvp` · `attendance` · `login` · `maps` · `books` · `lesson` …)
 
 ## 서버가 생기면
 
@@ -72,12 +72,16 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 
 ### 3. 학습 (16 ~ 30)
 
-- ☐ 16 맵 칩 · 17 교재 · 과 목록 — `data/library*.ts` (map-data 세션이 데이터 모양을 바꾸는 중 → 끝난 뒤에)
-- ☐ 18 과 콘텐츠 — `data/lesson-lv*.ts` · `lesson34-*.ts` · `situation-content.ts`
-- ☐ 19 · 20 · 21 진도 · 저장 · 완료 — `state/progress.ts` (count-bugs 세션이 포인트 원장을 만드는 중 → 끝난 뒤에)
+- ✅ 16 상황 맵 — `situationMapsQuery()` (서버 줄 `MapRow[]` → `select` 에서 `toSituationMaps` 로 열린 맵 · 곧 열릴 맵). 라이브러리 탭 · 장면 화면 · 리스닝 룸 제목. 장면 줄은 콘텐츠 대신 `contentId` 만 가져요
+- ✅ 17 책장 · 과 목록 — `bookShelfQuery()` → `GET /library/books` (언어별 책장, 권마다 과 목록 `study` 포함). 라이브러리 탭 · 교재 소개 · 과 화면 · 리스닝 룸 제목
+  - **백엔드에 제안**: 인벤토리에는 `/library/books/:id/lessons` 만 있어요. 섬 지도가 모든 권의 진도(3/20과)를 한 번에 그려서, 책장 전체를 한 번에 주는 `GET /library/books` 가 있으면 좋아요
+- ✅ 18 과 콘텐츠 — `GET /lessons/:id` 하나를 세 함수로: `fetchPatternLesson`(Lv.1 · 2, id `1-1`) · `fetchUnit34`(Lv.3 · 4, id `3-101`) · `fetchSceneContent`(상황 장면, id = 맵 데이터의 `contentId`). 레슨 · Lv.3/4 레슨 · 장면 · 장면 단계 화면 (`components/scene/use-scene.ts`). 없는 id = `NOT_FOUND` → '준비 중' · '곧 열려요'
+  - 서버 응답으로 바꿀 때: Lv.3 `liveFix` 가 정규식 · 함수라 JSON 으로 못 와요 → 서버 모양(패턴 문자열 등)을 따로 정해야 해요 (B2)
+- 스플래시 동안 책장 · 맵 목록을 미리 받아요 (`prefetchStartData`). 교재 · 맵 · 과 콘텐츠는 10분 동안 다시 받지 않아요
+- ☐ 19 · 20 · 21 진도 · 저장 · 완료 — `state/progress.ts` · 포인트 장부(`state/ledger.ts`)와 같이 옮겨요 (다음 차례)
 - ☐ 22 건너뛰기 테스트 · A5 문제 받기
 - ☐ 23 · 26 · 27 · 28 답변 저장 · 음성 · AI — 엔진 정해지면 (Q-T4)
-- ☐ 24 · 25 리스닝 문장 · 음원
+- ☐ 24 · 25 리스닝 문장 · 음원 — 리스닝 룸 문장은 아직 앱에 든 값 (`listenItemsOf` · `localSceneListenItems`)
 - ☐ 29 표현함 — `state/expressions.ts`
 - ☐ 30 설정 — `state/learn-prefs.ts` (A17 결정 먼저)
 

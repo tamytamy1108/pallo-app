@@ -5,7 +5,7 @@ import { focusManager, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
 import { isApiError } from './errors';
-import { loungeHighlightsQuery, meQuery, noticeBoardQuery, popupsQuery, sessionsTodayQuery } from './queries';
+import { bookShelfQuery, loungeHighlightsQuery, meQuery, noticeBoardQuery, popupsQuery, sessionsTodayQuery, situationMapsQuery } from './queries';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,7 +30,7 @@ if (Platform.OS !== 'web') {
 const START_TIMEOUT_MS = 3_000;
 
 /**
- * 스플래시가 떠 있는 동안 홈 첫 화면 데이터를 미리 받아요 (화면이 빈 채로 깜빡이지 않게).
+ * 스플래시가 떠 있는 동안 홈 첫 화면 데이터와 라이브러리 책장 · 맵 목록을 미리 받아요 (화면이 빈 채로 깜빡이지 않게).
  * 오래 걸려도 3초 넘게 기다리지 않아요. 실패한 것은 화면에서 다시 받아요.
  */
 export async function prefetchStartData() {
@@ -40,6 +40,8 @@ export async function prefetchStartData() {
     queryClient.prefetchQuery(noticeBoardQuery()),
     queryClient.prefetchQuery(loungeHighlightsQuery()),
     queryClient.prefetchQuery(popupsQuery()),
+    queryClient.prefetchQuery(bookShelfQuery()),
+    queryClient.prefetchQuery(situationMapsQuery()),
   ]);
   await Promise.race([all, new Promise((r) => setTimeout(r, START_TIMEOUT_MS))]);
 }

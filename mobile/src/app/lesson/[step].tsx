@@ -1,9 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ClientErrorCode, errorMessage, isApiError } from '@/api/errors';
+import { patternLessonQuery } from '@/api/queries';
 import { Celebrate } from '@/components/lesson/celebrate';
 import { ChalView } from '@/components/lesson/chal-view';
 import { QuizView } from '@/components/lesson/quiz-view';
@@ -13,9 +16,10 @@ import { TalkView } from '@/components/lesson/talk-view';
 import { TaskRunner } from '@/components/lesson/task-runner';
 import { leaveLesson, useStepFinish } from '@/components/lesson/use-step-finish';
 import { Screen } from '@/components/screen';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
-import { bankTasks, chalFinishTasks, dialogueTasks, getLesson, patternTasks, stepDef, stepTitle, storyTasks, type LessonData, type StepDef, type Task } from '@/data/lessons';
+import { bankTasks, chalFinishTasks, dialogueTasks, patternTasks, stepDef, stepTitle, storyTasks, type LessonData, type StepDef, type Task } from '@/data/lessons';
 import { setLastStep, stepKey } from '@/state/progress';
 
 /**
@@ -23,13 +27,22 @@ import { setLastStep, stepKey } from '@/state/progress';
  * - 예습(오늘의 패턴 · 대화문 · Bank)은 한 화면에 한 문제 진행기
  * - 본학습 · 복습(상황 활동 · My Story · AI 프리토킹 · 스피킹 퀴즈 · 챌린지)은 단계 화면 → 끝에 진행기로 이어지기도 해요
  * - 다 끝내면 완료(축하) 화면. resume=resume|restart: 앞 화면(과 화면 팝업)에서 이미 고른 경우
+ * 과 콘텐츠는 18 `GET /lessons/:id` (id = '레벨-과') 로 받아요. 같은 과의 다른 단계로 가면 받아 둔 값을 그대로 써요.
  */
 export default function LessonScreen() {
   const p = useLocalSearchParams<{ step: string; lv?: string; unit?: string; resume?: string }>();
   const lv = Number(p.lv ?? 1) || 1;
   const unit = Number(p.unit ?? 1) || 1;
-  const D = getLesson(lv, unit);
   const step = stepDef(p.step);
+  const q = useQuery({ ...patternLessonQuery(lv, unit), enabled: !!step });
+  if (step && q.isPending) return <LessonState><LoadingState /></LessonState>;
+  if (step && q.isError && !(isApiError(q.error) && q.error.code === ClientErrorCode.notFound))
+    return (
+      <LessonState>
+        <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
+      </LessonState>
+    );
+  const D = q.data;
   if (!D || !step) {
     return (
       <Screen title="준비 중">
@@ -43,6 +56,15 @@ export default function LessonScreen() {
         <StepScreen key={`${lv}:${unit}:${step.id}`} D={D} step={step} resume={p.resume === 'resume' || p.resume === 'restart' ? p.resume : undefined} />
       </SafeAreaView>
     </GestureHandlerRootView>
+  );
+}
+
+/** 과 콘텐츠를 받는 중 · 못 받았을 때 (레슨 화면과 같은 바탕) */
+function LessonState({ children }: { children: ReactNode }) {
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      {children}
+    </SafeAreaView>
   );
 }
 

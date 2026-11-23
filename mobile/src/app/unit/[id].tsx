@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
@@ -5,6 +6,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { errorMessage } from '@/api/errors';
+import { bookShelfQuery } from '@/api/queries';
 import { BackButton } from '@/components/ui/back-button';
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
@@ -13,7 +16,7 @@ import { openStep } from '@/components/library/open-step';
 import { StepPopup } from '@/components/library/step-popup';
 import { ListenCard, UnitHero, UnitSummary } from '@/components/library/unit-parts';
 import { Raised } from '@/components/ui/raised';
-import { EmptyState } from '@/components/ui/state-view';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -37,7 +40,16 @@ export default function UnitScreen() {
   // '/unit/1-1' (레벨-과) · 홈 스터디 맵의 '/unit/1?lv=1' 둘 다 받아요
   const { id, lv: lvParam } = useLocalSearchParams<{ id: string; lv?: string }>();
   const { lv, no } = id?.includes('-') ? parseUnitId(id) : { lv: Number(lvParam ?? 1), no: Number(id) };
-  const L = findLevel(lv);
+  // 과 목록은 17 /library/books 책장에서 (라이브러리 탭에서 받아 둔 값)
+  const shelf = useQuery(bookShelfQuery());
+  if (shelf.isPending || shelf.isError)
+    return (
+      <SafeAreaView style={styles.safe}>
+        <TopBar title="" onList={() => {}} />
+        {shelf.isPending ? <LoadingState /> : <ErrorState message={errorMessage(shelf.error)} onRetry={() => shelf.refetch()} />}
+      </SafeAreaView>
+    );
+  const L = findLevel(shelf.data, lv);
   const ls = L?.lessons.find((x) => x.no === no);
   if (!L || !ls || !ls.data)
     return (

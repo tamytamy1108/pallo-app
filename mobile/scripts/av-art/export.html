@@ -55,7 +55,7 @@ function split(d0, d1) {
     st('그리는 중 ' + it.id);
     if (it.hair) {
       const g = { k: 'box', hair: true };
-      for (const part of ['back', 'front', 'cap', 'side']) {
+      for (const part of ['back', 'front']) {
         if (!it[part]) continue;
         const d0 = await raster(A.svg(it[part]('#000000')), W, H), d1 = await raster(A.svg(it[part]('#FFFFFF')), W, H);
         const b = bbox(d0); if (!b) continue; const [base, fill] = split(d0, d1);

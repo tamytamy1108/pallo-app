@@ -2,7 +2,7 @@ import * as Tts from 'expo-speech';
 import { useState } from 'react';
 
 import { ShadowTask } from '@/components/lesson/shadow-task';
-import type { Scene } from '@/data/situation';
+import type { SceneWithContent } from '@/data/situation';
 import type { ShadowTask as Task } from '@/data/lessons';
 import { useLearnPrefs } from '@/state/learn-prefs';
 
@@ -16,8 +16,8 @@ const NO_FOCUS = /$^/;
  * 미션 익히기 (프로토타입 runMission): 미션마다 내 레벨 문장을 듣고 따라 말하기.
  * 레슨의 따라 말하기(ShadowTask)를 그대로 써요 — 말하기 · 단어 카드 · 소리 끄기 흐름도 같아요.
  */
-export function MissionStep({ sceneId, scene }: { sceneId: string; scene: Scene }) {
-  const X = scene.content!.flow;
+export function MissionStep({ sceneId, scene }: { sceneId: string; scene: SceneWithContent }) {
+  const X = scene.content.flow;
   const L = useQuizLevel();
   const { noListen } = useLearnPrefs();
   const { finish, celebrate, finished } = useStepFinish(sceneId, 'mis');
