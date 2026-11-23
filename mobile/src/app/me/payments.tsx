@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box } from '@/components/account/parts';
 import { Button } from '@/components/ui/button';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -66,7 +66,7 @@ export default function PaymentsScreen() {
               wide
               onPress={() => {
                 setOpen(null);
-                router.push({ pathname: '/me/support', params: { view: 'ask', type: '결제 · 환불' } });
+                runAfterSheetClose(() => router.push({ pathname: '/me/support', params: { view: 'ask', type: '결제 · 환불' } }));
               }}
             />
           </View>,
