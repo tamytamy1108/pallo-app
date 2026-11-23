@@ -134,7 +134,11 @@ export function AskBubble({ ask, soundOff }: { ask: Ask; soundOff: boolean }) {
             <Spk text={ask.en} soundOff={soundOff} />
           </View>
         </View>
-        <View style={s.tail} />
+        {/* 꼬리: 흰 삼각형이 말풍선 테두리를 덮고, 두 선 끝이 테두리 한가운데에서 만나 하나로 이어져요 */}
+        <Svg pointerEvents="none" width={16} height={24} viewBox="0 0 16 24" style={s.tail}>
+          <Path d="M15 -1 L2 12 L15 25 Z" fill={Colors.white} />
+          <Path d="M12 0.5 L1.8 12 L12 23.5" fill="none" stroke={Colors.ink} strokeWidth={2} strokeLinejoin="round" strokeLinecap="butt" />
+        </Svg>
       </View>
     </View>
   );
@@ -423,7 +427,7 @@ export const s = StyleSheet.create({
   pavT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
   bubWrap: { flex: 1, minWidth: 0, marginBottom: 28 },
   bub: { paddingVertical: 12, paddingLeft: 14, paddingRight: 52, borderWidth: 2, borderColor: Colors.ink, borderRadius: 20, backgroundColor: Colors.white, boxShadow: `3px 3px 0px ${Colors.ink}` },
-  tail: { position: 'absolute', zIndex: 2, left: -9, bottom: 18, width: 16, height: 16, backgroundColor: Colors.white, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: Colors.ink, borderBottomLeftRadius: 2, transform: [{ rotate: '45deg' }] },
+  tail: { position: 'absolute', zIndex: 2, left: -11, bottom: 14 },
   bubEn: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23.8, letterSpacing: -0.2 },
   bubKo: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.1, marginTop: 6 },
   bubSpk: { position: 'absolute', top: 10, right: 10 },

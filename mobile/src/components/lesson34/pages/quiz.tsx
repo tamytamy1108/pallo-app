@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { GrowInput } from '@/components/ui/grow-input';
@@ -20,7 +21,8 @@ import { useLearnPrefs } from '@/state/learn-prefs';
 
 import type { StepCtx } from '../finish';
 import { gradeWords, pickOne, shuffle } from '../text';
-import { CardHead, Check, EndMsg, EndNote, FootRow, GoBtn, IMG, MarkBtn, ModeTabs, PINK_INK, Spk, Stars, SUB, XMark } from '../ui';
+import { PopStars, useCountUp } from '../blocks/match-result-fx';
+import { CardHead, Check, EndMsg, EndNote, FootRow, GoBtn, IMG, MarkBtn, ModeTabs, PINK_INK, Spk, SUB, XMark } from '../ui';
 import { PCard, PFoot } from './common';
 import type { PageApi } from './study-shell';
 
@@ -280,33 +282,38 @@ function QuizResult({ items, log, right, api, source }: { items: SpeakItem[]; lo
   const rate = total ? right / total : 0;
   const stars = rate >= 0.85 ? 3 : rate >= 0.5 ? 2 : right > 0 ? 1 : 0;
   const msg = right === total ? '완벽해요! 힌트 없이 다 맞혔어요' : stars >= 2 ? '좋아요! 놓친 문장만 다시 들어 봐요' : '괜찮아요! 문장을 듣고 따라 말해 봐요';
+  const still = useReducedMotion();
+  const count = useCountUp(right, 300, 700);
   return (
     <>
       <ScrollView style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false}>
         <View style={st.res}>
+          {/* 톡 튀어나온 뒤 숨쉬듯 통통 · 가끔 한 번 크게 뛰어요 */}
           <Appear kind="reactHop">
-            <Image source={stars >= 2 ? IMG.yellow : IMG.tilted} style={st.resImg} contentFit="contain" />
+            <Animated.View style={[st.resChar, !still && (stars >= 2 ? idleHappy : idleSad)]}>
+              <Image source={stars >= 2 ? IMG.yellow : IMG.tilted} style={st.resImg} contentFit="contain" />
+            </Animated.View>
           </Appear>
-          <PText style={st.resN}>
-            {right}
+          <PText style={st.resN} accessibilityLabel={`${total}문장 중 ${right}문장`}>
+            {count}
             <PText style={st.resOf} color={SUB}>{` / ${total}`}</PText>
           </PText>
           <PText style={st.resL} color={SUB}>
             한 번에 맞힌 문장
           </PText>
-          <Stars n={stars} />
+          <PopStars n={stars} delay={450} />
           <View style={st.rs}>
-            <ResTile tone={st.t1} icon={<Check size={16} />} value={String(right)} label="한 번에 맞힘" delay={450} />
-            <ResTile tone={st.t2} icon={<BulbIc />} value={String(nHint)} label="힌트 쓴 문장" delay={570} />
-            <ResTile tone={st.t3} icon={<XMark size={16} color={PINK_INK} />} value={String(nMiss)} label="놓친 문장" delay={690} />
+            <ResTile tone={st.t1} icon={<Check size={16} />} value={right} label="한 번에 맞힘" delay={900} />
+            <ResTile tone={st.t2} icon={<BulbIc />} value={nHint} label="힌트 쓴 문장" delay={1020} />
+            <ResTile tone={st.t3} icon={<XMark size={16} color={PINK_INK} />} value={nMiss} label="놓친 문장" delay={1140} />
           </View>
         </View>
-        <Appear kind="tkRise" delay={800}>
+        <Appear kind="tkRise" delay={1250}>
           <PCard style={st.list}>
             {log.map((r, j) => {
               const it = items[r.k];
               return (
-                <View key={j} style={StyleSheet.flatten([st.row, j > 0 && st.rowLine])}>
+                <Appear key={j} kind="rise" delay={1330 + j * 70} style={StyleSheet.flatten([st.row, j > 0 && st.rowLine])}>
                   <View
                     style={StyleSheet.flatten([st.mk, r.first ? st.mkFirst : !r.ok ? st.mkMiss : st.mkHint])}
                     accessibilityLabel={r.first ? '한 번에 맞힘' : !r.ok ? '놓침' : r.hint ? '힌트 씀' : '두 번째에 맞힘'}>
@@ -320,7 +327,7 @@ function QuizResult({ items, log, right, api, source }: { items: SpeakItem[]; lo
                   </View>
                   <Spk text={it.en} soundOff={api.soundOff} />
                   <MarkBtn en={it.en} ko={it.ko} source={source} />
-                </View>
+                </Appear>
               );
             })}
           </PCard>
@@ -338,13 +345,14 @@ function QuizResult({ items, log, right, api, source }: { items: SpeakItem[]; lo
   );
 }
 
-/** 결과 숫자 칸 (짝 맞추기 결과 .tk-rs 와 같은 모양) */
-function ResTile({ tone, icon, value, label, delay }: { tone: object; icon: ReactNode; value: string; label: string; delay: number }) {
+/** 결과 숫자 칸 (짝 맞추기 결과 .tk-rs 와 같은 모양) · 아래에서 솟아오르고 숫자는 0부터 올라가요 */
+function ResTile({ tone, icon, value, label, delay }: { tone: object; icon: ReactNode; value: number; label: string; delay: number }) {
+  const n = useCountUp(value, delay + 200, 650);
   return (
     <Appear kind="tkRise" delay={delay} style={st.rtWrap}>
       <View style={StyleSheet.flatten([st.rt, tone])}>
         <View style={st.ic}>{icon}</View>
-        <PText style={st.rtB}>{value}</PText>
+        <PText style={st.rtB}>{n}</PText>
         <PText style={st.rtS} color={SUB}>
           {label}
         </PText>
@@ -352,6 +360,31 @@ function ResTile({ tone, icon, value, label, delay }: { tone: object; icon: Reac
     </Appear>
   );
 }
+
+/* 결과 캐릭터 제자리 움직임: 숨쉬듯 두 번 통통 → 웅크렸다 크게 한 번 뛰고 착지 (바닥 기준) */
+const HOP = cubicBezier(0.3, 1.5, 0.5, 1);
+const bobHop = css.keyframes({
+  '0%, 30%, 60%': { transform: [{ translateY: 0 }, { scaleX: 1 }, { scaleY: 1 }], animationTimingFunction: 'ease-in-out' },
+  '15%, 45%': { transform: [{ translateY: -3 }, { scaleX: 0.98 }, { scaleY: 1.03 }], animationTimingFunction: 'ease-in-out' },
+  '72%': { transform: [{ translateY: 2 }, { scaleX: 1.12 }, { scaleY: 0.88 }], animationTimingFunction: cubicBezier(0.2, 0.8, 0.3, 1) },
+  '82%': { transform: [{ translateY: -16 }, { scaleX: 0.92 }, { scaleY: 1.1 }], animationTimingFunction: cubicBezier(0.6, 0, 0.9, 0.5) },
+  '91%': { transform: [{ translateY: 1 }, { scaleX: 1.14 }, { scaleY: 0.86 }], animationTimingFunction: HOP },
+  '100%': { transform: [{ translateY: 0 }, { scaleX: 1 }, { scaleY: 1 }] },
+});
+/** 기운 캐릭터는 느릿느릿 · 작게만 */
+const bobSlow = css.keyframes({
+  '0%, 100%': { transform: [{ translateY: 0 }, { scaleX: 1 }, { scaleY: 1 }] },
+  '50%': { transform: [{ translateY: -2 }, { scaleX: 1.03 }, { scaleY: 0.97 }] },
+});
+const idle = (name: typeof bobHop, ms: number) => ({
+  animationName: name,
+  animationDuration: `${ms}ms`,
+  animationDelay: '900ms',
+  animationIterationCount: 'infinite' as const,
+  animationTimingFunction: 'linear' as const,
+});
+const idleHappy = idle(bobHop, 4200);
+const idleSad = idle(bobSlow, 2800);
 
 const BulbIc = ({ size = 16 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
@@ -407,6 +440,7 @@ const st = StyleSheet.create({
   hpT: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
   // 결과 화면
   res: { alignItems: 'center', gap: 8, paddingTop: 18 },
+  resChar: { transformOrigin: 'center bottom' },
   resImg: { width: 130, height: 112 },
   resN: { fontFamily: Font.display, fontSize: 44, lineHeight: 50, letterSpacing: -1, fontVariant: ['tabular-nums'] },
   resOf: { fontFamily: Font.display, fontSize: 22, lineHeight: 50 },

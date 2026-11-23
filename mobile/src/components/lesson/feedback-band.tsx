@@ -32,7 +32,8 @@ export function FeedbackBand({
 }) {
   const good = kind === 'good';
   return (
-    <View style={styles.wrap} accessibilityLiveRegion="polite" accessibilityLabel={`${en}. ${ko}`}>
+    // 버튼을 안에 안 넣고 바로 아래 둘 때도 같은 간격 (리액션 ↔ 버튼 18)
+    <View style={[styles.wrap, !children && styles.alone]} accessibilityLiveRegion="polite" accessibilityLabel={`${en}. ${ko}`}>
       <FadeUp style={styles.row}>
         <Appear kind="reactHop">
           <Image source={good ? require('@/assets/characters/c-upright-yellow.png') : require('@/assets/characters/c-upright-purple.png')} style={styles.char} contentFit="contain" />
@@ -60,6 +61,7 @@ export function FeedbackBand({
 
 const styles = StyleSheet.create({
   wrap: { gap: 18, paddingTop: 8 },
+  alone: { marginBottom: 18 },
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   char: { width: 88, height: 70, marginBottom: -2 },
   t: { flex: 1, minWidth: 0, paddingBottom: 2 },

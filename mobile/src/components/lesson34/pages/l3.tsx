@@ -1,6 +1,6 @@
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { GrowInput } from '@/components/ui/grow-input';
@@ -134,7 +134,16 @@ export function TopicRead({ D, api }: P) {
         </PCard>
       </ScrollView>
       <PFoot>
-        <GoBtn label="다 읽었어요" onPress={() => api.finish()} />
+        <GoBtn
+          label="다 읽었어요"
+          onPress={() => {
+            // 전체 듣기 중이면 소리부터 멈춰요 (축하 화면 위로 계속 읽지 않게)
+            tok.current += 1;
+            Tts.stop();
+            setNow(null);
+            api.finish();
+          }}
+        />
       </PFoot>
     </>
   );
@@ -231,9 +240,16 @@ export function BeforeAfter({ ctx, D, api }: P) {
     const sAvg = Math.round(filled.reduce((n, i) => n + sentences(a[i]), 0) / Math.max(1, filled.length));
     return { all, old, used, filled, sAvg };
   })();
+  // 비교하기를 누르면 아래에 생긴 결과로 스르르 내려가요 (안 내리면 생긴 줄 몰라요)
+  const baScroll = useRef<ScrollViewInstance>(null);
+  useEffect(() => {
+    if (!out) return;
+    const tm = setTimeout(() => baScroll.current?.scrollToEnd({ animated: true }), 120);
+    return () => clearTimeout(tm);
+  }, [out]);
   return (
     <>
-      <ScrollView style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={baScroll} style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Intro text={none ? '예습 답변이 없어요. 지금 답해도 돼요. 다음엔 예습부터 하면 성장을 비교할 수 있어요.' : '예습 때 했던 같은 질문에 다시 답해요. 수업에서 배운 표현을 넣어 보세요.'} />
         {idx.map((i) => (
           <PCard key={i} style={st.baQ}>

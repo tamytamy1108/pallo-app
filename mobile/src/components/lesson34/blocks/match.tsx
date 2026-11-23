@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -20,7 +20,7 @@ import { HopStage, PopStars, useCountUp } from './match-result-fx';
 
 /**
  * 짝 맞추기 타임어택 (프로토타입 TKV.match): 왼쪽 영어 → 오른쪽 뜻. 30초 · 콤보 · 최고 기록.
- * 맞은 짝은 초록, 틀린 짝은 양쪽이 빨갛게 흔들려요. 결과: 걸린 시간 · 최고 콤보 · 틀린 짝.
+ * 고르면 들리고, 맞은 짝은 통 튀며 반짝인 뒤 초록으로 가라앉고, 틀린 짝은 양쪽이 분홍으로 번쩍이며 흔들려요. 결과: 걸린 시간 · 최고 콤보 · 틀린 짝.
  */
 export function MatchBlock({ task }: { task: MatchTask }) {
   const [round, setRound] = useState(0);
@@ -132,24 +132,64 @@ function MatchRound({ task, onAgain }: { task: MatchTask; onAgain: () => void })
   );
 }
 
-/** 짝 카드 .tk-mc (고름: 노랑 · 맞음: 초록 · 틀림: 빨강 흔들림) */
+/** 고르면 살짝 들려요 · 짝 맞으면 통 튀었다 가라앉는 스프링 */
+const LIFT = { damping: 13, stiffness: 340, mass: 0.7 } as const;
+const SETTLE = { damping: 8, stiffness: 260, mass: 0.7 } as const;
+const OUT = Easing.out(Easing.quad);
+
+/**
+ * 짝 카드 .tk-mc (고름: 노랑 · 맞음: 초록 · 틀림: 빨강 흔들림)
+ * - 고르면: 스프링으로 살짝 커지며 들려요
+ * - 맞으면: 통 커졌다가 반짝(흰 빛) → 조금 작고 옅게 가라앉아 '끝난 짝' 이 돼요
+ * - 틀리면: 레슨 1 처럼 좌우로 흔들리고 분홍 빛이 번쩍 (0.5초 뒤 원래 색)
+ * 움직임 줄이기면 색만 바뀌어요.
+ */
 function Tile({ label, en, ok, sel, bad, onPress }: { label: string; en?: boolean; ok: boolean; sel?: boolean; bad: number; onPress: () => void }) {
   const still = useReducedMotion();
   const x = useSharedValue(0);
+  const s = useSharedValue(1);
+  const y = useSharedValue(0);
+  const fade = useSharedValue(1);
+  const flash = useSharedValue(0);
   // 틀린 짝은 0.5초 동안 빨갛게 (bad 가 0이 되면 원래대로)
   const red = bad > 0;
+
+  // 고름 ↔ 풀림: 스프링 들림 (맞음 효과보다 먼저 두어야 맞음이 이겨요)
+  useEffect(() => {
+    if (still || ok) return;
+    s.set(withSpring(sel ? 1.06 : 1, LIFT));
+    y.set(withSpring(sel ? -3 : 0, LIFT));
+  }, [sel, ok, still, s, y]);
+
+  // 맞음: 통 → 반짝 → 가라앉기
+  useEffect(() => {
+    if (!ok || still) return;
+    s.set(withSequence(withTiming(1.12, { duration: 120, easing: OUT }), withSpring(0.96, SETTLE)));
+    y.set(withSequence(withTiming(-6, { duration: 120, easing: OUT }), withSpring(0, SETTLE)));
+    flash.set(withSequence(withTiming(0.85, { duration: 90 }), withTiming(0, { duration: 380, easing: OUT })));
+    fade.set(withDelay(380, withTiming(0.72, { duration: 320 })));
+  }, [ok, still, s, y, flash, fade]);
+
+  // 틀림: 좌우 흔들림 (레슨 1 카드와 같은 박자) + 분홍 번쩍
   useEffect(() => {
     if (!bad || still) return;
-    x.set(withSequence(withTiming(-6, { duration: 70 }), withTiming(6, { duration: 70 }), withTiming(-4, { duration: 70 }), withTiming(0, { duration: 70 })));
-  }, [bad, still, x]);
-  const move = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
+    x.set(withSequence(withTiming(-6, { duration: 70 }), withTiming(6, { duration: 90 }), withTiming(-4, { duration: 80 }), withTiming(0, { duration: 70 })));
+    s.set(withSequence(withTiming(0.97, { duration: 70 }), withSpring(1, LIFT)));
+    flash.set(withSequence(withTiming(0.7, { duration: 70 }), withTiming(0, { duration: 330, easing: OUT })));
+  }, [bad, still, x, s, flash]);
+
+  const move = useAnimatedStyle(() => ({ opacity: fade.get(), transform: [{ translateX: x.get() }, { translateY: y.get() }, { scale: s.get() }] }));
+  const glow = useAnimatedStyle(() => ({ opacity: flash.get() }));
   return (
     <Pressable onPress={onPress} disabled={ok} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!sel, disabled: ok }}>
       {({ pressed }) => (
-        <Animated.View style={[styles.tile, sel && styles.tileSel, ok && styles.tileOk, red && styles.tileBad, pressed && !ok && styles.tileOn, move]}>
-          <PText style={en ? styles.tileEn : styles.tileKo} color={ok ? '#1D6B3B' : red ? '#A3243C' : Colors.ink}>
-            {label}
-          </PText>
+        <Animated.View style={move}>
+          <View style={[styles.tile, sel && styles.tileSel, ok && styles.tileOk, red && styles.tileBad, pressed && !ok && styles.tileOn]}>
+            <Animated.View pointerEvents="none" style={[styles.flash, { backgroundColor: red ? '#FF9DB1' : Colors.white }, glow]} />
+            <PText style={en ? styles.tileEn : styles.tileKo} color={ok ? '#1D6B3B' : red ? '#A3243C' : Colors.ink}>
+              {label}
+            </PText>
+          </View>
         </Animated.View>
       )}
     </Pressable>
@@ -179,7 +219,8 @@ function MatchResult({ task, nDone, used, best, miss, onAgain }: { task: MatchTa
     <>
       <Body>
         <View style={styles.res}>
-          <Appear kind="tkRise">
+          {/* res 가 가운데 정렬이라 감싸개가 내용 폭(0)으로 줄어요 → 꽉 채워야 무대(width 100%)가 보여요 */}
+          <Appear kind="tkRise" style={styles.stageWrap}>
             <HopStage good={all} />
           </Appear>
           <View style={styles.score} accessibilityLabel={`${N}짝 중 ${nDone}짝`}>
@@ -246,6 +287,7 @@ const styles = StyleSheet.create({
   col: { flex: 1, gap: 7 },
   tile: { minHeight: 56, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, boxShadow: `0px 4px 0px ${Colors.ink}`, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   tileSel: { backgroundColor: Colors.yellow },
+  flash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16, opacity: 0 },
   tileOk: { backgroundColor: '#DDF3E2', borderColor: '#2E9E5B', boxShadow: 'none' },
   tileBad: { backgroundColor: '#FBD5DC', borderColor: '#D83A56', boxShadow: 'none' },
   tileOn: { transform: [{ translateY: 3 }], boxShadow: `0px 1px 0px ${Colors.ink}` },
@@ -253,6 +295,7 @@ const styles = StyleSheet.create({
   tileKo: { fontFamily: Font.body800, fontSize: 15, lineHeight: 19.5, textAlign: 'center' },
   footMsg: { paddingBottom: 8 },
   res: { flex: 1, alignItems: 'center', gap: 6, paddingTop: 6 },
+  stageWrap: { alignSelf: 'stretch' },
   score: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 10 },
   rn: { fontFamily: Font.display, fontSize: 52, lineHeight: 58, letterSpacing: -1, fontVariant: ['tabular-nums'] },
   rnOf: { fontFamily: Font.display, fontSize: 26, lineHeight: 32 },

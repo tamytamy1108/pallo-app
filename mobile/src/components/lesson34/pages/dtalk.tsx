@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import Animated, { css, useReducedMotion } from "react-native-reanimated";
 import * as Tts from "expo-speech";
 import { useEffect, useState } from "react";
 import {
@@ -44,6 +45,47 @@ type Msg = {
   kw?: Record<string, 1>;
 };
 type Mode = "voice" | "write";
+/**
+ * 눈을 깜빡이는 노랑 팔로 (원본 그림 그대로 · 눈 흰자 위에 잉크색 눈꺼풀이 내려왔다 올라가요).
+ * 눈 자리는 c-upright-yellow.png(480×306)에서 잰 비율이에요.
+ */
+const blink = css.keyframes({ '0%': { transform: [{ scaleY: 0 }] }, '90%': { transform: [{ scaleY: 0 }] }, '94%': { transform: [{ scaleY: 1 }] }, '98%': { transform: [{ scaleY: 0 }] }, '100%': { transform: [{ scaleY: 0 }] } });
+const EYES = [
+  { l: 0.452, w: 0.075 },
+  { l: 0.61, w: 0.072 },
+];
+function BlinkChar({ width }: { width: number }) {
+  const still = useReducedMotion();
+  const h = (width * 306) / 480;
+  return (
+    <View style={{ width, height: h, marginBottom: -16, marginRight: -6 }}>
+      <Image source={IMG.yellow} style={{ width, height: h }} contentFit="contain" />
+      {!still
+        ? EYES.map((e, i) => (
+            <Animated.View
+              key={i}
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                left: e.l * width,
+                top: 0.06 * h,
+                width: e.w * width,
+                height: 0.27 * h,
+                borderRadius: 999,
+                backgroundColor: "#181B21",
+                transformOrigin: "top",
+                animationName: blink,
+                animationDuration: "4200ms",
+                animationIterationCount: "infinite",
+                animationTimingFunction: "ease-in-out",
+              }}
+            />
+          ))
+        : null}
+    </View>
+  );
+}
+
 /** AI 피드백 한 칸 (왼쪽 색 줄 + 이름 + 문장들) */
 function FbPart({ label, color, bar, items }: { label: string; color: string; bar: string; items: string[] }) {
   return (
@@ -135,8 +177,19 @@ export function DailyTalk({
   const begin = (o: number[]) => {
     setOrder(o);
     const m = opener(Q[o[0]]);
-    ai(m.en, m.ko ?? "");
+    setLog((l) => [...l, m]);
+    // 누른 순간 바로 읽어요 (사파리는 누른 뒤 바로 불러야 소리가 나요)
+    sayEn(m.en, api.soundOff, 0.95);
   };
+  // 예습 별표로 바로 시작했으면 들어오자마자 첫 인사를 읽어요
+  useEffect(() => {
+    const first = log[0];
+    if (order && log.length === 1 && first && !first.me) {
+      const tm = setTimeout(() => sayEn(first.en, api.soundOff, 0.95), 300);
+      return () => clearTimeout(tm);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 처음 들어올 때 한 번만
+  }, []);
   useEffect(() => {
     if (log[0]) {
       const tm = setTimeout(() => sayEn(log[0].en, api.soundOff, 0.95), 250);
@@ -289,7 +342,7 @@ export function DailyTalk({
                   ))}
                 </View>
               </View>
-              <Image source={IMG.yellow} style={st.fbImg} contentFit="contain" />
+              <BlinkChar width={118} />
             </View>
             <FbPart label="잘했어요" color="#2F6B2A" bar="#6BBF59" items={good} />
             {weak.length ? <FbPart label="아쉬워요" color="#C2416B" bar="#E59AAE" items={weak} /> : null}

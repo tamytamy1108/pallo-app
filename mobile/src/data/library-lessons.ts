@@ -72,9 +72,9 @@ export const STUDY_LEVELS: StudyLevel[] = [
     kind: "topic",
     about: "DAILY TOPIC · AI 대화 · 지문 · 표현",
     lessons: [
-      {"no":101,"title":"The Present","sub":"DAILY TOPIC · 뒷면 TOPIC Forgotten Name","data":{"kind":"topic","topicTitle":"Forgotten Name","pdf":{"path":"assets/lv3-101-the-present.pdf","name":"PALLO Lv.3 #101 The Present.pdf","size":"748KB · 2쪽"}}},
-      {"no":54,"title":"Activities","sub":"뒷면 TOPIC · Digital detox"},
-      {"no":89,"title":"Hometowns","sub":"뒷면 TOPIC · Fan Culture"},
+      {"no":101,"title":"The Present","sub":"DAILY TOPIC - The Present · JOURNAL TOPIC Forgotten Name","data":{"kind":"topic","topicTitle":"Forgotten Name","pdf":{"path":"assets/lv3-101-the-present.pdf","name":"PALLO Lv.3 #101 The Present.pdf","size":"748KB · 2쪽"}}},
+      {"no":54,"title":"Activities","sub":"JOURNAL TOPIC · Digital detox"},
+      {"no":89,"title":"Hometowns","sub":"JOURNAL TOPIC · Fan Culture"},
       {"no":47,"title":"Health","sub":"DAILY TOPIC · Health"},
     ],
   },

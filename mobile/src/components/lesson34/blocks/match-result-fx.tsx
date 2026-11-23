@@ -105,7 +105,7 @@ const HAPPY = route(
   46,
 );
 /** 아쉽게: 느릿느릿 작게 · 오래 쉬어요 */
-const SAD_PAD = 60;
+const SAD_PAD = 80;
 const SAD = route(
   [
     { k: 'idle', ms: 1300 },
@@ -322,7 +322,7 @@ export function useCountUp(to: number, delay = 0, ms = 700) {
 
 const styles = StyleSheet.create({
   abs: { position: 'absolute' },
-  stage: { width: '100%', height: STAGE_H, borderRadius: 24, borderWidth: 2, borderColor: Colors.ink, overflow: 'hidden', boxShadow: `0px 4px 0px ${Colors.ink}` },
+  stage: { width: '100%', alignSelf: 'stretch', height: STAGE_H, borderRadius: 24, borderWidth: 2, borderColor: Colors.ink, overflow: 'hidden', boxShadow: `0px 4px 0px ${Colors.ink}` },
   stageGood: { backgroundColor: Colors.skyMist },
   stageSad: { backgroundColor: '#EEEAF3' },
   floor: { position: 'absolute', left: 0, right: 0, bottom: 0, height: FLOOR_H, borderTopWidth: 2, borderColor: Colors.ink },

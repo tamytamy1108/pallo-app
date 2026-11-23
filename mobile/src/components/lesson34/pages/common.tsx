@@ -7,6 +7,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
+import { FootFade } from '../frame';
 import { SUB } from '../ui';
 
 /*
@@ -26,7 +27,12 @@ export const PCard = ({ children, style }: { children: ReactNode; style?: StyleP
 /** 아래 고정 칸 .st-foot */
 export function PFoot({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
-  return <View style={StyleSheet.flatten([s.foot, { paddingBottom: 16 + insets.bottom }])}>{children}</View>;
+  return (
+    <View style={StyleSheet.flatten([s.foot, { paddingBottom: 16 + insets.bottom }])}>
+      <FootFade />
+      {children}
+    </View>
+  );
 }
 
 /** 숫자 칸 .st-stats (큰 숫자 + 이름) */

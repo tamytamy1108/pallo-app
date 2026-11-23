@@ -16,6 +16,10 @@ describe('aiFix', () => {
     ['I enjoy to swim', 'I enjoy swimming.'],
     ['it makes me to smile', 'It makes me smile.'],
     ['I go to home late', 'I go home late.'],
+    ['i donnnt know', "I don't know."],
+    ['i realy like it becuse its fun', "I really like it because it's fun."],
+    ['mozzi', 'Mozzi.'],
+    ['I watch movies on weekneds', 'I watch movies on weekends.'],
   ])('%s → %s', (a, b) => expect(fix(a)).toBe(b));
   test('바른 문장은 그대로 (바뀜 없음)', () => expect(aiFix('I love running every morning.', []).changed).toBe(false));
 });

@@ -224,7 +224,7 @@ const AI_TYPO: [RegExp, string][] = [
   [/\bdont\b/gi, "don't"], [/\bdoesnt\b/gi, "doesn't"], [/\bdidnt\b/gi, "didn't"], [/\bcant\b/gi, "can't"], [/\bwont\b/gi, "won't"], [/\bisnt\b/gi, "isn't"],
   [/\bim\b/gi, "I'm"], [/\bive\b/gi, "I've"], [/\bthats\b/gi, "that's"], [/\bu\b/g, 'you'], [/\bur\b/g, 'your'], [/\bvirall\b/gi, 'viral'], [/\bthier\b/gi, 'their'],
   [/\b(beacuse|becuase|becasue)\b/gi, 'because'], [/\bdefinately\b/gi, 'definitely'], [/\bwierd\b/gi, 'weird'], [/\brecieve\b/gi, 'receive'], [/\buntill\b/gi, 'until'], [/\btommorow\b/gi, 'tomorrow'],
-  [/\b(alway)\b/gi, 'always'], [/\bbecause of i\b/gi, 'because I'], [/\bfavourit\b|\bfavorit\b/gi, 'favorite'], [/\bbeautiful\b/gi, 'beautiful'], [/\bthru\b/gi, 'through'], [/\btho\b/gi, 'though'],
+  [/\b(alway)\b/gi, 'always'], [/\brealy\b/gi, 'really'], [/\bbecuse\b|\bbecaus\b/gi, 'because'], [/\bwanto\b/gi, 'want to'], [/\bbecause of i\b/gi, 'because I'], [/\bfavourit\b|\bfavorit\b/gi, 'favorite'], [/\bbeautiful\b/gi, 'beautiful'], [/\bthru\b/gi, 'through'], [/\btho\b/gi, 'though'],
   [/\bpls\b|\bplz\b/gi, 'please'], [/\bidk\b/gi, "I don't know"], [/\bsth\b/gi, 'something'], [/\bppl\b/gi, 'people'], [/\bfreind\b/gi, 'friend'], [/\bwich\b/gi, 'which'], [/\balright\b/gi, 'all right'],
   [/\bdoesnt\b/gi, "doesn't"], [/\bwasnt\b/gi, "wasn't"], [/\bwouldnt\b/gi, "wouldn't"], [/\bcouldnt\b/gi, "couldn't"], [/\bshouldnt\b/gi, "shouldn't"], [/\barent\b/gi, "aren't"], [/\bhavent\b/gi, "haven't"], [/\btheyre\b/gi, "they're"], [/\byoure\b/gi, "you're"], [/\bwhats\b/gi, "what's"],
 ];
@@ -266,6 +266,38 @@ export function notEnglish(v: string) {
   if (!w.length || w.every((x) => !/[aeiouy]/i.test(x)) || /^(.)\1{3,}$/.test(w.join(''))) return 'junk' as const;
   return null;
 }
+/** 자주 쓰는 낱말 — 한 글자만 틀린 오타를 고칠 때 이 중 하나로만 (이름 · 새 낱말은 건드리지 않아요) */
+const COMMON = new Set('a about actually after again all also always am an and annoying any anything are around as ask at away back bad be beach because been before being best better big book bored boring both busy but buy by call came can car care cat change cheap child city class close coffee cold come cook could country crazy cute dad day days definitely different do does dog done door down drama drink drive during each early easy eat else end enjoy enough especially even evening ever every everyone everything exactly example family famous far fast favorite feel few find fine first food for free friend friends from fun funny game get give go going good got great had happy hard has have he health hear help her here him his hobby home hope hot hour house how hungry husband idea if important in interesting into is it just keep kind know language last late later learn least leave less let life like little live long look lot love lunch make many maybe me mean meet might mind money more morning most mother movie much music must my name need never new next nice night no not nothing now of off often old on once one only or other our out over own parents party people person phone picture place plan play please popular pretty probably problem quite rain read ready really reason relax remember rest right run same say school see seem should show since sister sleep slow small so some someone something sometimes song soon sorry special spend sport start stay still stop story study such summer sure take talk teacher tell than thank that the their them then there these they thing things think this those though time tired to today together tomorrow too travel tried trip true try understand until up us use usually very visit wait walk want was watch water way we weather week weekend weekends well went were what when where which while who why will winter with without work worry would write wrong year years yes yesterday yet you young your yourself'.split(' '));
+/** 한 글자 넣기 · 빼기 · 바꾸기 · 이웃 두 글자 바꾸기로 같아지나 */
+function oneEdit(a: string, b: string) {
+  if (Math.abs(a.length - b.length) > 1 || a === b) return false;
+  if (a.length === b.length) {
+    const d = [...a].map((c, i) => (c !== b[i] ? i : -1)).filter((i) => i >= 0);
+    return d.length === 1 || (d.length === 2 && d[1] === d[0] + 1 && a[d[0]] === b[d[1]] && a[d[1]] === b[d[0]]);
+  }
+  const [l, sh] = a.length > b.length ? [a, b] : [b, a];
+  for (let i = 0; i < l.length; i += 1) if (l.slice(0, i) + l.slice(i + 1) === sh) return true;
+  return false;
+}
+/** 낱말 오타: 같은 글자 셋 이상 늘인 것(donnnt) 줄이기 · 자주 쓰는 낱말과 한 글자만 다르면 그 낱말로 (후보가 하나일 때만) */
+const known = (w: string) => COMMON.has(w) || [/s$/, /es$/, /ed$/, /d$/, /ing$/, /ly$/, /er$/].some((re) => re.test(w) && COMMON.has(w.replace(re, ''))) || COMMON.has(w.replace(/ing$/, 'e')) || COMMON.has(w.replace(/ies$/, 'y'));
+/** 같은 글자 셋 이상 늘인 것 줄이기 (donnnt → dont) */
+const squeeze = (t: string) => t.replace(/([a-z])\1{2,}/gi, '$1');
+function fixWordTypos(text: string) {
+  let changed = false;
+  const out = text.replace(/[A-Za-z']+/g, (w) => {
+    let x = w;
+    const low = x.toLowerCase();
+    if (low.length >= 4 && !known(low) && !low.includes("'")) {
+      const cand = [...COMMON].filter((c) => c.length >= 3 && oneEdit(low, c));
+      if (cand.length === 1) x = /^[A-Z]/.test(x) ? cand[0][0].toUpperCase() + cand[0].slice(1) : cand[0];
+    }
+    if (x !== w) changed = true;
+    return x;
+  });
+  return { out, changed };
+}
+
 /** 답 교정: 맞춤법 · 자주 틀리는 문법 · 대문자 · 마침표. why 는 고친 까닭 목록 */
 export function aiFix(v: string, live: LiveFix[]) {
   let out = nrm(v).trim();
@@ -276,7 +308,9 @@ export function aiFix(v: string, live: LiveFix[]) {
       why.push(w);
       break;
     }
-  let typo = false;
+  const sq = squeeze(out);
+  let typo = sq !== out;
+  out = sq;
   for (const [re, b] of AI_TYPO) {
     const y = out.replace(re, b);
     if (y !== out) {
@@ -284,6 +318,9 @@ export function aiFix(v: string, live: LiveFix[]) {
       typo = true;
     }
   }
+  const wt = fixWordTypos(out);
+  out = wt.out;
+  typo = typo || wt.changed;
   if (typo) why.push('맞춤법');
   for (const [re, b, w] of AI_GRAM) {
     const y = typeof b === 'string' ? out.replace(re, b) : out.replace(re, b as (...m: string[]) => string);

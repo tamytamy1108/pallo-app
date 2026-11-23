@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';
@@ -60,8 +61,19 @@ export function Body({ children, toEnd }: { children: ReactNode; toEnd?: unknown
 /** 아래 고정 칸 (프로토타입 #lsFoot): 말하기가 어려워요 · 답하는 방식 · 행동 단추 */
 export function Foot({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
-  return <View style={StyleSheet.flatten([styles.foot, { paddingBottom: 18 + insets.bottom }])}>{children}</View>;
+  return (
+    <View style={StyleSheet.flatten([styles.foot, { paddingBottom: 18 + insets.bottom }])}>
+      <FootFade />
+      {children}
+    </View>
+  );
 }
+
+/** 아래 고정 칸 위 흐림: 글이 칸 밑으로 스르르 사라지게 (리액션이 떠 있는 느낌) */
+export const FootFade = () => (
+  <LinearGradient pointerEvents="none" colors={['rgba(251,246,234,0)', Colors.cream]} style={{ position: 'absolute', left: 0, right: 0, top: -28, height: 28 }} />
+);
+
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
