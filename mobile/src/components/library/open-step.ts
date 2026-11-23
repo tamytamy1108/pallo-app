@@ -9,7 +9,9 @@ import { clearPos, stepKey } from '@/state/progress';
 export function openStep(lv: number, unit: number, step: string, mode: 'start' | 'resume' | 'restart' = 'start') {
   if (mode === 'restart') clearPos(stepKey(lv, unit, step));
   const base = lv >= 3 ? '/lesson34' : '/lesson';
-  router.push(`${base}/${step}?lv=${lv}&unit=${unit}` as Href);
+  // 팝업에서 이미 이어서 / 처음부터를 골랐으면 레슨이 다시 묻지 않게 넘겨요
+  const resume = mode === 'start' ? '' : `&resume=${mode}`;
+  router.push(`${base}/${step}?lv=${lv}&unit=${unit}${resume}` as Href);
 }
 
 export const openScene = (id: string) => router.push(`/scene/${id}` as Href);
