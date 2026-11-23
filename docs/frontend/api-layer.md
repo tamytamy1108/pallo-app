@@ -108,6 +108,8 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 - 레슨 · 스피킹 퀴즈 · 상황 퀴즈는 문제를 넘길 때마다 멈춘 곳을 남겨요 → '그만하기' 없이 앱이 꺼져도(쓸어 닫기 · 시스템 종료) 이어서 해요
 - Lv.3·4 '그만둔 곳'의 문제 목록은 함수가 들어 있어 못 남겨요 → 다시 켜면 처음 목록에서 멈춘 번호부터
 - 내 기록은 아니지만 3D 지도 텍스처 그림도 기억해요 (`components/library/world/texture-cache.ts`): 메모리 72MB · 폰 캐시 폴더 `pallo-tex-v<판>/` 96MB 까지 (가벼운 폰은 24 · 32MB), 운영체제가 비워도 다시 칠하면 돼요. soft-canvas 칠하는 결과가 바뀌면 `VER` 를 올려요
+- 3D 지도를 만드는 동안(폰 1~7초)은 앱에 넣어 둔 지도 사진(`assets/images/world/<지도 id>.jpg` · `world/preview.ts`)을 바로 보여 주고, 3D 가 그려지면 같은 구도로 바꿔요. 지도 모습 · 구도가 바뀌면 사진을 다시 찍어요 (방법은 `preview.ts` 머리말)
+- 간판 글자는 soft-canvas 가 글꼴 모양(`world/glyph-data.json` · Lexend · DM Serif Display, OFL)을 경로로 칠해요. 새 글자(한글 등)가 필요하면 글꼴에서 모양을 다시 뽑아요
 
 ## 지켜야 할 것
 
