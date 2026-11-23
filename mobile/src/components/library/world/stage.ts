@@ -55,23 +55,29 @@ function quietPixelStore(gl: ExpoWebGLRenderingContext) {
 }
 
 export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts) {
-  const { gl, width: w, height: h } = host;
-  quietPixelStore(gl);
-  // 웹은 GL 을 만들 때 아직 canvas 크기가 정해지기 전이라 화면 크기 × 화소 비율로 맞춰요 (폰은 GL 버퍼 크기 그대로)
+  const { width: w, height: h } = host;
+  let gl = host.gl;
   const web = Platform.OS === 'web';
-  const bw = web ? Math.round(w * PixelRatio.get()) : gl.drawingBufferWidth;
-  const bh = web ? Math.round(h * PixelRatio.get()) : gl.drawingBufferHeight;
-  // three 가 찾는 canvas 모양만 흉내 (폰) · 웹은 진짜 canvas
-  const canvas =
-    web && (gl as unknown as WebGL2RenderingContext).canvas
-      ? (gl as unknown as WebGL2RenderingContext).canvas
-      : ({ width: bw, height: bh, style: {}, clientWidth: w, clientHeight: h, addEventListener: () => {}, removeEventListener: () => {}, getContext: () => gl } as unknown as HTMLCanvasElement);
-  const r = new THREE.WebGLRenderer({ canvas, context: gl as unknown as WebGL2RenderingContext, antialias: true });
-  r.setPixelRatio(1);
-  r.setSize(bw, bh, false);
-  r.shadowMap.enabled = true;
-  r.shadowMap.type = THREE.PCFSoftShadowMap;
-  r.outputColorSpace = THREE.SRGBColorSpace;
+  /** GL 하나에 three 렌더러 하나. 폰에서 GL 판이 새로 만들어지면(탭을 떠났다 오면) rebind 로 렌더러만 바꿔요 */
+  const makeRenderer = (g: ExpoWebGLRenderingContext) => {
+    quietPixelStore(g);
+    // 웹은 GL 을 만들 때 아직 canvas 크기가 정해지기 전이라 화면 크기 × 화소 비율로 맞춰요 (폰은 GL 버퍼 크기 그대로)
+    const bw = web ? Math.round(w * PixelRatio.get()) : g.drawingBufferWidth;
+    const bh = web ? Math.round(h * PixelRatio.get()) : g.drawingBufferHeight;
+    // three 가 찾는 canvas 모양만 흉내 (폰) · 웹은 진짜 canvas
+    const canvas =
+      web && (g as unknown as WebGL2RenderingContext).canvas
+        ? (g as unknown as WebGL2RenderingContext).canvas
+        : ({ width: bw, height: bh, style: {}, clientWidth: w, clientHeight: h, addEventListener: () => {}, removeEventListener: () => {}, getContext: () => g } as unknown as HTMLCanvasElement);
+    const nr = new THREE.WebGLRenderer({ canvas, context: g as unknown as WebGL2RenderingContext, antialias: true });
+    nr.setPixelRatio(1);
+    nr.setSize(bw, bh, false);
+    nr.shadowMap.enabled = true;
+    nr.shadowMap.type = THREE.PCFSoftShadowMap;
+    nr.outputColorSpace = THREE.SRGBColorSpace;
+    return nr;
+  };
+  let r = makeRenderer(gl);
 
   const sc = new THREE.Scene();
   sc.background = bg;
@@ -260,6 +266,25 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     report();
     raf = requestAnimationFrame(loop);
   };
+  /**
+   * 새 GL 판에 다시 붙이기 (폰: 탭을 떠나면 그리기 판이 사라져요). 장면 · 텍스처 그림은 그대로 두고
+   * 렌더러만 새로 만들어요 → 지도를 다시 만들지 않아요 (텍스처는 새 GL 에 다시 올라가요)
+   */
+  const rebind = (next: ExpoWebGLRenderingContext) => {
+    cancelAnimationFrame(raf);
+    try {
+      r.dispose();
+    } catch {
+      // 옛 GL 은 이미 사라졌을 수 있어요
+    }
+    gl = next;
+    host.gl = next;
+    r = makeRenderer(next);
+    alive = true;
+    if (!render()) return;
+    report();
+    raf = requestAnimationFrame(loop);
+  };
   /** 닫을 때: 루프 멈추고 GPU 자원 정리 */
   const dispose = () => {
     alive = false;
@@ -301,6 +326,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     drag,
     release,
     reset,
+    rebind,
     dispose,
     onFocus: null as ((info: FocusInfo) => void) | null,
     /** 팔로 캐릭터 (palloRun 이 넣어요) */

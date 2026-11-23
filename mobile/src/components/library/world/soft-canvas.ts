@@ -16,6 +16,8 @@ type Paint = string | SoftGradient;
 const MAX_SIDE = 512;
 const SAMPLES = 4; // 한 줄을 세로로 4번 나눠 재서 가장자리를 부드럽게
 
+/** 그라데이션 색을 픽셀마다 담아 두는 칸 (다시 써요) */
+const GRAD_COL = new Float64Array(4);
 const NAMED: Record<string, RGBA> = { white: [255, 255, 255, 1], black: [0, 0, 0, 1], transparent: [0, 0, 0, 0], red: [255, 0, 0, 1] };
 const colorCache = new Map<string, RGBA>();
 
@@ -61,6 +63,32 @@ class SoftGradient {
       }
     }
     return s[s.length - 1].c;
+  }
+  /** at() 과 같은 색을 out 에 써요 (픽셀마다 배열을 만들지 않게) */
+  atInto(t: number, out: Float64Array) {
+    const s = this.stops;
+    let c: RGBA | null = null;
+    if (!s.length) c = [0, 0, 0, 0];
+    else if (t <= s[0].o) c = s[0].c;
+    else {
+      for (let i = 1; i < s.length; i++) {
+        if (t <= s[i].o) {
+          const p = s[i - 1];
+          const q = s[i];
+          const f = q.o === p.o ? 1 : (t - p.o) / (q.o - p.o);
+          out[0] = p.c[0] + (q.c[0] - p.c[0]) * f;
+          out[1] = p.c[1] + (q.c[1] - p.c[1]) * f;
+          out[2] = p.c[2] + (q.c[2] - p.c[2]) * f;
+          out[3] = p.c[3] + (q.c[3] - p.c[3]) * f;
+          return;
+        }
+      }
+      c = s[s.length - 1].c;
+    }
+    out[0] = c[0];
+    out[1] = c[1];
+    out[2] = c[2];
+    out[3] = c[3];
   }
   /** 사용자 좌표 (x, y) 의 t */
   tAt(x: number, y: number) {
@@ -533,51 +561,100 @@ export class SoftContext {
     return out;
   }
 
-  /** 모양 칠하기 (nonzero 규칙 · 세로 4번 재서 가장자리 부드럽게) */
+  /**
+   * 모양 칠하기 (nonzero 규칙 · 세로 4번 재서 가장자리 부드럽게).
+   * 빠르게: 줄마다 그 줄에 걸친 변만 보고(위에서부터 차례로 넣고 지난 변은 빼요), 교차점은 다시 쓰는 배열에 모아요.
+   */
   private raster(subs: Sub[], paint: Paint) {
     const W = this.canvas.pw;
     const H = this.canvas.ph;
-    const edges: [number, number, number, number, number][] = [];
+    let total = 0;
+    for (const s of subs) if (s.pts.length >= 2) total += s.pts.length;
+    if (!total) return;
+    // 변 하나 = x1 y1 x2 y2 dir top bot (원래 방향 그대로 · 교차점 계산식도 같아요)
+    const E = new Float64Array(total * 7);
+    let n = 0;
     let minY = Infinity;
     let maxY = -Infinity;
     for (const s of subs) {
-      const n = s.pts.length;
-      if (n < 2) continue;
-      for (let i = 0; i < n; i++) {
-        const [x1, y1] = s.pts[i];
-        const [x2, y2] = s.pts[(i + 1) % n];
+      const len = s.pts.length;
+      if (len < 2) continue;
+      for (let i = 0; i < len; i++) {
+        const p1 = s.pts[i];
+        const p2 = s.pts[(i + 1) % len];
+        const y1 = p1[1];
+        const y2 = p2[1];
         if (y1 === y2) continue;
-        const dir = y2 > y1 ? 1 : -1;
-        const top = Math.min(y1, y2);
-        const bot = Math.max(y1, y2);
-        edges.push([x1, y1, x2, y2, dir]);
+        const top = y1 < y2 ? y1 : y2;
+        const bot = y1 < y2 ? y2 : y1;
+        const o = n * 7;
+        E[o] = p1[0];
+        E[o + 1] = y1;
+        E[o + 2] = p2[0];
+        E[o + 3] = y2;
+        E[o + 4] = y2 > y1 ? 1 : -1;
+        E[o + 5] = top;
+        E[o + 6] = bot;
+        n++;
         if (top < minY) minY = top;
         if (bot > maxY) maxY = bot;
       }
     }
-    if (!edges.length) return;
+    if (!n) return;
     const y0 = Math.max(0, Math.floor(minY));
     const y1 = Math.min(H, Math.ceil(maxY));
+    if (y1 <= y0) return;
+    // 위쪽 끝 순서
+    const order = new Int32Array(n);
+    for (let i = 0; i < n; i++) order[i] = i;
+    order.sort((a, b) => E[a * 7 + 5] - E[b * 7 + 5]);
+    const active = new Int32Array(n);
+    let na = 0;
+    let next = 0;
+    const cx = new Float64Array(n);
+    const cd = new Int8Array(n);
     const cov = new Float32Array(W + 1);
-    const xs: [number, number][] = [];
+    const b = this.brush(paint);
     for (let y = y0; y < y1; y++) {
+      // 이 줄(y ~ y+1)에 걸친 변만
+      while (next < n && E[order[next] * 7 + 5] < y + 1) active[na++] = order[next++];
+      let k2 = 0;
+      for (let i = 0; i < na; i++) if (E[active[i] * 7 + 6] > y) active[k2++] = active[i];
+      na = k2;
+      if (!na) continue;
       cov.fill(0);
       let lo = W;
       let hi = 0;
       for (let k = 0; k < SAMPLES; k++) {
         const sy = y + (k + 0.5) / SAMPLES;
-        xs.length = 0;
-        for (const [ax, ay, bx, by, dir] of edges) {
-          if ((sy >= ay && sy < by) || (sy >= by && sy < ay)) xs.push([ax + ((sy - ay) / (by - ay)) * (bx - ax), dir]);
+        let m = 0;
+        for (let i = 0; i < na; i++) {
+          const o = active[i] * 7;
+          const ay = E[o + 1];
+          const by = E[o + 3];
+          if ((sy >= ay && sy < by) || (sy >= by && sy < ay)) {
+            const ax = E[o];
+            const x = ax + ((sy - ay) / (by - ay)) * (E[o + 2] - ax);
+            const d = E[o + 4];
+            // x 순서로 끼워 넣기 (교차점은 몇 개뿐이라 이게 빨라요)
+            let j = m - 1;
+            while (j >= 0 && cx[j] > x) {
+              cx[j + 1] = cx[j];
+              cd[j + 1] = cd[j];
+              j--;
+            }
+            cx[j + 1] = x;
+            cd[j + 1] = d;
+            m++;
+          }
         }
-        if (xs.length < 2) continue;
-        xs.sort((p, q) => p[0] - q[0]);
+        if (m < 2) continue;
         let wind = 0;
-        for (let i = 0; i < xs.length - 1; i++) {
-          wind += xs[i][1];
+        for (let i = 0; i < m - 1; i++) {
+          wind += cd[i];
           if (wind === 0) continue;
-          const xa = Math.max(0, xs[i][0]);
-          const xb = Math.min(W, xs[i + 1][0]);
+          const xa = Math.max(0, cx[i]);
+          const xb = Math.min(W, cx[i + 1]);
           if (xb <= xa) continue;
           const ia = Math.floor(xa);
           const ib = Math.floor(xb);
@@ -591,9 +668,10 @@ export class SoftContext {
           }
         }
       }
-      for (let x = lo; x <= Math.min(hi, W - 1); x++) {
+      const end = Math.min(hi, W - 1);
+      for (let x = lo; x <= end; x++) {
         const c = Math.min(1, cov[x]);
-        if (c > 0.002) this.put(x, y, c, paint);
+        if (c > 0.002) this.put(x, y, c, b);
       }
     }
   }
@@ -606,6 +684,66 @@ export class SoftContext {
     const x1 = Math.min(W, Math.ceil(bx));
     const y0 = Math.max(0, Math.floor(ay));
     const y1 = Math.min(H, Math.ceil(by));
+    const b = clear ? null : this.brush(paint);
+    const px = this.canvas.px;
+    if (b && b.solid && !b.erase) {
+      // 단색 사각형: put() 과 같은 계산을 함수 부르지 않고 바로 (작은 사각형 수천 개를 칠하는 지도가 있어요)
+      const col = b.solid;
+      const alpha = b.alpha;
+      for (let y = y0; y < y1; y++) {
+        const cy = Math.min(y + 1, by) - Math.max(y, ay);
+        if (cy <= 0) continue;
+        let i = (y * W + x0) * 4;
+        for (let x = x0; x < x1; x++, i += 4) {
+          const cx = Math.min(x + 1, bx) - Math.max(x, ax);
+          if (cx <= 0) continue;
+          const a = col[3] * Math.min(1, cx * cy) * alpha;
+          if (a <= 0) continue;
+          if (a === 1) {
+            px[i] = col[0];
+            px[i + 1] = col[1];
+            px[i + 2] = col[2];
+            px[i + 3] = 255;
+          } else this.blend(i, col[0], col[1], col[2], a);
+        }
+      }
+      return;
+    }
+    if (b && b.grad && !b.erase) {
+      // 그라데이션 사각형 (하늘 · 바닥 · 빛): put() 과 같은 계산을 바로. 세로 선형 + 회전 없음이면 한 줄은 같은 색이라 줄마다 한 번만 재요
+      const g = b.grad;
+      const A = g.a;
+      const rowConst = g.kind === 'lin' && A[2] - A[0] === 0 && b.m1 === 0 && b.m2 === 0;
+      const col = GRAD_COL;
+      const alpha = b.alpha;
+      for (let y = y0; y < y1; y++) {
+        const cy = Math.min(y + 1, by) - Math.max(y, ay);
+        if (cy <= 0) continue;
+        let ready = false;
+        let i = (y * W + x0) * 4;
+        for (let x = x0; x < x1; x++, i += 4) {
+          const cx = Math.min(x + 1, bx) - Math.max(x, ax);
+          if (cx <= 0) continue;
+          if (!rowConst || !ready) {
+            const dx = x + 0.5 - b.m4;
+            const dy = y + 0.5 - b.m5;
+            const ux = (b.m3 * dx - b.m2 * dy) / b.det;
+            const uy = (-b.m1 * dx + b.m0 * dy) / b.det;
+            g.atInto(Math.max(0, Math.min(1, g.tAt(ux, uy))), col);
+            ready = true;
+          }
+          const a = col[3] * Math.min(1, cx * cy) * alpha;
+          if (a <= 0) continue;
+          if (a === 1) {
+            px[i] = col[0];
+            px[i + 1] = col[1];
+            px[i + 2] = col[2];
+            px[i + 3] = 255;
+          } else this.blend(i, col[0], col[1], col[2], a);
+        }
+      }
+      return;
+    }
     for (let y = y0; y < y1; y++) {
       const cy = Math.min(y + 1, by) - Math.max(y, ay);
       if (cy <= 0) continue;
@@ -613,27 +751,61 @@ export class SoftContext {
         const cx = Math.min(x + 1, bx) - Math.max(x, ax);
         if (cx <= 0) continue;
         const c = Math.min(1, cx * cy);
-        if (clear) {
+        if (b) this.put(x, y, c, b);
+        else {
           const i = (y * W + x) * 4;
-          this.canvas.px[i + 3] = this.canvas.px[i + 3] * (1 - c);
-        } else this.put(x, y, c, paint);
+          px[i + 3] = px[i + 3] * (1 - c);
+        }
       }
     }
   }
 
+  /** 한 번 칠하는 동안 바뀌지 않는 것: 색(또는 그라데이션 + 거꾸로 변환) · 투명도 · 섞는 방식 */
+  private brush(paint: Paint): Brush {
+    const m = this.st.m;
+    return {
+      solid: typeof paint === 'string' ? parseColor(paint) : null,
+      grad: typeof paint === 'string' ? null : paint,
+      m0: m[0],
+      m1: m[1],
+      m2: m[2],
+      m3: m[3],
+      m4: m[4],
+      m5: m[5],
+      det: m[0] * m[3] - m[1] * m[2] || 1,
+      alpha: this.st.globalAlpha,
+      erase: this.st.globalCompositeOperation === 'destination-out',
+    };
+  }
+
   /** 픽셀 하나에 칠 (덮임 c) */
-  private put(x: number, y: number, c: number, paint: Paint) {
-    let col: RGBA;
-    if (typeof paint === 'string') col = parseColor(paint);
+  private put(x: number, y: number, c: number, b: Brush) {
+    let col: RGBA | Float64Array;
+    if (b.solid) col = b.solid;
     else {
-      const [ux, uy] = this.inv(x + 0.5, y + 0.5);
-      col = paint.at(Math.max(0, Math.min(1, paint.tAt(ux, uy))));
+      // inv() 와 같은 계산 (배열을 만들지 않게 풀어 썼어요)
+      const dx = x + 0.5 - b.m4;
+      const dy = y + 0.5 - b.m5;
+      const ux = (b.m3 * dx - b.m2 * dy) / b.det;
+      const uy = (-b.m1 * dx + b.m0 * dy) / b.det;
+      const g = b.grad as SoftGradient;
+      g.atInto(Math.max(0, Math.min(1, g.tAt(ux, uy))), GRAD_COL);
+      col = GRAD_COL;
     }
-    const a = col[3] * c * this.st.globalAlpha;
+    const a = col[3] * c * b.alpha;
     if (a <= 0) return;
     const i = (y * this.canvas.pw + x) * 4;
-    if (this.st.globalCompositeOperation === 'destination-out') {
-      this.canvas.px[i + 3] = this.canvas.px[i + 3] * (1 - a);
+    const p = this.canvas.px;
+    if (b.erase) {
+      p[i + 3] = p[i + 3] * (1 - a);
+      return;
+    }
+    if (a === 1) {
+      // 다 덮는 불투명 칠: 섞기 결과가 새 색 그대로예요
+      p[i] = col[0];
+      p[i + 1] = col[1];
+      p[i + 2] = col[2];
+      p[i + 3] = 255;
       return;
     }
     this.blend(i, col[0], col[1], col[2], a);
@@ -651,6 +823,20 @@ export class SoftContext {
     p[i + 3] = oa * 255;
   }
 }
+
+type Brush = {
+  solid: RGBA | null;
+  grad: SoftGradient | null;
+  m0: number;
+  m1: number;
+  m2: number;
+  m3: number;
+  m4: number;
+  m5: number;
+  det: number;
+  alpha: number;
+  erase: boolean;
+};
 
 // ---- SVG 경로 읽기 (M L H V C S Q T A Z, 소문자 = 상대 좌표) ----
 function parseSvgPath(d: string): Sub[] {
