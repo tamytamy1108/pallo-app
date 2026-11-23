@@ -10,6 +10,7 @@ import { Colors } from '@/constants/theme';
 import { createStore } from '@/lib/store';
 import { exprCard, exprFrom, type SavedExpression } from '@/state/expressions';
 import { getMe } from '@/state/me';
+import { dayKey } from '@/state/today-goal';
 
 /** 프로토타입 LG_C */
 export const CH_C = {
@@ -167,7 +168,7 @@ type ChState = {
   flash: string | null;
 };
 
-const store = createStore<ChState>({
+const CH0: ChState = {
   created: [],
   joined: { c1: true, c5: true, c7: true, c8: true, c11: true },
   joinedNew: {},
@@ -179,6 +180,19 @@ const store = createStore<ChState>({
   replies: {},
   liked: {},
   flash: null,
+};
+// 기기에 남아요 (연 챌린지 · 참여 · 인증 · 문장 · 답글 · 좋아요). '오늘 인증함'은 날이 바뀌면 다시 할 수 있게 비워요 · 반짝임은 저장 안 해요
+const store = createStore<ChState>(CH0, {
+  persist: {
+    key: 'challenges',
+    save: (s) => ({ ...s, flash: null, day: dayKey() }),
+    load: (saved, initial) => {
+      if (!saved || typeof saved !== 'object') return initial;
+      const { day, ...s } = saved as Partial<ChState> & { day?: string };
+      const next: ChState = { ...initial, ...s, flash: null };
+      return day === dayKey() ? next : { ...next, checked: {} };
+    },
+  },
 });
 export type ChView = ChState;
 export const useChallengeState = () => store.useStore();

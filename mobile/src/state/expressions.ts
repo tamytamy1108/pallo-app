@@ -26,8 +26,13 @@ export type SavedExpression = {
   coreKo?: string;
 };
 
-// 처음엔 프로토타입 예시 14개가 들어 있어요 (어느 화면에서 먼저 열어도 같게)
-const store = createStore<SavedExpression[]>(SEED_EXPRESSIONS);
+// 처음엔 프로토타입 예시 14개가 들어 있어요 (어느 화면에서 먼저 열어도 같게). 저장 · 빼기는 기기에 남아요
+const store = createStore<SavedExpression[]>(SEED_EXPRESSIONS, {
+  persist: {
+    key: 'expressions',
+    load: (saved, initial) => (Array.isArray(saved) ? saved.filter((x): x is SavedExpression => !!x && typeof x.en === 'string' && typeof x.id === 'string') : initial),
+  },
+});
 
 export const useSavedExpressions = () => store.useStore();
 export const getSavedExpressions = store.get;

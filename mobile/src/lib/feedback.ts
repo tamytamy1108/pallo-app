@@ -47,32 +47,12 @@ const FILES = {
 } satisfies Record<string, number>;
 type SfxFile = keyof typeof FILES;
 
-const SOUND_KEY = 'pallo-sound';
-
-/** 효과음 켜고 끄기 (설정 › 효과음). 웹은 프로토타입처럼 기기에 저장해요 */
-const soundStore = createStore({ on: readSaved() });
+/** 효과음 켜고 끄기 (설정 › 효과음). 프로토타입 `pallo-sound` 처럼 기기에 남아요 (폰 · 웹 모두) */
+const soundStore = createStore({ on: true }, { persist: { key: 'sound' } });
 // React Compiler 가 x.use() 를 React use() 로 보지 않게 useXxx 이름으로 꺼내 써요
 const useSoundStore = soundStore.use;
 export const useSfxOn = () => useSoundStore((s) => s.on);
-export const setSfxOn = (on: boolean) => {
-  soundStore.set({ on });
-  if (Platform.OS === 'web') {
-    try {
-      globalThis.localStorage?.setItem(SOUND_KEY, on ? 'on' : 'off');
-    } catch {
-      // 저장 못 해도 지금 켜고 끄기는 돼요
-    }
-  }
-};
-
-function readSaved() {
-  if (Platform.OS !== 'web') return true;
-  try {
-    return globalThis.localStorage?.getItem(SOUND_KEY) !== 'off';
-  } catch {
-    return true;
-  }
-}
+export const setSfxOn = (on: boolean) => soundStore.set({ on });
 
 // 소리마다 플레이어 하나 (처음 울릴 때 만들어 두고 계속 다시 써요)
 const players = new Map<SfxFile, AudioPlayer>();

@@ -54,6 +54,14 @@ export function QuizStep({ sceneId, scene }: { sceneId: string; scene: SceneWith
   }, []);
 
   const N = run.items.length;
+
+  // 문제를 넘길 때마다 멈춘 곳을 남겨요 — 그만하기 없이 앱이 꺼져도 이어서 해요
+  useEffect(() => {
+    if (phase !== 'q' || run.i <= 0 || run.i >= N) return;
+    saveQuizPos(sceneId, { i: run.i, right: run.right, order: run.order, res: run.res, lv: run.lv });
+    savePos(sceneStepKey(sceneId, 'exq'), run.i);
+  }, [phase, run, N, sceneId]);
+
   const start = (lv: QuizLevel) => {
     clearQuizPos(sceneId);
     setRun(newRun(scene, lv));
