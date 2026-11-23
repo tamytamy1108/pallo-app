@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BackButton } from '@/components/ui/back-button';
+import { TopBar } from '@/components/ui/top-bar';
 import { BottomBar } from '@/components/bottom-bar';
 import { SheetLink } from '@/components/common/sheet-parts';
 import { Button } from '@/components/ui/button';
@@ -81,9 +81,7 @@ export default function PhoneLoginScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* 프로토타입 하위 화면 머리 (.dtop.mp-top · .icon-btn) */}
-      <View style={styles.top}>
-        <BackButton onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/login'); }} />
-      </View>
+      <TopBar fallback="/login" />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <PText variant="title" accessibilityRole="header">
           휴대폰 번호로 시작해요
@@ -145,8 +143,6 @@ export default function PhoneLoginScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8 },
-  iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: 18, paddingTop: 12, paddingBottom: 40, gap: 18 },
   codeBlock: { gap: 6 },
   codeHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },

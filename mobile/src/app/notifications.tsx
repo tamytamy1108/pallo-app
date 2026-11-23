@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BackButton } from '@/components/ui/back-button';
+import { TOP_ICON, TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
@@ -36,12 +36,10 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Stack.Screen options={SCREEN.push} />
-      <View style={styles.top}>
-        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
-        <PText style={styles.topTitle} accessibilityRole="header">
-          알림
-        </PText>
-        <View style={styles.sp} />
+      <TopBar
+        title="알림"
+        right={
+          <>
         <Pressable
           onPress={() => {
             markAllNotiRead();
@@ -54,10 +52,12 @@ export default function NotificationsScreen() {
           <PText style={styles.linkText}>모두 읽음</PText>
         </Pressable>
         {/* 알림 설정: 설정 › 알림 칸으로 */}
-        <Pressable onPress={() => router.push('/me/settings?section=noti' as Href)} accessibilityRole="button" accessibilityLabel="알림 설정" style={styles.iconBtn}>
+        <Pressable onPress={() => router.push('/me/settings?section=noti' as Href)} accessibilityRole="button" accessibilityLabel="알림 설정" style={TOP_ICON}>
           <LineIcon d={ICON_PATH.grid} size={19} />
         </Pressable>
-      </View>
+          </>
+        }
+      />
 
       <View style={styles.tabs} accessibilityRole="tablist">
         {NOTI_TABS.map((t) => {
@@ -113,11 +113,6 @@ function Row({ n, unread, onPress }: { n: Noti; unread: boolean; onPress: () => 
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  // .lg-det.mp .dtop.mp-top: 크림 바탕 · 아래 1.5px 선
-  top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: Colors.line },
-  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  topTitle: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
-  sp: { flex: 1 },
   link: { paddingVertical: 6, paddingHorizontal: 2, minHeight: 44, justifyContent: 'center' },
   linkOff: { opacity: 0.4 },
   linkText: { fontFamily: Font.display, fontSize: 13, lineHeight: 17 },

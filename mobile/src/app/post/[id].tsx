@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BackButton } from '@/components/ui/back-button';
+import { TopBar } from '@/components/ui/top-bar';
 import { SCREEN } from '@/lib/transitions';
 import { useIsBlocked } from '@/components/common/report-sheet';
 import { AbroadCard, PostCard } from '@/components/lounge/post-card';
@@ -24,9 +24,7 @@ export default function PostScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Stack.Screen options={SCREEN.push} />
-      <View style={styles.top}>
-        <BackButton onPress={back} />
-      </View>
+      <TopBar onBack={back} />
       <ScrollView contentContainerStyle={styles.body}>{!p || blocked || (p.k !== 'post' && p.k !== 'abroad') ? <EmptyState title="글을 볼 수 없어요" /> : p.k === 'post' ? <PostCard p={p} /> : <AbroadCard p={p} />}</ScrollView>
     </SafeAreaView>
   );
@@ -34,7 +32,5 @@ export default function PostScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { paddingVertical: 8, paddingHorizontal: 12, justifyContent: 'center' },
-  ib: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 60 },
 });

@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/api/errors';
 import { noticesQuery } from '@/api/queries';
-import { BackButton } from '@/components/ui/back-button';
+import { TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
 import { useNoticeRead } from '@/components/home/noti-state';
@@ -23,12 +23,7 @@ export default function NoticeListScreen() {
   const { data, isPending, isError, error, refetch } = useQuery(noticesQuery());
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.top}>
-        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
-        <PText style={styles.topTitle} accessibilityRole="header">
-          공지사항
-        </PText>
-      </View>
+      <TopBar title="공지사항" />
       <ScrollView contentContainerStyle={styles.body}>
         {isPending ? (
           <LoadingState />
@@ -71,9 +66,6 @@ function Row({ id, tag, pinned, title, meta }: { id: string; tag: string; pinned
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8, borderBottomWidth: 1.5, borderColor: Colors.line },
-  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  topTitle: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
   body: { paddingTop: 4, paddingHorizontal: 16, paddingBottom: 110 },
   row: { paddingVertical: 14, borderBottomWidth: 1.5, borderColor: Colors.line },
   rowPressed: { opacity: 0.7 },
