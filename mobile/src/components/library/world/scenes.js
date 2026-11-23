@@ -4,7 +4,7 @@
  * - 스터디 맵 = study2 (하늘 계단 섬 · 놀이공원 섬 ?isle=9), 상황 맵 = travel · biz · cafe · campus. 시안 주소 값(?flinders · ?library · ?sandl …)은 기본값만 남겼어요.
  * - 프로토타입 코드를 거의 그대로 두어 비교 · 갱신이 쉽게 했어요 (그래서 이 파일만 JS · 린트 끔).
  *   바뀐 곳: 무대는 stage.ts (expo-gl), <canvas> 는 canvas2d.ts (폰은 소프트 그림판), 이름표 · 팔로는 RN 이 그려요.
- * - 새 상황 맵이 BUILD 에 없으면 여행 모양으로 그려요 (데이터 한 줄로 맵이 늘어나요).
+ * - 어떤 맵이 어떤 BUILD 를 쓰는지는 presets.ts (프리셋 키 → BUILD 이름). 모르는 이름이 오면 개발 경고 + 여행 모양.
  */
 import * as THREE from 'three';
 
@@ -1018,7 +1018,12 @@ BUILD.study2 = (EL, SC) => {
  */
 export function mountWorld(host, id, SC, onOpen) {
   OPEN = onOpen;
-  const f = BUILD[id] || BUILD.travel;
+  let f = BUILD[id];
+  if (!f) {
+    // 데이터 쪽(@/data/maps)이 모르는 프리셋을 미리 걸러요. 여기까지 오면 presets.ts 와 BUILD 가 어긋난 거예요
+    if (__DEV__) console.warn(`[maps] BUILD '${id}' 가 없어요 — presets.ts 의 build 이름을 확인하세요. 여행 모양으로 그려요`);
+    f = BUILD.travel;
+  }
   const S = f(host, SC);
   S.draw();
   return S;

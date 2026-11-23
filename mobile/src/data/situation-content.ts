@@ -1,7 +1,7 @@
 /**
  * 상황 맵 장면 콘텐츠 — 가짜 데이터. 값은 프로토타입 SITS(expr · rp) · SIT_LEARN(bank) · SIT_MIS + SIT_KO(flow) · SIT_MORE · SIT_QUIZ · SIT_Q0 그대로예요.
- * 맞는 API: 18 `/lessons/:id` (장면 콘텐츠 한 덩어리). 키 = 장면 제목 (프로토타입과 같아요).
- * 새 장면 = 여기에 한 덩어리 + situation.ts 의 장면 줄 하나. 화면은 저절로 생겨요.
+ * 맞는 API: 18 `/lessons/:id` (장면 콘텐츠 한 덩어리). 키 = 맵 데이터의 contentId ('travel-1' = 맵 id-장면 번호).
+ * 새 장면 = 여기에 한 덩어리 + data/maps/situation-maps.json 의 장면 줄 하나. 화면은 저절로 생겨요.
  * (SIT_LEARN 의 patterns · dialogue · talk 는 v480 부터 장면 흐름에서 안 써서 옮기지 않았어요)
  * 이 파일은 프로토타입에서 뽑아 만든 거라 손으로 고치기보다 다시 뽑는 게 좋아요.
  */
@@ -30,7 +30,7 @@ export type Q0Row = ['w', ko: string, example: string, ans: string, wrong: strin
 export type SceneContent = { expr: Expr[]; rp: Roleplay; bank: BankRow[]; flow: Flow; more: MoreQ[]; quiz: QuizRow[]; q0: Q0Row[] };
 
 export const SCENE_CONTENT: Record<string, SceneContent> = {
-  "공항 체크인": {
+  "travel-1": {
     expr: [
       ["Can I have a window seat?","창가 자리로 주실 수 있나요?","Can I have a window seat, please?"],
       ["I’d like to check this bag.","이 가방을 부치고 싶어요.","I’d like to check this bag. It’s about 20 kilos."],
@@ -115,7 +115,7 @@ export const SCENE_CONTENT: Record<string, SceneContent> = {
       ["g","추가 가방이 하나 있어요.","I have ___ extra bag.","an",["a","two","much"],"모음 소리 앞에는 a 대신 an (an extra, an aisle)"],
     ],
   },
-  "기내 주문": {
+  "travel-2": {
     expr: [
       ["Could I get some water?","물 좀 주시겠어요?","Excuse me, could I get some water?"],
       ["I’ll have the chicken, please.","치킨으로 할게요.","I’ll have the chicken, please. Thank you."],
@@ -199,7 +199,7 @@ export const SCENE_CONTENT: Record<string, SceneContent> = {
       ["g","착륙까지 얼마나 남았어요?","How ___ until we land?","long",["much","many","old"],"How long ~? = 얼마나 오래 ~?"],
     ],
   },
-  "입국 심사": {
+  "travel-3": {
     expr: [
       ["I’m here on vacation.","휴가로 왔어요.","I’m here on vacation for a week."],
       ["I’m staying for five days.","5일 동안 있을 거예요.","I’m staying for five days."],
@@ -284,7 +284,7 @@ export const SCENE_CONTENT: Record<string, SceneContent> = {
       ["g","관광하러 왔어요.","I'm here ___ sightseeing.","for",["to","at","with"],"for + 명사 = ~하러 (for sightseeing, for work)"],
     ],
   },
-  "첫 미팅 자기소개": {
+  "biz-1": {
     expr: [
       ["Nice to finally meet you.","드디어 뵙네요.","Nice to finally meet you in person."],
       ["I’m in charge of marketing.","마케팅을 맡고 있어요.","I’m in charge of marketing for the Asia team."],
@@ -368,7 +368,7 @@ export const SCENE_CONTENT: Record<string, SceneContent> = {
       ["g","다시 연락드릴게요.","I'll get back ___ you.","to",["for","at","with"],"get back to + 사람 = 다시 연락하다"],
     ],
   },
-  "주문 바꾸기": {
+  "cafe-1": {
     expr: [
       ["Can I change my order?","주문을 바꿀 수 있을까요?","Sorry, can I change my order?"],
       ["Could I get it with oat milk?","오트밀크로 해 주실 수 있나요?","Could I get it with oat milk instead?"],

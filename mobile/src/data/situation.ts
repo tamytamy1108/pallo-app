@@ -1,98 +1,20 @@
 /**
- * 상황 맵 · 장면 — 가짜 데이터. 값은 프로토타입 SITS · SIT_SOON · STUDY_STEPS.situation · SITQ_PICK · ME.lvs 그대로예요.
+ * 상황 맵 · 장면 — 맵 목록은 data/maps (JSON 한 줄 = 맵 하나), 장면 단계 · 퀴즈 난이도는 여기.
  * 맞는 API: 16 `/library/maps` (맵 목록) · 17 `/library/books/:id/lessons` (장면 목록) · 18 `/lessons/:id` (장면 콘텐츠 → situation-content.ts).
- * 새 상황 맵 = SITUATION_MAPS 에 객체 하나, 새 장면 = scenes 에 한 줄(+ 콘텐츠). 콘텐츠가 없는 장면은 '커밍순'이에요.
+ * 새 상황 맵 = data/maps/situation-maps.json 에 한 줄 (모양은 앱에 있는 프리셋 중 고르기). 형식은 docs/frontend/map-data.md.
  * 장면 id = '맵 id-장면 번호' (예: 'travel-1') — 라이브러리 지도 · 리스닝 룸과 같은 키예요.
  */
-import { SCENE_CONTENT, type SceneContent } from './situation-content';
+import { getMaps, toSituationMaps, type Scene, type SituationMap, type SoonMap } from './maps';
 
-export type Scene = {
-  no: number;
-  title: string;
-  sub: string;
-  /** 지도 정류장 아이콘 이름 (프로토타입 ICO 키) */
-  icon: string;
-  /** 없으면 '커밍순' */
-  content: SceneContent | null;
-};
+export type { Scene, SituationMap, SoonMap };
 
-export type SituationMap = {
-  id: string;
-  title: string;
-  /** 표지 · 머리 글자 (TRAVEL) */
-  series: string;
-  /** 맵 색 (표지 · 단계 번호) */
-  c: string;
-  about: string;
-  /** 새 맵 표시 (NEW) */
-  isNew?: boolean;
-  scenes: Scene[];
-};
+const LOADED = toSituationMaps(getMaps());
 
-/** 프로토타입 sc(title, sub, icon, data) — 콘텐츠는 장면 제목으로 찾아요 (없으면 커밍순) */
-const sc = (title: string, sub: string, icon: string): Omit<Scene, 'no'> => ({ title, sub, icon, content: SCENE_CONTENT[title] ?? null });
-const numbered = (list: Omit<Scene, 'no'>[]): Scene[] => list.map((x, i) => ({ no: i + 1, ...x }));
-
-export const SITUATION_MAPS: SituationMap[] = [
-  {
-    id: 'travel',
-    title: '여행',
-    series: 'TRAVEL',
-    c: '#D0798E',
-    about: '공항부터 길 묻기까지 · 장면마다 표현 + 롤플레이',
-    scenes: numbered([
-      sc('공항 체크인', 'Check-in counter', 'plane'),
-      sc('기내 주문', 'On the plane', 'seat'),
-      sc('입국 심사', 'Immigration', 'pass'),
-      sc('택시 타기', 'Taxi', 'taxi'),
-      sc('호텔 체크인', 'Hotel', 'hotel'),
-      sc('식당 주문', 'Restaurant', 'food'),
-      sc('쇼핑 · 환불', 'Shopping', 'bag'),
-      sc('길 묻기', 'Directions', 'map'),
-    ]),
-  },
-  {
-    id: 'biz',
-    title: '비즈니스',
-    series: 'BUSINESS',
-    c: '#493087',
-    about: '자기소개부터 회의 · 메일 · 협상까지',
-    scenes: numbered([
-      sc('첫 미팅 자기소개', 'Introductions', 'brief'),
-      sc('회의에서 의견 말하기', 'Meetings', 'chat'),
-      sc('메일 · 메신저', 'Email', 'mail'),
-      sc('가격 협상', 'Negotiation', 'deal'),
-      sc('발표 Q&A', 'Presentation', 'mic'),
-    ]),
-  },
-  {
-    id: 'cafe',
-    title: '카페',
-    series: 'CAFÉ',
-    c: '#138A9E',
-    about: '주문 · 변경 · 자리 찾기 · 컴플레인',
-    isNew: true,
-    scenes: numbered([sc('주문 바꾸기', 'Change my order', 'coffee'), sc('자리 찾기', 'Find a seat', 'seat'), sc('컴플레인', 'Complaint', 'chat')]),
-  },
-  {
-    id: 'campus',
-    title: '캠퍼스',
-    series: 'CAMPUS',
-    c: '#5EA35A',
-    about: '수업 · 질문 · 조별 과제 · 동아리',
-    scenes: numbered([
-      sc('첫 수업 자기소개', 'First class', 'book'),
-      sc('수업 중 질문', 'Asking in class', 'chat'),
-      sc('조별 과제', 'Group project', 'group'),
-      sc('도서관', 'Library', 'lib'),
-      sc('동아리 가입', 'Joining a club', 'star'),
-      sc('기숙사 생활', 'Dorm life', 'dorm'),
-    ]),
-  },
-];
+/** 지금 열린 상황 맵 (순서대로) */
+export const SITUATION_MAPS: SituationMap[] = LOADED.maps;
 
 /** 곧 열릴 맵 (칩만 보이고 누르면 알림 안내) */
-export const SITUATION_SOON = [{ id: 'next', title: '새 맵', when: '커밍순' }];
+export const SITUATION_SOON: SoonMap[] = LOADED.soon;
 
 export const sceneIdOf = (mapId: string, no: number) => `${mapId}-${no}`;
 

@@ -1,14 +1,14 @@
 /**
  * 라이브러리 — 가짜 데이터 (맵 칩 · 교재 · 단계 구성). 값은 프로토타입 LANGS · LIB · STUDY_STEPS 그대로예요.
  * 맞는 API: 16 `/library/maps` (맵 칩) · 17 `/library/books/:id/lessons` (과 목록) · 18 `/lessons/:id` · 24 `/lessons/:id/listen-items`
- * - 상황 맵 · 장면은 상황 담당 @/data/situation 한 곳에서 와요 (SITUATION_MAPS 에 한 줄 = 칩 · 3D 지도 · 장면 목록이 저절로).
- *   3D 지도 모양은 components/library/world 의 BUILD 에 같은 id 가 있으면 그걸, 없으면 여행 모양.
+ * - 상황 맵 · 장면은 @/data/maps 의 JSON 한 줄에서 와요 (한 줄 = 칩 · 3D 지도 · 장면 목록이 저절로).
+ *   3D 지도 모양은 그 줄의 preset 키 (components/library/world/presets.ts).
  */
 import { Colors } from '@/constants/theme';
 
 import { STUDY_LEVELS } from './library-lessons';
 import { LISTEN_ITEMS } from './library-listen';
-import { SITUATION_MAPS, SITUATION_SOON, findScene, sceneIdOf, sceneListenItems, type Scene, type SituationMap } from './situation';
+import { SITUATION_MAPS, SITUATION_SOON, findScene, sceneIdOf, sceneListenItems, type Scene, type SituationMap, type SoonMap } from './situation';
 
 export type StageKey = 'pre' | 'main' | 'post';
 export type StudyKind = 'pattern' | 'topic' | 'debate';
@@ -33,8 +33,7 @@ export type Book = { id: string; n: string; l: string; s?: string; c: string; jp
 
 export type ListenItem = { en: string; ko: string; tag: string };
 
-export type SoonMap = { id: string; title: string; when: string; lang?: number };
-export type { Scene, SituationMap };
+export type { Scene, SituationMap, SoonMap };
 
 /** 공부하는 언어 (프로토타입 LANGS) */
 export const LANGS = [
@@ -71,7 +70,7 @@ export { SITUATION_MAPS };
 export const SOON_MAPS: SoonMap[] = SITUATION_SOON;
 
 /** 맵의 언어 (없으면 영어) */
-export const mapLang = (m: SituationMap | SoonMap) => ('lang' in m && typeof m.lang === 'number' ? m.lang : 0);
+export const mapLang = (m: SituationMap | SoonMap) => m.lang;
 /** 장면 id = '맵 id-장면 번호' (프로토타입 lkOf). /scene/[id] · sceneKey(id) 에 그대로 써요 */
 export const sceneId = sceneIdOf;
 /** 콘텐츠가 있는 장면만 열려요 */
