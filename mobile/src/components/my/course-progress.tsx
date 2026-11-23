@@ -263,7 +263,7 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
 /** 달력 칩 글자: 패턴형 '5과' · 토픽형 '#101' · 토론형 '101' */
 const chipOf = (L: StudyLevel, ls: Lesson) => (L.kind === 'pattern' ? `${ls.no}과` : L.kind === 'topic' ? `#${ls.no}` : String(ls.no));
 
-/** 달력 한 칸: 날짜 + 그날 과 번호 (월화토 노랑 · 수목일 하늘 · 끝냈으면 ✓ · 하는 중이면 •) · 휴무 날은 회색 '휴무' */
+/** 달력 한 칸: 날짜 + 그날 과 번호 (월화토 노랑 · 수목일 핑크 · 끝냈으면 ✓ · 하는 중이면 •) · 휴무 날은 회색 '휴무' */
 function DayCell({ d, cd, L, steps, isToday, on, onPress }: { d: Date; cd?: ClassDay; L: StudyLevel; steps: number; isToday: boolean; on: boolean; onPress: () => void }) {
   const ls = cd?.ls;
   const done = useDoneCount(ls ? `${L.lv}:${ls.no}:` : 'none:');
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   lsChip: { minWidth: 34, paddingHorizontal: 4, height: 18, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   lsChipT: { fontFamily: Font.body900, fontSize: 10, lineHeight: 14, fontVariant: ['tabular-nums'] },
   slotA: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
-  slotB: { backgroundColor: Colors.sky, borderWidth: 1.5, borderColor: Colors.ink },
+  slotB: { backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
   swOff: { backgroundColor: Colors.line },
   offT: { color: Colors.inkSub },
   day: { padding: 14, borderRadius: 18, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, gap: 2 },
