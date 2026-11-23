@@ -11,7 +11,7 @@ import { EmptyIsland } from '@/components/library/empty-island';
 import { LibHead, MapTabs, SitChips } from '@/components/library/lib-head';
 import { CurrPanel, EmptyBlock, PanelCard, SitPanel, levelProgress } from '@/components/library/lib-panel';
 import { LibraryWorld } from '@/components/library/library-world';
-import { libStore, markMapSeen, nextSceneNo, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
+import { islandFor, libStore, markMapSeen, nextSceneNo, pickIsland, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
 import { ToTop } from '@/components/library/to-top';
 import { MAP_PRESETS } from '@/components/library/world/presets';
 import type { WorldSC } from '@/components/library/world/scenes';
@@ -21,6 +21,7 @@ import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { useMe } from '@/state/me';
+import { useLastStep } from '@/state/progress';
 
 const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
 const NO_BOOKS: Book[] = [];
@@ -35,6 +36,7 @@ export default function LibraryScreen() {
   const st = libStore.useStore();
   const myLang = useMe((m) => m.lang);
   useProgressVersion();
+  const lastStep = useLastStep();
   const shelfQ = useQuery(bookShelfQuery());
   const mapsQ = useQuery(situationMapsQuery());
   const scroll = useRef<ScrollViewInstance>(null);
@@ -64,7 +66,7 @@ export default function LibraryScreen() {
     if (sitMap?.isNew) markMapSeen(sitMap.id);
   }, [sitMap]);
 
-  const bi = st.bi < books.length ? st.bi : Math.max(0, books.findIndex((b) => b.mine));
+  const bi = islandFor(books, st, lastStep);
   const book = books[bi];
 
   // 3D 지도에 넘길 섬 · 장면 상태
@@ -93,7 +95,7 @@ export default function LibraryScreen() {
       router.push(`/scene/${sceneId(sitMap.id, no)}` as Href);
       return;
     }
-    setLib({ bi: no - 1 });
+    pickIsland(no - 1);
   };
 
   const langLabel = LANGS[st.lang].ko;
@@ -106,7 +108,7 @@ export default function LibraryScreen() {
         }} scrollEventThrottle={64}>
         {/* 언어 메뉴 밖을 누르면 닫혀요 (위 줄만 이 판보다 위에 있어요) */}
         {langOpen && <Pressable style={styles.menuBack} onPress={() => setLangOpen(false)} accessibilityLabel="닫기" />}
-        <LibHead open={langOpen} setOpen={setLangOpen} lang={st.lang} onLang={(i) => setLib({ lang: i, bi: Math.max(0, (shelfQ.data?.[i] ?? NO_BOOKS).findIndex((b) => b.mine)) })} />
+        <LibHead open={langOpen} setOpen={setLangOpen} lang={st.lang} onLang={(i) => pickIsland(null, { lang: i })} />
         <MapTabs sitMode={st.sitMode} sitNew={sits.some(isNew)} onMode={(sit) => setLib({ sitMode: sit })} />
         {st.sitMode && (sits.length > 0 || soons.length > 0) && (
           <SitChips maps={sits} soons={soons} current={sitMap?.id ?? ''} isNew={isNew} onPick={(id) => setLib({ map: id })} onSoon={() => showToast('다음 상황 맵을 준비하고 있어요 · 열리면 알려드릴게요')} />

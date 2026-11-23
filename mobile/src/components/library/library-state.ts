@@ -3,14 +3,36 @@
  * 진도(끝낸 단계 · 장면 도장)는 @/state/progress 를 읽기만 해요.
  */
 import { createStore } from '@/lib/store';
-import { isDone, sceneKey, stepKey, useDoneCount } from '@/state/progress';
-import { STAGES, STUDY_STEPS, sceneId, sceneOpen, type Lesson, type SituationMap, type StudyLevel } from '@/data/library';
+import { isDone, sceneKey, stepKey, useDoneCount, type LastStep } from '@/state/progress';
+import { STAGES, STUDY_STEPS, sceneId, sceneOpen, type Book, type Lesson, type SituationMap, type StudyLevel } from '@/data/library';
 
-type LibState = { lang: number; sitMode: boolean; map: string | null; bi: number; seen: Record<string, true> };
+/**
+ * pick: 이번에 '교재 보기'로 고른 섬 번호 (pickAt = 고른 때). 앱을 다시 켜면 잊어요 → 최근 공부한 레벨 섬에서 시작.
+ */
+type LibState = { lang: number; sitMode: boolean; map: string | null; pick: number | null; pickAt: number; seen: Record<string, true> };
 
-/** 프로토타입 freshST: 영어 · 스터디 맵 · 내 교재 섬(Lv.1) */
-export const libStore = createStore<LibState>({ lang: 0, sitMode: false, map: null, bi: 1, seen: {} }, { persist: { key: 'library' } });
+/** 처음: 영어 · 스터디 맵 · 내 레벨 섬 */
+export const libStore = createStore<LibState>(
+  { lang: 0, sitMode: false, map: null, pick: null, pickAt: 0, seen: {} },
+  // 고른 섬(pick · 예전 이름 bi)은 저장하지 않아요
+  { persist: { key: 'library', save: ({ lang, sitMode, map, seen }) => ({ lang, sitMode, map, seen }) } },
+);
 export const setLib = (patch: Partial<LibState>) => libStore.set((s) => ({ ...s, ...patch }));
+/** 섬 고르기 (null = 다시 정해진 순서대로) */
+export const pickIsland = (pick: number | null, patch: Partial<LibState> = {}) => setLib({ ...patch, pick, pickAt: Date.now() });
+
+/**
+ * 팔로가 서는 섬 (교재 번호):
+ * 1) 이번에 고른 섬 — 단, 그 뒤에 공부를 시작했으면 공부한 레벨이 이겨요
+ * 2) 최근에 공부한 레벨 섬 (마지막으로 연 단계)
+ * 3) 내 레벨 섬 (내 레벨이 둘이면 낮은 레벨) — 처음 들어왔을 때
+ */
+export function islandFor(books: Book[], st: Pick<LibState, 'pick' | 'pickAt'>, last: LastStep | null) {
+  const studied = last ? books.findIndex((b) => b.study?.lv === last.lv) : -1;
+  if (st.pick != null && st.pick < books.length && !(studied >= 0 && last && last.at > st.pickAt)) return st.pick;
+  if (studied >= 0) return studied;
+  return Math.max(0, books.findIndex((b) => b.mine));
+}
 /** 새 맵 점: 그 맵을 한 번 열면 꺼져요 (프로토타입 MAPSEEN) */
 export const markMapSeen = (id: string) => libStore.set((s) => (s.seen[id] ? s : { ...s, seen: { ...s.seen, [id]: true } }));
 

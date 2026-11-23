@@ -6,7 +6,7 @@ import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reani
 import Svg, { Circle, Defs, Path, Pattern, Rect } from 'react-native-svg';
 
 import { bookShelfQuery } from '@/api/queries';
-import { setLib } from '@/components/library/library-state';
+import { pickIsland, setLib } from '@/components/library/library-state';
 import { Pressable } from '@/components/ui/pressable';
 import { XmasBackLayer, XmasGarland } from '@/components/home/christmas';
 import { CurrentFx, NodeHop, Rider } from '@/components/home/map-current';
@@ -184,7 +184,8 @@ export function StudyMap() {
     sfx('tap');
     const lang = shelf?.findIndex((books) => books.some((b) => b.study?.lv === LV)) ?? -1;
     const bi = lang >= 0 && shelf ? shelf[lang].findIndex((b) => b.study?.lv === LV) : -1;
-    setLib(lang >= 0 ? { sitMode: false, lang, bi } : { sitMode: false });
+    if (lang >= 0) pickIsland(bi, { sitMode: false, lang });
+    else setLib({ sitMode: false });
     router.navigate('/library' as Href);
   };
 
