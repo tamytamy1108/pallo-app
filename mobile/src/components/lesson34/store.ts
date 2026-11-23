@@ -15,13 +15,10 @@ type Answers = {
   after: Record<string, string[] | string>;
   side: Record<string, { side: 'A' | 'B'; text: string }>;
   talk: Record<string, string[]>;
-  /** 오늘 처음 끝낸 단계 수 (오늘 목표) — 날짜가 바뀌면 0 */
-  today: { day: string; n: number };
   /** 매치 최고 기록 (초) */
   best: Record<string, number>;
 };
-const today = () => new Date().toDateString();
-const store = createStore<Answers>({ ans: {}, after: {}, side: {}, talk: {}, today: { day: today(), n: 0 }, best: {} });
+const store = createStore<Answers>({ ans: {}, after: {}, side: {}, talk: {}, best: {} });
 
 export const answers = store.get;
 export const useAnswers = store.useStore;
@@ -31,13 +28,7 @@ export const setSide = (unitKey: string, v: { side: 'A' | 'B'; text: string }) =
 export const setTalk = (key: string, v: string[]) => store.set((s) => ({ ...s, talk: { ...s.talk, [key]: v } }));
 export const setBest = (key: string, sec: number) => store.set((s) => ({ ...s, best: { ...s.best, [key]: sec } }));
 
-/** 처음 끝낸 단계를 오늘 목표에 더해요. 오늘 몇 개 했는지 돌려줘요 */
-export function addToday() {
-  const d = today();
-  store.set((s) => ({ ...s, today: { day: d, n: (s.today.day === d ? s.today.n : 0) + 1 } }));
-  return store.get().today.n;
-}
-export const todayCount = () => (store.get().today.day === today() ? store.get().today.n : 0);
+// 오늘 목표는 state/today-goal 한 곳에서 세요 (markDone 이 적어요)
 
 /** 그만둔 곳 (코너마다) — 문제 목록째 기억해요 (고른 질문으로 늘어난 문제도 그대로). 프로토타입 TK_SAVE */
 const saved = new Map<string, { tasks: Task34[]; i: number; res: Record<number, boolean> }>();

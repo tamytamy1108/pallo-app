@@ -13,15 +13,11 @@ import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { SCENE_STEPS, sceneStepKey, type SceneStepId } from '@/data/situation';
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
-import { getMe, updateMe } from '@/state/me';
-import { clearPos, isDone, markDone, sceneKey } from '@/state/progress';
+import { awardPoints } from '@/state/ledger';
+import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, sceneKey } from '@/state/progress';
 
 import { Sound, XMark } from './icons';
 import { QuitSheet } from './parts';
-import { addTodayDone, getTodayDone } from './scene-store';
-
-/** 오늘 목표 (프로토타입 DAILY_GOAL · 홈 '오늘의 학습 목표'와 같은 값) */
-const DAILY_GOAL = 2;
 
 /** 장면 화면으로 (앞 화면이 장면이면 뒤로, 주소로 바로 들어왔으면 장면 화면으로 바꿔요) */
 export const backToHub = (sceneId: string) => (router.canGoBack() ? router.back() : router.replace(`/scene/${sceneId}` as Href));
@@ -35,12 +31,10 @@ export function useStepFinish(sceneId: string, stepId: SceneStepId) {
   const finish = (score?: { right: number; total: number }) => {
     Tts.stop();
     const step = SCENE_STEPS.find((s) => s.id === stepId) ?? SCENE_STEPS[0];
-    const first = markDone(sceneStepKey(sceneId, stepId));
-    clearPos(sceneStepKey(sceneId, stepId));
-    if (first) {
-      updateMe({ weekPoints: getMe().weekPoints + step.xp });
-      addTodayDone();
-    }
+    const key = sceneStepKey(sceneId, stepId);
+    const first = markDone(key);
+    clearPos(key);
+    if (first) awardPoints(`step:${key}`, 'step', step.xp);
     const allDone = SCENE_STEPS.every((s) => isDone(sceneStepKey(sceneId, s.id)));
     const stamp = allDone ? markDone(sceneKey(sceneId)) : false; // 장면 완료! 지도에 도장이 찍혔어요
     const nextStep = SCENE_STEPS.find((s) => !isDone(sceneStepKey(sceneId, s.id)));

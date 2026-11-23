@@ -11,7 +11,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { TODAY_GOAL } from '@/data/home';
 import { kf, useLoop } from '@/lib/motion';
-import { useDoneCount } from '@/state/progress';
+import { DAILY_GOAL, useTodayDone } from '@/state/progress';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
@@ -20,9 +20,9 @@ const AnimatedRect = Animated.createAnimatedComponent(Rect);
  * '퀘스트 2개 깨기' · n/2 완료 · 연속 학습 n일 · [이어서 하기 →] (스터디 맵의 지금 정류장 팝업을 열어요).
  */
 export function GoalCard({ onContinue }: { onContinue: () => void }) {
-  // TODO: 진도 담당이 '오늘 끝낸 수'를 주면 바꿔요 (지금은 Lv.1 에서 끝낸 수)
-  const done = useDoneCount('1:');
-  const today = Math.min(TODAY_GOAL.total, done);
+  // 오늘 끝낸 단계 수 (Lv.1~4 레슨 · 상황 장면 · 건너뛰기 모두) — 축하 화면과 같은 셈
+  const done = useTodayDone();
+  const today = Math.min(DAILY_GOAL, done);
   return (
     <Raised radius={26}>
       <View style={styles.card}>
@@ -34,7 +34,7 @@ export function GoalCard({ onContinue }: { onContinue: () => void }) {
         </View>
         <PText style={styles.title}>{TODAY_GOAL.title}</PText>
         <PText style={styles.meta}>
-          {today}/{TODAY_GOAL.total} 완료 · 연속 학습 {done > 0 ? 1 : 0}일
+          {today}/{DAILY_GOAL} 완료 · 연속 학습 {done > 0 ? 1 : 0}일
         </PText>
         <View style={styles.actions}>
           <Pressable onPress={onContinue} accessibilityRole="button" accessibilityLabel="이어서 하기">

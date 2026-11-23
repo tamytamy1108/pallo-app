@@ -18,11 +18,9 @@ type SceneState = {
   best: Record<string, Partial<Record<QuizLevel, number>>>;
   /** 장면 id → 퀴즈 멈춘 곳 */
   quizPos: Record<string, QuizPos>;
-  /** 오늘 끝낸 단계 수 (홈 '오늘의 학습 목표'와 같은 셈) */
-  todayDone: number;
 };
 
-const store = createStore<SceneState>({ qLv: null, picked: {}, best: {}, quizPos: {}, todayDone: 0 });
+const store = createStore<SceneState>({ qLv: null, picked: {}, best: {}, quizPos: {} });
 
 /** 지금 상황 퀴즈 · 미션 문장 레벨 (프로토타입 sitQLv) */
 export const quizLevelOf = (s: SceneState): QuizLevel => s.qLv ?? MY_QUIZ_LEVELS[0] ?? 1;
@@ -52,5 +50,4 @@ export const clearQuizPos = (sceneId: string) =>
     return { ...s, quizPos: rest };
   });
 
-export const addTodayDone = () => store.set((s) => ({ ...s, todayDone: s.todayDone + 1 }));
-export const getTodayDone = () => store.get().todayDone;
+// 오늘 목표는 state/today-goal 한 곳에서 세요 (markDone 이 적어요)

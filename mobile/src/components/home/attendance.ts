@@ -5,8 +5,11 @@
  */
 import { useEffect, useState } from 'react';
 
-import { LANGS, MY_LANG, MY_SLOT, QR_AFTER, QR_BEFORE, SLOTS } from '@/data/home';
+import { ATTEND_POINTS, LANGS, MY_LANG, MY_SLOT, QR_AFTER, QR_BEFORE, SLOTS } from '@/data/home';
+import { SPARK_ATTEND } from '@/data/my';
 import { createStore } from '@/lib/store';
+import { awardPoints, awardSparks } from '@/state/ledger';
+import { dayKey } from '@/state/today-goal';
 
 /* ───────── 지금 시각 ───────── */
 
@@ -76,6 +79,10 @@ export function sendAttendance(slot: number, lang: number, qr: string) {
   void qr; // 실제 앱: 서버가 QR(지점 · 시간 · 만료)을 확인해요
   if (store.get().checked) return false;
   store.set((s) => ({ ...s, checked: true, slot, lang, week: s.week + 1 }));
+  // 출석 포인트 · 스파크 (같은 날 같은 세션은 한 번만 · 서버는 세션 id 로)
+  const id = `attend:${dayKey(nowDate().getTime())}:${slot}`;
+  awardPoints(id, 'attend', ATTEND_POINTS);
+  awardSparks(id, 'attend', SPARK_ATTEND);
   return true;
 }
 

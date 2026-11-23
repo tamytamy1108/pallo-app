@@ -26,6 +26,8 @@ export const QR_AFTER = 20;
 
 /** 출석 포인트 */
 export const ATTEND_POINTS = 30;
+/** 구간 건너뛰기(테스트 통과): 건너뛴 단계마다 +10P (프로토타입 xp: gained * 10) */
+export const SKIP_POINTS = 10;
 
 export const LANGS = [
   { key: 'en', ko: '영어', g: 'EN', color: Colors.langEn, ink: Colors.white },

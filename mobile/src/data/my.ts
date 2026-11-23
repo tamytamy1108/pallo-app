@@ -179,9 +179,11 @@ export const AV_CATS: readonly (readonly [AvTab, string])[] = [
 export const AV_RARE_C: Record<AvRare, string> = { 기본: '#5A5366', 일반: '#5A5366', 레어: '#2F6FD0', 에픽: '#493087', 시즌: '#D2477A' };
 export const SAY_IDEAS = ['Hello!', '같이 말해요', '오늘도 출석!', 'こんにちは', '你好!', "Let's go!", '말 걸어 주세요'];
 
+/** 세션 출석 스파크 — 지금 장부(state/ledger)에 연결된 스파크 규칙은 이것 하나 (나머지는 정책 정해지면) */
+export const SPARK_ATTEND = 50;
 /** 스파크 모으는 법 (프로토타입 earn 시트) */
 export const SPARK_EARN: readonly (readonly [string, string])[] = [
-  ['세션 출석', '+50'],
+  ['세션 출석', `+${SPARK_ATTEND}`],
   ['오늘 퀘스트 완료', '+30'],
   ['번개 · 정기 모임 참여', '+40'],
   ['7일 연속 학습', '+200'],
