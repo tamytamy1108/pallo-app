@@ -2,8 +2,9 @@
  * 학습 진도: 끝낸 단계 · 멈춘 곳(이어서 하기) · 상황 맵 도장 · 오늘 목표. 맞는 API: 19 `/me/progress` · 20 `/me/progress/:lesson/:step`
  * 담당: 레슨 A. 레슨 B · 상황 장면은 끝낼 때 markDone · 멈출 때 savePos, 홈 · 라이브러리는 읽기만 해요.
  * 함수 이름 · 키 모양은 바꾸지 않아요(늘리기만).
- * 실서비스: 서버에 저장해서 앱을 껐다 켜도, 다른 기기에서도 이어져야 해요.
+ * 지금은 기기에 저장해서 앱을 껐다 켜도 이어져요. 실서비스: 서버에 저장해서 다른 기기에서도 이어져야 해요.
  */
+import { packValue, unpackValue } from '@/lib/device-storage';
 import { createStore } from '@/lib/store';
 
 import { recordToday } from './today-goal';
@@ -25,7 +26,7 @@ type Progress = {
   last: LastStep | null;
 };
 export type LastStep = { lv: number; unit: number; step: string; at: number };
-const store = createStore<Progress>({ done: {}, pos: {}, posOf: {}, best: {}, last: null });
+const store = createStore<Progress>({ done: {}, pos: {}, posOf: {}, best: {}, last: null }, { persist: { key: 'progress' } });
 
 export const useIsDone = (key: string) => store.useStore((s) => key in s.done);
 /** 키 앞부분이 같은 것 중 끝낸 개수 (예: '1:1:' → 1과에서 끝낸 단계 수) */
@@ -41,7 +42,7 @@ export function markDone(key: string) {
     pos: omit(s.pos, key),
     posOf: omit(s.posOf, key),
   }));
-  snaps.delete(key);
+  snaps.drop(key);
   // 장면 도장(sceneKey)은 단계가 아니라서 오늘 목표에 세지 않아요
   if (first && !key.startsWith('scene:')) recordToday(key);
   return first;
@@ -55,7 +56,7 @@ export const useSavedTotal = (key: string) => store.useStore((s) => s.posOf[key]
 export const getSavedPos = (key: string) => store.get().pos[key];
 export function clearPos(key: string) {
   store.set((s) => ({ ...s, pos: omit(s.pos, key), posOf: omit(s.posOf, key) }));
-  snaps.delete(key);
+  snaps.drop(key);
 }
 
 /** 단계를 열 때 남겨요 → 홈 스터디 맵 · 라이브러리 '이어서' */
@@ -70,14 +71,48 @@ export const setBest = (key: string, v: number) => store.set((s) => ({ ...s, bes
  * 멈춘 곳 그대로 다시 열기 위한 화면 상태 (문제 목록 · 결과 · 고른 역할 등).
  * 화면마다 모양이 달라서 그대로 맡아 두기만 해요. 실서비스는 서버 진행 저장에 같이 실어요.
  */
-const snaps = new Map<string, unknown>();
-export const saveSnapshot = (key: string, data: unknown) => void snaps.set(key, data);
+const snaps = keyedStore('progress-snaps');
+export const saveSnapshot = (key: string, data: unknown) => snaps.put(key, data);
 export const getSnapshot = <T>(key: string) => snaps.get(key) as T | undefined;
 
-/** 단계 화면에서 쓴 내용 (My Story 키워드 · 처음 답변 등) — 나갔다 와도 남아 있어요 */
-const stepData = new Map<string, unknown>();
-export const setStepData = (key: string, data: unknown) => void stepData.set(key, data);
+/** 단계 화면에서 쓴 내용 (My Story 키워드 · 처음 답변 등) — 나갔다 와도 · 앱을 다시 켜도 남아 있어요 */
+const stepData = keyedStore('step-data');
+export const setStepData = (key: string, data: unknown) => stepData.put(key, data);
 export const getStepData = <T>(key: string) => stepData.get(key) as T | undefined;
+
+/**
+ * 키 → 아무 모양 값. 기기에 남기되, 함수처럼 못 남기는 값이 든 것은 이번 실행 동안만 (packValue).
+ * 화면이 구독하지 않아서 바꿔도 다시 그리지 않아요.
+ */
+function keyedStore(persistKey: string) {
+  const s = createStore<Record<string, unknown>>(
+    {},
+    {
+      persist: {
+        key: persistKey,
+        save: (all) => {
+          const out: Record<string, unknown> = {};
+          Object.entries(all).forEach(([k, v]) => {
+            const p = packValue(v);
+            if (p !== undefined) out[k] = p;
+          });
+          return out;
+        },
+        load: (saved, initial) => (saved && typeof saved === 'object' && !Array.isArray(saved) ? (unpackValue(saved) as Record<string, unknown>) : initial),
+      },
+    },
+  );
+  return {
+    get: (key: string) => s.get()[key],
+    put: (key: string, data: unknown) => s.set((all) => ({ ...all, [key]: data })),
+    drop: (key: string) =>
+      s.set((all) => {
+        if (!(key in all)) return all;
+        const { [key]: _drop, ...rest } = all;
+        return rest;
+      }),
+  };
+}
 
 function omit(o: Record<string, number>, k: string) {
   if (!(k in o)) return o;

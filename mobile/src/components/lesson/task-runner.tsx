@@ -17,7 +17,7 @@ import { stopSay, useSoundToggle } from '@/components/lesson/voice';
 import { showToast } from '@/components/ui/toast';
 import { CHEER_STREAK, pickOne, taskLimit, type Task } from '@/data/lessons';
 import { haptic, sfx } from '@/lib/feedback';
-import { clearPos, getSnapshot, savePos, saveSnapshot } from '@/state/progress';
+import { clearPos, getSavedPos, getSnapshot, savePos, saveSnapshot } from '@/state/progress';
 import { useLearnPrefs } from '@/state/learn-prefs';
 
 /** 최종 점수: 문제마다 마지막 결과를 모아요 + 제한 시간 안에 맞힌 문제 수 (프로토타입 tkClose → LAST_SCORE) */
@@ -61,7 +61,10 @@ export function TaskRunner({
       return null;
     }
     const s = getSnapshot<Snap>(skey);
-    return s && s.i > 0 && s.i < s.tasks.length ? s : null;
+    if (s && s.i > 0 && s.i < s.tasks.length) return s;
+    // 화면 상태를 못 남긴 채 앱을 다시 켰으면: 멈춘 문제 번호부터 (같은 문제 목록)
+    const at = getSavedPos(skey);
+    return at != null && at > 0 && at < initial.length ? { tasks: initial, i: at, res: {}, times: {} } : null;
   });
   const [tasks, setTasks] = useState<Task[]>(saved?.tasks ?? initial);
   const [i, setI] = useState(saved?.i ?? 0);

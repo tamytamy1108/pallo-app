@@ -22,12 +22,12 @@ const REPORT_REASONS = ['스팸 · 광고', '불쾌하거나 무례한 말', '�
 const BLOCK_REASONS = ['스팸 · 광고', '불쾌하거나 무례한 말', '개인정보를 물어봐요', '모임에서 불편한 일이 있었어요', '그냥 보고 싶지 않아요', '기타'];
 
 /*
- * 차단한 멤버 · 내 신고 (가짜 저장소). 맞는 API: 75 `POST /reports` · 77 `POST / DELETE /blocks`.
+ * 차단한 멤버 · 내 신고 (가짜 저장소 · 기기에 남아요). 맞는 API: 75 `POST /reports` · 77 `POST / DELETE /blocks`.
  * 라운지는 useIsBlocked(이름)로 글을 숨기고, 설정 › 차단한 멤버 · 신고 내역은 useBlockedNames · useMyReports 로 읽어요.
  */
-const blockStore = createStore<string[]>([]);
+const blockStore = createStore<string[]>([], { persist: { key: 'blocks' } });
 export type MyReport = { id: string; kind: ReportTarget['kind']; name: string; reason: string; at: string };
-const reportStore = createStore<MyReport[]>([]);
+const reportStore = createStore<MyReport[]>([], { persist: { key: 'my-reports' } });
 
 // React Compiler 가 x.use() 를 React use() 로 보지 않게 useXxx 이름으로 꺼내 써요
 const useBlockStore = blockStore.use;

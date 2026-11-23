@@ -42,6 +42,7 @@ npx expo lint      # 코드 규칙 검사
 | `src/app/lesson/[step].tsx` · `src/components/lesson/` | 레슨 화면 · 따라 말하기 문제 · 단어 카드 · 보라 팔로 한마디 |
 | `src/lib/speech.ts` · `src/lib/words.ts` | 듣기(음성 인식) · 채점. 테스트는 `src/lib/__tests__/` |
 | `src/data/mock.ts` | 가짜 데이터. API가 나오면 서버 값으로 바꿔요 |
+| `src/lib/store.ts` · `src/lib/device-storage.ts` | 전역 상태 · 기기 저장 (`createStore(초기값, { persist: { key } })` 면 앱을 껐다 켜도 남아요). 마이 맨 아래 개발용 '기기에 저장한 기록 지우기' |
 | `src/app/design.tsx` | 개발용 디자인 부품 모음 (마이 → 디자인 부품 보기). 출시 전에 빼요 |
 | `src/components/ui/` | 디자인 부품: `PText`(글자) · `Button` · `Card` · `Pill` · `Chip` · `Raised`(하드 섀도) |
 | `src/components/` | 탭 바 · 화면 틀 |

@@ -32,7 +32,14 @@ import { IMG, Kicker } from './ui';
 export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; build: () => Task34[] }) {
   const key = stepKey(ctx.lv, ctx.unit, ctx.step.id);
   const savedPos = useSavedPos(key);
-  const [snap] = useState(() => (savedPos != null ? loadRun(key) : undefined));
+  const [snap] = useState(() => {
+    if (savedPos == null) return undefined;
+    const run = loadRun(key);
+    if (run) return run;
+    // 문제 목록(함수가 들어 있어요)은 기기에 못 남겨요 → 앱을 다시 켰으면 처음 목록에서 멈춘 번호부터
+    const tasks = build();
+    return savedPos > 0 && savedPos < tasks.length ? { tasks, i: savedPos, res: {} } : undefined;
+  });
   const [tasks, setTasksState] = useState<Task34[]>(() => snap?.tasks ?? build());
   // 끼워 넣은 문제를 바로 '다음'에서 볼 수 있게 지금 목록을 ref 에도 둬요 (고르고 바로 다음으로 넘어가요)
   const tasksRef = useRef(tasks);

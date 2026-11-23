@@ -10,7 +10,7 @@
 | `api/config.ts` | 어느 서버(dev · staging · prod)인지, mock 을 쓸지. `app.json › expo.extra.api` 와 `.env` 의 `EXPO_PUBLIC_API_ENV` · `EXPO_PUBLIC_API_MOCK` |
 | `api/client.ts` | 공통 요청 함수 `http.get/post/put/patch/delete`. 토큰 붙이기 · 15초 시간 초과 · 오류를 `ApiError` 로. 목록 모양 `Page<T>` |
 | `api/errors.ts` | `ApiError { code, message, status }` · `errorMessage(e)` (화면에 띄울 한 줄) |
-| `api/token.ts` | 로그인 토큰 저장 (폰: expo-secure-store · 웹 미리보기: 메모리) |
+| `api/token.ts` | 로그인 토큰 저장 (폰: expo-secure-store · 웹 미리보기: localStorage `pallo-tokens` — 새로고침해도 로그인 유지) |
 | `api/mock.ts` | 가짜 응답 · 늦추기 · 실패시키기 |
 | `api/auth.ts` · `me.ts` · `home.ts` | API 하나 = 함수 하나 (번호는 `api-inventory.md` · `api-additions.md`) |
 | `api/queries.ts` | 화면이 쓰는 Query 키 · 옵션 (`meQuery()`, `noticesQuery()` …) |
@@ -84,6 +84,24 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 ### 4. 라운지 · 이벤트 · 챌린지 · 마이 (31 ~ 96)
 
 - ☐ 전부. 순서 제안: 31 랭킹 · 32 마이 숫자 · 33 배지 → 86 이벤트 목록 · 상세 → 49 라운지 피드 → 79 챌린지 → 나머지
+
+## 기기 저장 (서버가 생기기 전까지)
+
+내 기록은 모두 기기에 남아서 앱을 껐다 켜도 이어져요 — `createStore(초기값, { persist: { key } })` (`lib/store.ts` · `lib/device-storage.ts`).
+폰은 문서 폴더 `pallo/<key>.json`, 웹 미리보기는 localStorage `pallo-<key>` — 폰과 웹이 같은 키 · 같은 모양으로 저장해요. 회원 탈퇴 · 마이 맨 아래 개발용 버튼이 `clearSavedData()` 로 모두 지워요.
+
+| key | 무엇 | 서버가 생기면 |
+|---|---|---|
+| `me` · `ledger` | 내 정보 · 포인트 · 스파크 장부 (이번 주 포인트는 주가 바뀌면 0) | 3 `/me` · 장부 API |
+| `progress` · `progress-snaps` · `step-data` · `today-goal` · `scene` · `lesson34-answers` | 진도 · 이어서 하기 · 오늘 목표 · 상황 퀴즈 · Lv.3·4 내 답 | 19 · 20 · 21 · 23 |
+| `expressions` · `avatar` | 표현함 · 꾸미기 | 29 · 34 · 36 |
+| `attendance` | 오늘 사전 출석 · 출석 (날이 바뀌면 처음부터) · 이번 주 횟수 | 8 · 9 · 10 |
+| `settings` · `logins` · `asks` · `level-request` · `change-request` · `pro-notes` · `notice-read` · `noti-read` · `notice-dot` | 마이 B · 알림 · 공지 읽음 | 30 · 13 · 14 · 39 · 44 · 45 · 46 · 94 |
+| `lounge` · `meets` · `challenges` · `blocks` · `my-reports` | 라운지 · 번개 · 동아리 · 이벤트 · 챌린지 · 차단 · 신고 (라운지 예시 글은 저장하지 않고 내가 바꾼 것만) | 49 ~ 92 |
+| `sound` · `listen-prefs` · `learn-prefs` · `library` · `stage-line` · `popup-hidden` | 기기 설정 · 화면 기억 | 기기에 그대로 둬도 돼요 (A17) |
+
+- 저장 모양을 바꾸면 `persist.version` 을 올려요 → 예전 저장은 버리고 처음 값으로 시작해요
+- Lv.3·4 '그만둔 곳'의 문제 목록은 함수가 들어 있어 못 남겨요 → 다시 켜면 처음 목록에서 멈춘 번호부터
 
 ## 지켜야 할 것
 

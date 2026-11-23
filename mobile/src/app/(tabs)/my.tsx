@@ -13,12 +13,14 @@ import { MyHero } from '@/components/my/my-hero';
 import { BadgeSheet, FollowSheet, MeetsSheet } from '@/components/my/my-sheets';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/dialog';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { MY_BADGES, rankPeople } from '@/data/my';
 import { sfx } from '@/lib/feedback';
+import { clearSavedData } from '@/lib/store';
 import { useSavedCount } from '@/state/expressions';
 import { useMe } from '@/state/me';
 
@@ -39,6 +41,7 @@ export default function MyScreen() {
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
   const [badges, setBadges] = useState(false);
   const [meets, setMeets] = useState<'joined' | 'saved' | null>(null);
+  const [askReset, setAskReset] = useState(false);
 
   const people = rankPeople('w', me);
   const myRank = people.findIndex((p) => p.me) + 1;
@@ -132,12 +135,26 @@ export default function MyScreen() {
         {/* 개발용 입구: 출시 전에 빼요 */}
         <View style={styles.dev}>
           <Button label="디자인 부품 보기" variant="secondary" onPress={() => router.push('/design')} />
+          <Button label="기기에 저장한 기록 지우기" variant="secondary" onPress={() => setAskReset(true)} />
         </View>
       </ScrollView>
 
       <FollowSheet name={follow ? me.name : null} tab={follow ?? 'fer'} onTab={setFollow} onClose={() => setFollow(null)} />
       <BadgeSheet open={badges} onClose={() => setBadges(false)} />
       <MeetsSheet kind={meets} onClose={() => setMeets(null)} />
+      <ConfirmDialog
+        open={askReset}
+        title="저장한 기록을 지울까요?"
+        message="진도 · 포인트 · 꾸미기 · 설정이 처음 상태로 돌아가요 (개발용)."
+        confirmLabel="지우기"
+        destructive
+        onCancel={() => setAskReset(false)}
+        onConfirm={() => {
+          setAskReset(false);
+          clearSavedData();
+          showToast('기기에 저장한 기록을 지웠어요');
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -147,5 +164,5 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: Spacing.gutter, paddingTop: 12, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
-  dev: { marginTop: 10 },
+  dev: { marginTop: 10, gap: 10 },
 });
