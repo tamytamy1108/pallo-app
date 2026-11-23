@@ -1,18 +1,19 @@
 import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState, PanResponder, StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 
-import { Pressable } from '@/components/ui/pressable';
 import { MyCharacter } from '@/components/character/my-character';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
+import { FocusCard } from './focus-card';
 import { mountWorld, type WorldSC } from './scenes';
 import type { FocusInfo, Host, LabelSpec, Stage } from './stage';
+import { WorldFlat } from './world-flat';
+import { canTryWorld3D, GL_START_TIMEOUT, liteWorld } from './world-support';
 
 /** 이름표를 가운데 맞추려고 두는 상자 너비 (프로토타입 translate(-50%)) */
 const BOX = 240;
@@ -34,11 +35,43 @@ type Props = {
 };
 
 /**
- * 3D 섬 지도 한 장 (프로토타입 .m3-layer): GL 그림 + 이름표 · 내 캐릭터 · 확대 카드(.m3-zp).
+ * 섬 지도 한 장. 3D(WebGL)를 그려 보고, 이 기기에서 안 되면 2D 지도(WorldFlat)로 바꿔요.
+ * 2D 로 바꾸는 때: 웹에 WebGL 이 없음 · GL 이 5초 안에 시작 안 함 · 만들다 오류 · 그리다 오류 · GL 화면이 터짐.
+ * 한 번 바꾸면 이 지도는 2D 로 남아요 (깜빡임 없이). 데이터 · 누르면 아래 카드 동작은 같아요.
+ */
+export function WorldView(props: Props) {
+  const [flat, setFlat] = useState(() => !canTryWorld3D());
+  if (flat) return <WorldFlat id={props.id} sc={props.sc} onOpen={props.onOpen} />;
+  return (
+    <GLBoundary onFail={() => setFlat(true)}>
+      <World3D {...props} onFail={() => setFlat(true)} />
+    </GLBoundary>
+  );
+}
+
+/** GL 화면이 그리다 터지면 (네이티브 GL 모듈이 없음 등) 앱 대신 지도만 2D 로 */
+class GLBoundary extends Component<{ onFail: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(e: unknown) {
+    console.warn('3D 지도를 그리지 못해서 2D 지도로 바꿔요', e);
+    this.props.onFail();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+/**
+ * 3D 섬 지도 (프로토타입 .m3-layer): GL 그림 + 이름표 · 내 캐릭터 · 확대 카드(.m3-zp).
  * 크기는 부모가 정해요. 화면을 떠나면(탭 이동 · 앱 내려감) 그리기를 멈춰요.
  */
-export function WorldView({ id, sc, swapDir, onOpen, visible = true }: Props) {
+function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { onFail: () => void }) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const [lite] = useState(liteWorld);
+  const fail = useRef(onFail);
   const reduced = useReducedMotion();
   const focused = useIsFocused();
   const host = useRef<Host | null>(null);
@@ -53,7 +86,19 @@ export function WorldView({ id, sc, swapDir, onOpen, visible = true }: Props) {
 
   useEffect(() => {
     open.current = onOpen;
+    fail.current = onFail;
   });
+  // GL 이 시작하지 않으면 (오래된 폰 · GL 없는 에뮬레이터) 2D 지도로
+  useEffect(() => {
+    if (!size) return;
+    const t = setTimeout(() => {
+      if (!stage.current) {
+        console.warn('3D 지도가 시작하지 않아서 2D 지도로 바꿔요');
+        fail.current();
+      }
+    }, GL_START_TIMEOUT);
+    return () => clearTimeout(t);
+  }, [size]);
   // 탭을 떠나거나 앱이 내려가면 그리기 멈춤
   useEffect(() => {
     const set = (active: boolean) => {
@@ -72,6 +117,7 @@ export function WorldView({ id, sc, swapDir, onOpen, visible = true }: Props) {
       width: size.w,
       height: size.h,
       reduced,
+      lite,
       swapDir,
       paused: !focused,
       onLabels: (l) => setLabels(l.map((x) => x.spec)),
@@ -84,13 +130,20 @@ export function WorldView({ id, sc, swapDir, onOpen, visible = true }: Props) {
         }
       },
       onFocus: setFocus,
+      onError: (e) => {
+        console.warn('3D 지도를 그리다 멈췄어요 → 2D 지도로 바꿔요', e);
+        fail.current();
+      },
     };
     host.current = h;
     try {
       stage.current = mountWorld(h, id, sc, (no) => open.current(no));
     } catch (e) {
-      // GL 이 안 되는 기기 · 브라우저: 지도 없이 바탕색만 (아래 목록은 그대로 써요)
-      console.warn('3D 지도를 그리지 못했어요', e);
+      // 셰이더 · 확장 기능이 안 되는 기기: 2D 지도로
+      console.warn('3D 지도를 만들지 못해서 2D 지도로 바꿔요', e);
+      stage.current?.dispose();
+      stage.current = null;
+      fail.current();
     }
   };
 
@@ -119,7 +172,7 @@ export function WorldView({ id, sc, swapDir, onOpen, visible = true }: Props) {
 
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      {size && <GLView style={styles.fill} onContextCreate={onContextCreate} msaaSamples={2} />}
+      {size && <GLView style={styles.fill} onContextCreate={onContextCreate} msaaSamples={lite ? 0 : 2} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />
@@ -209,44 +262,6 @@ function RiderView({ rider }: { rider: SharedValue<number[]> }) {
   );
 }
 
-const ZP_EASE = Easing.bezier(0.2, 0.9, 0.3, 1.2);
-
-/** 눌러서 확대했을 때 아래 카드 (프로토타입 .m3-zp) */
-function FocusCard({ info, onGo, onClose }: { info: FocusInfo | null; onGo: (no: number) => void; onClose: () => void }) {
-  const [shown, setShown] = useState<FocusInfo | null>(info);
-  const p = useSharedValue(0);
-  const reduced = useReducedMotion();
-  // 닫히는 동안에도 마지막 카드를 보여 줘요 (그리는 중에 바로 기억)
-  if (info && info !== shown) setShown(info);
-  useEffect(() => {
-    p.set(reduced ? (info ? 1 : 0) : withTiming(info ? 1 : 0, { duration: 350, easing: ZP_EASE }));
-  }, [info, p, reduced]);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - p.value) * 110 }] }));
-  if (!shown) return null;
-  const soon = shown.st === 'soon';
-  const go = soon ? (shown.soonT ?? '곧 열려요') : (shown.goT ?? (shown.st === 'done' ? '다시 하기' : '장면 열기'));
-  return (
-    <Animated.View style={[styles.zp, style]} pointerEvents={info ? 'auto' : 'none'}>
-      <View style={styles.zpT}>
-        <PText style={styles.zpSmall} numberOfLines={1}>
-          {shown.k ?? `${shown.no}번 장면`}
-        </PText>
-        <PText style={styles.zpB} numberOfLines={1}>
-          {shown.n}
-        </PText>
-      </View>
-      <Pressable onPress={() => onGo(shown.no)} accessibilityRole="button" accessibilityLabel={go} style={({ pressed }) => [styles.zpGo, soon && styles.zpGoSoon, pressed && styles.pressed]}>
-        <PText style={[styles.zpGoText, soon && { color: '#8C8597' }]}>{go}</PText>
-      </Pressable>
-      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="전체 보기" hitSlop={6} style={({ pressed }) => [styles.zpX, pressed && styles.pressed]}>
-        <Svg width={14} height={14} viewBox="0 0 14 14">
-          <Path d="M2 2l10 10M12 2L2 12" stroke={Colors.ink} strokeWidth={2.4} strokeLinecap="round" />
-        </Svg>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   labelBox: { position: 'absolute', left: 0, top: 0, width: BOX, alignItems: 'center' },
@@ -268,14 +283,5 @@ const styles = StyleSheet.create({
   hereText: { fontFamily: Font.display, fontSize: 10, lineHeight: 12, color: Colors.yellow },
   rider: { position: 'absolute', left: 0, top: 0, width: RIDER_W, height: RIDER_H, transformOrigin: 'bottom' },
   riderImg: { width: RIDER_W, height: RIDER_H },
-  // .m3-zp
-  zp: { position: 'absolute', left: 12, right: 12, bottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingRight: 12, paddingLeft: 16, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, boxShadow: `3px 4px 0 ${Colors.ink}` },
-  zpT: { flex: 1, minWidth: 0 },
-  zpSmall: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15, color: Colors.purple },
-  zpB: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
-  zpGo: { height: 40, paddingHorizontal: 16, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, justifyContent: 'center' },
-  zpGoSoon: { backgroundColor: '#EFEAE0', borderStyle: 'dashed', borderColor: SOON_LINE },
-  zpGoText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
-  zpX: { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   pressed: { transform: [{ scale: 0.96 }] },
 });
