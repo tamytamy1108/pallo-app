@@ -325,7 +325,31 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     r.dispose();
   };
 
+  /**
+   * 개발용(웹): 지금 그림을 사진으로 + 이름표 · 정류장 화면 좌표 (2D 지도 사진 만들기 · scripts 참고).
+   * 실제 앱에서는 부르지 않아요.
+   */
+  const snapshot = (type = 'image/webp', quality = 0.9) => {
+    r.render(sc, cam);
+    const el = r.domElement;
+    const infos: FocusInfo[] = [];
+    sc.traverse((o) => {
+      const it = o.userData.info as FocusInfo | undefined;
+      if (it && !infos.some((x) => x.no === it.no)) infos.push(it);
+    });
+    return {
+      img: typeof el.toDataURL === 'function' ? el.toDataURL(type, quality) : '',
+      w,
+      h,
+      ppu: ppu(),
+      labels: labels.map((l) => ({ spec: l.spec, dy: l.dy, xy: proj(l.p) })),
+      stops: infos.sort((a, b) => a.no - b.no).map((it) => ({ no: it.no, at: [it.at.x, it.at.y, it.at.z] as [number, number, number], xy: proj(it.at) })),
+      proj: (x: number, y: number, z: number) => proj(new THREE.Vector3(x, y, z)),
+    };
+  };
+
   const api = {
+    snapshot,
     sc,
     label,
     ticks,

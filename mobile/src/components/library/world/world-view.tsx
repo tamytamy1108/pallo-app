@@ -5,23 +5,17 @@ import { ActivityIndicator, AppState, PanResponder, Platform, StyleSheet, View }
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { MyCharacter } from '@/components/character/my-character';
-import { PText } from '@/components/ui/text';
-import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
 import { FocusCard } from './focus-card';
 import { SafeGLView } from './safe-gl-view';
+import { BOX, HERE_H, LabelBody } from './world-labels';
 import { mountWorld, type WorldSC } from './scenes';
 import type { FocusInfo, Host, LabelSpec, Stage } from './stage';
 import { WorldFlat } from './world-flat';
-import { canTryWorld3D, GL_START_TIMEOUT, liteWorld } from './world-support';
+import { canTryWorld3D, devCapture, GL_START_TIMEOUT, liteWorld } from './world-support';
 
 /** 이름표를 가운데 맞추려고 두는 상자 너비 (프로토타입 translate(-50%)) */
-const BOX = 240;
-const HERE_H = 20;
-const SUB = '#5A5366';
-const SOON_LINE = '#9A93A6';
-const SOON_INK = '#6F6880';
 /** 지도를 고르고 이만큼 머물면 만들기 시작 (빠르게 넘기는 동안의 지도는 만들지 않아요) */
 const SETTLE_MS = 180;
 
@@ -189,7 +183,8 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
       building.current = null;
       if (left.current) return;
       try {
-        stage.current = mountWorld(h, id, sc, (no) => open.current(no));
+        stage.current = mountWorld(h, id, devCapture() ? openAll(sc) : sc, (no) => open.current(no));
+        if (devCapture()) (globalThis as { __world?: Record<string, unknown> }).__world = { ...(globalThis as { __world?: Record<string, unknown> }).__world, [id]: stage.current };
       } catch (e) {
         // 셰이더 · 확장 기능이 안 되는 기기: 2D 지도로
         console.warn('3D 지도를 만들지 못해서 2D 지도로 바꿔요', e);
@@ -259,47 +254,6 @@ function WorldLabel({ i, spec, xy, zoomed }: { i: number; spec: LabelSpec; xy: S
   );
 }
 
-function LabelBody({ spec, zoomed }: { spec: LabelSpec; zoomed: boolean }) {
-  if (spec.kind === 'lv') {
-    const soon = spec.st === 'soon';
-    return (
-      <View style={[styles.lv, spec.st === 'cur' && styles.lvCur, soon && styles.lvSoon]}>
-        <PText style={[styles.lvTitle, soon && { color: SOON_INK }]} numberOfLines={1}>
-          {spec.title}
-        </PText>
-        <PText style={[styles.lvSub, soon && { color: SOON_INK }]} numberOfLines={1}>
-          {spec.sub}
-        </PText>
-      </View>
-    );
-  }
-  if (spec.kind === 'here')
-    return (
-      <View style={styles.here}>
-        <PText style={styles.hereText}>{spec.text}</PText>
-      </View>
-    );
-  if (spec.kind === 'tag')
-    return (
-      <View style={[styles.tag, styles.tagCur]}>
-        <PText style={styles.tagText} numberOfLines={1}>
-          {spec.text}
-        </PText>
-      </View>
-    );
-  // 정류장 번호: 멀리서는 동그라미 번호, 확대하면 장면 이름 (.m3-tag.min)
-  return zoomed ? (
-    <View style={[styles.tag, spec.soon && styles.tagSoon]}>
-      <PText style={[styles.tagText, spec.soon && { color: SOON_INK }]} numberOfLines={1}>
-        {spec.text}
-      </PText>
-    </View>
-  ) : (
-    <View style={[styles.min, spec.soon && styles.tagSoon]}>
-      <PText style={[styles.minText, spec.soon && { color: SOON_INK }]}>{spec.num}</PText>
-    </View>
-  );
-}
 
 /** 내 캐릭터 (프로토타입 .m3-me): 아래 가운데가 3D 점에 오고, 콩콩 뛸 때 눌림 · 방향 반전을 따라가요.
  * 그림은 정해진 크기(RIDER_W × RIDER_H, 프로토타입 .av-char 520:332)로 그리고 크기는 scale 로 맞춰요 */
@@ -324,23 +278,12 @@ const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
   loading: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   labelBox: { position: 'absolute', left: 0, top: 0, width: BOX, alignItems: 'center' },
-  // .m3-lv
-  lv: { paddingTop: 4, paddingBottom: 5, paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', boxShadow: `2px 2px 0 ${Colors.ink}` },
-  lvCur: { backgroundColor: Colors.yellow },
-  lvSoon: { borderStyle: 'dashed', borderColor: SOON_LINE, backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: 'none' },
-  lvTitle: { fontFamily: Font.display, fontSize: 11, lineHeight: 12.65 },
-  lvSub: { fontFamily: Font.body800, fontSize: 10, lineHeight: 11.5, color: SUB },
-  // .m3-tag
-  tag: { paddingTop: 2, paddingBottom: 3, paddingHorizontal: 8, borderRadius: 11, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
-  tagCur: { backgroundColor: Colors.yellow, boxShadow: `2px 2px 0 ${Colors.ink}` },
-  tagSoon: { borderStyle: 'dashed', borderColor: SOON_LINE, backgroundColor: 'rgba(255,255,255,0.88)' },
-  tagText: { fontFamily: Font.body900, fontSize: 11, lineHeight: 14.3 },
-  min: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
-  minText: { fontFamily: Font.display, fontSize: 10, lineHeight: 12 },
-  // .m3-here
-  here: { height: HERE_H, paddingHorizontal: 9, borderRadius: 10, backgroundColor: Colors.ink, justifyContent: 'center' },
-  hereText: { fontFamily: Font.display, fontSize: 10, lineHeight: 12, color: Colors.yellow },
   rider: { position: 'absolute', left: 0, top: 0, width: RIDER_W, height: RIDER_H, transformOrigin: 'bottom' },
   riderImg: { width: RIDER_W, height: RIDER_H },
   pressed: { transform: [{ scale: 0.96 }] },
 });
+
+/** 개발용 사진 찍기: 모든 정류장 · 섬을 '열림'으로 (지금 섬 · 곧 열림은 2D 지도가 위에 그려요) */
+function openAll(sc: WorldSC): WorldSC {
+  return sc.map(([a, b]) => [a, b, 'open']) as WorldSC;
+}
