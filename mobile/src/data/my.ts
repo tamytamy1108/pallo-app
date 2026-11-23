@@ -248,7 +248,12 @@ export function rankPeople(per: 'w' | 'm', me: { name: string; branch: string; w
 
 export type BranchItemIcon = 'park' | 'wifi' | 'loc' | 'lock' | 'tel';
 export type BranchItem = { ic: BranchItemIcon; bg: string; t: string; s?: string; d: string; cp?: readonly (readonly [string, string])[]; act?: readonly ['map' | 'tel', string]; star?: boolean };
-export type Partner = { n: string; b: string; c: string; w: string; addr?: string; tel?: string; hrs?: string; info?: string; how?: string };
+/** 협업 업체 추가 정보 링크: 네이버 플레이스 · 인스타그램 · 카카오톡 채널 · 홈페이지 (label 이 없으면 종류별 기본 이름) */
+export type PartnerLinkKind = 'naver' | 'insta' | 'kakao' | 'web';
+export type PartnerLink = { kind: PartnerLinkKind; url: string; label?: string };
+/** 포스터 · 사진: 앱에 넣은 그림(require) 또는 서버 주소. 관리자가 아무 크기로 올려요 (0번이 대표) */
+export type PartnerPoster = number | string;
+export type Partner = { n: string; b: string; c: string; w: string; addr?: string; tel?: string; hrs?: string; info?: string; how?: string; links?: PartnerLink[]; posters?: PartnerPoster[] };
 export type BranchBoard = { addr: string; hrs: string; pin: { t: string; by: string; at: string } | null; items: BranchItem[]; partners: Partner[] };
 export const BR_BOARDS: Record<string, BranchBoard> = {
   하남점: {
@@ -263,9 +268,9 @@ export const BR_BOARDS: Record<string, BranchBoard> = {
       { ic: 'tel', bg: '#FFE7D1', t: '지점 문의', d: '0507-0000-0000 · 평일 10~19시', act: ['tel', '0507-0000-0000'], star: true },
     ],
     partners: [
-      { n: '카페 하남온', b: '음료 10% 할인', c: '#8A4B3A', w: 'CAFE', addr: '하남시 [주소] 1층 · 지점에서 도보 2분', tel: '031-000-0000', hrs: '매일 8~22시', info: '지점에서 걸어서 2분, 스터디 전후로 들르기 좋은 조용한 카페예요. 2층에 4인 테이블이 있어서 번개 모임이나 복습 자리로도 많이 써요. 영어로 주문하면 쿠키 하나를 더 주세요.', how: '주문할 때 PALLO 앱 멤버 화면을 보여 주세요' },
-      { n: '북스 미사', b: '원서 15% 할인', c: '#493087', w: 'BOOKS', addr: '하남시 미사 [주소] 2층', hrs: '10~21시 · 월요일 휴무', info: '원서 · 그래픽노블 코너가 따로 있는 동네 서점이에요. PALLO 교재 원서도 주문해 줘요.', how: '계산할 때 멤버 화면을 보여 주세요' },
-      { n: '스터디카페 온', b: '2시간 이용권 20% 할인', c: '#138A9E', w: 'STUDY' },
+      { n: 'Cafe Tammy', b: '음료 10% 할인', c: '#8A4B3A', w: 'CAFE', addr: '하남시 [주소] 1층 · 지점에서 도보 2분', tel: '031-000-0000', hrs: '매일 8~22시', info: '지점에서 걸어서 2분, 스터디 전후로 들르기 좋은 조용한 카페예요. 2층에 4인 테이블이 있어서 번개 모임이나 복습 자리로도 많이 써요. 영어로 주문하면 쿠키 하나를 더 주세요.', how: '주문할 때 PALLO 앱 멤버 화면을 보여 주세요', links: [{ kind: 'naver', url: 'https://map.naver.com' }, { kind: 'insta', url: 'https://instagram.com/cafe_tammy' }], posters: [require('@/assets/images/partners/cafe-poster.webp'), require('@/assets/images/partners/cafe-room.webp')] },
+      { n: '북스 미사', b: '원서 15% 할인', c: '#493087', w: 'BOOKS', addr: '하남시 미사 [주소] 2층', hrs: '10~21시 · 월요일 휴무', info: '원서 · 그래픽노블 코너가 따로 있는 동네 서점이에요. PALLO 교재 원서도 주문해 줘요.', how: '계산할 때 멤버 화면을 보여 주세요', links: [{ kind: 'insta', url: 'https://instagram.com/books_misa' }, { kind: 'web', url: 'https://example.com' }], posters: [require('@/assets/images/partners/books-poster.webp')] },
+      { n: '스터디카페 온', b: '2시간 이용권 20% 할인', c: '#138A9E', w: 'STUDY', posters: [require('@/assets/images/partners/study-poster.webp')] },
     ],
   },
   잠실점: {
