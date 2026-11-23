@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보상 상자 카드 시안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FBF6EA; --ink:#1E1A2B; --yellow:#FFE200; --pink:#D0798E;
+  --purple:#4A3A8C; --sky:#8FA6DC; --lav:#E5DDF6;
+  --ink-60:rgba(30,26,43,.6);
+  --disp:'Unbounded','Noto Sans KR',system-ui,sans-serif;
+  --kr:'Noto Sans KR',system-ui,sans-serif;
+  --out:cubic-bezier(.22,1,.36,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --io:cubic-bezier(.65,0,.35,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#EFE8D8;color:var(--ink);font-family:var(--kr);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;padding:40px 16px 72px;overflow-x:hidden}
+img{display:block;user-select:none;-webkit-user-drag:none;max-width:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,.stage:focus-visible{outline:3px solid var(--purple);outline-offset:3px}
+
+/* ---------- page ---------- */
+.page-head{max-width:1400px;margin:0 auto 36px;padding:0 8px}
+.page-head h1{font-family:var(--disp);font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1.15}
+.page-head p{font-weight:700;font-size:14px;color:#5b5470;margin-top:8px}
+.variants{max-width:1400px;margin:0 auto;display:flex;flex-wrap:wrap;gap:56px 32px;justify-content:center}
+.variant{flex:0 1 422px;min-width:0}
+.cap{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:0 4px}
+.cap .letter{font-family:var(--disp);font-weight:800;font-size:17px;width:38px;height:38px;flex:none;display:grid;place-items:center;border:2px solid var(--ink);border-radius:12px;background:var(--cream)}
+.cap .name{font-weight:900;font-size:15px;flex:1;min-width:0;line-height:1.3}
+.cap .name small{display:block;font-weight:500;font-size:12.5px;color:#6d6680;margin-top:2px}
+.replay{flex:none;border:2px solid var(--ink);background:var(--cream);border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;box-shadow:3px 3px 0 var(--ink);display:flex;align-items:center;gap:6px;transition:transform .12s var(--out),box-shadow .12s var(--out)}
+.replay:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.replay:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.replay svg{width:14px;height:14px}
+
+.phone-wrap{position:relative;width:100%;height:876px;overflow:hidden}
+.phone{position:absolute;left:0;top:0;width:414px;height:868px;transform-origin:0 0;background:var(--ink);border-radius:58px;padding:12px;box-shadow:6px 6px 0 rgba(30,26,43,.18)}
+.screen{position:relative;width:390px;height:844px;border-radius:46px;overflow:hidden;isolation:isolate;background:var(--cream)}
+.island{position:absolute;top:11px;left:50%;width:120px;height:34px;margin-left:-60px;background:#000;border-radius:20px;z-index:60}
+.status{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 40px;font-weight:700;font-size:15px;z-index:55;pointer-events:none}
+.status .icons{display:flex;gap:6px;align-items:center}
+.status .icons i{display:block;background:currentColor;border-radius:2px}
+.homebar{position:absolute;bottom:8px;left:50%;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:currentColor;opacity:.85;z-index:55}
+.stage{position:absolute;inset:0;-webkit-tap-highlight-color:transparent;touch-action:pan-y}
+.screen.ready:not(.is-open) .stage{cursor:pointer}
+.clip{position:absolute;left:0;top:0;width:390px;overflow:hidden;pointer-events:none}
+.free{position:absolute;left:0;top:0;width:390px;height:844px;pointer-events:none}
+.clip .card,.free .card{pointer-events:auto}
+
+/* ---------- title (swaps once everything is collected) ---------- */
+.ttl{position:absolute;left:0;right:0;top:92px;text-align:center;height:80px}
+.ttl > div{position:absolute;left:0;right:0;top:0;transition:opacity .35s,transform .5s var(--out)}
+.ttl p{font-family:var(--disp);font-weight:600;font-size:13px;opacity:.72}
+.ttl h2{font-weight:900;font-size:30px;letter-spacing:-.03em;margin-top:8px;line-height:1.1}
+.ttl .t-done{opacity:0;transform:translateY(12px)}
+.done .ttl .t-pre{opacity:0;transform:translateY(-10px)}
+.done .ttl .t-done{opacity:1;transform:none;transition-delay:.25s}
+
+/* ---------- bottom buttons ---------- */
+.btns{position:absolute;left:20px;right:20px;bottom:34px;display:flex;gap:10px;z-index:30;transform:translateY(130px);transition:transform .7s var(--out)}
+.done .btns{transform:none;transition-delay:var(--bd,.5s)}
+.btn{height:56px;border:2px solid var(--ink);border-radius:999px;font-weight:900;font-size:16.5px;color:var(--ink);box-shadow:4px 4px 0 var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s var(--out),box-shadow .12s var(--out)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn.home{flex:1;background:var(--cream)}
+.btn.next{flex:1.7;background:var(--yellow)}
+
+/* ---------- tap hint before opening (text only) ---------- */
+.tap-hint{position:absolute;left:0;right:0;text-align:center;font-weight:900;font-size:14px;letter-spacing:-.01em;opacity:0;transition:opacity .4s}
+.ready .tap-hint{opacity:1}
+.is-open .tap-hint{opacity:0}
+.hint:not(.is-open) .tap-hint{animation:hintPulse 1.6s var(--io) infinite}
+@keyframes hintPulse{0%,100%{transform:none}40%{transform:translateY(-3px) scale(1.06)}}
+.ring{position:absolute;border-radius:50%;border:2px solid currentColor;opacity:0;pointer-events:none}
+.hint:not(.is-open) .ring{animation:ring 1.6s var(--out) infinite}
+.hint:not(.is-open) .ring.r2{animation-delay:.2s}
+@keyframes ring{0%{opacity:0;transform:scale(.6)}10%{opacity:.55}100%{opacity:0;transform:scale(1.35)}}
+
+/* ---------- the chest (exact app chest, split into layers) ---------- */
+.chest-wrap{position:absolute;inset:0;transition:transform .7s var(--io),opacity .5s}
+.sink .chest-wrap{transform:translateY(110px);opacity:0}
+.chest{position:absolute;width:calc(84px * var(--s));height:calc(74px * var(--s))}
+.c-idle,.c-tap{position:absolute;inset:0;transform-origin:50% 92%}
+.c-tap{perspective:calc(240px * var(--s));perspective-origin:50% 0%}
+.chest svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.c-seam{position:absolute;left:-16%;width:132%;top:calc(var(--s) * 27px);height:calc(var(--s) * 16px);
+  background:radial-gradient(closest-side,rgba(255,251,214,.95),rgba(255,226,0,.6) 45%,rgba(255,226,0,0));
+  opacity:var(--glow,0);transition:opacity .45s var(--out)}
+.c-inglow{opacity:var(--glow,0);transition:opacity .45s var(--out)}
+.c-lid,.c-lock{position:absolute;inset:0}
+.c-lid{transform-origin:50% 48.65% calc(var(--s) * -12px);transform:translateY(calc(var(--s) * var(--lift,0) * 1px)) rotateX(var(--lid,0deg));transition:transform .5s var(--spring)}
+.c-lock{transform-origin:50% 53.4%}
+.ready:not(.is-open) .c-idle{animation:chestIdle 2.4s var(--io) .3s infinite}
+.hint:not(.is-open) .c-idle{animation-duration:1.6s}
+@keyframes chestIdle{
+  0%,62%,100%{transform:none}
+  68%{transform:rotate(-3deg)}74%{transform:rotate(3deg)}80%{transform:rotate(-2deg)}86%{transform:rotate(1deg)}92%{transform:none}
+}
+.is-open .chest{--glow:1}
+.is-open .c-lid{transform:rotateX(var(--lidOpen,62deg));animation:lidOpen .75s var(--spring) .2s both}
+@keyframes lidOpen{from{transform:translateY(calc(var(--s) * var(--lift,0) * 1px)) rotateX(var(--lid,0deg))}to{transform:translateY(0) rotateX(var(--lidOpen,62deg))}}
+.is-open .c-lock{opacity:0;animation:lockPop .6s linear both}
+@keyframes lockPop{
+  0%{transform:none;opacity:1;animation-timing-function:cubic-bezier(.3,.7,.4,1)}
+  25%{transform:translateY(calc(var(--s) * -4px)) scale(1.14);opacity:1;animation-timing-function:cubic-bezier(.5,0,.9,.6)}
+  100%{transform:translateY(calc(var(--s) * 40px)) rotate(30deg) scale(.9);opacity:0}
+}
+.is-open .c-tap{animation:chestPop .55s var(--out) .2s both}
+@keyframes chestPop{0%{transform:scale(1.06,.92)}45%{transform:scale(.97,1.04)}100%{transform:none}}
+
+.spot{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(255,226,0,.5),rgba(255,226,0,.18) 55%,rgba(255,226,0,0));opacity:0;transition:opacity .8s}
+.ready .spot{opacity:1;animation:spot 2.4s var(--io) infinite}
+@keyframes spot{0%,100%{transform:scale(.94)}50%{transform:scale(1.04)}}
+
+.rays{position:absolute;left:195px;width:0;height:0;transition:opacity .6s}
+.ray{position:absolute;left:-28px;bottom:0;width:56px;height:420px;transform-origin:50% 100%;transform:rotate(var(--a)) scaleY(0);opacity:0;
+  clip-path:polygon(50% 100%,0 0,100% 0);background:linear-gradient(to top,rgba(255,226,0,.5),rgba(255,226,0,0) 80%)}
+.is-open .ray{transform:rotate(var(--a));opacity:1;animation:rayIn .9s var(--out) var(--rd) both,rayBreath 3.6s var(--io) calc(var(--rd) + 1s) infinite}
+@keyframes rayIn{from{transform:rotate(var(--a)) scaleY(0);opacity:0}to{transform:rotate(var(--a));opacity:1}}
+@keyframes rayBreath{0%,100%{opacity:1}50%{opacity:.55}}
+.rare .ray{background:linear-gradient(to top,rgba(255,240,140,.85),rgba(255,226,0,0) 85%)}
+.sink .rays{opacity:0}
+
+/* =========================================================
+   CARD (collectible, v2 "수집 카드" language)
+   ========================================================= */
+.card{position:absolute;left:0;top:0;width:240px;height:336px;perspective:1000px;transform-origin:50% 50%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.card .tilt{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .45s var(--out)}
+.card .flip{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(180deg);transition:transform .95s cubic-bezier(.3,1.32,.5,1)}
+.card.up .flip{transform:rotateY(0deg)}
+.face{position:absolute;inset:0;border:2px solid var(--ink);border-radius:26px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.front{background:var(--bg);color:var(--ink);box-shadow:6px 6px 0 var(--ink)}
+/* back: mirrored, so its shadow is drawn to the left to land on the right */
+.back{background:var(--ink);transform:rotateY(180deg);display:grid;place-items:center;box-shadow:-6px 6px 0 rgba(30,26,43,.55)}
+.back::before{content:"";position:absolute;inset:12px;border:2px solid rgba(255,226,0,.45);border-radius:16px}
+.back .mark{display:flex;flex-direction:column;align-items:center;gap:12px;position:relative}
+.back img{width:104px}
+.back b{font-family:var(--disp);font-weight:800;font-size:16px;letter-spacing:.06em;color:var(--yellow)}
+.card.rare .back{background:#4A2F9E}
+.card.rare .back::before{inset:10px;border-color:var(--yellow);border-width:2.5px}
+.card.rare .back::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(112deg,transparent 38%,rgba(255,255,255,.28) 48%,transparent 58%);background-size:300% 100%;background-position:120% 0;
+  animation:sheenLoop 2.8s var(--io) infinite}
+
+.front .top{position:absolute;left:18px;right:18px;top:15px;display:flex;justify-content:space-between;align-items:baseline;font-family:var(--disp)}
+.front .top b{font-weight:800;font-size:14px;letter-spacing:-.01em}
+.front .top span{font-weight:600;font-size:11px}
+.front .art{position:absolute;left:50%;top:44px;width:164px;height:164px;margin-left:-82px;border-radius:50%;display:grid;place-items:center;
+  background:repeating-radial-gradient(circle at 50% 50%,transparent 0 8px,rgba(30,26,43,.09) 8px 10px)}
+.front .art svg{width:118px;height:118px;overflow:visible}
+.front .art img{position:absolute;left:50%;top:50%;width:176px;transform:translate(-50%,-50%) rotate(-4deg)}
+.front .foot{position:absolute;left:18px;right:18px;bottom:16px}
+.front .foot h3{font-family:var(--disp);font-weight:800;font-size:22px;letter-spacing:-.03em;line-height:1.1}
+.front .foot h3.kr{font-family:var(--kr);font-weight:900;font-size:24px;letter-spacing:-.04em}
+.card.rare .front .foot h3{font-size:18px;letter-spacing:-.02em}
+.front .sub{margin-top:9px;font-size:11.5px;font-weight:700;display:flex;gap:10px;align-items:center}
+.front .sub span{display:flex;align-items:center;gap:5px}
+.front .sub svg{width:13px;height:13px;flex:none;color:var(--ink)}
+.front .lines{margin-top:8px;font-family:var(--disp);font-weight:600;font-size:10.5px;line-height:1.5;letter-spacing:-.01em;opacity:.78}
+.front .days{margin-top:10px;display:flex;gap:6px}
+.front .days i{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink)}
+.front .days i.on{background:var(--ink)}
+.front .frame{position:absolute;inset:8px;border:1.5px solid rgba(30,26,43,.22);border-radius:19px;pointer-events:none}
+
+.sheen{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
+  background:linear-gradient(112deg,transparent 30%,rgba(255,255,255,.95) 44%,rgba(143,166,220,.9) 50%,rgba(208,121,142,.8) 55%,transparent 68%);
+  background-size:300% 100%;background-position:120% 0}
+.gloss{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(112deg,transparent 38%,rgba(255,255,255,.55) 48%,transparent 58%);background-size:300% 100%;background-position:120% 0}
+.card.shine .sheen,.card.shine .gloss{animation:sheenOnce 1.15s var(--io) .3s both}
+@keyframes sheenOnce{from{background-position:120% 0}to{background-position:-20% 0}}
+.card.rare.shine .sheen,.card.rare.shine .gloss{animation:sheenOnce 1.15s var(--io) .3s both,sheenLoop 6s var(--io) 2.2s infinite}
+@keyframes sheenLoop{0%{background-position:120% 0}22%{background-position:-20% 0}100%{background-position:-20% 0}}
+/* holo foil on the chapter card only */
+.foil{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;opacity:.9;
+  background:linear-gradient(125deg,transparent 12%,rgba(143,166,220,.95) 26%,rgba(255,255,255,.95) 36%,rgba(208,121,142,.9) 46%,rgba(229,221,246,.95) 56%,rgba(143,166,220,.9) 66%,rgba(255,255,255,.8) 76%,transparent 90%);
+  background-size:260% 260%;background-position:var(--fx,100%) 50%;transition:background-position .45s var(--out)}
+.card.rare.shine .foil{animation:foil 7s linear infinite}
+@keyframes foil{0%{background-position:100% 50%}50%{background-position:0% 50%}100%{background-position:100% 50%}}
+.card.tilting .foil{animation:none}
+
+/* finale burst behind the chapter card */
+.flash{position:absolute;width:0;height:0;pointer-events:none}
+.flash .glow{position:absolute;left:-210px;top:-210px;width:420px;height:420px;border-radius:50%;opacity:0;
+  background:radial-gradient(closest-side,rgba(255,251,214,.95),rgba(255,226,0,.55) 40%,rgba(255,226,0,0))}
+.flash .tk{position:absolute;left:0;top:0;width:0;height:0}
+.flash .tk i{position:absolute;left:0;top:-1.5px;width:22px;height:3px;border-radius:2px;background:var(--tick,var(--yellow));opacity:0;transform-origin:0 50%}
+
+/* scrim behind a zoomed card */
+.scrim{position:absolute;inset:0;background:rgba(30,26,43,.5);opacity:0;pointer-events:none;transition:opacity .35s;z-index:40}
+.zoom .scrim{opacity:1;pointer-events:auto}
+
+/* =========================================================
+   A  한 장씩 뽑기
+   ========================================================= */
+.va .screen{background:#2A2150;color:var(--cream)}
+.va .status{color:var(--cream)}
+.va .homebar{background:var(--cream)}
+.va .floor{position:absolute;left:-40px;right:-40px;top:560px;height:380px;border-radius:50%;background:radial-gradient(closest-side,rgba(74,58,140,.9),rgba(74,58,140,0));transition:opacity .6s}
+.va .a-spot{left:55px;top:390px;width:280px;height:250px}
+.va .dots{position:absolute;left:0;right:0;top:654px;display:flex;justify-content:center;gap:10px;transition:opacity .3s}
+.va .dots i{width:10px;height:10px;border-radius:50%;border:2px solid var(--lav);opacity:.6;transition:background .2s,opacity .2s,transform .3s var(--spring)}
+.va .dots i.on{background:var(--yellow);border-color:var(--yellow);opacity:1;transform:scale(1.25)}
+.va .is-open .dots{opacity:0}
+.va .tap-hint{top:680px;color:var(--cream)}
+.va .a-ring{left:65px;top:400px;width:260px;height:260px;color:var(--yellow)}
+.va .slots{position:absolute;left:0;right:0;top:672px;height:81px;opacity:0;transition:opacity .5s .9s}
+.va .is-open .slots{opacity:1}
+.va .done .slots{opacity:0;transition-delay:0s}
+.va .slot{position:absolute;top:0;width:58px;height:81px;margin-left:-29px;border:2px dashed rgba(229,221,246,.28);border-radius:8px}
+.va .prompt{position:absolute;left:0;right:0;top:770px;text-align:center;font-weight:900;font-size:14px;color:var(--cream);opacity:0;transition:opacity .3s}
+.va .prompt.show{opacity:1;animation:hintPulse 1.8s var(--io) 1.5s infinite}
+.va .done .floor{opacity:.4}
+.va .btn.home{background:var(--lav)}
+
+/* =========================================================
+   B  카드 덱 펼치기
+   ========================================================= */
+.vb .screen{background:var(--cream)}
+.vb .b-spot{left:45px;top:310px;width:300px;height:260px}
+.vb .tap-hint{top:578px}
+.vb .b-ring{left:65px;top:323px;width:260px;height:260px;color:var(--ink)}
+.vb .flash{--tick:var(--ink)}
+
+/* =========================================================
+   C  스와이프 컬렉션
+   ========================================================= */
+.vc .screen{background:var(--purple);color:var(--cream)}
+.vc .status{color:var(--cream)}
+.vc .homebar{background:var(--cream)}
+.vc .c-spot{left:45px;top:370px;width:300px;height:260px}
+.vc .tap-hint{top:638px;color:var(--cream)}
+.vc .c-ring{left:65px;top:383px;width:260px;height:260px;color:var(--yellow)}
+.vc .nav{position:absolute;left:0;right:0;top:546px;height:48px;display:flex;align-items:center;justify-content:center;gap:28px;opacity:0;transform:translateY(10px);transition:opacity .4s,transform .5s var(--out);pointer-events:none}
+.vc .deck .nav{opacity:1;transform:none;pointer-events:auto}
+.vc .arrow{width:48px;height:48px;border-radius:50%;border:2px solid var(--ink);background:var(--cream);box-shadow:3px 3px 0 var(--ink);display:grid;place-items:center;transition:transform .12s var(--out),box-shadow .12s var(--out),opacity .25s}
+.vc .arrow:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.vc .arrow svg{width:18px;height:18px}
+.vc .arrow[disabled]{opacity:.3;cursor:default}
+.vc .arrow.nudge{animation:nudge 1.4s var(--io) infinite}
+@keyframes nudge{0%,100%{transform:none}35%{transform:translateX(5px)}60%{transform:translateX(-1px)}}
+.vc .pdots{display:flex;gap:9px;align-items:center}
+.vc .pdots i{width:8px;height:8px;border-radius:50%;background:rgba(229,221,246,.35);transition:width .35s var(--out),background .25s}
+.vc .pdots i.seen{background:rgba(229,221,246,.75)}
+.vc .pdots i.on{width:22px;border-radius:4px;background:var(--yellow)}
+.vc .btn.home{background:var(--lav)}
+
+/* ---------- reduced motion: final state, no taps needed ---------- */
+@media (prefers-reduced-motion: reduce){
+  .screen *,.screen *::before,.screen *::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <h1>Chapter Clear: 보상 카드</h1>
+  <p>상자를 열면 보상이 수집 카드로 나와요 · 시안 3종 · 화면을 눌러 보세요</p>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="chk" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="currentColor"/><path d="M4.6 8.3l2.2 2.2 4.4-4.6" fill="none" stroke="#FFE200" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="cup" viewBox="0 0 24 24"><path d="M9 2.8c-.9 1.1.9 2.1-.1 3.4M12.6 2.8c-.9 1.1.9 2.1-.1 3.4" stroke="#1E1A2B" stroke-width="1.7" stroke-linecap="round" fill="none"/><path d="M4.5 9h11.5v4.6a5.4 5.4 0 0 1-5.4 5.4h-.7a5.4 5.4 0 0 1-5.4-5.4z" fill="#fff" stroke="#1E1A2B" stroke-width="2" stroke-linejoin="round"/><path d="M16 10.6h1.4a2.6 2.6 0 0 1 0 5.2H16" fill="none" stroke="#1E1A2B" stroke-width="2"/></symbol>
+  <symbol id="replay" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4"/><path d="M2.5 2.5v3.2h3.2"/></g></symbol>
+</svg>
+
+<main class="variants">
+
+<!-- ================= A ================= -->
+<section class="variant va" data-v="a">
+  <div class="cap">
+    <div class="letter">A</div>
+    <div class="name">한 장씩 뽑기<small>세 번 눌러 열고, 카드를 한 장씩 뒤집기</small></div>
+    <button class="replay" type="button"><svg><use href="#replay"/></svg>다시 보기</button>
+  </div>
+  <div class="phone-wrap"><div class="phone"><div class="screen">
+    <div class="island"></div>
+    <div class="status"><span>9:41</span><span class="icons"><i style="width:17px;height:10px"></i><i style="width:15px;height:10px;border-radius:6px 6px 2px 2px"></i><i style="width:24px;height:11px;border-radius:3px"></i></span></div>
+    <div class="stage" role="button" aria-label="보상 상자 열기">
+      <div class="floor"></div>
+      <div class="ttl">
+        <div class="t-pre"><p>Cafe Complaint</p><h2>1과 보상</h2></div>
+        <div class="t-done"><p>카드 5장 획득</p><h2>1과 완료</h2></div>
+      </div>
+      <div class="chest-wrap">
+        <div class="spot a-spot"></div>
+        <div class="rays" style="top:520px"></div>
+        <div class="chest" style="--s:2.5;left:90px;top:440px"></div>
+      </div>
+      <div class="ring a-ring"></div><div class="ring r2 a-ring"></div>
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="tap-hint">눌러서 열기</div>
+      <div class="slots"></div>
+      <div class="prompt"></div>
+      <div class="flash"></div>
+      <div class="clip" style="height:524px"></div>
+      <div class="free"></div>
+      <div class="scrim"></div>
+      <div class="btns"><button class="btn home" type="button">홈으로</button><button class="btn next" type="button">다음 과로</button></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+</section>
+
+<!-- ================= B ================= -->
+<section class="variant vb" data-v="b">
+  <div class="cap">
+    <div class="letter">B</div>
+    <div class="name">카드 덱 펼치기<small>덱이 부채꼴로 펼쳐지며 차례로 뒤집힘</small></div>
+    <button class="replay" type="button"><svg><use href="#replay"/></svg>다시 보기</button>
+  </div>
+  <div class="phone-wrap"><div class="phone"><div class="screen">
+    <div class="island"></div>
+    <div class="status"><span>9:41</span><span class="icons"><i style="width:17px;height:10px"></i><i style="width:15px;height:10px;border-radius:6px 6px 2px 2px"></i><i style="width:24px;height:11px;border-radius:3px"></i></span></div>
+    <div class="stage" role="button" aria-label="보상 상자 열기">
+      <div class="ttl">
+        <div class="t-pre"><p>Cafe Complaint</p><h2>1과 보상</h2></div>
+        <div class="t-done"><p>카드 5장 획득</p><h2>1과 완료</h2></div>
+      </div>
+      <div class="chest-wrap">
+        <div class="spot b-spot"></div>
+        <div class="chest" style="--s:2.5;left:90px;top:360px"></div>
+      </div>
+      <div class="ring b-ring"></div><div class="ring r2 b-ring"></div>
+      <div class="tap-hint">눌러서 열기</div>
+      <div class="flash"></div>
+      <div class="clip" style="height:444px"></div>
+      <div class="free"></div>
+      <div class="scrim"></div>
+      <div class="btns"><button class="btn home" type="button">홈으로</button><button class="btn next" type="button">다음 과로</button></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+</section>
+
+<!-- ================= C ================= -->
+<section class="variant vc" data-v="c">
+  <div class="cap">
+    <div class="letter">C</div>
+    <div class="name">스와이프 컬렉션<small>넘길 때마다 한 장씩 뒤집힘 · 마지막은 1과 카드</small></div>
+    <button class="replay" type="button"><svg><use href="#replay"/></svg>다시 보기</button>
+  </div>
+  <div class="phone-wrap"><div class="phone"><div class="screen">
+    <div class="island"></div>
+    <div class="status"><span>9:41</span><span class="icons"><i style="width:17px;height:10px"></i><i style="width:15px;height:10px;border-radius:6px 6px 2px 2px"></i><i style="width:24px;height:11px;border-radius:3px"></i></span></div>
+    <div class="stage" role="button" aria-label="보상 상자 열기">
+      <div class="ttl">
+        <div class="t-pre"><p>Cafe Complaint</p><h2>1과 보상</h2></div>
+        <div class="t-done"><p>Cafe Complaint</p><h2>1과 완료</h2></div>
+      </div>
+      <div class="chest-wrap">
+        <div class="spot c-spot"></div>
+        <div class="rays" style="top:500px"></div>
+        <div class="chest" style="--s:2.5;left:90px;top:420px"></div>
+      </div>
+      <div class="ring c-ring"></div><div class="ring r2 c-ring"></div>
+      <div class="tap-hint">눌러서 열기</div>
+      <div class="flash"></div>
+      <div class="clip" style="height:504px"></div>
+      <div class="free"></div>
+      <div class="nav">
+        <button class="arrow prev" type="button" aria-label="이전 카드"><svg viewBox="0 0 18 18" fill="none" stroke="#1E1A2B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.5L5.5 9l5.5 5.5"/></svg></button>
+        <div class="pdots"><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="arrow nextc" type="button" aria-label="다음 카드"><svg viewBox="0 0 18 18" fill="none" stroke="#1E1A2B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5L12.5 9 7 14.5"/></svg></button>
+      </div>
+      <div class="btns"><button class="btn home" type="button">홈으로</button><button class="btn next" type="button">다음 과로</button></div>
+    </div>
+    <div class="homebar"></div>
+  </div></div></div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var HINT_AFTER = 4000;
+  var OUT = 'cubic-bezier(.22,1,.36,1)', IO = 'cubic-bezier(.65,0,.35,1)', SPRING = 'cubic-bezier(.34,1.4,.64,1)';
+
+  /* ---------- the app chest, split into layers so the lid and lock can move ---------- */
+  var CHEST =
+    '<div class="c-idle"><div class="c-tap">' +
+      '<div class="c-seam"></div>' +
+      '<svg viewBox="0 0 84 74" aria-hidden="true">' +
+        '<rect x="7" y="38" width="70" height="32" rx="7" fill="#1E1A2B"/>' +
+        '<path d="M9 35c0-5 3-8.5 8-8.5h50c5 0 8 3.5 8 8.5z" fill="#231848" stroke="#1E1A2B" stroke-width="2.5" stroke-linejoin="round"/>' +
+        '<defs><radialGradient id="cInGlow"><stop offset="0" stop-color="#FFFBD6"/><stop offset=".45" stop-color="#FFE200"/><stop offset="1" stop-color="#FFE200" stop-opacity="0"/></radialGradient></defs>' +
+        '<ellipse class="c-inglow" cx="42" cy="32" rx="32" ry="6" fill="url(#cInGlow)"/>' +
+        '<g><rect x="7" y="34" width="70" height="32" rx="7" fill="#4A2F9E" stroke="#1E1A2B" stroke-width="2.5"/>' +
+        '<rect x="17" y="34" width="8" height="32" fill="#FFE200" stroke="#1E1A2B" stroke-width="2"/>' +
+        '<rect x="59" y="34" width="8" height="32" fill="#FFE200" stroke="#1E1A2B" stroke-width="2"/></g>' +
+      '</svg>' +
+      '<div class="c-lid"><svg viewBox="0 0 84 74" aria-hidden="true">' +
+        '<path d="M7 36V24C7 11 22 6 42 6s35 5 35 18v12Z" fill="#6C4FD0" stroke="#1E1A2B" stroke-width="2.5" stroke-linejoin="round"/>' +
+        '<path d="M17 36V12.5c2.4-1.2 5-2.1 8-2.8V36Z M59 36V9.7c3 .7 5.6 1.6 8 2.8V36Z" fill="#FFE200" stroke="#1E1A2B" stroke-width="2" stroke-linejoin="round"/>' +
+        '<path d="M30 14c4-1.4 9-2 14-2" stroke="#fff" stroke-opacity=".7" stroke-width="3.5" stroke-linecap="round" fill="none"/>' +
+        '<rect x="5" y="31" width="74" height="7" rx="3.5" fill="#FFE200" stroke="#1E1A2B" stroke-width="2.5"/>' +
+      '</svg></div>' +
+      '<div class="c-lock"><svg viewBox="0 0 84 74" aria-hidden="true">' +
+        '<rect x="33.5" y="30" width="17" height="19" rx="4" fill="#FFE200" stroke="#1E1A2B" stroke-width="2.5"/>' +
+        '<circle cx="42" cy="37.5" r="2.6" fill="#1E1A2B"/>' +
+        '<path d="M42 39v5" stroke="#1E1A2B" stroke-width="2.6" stroke-linecap="round"/>' +
+      '</svg></div>' +
+    '</div></div>';
+  document.querySelectorAll('.chest').forEach(function(c){ c.innerHTML = CHEST; });
+
+  /* ---------- card art (simple bold SVG; the mascot is always the real PNG) ---------- */
+  function rosette(cx, cy, r, bump, n){
+    var d = '', i, a, rr, pts = n * 2;
+    for (i = 0; i <= pts; i++){
+      a = (i / pts) * Math.PI * 2 - Math.PI / 2; rr = i % 2 ? r : r + bump;
+      d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rr).toFixed(1) + ' ' + (cy + Math.sin(a) * rr).toFixed(1);
+    }
+    return d + 'Z';
+  }
+  var ART = {
+    xp:
+      '<svg viewBox="0 0 120 120" aria-hidden="true">' +
+        '<circle cx="64" cy="64" r="50" fill="#1E1A2B"/>' +
+        '<circle cx="60" cy="60" r="50" fill="#FFE200" stroke="#1E1A2B" stroke-width="3.5"/>' +
+        '<circle cx="60" cy="60" r="39" fill="none" stroke="#1E1A2B" stroke-opacity=".3" stroke-width="2.5" stroke-dasharray="4 5"/>' +
+        '<text x="60" y="72" text-anchor="middle" font-family="Unbounded,sans-serif" font-weight="800" font-size="33" letter-spacing="-1" fill="#1E1A2B">XP</text>' +
+        '<path d="M28 44a35 35 0 0 1 17-18" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".85"/>' +
+      '</svg>',
+    badge:
+      '<svg viewBox="0 0 120 120" aria-hidden="true">' +
+        '<path d="M36 70h20l-5 46-8-8-10 7z" fill="#8FA6DC" stroke="#1E1A2B" stroke-width="3" stroke-linejoin="round"/>' +
+        '<path d="M64 70h20l3 45-10-7-8 8z" fill="#4A3A8C" stroke="#1E1A2B" stroke-width="3" stroke-linejoin="round"/>' +
+        '<path transform="translate(4 4)" d="' + rosette(60, 54, 40, 6, 14) + '" fill="#1E1A2B"/>' +
+        '<path d="' + rosette(60, 54, 40, 6, 14) + '" fill="#FFE200" stroke="#1E1A2B" stroke-width="3" stroke-linejoin="round"/>' +
+        '<circle cx="60" cy="54" r="27" fill="#FBF6EA" stroke="#1E1A2B" stroke-width="3"/>' +
+        '<use href="#cup" x="40" y="33" width="40" height="40"/>' +
+      '</svg>',
+    expr:
+      '<svg viewBox="0 0 120 120" aria-hidden="true">' +
+        '<path transform="translate(4 4)" d="M30 22h60a18 18 0 0 1 18 18v28a18 18 0 0 1-18 18H52l-20 16 4-16h-6a18 18 0 0 1-18-18V40a18 18 0 0 1 18-18z" fill="#1E1A2B"/>' +
+        '<path d="M30 22h60a18 18 0 0 1 18 18v28a18 18 0 0 1-18 18H52l-20 16 4-16h-6a18 18 0 0 1-18-18V40a18 18 0 0 1 18-18z" fill="#FBF6EA" stroke="#1E1A2B" stroke-width="3" stroke-linejoin="round"/>' +
+        '<g fill="#1E1A2B"><circle cx="47" cy="59" r="9"/><path d="M38 58c0-11 5-18 14-21l2.4 4.4C48.5 44 46 49 46.5 56z"/>' +
+        '<circle cx="73" cy="59" r="9"/><path d="M64 58c0-11 5-18 14-21l2.4 4.4C74.5 44 72 49 72.5 56z"/></g>' +
+      '</svg>',
+    streak:
+      '<svg viewBox="0 0 120 120" aria-hidden="true">' +
+        '<circle cx="64" cy="64" r="48" fill="#1E1A2B"/>' +
+        '<circle cx="60" cy="60" r="48" fill="#D0798E" stroke="#1E1A2B" stroke-width="3.5"/>' +
+        '<text x="58" y="79" text-anchor="middle" font-family="Unbounded,sans-serif" font-weight="800" font-size="54" letter-spacing="-2" fill="#1E1A2B">5</text>' +
+        '<text x="86" y="79" text-anchor="middle" font-family="Noto Sans KR,sans-serif" font-weight="900" font-size="17" fill="#1E1A2B">일</text>' +
+        '<path d="M28 42a34 34 0 0 1 16-16" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".6"/>' +
+      '</svg>'
+  };
+  var CHK = '<svg><use href="#chk"/></svg>';
+  var CARDS = {
+    xp:     { bg:'#8FA6DC', tl:'XP',  tr:'1과', art:ART.xp,    title:'+120 XP', sub:'<div class="sub">경험치</div>', label:'XP 카드 +120 XP' },
+    badge:  { bg:'#D0798E', tl:'배지', tr:'1과', art:ART.badge, title:'카페 마스터', kr:true, sub:'<div class="sub">새 배지</div>', label:'배지 카드 카페 마스터' },
+    expr:   { bg:'#E5DDF6', tl:'표현', tr:'1과', art:ART.expr,  title:'새 표현 8개', kr:true, sub:'<div class="lines">on the tip of my tongue<br>I\'d like a refund</div>', label:'표현 카드 새 표현 8개' },
+    streak: { bg:'#FBF6EA', tl:'연속', tr:'1과', art:ART.streak, title:'연속 5일', kr:true, sub:'<div class="days"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>', label:'연속 카드 5일' },
+    ch:     { bg:'#FFE200', tl:'1과', tr:'No.01', art:'<img src="assets/c-purple-tilt-3d.png" alt="">', title:'Cafe Complaint',
+              sub:'<div class="sub"><span>' + CHK + '예습</span><span>' + CHK + '본학습</span><span>' + CHK + '복습</span></div>', rare:true, label:'1과 카드 Cafe Complaint' }
+  };
+  function makeCard(k){
+    var d = CARDS[k], el = document.createElement('div');
+    el.className = 'card' + (d.rare ? ' rare' : '');
+    el.dataset.k = k;
+    el.setAttribute('aria-label', d.label);
+    el.innerHTML =
+      '<div class="tilt"><div class="flip">' +
+        '<div class="face back"><div class="mark"><img src="assets/c-upright-yellow.png" alt=""><b>PALLO</b></div></div>' +
+        '<div class="face front" style="--bg:' + d.bg + '">' +
+          (d.rare ? '<div class="frame"></div>' : '') +
+          '<div class="top"><b>' + d.tl + '</b><span>' + d.tr + '</span></div>' +
+          '<div class="art">' + d.art + '</div>' +
+          '<div class="foot"><h3' + (d.kr ? ' class="kr"' : '') + '>' + d.title + '</h3>' + d.sub + '</div>' +
+          (d.rare ? '<div class="foil"></div>' : '') +
+          '<div class="sheen"></div><div class="gloss"></div>' +
+        '</div>' +
+      '</div></div>';
+    return { el: el, k: k, p: null, anim: null };
+  }
+
+  /* ---------- card motion helpers ---------- */
+  function T(p){ return 'translate(' + (p.x - 120) + 'px,' + (p.y - 168) + 'px) rotate(' + (p.r || 0) + 'deg) scale(' + p.s + ')'; }
+  function move(c, p, dur, ease, delay){
+    var from = getComputedStyle(c.el).transform;
+    if (c.anim) c.anim.cancel();
+    c.p = p; c.el.style.transform = T(p);
+    if (p.z != null) c.el.style.zIndex = p.z;
+    if (!dur || reduce) return;
+    c.anim = c.el.animate([{ transform: from === 'none' ? T(p) : from }, { transform: T(p) }],
+      { duration: dur, easing: ease || OUT, delay: delay || 0, fill: 'backwards' });
+  }
+  function path(c, pts, dur, delay){
+    if (c.anim) c.anim.cancel();
+    var last = pts[pts.length - 1];
+    c.p = last; c.el.style.transform = T(last);
+    if (last.z != null) c.el.style.zIndex = last.z;
+    if (reduce) return;
+    c.anim = c.el.animate(pts.map(function(p){ var f = { transform: T(p) }; if (p.o != null) f.offset = p.o; if (p.e) f.easing = p.e; return f; }),
+      { duration: dur, delay: delay || 0, fill: 'backwards' });
+  }
+  function pop(c, amt){
+    if (reduce) return;
+    c.el.querySelector('.tilt').animate([{ transform:'scale(1)' }, { transform:'scale(' + (amt || 1.07) + ')', offset:.35 }, { transform:'scale(1)' }],
+      { duration: 700, easing: OUT, composite: 'add' });
+  }
+  function charge(c){
+    if (reduce) return;
+    c.el.querySelector('.tilt').animate([
+      { transform:'none' }, { transform:'rotate(-2.5deg)', offset:.2 }, { transform:'rotate(2.5deg)', offset:.45 },
+      { transform:'rotate(-1.5deg)', offset:.7 }, { transform:'none' }], { duration: 340, easing: 'ease-out', composite: 'add' });
+  }
+
+  /* fan slots shared by A (final) and B; arc order: xp, badge, ch, expr, streak */
+  var ARC = ['xp','badge','ch','expr','streak'];
+  var FAN = {
+    xp:     { dx:-113, dy:34, r:-12, s:.5,  z:1 },
+    badge:  { dx:-60,  dy:12, r:-6,  s:.55, z:2 },
+    ch:     { dx:0,    dy:-6, r:0,   s:.74, z:5 },
+    expr:   { dx:60,   dy:12, r:6,   s:.55, z:3 },
+    streak: { dx:113,  dy:34, r:12,  s:.5,  z:2 }
+  };
+  function fanPos(k, cy){ var f = FAN[k]; return { x:195 + f.dx, y:cy + f.dy, r:f.r, s:f.s, z:f.z }; }
+
+  function wiggle(el, amp, dur){
+    if (reduce) return;
+    return el.animate([
+      { transform:'none' },
+      { transform:'rotate(' + (-amp) + 'deg) scale(1.03,.97)', offset:.18 },
+      { transform:'rotate(' + (amp*.8) + 'deg)', offset:.42 },
+      { transform:'rotate(' + (-amp*.45) + 'deg)', offset:.66 },
+      { transform:'rotate(' + (amp*.2) + 'deg)', offset:.84 },
+      { transform:'none' }
+    ], { duration: dur || 480, easing:'ease-out' });
+  }
+
+  /* flip a card face up; finale = the chapter card's bigger moment */
+  function reveal(v, c, finale){
+    c.el.classList.add('up');
+    v.later(reduce ? 0 : 120, function(){ c.el.classList.add('shine'); });
+    pop(c, finale ? 1.1 : 1.06);
+    if (finale && !reduce){
+      v.screen.classList.add('rare');
+      var fl = v.q('.flash'), x = c.p.x, y = c.p.y;
+      fl.style.left = x + 'px'; fl.style.top = y + 'px';
+      fl.querySelector('.glow').animate([{ opacity:0, transform:'scale(.3)' }, { opacity:1, transform:'scale(1)', offset:.3 }, { opacity:0, transform:'scale(1.25)' }],
+        { duration: 1400, easing: OUT, delay: 200 });
+      v.q('.flash .tk i', true).forEach(function(t){
+        var R = 120 * c.p.s;
+        t.animate([{ opacity:0, transform:'translateX(' + R + 'px) scaleX(.2)' }, { opacity:1, transform:'translateX(' + (R + 14) + 'px) scaleX(1)', offset:.3 },
+          { opacity:0, transform:'translateX(' + (R + 44) + 'px) scaleX(0)' }], { duration: 700, easing: OUT, delay: 380 });
+      });
+    }
+  }
+
+  /* ---------- per-variant behaviour ---------- */
+  var ORDER = ['xp','badge','expr','streak','ch'];
+
+  var SPEC = {
+    /* A: three taps to open, cards come out one at a time */
+    a: {
+      mouth: 525, taps: 3,
+      setup: function(v){
+        var s = v.q('.slots'); s.innerHTML = '';
+        ORDER.forEach(function(k, i){ var d = document.createElement('div'); d.className = 'slot'; d.style.left = (195 + (i - 2) * 68) + 'px'; s.appendChild(d); });
+        v.q('.dots i', true).forEach(function(i){ i.classList.remove('on'); });
+        v.setPrompt('');
+      },
+      tapClosed: function(v){
+        var n = ++v.taps, dots = v.q('.dots i', true), tapEl = v.q('.c-tap');
+        dots[n-1] && dots[n-1].classList.add('on');
+        if (n === 1){ v.stage.style.setProperty('--lid','4deg'); v.stage.style.setProperty('--lift','-6'); v.stage.style.setProperty('--glow','.45'); wiggle(tapEl, 5); }
+        else if (n === 2){ v.stage.style.setProperty('--lid','8deg'); v.stage.style.setProperty('--lift','-9.5'); v.stage.style.setProperty('--glow','.9'); wiggle(tapEl, 9, 560);
+          v.q('.c-lock').animate([{transform:'none'},{transform:'rotate(-14deg)'},{transform:'rotate(10deg)'},{transform:'none'}],{duration:380,easing:'ease-out'}); }
+        else v.open();
+      },
+      opened: function(v){ v.idx = 0; v.later(900, function(){ SPEC.a.draw(v); }); },
+      draw: function(v){
+        var k = ORDER[v.idx], c = makeCard(k); v.cards[k] = c; v.clip.appendChild(c.el);
+        var M = this.mouth, last = k === 'ch';
+        v.busy = true; v.setPrompt('');
+        if (last) v.screen.classList.add('rare');
+        path(c, [
+          { x:195, y:M + 72, s:.4, r:0, z:10, e:'cubic-bezier(.2,.8,.3,1)' },
+          { x:195, y:M - 125, s:.6, r:last ? 0 : -3, o:.42, e:'cubic-bezier(.45,0,.2,1)' },
+          { x:195, y:318, s:.8, r:0, z:10 }
+        ], last ? 1250 : 1000);
+        v.later(last ? 1250 : 1000, function(){
+          v.free.appendChild(c.el); v.focus = c; v.state = 'flip'; v.busy = false;
+          v.setPrompt('눌러서 뒤집기');
+        });
+      },
+      tapOpen: function(v){
+        var c = v.cards[ORDER[v.idx]];
+        if (v.state === 'flip'){
+          v.busy = true; v.setPrompt('');
+          var last = c.k === 'ch';
+          if (last){ charge(c); v.later(340, function(){ reveal(v, c, true); }); }
+          else reveal(v, c);
+          v.later(last ? 1100 : 750, function(){
+            v.busy = false;
+            if (last){ v.state = 'end'; v.later(900, function(){ SPEC.a.finish(v); }); }
+            else { v.state = 'take'; v.setPrompt('눌러서 받기'); }
+          });
+        } else if (v.state === 'take'){
+          v.busy = true; v.setPrompt(''); v.focus = null; v.resetTilt(c);
+          move(c, { x:195 + (v.idx - 2) * 68, y:712, s:.24, r:0, z:2 + v.idx }, 620, SPRING);
+          v.idx++;
+          v.later(380, function(){ SPEC.a.draw(v); });
+        }
+      },
+      finish: function(v){
+        v.focus = null; v.resetTilt(v.cards.ch);
+        v.screen.classList.add('sink','done');
+        ARC.forEach(function(k, i){ move(v.cards[k], fanPos(k, v.fanY), 900, SPRING, 80 * i); });
+        v.state = 'final';
+      },
+      final: function(v){
+        ORDER.forEach(function(k){ var c = makeCard(k); v.cards[k] = c; v.free.appendChild(c.el); c.el.classList.add('up','shine'); move(c, fanPos(k, v.fanY)); });
+        v.screen.classList.add('is-open','sink','done','rare'); v.state = 'final';
+      }
+    },
+
+    /* B: one tap, a deck rises and fans out, cards flip on their own */
+    b: {
+      mouth: 445, taps: 1,
+      tapClosed: function(v){ wiggle(v.q('.c-tap'), 6); v.open(); },
+      opened: function(v){
+        var M = this.mouth;
+        v.later(700, function(){
+          ORDER.slice().reverse().forEach(function(k, i){
+            var c = makeCard(k); v.cards[k] = c; v.clip.appendChild(c.el);
+            path(c, [
+              { x:195, y:M + 72, s:.4, r:0, z:1 + i, e:'cubic-bezier(.2,.8,.3,1)' },
+              { x:195, y:290 - i * 3, s:.6, r:(i - 2) * 1.2, z:1 + i }
+            ], 900, i * 45);
+          });
+        });
+        v.later(1750, function(){
+          v.clip.style.height = '844px';
+          v.screen.classList.add('sink');
+          ARC.forEach(function(k, i){ move(v.cards[k], fanPos(k, v.fanY), 820, SPRING, 160 + i * 70); });
+        });
+        var t0 = 2900;
+        ORDER.forEach(function(k, i){
+          var last = k === 'ch';
+          var at = last ? t0 + 4 * 420 + 500 : t0 + i * 420;
+          if (last) v.later(at - 360, function(){ charge(v.cards.ch); });
+          v.later(at, function(){ reveal(v, v.cards[k], last); });
+        });
+        v.later(t0 + 4 * 420 + 500 + 1000, function(){ v.screen.classList.add('done'); v.state = 'final'; });
+      },
+      final: function(v){
+        ORDER.forEach(function(k){ var c = makeCard(k); v.cards[k] = c; v.free.appendChild(c.el); c.el.classList.add('up','shine'); move(c, fanPos(k, v.fanY)); });
+        v.screen.classList.add('is-open','sink','done'); v.state = 'final';
+      }
+    },
+
+    /* C: one tap, deck in the centre, swipe through; chapter card last */
+    c: {
+      mouth: 505, taps: 1,
+      setup: function(v){ v.cur = 0; v.seen = 0; SPEC.c.dots(v); },
+      tapClosed: function(v){ wiggle(v.q('.c-tap'), 6); v.open(); },
+      opened: function(v){
+        var M = this.mouth;
+        v.later(700, function(){
+          ORDER.slice().reverse().forEach(function(k, i){
+            var c = makeCard(k); v.cards[k] = c; v.clip.appendChild(c.el);
+            path(c, [
+              { x:195, y:M + 72, s:.4, r:0, z:1 + i, e:'cubic-bezier(.2,.8,.3,1)' },
+              { x:195 + (4 - i) * 3, y:340 - (4 - i) * 3, s:.96, r:0, z:1 + i }
+            ], 950, i * 50);
+          });
+        });
+        v.later(1750, function(){
+          v.clip.style.height = '844px'; v.screen.classList.add('sink');
+          SPEC.c.layout(v, 700);
+        });
+        v.later(2350, function(){ v.screen.classList.add('deck'); SPEC.c.show(v); });
+      },
+      pos: function(d){
+        if (d === 0) return { x:195, y:344, s:.96, r:0, z:10 };
+        var sg = d > 0 ? 1 : -1, a = Math.abs(d);
+        if (a === 1) return { x:195 + sg * 246, y:356, s:.76, r:sg * 5, z:6 };
+        return { x:195 + sg * 350, y:366, s:.7, r:sg * 8, z:6 - a };
+      },
+      layout: function(v, dur, dx){
+        ORDER.forEach(function(k, j){
+          var p = SPEC.c.pos(j - v.cur);
+          if (dx) p = { x:p.x + dx, y:p.y, s:p.s, r:p.r + dx * .02, z:p.z };
+          move(v.cards[k], p, dur, dx ? null : 'cubic-bezier(.25,1,.4,1)');
+        });
+      },
+      show: function(v){
+        var c = v.cards[ORDER[v.cur]];
+        v.focus = c; SPEC.c.dots(v);
+        if (!c.el.classList.contains('up')){
+          var last = c.k === 'ch';
+          v.busy = true;
+          if (last){ charge(c); v.later(340, function(){ reveal(v, c, true); }); }
+          else v.later(260, function(){ reveal(v, c); });
+          v.later(last ? 1300 : 900, function(){
+            v.busy = false;
+            if (last){ v.screen.classList.add('done'); v.state = 'final'; }
+            SPEC.c.nudge(v);
+          });
+        } else SPEC.c.nudge(v);
+      },
+      nudge: function(v){
+        var nx = v.q('.nextc'); nx.classList.remove('nudge'); clearTimeout(v.nudgeT);
+        if (v.cur < ORDER.length - 1 && v.seen <= v.cur) v.nudgeT = setTimeout(function(){ nx.classList.add('nudge'); }, 2200);
+      },
+      go: function(v, d){
+        var n = Math.max(0, Math.min(ORDER.length - 1, v.cur + d));
+        if (v.busy){ SPEC.c.layout(v, 380); return; }
+        if (n === v.cur){ SPEC.c.layout(v, 380); return; }
+        v.resetTilt(v.cards[ORDER[v.cur]]);
+        v.cur = n; v.seen = Math.max(v.seen, n);
+        SPEC.c.layout(v, 620);
+        SPEC.c.show(v);
+      },
+      dots: function(v){
+        v.q('.pdots i', true).forEach(function(d, i){ d.classList.toggle('on', i === v.cur); d.classList.toggle('seen', i <= v.seen); });
+        v.q('.prev').disabled = v.cur === 0;
+        v.q('.nextc').disabled = v.cur === ORDER.length - 1;
+      },
+      bind: function(v){
+        v.q('.prev').addEventListener('click', function(e){ e.stopPropagation(); if (v.state !== 'idle') SPEC.c.go(v, -1); });
+        v.q('.nextc').addEventListener('click', function(e){ e.stopPropagation(); if (v.state !== 'idle') SPEC.c.go(v, 1); });
+        var sx = null, dx = 0;
+        v.stage.addEventListener('pointerdown', function(e){
+          if (!v.screen.classList.contains('deck') || e.target.closest('button')) return;
+          sx = e.clientX; dx = 0;
+        });
+        v.stage.addEventListener('pointermove', function(e){
+          if (sx == null) return;
+          var sc = v.stage.getBoundingClientRect().width / 390;
+          dx = (e.clientX - sx) / sc;
+          if (Math.abs(dx) > 6){ v.dragged = true; SPEC.c.layout(v, 0, dx * .85); }
+        });
+        function end(){
+          if (sx == null) return; sx = null;
+          if (!v.dragged) return;
+          if (dx < -50) SPEC.c.go(v, 1); else if (dx > 50) SPEC.c.go(v, -1); else SPEC.c.layout(v, 380);
+          setTimeout(function(){ v.dragged = false; }, 0);
+        }
+        v.stage.addEventListener('pointerup', end);
+        v.stage.addEventListener('pointercancel', end);
+        v.stage.addEventListener('pointerleave', end);
+      },
+      tapOpen: function(v, e){
+        var cardEl = e.target.closest('.card');
+        if (!cardEl) return;
+        var j = ORDER.indexOf(cardEl.dataset.k);
+        if (j !== v.cur) SPEC.c.go(v, j - v.cur);
+      },
+      final: function(v){
+        ORDER.forEach(function(k){ var c = makeCard(k); v.cards[k] = c; v.free.appendChild(c.el); c.el.classList.add('up','shine'); });
+        v.cur = ORDER.length - 1; v.seen = v.cur; SPEC.c.layout(v, 0); SPEC.c.dots(v);
+        v.screen.classList.add('is-open','sink','deck','done'); v.state = 'final';
+      }
+    }
+  };
+
+  /* zoom a fanned card (A final, B final): tap brings it front, tap again puts it back */
+  function zoomTap(v, e){
+    var cardEl = e.target.closest('.card');
+    if (v.zoomed){
+      var z = v.zoomed; v.zoomed = null; v.focus = null; v.resetTilt(z);
+      v.screen.classList.remove('zoom');
+      move(z, fanPos(z.k, v.fanY), 560, SPRING);
+      if (!cardEl || cardEl === z.el) return;
+    }
+    if (!cardEl) return;
+    var c = v.cards[cardEl.dataset.k];
+    v.zoomed = c; v.focus = c;
+    v.screen.classList.add('zoom');
+    move(c, { x:195, y:420, s:.96, r:0, z:50 }, 620, SPRING);
+    if (!reduce){ c.el.classList.remove('shine'); void c.el.offsetWidth; c.el.classList.add('shine'); }
+  }
+
+  function Variant(root){
+    var self = this, key = root.dataset.v, spec = SPEC[key];
+    this.root = root; this.screen = root.querySelector('.screen'); this.stage = root.querySelector('.stage');
+    this.clip = root.querySelector('.clip'); this.free = root.querySelector('.free');
+    this.clipH = this.clip.style.height;
+    this.fanY = key === 'a' ? 410 : 430;
+    this.timers = [];
+    this.q = function(sel, all){ return all ? [].slice.call(root.querySelectorAll(sel)) : root.querySelector(sel); };
+    this.later = function(ms, fn){ if (reduce || ms <= 0){ fn(); return; } self.timers.push(setTimeout(fn, ms)); };
+    this.setPrompt = function(t){ var p = self.q('.prompt'); if (!p) return; p.classList.remove('show'); if (t){ p.textContent = t; void p.offsetWidth; p.classList.add('show'); } };
+    this.resetTilt = function(c){ if (!c) return; var t = c.el.querySelector('.tilt'); t.style.removeProperty('--rx'); t.style.removeProperty('--ry'); c.el.classList.remove('tilting'); c.el.querySelector('.front').style.removeProperty('--fx'); c.el.querySelectorAll('.sheen,.gloss').forEach(function(s){ s.style.backgroundPosition = ''; }); };
+    this.armHint = function(){
+      clearTimeout(self.hintT); self.screen.classList.remove('hint');
+      if (!self.isOpen) self.hintT = setTimeout(function(){ self.screen.classList.add('hint'); }, HINT_AFTER);
+    };
+    this.open = function(){
+      if (self.isOpen) return;
+      self.isOpen = true; self.state = 'open'; clearTimeout(self.hintT);
+      self.screen.classList.remove('hint'); self.screen.classList.add('is-open');
+      self.stage.setAttribute('aria-label', '보상 카드');
+      spec.opened(self);
+    };
+    this.reset = function(){
+      self.timers.forEach(clearTimeout); self.timers = []; clearTimeout(self.hintT); clearTimeout(self.nudgeT);
+      self.screen.getAnimations({ subtree:true }).forEach(function(a){ if (!(a instanceof CSSAnimation) && !(a instanceof CSSTransition)) a.cancel(); });
+      self.taps = 0; self.busy = false; self.isOpen = false; self.state = 'idle'; self.focus = null; self.zoomed = null; self.cards = {};
+      self.clip.innerHTML = ''; self.free.innerHTML = ''; self.clip.style.height = self.clipH;
+      self.stage.style.removeProperty('--lid'); self.stage.style.removeProperty('--lift'); self.stage.style.removeProperty('--glow');
+      self.stage.setAttribute('aria-label', '보상 상자 열기');
+      self.screen.classList.remove('is-open','ready','hint','sink','done','rare','zoom','deck');
+      var nx = root.querySelector('.nextc'); nx && nx.classList.remove('nudge');
+      spec.setup && spec.setup(self);
+      void self.screen.offsetWidth;
+      if (reduce){ self.screen.classList.add('ready'); self.isOpen = true; spec.final(self); return; }
+      self.timers.push(setTimeout(function(){ self.screen.classList.add('ready'); self.armHint(); }, 350));
+    };
+
+    /* finale burst parts */
+    var fl = root.querySelector('.flash');
+    fl.innerHTML = '<div class="glow"></div>';
+    for (var a = 0; a < 12; a++){ var t = document.createElement('div'); t.className = 'tk'; t.style.transform = 'rotate(' + (a * 30 + 15) + 'deg)'; t.appendChild(document.createElement('i')); fl.appendChild(t); }
+    /* rays */
+    var rays = root.querySelector('.rays');
+    if (rays) [-48,-24,0,24,48].forEach(function(an, i){
+      var el = document.createElement('div'); el.className = 'ray';
+      el.style.setProperty('--a', an + 'deg'); el.style.setProperty('--rd', (.36 + Math.abs(i-2) * .07) + 's');
+      rays.appendChild(el);
+    });
+
+    this.stage.addEventListener('click', function(e){
+      if (e.target.closest('button')) return;
+      if (self.dragged) return;
+      if (!self.isOpen){
+        if (!self.screen.classList.contains('ready')) return;
+        self.screen.classList.remove('hint');
+        spec.tapClosed(self);
+        if (!self.isOpen) self.armHint();
+        return;
+      }
+      if (self.state === 'final' && key !== 'c'){ zoomTap(self, e); return; }
+      if (self.busy) return;
+      spec.tapOpen && spec.tapOpen(self, e);
+    });
+    this.stage.tabIndex = 0;
+    this.stage.addEventListener('keydown', function(e){
+      if (e.target !== self.stage) return;
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); self.stage.click(); }
+      if (key === 'c' && self.screen.classList.contains('deck')){
+        if (e.key === 'ArrowRight') SPEC.c.go(self, 1);
+        if (e.key === 'ArrowLeft') SPEC.c.go(self, -1);
+      }
+    });
+
+    /* pointer tilt on the focused card */
+    if (!reduce){
+      this.stage.addEventListener('pointermove', function(e){
+        var c = self.focus; if (!c || self.dragged || !c.el.classList.contains('up')) return;
+        var r = c.el.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+        x = Math.max(-.6, Math.min(.6, x)); y = Math.max(-.6, Math.min(.6, y));
+        var t = c.el.querySelector('.tilt');
+        t.style.setProperty('--ry', (x * 18).toFixed(2) + 'deg');
+        t.style.setProperty('--rx', (-y * 14).toFixed(2) + 'deg');
+        c.el.classList.add('tilting');
+        c.el.querySelectorAll('.sheen,.gloss').forEach(function(s){ s.style.backgroundPosition = (50 - x * 120) + '% 0'; });
+        c.el.querySelector('.front').style.setProperty('--fx', (50 - x * 100) + '%');
+      });
+      this.stage.addEventListener('pointerleave', function(){ self.resetTilt(self.focus); });
+    }
+
+    spec.bind && spec.bind(this);
+    root.querySelector('.replay').addEventListener('click', function(){ self.reset(); });
+  }
+
+  /* ---------- fit phones to column width ---------- */
+  function fit(){
+    document.querySelectorAll('.phone-wrap').forEach(function(w){
+      var s = Math.min(1, w.clientWidth / 422);
+      w.querySelector('.phone').style.transform = 'scale(' + s + ')';
+      w.style.height = Math.ceil(876 * s) + 'px';
+    });
+  }
+  window.addEventListener('resize', fit); fit();
+
+  var list = [].map.call(document.querySelectorAll('.variant'), function(r){ return new Variant(r); });
+  window.__variants = list;
+  function start(){ list.forEach(function(v){ v.reset(); }); }
+  /* preload card art so flips never show a blank face */
+  var srcs = ['assets/c-purple-tilt-3d.png','assets/c-upright-yellow.png'];
+  var pre = Promise.all(srcs.map(function(s){ return new Promise(function(r){ var im = new Image(); im.onload = im.onerror = r; im.src = s; }); }));
+  var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+  Promise.race([Promise.all([fonts, pre]), new Promise(function(r){ setTimeout(r, 2500); })]).then(start);
+})();
+</script>
+</body>
+</html>
