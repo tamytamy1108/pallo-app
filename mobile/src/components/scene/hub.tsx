@@ -9,7 +9,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
-import { SCENE_STEPS, sceneIdOf, sceneListenItems, sceneStepKey, stepTitle, type Scene, type SceneStep, type SceneStepId, type SituationMap } from '@/data/situation';
+import { SCENE_STEPS, sceneIdOf, sceneListenItems, sceneStepKey, stepTitle, type Scene, type SceneStep, type SceneWithContent, type SceneStepId, type SituationMap } from '@/data/situation';
 import { useIsDone, useSavedPos } from '@/state/progress';
 
 import { Back, Check, Chev, ChevDown, Coin, Headphones, XMark } from './icons';
@@ -42,14 +42,14 @@ export function HubTop({ map, onBack, onList }: { map: SituationMap; onBack: () 
 }
 
 /** 장면 화면 본문 */
-export function HubBody({ map, scene, onLevel, onListen, onStep }: { map: SituationMap; scene: Scene; onLevel: () => void; onListen: () => void; onStep: (s: SceneStep) => void }) {
+export function HubBody({ map, scene, onLevel, onListen, onStep }: { map: SituationMap; scene: SceneWithContent; onLevel: () => void; onListen: () => void; onStep: (s: SceneStep) => void }) {
   const lv = useQuizLevel();
   const c = scene.content;
   const id = sceneIdOf(map.id, scene.no);
   const doneFlags = [useIsDone(sceneStepKey(id, 'mis')), useIsDone(sceneStepKey(id, 'flow')), useIsDone(sceneStepKey(id, 'bank')), useIsDone(sceneStepKey(id, 'exq')), useIsDone(sceneStepKey(id, 'talk'))];
   const nextId = SCENE_STEPS.find((_, i) => !doneFlags[i])?.id;
   if (!c) return null;
-  const items = sceneListenItems(scene).length;
+  const items = sceneListenItems(scene, c).length;
   return (
     <ScrollView style={styles.flex} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
@@ -168,7 +168,7 @@ function StepCard({ sceneId, step, index, done, next, onPress }: { sceneId: stri
 /** 장면 목록 시트 (프로토타입 stLessonSheet · .stc-sh) */
 export function SceneListSheet({ open, map, current, doneOf, onPick, onClose }: { open: boolean; map: SituationMap; current: number; doneOf: (no: number) => boolean; onPick: (s: Scene) => void; onClose: () => void }) {
   const insets = useSafeAreaInsets();
-  const doneN = map.scenes.filter((x) => x.content && doneOf(x.no)).length;
+  const doneN = map.scenes.filter((x) => x.contentId && doneOf(x.no)).length;
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.shRoot}>
@@ -184,7 +184,7 @@ export function SceneListSheet({ open, map, current, doneOf, onPick, onClose }: 
           <ScrollView contentContainerStyle={[styles.ls, { paddingBottom: 24 + insets.bottom }]}>
             {map.scenes.map((x) => {
               const cur = x.no === current;
-              const off = !x.content;
+              const off = !x.contentId;
               const dn = !off && doneOf(x.no);
               const row = (
                 <View style={[styles.r, cur && styles.rCur, off && styles.rOff]}>

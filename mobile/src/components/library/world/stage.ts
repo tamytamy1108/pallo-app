@@ -35,6 +35,10 @@ export type Host = {
   /** 맵을 바꿀 때 들어오는 방향 (1 · -1), 처음이면 1 */
   swapDir: number;
   paused: boolean;
+  /** 가벼운 그림 (메모리가 적거나 오래된 폰): 그림자 · 안티에일리어싱을 꺼요 */
+  lite?: boolean;
+  /** 그리다가 오류가 나면 (GL 을 잃음 · 셰이더 실패 등): 그리기를 멈추고 알려요 → 화면은 2D 지도로 바꿔요 */
+  onError?: (e: unknown) => void;
   onLabels?: (labels: { spec: LabelSpec }[]) => void;
   /** 이름표 좌표 [x0, y0, x1, y1, …] · 캐릭터 [x, y(발), 높이 px, 좌우(1|-1), 가로 배율, 세로 배율] · 확대 중인지 */
   onFrame?: (labelXY: number[], rider: number[] | null, zoomed: boolean) => void;
@@ -69,10 +73,10 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
       web && (g as unknown as WebGL2RenderingContext).canvas
         ? (g as unknown as WebGL2RenderingContext).canvas
         : ({ width: bw, height: bh, style: {}, clientWidth: w, clientHeight: h, addEventListener: () => {}, removeEventListener: () => {}, getContext: () => g } as unknown as HTMLCanvasElement);
-    const nr = new THREE.WebGLRenderer({ canvas, context: g as unknown as WebGL2RenderingContext, antialias: true });
+    const nr = new THREE.WebGLRenderer({ canvas, context: g as unknown as WebGL2RenderingContext, antialias: !host.lite });
     nr.setPixelRatio(1);
     nr.setSize(bw, bh, false);
-    nr.shadowMap.enabled = true;
+    nr.shadowMap.enabled = !host.lite;
     nr.shadowMap.type = THREE.PCFSoftShadowMap;
     nr.outputColorSpace = THREE.SRGBColorSpace;
     return nr;
@@ -207,6 +211,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
         alive = false;
         cancelAnimationFrame(raf);
         if (__DEV__) console.log('[gl] 3D 지도 그리기를 멈췄어요', e);
+        host.onError?.(e); // 화면은 2D 지도로 바꿔요
       }
       return false;
     }
@@ -244,9 +249,17 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     if (!alive) return;
     raf = requestAnimationFrame(loop);
     if (host.paused) return;
-    step();
-    const t = (Date.now() - t0) / 1000;
-    ticks.forEach((f) => f(t));
+    try {
+      step();
+      const t = (Date.now() - t0) / 1000;
+      ticks.forEach((f) => f(t));
+    } catch (e) {
+      // 폰에서 프레임 오류가 그대로 올라가면 앱이 꺼져요 → 여기서 멈추고 화면에 알려요 (2D 지도로)
+      alive = false;
+      cancelAnimationFrame(raf);
+      host.onError?.(e);
+      return;
+    }
     if (render()) report();
   };
   // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게

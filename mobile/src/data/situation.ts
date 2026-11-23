@@ -1,28 +1,24 @@
 /**
  * 상황 맵 · 장면 — 맵 목록은 data/maps (JSON 한 줄 = 맵 하나), 장면 단계 · 퀴즈 난이도는 여기.
- * 맞는 API: 16 `/library/maps` (맵 목록) · 17 `/library/books/:id/lessons` (장면 목록) · 18 `/lessons/:id` (장면 콘텐츠 → situation-content.ts).
+ * 맞는 API: 16 `/library/maps` (맵 목록 · 장면 줄) · 18 `/lessons/:id` (장면 콘텐츠). 둘 다 api/learn 으로 받아요 (화면은 api/queries).
  * 새 상황 맵 = data/maps/situation-maps.json 에 한 줄 (모양은 앱에 있는 프리셋 중 고르기). 형식은 docs/frontend/map-data.md.
  * 장면 id = '맵 id-장면 번호' (예: 'travel-1') — 라이브러리 지도 · 리스닝 룸과 같은 키예요.
  */
-import { getMaps, toSituationMaps, type Scene, type SituationMap, type SoonMap } from './maps';
+import type { Scene, SituationMap, SoonMap } from './maps';
+import { SCENE_CONTENT, type SceneContent } from './situation-content';
 
 export type { Scene, SituationMap, SoonMap };
 
-const LOADED = toSituationMaps(getMaps());
-
-/** 지금 열린 상황 맵 (순서대로) */
-export const SITUATION_MAPS: SituationMap[] = LOADED.maps;
-
-/** 곧 열릴 맵 (칩만 보이고 누르면 알림 안내) */
-export const SITUATION_SOON: SoonMap[] = LOADED.soon;
+/** 콘텐츠까지 받은 장면 (장면 화면 · 단계 화면) */
+export type SceneWithContent = Scene & { content: SceneContent };
 
 export const sceneIdOf = (mapId: string, no: number) => `${mapId}-${no}`;
 
-/** 장면 id('travel-1') → 맵 · 장면. 없는 id 면 null */
-export function findScene(id: string | undefined): { map: SituationMap; scene: Scene } | null {
+/** 장면 id('travel-1') → 맵 · 장면. maps = 16 `/library/maps` 로 받은 열린 맵. 없는 id 면 null */
+export function findScene(maps: SituationMap[], id: string | undefined): { map: SituationMap; scene: Scene } | null {
   if (!id) return null;
   const cut = id.lastIndexOf('-');
-  const map = SITUATION_MAPS.find((m) => m.id === id.slice(0, cut));
+  const map = maps.find((m) => m.id === id.slice(0, cut));
   const scene = map?.scenes.find((s) => s.no === Number(id.slice(cut + 1)));
   return map && scene ? { map, scene } : null;
 }
@@ -64,8 +60,13 @@ export const QUIZ_LEVELS: { lv: QuizLevel; name: string; d: string; ex: string }
 export const MY_QUIZ_LEVELS: QuizLevel[] = [1, 2];
 
 /** 리스닝 룸 문장 (프로토타입 lrItemsOf: 표현 예문 + 롤플레이 대사) */
-export function sceneListenItems(scene: Scene) {
-  const c = scene.content;
+export function sceneListenItems(scene: Scene, c: SceneContent | null | undefined) {
   if (!c) return [];
   return [...c.expr.map(([, ko, ex]) => ({ en: ex, ko, tag: `${scene.title} 표현` })), ...c.rp.lines.map(([en, ko]) => ({ en, ko, tag: `${scene.title} 대화` }))];
 }
+
+/**
+ * 리스닝 룸이 쓰는 장면 문장 — 24 `/lessons/:id/listen-items` 를 옮기기 전까지 앱에 든 콘텐츠를 바로 읽어요.
+ * 장면 화면 · 단계 화면은 이걸 쓰지 않고 18 `/lessons/:id` 로 받아요.
+ */
+export const localSceneListenItems = (scene: Scene) => sceneListenItems(scene, scene.contentId ? SCENE_CONTENT[scene.contentId] : null);

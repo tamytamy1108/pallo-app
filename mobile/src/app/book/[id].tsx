@@ -1,16 +1,19 @@
+import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { errorMessage } from '@/api/errors';
+import { bookShelfQuery } from '@/api/queries';
 import { TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
 import { MiniCover } from '@/components/library/unit-parts';
 import { Raised } from '@/components/ui/raised';
-import { EmptyState } from '@/components/ui/state-view';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -29,13 +32,19 @@ const back = () => (router.canGoBack() ? router.back() : router.replace('/librar
  */
 export default function BookScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const b = findBook(id ?? '');
+  // 17 /library/books — 라이브러리 탭에서 받아 둔 책장이면 기다리지 않아요
+  const shelf = useQuery(bookShelfQuery());
+  const b = shelf.data ? findBook(shelf.data, id ?? '') : undefined;
   const jp = !!b?.jp;
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Stack.Screen options={SCREEN.push} />
       <TopBar title={b ? `${b.l} 교재` : '교재'} onBack={back} />
-      {!b ? (
+      {shelf.isPending ? (
+        <LoadingState />
+      ) : shelf.isError ? (
+        <ErrorState message={errorMessage(shelf.error)} onRetry={() => shelf.refetch()} />
+      ) : !b ? (
         <EmptyState title="교재를 찾을 수 없어요" />
       ) : (
         <>

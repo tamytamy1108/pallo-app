@@ -9,34 +9,34 @@ import { HubBody, HubTop, SceneListSheet, StepPopup } from '@/components/scene/h
 import { LevelPick } from '@/components/scene/level-pick';
 import { getBest, pickLevel, useLevelPicked, useQuizLevel, clearQuizPos } from '@/components/scene/scene-store';
 import { showToast } from '@/components/ui/toast';
-import { EmptyState } from '@/components/ui/state-view';
+import { useScene } from '@/components/scene/use-scene';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { MY_QUIZ_LEVELS, SCENE_STEPS, findScene, sceneIdOf, sceneStepKey, type SceneStep } from '@/data/situation';
+import { MY_QUIZ_LEVELS, SCENE_STEPS, sceneIdOf, sceneStepKey, type SceneStep, type SceneWithContent, type SituationMap } from '@/data/situation';
 import { clearPos, isDone, sceneKey, useSavedPos } from '@/state/progress';
 
 /**
  * 상황 맵 장면 화면 (프로토타입 openStudy → showHub, 상황 맵이면 '장면' 화면).
  * 장면에 처음 들어오면 장면 화면보다 먼저 '내 레벨을 골라요'. 단계를 누르면 단계 팝업 → /scene/[id]/[단계].
- * id = '맵 id-장면 번호' (예: travel-1).
+ * id = '맵 id-장면 번호' (예: travel-1). 맵은 16 `/library/maps`, 장면 콘텐츠는 18 `/lessons/:id` 로 받아요.
  */
 export default function SceneScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const found = findScene(id);
-  if (!found || !found.scene.content) {
+  const load = useScene(id);
+  if (load.state !== 'ready') {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <EmptyState title="곧 열려요" />
+        {load.state === 'loading' ? <LoadingState /> : load.state === 'error' ? <ErrorState message={load.message} onRetry={load.retry} /> : <EmptyState title="곧 열려요" />}
       </SafeAreaView>
     );
   }
-  return <SceneHub key={id} sceneId={sceneIdOf(found.map.id, found.scene.no)} />;
+  return <SceneHub key={id} sceneId={sceneIdOf(load.map.id, load.scene.no)} map={load.map} scene={load.scene} />;
 }
 
 const leave = () => (router.canGoBack() ? router.back() : router.replace('/library'));
 
-function SceneHub({ sceneId }: { sceneId: string }) {
-  const { map, scene } = findScene(sceneId)!;
+function SceneHub({ sceneId, map, scene }: { sceneId: string; map: SituationMap; scene: SceneWithContent }) {
   const picked = useLevelPicked(scene.title);
   const lv = useQuizLevel();
   const [changing, setChanging] = useState(false);
@@ -108,7 +108,7 @@ function SceneHub({ sceneId }: { sceneId: string }) {
         doneOf={(no) => isDone(sceneKey(sceneIdOf(map.id, no)))}
         onClose={() => setSheet(false)}
         onPick={(x) => {
-          if (!x.content) {
+          if (!x.contentId) {
             showToast(`${x.no}장면은 교재 데이터가 들어오면 열려요`);
             return;
           }

@@ -14,7 +14,7 @@ import { BadgeSheet, FollowSheet, MeetsSheet } from '@/components/my/my-sheets';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/dialog';
-import { Raised } from '@/components/ui/raised';
+import { Raised, SHADOW_OFFSET } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
@@ -45,8 +45,10 @@ export default function MyScreen() {
 
   const people = rankPeople('w', me);
   const myRank = people.findIndex((p) => p.me) + 1;
-  // 카드 폭 = 화면 - 양쪽 16 - 그림자 4
-  const cardW = Math.min(width, 520) - Spacing.gutter * 2 - 4;
+  // 카드 폭 = 놓인 자리 폭 - 그림자 4 (재기 전에는 화면 - 양쪽 16 - 그림자 4).
+  // 화면 폭으로만 셈하면 넓은 화면에서 카드보다 자리가 넓어져 오른쪽에 그림자 판이 드러나요.
+  const [heroSlotW, setHeroSlotW] = useState(0);
+  const cardW = (heroSlotW || width - Spacing.gutter * 2) - SHADOW_OFFSET;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -67,7 +69,9 @@ export default function MyScreen() {
         </Appear>
 
         <Appear kind="rise" delay={40}>
-          <MyHero width={cardW} onFollow={setFollow} />
+          <View onLayout={(e) => setHeroSlotW(Math.round(e.nativeEvent.layout.width))}>
+            <MyHero width={cardW} onFollow={setFollow} />
+          </View>
         </Appear>
 
         <Appear kind="rise" delay={60}>

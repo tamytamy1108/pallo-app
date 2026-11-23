@@ -3,11 +3,11 @@
  * 원본은 scripts/av-art/art.js (캐릭터 원본 좌표 520 × 332 위에 그린 SVG) → export.html 로 뜬 PNG 예요.
  * 자리 r = [x, y, 폭, 높이]: box = 캐릭터 상자 비율 · stage = 무대(300 × 220) 비율.
  * 헤어는 머리 색을 바꾸도록 두 장: 바탕(빛 · 그림자 · 선) 위에 색칠 자리(tintColor 로 머리 색). front = 눈 위 앞머리.
- * 머리를 덮는 모자(cover)를 같이 쓰면 back · front 대신 cap(모자 속을 뺀 뒷머리) · side(모자 아랫선 아래로 내려오는 옆머리).
+ * 머리를 덮는 모자(cover)를 같이 써도 헤어는 그대로예요: 뒷머리 위에 모자가 얹히고, 앞머리는 모자 아랫선(clipY) 아래만 보여요.
  */
 
 export type AvRect = readonly [number, number, number, number];
-export type AvGeo = { k: 'box' | 'stage'; r: AvRect } | { k: 'hair'; back: AvRect; front?: AvRect; cap?: AvRect; side: AvRect } | { k: 'none' };
+export type AvGeo = { k: 'box' | 'stage'; r: AvRect } | { k: 'hair'; back: AvRect; front?: AvRect } | { k: 'none' };
 
 export const AV_ART: Record<string, number> = {
   'hr-sprout': require('@/assets/characters/av/hr-sprout.png'),
@@ -115,32 +115,28 @@ export const AV_HAIR_FILL: Record<string, number> = {
   'hr-long': require('@/assets/characters/av/hr-long-fill.png'),
 };
 
-/** 헤어 부분 그림: front 앞머리 · cap 모자 속을 뺀 뒷머리 · side 모자 아래 옆머리 (각각 바탕 + 색칠 자리) */
-type Two = { base: number; fill: number };
-export const AV_HAIR_PART: Record<string, { front?: Two; cap?: Two; side: Two }> = {
-  'hr-sprout': { side: { base: require('@/assets/characters/av/hr-sprout-side.png'), fill: require('@/assets/characters/av/hr-sprout-side-fill.png') } },
-  'hr-spiky': { cap: { base: require('@/assets/characters/av/hr-spiky-cap.png'), fill: require('@/assets/characters/av/hr-spiky-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-spiky-side.png'), fill: require('@/assets/characters/av/hr-spiky-side-fill.png') } },
-  'hr-bowl': { front: { base: require('@/assets/characters/av/hr-bowl-front.png'), fill: require('@/assets/characters/av/hr-bowl-front-fill.png') }, cap: { base: require('@/assets/characters/av/hr-bowl-cap.png'), fill: require('@/assets/characters/av/hr-bowl-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-bowl-side.png'), fill: require('@/assets/characters/av/hr-bowl-side-fill.png') } },
-  'hr-bun': { front: { base: require('@/assets/characters/av/hr-bun-front.png'), fill: require('@/assets/characters/av/hr-bun-front-fill.png') }, cap: { base: require('@/assets/characters/av/hr-bun-cap.png'), fill: require('@/assets/characters/av/hr-bun-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-bun-side.png'), fill: require('@/assets/characters/av/hr-bun-side-fill.png') } },
-  'hr-quiff': { cap: { base: require('@/assets/characters/av/hr-quiff-cap.png'), fill: require('@/assets/characters/av/hr-quiff-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-quiff-side.png'), fill: require('@/assets/characters/av/hr-quiff-side-fill.png') } },
-  'hr-bob': { front: { base: require('@/assets/characters/av/hr-bob-front.png'), fill: require('@/assets/characters/av/hr-bob-front-fill.png') }, cap: { base: require('@/assets/characters/av/hr-bob-cap.png'), fill: require('@/assets/characters/av/hr-bob-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-bob-side.png'), fill: require('@/assets/characters/av/hr-bob-side-fill.png') } },
-  'hr-pig': { front: { base: require('@/assets/characters/av/hr-pig-front.png'), fill: require('@/assets/characters/av/hr-pig-front-fill.png') }, cap: { base: require('@/assets/characters/av/hr-pig-cap.png'), fill: require('@/assets/characters/av/hr-pig-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-pig-side.png'), fill: require('@/assets/characters/av/hr-pig-side-fill.png') } },
-  'hr-pony': { front: { base: require('@/assets/characters/av/hr-pony-front.png'), fill: require('@/assets/characters/av/hr-pony-front-fill.png') }, cap: { base: require('@/assets/characters/av/hr-pony-cap.png'), fill: require('@/assets/characters/av/hr-pony-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-pony-side.png'), fill: require('@/assets/characters/av/hr-pony-side-fill.png') } },
-  'hr-curly': { front: { base: require('@/assets/characters/av/hr-curly-front.png'), fill: require('@/assets/characters/av/hr-curly-front-fill.png') }, cap: { base: require('@/assets/characters/av/hr-curly-cap.png'), fill: require('@/assets/characters/av/hr-curly-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-curly-side.png'), fill: require('@/assets/characters/av/hr-curly-side-fill.png') } },
-  'hr-long': { front: { base: require('@/assets/characters/av/hr-long-front.png'), fill: require('@/assets/characters/av/hr-long-front-fill.png') }, cap: { base: require('@/assets/characters/av/hr-long-cap.png'), fill: require('@/assets/characters/av/hr-long-cap-fill.png') }, side: { base: require('@/assets/characters/av/hr-long-side.png'), fill: require('@/assets/characters/av/hr-long-side-fill.png') } },
+/** 앞머리 그림 (바탕 + 색칠 자리) */
+export const AV_HAIR_FRONT: Record<string, { base: number; fill: number }> = {
+  'hr-bowl': { base: require('@/assets/characters/av/hr-bowl-front.png'), fill: require('@/assets/characters/av/hr-bowl-front-fill.png') },
+  'hr-bun': { base: require('@/assets/characters/av/hr-bun-front.png'), fill: require('@/assets/characters/av/hr-bun-front-fill.png') },
+  'hr-bob': { base: require('@/assets/characters/av/hr-bob-front.png'), fill: require('@/assets/characters/av/hr-bob-front-fill.png') },
+  'hr-pig': { base: require('@/assets/characters/av/hr-pig-front.png'), fill: require('@/assets/characters/av/hr-pig-front-fill.png') },
+  'hr-pony': { base: require('@/assets/characters/av/hr-pony-front.png'), fill: require('@/assets/characters/av/hr-pony-front-fill.png') },
+  'hr-curly': { base: require('@/assets/characters/av/hr-curly-front.png'), fill: require('@/assets/characters/av/hr-curly-front-fill.png') },
+  'hr-long': { base: require('@/assets/characters/av/hr-long-front.png'), fill: require('@/assets/characters/av/hr-long-front-fill.png') },
 };
 
 export const AV_GEO: Record<string, AvGeo> = {
-  'hr-sprout': { k: 'hair', back: [0.541, -0.2229, 0.1346, 0.3273], side: [0.3705, 0.0321, 0.4128, 0.1928] },
-  'hr-spiky': { k: 'hair', back: [0.3833, -0.2068, 0.3872, 0.3474], cap: [0.3885, 0.1285, 0.3769, 0.012], side: [0.3679, 0.0321, 0.4179, 0.2169] },
-  'hr-bowl': { k: 'hair', back: [0.3795, -0.0884, 0.3949, 0.2651], front: [0.391, -0.0542, 0.3718, 0.1747], cap: [0.3795, 0.1285, 0.3949, 0.0482], side: [0.3705, 0.0321, 0.4128, 0.1928] },
-  'hr-bun': { k: 'hair', back: [0.3872, -0.2851, 0.3795, 0.4438], front: [0.3949, -0.0341, 0.3641, 0.1446], cap: [0.3872, 0.1285, 0.3795, 0.0301], side: [0.3705, 0.0321, 0.4128, 0.1928] },
-  'hr-quiff': { k: 'hair', back: [0.3808, -0.2129, 0.4205, 0.3775], cap: [0.3821, -0.1566, 0.4192, 0.3213], side: [0.3705, 0.0321, 0.4128, 0.1928] },
-  'hr-bob': { k: 'hair', back: [0.3564, -0.1707, 0.441, 0.3956], front: [0.3846, -0.0683, 0.3846, 0.2711], cap: [0.3564, -0.004, 0.441, 0.2289], side: [0.3564, 0.0201, 0.441, 0.3012] },
-  'hr-pig': { k: 'hair', back: [0.2013, -0.0683, 0.7513, 0.3112], front: [0.3987, -0.0763, 0.3564, 0.1747], cap: [0.2013, -0.0683, 0.7513, 0.3112], side: [0.3705, 0.0321, 0.4128, 0.1928] },
-  'hr-pony': { k: 'hair', back: [0.1756, -0.1084, 0.5949, 0.3454], front: [0.3949, -0.0341, 0.3641, 0.1446], cap: [0.1756, -0.1084, 0.5949, 0.3454], side: [0.3705, 0.0321, 0.4128, 0.1928] },
-  'hr-curly': { k: 'hair', back: [0.3269, -0.3815, 0.5, 0.6426], front: [0.3987, -0.0241, 0.3564, 0.1426], cap: [0.3269, -0.3815, 0.5, 0.6426], side: [0.3564, 0.0482, 0.441, 0.2369] },
-  'hr-long': { k: 'hair', back: [0.3, -0.0723, 0.5538, 0.8614], front: [0.3718, -0.0964, 0.4103, 0.3213], cap: [0.3, 0.1285, 0.5538, 0.6606], side: [0.3526, 0.0201, 0.4487, 0.4398] },
+  'hr-sprout': { k: 'hair', back: [0.541, -0.2229, 0.1346, 0.3273] },
+  'hr-spiky': { k: 'hair', back: [0.3833, -0.2068, 0.3872, 0.3474] },
+  'hr-bowl': { k: 'hair', back: [0.3795, -0.0884, 0.3949, 0.2651], front: [0.391, -0.0542, 0.3718, 0.1747] },
+  'hr-bun': { k: 'hair', back: [0.3872, -0.2851, 0.3795, 0.4438], front: [0.3949, -0.0341, 0.3641, 0.1446] },
+  'hr-quiff': { k: 'hair', back: [0.3808, -0.2129, 0.4205, 0.3775] },
+  'hr-bob': { k: 'hair', back: [0.3564, -0.1707, 0.441, 0.3956], front: [0.3846, -0.0683, 0.3846, 0.2711] },
+  'hr-pig': { k: 'hair', back: [0.2013, -0.0683, 0.7513, 0.3112], front: [0.3987, -0.0763, 0.3564, 0.1747] },
+  'hr-pony': { k: 'hair', back: [0.1756, -0.1084, 0.5949, 0.3454], front: [0.3949, -0.0341, 0.3641, 0.1446] },
+  'hr-curly': { k: 'hair', back: [0.3269, -0.3815, 0.5, 0.6426], front: [0.3987, -0.0221, 0.3564, 0.1406] },
+  'hr-long': { k: 'hair', back: [0.3, -0.0723, 0.5538, 0.8614], front: [0.3718, -0.0964, 0.4103, 0.3213] },
   'e-sparkle': { k: 'box', r: [0.4744, 0.0783, 0.2282, 0.1847] },
   'e-lash': { k: 'box', r: [0.3897, -0.0462, 0.3705, 0.1867] },
   'e-liner': { k: 'box', r: [0.3577, 0.0361, 0.4346, 0.1325] },

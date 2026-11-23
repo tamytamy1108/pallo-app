@@ -14,11 +14,11 @@ let a = `/**
  * 원본은 scripts/av-art/art.js (캐릭터 원본 좌표 520 × 332 위에 그린 SVG) → export.html 로 뜬 PNG 예요.
  * 자리 r = [x, y, 폭, 높이]: box = 캐릭터 상자 비율 · stage = 무대(300 × 220) 비율.
  * 헤어는 머리 색을 바꾸도록 두 장: 바탕(빛 · 그림자 · 선) 위에 색칠 자리(tintColor 로 머리 색). front = 눈 위 앞머리.
- * 머리를 덮는 모자(cover)를 같이 쓰면 back · front 대신 cap(모자 속을 뺀 뒷머리) · side(모자 아랫선 아래로 내려오는 옆머리).
+ * 머리를 덮는 모자(cover)를 같이 써도 헤어는 그대로예요: 뒷머리 위에 모자가 얹히고, 앞머리는 모자 아랫선(clipY) 아래만 보여요.
  */
 
 export type AvRect = readonly [number, number, number, number];
-export type AvGeo = { k: 'box' | 'stage'; r: AvRect } | { k: 'hair'; back: AvRect; front?: AvRect; cap?: AvRect; side: AvRect } | { k: 'none' };
+export type AvGeo = { k: 'box' | 'stage'; r: AvRect } | { k: 'hair'; back: AvRect; front?: AvRect } | { k: 'none' };
 
 export const AV_ART: Record<string, number> = {
 `;
@@ -30,8 +30,8 @@ for (const [id, g] of Object.entries(geo.items)) {
   if (g.hair) { fill.push(id); parts.push([id, g]); if (g.front) { front.push(id); frontFill.push(id); } }
 }
 a += `};\n\nexport const AV_HAIR_FILL: Record<string, number> = {\n${fill.map((id) => `  ${q(id)}: ${req(id + '-fill')},`).join('\n')}\n};\n`;
-a += `\n/** 헤어 부분 그림: front 앞머리 · cap 모자 속을 뺀 뒷머리 · side 모자 아래 옆머리 (각각 바탕 + 색칠 자리) */\ntype Two = { base: number; fill: number };\nexport const AV_HAIR_PART: Record<string, { front?: Two; cap?: Two; side: Two }> = {\n${parts.map(([id, g]) => `  ${q(id)}: { ${g.front ? `front: { base: ${req(id + '-front')}, fill: ${req(id + '-front-fill')} }, ` : ''}${g.cap ? `cap: { base: ${req(id + '-cap')}, fill: ${req(id + '-cap-fill')} }, ` : ''}side: { base: ${req(id + '-side')}, fill: ${req(id + '-side-fill')} } },`).join('\n')}\n};\n`;
-a += `\nexport const AV_GEO: Record<string, AvGeo> = {\n${Object.entries(geo.items).map(([id, g]) => `  ${q(id)}: ${g.hair ? `{ k: 'hair', back: ${arr(g.back)}${g.front ? `, front: ${arr(g.front)}` : ''}${g.cap ? `, cap: ${arr(g.cap)}` : ''}, side: ${arr(g.side)} }` : g.k === 'none' ? `{ k: 'none' }` : `{ k: '${g.k}', r: ${arr(g.r)} }`},`).join('\n')}\n};\n`;
+a += `\n/** 앞머리 그림 (바탕 + 색칠 자리) */\nexport const AV_HAIR_FRONT: Record<string, { base: number; fill: number }> = {\n${parts.filter(([, g]) => g.front).map(([id]) => `  ${q(id)}: { base: ${req(id + '-front')}, fill: ${req(id + '-front-fill')} },`).join('\n')}\n};\n`;
+a += `\nexport const AV_GEO: Record<string, AvGeo> = {\n${Object.entries(geo.items).map(([id, g]) => `  ${q(id)}: ${g.hair ? `{ k: 'hair', back: ${arr(g.back)}${g.front ? `, front: ${arr(g.front)}` : ''} }` : g.k === 'none' ? `{ k: 'none' }` : `{ k: '${g.k}', r: ${arr(g.r)} }`},`).join('\n')}\n};\n`;
 a += `\nexport const AV_BG_ART: Record<string, number> = {\n${geo.bgMeta.map((b) => `  ${q(b.id)}: ${req('bg-' + b.id)},`).join('\n')}\n};\n`;
 a += `
 /** 원본 3D 몸 PNG (색마다 따로 그린 원본) */

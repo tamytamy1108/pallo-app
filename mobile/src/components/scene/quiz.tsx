@@ -8,7 +8,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
-import { MY_QUIZ_LEVELS, sceneStepKey, type QuizLevel, type Scene } from '@/data/situation';
+import { MY_QUIZ_LEVELS, sceneStepKey, type QuizLevel, type SceneWithContent } from '@/data/situation';
 import { useLearnPrefs } from '@/state/learn-prefs';
 import { savePos } from '@/state/progress';
 
@@ -21,8 +21,8 @@ import { StepShell, useStepFinish } from './step-frame';
 
 type Run = { lv: QuizLevel; items: QuizItem[]; order: number[]; i: number; right: number; res: (boolean | undefined)[] };
 
-const newRun = (scene: Scene, lv: QuizLevel): Run => {
-  const items = scene.content ? quizItems(scene.content, lv) : [];
+const newRun = (scene: SceneWithContent, lv: QuizLevel): Run => {
+  const items = quizItems(scene.content, lv);
   return { lv, items, order: shuffle(items.map((_, k) => k)), i: 0, right: 0, res: [] };
 };
 
@@ -31,7 +31,7 @@ const newRun = (scene: Scene, lv: QuizLevel): Run => {
  * 보기는 문제 바로 아래, 아래 고정 칸에는 정답 반응 + 다음 버튼 (v479). 처음 틀리면 그 보기만 지우고 한 번 더.
  * 결과: 맞힌 문제 · 문제별 다시 듣기 · 저장 · 'Lv.N로도 풀어 보기'(병행 레벨 중 안 푼 것) 또는 '다른 난이도로 다시 풀기'.
  */
-export function QuizStep({ sceneId, scene }: { sceneId: string; scene: Scene }) {
+export function QuizStep({ sceneId, scene }: { sceneId: string; scene: SceneWithContent }) {
   const picked = useLevelPicked(scene.title);
   const { finish, celebrate, finished } = useStepFinish(sceneId, 'exq');
   const [run, setRun] = useState<Run>(() => {
@@ -142,7 +142,7 @@ export function QuizStep({ sceneId, scene }: { sceneId: string; scene: Scene }) 
 }
 
 /* ---------- 문제 한 개 ---------- */
-function Question({ scene, item, last, onAnswered, onNext }: { scene: Scene; item: QuizItem; last: boolean; onAnswered: (first: boolean) => void; onNext: () => void }) {
+function Question({ scene, item, last, onAnswered, onNext }: { scene: SceneWithContent; item: QuizItem; last: boolean; onAnswered: (first: boolean) => void; onNext: () => void }) {
   const say = useSay();
   const [opts] = useState(() => optionsOf(item));
   const [miss, setMiss] = useState<string | null>(null);
@@ -287,7 +287,7 @@ function Part({ part, top }: { part: QuizPart; top?: boolean }) {
 }
 
 /* ---------- 결과 ---------- */
-function Result({ scene, run, onAgain, onDone }: { scene: Scene; run: Run; onAgain: (next: QuizLevel | null) => void; onDone: () => void }) {
+function Result({ scene, run, onAgain, onDone }: { scene: SceneWithContent; run: Run; onAgain: (next: QuizLevel | null) => void; onDone: () => void }) {
   const N = run.items.length;
   const best = getBest(scene.title);
   // 병행 레벨 중 아직 안 푼 레벨이 있으면 'Lv.N로도 풀어 보기'

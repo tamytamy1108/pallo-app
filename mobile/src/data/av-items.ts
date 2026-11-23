@@ -34,7 +34,7 @@ export const AV_ITEMS: AvItem[] = [
   { id: 'h-grad', cat: 'hat', name: '학사모', price: 400, rare: '레어', layer: 'back', hat: true, cover: true, clipY: 30 },
   { id: 'h-witch', cat: 'hat', name: '마녀 모자', price: 500, rare: '에픽', layer: 'back', hat: true, cover: true, clipY: 48 },
   { id: 'h-santa', cat: 'hat', name: '산타 모자', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', layer: 'back', hat: true, cover: true, clipY: 42 },
-  { id: 'h-crown', cat: 'hat', name: '황금 왕관', price: 0, rare: '시즌', lock: '주간 랭킹 TOP 3 보상', layer: 'back', hat: true },
+  { id: 'h-crown', cat: 'hat', name: '황금 왕관', price: 0, rare: '시즌', lock: '주간 랭킹 TOP 3 보상', layer: 'back', hat: true, cover: true, clipY: 32 },
   { id: 'f-cheek', cat: 'face', name: '발그레 볼', price: 0, rare: '기본', layer: 'front' },
   { id: 'f-cheek3', cat: 'face', name: '하트 볼', price: 150, rare: '일반', layer: 'front' },
   { id: 'f-freck', cat: 'face', name: '주근깨', price: 80, rare: '일반', layer: 'front' },

@@ -13,7 +13,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
-import type { Scene } from '@/data/situation';
+import type { SceneWithContent } from '@/data/situation';
 import type { Flow, MoreQ } from '@/data/situation-content';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useLearnPrefs } from '@/state/learn-prefs';
@@ -40,8 +40,8 @@ function talkCfg(X: Flow, more: MoreQ[], L: number) {
  * 말하기 · 쓰기 탭 (말하기가 어려워요면 처음부터 쓰기) · 전구 = 핵심 단어를 빈칸으로 둔 예시.
  * 끝나면 Great talk! — 내 말을 고쳐 보여 주고(분홍 취소선 → 초록) 표현함에 저장할 수 있어요.
  */
-export function TalkStep({ sceneId, scene }: { sceneId: string; scene: Scene }) {
-  const c = scene.content!;
+export function TalkStep({ sceneId, scene }: { sceneId: string; scene: SceneWithContent }) {
+  const c = scene.content;
   const X = c.flow;
   const L = useQuizLevel();
   const { noSpeak } = useLearnPrefs();
@@ -381,7 +381,7 @@ function Wait() {
 }
 
 /** 끝: Great talk! — 질문과 내 답(고친 곳 표시) · 저장 */
-function TalkEnd({ X, C, log, dict, used, scene }: { X: Flow; C: { lines: [string, string][] }; log: Msg[]; dict: Set<string>; used: boolean[]; scene: Scene }) {
+function TalkEnd({ X, C, log, dict, used, scene }: { X: Flow; C: { lines: [string, string][] }; log: Msg[]; dict: Set<string>; used: boolean[]; scene: SceneWithContent }) {
   const pairs = log.filter((m): m is Extract<Msg, { who: 'me' }> => m.who === 'me' && !m.retry);
   return (
     <View style={styles.end}>

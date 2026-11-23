@@ -14,8 +14,8 @@ describe('toSituationMaps', () => {
     const { maps, soon } = toSituationMaps(getMaps(), NOW);
     expect(maps.map((m) => m.id)).toEqual(['travel', 'biz', 'cafe', 'campus']);
     expect(soon).toEqual([{ id: 'next', title: '새 맵', when: '커밍순', lang: 0 }]);
-    expect(maps[0].scenes[0].content).not.toBeNull();
-    expect(maps[0].scenes[3].content).toBeNull();
+    expect(maps[0].scenes[0].contentId).toBe('travel-1');
+    expect(maps[0].scenes[3].contentId).toBeNull();
     expect(warn).not.toHaveBeenCalled();
   });
 

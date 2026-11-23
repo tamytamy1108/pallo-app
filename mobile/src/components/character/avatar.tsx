@@ -11,7 +11,7 @@ import { AV_BG, AV_COLOR_HEX, AV_ITEM, memberAvatar, type Avatar, type AvItem } 
 import { getMe } from '@/state/me';
 import { useMyAvatar } from '@/state/avatar';
 
-import { AV_ART, AV_BG_ART, AV_BODY, AV_GEO, AV_HAIR_FILL, AV_HAIR_PART, AV_TINT, type AvRect } from './av-assets';
+import { AV_ART, AV_BG_ART, AV_BODY, AV_GEO, AV_HAIR_FILL, AV_HAIR_FRONT, AV_TINT, type AvRect } from './av-assets';
 
 /*
  * 꾸민 캐릭터 그리기 (프로토타입 avCharHTML · avStage · lgFace).
@@ -142,31 +142,32 @@ function Tinted({ base, fill, r, hc, w, h }: { base: number; fill: number; r: Av
   );
 }
 
-/** 아이템 한 개 (캐릭터 상자 w × h 기준 자리) — 헤어는 뒷머리 (모자를 덮어쓰면 모자 속을 뺀 뒷머리) */
-function Sticker({ it, hc, w, h, capped = false }: { it: AvItem; hc: string; w: number; h: number; capped?: boolean }) {
+/** 아이템 한 개 (캐릭터 상자 w × h 기준 자리) — 헤어는 뒷머리 (모자를 써도 그대로, 모자가 위에 얹혀요) */
+function Sticker({ it, hc, w, h }: { it: AvItem; hc: string; w: number; h: number }) {
   const g = AV_GEO[it.id];
   if (!g) return null;
-  if (g.k === 'hair') {
-    const p = AV_HAIR_PART[it.id];
-    if (capped) return p?.cap && g.cap ? <Tinted base={p.cap.base} fill={p.cap.fill} r={g.cap} hc={hc} w={w} h={h} /> : null;
-    return <Tinted base={AV_ART[it.id]} fill={AV_HAIR_FILL[it.id]} r={g.back} hc={hc} w={w} h={h} />;
-  }
+  if (g.k === 'hair') return <Tinted base={AV_ART[it.id]} fill={AV_HAIR_FILL[it.id]} r={g.back} hc={hc} w={w} h={h} />;
   if (g.k !== 'box') return null;
   return <Image source={AV_ART[it.id]} style={rectStyle(g.r, w, h)} contentFit="fill" />;
 }
 
-/** 눈 위 헤어: 모자가 없으면 앞머리 · 머리를 덮는 모자를 쓰면 모자 아랫선(clipY) 아래로 옆머리 */
+/** 모자 아랫선 아래로 앞머리가 이만큼(원본 좌표)도 안 남으면 앞머리를 숨겨요 — 눈 위에 가는 띠로 걸쳐 보여서 */
+const MIN_BANGS_BELOW_HAT = 12;
+
+/** 눈 위 앞머리: 머리를 덮는 모자를 쓰면 모자 아랫선(clipY) 아래로 보이는 부분만 (단발 · 긴 머리처럼 길게 내려오는 앞머리만 남아요) */
 function HairFront({ it, cover, hc, w, h }: { it: AvItem; cover?: AvItem; hc: string; w: number; h: number }) {
   const g = AV_GEO[it.id];
-  const p = AV_HAIR_PART[it.id];
-  if (!g || g.k !== 'hair' || !p) return null;
-  if (!cover) return p.front && g.front ? <Tinted base={p.front.base} fill={p.front.fill} r={g.front} hc={hc} w={w} h={h} /> : null;
-  const top = ((cover.clipY ?? 40) / 332) * h;
+  const p = AV_HAIR_FRONT[it.id];
+  if (!g || g.k !== 'hair' || !p || !g.front) return null;
+  const bangs = <Tinted base={p.base} fill={p.fill} r={g.front} hc={hc} w={w} h={h} />;
+  if (!cover) return bangs;
+  const clipY = cover.clipY ?? 40;
+  const bangsBottom = (g.front[1] + g.front[3]) * 332;
+  if (bangsBottom - clipY < MIN_BANGS_BELOW_HAT) return null;
+  const top = (clipY / 332) * h;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: -w, top, width: w * 3, height: h * 2, overflow: 'hidden' }}>
-      <View style={{ position: 'absolute', left: w, top: -top, width: w, height: h }}>
-        <Tinted base={p.side.base} fill={p.side.fill} r={g.side} hc={hc} w={w} h={h} />
-      </View>
+      <View style={{ position: 'absolute', left: w, top: -top, width: w, height: h }}>{bangs}</View>
     </View>
   );
 }
@@ -192,7 +193,7 @@ export const AvatarChar = memo(function AvatarChar({ av, width: w, flip = av.fli
   const cover = its.find((i) => i.hat && i.cover);
   return (
     <View pointerEvents="none" style={[{ width: w, height: h }, flip && styles.flip, style]}>
-      {its.filter((i) => i.layer === 'back').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} capped={!!cover} />)}
+      {its.filter((i) => i.layer === 'back').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
       <Body color={av.color} w={w} h={h} />
       {its.filter((i) => i.layer === 'paint').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
       {its.filter((i) => i.layer === 'eye').map((i) => <EyeLayer key={i.id} it={i} color={av.color} w={w} h={h} />)}
