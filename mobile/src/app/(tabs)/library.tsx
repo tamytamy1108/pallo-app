@@ -10,6 +10,7 @@ import { CurrPanel, EmptyBlock, PanelCard, SitPanel, levelProgress } from '@/com
 import { LibraryWorld } from '@/components/library/library-world';
 import { libStore, markMapSeen, nextSceneNo, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
 import { ToTop } from '@/components/library/to-top';
+import { MAP_PRESETS } from '@/components/library/world/presets';
 import type { WorldSC } from '@/components/library/world/scenes';
 import { Raised } from '@/components/ui/raised';
 import { showToast } from '@/components/ui/toast';
@@ -60,12 +61,12 @@ export default function LibraryScreen() {
     if (sitMap) {
       const nx = nextSceneNo(sitMap);
       const sc: WorldSC = sitMap.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) ? 'soon' : sceneDone(sitMap, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
-      return { id: sitMap.id, sc, order: SITUATION_MAPS.indexOf(sitMap) };
+      return { id: MAP_PRESETS[sitMap.preset].build, sc, order: SITUATION_MAPS.indexOf(sitMap) };
     }
     if (!st.sitMode && books.length) {
       const sc: WorldSC = books.map((b) => [bookTag(b), b.study ? levelProgress(b.study) : '커밍순', !b.study ? 'soon' : b.mine ? 'cur' : 'open']);
       sc.sel = bi;
-      return { id: 'study2', sc, order: -1 };
+      return { id: MAP_PRESETS['island-study'].build, sc, order: -1 };
     }
     return null;
   })();
