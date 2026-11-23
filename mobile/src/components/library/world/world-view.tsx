@@ -1,4 +1,4 @@
-import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
+import { type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, PanResponder, StyleSheet, View } from 'react-native';
@@ -11,6 +11,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
+import { SafeGLView } from './safe-gl-view';
 import { mountWorld, type WorldSC } from './scenes';
 import type { FocusInfo, Host, LabelSpec, Stage } from './stage';
 
@@ -119,7 +120,7 @@ export function WorldView({ id, sc, swapDir, onOpen, visible = true }: Props) {
 
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      {size && <GLView style={styles.fill} onContextCreate={onContextCreate} msaaSamples={2} />}
+      {size && <SafeGLView style={styles.fill} onContextCreate={onContextCreate} msaaSamples={2} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />

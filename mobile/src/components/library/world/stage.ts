@@ -187,9 +187,23 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     if (zoomed !== lastZoomed) lastZoomed = zoomed;
     host.onFrame(xy, rider, zoomed);
   };
+  /**
+   * 한 장 그리기. GL 이 끊긴 판(지도를 빠르게 바꿀 때 폰에서 가끔)은 three 안에서 오류가 나요
+   * → 앱을 멈추지 않고 이 지도만 그리기를 그만둬요 (바탕색만 남아요 · 다시 들어오면 새로 그려요)
+   */
   const render = () => {
-    r.render(sc, cam);
-    gl.endFrameEXP();
+    try {
+      r.render(sc, cam);
+      gl.endFrameEXP();
+      return true;
+    } catch (e) {
+      if (alive) {
+        alive = false;
+        cancelAnimationFrame(raf);
+        if (__DEV__) console.log('[gl] 3D 지도 그리기를 멈췄어요', e);
+      }
+      return false;
+    }
   };
   const step = () => {
     if (intro) {
@@ -227,8 +241,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     step();
     const t = (Date.now() - t0) / 1000;
     ticks.forEach((f) => f(t));
-    render();
-    report();
+    if (render()) report();
   };
   // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게
   const draw = () => {
@@ -243,7 +256,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     }
     ticks.forEach((f) => f(0));
     host.onLabels?.(labels.map(({ spec }) => ({ spec })));
-    render();
+    if (!render()) return;
     report();
     raf = requestAnimationFrame(loop);
   };
@@ -251,6 +264,14 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const dispose = () => {
     alive = false;
     cancelAnimationFrame(raf);
+    // GL 이 이미 끊겼으면 정리 중에도 오류가 나요 — 닫는 길이라 그냥 넘어가요
+    try {
+      freeGpu();
+    } catch {
+      // 판이 사라지면 GPU 자원도 함께 사라져요
+    }
+  };
+  const freeGpu = () => {
     sc.traverse((o) => {
       const m = o as THREE.Mesh;
       m.geometry?.dispose?.();
