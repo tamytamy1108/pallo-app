@@ -6,49 +6,44 @@
  */
 import { createStore } from '@/lib/store';
 
+import { recordToday } from './today-goal';
+
+export { DAILY_GOAL, getTodayDone, useTodayDone } from './today-goal';
+
 /** 단계 키: `${레벨}:${과}:${단계 id}` (예: '1:1:pat'). 상황 장면: `scene:${장면 id}`. 단계 id · 장면 id 는 프로토타입 데이터의 id 그대로 */
 export const stepKey = (lv: number | string, unit: number | string, step: string) => `${lv}:${unit}:${step}`;
 export const sceneKey = (sceneId: string) => `scene:${sceneId}`;
-
-/** 오늘 목표: 학습 2개 (프로토타입 DAILY_GOAL · 홈 '오늘의 학습 목표'와 같은 값) */
-export const DAILY_GOAL = 2;
 
 type Progress = {
   done: Record<string, number>;
   pos: Record<string, number>;
   /** 멈춘 곳의 전체 문제 수 ('3/9까지 했어요') */
   posOf: Record<string, number>;
-  /** 오늘 처음 끝낸 단계 수 (날짜가 바뀌면 0부터) */
-  today: { day: string; n: number };
   /** 최고 기록 (짝 맞추기 걸린 초 · 빠른 답 보너스 등) */
   best: Record<string, number>;
   /** 마지막으로 연 단계 — 홈 스터디 맵이 여기서 시작해요 (프로토타입 ST.last) */
   last: LastStep | null;
 };
 export type LastStep = { lv: number; unit: number; step: string; at: number };
-const store = createStore<Progress>({ done: {}, pos: {}, posOf: {}, today: { day: '', n: 0 }, best: {}, last: null });
-
-const dayOf = (t = Date.now()) => new Date(t).toDateString();
+const store = createStore<Progress>({ done: {}, pos: {}, posOf: {}, best: {}, last: null });
 
 export const useIsDone = (key: string) => store.useStore((s) => key in s.done);
 /** 키 앞부분이 같은 것 중 끝낸 개수 (예: '1:1:' → 1과에서 끝낸 단계 수) */
 export const useDoneCount = (prefix: string) => store.useStore((s) => Object.keys(s.done).filter((k) => k.startsWith(prefix)).length);
 export const isDone = (key: string) => key in store.get().done;
 
-/** 끝냈다고 기록해요. 처음 끝낸 거면 true (포인트 · 오늘 목표는 처음일 때만) */
+/** 끝냈다고 기록해요. 처음 끝낸 거면 true (포인트 · 오늘 목표는 처음일 때만 · 오늘 목표는 state/today-goal) */
 export function markDone(key: string) {
   const first = !(key in store.get().done);
-  store.set((s) => {
-    const today = s.today.day === dayOf() ? s.today : { day: dayOf(), n: 0 };
-    return {
-      ...s,
-      done: first ? { ...s.done, [key]: Date.now() } : s.done,
-      pos: omit(s.pos, key),
-      posOf: omit(s.posOf, key),
-      today: first ? { ...today, n: today.n + 1 } : today,
-    };
-  });
+  store.set((s) => ({
+    ...s,
+    done: first ? { ...s.done, [key]: Date.now() } : s.done,
+    pos: omit(s.pos, key),
+    posOf: omit(s.posOf, key),
+  }));
   snaps.delete(key);
+  // 장면 도장(sceneKey)은 단계가 아니라서 오늘 목표에 세지 않아요
+  if (first && !key.startsWith('scene:')) recordToday(key);
   return first;
 }
 
@@ -62,13 +57,6 @@ export function clearPos(key: string) {
   store.set((s) => ({ ...s, pos: omit(s.pos, key), posOf: omit(s.posOf, key) }));
   snaps.delete(key);
 }
-
-/** 오늘 처음 끝낸 단계 수 */
-export const useTodayDone = () => store.useStore((s) => (s.today.day === dayOf() ? s.today.n : 0));
-export const getTodayDone = () => {
-  const t = store.get().today;
-  return t.day === dayOf() ? t.n : 0;
-};
 
 /** 단계를 열 때 남겨요 → 홈 스터디 맵 · 라이브러리 '이어서' */
 export const setLastStep = (lv: number, unit: number, step: string) => store.set((s) => ({ ...s, last: { lv, unit, step, at: Date.now() } }));

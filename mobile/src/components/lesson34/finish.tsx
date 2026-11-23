@@ -6,14 +6,11 @@ import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
 import { showToast } from '@/components/ui/toast';
 import { findStep34, type Stage, type Step34 } from '@/data/lessons34';
 import { sfx } from '@/lib/feedback';
-import { clearPos, isDone, markDone, stepKey } from '@/state/progress';
-import { getMe, updateMe } from '@/state/me';
+import { awardPoints } from '@/state/ledger';
+import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, stepKey } from '@/state/progress';
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 
-import { addToday, dropRun, todayCount } from './store';
-
-/** 오늘 목표: 학습 2개 (프로토타입 DAILY_GOAL) */
-const DAILY_GOAL = 2;
+import { dropRun } from './store';
 
 export type StepCtx = { lv: 3 | 4; unit: number; step: Step34 & { stage: Stage }; source: string };
 
@@ -46,10 +43,7 @@ export function useStepFinish(ctx: StepCtx) {
     const first = markDone(key);
     clearPos(key);
     dropRun(key);
-    const today = first ? addToday() : todayCount();
-    if (first) {
-      updateMe({ weekPoints: getMe().weekPoints + ctx.step.xp });
-    }
+    if (first) awardPoints(`step:${key}`, 'step', ctx.step.xp);
     const found = findStep34(ctx.lv, ctx.step.id);
     const all = found?.all ?? [];
     const left = all.filter((s) => !isDone(stepKey(ctx.lv, ctx.unit, s.id)));
@@ -60,7 +54,7 @@ export function useStepFinish(ctx: StepCtx) {
       correct: score?.right ?? 0,
       total: score?.total ?? 0,
       points: first ? ctx.step.xp : 0,
-      goalDone: Math.min(today, DAILY_GOAL),
+      goalDone: Math.min(getTodayDone(), DAILY_GOAL),
       goalTotal: DAILY_GOAL,
       unitComplete: first && left.length === 0,
     });

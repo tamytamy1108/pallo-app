@@ -5,7 +5,8 @@
  */
 import { AV_BG, AV_ITEM, AV_OWN0, AVC_LIST, avFresh, type Avatar } from '@/data/my';
 import { createStore } from '@/lib/store';
-import { getMe, updateMe } from '@/state/me';
+import { award } from '@/state/ledger';
+import { getMe } from '@/state/me';
 
 type AvatarState = { saved: Avatar; own: string[] };
 
@@ -59,7 +60,7 @@ export function buyAndSave(d: Avatar): { ok: true; cost: number; need: string[] 
   const sparks = getMe().sparks;
   if (cost > sparks) return { ok: false, short: cost - sparks };
   const add = [d.color, 'bg:' + d.bg, ...Object.values(d.eq).filter((x): x is string => !!x)].filter((k) => !isOwned(own, k));
-  updateMe({ sparks: sparks - cost });
+  award({ id: `shop:${Date.now()}`, type: 'shop', currency: 'sparks', amount: -cost });
   store.set({ saved: cloneAvatar(d), own: [...own, ...add] });
   return { ok: true, cost, need };
 }

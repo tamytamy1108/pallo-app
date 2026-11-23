@@ -14,10 +14,11 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
 import { Colors } from '@/constants/theme';
-import { TODAY_GOAL } from '@/data/home';
+import { SKIP_POINTS } from '@/data/home';
 import { LESSON_STEPS, MY_BOOK, STAGES } from '@/data/mock';
 import { sfx } from '@/lib/feedback';
-import { clearPos, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
+import { awardPoints } from '@/state/ledger';
+import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
 
 import { devSeason } from './dev';
 import { ARROW_PATH, CHECK_PATH, LineIcon } from './icons';
@@ -150,13 +151,17 @@ export function StudyMap() {
     (si: number) => {
       let gained = 0;
       LESSON_STEPS.forEach((s, i) => {
-        if (stageOf(i) <= si && markDone(stepKey(LV, lesson, s.id))) gained += 1;
+        const key = stepKey(LV, lesson, s.id);
+        if (stageOf(i) <= si && markDone(key)) {
+          gained += 1;
+          awardPoints(`skip:${key}`, 'skip', SKIP_POINTS);
+        }
       });
       setSkipStage(null);
       const allNow = LESSON_STEPS.every((s) => isDone(stepKey(LV, lesson, s.id)));
       sfx('fanfare');
       // 프로토타입: '테스트 통과!' · 'STAGE n까지 건너뛰었어요' · 단계마다 +10P
-      setCele({ correct: 0, total: 0, points: gained * 10, goalDone: Math.min(TODAY_GOAL.total, gained), goalTotal: TODAY_GOAL.total, unitComplete: allNow });
+      setCele({ correct: 0, total: 0, points: gained * SKIP_POINTS, goalDone: Math.min(getTodayDone(), DAILY_GOAL), goalTotal: DAILY_GOAL, unitComplete: allNow });
     },
     [lesson],
   );

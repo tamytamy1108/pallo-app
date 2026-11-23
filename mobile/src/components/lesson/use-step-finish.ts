@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { CelebrateResult } from '@/components/lesson/celebrate';
 import { stopSay } from '@/components/lesson/voice';
 import { nextStepAfter, STAGE_KO, STEP_DEFS, type StepDef } from '@/data/lessons';
-import { getMe, updateMe } from '@/state/me';
+import { awardPoints } from '@/state/ledger';
 import { DAILY_GOAL, getBest, getTodayDone, isDone, markDone, setBest, stepKey } from '@/state/progress';
 
 export type StepScore = { right: number; total: number; timed?: number; fast?: number };
@@ -25,8 +25,9 @@ export function useStepFinish(lv: number, unit: number, step: StepDef) {
     const bestK = `${key}:best`;
     const gain = Math.max(0, speed - (getBest(bestK) ?? 0));
     if (gain) setBest(bestK, speed);
+    if (first) awardPoints(`step:${key}`, 'step', step.xp);
+    if (gain) awardPoints(`speed:${key}:${speed}`, 'speed', gain);
     const points = (first ? step.xp : 0) + gain;
-    if (points) updateMe({ weekPoints: getMe().weekPoints + points });
 
     const done = (id: string) => isDone(stepKey(lv, unit, id));
     const next = nextStepAfter(step, done);
