@@ -15,7 +15,9 @@ import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
 import { Colors } from '@/constants/theme';
 import { SKIP_POINTS } from '@/data/home';
-import { LESSON_STEPS, MY_BOOK, STAGES } from '@/data/mock';
+import { lessonName, STUDY_STEPS } from '@/data/library';
+import { STUDY_LEVELS } from '@/data/library-lessons';
+import { MY_BOOK, STAGES } from '@/data/mock';
 import { sfx } from '@/lib/feedback';
 import { awardPoints } from '@/state/ledger';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
@@ -30,7 +32,24 @@ import { StopPopup, type StartMode } from './stop-popup';
 const NODE = 64;
 const NODE_CUR = 78;
 const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
-const LV = 1; // 홈 맵은 지금 내 교재 (Lv.1) — 프로토타입 mapLk '1-과'
+/** 홈 맵은 내 교재 레벨 (MY_BOOK.level) — 프로토타입 mapLk '레벨-과' */
+const LV = Number(MY_BOOK.level.replace('Lv.', ''));
+const LEVEL = STUDY_LEVELS.find((L) => L.lv === LV) ?? STUDY_LEVELS[0];
+/**
+ * 정류장 = 이 레벨의 예습 · 본학습 · 복습 단계 (STUDY_STEPS) 그대로. 맵 모양은 레벨이 달라도 같고 정류장 수 · 이름만 달라요
+ * (Lv.1 · 2 패턴형 8개 · Lv.3 토픽형 10개 · Lv.4 토론형 9개).
+ */
+const LESSON_STEPS = STAGES.flatMap((g) => STUDY_STEPS[LEVEL.kind][g.key].map((s) => ({ id: s.id, stage: g.key, title: s.t, min: s.min, xp: s.xp })));
+/** 위 칩 = 이 레벨의 과 (교재 순서 그대로 · Lv.3 은 토픽 번호, Lv.4 는 회차) */
+const UNITS = LEVEL.lessons.map((ls) => ls.no);
+const unitOf = (n: number) => LEVEL.lessons.find((ls) => ls.no === n);
+/** 제목 줄 (1과 Cafe Complaint · #54 Activities · Behind the Mask) */
+const unitName = (n: number) => {
+  const ls = unitOf(n);
+  return ls ? lessonName(LEVEL, ls) : '';
+};
+/** 칩 글자 (1과 · #54 · 2회) */
+const chipLabel = (n: number) => (LEVEL.kind === 'topic' ? `#${n}` : LEVEL.kind === 'debate' ? `${UNITS.indexOf(n) + 1}회` : `${n}과`);
 
 type Point = { x: number; y: number };
 
@@ -69,7 +88,7 @@ export function StudyMap() {
   // 마지막으로 연 단계 — 라이브러리 · 홈 맵 · 레슨이 같은 기록을 써요 (프로토타입 ST.last).
   // 맵은 그 과로 열리고, 캐릭터는 그 단계 위에 서요
   const last = useLastStep();
-  const [lesson, setLesson] = useState(() => (last?.lv === LV ? last.unit : 1));
+  const [lesson, setLesson] = useState(() => (last?.lv === LV ? last.unit : (UNITS[0] ?? 1)));
   const [seenAt, setSeenAt] = useState(last?.at);
   if (last && last.at !== seenAt) {
     // 다른 곳(라이브러리)에서 새 단계를 열었으면 맵도 그 과로 옮겨요
@@ -91,8 +110,8 @@ export function StudyMap() {
   const all = done.every(Boolean);
   const lastIdx = last?.lv === LV && last.unit === lesson ? LESSON_STEPS.findIndex((s) => s.id === last.step) : -1;
   const current = lastIdx >= 0 ? lastIdx : done.findIndex((d) => !d);
-  const title = MY_BOOK.titles[lesson] ?? '';
-  const next = MY_BOOK.titles[lesson + 1];
+  const nextNo = UNITS[UNITS.indexOf(lesson) + 1];
+  const next = nextNo == null ? '' : unitName(nextNo);
   const map = width ? layout(width) : null;
 
   // 챕터 줄: 칩 자리 기억 → 고른 과 · 이번 주 과를 가운데로
@@ -137,7 +156,7 @@ export function StudyMap() {
     const step = LESSON_STEPS[i];
     setPopIdx(null);
     if (!(OPEN_UNITS[LV] ?? []).includes(lesson)) {
-      showToast(`${lesson}과는 교재가 들어오면 열려요`);
+      showToast(`${chipLabel(lesson)}는 교재가 들어오면 열려요`);
       return;
     }
     if (mode === 'restart') clearPos(stepKey(LV, lesson, step.id));
@@ -213,11 +232,11 @@ export function StudyMap() {
           </View>
 
           <PText variant="title" numberOfLines={2} style={styles.title} color={onDark}>
-            {lesson}과 {title}
+            {unitName(lesson)}
           </PText>
 
           <ScrollView ref={chipRow} horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow} onLayout={(e) => (rowW.current = e.nativeEvent.layout.width)}>
-            {Array.from({ length: MY_BOOK.lessonCount }, (_, k) => k + 1).map((n) => (
+            {UNITS.map((n) => (
               <ChapChip key={n} n={n} on={n === lesson} week={MY_BOOK.weekLessons.includes(n)} bounce={bounce} onPress={() => pickLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
             ))}
           </ScrollView>
@@ -305,12 +324,12 @@ export function StudyMap() {
           </View>
 
           {next && (
-            <Pressable onPress={() => pickLesson(lesson + 1)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${lesson + 1}과 ${next}`}>
+            <Pressable onPress={() => pickLesson(nextNo)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${next}`}>
               {({ pressed }) => (
                 <Raised radius={20} pressed={pressed}>
                   <View style={styles.nextBtn}>
                     <PText style={styles.nextText} numberOfLines={1}>
-                      다음 챕터 · {lesson + 1}과 {next}
+                      다음 챕터 · {next}
                     </PText>
                     <LineIcon d={ARROW_PATH} size={22} width={2.4} />
                   </View>
@@ -381,10 +400,10 @@ function ChapChip({ n, on, week, bounce, onPress, onLayout }: { n: number; on: b
         onPress={onPress}
         accessibilityRole="tab"
         accessibilityState={{ selected: on }}
-        accessibilityLabel={`${n}과 ${MY_BOOK.titles[n] ?? ''}, ${count}/${LESSON_STEPS.length}${week ? ', 이번 주 스터디 진도' : ''}`}
+        accessibilityLabel={`${unitName(n)}, ${count}/${LESSON_STEPS.length}${week ? ', 이번 주 스터디 진도' : ''}`}
         style={({ pressed }) => StyleSheet.flatten([styles.chap, week && styles.chapWeek, full && styles.chapDone, on && styles.chapOn, pressed && styles.chapPressed])}>
         <PText style={styles.chapText} color={on ? Colors.white : Colors.ink}>
-          {n}과
+          {chipLabel(n)}
         </PText>
         {full && <LineIcon d={CHECK_PATH} size={12} width={3.6} color={on ? Colors.yellow : Colors.ink} />}
         {part && !on && <View style={styles.chapDot} />}
@@ -431,7 +450,7 @@ function ChestNode({ x, y, open, lesson, xmas, shake, onPress }: { x: number; y:
           <CurrentFx chest />
         </View>
       )}
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${lesson}과 보상 상자${open ? ', 열 수 있어요' : ', 잠김'}`}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${chipLabel(lesson)} 보상 상자${open ? ', 열 수 있어요' : ', 잠김'}`}>
         {({ pressed }) => (
           <Animated.View key={shake} style={[{ width: W, height: H }, nudge, open && pressed && styles.chestPressed]}>
             <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: '50% 90%' }, loop(chestShakeKf)]}>
@@ -444,7 +463,7 @@ function ChestNode({ x, y, open, lesson, xmas, shake, onPress }: { x: number; y:
           </Animated.View>
         )}
       </Pressable>
-      <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, open && styles.chestLabelOpen, xmas && styles.labelXmas])}>{lesson}과 보상</PText>
+      <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, open && styles.chestLabelOpen, xmas && styles.labelXmas])}>{chipLabel(lesson)} 보상</PText>
     </View>
   );
 }
