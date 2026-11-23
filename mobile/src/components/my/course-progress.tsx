@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   lsChip: { minWidth: 34, paddingHorizontal: 4, height: 18, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   lsChipT: { fontFamily: Font.body900, fontSize: 10, lineHeight: 14, fontVariant: ['tabular-nums'] },
   slotA: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
-  slotB: { backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
+  slotB: { backgroundColor: '#F7C9D5', borderWidth: 1.5, borderColor: Colors.ink },
   swOff: { backgroundColor: Colors.line },
   offT: { color: Colors.inkSub },
   day: { padding: 14, borderRadius: 18, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, gap: 2 },
