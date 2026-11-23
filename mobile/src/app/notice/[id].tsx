@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BackButton } from '@/components/ui/back-button';
+import { TOP_ICON, TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { BottomBar } from '@/components/bottom-bar';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
@@ -32,18 +32,17 @@ export default function NoticeDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.top}>
-        <BackButton onPress={() => router.back()} />
-        <PText variant="bodyStrong" style={styles.topTitle}>
-          공지
-        </PText>
-        <View style={styles.sp} />
-        {notice && (
-          <Pressable onPress={() => showToast('공지 링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={styles.back}>
-            <LineIcon d={ICON_PATH.send} size={19} />
-          </Pressable>
-        )}
-      </View>
+      <TopBar
+        title="공지"
+        fallback="/notice"
+        right={
+          notice && (
+            <Pressable onPress={() => showToast('공지 링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={TOP_ICON}>
+              <LineIcon d={ICON_PATH.send} size={19} />
+            </Pressable>
+          )
+        }
+      />
 
       {notice ? <Detail notice={notice} /> : <PText style={styles.missing}>게시물을 찾을 수 없어요.</PText>}
     </SafeAreaView>
@@ -83,10 +82,6 @@ function Detail({ notice }: { notice: Notice }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderBottomWidth: 1.5, borderColor: Colors.line },
-  back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  topTitle: { fontFamily: Font.body900, fontSize: 16 },
-  sp: { flex: 1 },
   body: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 40, gap: 4 },
   title: { marginTop: 4, fontFamily: Font.body900, fontSize: 22, lineHeight: 30, letterSpacing: -0.4 },
   meta: { marginBottom: 10 },

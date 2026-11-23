@@ -8,10 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
+import { TopBar } from '@/components/ui/top-bar';
 import { SCREEN } from '@/lib/transitions';
 import { MemberFace } from '@/components/character/avatar';
 import { ExprRows } from '@/components/my/expr-rows';
-import { LgIcon } from '@/components/my/icons';
 import { Lift } from '@/components/my/lift';
 import { Appear } from '@/components/ui/appear';
 import { Raised } from '@/components/ui/raised';
@@ -137,23 +137,8 @@ export default function RankingScreen() {
   return (
     <View style={styles.screen}>
       <Stack.Screen options={SCREEN.push} />
-      <ScrollView contentContainerStyle={[styles.body, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 60 }]}>
-        <View style={styles.head}>
-          <Pressable
-            onPress={() => {
-              sfx('back');
-              if (router.canGoBack()) router.back();
-              else router.replace('/my');
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="마이로 돌아가기"
-            style={styles.back}>
-            <LgIcon name="back" size={22} sw={2.4} />
-          </Pressable>
-          <PText variant="headline" accessibilityRole="header">
-            랭킹 · 퀘스트
-          </PText>
-        </View>
+      <TopBar title="랭킹 · 퀘스트" fallback="/my" backLabel="마이로 돌아가기" safeTop />
+      <ScrollView contentContainerStyle={[styles.body, { paddingTop: 16, paddingBottom: insets.bottom + 60 }]}>
 
         <Appear kind="rise">
           <Raised radius={Radius.card}>
@@ -323,8 +308,6 @@ export default function RankingScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.cream },
   body: { paddingHorizontal: 16, gap: 14 },
-  head: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
-  back: { width: 44, height: 44, marginRight: 6, marginLeft: -8, alignItems: 'center', justifyContent: 'center' },
   rank: { padding: 16, gap: 12, borderWidth: 2, borderColor: INK, borderRadius: Radius.card, backgroundColor: Colors.white },
   hRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   nbTitle: { fontFamily: Font.display, fontSize: 16, lineHeight: 22 },
