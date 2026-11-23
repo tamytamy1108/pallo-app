@@ -2,14 +2,13 @@
  * 마이 B 화면들이 같이 쓰는 작은 부품: 위 줄(뒤로 · 제목) · 화면 틀 · 아이콘 · 스위치 · 칩 · 밑줄 탭.
  * 프로토타입 .mp-top · .lg-dcta · lgI() · .st-row.tg i · .cg-chips · .nt-tabs 를 옮겼어요.
  */
-import { router } from 'expo-router';
 import type { ReactNode, RefObject } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
-import { BackButton } from '@/components/ui/back-button';
 import { Pressable } from '@/components/ui/pressable';
+import { TopBar } from '@/components/ui/top-bar';
 import { BottomBar } from '@/components/bottom-bar';
 import { Sink } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
@@ -45,20 +44,6 @@ export function Icon({ name, size = 22, color = Colors.ink, fill = 'none', strok
   );
 }
 
-/** 위 줄 (프로토타입 .dtop.mp-top: 높이 60 · 뒤로 44 · 제목 15/900 · 아래 연한 선) */
-export function TopBar({ title, onBack, right }: { title: string; onBack?: () => void; right?: ReactNode }) {
-  return (
-    <View style={styles.top}>
-      <BackButton onPress={() => { if (onBack) onBack(); else if (router.canGoBack()) router.back(); else router.replace('/my'); }} />
-      <PText numberOfLines={1} style={styles.topTitle} accessibilityRole="header">
-        {title}
-      </PText>
-      <View style={styles.sp} />
-      {right}
-    </View>
-  );
-}
-
 type PageProps = {
   title: string;
   onBack?: () => void;
@@ -78,7 +63,7 @@ type PageProps = {
 export function AccountPage({ title, onBack, right, children, footer, bottom, bodyStyle, scrollRef, plain }: PageProps) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <TopBar title={title} onBack={onBack} right={right} />
+      <TopBar title={title} onBack={onBack} right={right} fallback="/my" />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {plain ? (
           <View style={[styles.flex, bodyStyle]}>{children}</View>
@@ -214,10 +199,6 @@ export const S = StyleSheet.create({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   flex: { flex: 1 },
-  top: { height: 60, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: Colors.line },
-  back: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
-  topTitle: { flexShrink: 1, fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
-  sp: { flex: 1 },
   bar: { flexDirection: 'row', gap: 10, paddingTop: 12, paddingHorizontal: 16, backgroundColor: Colors.cream, borderTopWidth: 2, borderColor: Colors.ink },
   pressed: { transform: [{ scale: 0.96 }] },
   body: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },

@@ -1,10 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BackButton } from '@/components/ui/back-button';
+import { TopBar } from '@/components/ui/top-bar';
 import { SCREEN } from '@/lib/transitions';
 import { ChxSheet } from '@/components/challenge/chx-sheet';
 import { DailyDetail } from '@/components/challenge/daily-detail';
@@ -28,9 +28,7 @@ export default function ChallengeScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <Stack.Screen options={SCREEN.push} />
-        <View style={styles.top}>
-          <BackButton onPress={back} />
-        </View>
+        <TopBar onBack={back} />
         <Empty>챌린지를 찾을 수 없어요.</Empty>
       </SafeAreaView>
     );
@@ -57,6 +55,4 @@ function ExprWindow({ p, write }: { p: Challenge; write: boolean }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { height: 60, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
-  ib: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });

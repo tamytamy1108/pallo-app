@@ -7,7 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { errorMessage } from '@/api/errors';
 import { bookShelfQuery } from '@/api/queries';
-import { BackButton } from '@/components/ui/back-button';
+import { TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
@@ -39,10 +39,7 @@ export default function BookScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Stack.Screen options={SCREEN.push} />
-      <View style={styles.top}>
-        <BackButton onPress={back} />
-        <PText style={styles.topTitle}>{b ? `${b.l} 교재` : ''}</PText>
-      </View>
+      <TopBar title={b ? `${b.l} 교재` : '교재'} onBack={back} />
       {shelf.isPending ? (
         <LoadingState />
       ) : shelf.isError ? (
@@ -114,9 +111,6 @@ function LgButton({ label, white = false, onPress }: { label: string; white?: bo
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderBottomWidth: 1.5, borderColor: Colors.line },
-  back: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  topTitle: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
   body: { paddingHorizontal: 16, paddingBottom: 30 },
   hero: { flexDirection: 'row', gap: 14, marginTop: 12 },
   coverWrap: { marginRight: 0, marginBottom: 0 },
