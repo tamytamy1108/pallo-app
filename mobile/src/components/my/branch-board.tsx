@@ -13,7 +13,7 @@ import { Colors, Radius } from '@/constants/theme';
 import { BR_BOARDS, MY_BRANCHES, type BranchItem } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 
-import { CourseProgress } from './course-progress';
+import { CourseProgressSheet } from './course-progress';
 import { Lift } from './lift';
 
 /** 지점 안내 아이콘 (프로토타입 BR_IC) */
@@ -25,6 +25,7 @@ const BR_IC = {
   tel: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2',
   pin: 'M12 17v5M9 3h6l-1 6 3 3H7l3-3z',
   copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
+  cal: 'M4 6h16v15H4zM4 10h16M8 3v5M16 3v5M8 14h2M14 14h2M8 17h2',
 } as const;
 function BrIc({ k, size = 20, color = Colors.ink }: { k: keyof typeof BR_IC; size?: number; color?: string }) {
   return (
@@ -67,12 +68,13 @@ function BranchSeg({ value, onChange }: { value: string; onChange: (b: string) =
 }
 
 /**
- * 마이 › 지점 안내 보드 (프로토타입 #brBoard .brb): 지점 고르기 · 자주 찾는 4칸 · 전체 진도 · 매니저 고정 글.
+ * 마이 › 지점 안내 보드 (프로토타입 #brBoard .brb): 지점 고르기 · 자주 찾는 4칸 + 교재 전체 진도 칸 · 매니저 고정 글.
  * [전체 보기 ›] · 칸 · 고정 글을 누르면 지점 안내 전체 (프로토타입은 겹쳐 뜨는 화면 — 앱은 키 큰 시트).
  */
 export function BranchBoard() {
   const [sel, setSel] = useState(MY_BRANCHES[0]);
   const [open, setOpen] = useState(false);
+  const [course, setCourse] = useState(false);
   const B = BR_BOARDS[sel] ?? BR_BOARDS['하남점'];
   const star = B.items.filter((x) => x.star).slice(0, 4);
   const go = () => {
@@ -100,13 +102,35 @@ export function BranchBoard() {
                         <BrIc k={x.ic} size={22} />
                       </View>
                     </Lift>
-                    <PText style={styles.itT}>{x.s || x.t.split(' · ')[0]}</PText>
+                    <PText style={styles.itT} numberOfLines={1}>
+                      {x.s || x.t.split(' · ')[0]}
+                    </PText>
                   </>
                 )}
               </Pressable>
             ))}
+            <Pressable
+              onPress={() => {
+                sfx('tap');
+                setCourse(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="교재 전체 진도"
+              style={styles.it}>
+              {({ pressed }) => (
+                <>
+                  <Lift radius={16} pressed={pressed}>
+                    <View style={[styles.itIc, styles.itCourse]}>
+                      <BrIc k="cal" size={22} />
+                    </View>
+                  </Lift>
+                  <PText style={styles.itT} numberOfLines={1}>
+                    전체 진도
+                  </PText>
+                </>
+              )}
+            </Pressable>
           </View>
-          <CourseProgress />
           {B.pin && (
             <Pressable onPress={go} accessibilityRole="button" style={styles.pin}>
               <View style={styles.pinIc}>
@@ -119,6 +143,7 @@ export function BranchBoard() {
           )}
         </View>
       </Raised>
+      <CourseProgressSheet open={course} onClose={() => setCourse(false)} />
       <BranchInfoSheet open={open} onClose={() => setOpen(false)} sel={sel} onSel={setSel} />
     </>
   );
@@ -240,10 +265,11 @@ const styles = StyleSheet.create({
   segOn: { backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink },
   segT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18, color: Colors.inkSub },
   segTOn: { color: Colors.ink },
-  sc: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  sc: { flexDirection: 'row', gap: 4, marginTop: 12 },
   it: { flex: 1, alignItems: 'center', gap: 6 },
   itIc: { width: 48, height: 48, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
-  itT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17 },
+  itCourse: { backgroundColor: Colors.lavender },
+  itT: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, letterSpacing: -0.2 },
   pin: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#FFF6C2' },
   pinIc: { marginTop: 2 },
   pinT: { flex: 1, fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18 },
