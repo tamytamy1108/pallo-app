@@ -1,11 +1,16 @@
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { errorMessage } from '@/api/errors';
+import { sendAttendance, sendRsvp } from '@/api/home';
+import { meQuery, queryKeys } from '@/api/queries';
+import { queryClient } from '@/api/query-client';
 import { Pressable } from '@/components/ui/pressable';
 import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-sheet';
-import { getAttend, sendAttendance, sendRsvp, summary, type SheetMode } from '@/components/home/attendance';
+import { getAttend, summary, type SheetMode } from '@/components/home/attendance';
 import { applyDevParams, applyDevPlan } from '@/components/home/dev';
 import { GoalCard } from '@/components/home/goal-card';
 import { LineIcon } from '@/components/home/icons';
@@ -20,6 +25,7 @@ import { StudyMap } from '@/components/home/study-map';
 import { Logo } from '@/components/logo';
 import { Appear } from '@/components/ui/appear';
 import { Raised } from '@/components/ui/raised';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
@@ -35,6 +41,8 @@ export default function HomeScreen() {
   useState(() => applyDevParams(dev));
   useEffect(() => applyDevPlan(dev.plan), [dev.plan]);
 
+  // 3 /me — 받아 온 값은 MeSync 가 state/me 에 넣어요 (src/api/provider.tsx). 여기서는 불러오는 중 · 오류만 봐요
+  const me = useQuery(meQuery());
   const name = useMe((m) => m.name);
   const plan = useMe((m) => m.plan);
   const unread = useUnreadCount();
@@ -45,11 +53,29 @@ export default function HomeScreen() {
   const [sheet, setSheet] = useState<AttendSheetMode | null>(null);
   const [scan, setScan] = useState<{ slot: number; lang: number } | null>(null);
 
+  // 9 사전 출석 · 10 QR 출석 (src/api/home.ts)
+  const refreshToday = () => queryClient.invalidateQueries({ queryKey: queryKeys.sessionsToday });
+  const rsvp = useMutation({
+    mutationFn: sendRsvp,
+    onSuccess: (_, v) => {
+      showToast(`${summary(v.slot, v.lang)} 참석을 알렸어요`);
+      refreshToday();
+    },
+    onError: (e) => showToast(errorMessage(e)),
+  });
+  const attendance = useMutation({
+    mutationFn: sendAttendance,
+    onSuccess: () => {
+      setSheet('done');
+      refreshToday();
+    },
+    onError: (e) => showToast(errorMessage(e)),
+  });
+
   const confirm = (mode: SheetMode, slot: number, lang: number) => {
     setSheet(null);
     if (mode === 'rsvp') {
-      sendRsvp(slot, lang);
-      showToast(`${summary(slot, lang)} 참석을 알렸어요`);
+      rsvp.mutate({ slot, lang });
       return;
     }
     // 시트가 내려간 뒤 스캐너
@@ -57,15 +83,22 @@ export default function HomeScreen() {
   };
   const scanned = (qr: string) => {
     const s = scan ?? { slot: getAttend().slot, lang: getAttend().lang };
-    sendAttendance(s.slot, s.lang, qr);
     setScan(null);
-    setSheet('done');
+    attendance.mutate({ slot: s.slot, lang: s.lang, qr });
   };
 
   const continueGoal = () => {
     scroll.current?.scrollTo({ y: Math.max(0, mapY.current - 20), animated: true });
     askCurrentStop();
   };
+
+  if (me.isPending || (me.isError && !me.data)) {
+    return (
+      <SafeAreaView style={[styles.safe, styles.center]} edges={['top']}>
+        {me.isPending ? <LoadingState /> : <ErrorState message={errorMessage(me.error)} onRetry={() => me.refetch()} />}
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -139,6 +172,7 @@ function Greeting({ name }: { name: string }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
+  center: { justifyContent: 'center' },
   body: { paddingHorizontal: Spacing.gutter, paddingTop: 12, paddingBottom: TabBarSpace + 40, gap: Spacing.stack },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },

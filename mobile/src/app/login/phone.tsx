@@ -12,7 +12,11 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { CODE_LENGTH, sendPhoneCode, verifyPhoneCode } from '@/data/auth';
+import { sendPhoneCode, verifyPhoneCode } from '@/api/auth';
+import { errorMessage, isApiError } from '@/api/errors';
+import { queryKeys } from '@/api/queries';
+import { queryClient } from '@/api/query-client';
+import { CODE_LENGTH } from '@/data/auth';
 import { formatPhone, isPhone, phoneDigits } from '@/data/trial';
 import { sfx } from '@/lib/feedback';
 
@@ -39,7 +43,13 @@ export default function PhoneLoginScreen() {
       showToast('휴대폰 번호를 확인해 주세요');
       return;
     }
-    const r = await sendPhoneCode(phoneDigits(phone));
+    let r: { seconds: number };
+    try {
+      r = await sendPhoneCode(phoneDigits(phone));
+    } catch (e) {
+      showToast(errorMessage(e));
+      return;
+    }
     setSentTo(formatPhone(phone));
     setCode('');
     setLeft(r.seconds);
@@ -53,13 +63,15 @@ export default function PhoneLoginScreen() {
       showToast('인증 시간이 지났어요 · 다시 받아 주세요');
       return;
     }
-    const r = await verifyPhoneCode(phoneDigits(sentTo), code);
-    if (!r.ok) {
+    try {
+      await verifyPhoneCode(phoneDigits(sentTo), code);
+    } catch (e) {
       sfx('wrong');
-      showToast('인증번호를 확인해 주세요');
+      showToast(isApiError(e) && e.code === 'INVALID_CODE' ? '인증번호를 확인해 주세요' : errorMessage(e));
       return;
     }
     sfx('save');
+    await queryClient.invalidateQueries({ queryKey: queryKeys.me });
     router.replace('/');
   };
 

@@ -1,21 +1,26 @@
+import { useQuery } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { errorMessage } from '@/api/errors';
+import { noticesQuery } from '@/api/queries';
 import { BackButton } from '@/components/ui/back-button';
 import { Pressable } from '@/components/ui/pressable';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
 import { useNoticeRead } from '@/components/home/noti-state';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { NOTICES } from '@/data/mock';
 
 /**
  * 공지사항 목록 (프로토타입 noticeHTML · .nc-row).
  * 고정 공지(압정) 맨 위 · 태그 · 제목 · 날짜 · 쓴 곳 · 새 글 점. 누르면 상세로.
+ * 데이터: 12 GET /notices (첫 20개 · 더 받기는 공지가 많아지면 useInfiniteQuery 로)
  */
 export default function NoticeListScreen() {
+  const { data, isPending, isError, error, refetch } = useQuery(noticesQuery());
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.top}>
@@ -25,9 +30,15 @@ export default function NoticeListScreen() {
         </PText>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
-        {NOTICES.map((n) => (
-          <Row key={n.id} id={n.id} tag={n.tag} pinned={!!n.pinned} title={n.title} meta={`${n.date} · ${n.author}`} />
-        ))}
+        {isPending ? (
+          <LoadingState />
+        ) : isError ? (
+          <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
+        ) : data.items.length === 0 ? (
+          <EmptyState title="아직 공지가 없어요." />
+        ) : (
+          data.items.map((n) => <Row key={n.id} id={n.id} tag={n.tag} pinned={!!n.pinned} title={n.title} meta={`${n.date} · ${n.author}`} />)
+        )}
       </ScrollView>
     </SafeAreaView>
   );

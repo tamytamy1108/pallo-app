@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -5,12 +6,13 @@ import { PanResponder, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 
+import { loungeHighlightsQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { LANG_CHIP, LOUNGE_HIGHLIGHTS, type LoungeHighlight, type Poster } from '@/data/home';
+import { LANG_CHIP, type LoungeHighlight, type Poster } from '@/data/home';
 import { EASE } from '@/lib/motion';
 
 import { ARROW_PATH, LineIcon } from './icons';
@@ -23,9 +25,15 @@ const ROTATE_MS = 2500;
  * 홈 라운지 미리보기 (프로토타입 .azit-feed · afItems · setAzit).
  * 내 지점 · 해외살이 · 동아리 인기 글이 2.5초마다 넘어가는 순환 슬라이드. 가운데 카드 78% · 양옆은 작고 흐리게.
  * 손으로 밀기 · 옆 카드 누르기 · 아래 점 누르기로도 넘어가고, 가운데 카드를 누르면 그 글(상세)로 가요.
+ * 데이터: 15 GET /lounge/highlights. 받기 전 · 실패 · 0개면 칸을 그리지 않아요.
  */
 export function LoungePreview() {
-  const items = LOUNGE_HIGHLIGHTS;
+  const { data } = useQuery(loungeHighlightsQuery());
+  if (!data?.length) return null;
+  return <LoungeSlides items={data} />;
+}
+
+function LoungeSlides({ items }: { items: LoungeHighlight[] }) {
   const n = items.length;
   const still = useReducedMotion();
   const [idx, setIdx] = useState(0);

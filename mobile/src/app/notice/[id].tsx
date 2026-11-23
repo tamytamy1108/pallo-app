@@ -1,19 +1,24 @@
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ClientErrorCode, errorMessage, isApiError } from '@/api/errors';
+import type { Page } from '@/api/client';
+import { noticeQuery } from '@/api/queries';
 import { BackButton } from '@/components/ui/back-button';
 import { Pressable } from '@/components/ui/pressable';
 import { BottomBar } from '@/components/bottom-bar';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
 import { markNoticeRead } from '@/components/home/noti-state';
 import { Button } from '@/components/ui/button';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { NOTICES, type Notice } from '@/data/mock';
+import type { Notice } from '@/data/mock';
 
 /** 공지 행동 버튼이 여는 곳 (프로토타입 nccta: 변경 신청 · 이벤트 탭 · 라이브러리 탭) */
 const CTA_HREF: Record<NonNullable<Notice['cta']>['action'], Href> = {
@@ -25,7 +30,10 @@ const CTA_HREF: Record<NonNullable<Notice['cta']>['action'], Href> = {
 /** 공지 · 이벤트 · 새 소식 상세. 행동 버튼은 아래 고정 바에. */
 export default function NoticeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const notice = NOTICES.find((n) => n.id === id);
+  const qc = useQueryClient();
+  // 12 GET /notices/:id — 목록(홈 띠 · 공지 목록)에서 이미 받은 공지면 기다리지 않고 바로 보여요
+  const { data: notice, isPending, error, refetch } = useQuery({ ...noticeQuery(id), initialData: () => cachedNotice(qc, id) });
+  const missing = isApiError(error) && error.code === ClientErrorCode.notFound;
   useEffect(() => {
     if (notice) markNoticeRead(notice.id);
   }, [notice]);
@@ -45,9 +53,25 @@ export default function NoticeDetailScreen() {
         )}
       </View>
 
-      {notice ? <Detail notice={notice} /> : <PText style={styles.missing}>게시물을 찾을 수 없어요.</PText>}
+      {notice ? (
+        <Detail notice={notice} />
+      ) : isPending ? (
+        <LoadingState />
+      ) : missing ? (
+        <PText style={styles.missing}>게시물을 찾을 수 없어요.</PText>
+      ) : (
+        <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />
+      )}
     </SafeAreaView>
   );
+}
+
+function cachedNotice(qc: QueryClient, id: string) {
+  for (const [, page] of qc.getQueriesData<Page<Notice>>({ queryKey: ['notices', 'list'] })) {
+    const hit = page?.items.find((n) => n.id === id);
+    if (hit) return hit;
+  }
+  return undefined;
 }
 
 function Detail({ notice }: { notice: Notice }) {

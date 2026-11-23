@@ -1,12 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 
+import { noticeBoardQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BOARD_NOTICES as NOTICES, NOTICE_TAG_STYLE } from '@/data/mock';
+import { NOTICE_TAG_STYLE, type Notice } from '@/data/mock';
 
 const ROTATE_MS = 3200;
 const HEIGHT = 48;
@@ -14,23 +16,32 @@ const HEIGHT = 48;
 /**
  * 홈 위쪽 Notice board 띠: 공지 · 이벤트 · 새 소식이 3.2초마다 옆으로 넘어가요.
  * 누르면 그때 보이는 게시물 상세로 가요 (프로토타입 v499 와 같아요).
+ * 데이터: 12 GET /notices?limit=3. 받기 전 · 실패 · 0개면 띠를 그리지 않아요 (홈의 다른 칸은 그대로).
  */
 export function NoticeStrip() {
+  const { data } = useQuery(noticeBoardQuery());
+  const notices = data?.items ?? [];
+  if (!notices.length) return null;
+  return <NoticeTrack notices={notices} />;
+}
+
+function NoticeTrack({ notices }: { notices: Notice[] }) {
   const [index, setIndex] = useState(0);
   const [width, setWidth] = useState(0);
   const [x] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
-    const t = setInterval(() => setIndex((i) => (i + 1) % NOTICES.length), ROTATE_MS);
+    const t = setInterval(() => setIndex((i) => (i + 1) % notices.length), ROTATE_MS);
     return () => clearInterval(t);
-  }, []);
+  }, [notices.length]);
 
   useEffect(() => {
     // 프로토타입 .nb-track: transform .7s var(--ease) = cubic-bezier(.16,1,.3,1)
     Animated.timing(x, { toValue: -index * width, duration: 700, easing: Easing.bezier(0.16, 1, 0.3, 1), useNativeDriver: true }).start();
   }, [index, width, x]);
 
-  const current = NOTICES[index];
+  // 목록이 줄어 지금 번호가 사라지면 첫 번째로
+  const current = notices[index] ?? notices[0];
 
   return (
     <Pressable
@@ -45,7 +56,7 @@ export function NoticeStrip() {
       </View>
       <View style={styles.view} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         <Animated.View style={StyleSheet.flatten([styles.track, { transform: [{ translateX: x }] }])}>
-          {NOTICES.map((n) => (
+          {notices.map((n) => (
             <View key={n.id} style={StyleSheet.flatten([styles.item, { width }])}>
               <View style={StyleSheet.flatten([styles.chip, { backgroundColor: NOTICE_TAG_STYLE[n.tag].bg }])}>
                 <PText variant="label" color={NOTICE_TAG_STYLE[n.tag].ink} style={styles.chipText}>
@@ -60,7 +71,7 @@ export function NoticeStrip() {
         </Animated.View>
       </View>
       <PText style={styles.idx}>
-        {index + 1}/{NOTICES.length}
+        {index + 1}/{notices.length}
       </PText>
     </Pressable>
   );
