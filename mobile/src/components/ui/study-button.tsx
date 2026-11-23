@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { css, cubicBezier } from 'react-native-reanimated';
 
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -8,7 +9,7 @@ import { Colors } from '@/constants/theme';
 /**
  * 학습 화면 아래 알약 버튼 하나 (프로토타입 #lesson .ls-foot .btn · #stBody .st-foot .btn).
  * Lv.1·2 · Lv.3·4 · 상황 장면이 모두 이 모양을 써요: 높이 54 · 둥글기 27 · 테두리 2.5 · 아래 잉크 그림자 5.
- * 누르면 4 내려앉고, 꺼지면 회색에 그림자가 없어요.
+ * 누르면 0.15초 동안 4 내려앉고(프로토타입 .press · --ease), 꺼지면 회색에 그림자가 없어요.
  */
 export const STUDY_BTN = { height: 54, radius: 27, border: 2.5, drop: 5, press: 4 } as const;
 
@@ -35,23 +36,27 @@ export function StudyButton({ label, onPress, disabled = false, bg = Colors.yell
   return (
     <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ disabled }} style={style}>
       {({ pressed }) => (
-        <View
-          style={StyleSheet.flatten([
+        <Animated.View
+          style={[
+            press,
             styles.pill,
             { backgroundColor: bg, paddingHorizontal: compact ? 14 : small ? 20 : 22 },
             disabled && styles.off,
             pressed && !disabled && styles.down,
-          ])}>
+          ]}>
           {left}
           <PText style={small ? styles.smallText : styles.text} color={disabled ? OFF.ink : textColor}>
             {label}
           </PText>
           {right}
-        </View>
+        </Animated.View>
       )}
     </Pressable>
   );
 }
+
+// 프로토타입 .press: transform · box-shadow .15s cubic-bezier(.16,1,.3,1)
+const press = css.create({ t: { transitionProperty: ['transform', 'boxShadow'], transitionDuration: '150ms', transitionTimingFunction: cubicBezier(0.16, 1, 0.3, 1) } }).t;
 
 const styles = StyleSheet.create({
   pill: {
