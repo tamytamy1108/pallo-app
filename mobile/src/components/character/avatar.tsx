@@ -11,13 +11,13 @@ import { AV_BG, AV_COLOR_HEX, AV_ITEM, memberAvatar, type Avatar, type AvItem } 
 import { getMe } from '@/state/me';
 import { useMyAvatar } from '@/state/avatar';
 
-import { AV_ART, AV_BG_ART, AV_BODY, AV_GEO, AV_HAIR_FILL, AV_TINT } from './av-assets';
+import { AV_ART, AV_BG_ART, AV_BODY, AV_GEO, AV_HAIR_FILL, AV_HAIR_PART, AV_TINT, type AvRect } from './av-assets';
 
 /*
  * 꾸민 캐릭터 그리기 (프로토타입 avCharHTML · avStage · lgFace).
  * 몸은 원본 3D PNG 그대로 — 추천 색은 색마다 원본, 직접 고른 색은 노랑 원본의 노랑 몸 픽셀만 같은 계산으로 바꿔요.
- * 아이템은 프로토타입 SVG 를 그대로 뜬 PNG 를 같은 자리(캐릭터 상자 % 기준)에 얹어요.
- * 겹침: 날개 → 헤어 → 모자(캐릭터 뒤) · 몸 · 칠한 옷 · 눈 · 깜빡임 · 앞 아이템. 효과(fx)는 무대에서 캐릭터 위에.
+ * 아이템은 캐릭터 원본 좌표 위에 그린 그림(scripts/av-art)을 뜬 PNG 라 눈 · 팔 · 다리 자리에 꼭 맞아요.
+ * 겹침: 날개 · 망토 · 손에 든 것 · 헤어 → 모자(캐릭터 뒤) · 몸 · 칠한 옷 · 눈 · 깜빡임 · 앞머리(모자 없을 때) · 앞 아이템. 효과(fx)는 무대에서 캐릭터 위에.
  */
 
 export const CHAR_RATIO = 332 / 520;
@@ -38,6 +38,8 @@ const wornItems = (a: Avatar) =>
     .map((id) => (id ? AV_ITEM[id] : undefined))
     .filter((i): i is AvItem => !!i)
     .sort((x, y) => (x.hat ? 2 : x.hair ? 1 : 0) - (y.hat ? 2 : y.hair ? 1 : 0));
+
+const rectStyle = (r: AvRect, w: number, h: number) => ({ position: 'absolute' as const, left: r[0] * w, top: r[1] * h, width: r[2] * w, height: r[3] * h });
 
 // ---------------------------------------------------------------- 몸
 
@@ -67,8 +69,10 @@ const ERY = 57.5;
 const EIRX = 25.5;
 const EIRY = 44;
 
-/** 프로토타입 avLids: 몸 색 + 위는 밝게 아래는 살짝 어둡게 + 아래 끝 속눈썹 선. k = 덮는 정도 */
-function Lids({ color, k, w, h }: { color: string; k: number; w: number; h: number }) {
+type LidSpec = { t?: number; b?: number; only?: number };
+
+/** 몸 색 눈꺼풀: t = 위에서 덮는 정도 · b = 아래에서 둥글게 올라오는 정도(웃는 눈) · only = 한쪽 눈만. 끝에 속눈썹 선 */
+function Lids({ color, lid, w, h }: { color: string; lid: LidSpec; w: number; h: number }) {
   const u = useId().replace(/[^a-zA-Z0-9]/g, '');
   const col = bodyHex(color);
   return (
@@ -86,12 +90,17 @@ function Lids({ color, k, w, h }: { color: string; k: number; w: number; h: numb
         ))}
       </Defs>
       {EYES.map(({ x, y }, i) => {
+        if (lid.only != null && lid.only !== i) return null;
         const t = y - ERY - 3;
-        const b = y - ERY + 2 * ERY * k;
+        const b = y - ERY + 2 * ERY * (lid.t ?? 0);
+        const bt = y + ERY + 3;
+        const tp = y + ERY - 2 * ERY * (lid.b ?? 0);
         return (
           <G key={i} clipPath={`url(#c${u}${i})`}>
-            <Path d={`M${x - 42} ${t} L${x + 42} ${t} L${x + 42} ${b} Q${x} ${b + 12} ${x - 42} ${b}Z`} fill={`url(#g${u})`} />
-            <Path d={`M${x + 42} ${b} Q${x} ${b + 12} ${x - 42} ${b}`} fill="none" stroke={Colors.ink} strokeWidth={7} />
+            {!!lid.t && <Path d={`M${x - 42} ${t} L${x + 42} ${t} L${x + 42} ${b} Q${x} ${b + 12} ${x - 42} ${b}Z`} fill={`url(#g${u})`} />}
+            {!!lid.t && <Path d={`M${x + 42} ${b} Q${x} ${b + 12} ${x - 42} ${b}`} fill="none" stroke={Colors.ink} strokeWidth={7} />}
+            {!!lid.b && <Path d={`M${x - 42} ${bt} L${x + 42} ${bt} L${x + 42} ${tp + 16} Q${x} ${tp - 22} ${x - 42} ${tp + 16}Z`} fill={col} />}
+            {!!lid.b && <Path d={`M${x + 42} ${tp + 16} Q${x} ${tp - 22} ${x - 42} ${tp + 16}`} fill="none" stroke={Colors.ink} strokeWidth={7} />}
           </G>
         );
       })}
@@ -103,6 +112,8 @@ function Lids({ color, k, w, h }: { color: string; k: number; w: number; h: numb
  * 깜빡임 (프로토타입 avBlink: 3초마다 93~95% 동안 눈꺼풀이 덮여요 · 캐릭터마다 때가 달라요).
  * 다 덮인 눈꺼풀을 위에서부터 드러내는 칸의 높이를 움직여요 (홈 맵 캐릭터와 같은 방법). 움직임 줄이기면 안 깜빡여요.
  */
+const BLINK: LidSpec = { t: 1.04 };
+
 function Blink({ color, w, h }: { color: string; w: number; h: number }) {
   const still = useReducedMotion();
   const [delay] = useState(() => `${Math.round(Math.random() * 3000)}ms`);
@@ -113,35 +124,60 @@ function Blink({ color, w, h }: { color: string; w: number; h: number }) {
     <Animated.View
       pointerEvents="none"
       style={[styles.lidBox, { width: w, animationName: kf, animationDuration: '3s', animationDelay: delay, animationIterationCount: 'infinite' }]}>
-      <Lids color={color} k={1.04} w={w} h={h} />
+      <Lids color={color} lid={BLINK} w={w} h={h} />
     </Animated.View>
   );
 }
 
 // ---------------------------------------------------------------- 아이템
 
-/** 스티커 아이템 한 개 (캐릭터 상자 w × h 안 자리) */
-function Sticker({ it, hc, w, h }: { it: AvItem; hc: string; w: number; h: number }) {
-  const g = AV_GEO[it.id];
-  if (!g) return null;
-  if (g.k === 'box') {
-    return <Image source={AV_ART[it.id]} style={{ position: 'absolute', left: g.r[0] * w, top: g.r[1] * h, width: g.r[2] * w, height: g.r[3] * h }} contentFit="fill" />;
-  }
-  if (!it.p) return null;
-  const [cx, top, pw] = it.p;
-  const iw = (pw / 100) * w;
-  const box = { position: 'absolute' as const, left: ((cx - pw / 2) / 100) * w + g.r[0] * iw, top: (top / 100) * h + g.r[1] * iw, width: g.r[2] * iw, height: g.r[3] * iw };
+/** 바탕 위에 머리 색 칠하기 */
+function Tinted({ base, fill, r, hc, w, h }: { base: number; fill: number; r: AvRect; hc: string; w: number; h: number }) {
+  const box = rectStyle(r, w, h);
   return (
     <>
-      <Image source={AV_ART[it.id]} style={box} contentFit="fill" />
-      {it.hair && <Image source={AV_HAIR_FILL[it.id]} style={box} contentFit="fill" tintColor={hc} />}
+      <Image source={base} style={box} contentFit="fill" />
+      <Image source={fill} style={box} contentFit="fill" tintColor={hc} />
     </>
   );
 }
 
+/** 아이템 한 개 (캐릭터 상자 w × h 기준 자리) — 헤어는 뒷머리 (모자를 덮어쓰면 모자 속을 뺀 뒷머리) */
+function Sticker({ it, hc, w, h, capped = false }: { it: AvItem; hc: string; w: number; h: number; capped?: boolean }) {
+  const g = AV_GEO[it.id];
+  if (!g) return null;
+  if (g.k === 'hair') {
+    const p = AV_HAIR_PART[it.id];
+    if (capped) return p?.cap && g.cap ? <Tinted base={p.cap.base} fill={p.cap.fill} r={g.cap} hc={hc} w={w} h={h} /> : null;
+    return <Tinted base={AV_ART[it.id]} fill={AV_HAIR_FILL[it.id]} r={g.back} hc={hc} w={w} h={h} />;
+  }
+  if (g.k !== 'box') return null;
+  return <Image source={AV_ART[it.id]} style={rectStyle(g.r, w, h)} contentFit="fill" />;
+}
+
+/** 눈 위 헤어: 모자가 없으면 앞머리 · 머리를 덮는 모자를 쓰면 모자 아랫선(clipY) 아래로 옆머리 */
+function HairFront({ it, cover, hc, w, h }: { it: AvItem; cover?: AvItem; hc: string; w: number; h: number }) {
+  const g = AV_GEO[it.id];
+  const p = AV_HAIR_PART[it.id];
+  if (!g || g.k !== 'hair' || !p) return null;
+  if (!cover) return p.front && g.front ? <Tinted base={p.front.base} fill={p.front.fill} r={g.front} hc={hc} w={w} h={h} /> : null;
+  const top = ((cover.clipY ?? 40) / 332) * h;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', left: -w, top, width: w * 3, height: h * 2, overflow: 'hidden' }}>
+      <View style={{ position: 'absolute', left: w, top: -top, width: w, height: h }}>
+        <Tinted base={p.side.base} fill={p.side.fill} r={g.side} hc={hc} w={w} h={h} />
+      </View>
+    </View>
+  );
+}
+
 function EyeLayer({ it, color, w, h }: { it: AvItem; color: string; w: number; h: number }) {
-  if (it.lid) return <Lids color={color} k={it.lid} w={w} h={h} />;
-  return <Sticker it={it} hc="" w={w} h={h} />;
+  return (
+    <>
+      {it.lid && <Lids color={color} lid={it.lid} w={w} h={h} />}
+      <Sticker it={it} hc="" w={w} h={h} />
+    </>
+  );
 }
 
 // ---------------------------------------------------------------- 캐릭터 · 무대 · 얼굴
@@ -153,13 +189,15 @@ export const AvatarChar = memo(function AvatarChar({ av, width: w, flip = av.fli
   const h = w * CHAR_RATIO;
   const its = wornItems(av);
   const hc = av.hc || '#3B2A20';
+  const cover = its.find((i) => i.hat && i.cover);
   return (
     <View pointerEvents="none" style={[{ width: w, height: h }, flip && styles.flip, style]}>
-      {its.filter((i) => i.layer === 'back').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
+      {its.filter((i) => i.layer === 'back').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} capped={!!cover} />)}
       <Body color={av.color} w={w} h={h} />
       {its.filter((i) => i.layer === 'paint').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
       {its.filter((i) => i.layer === 'eye').map((i) => <EyeLayer key={i.id} it={i} color={av.color} w={w} h={h} />)}
       {blink && <Blink color={av.color} w={w} h={h} />}
+      {its.filter((i) => i.hair).map((i) => <HairFront key={i.id} it={i} cover={cover} hc={hc} w={w} h={h} />)}
       {its.filter((i) => i.layer === 'front').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
     </View>
   );
@@ -182,7 +220,7 @@ export function AvatarStage({ av, width, border = false, big = false, style }: S
       <AvatarChar av={av} width={cw} style={{ position: 'absolute', left: iw * 0.18, top: ih * 0.9 - cw * CHAR_RATIO }} />
       {fx.map((i) => {
         const g = AV_GEO[i.id];
-        return g ? <Image key={i.id} source={AV_ART[i.id]} style={{ position: 'absolute', left: g.r[0] * iw, top: g.r[1] * ih, width: g.r[2] * iw, height: g.r[3] * ih }} contentFit="fill" /> : null;
+        return g && g.k === 'stage' ? <Image key={i.id} source={AV_ART[i.id]} style={rectStyle(g.r, iw, ih)} contentFit="fill" /> : null;
       })}
       {!!av.say && <SayBubble text={av.say} big={big} maxWidth={iw * 0.46} left={iw * 0.06} top={ih * 0.2} />}
     </View>
@@ -214,20 +252,41 @@ export function MemberFace({ name, size, border = 2, bg, style }: { name: string
   );
 }
 
+/** 타일에서 보여 줄 캐릭터 부분 [x, y, 폭, 높이] (캐릭터 원본 좌표) */
+const TILE_VIEW: Record<string, readonly [number, number, number, number]> = {
+  hair: [150, -110, 300, 240],
+  hat: [150, -125, 300, 255],
+  eye: [200, 0, 200, 130],
+  face: [180, 10, 240, 210],
+  wear: [-10, 20, 540, 320],
+  mitt: [-10, 30, 540, 170],
+  shoe: [70, 160, 380, 230],
+  hand: [330, -200, 320, 360],
+  acc: [-90, -110, 700, 450],
+};
+
+/** 손에 든 아이템: 아이템 자리 + 쥔 손 끝을 다 담는 칸 (길쭉한 깃발 · 우산도 안 잘려요) */
+function itemView(id: string): readonly [number, number, number, number] {
+  const g = AV_GEO[id];
+  if (!g || g.k !== 'box') return TILE_VIEW.hand;
+  const x0 = Math.min(g.r[0] * 520, 420) - 12;
+  const y0 = Math.min(g.r[1] * 332, 60) - 12;
+  const x1 = Math.max((g.r[0] + g.r[2]) * 520, 500) + 12;
+  const y1 = Math.max((g.r[1] + g.r[3]) * 332, 150) + 12;
+  return [x0, y0, x1 - x0, y1 - y0];
+}
+
 /**
- * 상점 타일 그림: 아이템 하나만 (프로토타입 .av-tile .art svg — 가로 76% · 세로 60px 안에 맞춰요).
+ * 상점 타일 그림: 노랑 캐릭터에 그 아이템 하나만 입혀서, 아이템이 있는 부분만 보여 줘요 (캐릭터에 어떻게 맞는지 바로 보여요).
  * 헤어는 고르는 중인 머리 색으로.
  */
-export function ItemArt({ it, maxW, maxH, hc = '#3B2A20' }: { it: AvItem; maxW: number; maxH: number; hc?: string }) {
-  const g = AV_GEO[it.id];
-  if (!g || g.k !== 'item') return null;
-  const a = g.a ?? 1;
-  const sw = Math.min(maxW, maxH / a);
-  const box = { position: 'absolute' as const, left: g.r[0] * sw, top: g.r[1] * sw, width: g.r[2] * sw, height: g.r[3] * sw };
+export function ItemArt({ it, width, height, hc = '#3B2A20' }: { it: AvItem; width: number; height: number; hc?: string }) {
+  const [vx, vy, vw, vh] = it.cat === 'hand' ? itemView(it.id) : (TILE_VIEW[it.cat] ?? TILE_VIEW.acc);
+  const k = Math.min(width / vw, height / vh);
+  const av = useMemo<Avatar>(() => ({ color: 'yellow', flip: false, bg: 'cream', hc, say: '', eq: { hair: null, eye: null, mitt: null, shoe: null, hat: null, face: null, wear: null, hand: null, acc: null, fx: null, [it.cat]: it.id } }), [it, hc]);
   return (
-    <View style={{ width: sw, height: sw * a }}>
-      <Image source={AV_ART[it.id]} style={box} contentFit="fill" />
-      {it.hair && <Image source={AV_HAIR_FILL[it.id]} style={box} contentFit="fill" tintColor={hc} />}
+    <View style={{ width, height, overflow: 'hidden' }}>
+      <AvatarChar av={av} width={520 * k} blink={false} style={{ position: 'absolute', left: -vx * k + (width - vw * k) / 2, top: -vy * k + (height - vh * k) / 2 }} />
     </View>
   );
 }
@@ -236,10 +295,10 @@ export function ItemArt({ it, maxW, maxH, hc = '#3B2A20' }: { it: AvItem; maxW: 
 export function StageArt({ it, bgId, width, height }: { it?: AvItem; bgId?: string; width: number; height: number }) {
   if (bgId) return <Image source={AV_BG_ART[bgId]} style={{ width, height }} contentFit="cover" />;
   const g = it ? AV_GEO[it.id] : null;
-  if (!it || !g) return null;
+  if (!it || !g || g.k !== 'stage') return null;
   return (
     <View style={{ width, height, backgroundColor: Colors.cream }}>
-      <Image source={AV_ART[it.id]} style={{ position: 'absolute', left: g.r[0] * width, top: g.r[1] * height, width: g.r[2] * width, height: g.r[3] * height }} contentFit="fill" />
+      <Image source={AV_ART[it.id]} style={rectStyle(g.r, width, height)} contentFit="fill" />
     </View>
   );
 }
@@ -249,17 +308,6 @@ export function BodyArt({ color, width }: { color: string; width: number }) {
   return (
     <View style={{ width, height: width * CHAR_RATIO }}>
       <Body color={color} w={width} h={width * CHAR_RATIO} />
-    </View>
-  );
-}
-
-/** 노랑 캐릭터에 아이템 하나만 입힌 작은 그림 (프로토타입 .wmini — 칠한 옷 · 눈 타일) */
-export function MiniWear({ it, width }: { it: AvItem; width: number }) {
-  const h = width * CHAR_RATIO;
-  return (
-    <View style={{ width, height: h }}>
-      <Body color="yellow" w={width} h={h} />
-      {it.layer === 'eye' ? <EyeLayer it={it} color="yellow" w={width} h={h} /> : <Sticker it={it} hc="" w={width} h={h} />}
     </View>
   );
 }

@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type Scro
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
-import { AvatarStage, BodyArt, ItemArt, MiniWear, StageArt } from '@/components/character/avatar';
+import { AvatarStage, BodyArt, ItemArt, StageArt } from '@/components/character/avatar';
 import { ColorPick } from '@/components/my/color-pick';
 import { LgIcon, SparkIcon } from '@/components/my/icons';
 import { Lift } from '@/components/my/lift';
@@ -84,6 +84,7 @@ export default function CustomizeScreen() {
     edit((x) => {
       if (cat === 'char') x.color = key;
       else if (key.startsWith('bg:')) x.bg = key.slice(3);
+      else if (key.startsWith('fx-')) x.eq.fx = x.eq.fx === key ? null : key;
       else if (cat !== 'say' && cat !== 'bg') x.eq[cat] = x.eq[cat] === key ? null : key;
     });
   };
@@ -106,7 +107,7 @@ export default function CustomizeScreen() {
     }
     if (k === 'rand') {
       edit((x) => {
-        (['eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc'] as AvCat[]).forEach((c) => {
+        (['eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc', 'fx'] as AvCat[]).forEach((c) => {
           const L = AV_ITEMS.filter((i) => i.cat === c && !i.lock && !i.hair);
           x.eq[c] = Math.random() < 0.25 ? null : pk(L).id;
         });
@@ -151,23 +152,13 @@ export default function CustomizeScreen() {
     );
   };
   const itemArt = (i: AvItem) => {
-    if (i.layer === 'paint') return <MiniWear it={i} width={artW * 0.92} />;
-    if (i.layer === 'eye') {
-      const w = artW * 1.35;
-      const h = w * (332 / 520);
-      return (
-        <View style={{ position: 'absolute', left: (artW - w) / 2 - w * 0.076, top: (64 - h) / 2 + h * 0.3 }}>
-          <MiniWear it={i} width={w} />
-        </View>
-      );
-    }
     if (i.layer === 'fx')
       return (
         <View style={styles.fxsw}>
           <StageArt it={i} width={64 * (300 / 220)} height={64} />
         </View>
       );
-    return <ItemArt it={i} maxW={artW * 0.76} maxH={60} hc={d.hc} />;
+    return <ItemArt it={i} width={artW} height={64} hc={d.hc} />;
   };
   const sub = (t: string) => (
     <PText key={`s-${t}`} style={styles.sub}>
@@ -227,6 +218,8 @@ export default function CustomizeScreen() {
             ),
           )}
         </View>
+        {sub('배경 효과')}
+        <View style={styles.tiles}>{AV_ITEMS.filter((i) => i.cat === 'fx').map((i) => tile(i.id, i.name, i.price, i.rare, d.eq.fx === i.id, itemArt(i), i.lock))}</View>
       </>
     );
   } else if (cat === 'say') {
