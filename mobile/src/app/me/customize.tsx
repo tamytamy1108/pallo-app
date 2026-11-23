@@ -82,6 +82,7 @@ export default function CustomizeScreen() {
     edit((x) => {
       if (cat === 'char') x.color = key;
       else if (key.startsWith('bg:')) x.bg = key.slice(3);
+      else if (key.startsWith('fx-')) x.eq.fx = x.eq.fx === key ? null : key;
       else if (cat !== 'say' && cat !== 'bg') x.eq[cat] = x.eq[cat] === key ? null : key;
     });
   };
@@ -104,7 +105,7 @@ export default function CustomizeScreen() {
     }
     if (k === 'rand') {
       edit((x) => {
-        (['eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc'] as AvCat[]).forEach((c) => {
+        (['eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc', 'fx'] as AvCat[]).forEach((c) => {
           const L = AV_ITEMS.filter((i) => i.cat === c && !i.lock && !i.hair);
           x.eq[c] = Math.random() < 0.25 ? null : pk(L).id;
         });
@@ -215,6 +216,8 @@ export default function CustomizeScreen() {
             ),
           )}
         </View>
+        {sub('배경 효과')}
+        <View style={styles.tiles}>{AV_ITEMS.filter((i) => i.cat === 'fx').map((i) => tile(i.id, i.name, i.price, i.rare, d.eq.fx === i.id, itemArt(i), i.lock))}</View>
       </>
     );
   } else if (cat === 'say') {

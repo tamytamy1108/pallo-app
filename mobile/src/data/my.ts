@@ -10,7 +10,8 @@ import { AV_BG, AV_ITEMS } from './av-items';
 
 // ---------------------------------------------------------------- 꾸미기 (스파크 상점)
 
-export type AvCat = 'hair' | 'eye' | 'mitt' | 'shoe' | 'hat' | 'face' | 'wear' | 'hand' | 'acc';
+/** fx = 배경 효과 (배경 탭에서 골라요 · 무대 위에 겹쳐요) */
+export type AvCat = 'hair' | 'eye' | 'mitt' | 'shoe' | 'hat' | 'face' | 'wear' | 'hand' | 'acc' | 'fx';
 export type AvRare = '기본' | '일반' | '레어' | '에픽' | '시즌';
 /** back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 덧그림 · fx: 배경 위 효과 */
 export type AvLayer = 'back' | 'front' | 'paint' | 'eye' | 'fx';
@@ -74,7 +75,7 @@ export const AV_CATS: readonly (readonly [AvTab, string])[] = [
   ['wear', '옷'],
   ['mitt', '장갑'],
   ['shoe', '신발'],
-  ['hand', '손'],
+  ['hand', '아이템'],
   ['acc', '액세서리'],
   ['bg', '배경'],
   ['say', '한마디'],
@@ -100,7 +101,7 @@ export const avFresh = (): Avatar => ({
   bg: 'cream',
   hc: '#3B2A20',
   say: '',
-  eq: { hair: null, eye: null, mitt: null, shoe: 's-purple', hat: 'h-beanie', face: null, wear: 'w-tee', hand: 'd-flag', acc: 'a-bow' },
+  eq: { hair: null, eye: null, mitt: null, shoe: 's-purple', hat: 'h-beanie', face: null, wear: 'w-tee', hand: 'd-flag', acc: 'a-bow', fx: null },
 });
 /** 처음부터 가진 것: 기본 등급 아이템 · 배경 */
 export const AV_OWN0 = ['yellow', 'purple', 'cream', 'yellow-bg', ...AV_ITEMS.filter((i) => i.rare === '기본').map((i) => i.id), ...AV_BG.filter((b) => b.rare === '기본').map((b) => 'bg:' + b.id)];
@@ -154,6 +155,7 @@ export function memberAvatar(name: string): Avatar {
       mitt: h % 3 === 1 ? idOf(pick(of('mitt', true), 9)) : null,
       eye: h % 2 ? idOf(pick(of('eye', true), 10)) : null,
       acc: null,
+      fx: null,
     },
   };
 }

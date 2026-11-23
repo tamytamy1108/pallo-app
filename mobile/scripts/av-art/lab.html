@@ -55,7 +55,7 @@ function stage(eq, bg = 'cream', hc) {
   const fx = eq.map((id) => A.ITEMS.find((i) => i.id === id)).filter((i) => i && i.layer === 'fx');
   return `<div class="stage"><div class="bg">${A.svg(B.art(), '0 0 300 220')}</div>${fx.map((i) => `<div class="fx">${A.svg(i.art(), '0 0 300 220')}</div>`).join('')}${charHTML(eq, hc)}</div>`;
 }
-const cats = ['hair', 'eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc'];
+const cats = ['hair', 'eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc', 'fx'];
 const q = new URLSearchParams(location.search), only = q.get('cat'); if (q.get('w')) document.body.style.setProperty('--cw', q.get('w') + 'px');
 let html = '';
 if (!only || only === 'combo') html += `<h2>조합</h2><div class="grid">${[

@@ -265,14 +265,25 @@ const TILE_VIEW: Record<string, readonly [number, number, number, number]> = {
   acc: [-90, -110, 700, 450],
 };
 
+/** 손에 든 아이템: 아이템 자리 + 쥔 손 끝을 다 담는 칸 (길쭉한 깃발 · 우산도 안 잘려요) */
+function itemView(id: string): readonly [number, number, number, number] {
+  const g = AV_GEO[id];
+  if (!g || g.k !== 'box') return TILE_VIEW.hand;
+  const x0 = Math.min(g.r[0] * 520, 420) - 12;
+  const y0 = Math.min(g.r[1] * 332, 60) - 12;
+  const x1 = Math.max((g.r[0] + g.r[2]) * 520, 500) + 12;
+  const y1 = Math.max((g.r[1] + g.r[3]) * 332, 150) + 12;
+  return [x0, y0, x1 - x0, y1 - y0];
+}
+
 /**
  * 상점 타일 그림: 노랑 캐릭터에 그 아이템 하나만 입혀서, 아이템이 있는 부분만 보여 줘요 (캐릭터에 어떻게 맞는지 바로 보여요).
  * 헤어는 고르는 중인 머리 색으로.
  */
 export function ItemArt({ it, width, height, hc = '#3B2A20' }: { it: AvItem; width: number; height: number; hc?: string }) {
-  const [vx, vy, vw, vh] = TILE_VIEW[it.cat] ?? TILE_VIEW.acc;
+  const [vx, vy, vw, vh] = it.cat === 'hand' ? itemView(it.id) : (TILE_VIEW[it.cat] ?? TILE_VIEW.acc);
   const k = Math.min(width / vw, height / vh);
-  const av = useMemo<Avatar>(() => ({ color: 'yellow', flip: false, bg: 'cream', hc, say: '', eq: { hair: null, eye: null, mitt: null, shoe: null, hat: null, face: null, wear: null, hand: null, acc: null, [it.cat]: it.id } }), [it, hc]);
+  const av = useMemo<Avatar>(() => ({ color: 'yellow', flip: false, bg: 'cream', hc, say: '', eq: { hair: null, eye: null, mitt: null, shoe: null, hat: null, face: null, wear: null, hand: null, acc: null, fx: null, [it.cat]: it.id } }), [it, hc]);
   return (
     <View style={{ width, height, overflow: 'hidden' }}>
       <AvatarChar av={av} width={520 * k} blink={false} style={{ position: 'absolute', left: -vx * k + (width - vw * k) / 2, top: -vy * k + (height - vh * k) / 2 }} />
