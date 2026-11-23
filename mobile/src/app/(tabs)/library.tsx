@@ -1,8 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { errorMessage } from '@/api/errors';
+import { bookShelfQuery, situationMapsQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
 import { EmptyIsland } from '@/components/library/empty-island';
 import { LibHead, MapTabs, SitChips } from '@/components/library/lib-head';
@@ -13,21 +16,27 @@ import { ToTop } from '@/components/library/to-top';
 import { MAP_PRESETS } from '@/components/library/world/presets';
 import type { WorldSC } from '@/components/library/world/scenes';
 import { Raised } from '@/components/ui/raised';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
-import { BOOKS, LANGS, SITUATION_MAPS, SOON_MAPS, bookTag, mapLang, sceneId, sceneOpen, type SituationMap } from '@/data/library';
+import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { useMe } from '@/state/me';
 
 const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
+const NO_BOOKS: Book[] = [];
+const NO_MAPS: SituationMap[] = [];
 
 /**
  * 라이브러리 탭 (프로토타입 #page-library · renderStudyLib):
  * 제목 + 언어 → [스터디 맵 | 상황 맵] → (상황 맵 칩) → 3D 섬 지도 → 아래 카드(과 · 장면 목록).
+ * 책장은 17 `/library/books`, 상황 맵은 16 `/library/maps` 로 받아요 (스플래시 동안 미리 받아 둬요).
  */
 export default function LibraryScreen() {
   const st = libStore.useStore();
   const myLang = useMe((m) => m.lang);
   useProgressVersion();
+  const shelfQ = useQuery(bookShelfQuery());
+  const mapsQ = useQuery(situationMapsQuery());
   const scroll = useRef<ScrollViewInstance>(null);
   const [showTop, setShowTop] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -42,9 +51,12 @@ export default function LibraryScreen() {
     if (LANG_INDEX[myLang] !== st.lang) setLib({ lang: LANG_INDEX[myLang] });
   }, [myLang, st.lang]);
 
-  const sits = SITUATION_MAPS.filter((m) => mapLang(m) === st.lang);
-  const soons = SOON_MAPS.filter((m) => mapLang(m) === st.lang);
-  const books = BOOKS[st.lang];
+  const allSits = mapsQ.data?.maps ?? NO_MAPS;
+  const sits = allSits.filter((m) => mapLang(m) === st.lang);
+  const soons = (mapsQ.data?.soon ?? []).filter((m) => mapLang(m) === st.lang);
+  const books = shelfQ.data?.[st.lang] ?? NO_BOOKS;
+  // 지금 보는 쪽(스터디 맵 = 책장 · 상황 맵 = 맵 목록)만 기다려요
+  const q = st.sitMode ? mapsQ : shelfQ;
   const isNew = (m: SituationMap) => !!m.isNew && !st.seen[m.id];
   const sitMap = st.sitMode ? (sits.find((m) => m.id === st.map) ?? sits[0]) : undefined;
   // 상황 맵을 한 번 열면 NEW 가 꺼져요
@@ -61,7 +73,7 @@ export default function LibraryScreen() {
     if (sitMap) {
       const nx = nextSceneNo(sitMap);
       const sc: WorldSC = sitMap.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) ? 'soon' : sceneDone(sitMap, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
-      return { id: MAP_PRESETS[sitMap.preset].build, sc, order: SITUATION_MAPS.indexOf(sitMap) };
+      return { id: MAP_PRESETS[sitMap.preset].build, sc, order: allSits.indexOf(sitMap) };
     }
     if (!st.sitMode && books.length) {
       const sc: WorldSC = books.map((b) => [bookTag(b), b.study ? levelProgress(b.study) : '커밍순', !b.study ? 'soon' : b.mine ? 'cur' : 'open']);
@@ -94,13 +106,17 @@ export default function LibraryScreen() {
         }} scrollEventThrottle={64}>
         {/* 언어 메뉴 밖을 누르면 닫혀요 (위 줄만 이 판보다 위에 있어요) */}
         {langOpen && <Pressable style={styles.menuBack} onPress={() => setLangOpen(false)} accessibilityLabel="닫기" />}
-        <LibHead open={langOpen} setOpen={setLangOpen} lang={st.lang} onLang={(i) => setLib({ lang: i, bi: Math.max(0, BOOKS[i].findIndex((b) => b.mine)) })} />
+        <LibHead open={langOpen} setOpen={setLangOpen} lang={st.lang} onLang={(i) => setLib({ lang: i, bi: Math.max(0, (shelfQ.data?.[i] ?? NO_BOOKS).findIndex((b) => b.mine)) })} />
         <MapTabs sitMode={st.sitMode} sitNew={sits.some(isNew)} onMode={(sit) => setLib({ sitMode: sit })} />
         {st.sitMode && (sits.length > 0 || soons.length > 0) && (
           <SitChips maps={sits} soons={soons} current={sitMap?.id ?? ''} isNew={isNew} onPick={(id) => setLib({ map: id })} onSoon={() => showToast('다음 상황 맵을 준비하고 있어요 · 열리면 알려드릴게요')} />
         )}
 
-        {world ? (
+        {q.isPending ? (
+          <LoadingState />
+        ) : q.isError ? (
+          <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
+        ) : world ? (
           <View onLayout={(e) => setWorldBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
             <LibraryWorld id={world.id} sc={world.sc} order={world.order} onOpen={onOpen} visible={worldSeen} />
           </View>
@@ -112,7 +128,7 @@ export default function LibraryScreen() {
           </Raised>
         )}
 
-        {sitMap ? (
+        {q.isPending || q.isError ? null : sitMap ? (
           <SitPanel map={sitMap} />
         ) : st.sitMode ? (
           <PanelCard>

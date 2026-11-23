@@ -9,7 +9,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
-import type { Scene } from '@/data/situation';
+import type { SceneWithContent } from '@/data/situation';
 
 import { Bolt, Clock, XMark } from './icons';
 import { BigBtn, Foot, Kick, PINK_INK, PressDrop, SUB, shuffle } from './parts';
@@ -27,8 +27,8 @@ const BEST: Record<string, number> = {};
  * Word Bank 30초 타임어택 (프로토타입 runBank → TKV.match).
  * 왼쪽 영어를 누르고 맞는 뜻을 오른쪽에서 골라요. 연속으로 맞히면 콤보. 결과: 맞힌 짝 · 별 · 걸린 시간 · 최고 콤보 · 틀린 짝.
  */
-export function BankStep({ sceneId, scene }: { sceneId: string; scene: Scene }) {
-  const P = scene.content!.bank.map((b) => [b[1], b[3]] as const);
+export function BankStep({ sceneId, scene }: { sceneId: string; scene: SceneWithContent }) {
+  const P = scene.content.bank.map((b) => [b[1], b[3]] as const);
   const N = P.length;
   const { finish, celebrate, finished } = useStepFinish(sceneId, 'bank');
   const [round, setRound] = useState(0);

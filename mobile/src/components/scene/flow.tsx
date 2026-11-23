@@ -6,7 +6,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
-import type { Scene } from '@/data/situation';
+import type { SceneWithContent } from '@/data/situation';
 import type { Flow, Moment } from '@/data/situation-content';
 import { useLearnPrefs } from '@/state/learn-prefs';
 
@@ -29,8 +29,8 @@ const beatsOf = (X: Flow): Beat[] => [
  * 직원 말에 대답 고르기 — 보기 = 내 레벨 문장, 다른 순간 문장이 헷갈리는 보기.
  * 자막: Lv.0 · 1 한국어 / Lv.2 영어 / Lv.3 · 4 자막 없이 듣고(답하면 열려요). 소리 끄기면 영어 글자로 보여 줘요.
  */
-export function FlowStep({ sceneId, scene }: { sceneId: string; scene: Scene }) {
-  const X = scene.content!.flow;
+export function FlowStep({ sceneId, scene }: { sceneId: string; scene: SceneWithContent }) {
+  const X = scene.content.flow;
   const L = useQuizLevel();
   const M = beatsOf(X);
   const { finish, celebrate, finished } = useStepFinish(sceneId, 'flow');
@@ -107,7 +107,7 @@ function StaffBubble({ X, en, ko, show, L, revealed }: { X: Flow; en: string; ko
   );
 }
 
-function BeatView({ X, M, i, L, scene, onAnswered, onNext }: { X: Flow; M: Beat[]; i: number; L: number; scene: Scene; onAnswered: (first: boolean) => void; onNext: () => void }) {
+function BeatView({ X, M, i, L, scene, onAnswered, onNext }: { X: Flow; M: Beat[]; i: number; L: number; scene: SceneWithContent; onAnswered: (first: boolean) => void; onNext: () => void }) {
   const { noListen } = useLearnPrefs();
   const say = useSay();
   const m = M[i];
@@ -180,7 +180,7 @@ function BeatView({ X, M, i, L, scene, onAnswered, onNext }: { X: Flow; M: Beat[
   );
 }
 
-function FlowEnd({ X, M, L, res, right, scene, onDone }: { X: Flow; M: Beat[]; L: number; res: boolean[]; right: number; scene: Scene; onDone: () => void }) {
+function FlowEnd({ X, M, L, res, right, scene, onDone }: { X: Flow; M: Beat[]; L: number; res: boolean[]; right: number; scene: SceneWithContent; onDone: () => void }) {
   const say = useSay();
   useEffect(() => {
     const t = setTimeout(() => say(X.end[0], 0.92, X.who), 300);

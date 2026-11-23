@@ -6,7 +6,6 @@
  */
 import { MAP_PRESETS, isMapPreset, type MapPresetKey } from '@/components/library/world/presets';
 
-import { SCENE_CONTENT, type SceneContent } from '../situation-content';
 import LOCAL_ROWS from './situation-maps.json';
 
 /* ---- 서버(관리자 웹)가 보내는 모양 ---- */
@@ -53,8 +52,8 @@ export type Scene = {
   title: string;
   sub: string;
   icon: string;
-  /** 없으면 '커밍순' */
-  content: SceneContent | null;
+  /** 장면 콘텐츠 id (18 `GET /lessons/:id` 로 장면 화면이 받아요). 없으면 '커밍순' */
+  contentId: string | null;
 };
 
 export type SituationMap = {
@@ -78,8 +77,7 @@ export type SoonMap = { id: string; title: string; when: string; lang: number };
 const LANG_INDEX: Record<MapLang, number> = { en: 0, ja: 1, zh: 2, es: 3 };
 
 /**
- * 맵 목록을 받는 곳 하나. 지금은 앱에 든 JSON, 나중엔 `GET /library/maps` 응답으로 바꿔요.
- * (바꿀 때: 앱 시작 때 받아 두고 여기서 돌려주기 — 화면 코드는 그대로)
+ * 앱에 든 맵 JSON (가짜 서버 값). 화면은 이걸 직접 읽지 않고 api/learn 의 fetchSituationMaps (16 `GET /library/maps`) 로 받아요.
  */
 export function getMaps(): MapRow[] {
   return LOCAL_ROWS as MapRow[];
@@ -124,11 +122,7 @@ export function toSituationMaps(rows: MapRow[], now: Date = new Date()): { maps:
     }
     const stops = MAP_PRESETS[r.preset].stops;
     if (r.scenes.length > stops) warn(`'${r.id}' 맵 장면 ${r.scenes.length}개 > '${r.preset}' 정류장 ${stops}개 — 넘는 장면은 뺐어요`);
-    const scenes = r.scenes.slice(0, stops).map((s): Scene => {
-      const content = s.contentId ? (SCENE_CONTENT[s.contentId] ?? null) : null;
-      if (s.contentId && !content) warn(`'${r.id}' ${s.no}번 장면 콘텐츠 '${s.contentId}' 가 없어요 — 커밍순으로 보여요`);
-      return { no: s.no, title: s.title, sub: s.sub, icon: s.icon, content };
-    });
+    const scenes = r.scenes.slice(0, stops).map((s): Scene => ({ no: s.no, title: s.title, sub: s.sub, icon: s.icon, contentId: s.contentId || null }));
     maps.push({ id: r.id, preset: r.preset, lang, title: r.title, series: r.series, c: r.color, about: r.about, ...(r.isNew ? { isNew: true } : null), scenes });
   }
   return { maps, soon };

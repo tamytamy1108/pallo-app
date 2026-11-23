@@ -7,8 +7,8 @@
 | 모양 (3D 섬 · 정류장 자리) | 앱 코드 `mobile/src/components/library/world/presets.ts` + `scenes.js` | **앱 업데이트** |
 | 내용 (이름 · 색 · 장면 · 공개일 · 순서) | 지금은 `mobile/src/data/maps/situation-maps.json`, 나중엔 API | **관리자 웹에서 바로** |
 
-앱은 맵 목록을 `getMaps()` 한 곳에서만 받아요 (`mobile/src/data/maps/index.ts`).
-지금은 앱에 든 JSON 을 돌려주고, API 가 생기면 이 함수만 `GET /library/maps` 응답으로 바꿔요. 화면 코드는 그대로예요.
+앱은 맵 목록을 `fetchSituationMaps()` 한 곳에서만 받아요 (`mobile/src/api/learn.ts`, 가짜 값은 `mobile/src/data/maps`).
+지금은 앱에 든 JSON 을 돌려주고, 서버가 생기면 설정만 바꾸면 같은 함수가 `GET /library/maps` 를 불러요. 화면 코드는 그대로예요.
 
 ## API
 
