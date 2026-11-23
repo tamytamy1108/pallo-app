@@ -60,6 +60,9 @@ function quietPixelStore(gl: ExpoWebGLRenderingContext) {
   };
 }
 
+/** 들어올 때 도는 인트로: 한 프레임에 이만큼 (약 0.5초 · 프로토타입은 0.022 로 0.75초였는데 앱에서는 느리게 느껴져서 빠르게) */
+const INTRO_STEP = 0.032;
+
 export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts) {
   const { width: w, height: h } = host;
   let gl = host.gl;
@@ -220,7 +223,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   };
   const step = () => {
     if (intro) {
-      intro.t = Math.min(1, intro.t + 0.022);
+      intro.t = Math.min(1, intro.t + INTRO_STEP);
       const k = 1 - Math.pow(1 - intro.t, 4);
       const off = cam.position.clone().sub(tgt);
       const base = intro.base || (intro.base = off.clone());

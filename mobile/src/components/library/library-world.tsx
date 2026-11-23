@@ -12,7 +12,7 @@ type Layer = { key: string; id: string; sc: WorldSC; dir: number };
 
 /**
  * 라이브러리 섬 지도 칸 (프로토타입 .st-world.w3d): 340:430 · 잉크 테두리 · 하드 섀도.
- * 맵이나 진도가 바뀌면 새 지도를 위에 0.4초 동안 서서히 띄우고, 다 뜨면 아래 지도를 치워요 (.m3-layer.m3-fade).
+ * 맵이나 진도가 바뀌면 새 지도를 위에 0.3초 동안 서서히 띄우고, 다 뜨면 아래 지도를 치워요 (.m3-layer.m3-fade).
  * 새 3D 가 그려질 때까지는 앞 지도를 그대로 두고, 그려지면 3D 인트로(돌며 커지기)와 함께 띄워요 (프로토타입처럼).
  * SWAP_WAIT_MS 안에 안 그려지면 그때 띄워요 (새 지도의 사진판이 먼저 보여요).
  * order: 상황 맵 순서 — 오른쪽 맵으로 가면 시계 방향, 왼쪽이면 반대로 돌며 들어와요.
@@ -47,7 +47,7 @@ export function LibraryWorld({ id, sc, order, onOpen, visible = true }: { id: st
 }
 
 /**
- * m3Fade .4s ease-out (움직임 줄이기면 바로). 바꿔 들어온 층은 show() 가 오면 바로, 안 오면 SWAP_WAIT_MS 뒤에 띄워요.
+ * m3Fade ease-out 0.3초 (프로토타입 0.4초 → 인트로를 빠르게 하면서 함께 줄였어요 · 움직임 줄이기면 바로). 바꿔 들어온 층은 show() 가 오면 바로, 안 오면 SWAP_WAIT_MS 뒤에 띄워요.
  * 기다리는 시간은 UI 스레드에서 세요 — 3D 를 만드는 동안 JS 가 멈춰도 제때 떠요.
  */
 function FadeLayer({ fade, onDone, children }: { fade: boolean; onDone: () => void; children: (show: () => void) => ReactNode }) {
@@ -80,7 +80,7 @@ function FadeLayer({ fade, onDone, children }: { fade: boolean; onDone: () => vo
   return <Animated.View style={[StyleSheet.absoluteFill, style]}>{children(show)}</Animated.View>;
 }
 
-const FADE = { duration: 400, easing: Easing.out(Easing.ease) };
+const FADE = { duration: 300, easing: Easing.out(Easing.ease) };
 
 const styles = StyleSheet.create({
   box: { aspectRatio: 340 / 430, borderWidth: 2, borderColor: Colors.ink, borderRadius: 26, overflow: 'hidden', backgroundColor: '#BFE4EC' },

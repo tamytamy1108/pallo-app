@@ -18,7 +18,7 @@ import { WorldPhoto } from './world-photo';
 import { canTryWorld3D, devCapture, GL_START_TIMEOUT, liteWorld } from './world-support';
 
 /** 이름표를 가운데 맞추려고 두는 상자 너비 (프로토타입 translate(-50%)) */
-/** 지도를 고르고 이만큼 머물면 만들기 시작 (빠르게 넘기는 동안의 지도는 만들지 않아요) */
+/** 지도를 고르고 이만큼 머물면 만들기 시작 (빠르게 넘기는 동안의 지도는 만들지 않아요) · 맵 버튼을 눌러 바꾼 지도는 기다리지 않고 바로 만들어요 */
 const SETTLE_MS = 180;
 /** 그리기 판이 이만큼(ms) 안 오면 판을 새로 만들어 다시 (두 번까지 · 그래도 안 되면 GL_START_TIMEOUT 에 2D) */
 const GL_RETRY_MS = 800;
@@ -214,7 +214,9 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
       // 첫 장면을 그릴 때 정해요: 바꿔 들어와 제때 그려졌으면 프로토타입처럼 돌며 들어오고,
       // 사진판을 이미 보여 줬으면(처음 들어옴 · 늦게 그려짐) 도는 인트로 없이 사진과 같은 구도에서 시작해요
       noIntro: () => {
-        const inTime = swapIn && Date.now() - mountedAt.current < SWAP_WAIT_MS;
+        const waited = Date.now() - mountedAt.current;
+        const inTime = swapIn && waited < SWAP_WAIT_MS;
+        if (__DEV__ && swapIn) console.log(`[gl] ${id} 바꾼 뒤 ${waited}ms 에 그리기 시작 → ${inTime ? '돌며 들어와요' : '사진판 먼저'}`);
         setSpinIn(inTime);
         return cover != null && !inTime;
       },
@@ -254,7 +256,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
         stage.current = null;
         fail.current();
       }
-    }, SETTLE_MS);
+    }, swapIn ? 0 : SETTLE_MS);
   };
 
   // 짧게 누르면 확대 · 옆으로 끌면 빙 돌기 (세로로 끌면 페이지 스크롤에 양보)
