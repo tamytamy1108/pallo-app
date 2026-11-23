@@ -13,6 +13,7 @@ import { Colors, Radius } from '@/constants/theme';
 import { BR_BOARDS, MY_BRANCHES, type BranchItem } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 
+import { CourseProgress } from './course-progress';
 import { Lift } from './lift';
 
 /** 지점 안내 아이콘 (프로토타입 BR_IC) */
@@ -66,7 +67,7 @@ function BranchSeg({ value, onChange }: { value: string; onChange: (b: string) =
 }
 
 /**
- * 마이 › 지점 안내 보드 (프로토타입 #brBoard .brb): 지점 고르기 · 자주 찾는 4칸 · 매니저 고정 글.
+ * 마이 › 지점 안내 보드 (프로토타입 #brBoard .brb): 지점 고르기 · 자주 찾는 4칸 · 전체 진도 · 매니저 고정 글.
  * [전체 보기 ›] · 칸 · 고정 글을 누르면 지점 안내 전체 (프로토타입은 겹쳐 뜨는 화면 — 앱은 키 큰 시트).
  */
 export function BranchBoard() {
@@ -105,6 +106,7 @@ export function BranchBoard() {
               </Pressable>
             ))}
           </View>
+          <CourseProgress />
           {B.pin && (
             <Pressable onPress={go} accessibilityRole="button" style={styles.pin}>
               <View style={styles.pinIc}>
