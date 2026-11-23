@@ -116,7 +116,8 @@ const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), 
 const mondayOf = (d: Date) => addDays(d, -((d.getDay() + 6) % 7));
 
 /** 수업 날 = 과 · 그날 내 팀, 휴무 날 = 쉬는 까닭 */
-type ClassDay = { date: Date; ls?: Lesson; off?: string; teams: Team[] };
+/** slot: 0 = 월화토 A과 · 1 = 수목일 B과 */
+type ClassDay = { date: Date; ls?: Lesson; slot?: 0 | 1; off?: string; teams: Team[] };
 
 /**
  * 반 진도를 날짜에 놓아요 (실서비스는 웹 전산에 등록한 진도를 서버가 날짜별로 내려 줘요).
@@ -140,7 +141,7 @@ function classCalendar(L: StudyLevel, lessons: Lesson[]) {
       }
       const ls = lessons[(w - 1) * WEEK_LESSONS + slot];
       if (!ls) continue;
-      byDay.set(dayKey(date), { date, ls, teams: teamsOn(dow) });
+      byDay.set(dayKey(date), { date, ls, slot, teams: teamsOn(dow) });
       classDates.push(date);
     }
   }
@@ -229,9 +230,9 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
           )}
         </View>
         <View style={styles.legend}>
-          <Legend swatch={styles.swDone} t="다 끝낸 과" />
-          <Legend swatch={styles.swHalf} t="하는 중" />
-          <Legend swatch={styles.swTodo} t="아직" />
+          <Legend swatch={styles.slotA} t="월 · 화 · 토 (A과)" />
+          <Legend swatch={styles.slotB} t="수 · 목 · 일 (B과)" />
+          <PText style={styles.lgT}>✓ 다 끝낸 과 · • 하는 중</PText>
           <Legend swatch={styles.swOff} t="휴무 (금 · 공휴일)" />
         </View>
       </View>
@@ -262,7 +263,7 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
 /** 달력 칩 글자: 패턴형 '5과' · 토픽형 '#101' · 토론형 '101' */
 const chipOf = (L: StudyLevel, ls: Lesson) => (L.kind === 'pattern' ? `${ls.no}과` : L.kind === 'topic' ? `#${ls.no}` : String(ls.no));
 
-/** 달력 한 칸: 날짜 + 그날 과 번호 (내 진도만큼 색) · 휴무 날은 회색 '휴무' */
+/** 달력 한 칸: 날짜 + 그날 과 번호 (월화토 노랑 · 수목일 하늘 · 끝냈으면 ✓ · 하는 중이면 •) · 휴무 날은 회색 '휴무' */
 function DayCell({ d, cd, L, steps, isToday, on, onPress }: { d: Date; cd?: ClassDay; L: StudyLevel; steps: number; isToday: boolean; on: boolean; onPress: () => void }) {
   const ls = cd?.ls;
   const done = useDoneCount(ls ? `${L.lv}:${ls.no}:` : 'none:');
@@ -275,8 +276,11 @@ function DayCell({ d, cd, L, steps, isToday, on, onPress }: { d: Date; cd?: Clas
         <PText style={[styles.dateT, isToday && styles.todayT]}>{d.getDate()}</PText>
       </View>
       {ls && (
-        <View style={[styles.lsChip, state === 'done' ? styles.swDone : state === 'half' ? styles.swHalf : styles.swTodo]}>
-          <PText style={[styles.lsChipT, state === 'done' && styles.lsChipTDone]}>{chipOf(L, ls)}</PText>
+        <View style={[styles.lsChip, cd?.slot === 1 ? styles.slotB : styles.slotA]}>
+          <PText style={styles.lsChipT}>
+            {chipOf(L, ls)}
+            {state === 'done' ? ' ✓' : state === 'half' ? ' •' : ''}
+          </PText>
         </View>
       )}
       {cd?.off && (
@@ -312,7 +316,6 @@ const styles = StyleSheet.create({
   legend: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 12, rowGap: 4, marginTop: 6 },
   lg: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   sw: { width: 10, height: 10, borderRadius: 3 },
-  swDone: { backgroundColor: Colors.purple },
   lgT: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   lvRow: { flexDirection: 'row', gap: 6 },
   lvBtn: { flex: 1, height: 36, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
@@ -341,11 +344,10 @@ const styles = StyleSheet.create({
   todayT: { color: Colors.white },
   lsChip: { minWidth: 34, paddingHorizontal: 4, height: 18, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   lsChipT: { fontFamily: Font.body900, fontSize: 10, lineHeight: 14, fontVariant: ['tabular-nums'] },
-  lsChipTDone: { color: Colors.white },
-  swHalf: { backgroundColor: Colors.lavender, borderWidth: 1.5, borderColor: Colors.purple },
+  slotA: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
+  slotB: { backgroundColor: Colors.sky, borderWidth: 1.5, borderColor: Colors.ink },
   swOff: { backgroundColor: Colors.line },
   offT: { color: Colors.inkSub },
-  swTodo: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
   day: { padding: 14, borderRadius: 18, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, gap: 2 },
   dayT: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20, marginBottom: 2 },
   dayS: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
