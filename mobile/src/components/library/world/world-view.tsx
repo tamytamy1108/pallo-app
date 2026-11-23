@@ -2,7 +2,7 @@ import { type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
 import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, AppState, PanResponder, Platform, StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { MyCharacter } from '@/components/character/my-character';
 import { Colors } from '@/constants/theme';
@@ -22,10 +22,11 @@ import { canTryWorld3D, devCapture, GL_START_TIMEOUT, liteWorld } from './world-
 const SETTLE_MS = 180;
 /** 그리기 판이 이만큼(ms) 안 오면 판을 새로 만들어 다시 (두 번까지 · 그래도 안 되면 GL_START_TIMEOUT 에 2D) */
 const GL_RETRY_MS = 800;
-/** 사진판이 돌며 들어오는 시간 · 처음 기울기 — 3D 인트로(stage.ts: 0.42 라디안 돌고 0.78 배에서 커지기, 약 45 프레임)를 사진으로 흉내 내요 */
-const SPIN_MS = 760;
-const SPIN_SKEW = 17;
-const SPIN_ZOOM = 0.78;
+/**
+ * 맵을 바꿀 때 새 3D 가 이만큼(ms) 안에 그려지면 사진판 없이 프로토타입처럼 3D 인트로(옆으로 돌며 커지기)로 들어와요.
+ * 그동안은 앞 지도가 그대로 있어요. 넘으면(느린 폰 · 처음 그리기) 사진판이 먼저 떠요 — library-world 의 FadeLayer 도 같은 시간을 써요.
+ */
+export const SWAP_WAIT_MS = 1200;
 
 type Props = {
   /** BUILD 이름 (study2 · travel · biz …) */
@@ -37,6 +38,10 @@ type Props = {
   onOpen: (no: number) => void;
   /** false 면 그리기를 멈춰요 (스크롤해서 지도가 화면 밖일 때) */
   visible?: boolean;
+  /** 다른 지도에서 바꿔 들어왔어요 (처음 뜰 때만 봐요) */
+  swap?: boolean;
+  /** 바꿔 들어온 3D 가 SWAP_WAIT_MS 안에 그려져서 인트로를 시작했어요 → 지금 서서히 띄워 주세요 */
+  onSpinIn?: () => void;
 };
 
 /**
@@ -73,7 +78,7 @@ class GLBoundary extends Component<{ onFail: () => void; children: ReactNode }, 
  * 3D 섬 지도 (프로토타입 .m3-layer): GL 그림 + 이름표 · 내 캐릭터 · 확대 카드(.m3-zp).
  * 크기는 부모가 정해요. 화면을 떠나면(탭 이동 · 앱 내려감) 그리기를 멈춰요.
  */
-function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { onFail: () => void }) {
+function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpinIn, onFail }: Props & { onFail: () => void }) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [lite] = useState(liteWorld);
   const fail = useRef(onFail);
@@ -106,11 +111,24 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
     const m = FLAT_MAPS[id];
     return m && sc.length <= m.stops.length ? m : null;
   });
+  /** 바꿔 들어온 지도인지 (처음 값만) · 언제 떴는지 · 제때 그려져 3D 인트로로 들어왔는지 */
+  const [swapIn] = useState(swap);
+  const mountedAt = useRef(0);
+  const [spinIn, setSpinIn] = useState(false);
+  const spinCb = useRef(onSpinIn);
 
   useEffect(() => {
     open.current = onOpen;
     fail.current = onFail;
+    spinCb.current = onSpinIn;
   });
+  useEffect(() => {
+    mountedAt.current = Date.now();
+  }, []);
+  // 사진판을 먼저 치우고(아래 PhotoCover 효과가 먼저 돌아요) 층을 띄워요 → 돌며 들어오는 3D 만 보여요
+  useEffect(() => {
+    if (drawn && spinIn) spinCb.current?.();
+  }, [drawn, spinIn]);
   // GL 이 시작하지 않으면 (오래된 폰 · GL 없는 에뮬레이터) 2D 지도로. 탭에 돌아와 판을 새로 만들 때(glKey)도 같아요.
   // 앱이 움직일 수 있던 시간만 세요: 다른 지도를 만드느라 JS 가 멈춘 동안(프레임 사이는 최대 0.1초만) · 다른 탭에 가 있던 동안은 빼요.
   // 다 기다렸으면 이미 와 있던 '판 준비됨' 신호를 먼저 받게 두 프레임 더 보고 정해요.
@@ -193,8 +211,13 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
       reduced,
       lite,
       swapDir,
-      // 사진을 먼저 보여 줬으면 도는 인트로 없이 사진과 같은 구도에서 시작해요
-      noIntro: cover != null,
+      // 첫 장면을 그릴 때 정해요: 바꿔 들어와 제때 그려졌으면 프로토타입처럼 돌며 들어오고,
+      // 사진판을 이미 보여 줬으면(처음 들어옴 · 늦게 그려짐) 도는 인트로 없이 사진과 같은 구도에서 시작해요
+      noIntro: () => {
+        const inTime = swapIn && Date.now() - mountedAt.current < SWAP_WAIT_MS;
+        setSpinIn(inTime);
+        return cover != null && !inTime;
+      },
       paused: !focused,
       onLabels: (l) => setLabels(l.map((x) => x.spec)),
       onFrame: (lxy, r, z) => {
@@ -260,7 +283,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       {size && <SafeGLView key={glKey} style={styles.fill} onContextCreate={onContextCreate} msaaSamples={lite ? 0 : 2} />}
-      {cover != null && <PhotoCover map={cover} sc={sc} dir={swapDir} still={reduced} hide={drawn} />}
+      {cover != null && <PhotoCover map={cover} sc={sc} hide={drawn} now={spinIn} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />
@@ -280,36 +303,16 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
 
 /**
  * 지도 사진판: 3D 가 그려질 때까지 덮어 두고(누르기는 3D 로), 그려지면 서서히 사라져요. 탭에 돌아와 판을 새로 만들 때도 다시 덮어요.
- * 처음 뜰 때 3D 인트로처럼 옆으로 돌며 들어와요 (UI 스레드라 3D 를 만드느라 JS 가 멈춰도 움직여요).
- * 섬을 옆으로 돌리면 가까운 쪽(아래)과 먼 쪽(위)이 서로 반대로 밀려요 → 기울이기(skewX) + 작게에서 커지기로 흉내 내요.
- * 3D 는 인트로 없이 끝 자세로 그려 두니, 사진이 다 돈 다음에 사라져야 구도가 이어져요.
+ * now: 3D 가 돌며 들어오는 중이라 바로 치워요 (사진은 끝 구도라 겹치면 어긋나 보여요)
  */
-function PhotoCover({ map, sc, dir, still, hide }: { map: FlatMap; sc: WorldSC; dir: number; still: boolean; hide: boolean }) {
+function PhotoCover({ map, sc, hide, now }: { map: FlatMap; sc: WorldSC; hide: boolean; now: boolean }) {
   const o = useSharedValue(1);
-  const spin = useSharedValue(still ? 1 : 0);
-  const spinEnd = useRef(0);
   useEffect(() => {
-    if (still) return;
-    spinEnd.current = Date.now() + SPIN_MS;
-    spin.set(withTiming(1, { duration: SPIN_MS, easing: Easing.out(Easing.poly(4)) }));
-  }, [still, spin]);
-  useEffect(() => {
-    if (!hide) {
-      o.set(1);
-      return;
-    }
-    const wait = Math.max(0, spinEnd.current - Date.now());
-    o.set(withDelay(wait, withTiming(0, { duration: 260 })));
-  }, [hide, o]);
-  const style = useAnimatedStyle(() => {
-    const k = spin.value;
-    return {
-      opacity: o.value,
-      transform: [{ scale: SPIN_ZOOM + (1 - SPIN_ZOOM) * k }, { skewX: `${-dir * SPIN_SKEW * (1 - k)}deg` }],
-    };
-  });
+    o.set(!hide ? 1 : now ? 0 : withTiming(0, { duration: 260 }));
+  }, [hide, now, o]);
+  const fade = useAnimatedStyle(() => ({ opacity: o.value }));
   return (
-    <Animated.View style={[styles.fill, style]} pointerEvents="none">
+    <Animated.View style={[styles.fill, fade]} pointerEvents="none">
       <WorldPhoto map={map} sc={sc} onOpen={() => {}} />
     </Animated.View>
   );

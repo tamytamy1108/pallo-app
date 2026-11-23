@@ -34,8 +34,8 @@ export type Host = {
   reduced: boolean;
   /** 맵을 바꿀 때 들어오는 방향 (1 · -1), 처음이면 1 */
   swapDir: number;
-  /** 도는 인트로 없이 제자리에서 시작 (지도 사진판을 먼저 보여 줬으면 — 사진과 같은 구도로 이어지게) */
-  noIntro?: boolean;
+  /** 첫 장면을 그릴 때 물어요: true 면 도는 인트로 없이 제자리에서 시작 (지도 사진판을 이미 보여 줬으면 — 사진과 같은 구도로 이어지게) */
+  noIntro?: () => boolean;
   paused: boolean;
   /** 가벼운 그림 (메모리가 적거나 오래된 폰): 그림자 · 안티에일리어싱을 꺼요 */
   lite?: boolean;
@@ -129,7 +129,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const home = tgt.clone();
   const ray = new THREE.Raycaster();
   let tw: { a: THREE.Vector3; b: THREE.Vector3; za: number; zb: number; t: number } | null = null;
-  let intro: { t: number; a: number; base?: THREE.Vector3 } | null = host.reduced || host.noIntro ? null : { t: 0, a: 0.42 * (host.swapDir || 1) };
+  let intro: { t: number; a: number; base?: THREE.Vector3 } | null = host.reduced ? null : { t: 0, a: 0.42 * (host.swapDir || 1) };
   const fly = (to: THREE.Vector3, z: number) => {
     tw = { a: tgt.clone(), b: to.clone(), za: cam.zoom, zb: z, t: 0 };
   };
@@ -266,6 +266,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   };
   // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게
   const draw = () => {
+    if (intro && !intro.base && host.noIntro?.()) intro = null;
     if (intro && !intro.base) {
       const off = cam.position.clone().sub(tgt);
       intro.base = off.clone();
