@@ -49,7 +49,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
   };
   const [i, setI] = useState(snap?.i ?? 0);
   const [nonce, setNonce] = useState(0);
-  const [askResume, setAskResume] = useState(!!snap);
+  const [askResume, setAskResume] = useState(!!snap && ctx.resume !== 'resume');
   const [askQuit, setAskQuit] = useState(false);
   const [kickOver, setKickOver] = useState<string | null>(null);
   const [combo, setCombo] = useState(0);

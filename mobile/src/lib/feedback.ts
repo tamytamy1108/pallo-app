@@ -117,9 +117,16 @@ function play(name: Sfx, noteKey?: string) {
 /** 진동 — 아껴 써요 (정답 · 오답 · 완료 같은 순간에만). 웹은 없어요 */
 export function haptic(kind: HapticKind = 'tap') {
   if (Platform.OS === 'web') return;
-  if (kind === 'success') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  else if (kind === 'warning') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  else if (kind === 'error') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  else if (kind === 'select') void Haptics.selectionAsync();
-  else void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  let p: Promise<void>;
+  try {
+    if (kind === 'success') p = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    else if (kind === 'warning') p = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    else if (kind === 'error') p = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    else if (kind === 'select') p = Haptics.selectionAsync();
+    else p = Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch {
+    return;
+  }
+  // 진동이 없는 기기 · 앱(일부 Expo Go 판)이면 조용히 넘어가요 — 빨간 오류 창을 띄우지 않게
+  p.catch(() => {});
 }
