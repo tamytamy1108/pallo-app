@@ -4,6 +4,9 @@
 
 공통 가정: 로그인 토큰 인증, 서버 시각 기준, 목록은 페이지네이션(`cursor`), 역할 검사는 서버에서.
 
+> 여기 없는 API(앱 시작 팝업 · 시즌 테마 · 스파크 내역 · 팔로우 등 16가지 + 로그아웃 · 토큰 갱신)와 **관리자 웹 API 개요(7묶음)** 는 [`docs/frontend/api-additions.md`](../frontend/api-additions.md) 에 이어서 적었어요 (A1 ~ A18).
+> 앱 쪽에서 어느 API까지 옮겼는지는 [`docs/frontend/api-layer.md`](../frontend/api-layer.md) 체크리스트를 봐요.
+
 ## 인증 · 회원
 
 | # | 방법 | 경로 | 하는 일 | 쓰는 화면 |
