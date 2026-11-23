@@ -81,13 +81,7 @@ export function BranchBoard() {
   const [sel, setSel] = useState(MY_BRANCHES[0]);
   const [open, setOpen] = useState(false);
   const [course, setCourse] = useState(false);
-  // 닫히는 동안에도 내용이 남게 업체는 따로 들고 있어요
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [partnerOpen, setPartnerOpen] = useState(false);
-  const openPartner = (p: Partner) => {
-    setPartner(p);
-    setPartnerOpen(true);
-  };
+  const partner = usePartnerSheet(sel);
   const B = BR_BOARDS[sel] ?? BR_BOARDS['하남점'];
   const star = B.items.filter((x) => x.star).slice(0, 4);
   const go = () => {
@@ -154,19 +148,21 @@ export function BranchBoard() {
               </PText>
             </Pressable>
           )}
-          <Partners list={B.partners} small onPick={openPartner} />
+          <Partners list={B.partners} small onPick={partner.open} />
         </View>
       </Raised>
       <CourseProgressSheet open={course} onClose={() => setCourse(false)} />
-      <BranchInfoSheet open={open} onClose={() => setOpen(false)} sel={sel} onSel={setSel} onPartner={openPartner} />
-      <PartnerSheet partner={partner} open={partnerOpen} branch={sel} onClose={() => setPartnerOpen(false)} />
+      <BranchInfoSheet open={open} onClose={() => setOpen(false)} sel={sel} onSel={setSel} />
+      {partner.sheet}
     </>
   );
 }
 
 /** 지점 안내 전체 (프로토타입 brInfoHTML): 지점 카드 · 고정 글 · 협업 업체 · 항목(복사 · 지도 · 전화) */
-function BranchInfoSheet({ open, onClose, sel, onSel, onPartner }: { open: boolean; onClose: () => void; sel: string; onSel: (b: string) => void; onPartner: (p: Partner) => void }) {
+function BranchInfoSheet({ open, onClose, sel, onSel }: { open: boolean; onClose: () => void; sel: string; onSel: (b: string) => void }) {
   const B = BR_BOARDS[sel] ?? BR_BOARDS['하남점'];
+  // 아이폰: 시트 위에 시트를 띄우려면 그 시트 안에 두어야 해요 (밖에 두면 안 뜨고, 그 뒤로 업체를 눌러도 반응이 없어요)
+  const partner = usePartnerSheet(sel);
   const loc = B.items.find((x) => x.ic === 'loc');
   const act = (x: BranchItem) => {
     if (!x.act) return;
@@ -201,7 +197,8 @@ function BranchInfoSheet({ open, onClose, sel, onSel, onPartner }: { open: boole
           </PText>
         </View>
       )}
-      <Partners list={B.partners} onPick={onPartner} />
+      <Partners list={B.partners} onPick={partner.open} />
+      {partner.sheet}
       <Raised radius={Radius.card}>
         <View style={styles.list}>
           {B.items
@@ -384,6 +381,21 @@ function PartnerGo({ go, name }: { go: { label: string; run: () => void }; name:
       <PText style={styles.liGoT}>{go.label}</PText>
     </Pressable>
   );
+}
+
+/**
+ * 협업 업체 상세 시트 + 여는 함수. 시트를 띄우는 화면(마이 · 지점 안내 전체)마다 따로 써요.
+ * 닫히는 동안에도 내용이 남게 업체는 따로 들고 있어요.
+ */
+function usePartnerSheet(branch: string) {
+  const [partner, setPartner] = useState<Partner | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const open = (p: Partner) => {
+    setPartner(p);
+    setIsOpen(true);
+  };
+  const sheet = <PartnerSheet partner={partner} open={isOpen} branch={branch} onClose={() => setIsOpen(false)} />;
+  return { open, sheet };
 }
 
 /** 협업 업체 자세히 (프로토타입 .br-pd2): 큰 색 머리 · 소개 · 멤버 혜택 쿠폰 · 주소 · 전화 · 영업 시간 */
