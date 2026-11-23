@@ -27,16 +27,16 @@ export function GoalCard({ onContinue }: { onContinue: () => void }) {
     <Raised radius={26}>
       <View style={styles.card}>
         <TiltedChar />
-        <View style={styles.pill}>
+        <View style={[styles.pill, styles.front]}>
           <PText style={styles.pillText} color={Colors.white}>
             앱 구독 · 오늘의 목표
           </PText>
         </View>
-        <PText style={styles.title}>{TODAY_GOAL.title}</PText>
-        <PText style={styles.meta}>
+        <PText style={[styles.title, styles.front]}>{TODAY_GOAL.title}</PText>
+        <PText style={[styles.meta, styles.front]}>
           {today}/{DAILY_GOAL} 완료 · 연속 학습 {done > 0 ? 1 : 0}일
         </PText>
-        <View style={styles.actions}>
+        <View style={[styles.actions, styles.front]}>
           <Pressable onPress={onContinue} accessibilityRole="button" accessibilityLabel="이어서 하기">
             {({ pressed }) => (
               <Raised radius={27} pressed={pressed}>
@@ -96,6 +96,8 @@ function TiltedChar() {
 const styles = StyleSheet.create({
   card: { minHeight: 190, borderRadius: 26, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, overflow: 'hidden', padding: 20 },
   char: { position: 'absolute', right: -40, bottom: -58 },
+  /** 글씨 · 버튼은 캐릭터 위로 (프로토타입 .sub-hero > *:not(.hero-char) { position: relative }) */
+  front: { position: 'relative', zIndex: 1 },
   pill: { alignSelf: 'flex-start', height: 26, paddingHorizontal: 11, borderRadius: 13, backgroundColor: Colors.ink, justifyContent: 'center' },
   pillText: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16 },
   title: { marginTop: 14, fontFamily: Font.display, fontSize: 22, lineHeight: 26.4 },
