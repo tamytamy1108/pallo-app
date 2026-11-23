@@ -13,7 +13,7 @@ import { Platform } from 'react-native';
 import { liteWorld } from './world-support';
 
 /** 칠하기 결과 판 — soft-canvas 를 바꿔 그림이 달라지면 올려요 */
-export const VER = 1;
+export const VER = 2;
 
 const MB = 1024 * 1024;
 const lite = () => {

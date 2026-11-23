@@ -3,13 +3,14 @@
  * 3D 지도의 그림 텍스처(하늘 · 벽돌 · 간판 · 아이콘)는 프로토타입에서 <canvas> 로 그려요. 폰에는 <canvas> 가 없어서,
  * 같은 그리기 명령을 여기서 픽셀로 칠한 뒤 three 의 DataTexture 로 넘겨요. 웹은 진짜 <canvas> 를 써요 (canvas2d.ts).
  * - 되는 것: 사각형 · 경로(선 · 원호 · 타원 · 곡선 · 둥근 사각형) 채우기와 선 긋기, 선형 · 원형 그라데이션, 투명도, 지우기, 이동 · 회전 · 크기, 다른 그림판 붙이기, SVG 경로(Path2D)
- * - 안 되는 것: 글자 (fillText 는 그냥 지나가요 — 간판 글자는 폰에서 비어 보여요)
+ * - 글자: glyph-data(Lexend · DM Serif Display 모양)로 경로를 만들어 칠해요 (커닝은 없어요)
  * - 메모리 · 속도 때문에 긴 변이 512px 를 넘으면 줄여서 칠해요 (그리는 좌표는 그대로).
  * - 칠하기는 미뤄요: 그리기 명령을 모아 두고(서명도 함께) 픽셀이 필요할 때(텍스처 올리기 · 다른 그림판에 붙이기) 한 번에 칠해요.
  *   같은 서명의 그림을 전에 칠했으면 texture-cache 에서 꺼내 써요 (지도를 다시 열 때 · 앱을 다시 켤 때 빨라요).
  */
 import * as THREE from 'three';
 
+import GLYPHS from './glyph-data.json';
 import { cachedPixels, rememberPixels, VER } from './texture-cache';
 
 type RGBA = [number, number, number, number];
@@ -565,12 +566,56 @@ export class SoftContext {
   createRadialGradient(x0: number, y0: number, r0: number, x1: number, y1: number, r1: number) {
     return new SoftGradient('rad', [x0, y0, r0, x1, y1, r1]);
   }
-  /** 글자는 폰에서 그리지 않아요 (글꼴을 칠할 방법이 없어서) */
-  fillText() {}
-  strokeText() {}
+  /** 글자: 글꼴 모양(glyph-data · Lexend · DM Serif Display)을 경로로 바꿔 칠해요 */
+  fillText(t: string, x: number, y: number, maxWidth?: number) {
+    this.textPath(t, x, y, maxWidth, false);
+  }
+  strokeText(t: string, x: number, y: number, maxWidth?: number) {
+    this.textPath(t, x, y, maxWidth, true);
+  }
   measureText(s: string) {
-    const fs = Number(/(\d+(?:\.\d+)?)px/.exec(this.st.font)?.[1] ?? 10);
-    return { width: String(s).length * fs * 0.56 };
+    const { face, k } = textFace(this.st.font);
+    return { width: textWidth(face, String(s)) * k };
+  }
+  private textPath(t: string, x: number, y: number, maxWidth: number | undefined, stroke: boolean) {
+    const text = String(t);
+    if (!text) return;
+    const { face, k } = textFace(this.st.font);
+    const width = textWidth(face, text) * k;
+    // 최대 너비를 넘으면 가로로 줄여요 (캔버스와 같아요)
+    const sx = maxWidth != null && maxWidth > 0 && width > maxWidth ? maxWidth / width : 1;
+    const w = width * sx;
+    const al = this.st.textAlign;
+    let px = al === 'center' ? x - w / 2 : al === 'right' || al === 'end' ? x - w : x;
+    const bl = this.st.textBaseline;
+    const by =
+      bl === 'middle' ? y + ((face.asc + face.desc) / 2) * k : bl === 'top' || bl === 'hanging' ? y + face.asc * k : bl === 'bottom' || bl === 'ideographic' ? y + face.desc * k : y;
+    const keep = this.path;
+    const keepCur = this.cur;
+    this.path = [];
+    this.cur = null;
+    const kx = k * sx;
+    for (const ch of text) {
+      const g = glyph(face, ch);
+      if (g) {
+        const c = g.cmds;
+        const X = (v: number) => px + v * kx;
+        const Y = (v: number) => by - v * k;
+        for (let i = 0; i < c.length; ) {
+          const op = c[i++];
+          if (op === 0) this.moveTo(X(c[i++]), Y(c[i++]));
+          else if (op === 1) this.lineTo(X(c[i++]), Y(c[i++]));
+          else if (op === 2) this.quadraticCurveTo(X(c[i++]), Y(c[i++]), X(c[i++]), Y(c[i++]));
+          else if (op === 3) this.bezierCurveTo(X(c[i++]), Y(c[i++]), X(c[i++]), Y(c[i++]), X(c[i++]), Y(c[i++]));
+          else this.closePath();
+        }
+      }
+      px += (g ? g.adv : face.upm * 0.3) * kx;
+    }
+    if (stroke) this.raster(this.outline(this.path), this.st.strokeStyle);
+    else this.raster(this.path, this.st.fillStyle);
+    this.path = keep;
+    this.cur = keepCur;
   }
   setLineDash() {}
   drawImage(src: SoftCanvas, dx: number, dy: number, dw?: number, dh?: number) {
@@ -1191,4 +1236,53 @@ function arcTo(x1: number, y1: number, rx: number, ry: number, phi: number, larg
     out.push([cp * ex - sp * ey + cx, sp * ex + cp * ey + cy]);
   }
   return out;
+}
+
+/* ───────── 글자 모양 ───────── */
+
+type FaceData = { upm: number; asc: number; desc: number; g: Record<string, [number, string]> };
+const FACES = GLYPHS as unknown as Record<string, FaceData>;
+type Glyph = { adv: number; cmds: number[] };
+const glyphMemo = new WeakMap<FaceData, Map<string, Glyph | null>>();
+
+/** 글꼴 글자 → 고른 모양 · 글자 크기 배율. Lexend 계열(sans) 은 굵기로, DM Serif 계열(serif) 은 기울임으로 골라요 */
+function textFace(font: string): { face: FaceData; k: number; name: string } {
+  const size = Number(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? 10);
+  const fam = font.slice(font.indexOf('px') + 2).trim().split(',')[0]?.replace(/["']/g, '').trim().toLowerCase() ?? '';
+  const serif = fam.includes('serif') && !fam.includes('sans') ? true : fam.includes('georgia') || fam.includes('times');
+  let name: string;
+  if (serif) name = /\bitalic\b/.test(font) ? 'serifItalic' : 'serif';
+  else {
+    const wt = Number(/\b([1-9]00)\b/.exec(font)?.[1] ?? (/\bbold\b/.test(font) ? 700 : 400));
+    name = wt >= 900 ? 'sans900' : wt >= 800 ? 'sans800' : wt >= 700 ? 'sans700' : 'sans600';
+  }
+  const face = FACES[name] ?? FACES.sans600;
+  return { face, k: size / face.upm, name };
+}
+
+function glyph(face: FaceData, ch: string): Glyph | null {
+  let memo = glyphMemo.get(face);
+  if (!memo) glyphMemo.set(face, (memo = new Map()));
+  const hit = memo.get(ch);
+  if (hit !== undefined) return hit;
+  const src = face.g[ch] ?? face.g[ch.normalize('NFD')[0] ?? ''] ?? null;
+  let out: Glyph | null = null;
+  if (src) {
+    const cmds: number[] = [];
+    const re = /([MLQCZ])([^MLQCZ]*)/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src[1]))) {
+      cmds.push('MLQCZ'.indexOf(m[1]));
+      if (m[2].trim()) for (const v of m[2].trim().split(' ')) cmds.push(Number(v));
+    }
+    out = { adv: src[0], cmds };
+  }
+  memo.set(ch, out);
+  return out;
+}
+
+function textWidth(face: FaceData, text: string) {
+  let w = 0;
+  for (const ch of text) w += glyph(face, ch)?.adv ?? face.upm * 0.3;
+  return w;
 }

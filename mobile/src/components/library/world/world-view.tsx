@@ -2,17 +2,19 @@ import { type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
 import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, AppState, PanResponder, Platform, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { MyCharacter } from '@/components/character/my-character';
 import { Colors } from '@/constants/theme';
 
 import { FocusCard } from './focus-card';
+import { FLAT_MAPS, type FlatMap } from './flat-maps';
 import { SafeGLView } from './safe-gl-view';
 import { BOX, HERE_H, LabelBody } from './world-labels';
 import { mountWorld, type WorldSC } from './scenes';
 import type { FocusInfo, Host, LabelSpec, Stage } from './stage';
 import { WorldFlat } from './world-flat';
+import { WorldPhoto } from './world-photo';
 import { canTryWorld3D, devCapture, GL_START_TIMEOUT, liteWorld } from './world-support';
 
 /** 이름표를 가운데 맞추려고 두는 상자 너비 (프로토타입 translate(-50%)) */
@@ -95,6 +97,11 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
   const glWaited = useRef(0);
   const glTries = useRef(0);
   const [glKey, setGlKey] = useState(0);
+  /** 만드는 동안 보여 줄 지도 사진판 (2D 사진 지도 · 이름표 · 팔로까지 같은 자리). 없으면 도는 표시 */
+  const [cover] = useState<FlatMap | null>(() => {
+    const m = FLAT_MAPS[id];
+    return m && sc.length <= m.stops.length ? m : null;
+  });
 
   useEffect(() => {
     open.current = onOpen;
@@ -182,6 +189,8 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
       reduced,
       lite,
       swapDir,
+      // 사진을 먼저 보여 줬으면 도는 인트로 없이 사진과 같은 구도에서 시작해요
+      noIntro: cover != null,
       paused: !focused,
       onLabels: (l) => setLabels(l.map((x) => x.spec)),
       onFrame: (lxy, r, z) => {
@@ -247,6 +256,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       {size && <SafeGLView key={glKey} style={styles.fill} onContextCreate={onContextCreate} msaaSamples={lite ? 0 : 2} />}
+      {cover != null && <PhotoCover map={cover} sc={sc} hide={drawn} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />
@@ -255,12 +265,26 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
         ))}
       </View>
       <FocusCard info={focus} onGo={(no) => open.current(no)} onClose={() => stage.current?.reset()} />
-      {!drawn && (
+      {!drawn && cover == null && (
         <View style={styles.loading} pointerEvents="none">
           <ActivityIndicator size="large" color={Colors.ink} />
         </View>
       )}
     </View>
+  );
+}
+
+/** 지도 사진판: 3D 가 그려질 때까지 덮어 두고(누르기는 3D 로), 그려지면 서서히 사라져요. 탭에 돌아와 판을 새로 만들 때도 다시 덮어요 */
+function PhotoCover({ map, sc, hide }: { map: FlatMap; sc: WorldSC; hide: boolean }) {
+  const o = useSharedValue(1);
+  useEffect(() => {
+    o.set(hide ? withTiming(0, { duration: 260 }) : 1);
+  }, [hide, o]);
+  const fade = useAnimatedStyle(() => ({ opacity: o.value }));
+  return (
+    <Animated.View style={[styles.fill, fade]} pointerEvents="none">
+      <WorldPhoto map={map} sc={sc} onOpen={() => {}} />
+    </Animated.View>
   );
 }
 
