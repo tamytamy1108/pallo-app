@@ -1028,4 +1028,4 @@ export function mountWorld(host, id, SC, onOpen) {
   S.draw();
   return S;
 }
-export { BUILD };
+export { BUILD, ICO };

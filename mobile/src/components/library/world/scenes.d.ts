@@ -7,3 +7,5 @@ export type WorldSC = WorldRow[] & { sel?: number };
 
 export function mountWorld(host: Host, id: string, SC: WorldSC, onOpen: (no: number) => void): Stage;
 export const BUILD: Record<string, unknown>;
+/** 장면 아이콘 SVG 경로 (24×24) — 2D 지도도 같이 써요 */
+export const ICO: Record<string, string>;
