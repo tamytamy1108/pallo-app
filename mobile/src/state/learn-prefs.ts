@@ -10,7 +10,23 @@ import { createStore } from '@/lib/store';
 export const LEARN_PREF_MS = 15 * 60 * 1000;
 
 type Prefs = { noSpeak: boolean; noListen: boolean; noSpeakUntil: number; noListenUntil: number };
-const store = createStore<Prefs>({ noSpeak: false, noListen: false, noSpeakUntil: 0, noListenUntil: 0 });
+// 기기에 남아요 — 15분 안에 앱을 다시 켜면 그대로, 지났으면 꺼진 채로 시작해요
+const store = createStore<Prefs>(
+  { noSpeak: false, noListen: false, noSpeakUntil: 0, noListenUntil: 0 },
+  {
+    persist: {
+      key: 'learn-prefs',
+      load: (saved, initial) => {
+        if (!saved || typeof saved !== 'object') return initial;
+        const s = saved as Partial<Prefs>;
+        const now = Date.now();
+        const noSpeakUntil = typeof s.noSpeakUntil === 'number' && s.noSpeakUntil > now ? s.noSpeakUntil : 0;
+        const noListenUntil = typeof s.noListenUntil === 'number' && s.noListenUntil > now ? s.noListenUntil : 0;
+        return { noSpeak: noSpeakUntil > 0, noListen: noListenUntil > 0, noSpeakUntil, noListenUntil };
+      },
+    },
+  },
+);
 
 // 가장 먼저 끝나는 시각에 한 번 깨어나 꺼 줘요. 앱이 뒤에 있다 돌아오면(타이머가 늦게 울려도) 바로 다시 확인해요
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -27,6 +43,8 @@ function expire() {
 AppState.addEventListener('change', (st) => {
   if (st === 'active') expire();
 });
+// 저장된 값으로 켜져 시작했으면 끝나는 시각에 맞춰 꺼지게
+expire();
 
 export function setNoSpeak(on: boolean) {
   store.set((s) => ({ ...s, noSpeak: on, noSpeakUntil: on ? Date.now() + LEARN_PREF_MS : 0 }));

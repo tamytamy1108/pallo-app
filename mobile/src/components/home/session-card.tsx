@@ -11,6 +11,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { QR_BEFORE, SLOTS } from '@/data/home';
 import { kf, SPRING, useLoop } from '@/lib/motion';
+import { createStore } from '@/lib/store';
 
 import { countOf, fmtMin, heroOf, useAttend, useClock, type Hero } from './attendance';
 import { ARROW_PATH, CHECK_PATH, LineIcon, QR_PATH } from './icons';
@@ -42,17 +43,17 @@ function ClapperArm() {
  */
 /**
  * 카드 제목 · 보라 팔로 포즈: 홈에 들어올 때마다 차례로 바뀌어요 (프로토타입 STAGE_LINES · 기본 → 기울이기 → 점프).
- * TODO: 앱을 다시 켜도 다음 차례부터 — 기기 저장소(AsyncStorage) 붙일 때
+ * 앱을 다시 켜도 다음 차례부터 — 마지막 차례를 기기에 남겨요 (프로토타입 `pallo-stage-line`)
  */
 const STAGE_LINES = ['Take the stage.', 'Your stage is ready.', 'The stage is yours.'];
-let stageTurn = -1;
+const stageTurn = createStore(-1, { persist: { key: 'stage-line' } });
 
 export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
   const [stage, setStage] = useState(0);
   useFocusEffect(
     useCallback(() => {
-      stageTurn = (stageTurn + 1) % STAGE_LINES.length;
-      setStage(stageTurn);
+      stageTurn.set((n) => (n + 1) % STAGE_LINES.length);
+      setStage(stageTurn.get());
     }, []),
   );
   const now = useClock();

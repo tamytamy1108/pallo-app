@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AnswerTask } from '@/components/lesson/answer-task';
@@ -17,7 +17,7 @@ import { stopSay, useSoundToggle } from '@/components/lesson/voice';
 import { showToast } from '@/components/ui/toast';
 import { CHEER_STREAK, pickOne, taskLimit, type Task } from '@/data/lessons';
 import { haptic, sfx } from '@/lib/feedback';
-import { clearPos, getSnapshot, savePos, saveSnapshot } from '@/state/progress';
+import { clearPos, getSavedPos, getSnapshot, savePos, saveSnapshot } from '@/state/progress';
 import { useLearnPrefs } from '@/state/learn-prefs';
 
 /** 최종 점수: 문제마다 마지막 결과를 모아요 + 제한 시간 안에 맞힌 문제 수 (프로토타입 tkClose → LAST_SCORE) */
@@ -61,7 +61,10 @@ export function TaskRunner({
       return null;
     }
     const s = getSnapshot<Snap>(skey);
-    return s && s.i > 0 && s.i < s.tasks.length ? s : null;
+    if (s && s.i > 0 && s.i < s.tasks.length) return s;
+    // 화면 상태를 못 남긴 채 앱을 다시 켰으면: 멈춘 문제 번호부터 (같은 문제 목록)
+    const at = getSavedPos(skey);
+    return at != null && at > 0 && at < initial.length ? { tasks: initial, i: at, res: {}, times: {} } : null;
   });
   const [tasks, setTasks] = useState<Task[]>(saved?.tasks ?? initial);
   const [i, setI] = useState(saved?.i ?? 0);
@@ -79,6 +82,13 @@ export function TaskRunner({
   const timesRef = useRef(times);
   const task = tasks[i];
   const lim = taskLimit(task, noSpeak);
+
+  // 문제를 넘길 때마다 멈춘 곳을 남겨요 — 그만하기를 누르지 않고 앱이 꺼져도(폰에서 쓸어 닫기 · 시스템 종료) 이어서 해요
+  useEffect(() => {
+    if (i <= 0 || i >= tasks.length) return;
+    savePos(skey, i, tasks.length);
+    saveSnapshot(skey, { tasks, i, res: resRef.current, times: timesRef.current } satisfies Snap);
+  }, [i, tasks, skey]);
 
   const goTo = (k: number) => {
     stopSay();

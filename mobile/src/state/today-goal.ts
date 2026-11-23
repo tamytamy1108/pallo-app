@@ -17,6 +17,13 @@ export const dayKey = (t: number = Date.now()) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+/** 그 주 월요일 날짜 'YYYY-MM-DD' — 주마다 새로 세는 값(이번 주 포인트 · 출석 횟수)을 기기에 남길 때 */
+export const weekKey = (t: number = Date.now()) => {
+  const d = new Date(t);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return dayKey(d.getTime());
+};
+
 /** 며칠치 남겨 둘지 (연속 학습 계산용 · 그보다 오래된 날은 지워요) */
 const KEEP_DAYS = 14;
 
@@ -27,7 +34,21 @@ type TodayGoal = {
   days: Record<string, string[]>;
 };
 
-const store = createStore<TodayGoal>({ day: dayKey(), days: {} });
+// 기기에 남아요 (날짜별 기록만 · 보는 날짜는 켤 때 오늘로)
+const store = createStore<TodayGoal>(
+  { day: dayKey(), days: {} },
+  {
+    persist: {
+      key: 'today-goal',
+      save: (s) => s.days,
+      load: (saved, initial) => ({ ...initial, days: isDays(saved) ? saved : {} }),
+    },
+  },
+);
+
+function isDays(v: unknown): v is Record<string, string[]> {
+  return !!v && typeof v === 'object' && Object.values(v).every((x) => Array.isArray(x) && x.every((k) => typeof k === 'string'));
+}
 
 const countOn = (s: TodayGoal, day: string) => s.days[day]?.length ?? 0;
 

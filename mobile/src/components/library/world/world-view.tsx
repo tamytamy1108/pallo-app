@@ -1,7 +1,7 @@
-import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
+import { type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
 import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState, PanResponder, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, AppState, PanResponder, Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { MyCharacter } from '@/components/character/my-character';
@@ -10,6 +10,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
 import { FocusCard } from './focus-card';
+import { SafeGLView } from './safe-gl-view';
 import { mountWorld, type WorldSC } from './scenes';
 import type { FocusInfo, Host, LabelSpec, Stage } from './stage';
 import { WorldFlat } from './world-flat';
@@ -21,6 +22,8 @@ const HERE_H = 20;
 const SUB = '#5A5366';
 const SOON_LINE = '#9A93A6';
 const SOON_INK = '#6F6880';
+/** 지도를 고르고 이만큼 머물면 만들기 시작 (빠르게 넘기는 동안의 지도는 만들지 않아요) */
+const SETTLE_MS = 180;
 
 type Props = {
   /** BUILD 이름 (study2 · travel · biz …) */
@@ -83,35 +86,75 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
   const xy = useSharedValue<number[]>([]);
   const rider = useSharedValue<number[]>([]);
   const zoomedNow = useRef(false);
+  // 첫 장면이 그려지기 전엔 도는 표시 (안 그려진 하늘색 판만 보이면 멈춘 것 같아서)
+  const [drawn, setDrawn] = useState(false);
+  const drawnNow = useRef(false);
+  const building = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const left = useRef(false);
+  /** 탭을 떠났거나 앱이 내려갔었어요 (폰: 돌아오면 GL 판을 새로) */
+  const gone = useRef(false);
+  /** GL 판이 한 번이라도 붙었어요 (시간 초과 2D 판단용) */
+  const glStarted = useRef(false);
+  const [glKey, setGlKey] = useState(0);
 
   useEffect(() => {
     open.current = onOpen;
     fail.current = onFail;
   });
-  // GL 이 시작하지 않으면 (오래된 폰 · GL 없는 에뮬레이터) 2D 지도로
+  // GL 이 시작하지 않으면 (오래된 폰 · GL 없는 에뮬레이터) 2D 지도로.
+  // 화면에 보이는 동안 GL 판이 끝내 안 붙었을 때만 (다른 탭에 가 있느라 늦은 건 빼요)
   useEffect(() => {
     if (!size) return;
     const t = setTimeout(() => {
-      if (!stage.current) {
+      if (!glStarted.current && !stage.current && !gone.current && !left.current) {
         console.warn('3D 지도가 시작하지 않아서 2D 지도로 바꿔요');
         fail.current();
       }
     }, GL_START_TIMEOUT);
     return () => clearTimeout(t);
   }, [size]);
-  // 탭을 떠나거나 앱이 내려가면 그리기 멈춤
+  // 탭을 떠나거나 앱이 내려가면 그리기 멈춤.
+  // 폰은 그때 그리기 판(GL)이 사라져서, 돌아오면 판만 새로 만들어 붙여요 (지도는 다시 만들지 않아요 · stage.rebind)
   useEffect(() => {
-    const set = (active: boolean) => {
-      if (host.current) host.current.paused = !active;
+    const set = (appActive: boolean) => {
+      if (!focused || !appActive) gone.current = true;
+      else if (gone.current && stage.current && Platform.OS !== 'web') {
+        gone.current = false;
+        if (host.current) host.current.paused = true;
+        drawnNow.current = false;
+        setDrawn(false);
+        setGlKey((k) => k + 1);
+        return;
+      }
+      if (host.current) host.current.paused = !(focused && visible && appActive);
     };
-    set(focused && visible && AppState.currentState === 'active');
-    const sub = AppState.addEventListener('change', (st) => set(focused && visible && st === 'active'));
+    set(AppState.currentState === 'active');
+    const sub = AppState.addEventListener('change', (st) => set(st === 'active'));
     return () => sub.remove();
   }, [focused, visible]);
-  useEffect(() => () => stage.current?.dispose(), []);
+  useEffect(
+    () => () => {
+      left.current = true;
+      if (building.current) clearTimeout(building.current);
+      stage.current?.dispose();
+    },
+    [],
+  );
 
   const onContextCreate = (gl: ExpoWebGLRenderingContext) => {
-    if (!size || stage.current) return;
+    if (!size) return;
+    glStarted.current = true;
+    if (stage.current && host.current) {
+      // 다시 만든 판: 이미 만든 지도를 새 GL 에 붙이기만
+      host.current.paused = !(focused && visible && AppState.currentState === 'active');
+      try {
+        stage.current.rebind(gl);
+      } catch (e) {
+        console.warn('3D 지도를 다시 붙이지 못했어요', e);
+        setDrawn(true);
+      }
+      return;
+    }
     const h: Host = {
       gl,
       width: size.w,
@@ -122,6 +165,10 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
       paused: !focused,
       onLabels: (l) => setLabels(l.map((x) => x.spec)),
       onFrame: (lxy, r, z) => {
+        if (!drawnNow.current) {
+          drawnNow.current = true;
+          setDrawn(true);
+        }
         if (lxy.length) xy.set(lxy);
         if (r) rider.set(r);
         if (z !== zoomedNow.current) {
@@ -136,15 +183,21 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
       },
     };
     host.current = h;
-    try {
-      stage.current = mountWorld(h, id, sc, (no) => open.current(no));
-    } catch (e) {
-      // 셰이더 · 확장 기능이 안 되는 기기: 2D 지도로
-      console.warn('3D 지도를 만들지 못해서 2D 지도로 바꿔요', e);
-      stage.current?.dispose();
-      stage.current = null;
-      fail.current();
-    }
+    if (building.current) clearTimeout(building.current);
+    // 지도를 만드는 동안(폰에서 1~5초) JS 가 멈춰요 → 빠르게 다른 지도로 넘어가면 만들지 않게 잠깐 기다렸다가 시작해요
+    building.current = setTimeout(() => {
+      building.current = null;
+      if (left.current) return;
+      try {
+        stage.current = mountWorld(h, id, sc, (no) => open.current(no));
+      } catch (e) {
+        // 셰이더 · 확장 기능이 안 되는 기기: 2D 지도로
+        console.warn('3D 지도를 만들지 못해서 2D 지도로 바꿔요', e);
+        stage.current?.dispose();
+        stage.current = null;
+        fail.current();
+      }
+    }, SETTLE_MS);
   };
 
   // 짧게 누르면 확대 · 옆으로 끌면 빙 돌기 (세로로 끌면 페이지 스크롤에 양보)
@@ -172,7 +225,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
 
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      {size && <GLView style={styles.fill} onContextCreate={onContextCreate} msaaSamples={lite ? 0 : 2} />}
+      {size && <SafeGLView key={glKey} style={styles.fill} onContextCreate={onContextCreate} msaaSamples={lite ? 0 : 2} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />
@@ -181,6 +234,11 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
         ))}
       </View>
       <FocusCard info={focus} onGo={(no) => open.current(no)} onClose={() => stage.current?.reset()} />
+      {!drawn && (
+        <View style={styles.loading} pointerEvents="none">
+          <ActivityIndicator size="large" color={Colors.ink} />
+        </View>
+      )}
     </View>
   );
 }
@@ -264,6 +322,7 @@ function RiderView({ rider }: { rider: SharedValue<number[]> }) {
 
 const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
+  loading: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   labelBox: { position: 'absolute', left: 0, top: 0, width: BOX, alignItems: 'center' },
   // .m3-lv
   lv: { paddingTop: 4, paddingBottom: 5, paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', boxShadow: `2px 2px 0 ${Colors.ink}` },

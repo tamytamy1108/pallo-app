@@ -3,14 +3,36 @@
  * 담당: 마이 A. 스파크 잔액은 state/me 의 sparks 를 같이 써요.
  * 저장하기 전 고르는 중인 모습(draft)은 꾸미기 화면이 들고 있어요 — [원래대로] = 여기 저장된 모습.
  */
-import { AV_BG, AV_ITEM, AV_OWN0, AVC_LIST, avFresh, type Avatar } from '@/data/my';
+import { AV_BG, AV_ITEM, AV_OWN0, AVC_LIST, avFresh, type AvCat, type Avatar } from '@/data/my';
 import { createStore } from '@/lib/store';
 import { award } from '@/state/ledger';
 import { getMe } from '@/state/me';
 
 type AvatarState = { saved: Avatar; own: string[] };
 
-const store = createStore<AvatarState>({ saved: avFresh(), own: AV_OWN0 });
+// 기기에 남아요 (프로토타입 `pallo-av`)
+const store = createStore<AvatarState>({ saved: avFresh(), own: AV_OWN0 }, { persist: { key: 'avatar', load: loadAvatar } });
+
+/** 저장된 모습 · 가진 것 확인: 아이템 목록이 바뀌어 없어진 것은 빼고, 새로 생긴 기본 아이템은 더해요 */
+function loadAvatar(saved: unknown, initial: AvatarState): AvatarState {
+  if (!saved || typeof saved !== 'object') return initial;
+  const s = saved as Partial<AvatarState>;
+  const a = s.saved;
+  if (!a || typeof a !== 'object' || !a.eq) return initial;
+  const fresh = avFresh();
+  const eq = { ...fresh.eq };
+  (Object.keys(eq) as AvCat[]).forEach((cat) => {
+    const id = a.eq[cat];
+    if (id === null || (typeof id === 'string' && AV_ITEM[id])) eq[cat] = id;
+  });
+  const color = typeof a.color === 'string' && (a.color[0] === '#' || AVC_LIST.some((c) => c[0] === a.color)) ? a.color : fresh.color;
+  const bg = typeof a.bg === 'string' && (a.bg[0] === '#' || AV_BG.some((b) => b.id === a.bg)) ? a.bg : fresh.bg;
+  const own = Array.isArray(s.own) ? [...new Set([...AV_OWN0, ...s.own.filter((k): k is string => typeof k === 'string')])] : initial.own;
+  return {
+    saved: { ...fresh, ...a, color, bg, eq, hc: typeof a.hc === 'string' ? a.hc : fresh.hc, say: typeof a.say === 'string' ? a.say : '', flip: !!a.flip },
+    own,
+  };
+}
 
 /** 저장된 내 모습 (홈 맵 · 마이 · 프로필 · 랭킹이 같이 써요) */
 export const useMyAvatar = () => store.useStore((s) => s.saved);

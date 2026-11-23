@@ -1,5 +1,5 @@
 /**
- * 상황 장면 화면끼리 나누는 작은 상태 (가짜 데이터용 · 기기 안에만).
+ * 상황 장면 화면끼리 나누는 작은 상태 (가짜 데이터용 · 기기에 남아요).
  * 프로토타입 ST.qLv(고른 레벨) · ST.qPicked(장면마다 처음 고르기 했는지) · ST.qBest(장면 · 레벨별 최고 기록) · ST.pos(퀴즈 멈춘 곳).
  * 맞는 API: 19 `/me/progress` · 20 `/me/progress/:lesson/:step` (실제 앱은 서버 진도에 함께 저장해요).
  */
@@ -20,7 +20,7 @@ type SceneState = {
   quizPos: Record<string, QuizPos>;
 };
 
-const store = createStore<SceneState>({ qLv: null, picked: {}, best: {}, quizPos: {} });
+const store = createStore<SceneState>({ qLv: null, picked: {}, best: {}, quizPos: {} }, { persist: { key: 'scene' } });
 
 /** 지금 상황 퀴즈 · 미션 문장 레벨 (프로토타입 sitQLv) */
 export const quizLevelOf = (s: SceneState): QuizLevel => s.qLv ?? MY_QUIZ_LEVELS[0] ?? 1;

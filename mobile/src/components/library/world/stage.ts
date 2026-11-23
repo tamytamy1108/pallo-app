@@ -59,23 +59,29 @@ function quietPixelStore(gl: ExpoWebGLRenderingContext) {
 }
 
 export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts) {
-  const { gl, width: w, height: h } = host;
-  quietPixelStore(gl);
-  // 웹은 GL 을 만들 때 아직 canvas 크기가 정해지기 전이라 화면 크기 × 화소 비율로 맞춰요 (폰은 GL 버퍼 크기 그대로)
+  const { width: w, height: h } = host;
+  let gl = host.gl;
   const web = Platform.OS === 'web';
-  const bw = web ? Math.round(w * PixelRatio.get()) : gl.drawingBufferWidth;
-  const bh = web ? Math.round(h * PixelRatio.get()) : gl.drawingBufferHeight;
-  // three 가 찾는 canvas 모양만 흉내 (폰) · 웹은 진짜 canvas
-  const canvas =
-    web && (gl as unknown as WebGL2RenderingContext).canvas
-      ? (gl as unknown as WebGL2RenderingContext).canvas
-      : ({ width: bw, height: bh, style: {}, clientWidth: w, clientHeight: h, addEventListener: () => {}, removeEventListener: () => {}, getContext: () => gl } as unknown as HTMLCanvasElement);
-  const r = new THREE.WebGLRenderer({ canvas, context: gl as unknown as WebGL2RenderingContext, antialias: !host.lite });
-  r.setPixelRatio(1);
-  r.setSize(bw, bh, false);
-  r.shadowMap.enabled = !host.lite;
-  r.shadowMap.type = THREE.PCFSoftShadowMap;
-  r.outputColorSpace = THREE.SRGBColorSpace;
+  /** GL 하나에 three 렌더러 하나. 폰에서 GL 판이 새로 만들어지면(탭을 떠났다 오면) rebind 로 렌더러만 바꿔요 */
+  const makeRenderer = (g: ExpoWebGLRenderingContext) => {
+    quietPixelStore(g);
+    // 웹은 GL 을 만들 때 아직 canvas 크기가 정해지기 전이라 화면 크기 × 화소 비율로 맞춰요 (폰은 GL 버퍼 크기 그대로)
+    const bw = web ? Math.round(w * PixelRatio.get()) : g.drawingBufferWidth;
+    const bh = web ? Math.round(h * PixelRatio.get()) : g.drawingBufferHeight;
+    // three 가 찾는 canvas 모양만 흉내 (폰) · 웹은 진짜 canvas
+    const canvas =
+      web && (g as unknown as WebGL2RenderingContext).canvas
+        ? (g as unknown as WebGL2RenderingContext).canvas
+        : ({ width: bw, height: bh, style: {}, clientWidth: w, clientHeight: h, addEventListener: () => {}, removeEventListener: () => {}, getContext: () => g } as unknown as HTMLCanvasElement);
+    const nr = new THREE.WebGLRenderer({ canvas, context: g as unknown as WebGL2RenderingContext, antialias: !host.lite });
+    nr.setPixelRatio(1);
+    nr.setSize(bw, bh, false);
+    nr.shadowMap.enabled = !host.lite;
+    nr.shadowMap.type = THREE.PCFSoftShadowMap;
+    nr.outputColorSpace = THREE.SRGBColorSpace;
+    return nr;
+  };
+  let r = makeRenderer(gl);
 
   const sc = new THREE.Scene();
   sc.background = bg;
@@ -191,9 +197,24 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     if (zoomed !== lastZoomed) lastZoomed = zoomed;
     host.onFrame(xy, rider, zoomed);
   };
+  /**
+   * 한 장 그리기. GL 이 끊긴 판(지도를 빠르게 바꿀 때 폰에서 가끔)은 three 안에서 오류가 나요
+   * → 앱을 멈추지 않고 이 지도만 그리기를 그만둬요 (바탕색만 남아요 · 다시 들어오면 새로 그려요)
+   */
   const render = () => {
-    r.render(sc, cam);
-    gl.endFrameEXP();
+    try {
+      r.render(sc, cam);
+      gl.endFrameEXP();
+      return true;
+    } catch (e) {
+      if (alive) {
+        alive = false;
+        cancelAnimationFrame(raf);
+        if (__DEV__) console.log('[gl] 3D 지도 그리기를 멈췄어요', e);
+        host.onError?.(e); // 화면은 2D 지도로 바꿔요
+      }
+      return false;
+    }
   };
   const step = () => {
     if (intro) {
@@ -232,14 +253,14 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
       step();
       const t = (Date.now() - t0) / 1000;
       ticks.forEach((f) => f(t));
-      render();
-      report();
     } catch (e) {
-      // 폰에서 프레임 오류가 그대로 올라가면 앱이 꺼져요 → 여기서 멈추고 화면에 알려요
+      // 폰에서 프레임 오류가 그대로 올라가면 앱이 꺼져요 → 여기서 멈추고 화면에 알려요 (2D 지도로)
       alive = false;
       cancelAnimationFrame(raf);
       host.onError?.(e);
+      return;
     }
+    if (render()) report();
   };
   // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게
   const draw = () => {
@@ -254,7 +275,26 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     }
     ticks.forEach((f) => f(0));
     host.onLabels?.(labels.map(({ spec }) => ({ spec })));
-    render();
+    if (!render()) return;
+    report();
+    raf = requestAnimationFrame(loop);
+  };
+  /**
+   * 새 GL 판에 다시 붙이기 (폰: 탭을 떠나면 그리기 판이 사라져요). 장면 · 텍스처 그림은 그대로 두고
+   * 렌더러만 새로 만들어요 → 지도를 다시 만들지 않아요 (텍스처는 새 GL 에 다시 올라가요)
+   */
+  const rebind = (next: ExpoWebGLRenderingContext) => {
+    cancelAnimationFrame(raf);
+    try {
+      r.dispose();
+    } catch {
+      // 옛 GL 은 이미 사라졌을 수 있어요
+    }
+    gl = next;
+    host.gl = next;
+    r = makeRenderer(next);
+    alive = true;
+    if (!render()) return;
     report();
     raf = requestAnimationFrame(loop);
   };
@@ -262,6 +302,14 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const dispose = () => {
     alive = false;
     cancelAnimationFrame(raf);
+    // GL 이 이미 끊겼으면 정리 중에도 오류가 나요 — 닫는 길이라 그냥 넘어가요
+    try {
+      freeGpu();
+    } catch {
+      // 판이 사라지면 GPU 자원도 함께 사라져요
+    }
+  };
+  const freeGpu = () => {
     sc.traverse((o) => {
       const m = o as THREE.Mesh;
       m.geometry?.dispose?.();
@@ -291,6 +339,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     drag,
     release,
     reset,
+    rebind,
     dispose,
     onFocus: null as ((info: FocusInfo) => void) | null,
     /** 팔로 캐릭터 (palloRun 이 넣어요) */
