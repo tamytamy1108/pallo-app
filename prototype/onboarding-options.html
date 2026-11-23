@@ -1,0 +1,824 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PALLO 첫 화면 · 가이드 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@400;600;700;900&display=swap">
+<style>
+:root{--cream:#FBF6EA;--ink:#1E1A2B;--sub:#5A5366;--line:#E3DCCB;--yellow:#FFE200;--purple:#493087;--pink:#D0798E;--sky:#8FA6DC;--lav:#E5DDF6;--mist:#E3EAF8;
+--en:#4463A8;--ja:#F06593;--zh:#EA373F;--es:#69BE5F;--kakao:#FEE500;--fd:'Unbounded','Noto Sans KR',sans-serif;--fb:'Noto Sans KR',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#E7E0CF;font-family:var(--fb);color:var(--ink);padding:28px 26px 70px;word-break:keep-all}
+h1{font-family:var(--fd);font-size:22px;font-weight:800;margin:0 0 6px;letter-spacing:-.5px}
+.lead{font-size:13.5px;font-weight:700;color:var(--sub);margin:0 0 18px;line-height:1.6;max-width:920px}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}
+.flow span{height:30px;padding:0 12px;border-radius:15px;border:2px solid var(--ink);background:#fff;font-size:12.5px;font-weight:900;display:inline-flex;align-items:center}
+.flow span.y{background:var(--yellow)}.flow span.l{background:var(--lav);color:var(--purple);border-color:var(--purple)}
+.flow i{font-style:normal;font-weight:900;color:var(--sub)}
+.flow span.br{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px;height:auto;padding:0;border:0;background:none}
+.sec{font-family:var(--fd);font-size:17px;font-weight:800;margin:38px 0 4px}
+.secd{font-size:12.5px;font-weight:700;color:var(--sub);margin:0 0 16px;line-height:1.55}
+.row{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start}
+.col{width:300px}
+.cap b{font-family:var(--fd);font-size:14px;font-weight:800}
+.cap>span{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:4px 0 12px;line-height:1.5;min-height:56px}
+.pick{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:9px;background:var(--purple);color:#fff;font-family:var(--fb);font-size:11px;font-weight:900;vertical-align:2px}
+
+/* phone */
+.ph{position:relative;width:300px;height:640px;border:8px solid var(--ink);border-radius:46px;background:var(--cream);overflow:hidden}
+.sb{position:absolute;top:0;left:0;right:0;z-index:5;height:38px;display:flex;justify-content:space-between;align-items:center;padding:4px 24px 0;font-size:12px;font-weight:900}
+.sb em{display:flex;gap:4px;align-items:center}.sb em i{display:block;width:16px;height:9px;border-radius:3px;border:1.5px solid currentColor}.sb em b{display:block;width:12px;height:9px;border-radius:2px;background:currentColor}
+.scr{position:absolute;inset:38px 0 0 0;display:flex;flex-direction:column;padding:0 18px 20px}
+.grow{flex:1}
+
+/* buttons */
+.btn{height:50px;border-radius:25px;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;font-size:14.5px;font-weight:900;background:#fff;color:var(--ink);margin-top:10px}
+.btn svg{width:19px;height:19px}
+.btn.y{background:var(--yellow)}
+.btn.k{background:var(--kakao);color:rgba(0,0,0,.85)}
+.btn.a{background:#000;color:#fff}
+.btn.p{background:var(--purple);color:#fff}
+.link{text-align:center;font-size:12.5px;font-weight:800;color:var(--sub);margin-top:14px}
+.link u{text-underline-offset:3px}
+.fine{font-size:10.5px;font-weight:600;color:var(--sub);text-align:center;line-height:1.55;margin-top:12px}
+
+/* step top bar */
+.tb{display:flex;align-items:center;gap:12px;height:44px}
+.tb .bk{width:34px;height:34px;border-radius:12px;border:2px solid var(--ink);background:#fff;display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink)}
+.tb .bar{flex:1;height:8px;border-radius:4px;background:#EAE2CF;border:1.5px solid var(--ink);overflow:hidden}
+.tb .bar b{display:block;height:100%;background:var(--purple)}
+.tb .st{font-family:var(--fd);font-size:11px;font-weight:800;color:var(--sub)}
+.ttl{font-size:22px;font-weight:900;line-height:1.32;letter-spacing:-.6px;margin:14px 0 6px}
+.dsc{font-size:12.5px;font-weight:600;color:var(--sub);line-height:1.55}
+
+/* input */
+.fld{display:flex;gap:8px;margin-top:14px}
+.inp{flex:1;height:50px;border:2px solid var(--ink);border-radius:14px;background:#fff;display:flex;align-items:center;padding:0 14px;font-size:17px;font-weight:900;outline:3px solid var(--purple);outline-offset:2px}
+.inp .cur{display:inline-block;width:2px;height:20px;background:var(--purple);margin-left:2px;animation:bl 1s steps(1) infinite}
+.inp .cnt{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--sub)}
+@keyframes bl{50%{opacity:0}}
+.ib{width:50px;height:50px;border-radius:14px;border:2px solid var(--ink);background:var(--yellow);box-shadow:2px 2px 0 var(--ink);display:grid;place-items:center;flex:none}
+.help{display:flex;align-items:center;gap:5px;margin-top:9px;font-size:12px;font-weight:900;color:var(--purple)}
+.help.sub{color:var(--sub);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{height:30px;padding:0 11px;border-radius:15px;border:1.5px solid var(--line);background:#fff;font-size:12px;font-weight:800;color:var(--sub);display:inline-flex;align-items:center;gap:4px}
+.chip.on{background:var(--lav);border-color:var(--purple);color:var(--purple)}
+
+/* misc */
+.chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--ink);background:#fff;display:grid;place-items:center;flex:none}
+.chk.on{background:var(--purple);border-color:var(--purple)}
+.tag{display:inline-block;font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:4px}
+.spark{position:absolute}
+img{display:block}
+.kbd{margin:auto -18px -20px;background:#D7D1C3;padding:8px 4px 26px;display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.kbd span{height:34px;border-radius:6px;background:#fff;font-size:13px;font-weight:700;display:grid;place-items:center;box-shadow:0 1px 0 #A9A294}
+.note{margin-top:12px;padding:10px 12px;border-radius:14px;background:#FFF6C2;border:1.5px solid #E9D98A;font-size:12px;font-weight:700;line-height:1.55}
+.note b{font-weight:900}
+
+/* decisions */
+.dec{margin-top:40px;max-width:960px;background:#fff;border:2px solid var(--ink);border-radius:22px;box-shadow:4px 4px 0 var(--ink);padding:18px 20px}
+.dec h3{font-family:var(--fd);font-size:15px;font-weight:800;margin:0 0 10px}
+.dec ol{margin:0;padding-left:20px}.dec li{font-size:13px;font-weight:700;line-height:1.6;margin-bottom:6px}.dec li b{font-weight:900}
+
+/* zones */
+.zn{display:inline-block;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:8px;border:1.5px dashed;line-height:1.4;z-index:6}
+.zn.up{background:#fff;color:var(--purple);border-color:var(--purple)}
+.zn.fx{background:#F3EEE2;color:var(--sub);border-color:var(--sub)}
+.secd .zn{vertical-align:1px}
+/* admin web */
+.adm{width:1080px;max-width:100%;background:#fff;border:2px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);overflow:hidden}
+.adm-top{height:34px;background:#F3EEE2;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:6px;padding:0 12px}
+.adm-top i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ink);background:#fff}
+.adm-top span{margin-left:10px;font-size:12px;font-weight:800;color:var(--sub)}
+.adm-body{display:flex;min-height:420px}
+.adm-nav{width:160px;flex:none;border-right:2px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;background:var(--cream)}
+.adm-nav b{font-size:10.5px;font-weight:900;color:var(--sub);margin:10px 8px 4px;letter-spacing:.3px}.adm-nav b:first-child{margin-top:0}
+.adm-nav span{font-size:13px;font-weight:700;padding:6px 8px;border-radius:9px}
+.adm-nav span.on{background:var(--lav);color:var(--purple);font-weight:900}
+.adm-nav span.new:after{content:"새로";margin-left:6px;font-size:9.5px;font-weight:900;color:#fff;background:var(--pink);padding:1px 5px;border-radius:5px;vertical-align:1px}
+.adm-main{flex:1;padding:18px 20px 20px;min-width:0}
+.adm-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.adm-t{font-size:20px;font-weight:900;letter-spacing:-.4px}
+.adm-s{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:12px;font-weight:700;color:var(--sub)}
+.st{display:inline-block;font-size:11px;font-weight:900;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.st.on{background:#E2F2E6;color:#2D6B3C}.st.draft{background:#FFF6C2;color:#7A6400}.st.wait{background:var(--mist);color:var(--en)}.st.end{background:#F0EBDF;color:var(--sub)}
+.adm-btns{display:flex;gap:8px;flex:none}
+.ab{height:36px;padding:0 14px;border-radius:18px;border:2px solid var(--ink);background:#fff;font-size:12.5px;font-weight:900;display:inline-flex;align-items:center;box-shadow:2px 2px 0 var(--ink);white-space:nowrap}
+.ab.y{background:var(--yellow)}.ab.sm{height:28px;padding:0 10px;font-size:11.5px;margin-top:6px}
+.adm-tabs{display:flex;align-items:center;gap:16px;margin-top:16px;border-bottom:1.5px solid var(--line);font-size:13px;font-weight:800;color:#9A92A6}
+.adm-tabs span{padding:0 0 8px}.adm-tabs span.on{color:var(--ink);box-shadow:inset 0 -3px 0 var(--purple)}
+.adm-tabs em{margin-left:auto;font-style:normal;font-size:11.5px;font-weight:700;color:var(--sub);padding-bottom:8px}
+.adm-strip{display:flex;gap:10px;margin-top:14px}
+.th{position:relative;width:118px;flex:none;border:2px solid var(--line);border-radius:14px;padding:6px;background:#fff}
+.th.on{border-color:var(--purple);outline:3px solid var(--purple);outline-offset:1px}
+.th i{position:absolute;left:10px;top:10px;z-index:2;width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-style:normal;font-family:var(--fd);font-size:10px;font-weight:800;display:grid;place-items:center}
+.th div{position:relative;height:84px;border-radius:9px;border:1.5px solid var(--ink);overflow:hidden}
+.th div img{position:absolute;left:50%;top:14px;width:110px;transform:translateX(-50%)}
+.th span{display:block;font-size:11px;font-weight:800;line-height:1.35;margin-top:6px;height:30px;overflow:hidden}
+.th.add{display:grid;place-items:center;text-align:center;border-style:dashed;font-size:12px;font-weight:900;color:var(--sub)}
+.th.add small{font-size:10.5px;font-weight:700}
+.adm-edit{display:flex;gap:26px;margin-top:18px}
+.adm-form{flex:1;min-width:0}
+.fl{margin-bottom:13px}.fl label{display:block;font-size:12.5px;font-weight:900;margin-bottom:6px}.fl label em{font-style:normal;font-size:10.5px;color:var(--purple);margin-left:4px}
+.drop{display:flex;gap:12px;align-items:center;padding:10px;border:2px dashed #CFC6B2;border-radius:14px;background:var(--cream)}
+.drop .dp{position:relative;width:76px;height:76px;border-radius:12px;border:1.5px solid var(--ink);overflow:hidden;flex:none}
+.drop .dp img{position:absolute;left:50%;top:12px;width:100px;transform:translateX(-50%)}
+.drop b{display:block;font-size:13px;font-weight:900}.drop small{display:block;font-size:11.5px;font-weight:700;color:var(--sub)}
+.hint{font-size:11.5px;font-weight:600;color:var(--sub);line-height:1.5;margin-top:6px}
+.sw{display:flex;gap:8px}.sw i{width:28px;height:28px;border-radius:50%;border:2px solid var(--ink)}.sw i.on{outline:3px solid var(--purple);outline-offset:2px}
+.in{position:relative;min-height:40px;border:2px solid var(--ink);border-radius:12px;padding:9px 52px 9px 12px;font-size:13.5px;font-weight:700;line-height:1.5}
+.in span{position:absolute;right:10px;bottom:9px;font-size:11px;font-weight:800;color:var(--sub)}
+.in.ta{min-height:64px}
+.row2{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cb{display:flex !important;align-items:center;gap:8px;margin:0 !important}.cb i{width:18px;height:18px;border-radius:5px;border:2px solid var(--ink)}.cb i.on{background:var(--purple);border-color:var(--purple)}
+.hist{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;font-weight:700;color:var(--sub);padding-top:12px;border-top:1.5px solid var(--line)}.hist b{color:var(--ink);font-weight:900}
+.adm-prev{flex:none;width:250px}
+.pv-cap{font-size:12px;font-weight:900;color:var(--sub);margin-bottom:8px;text-align:center}
+.ph.sm{transform:scale(.8);transform-origin:top left;margin-bottom:-128px}
+.tbl{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px;font-weight:700}
+.tbl th{text-align:left;font-size:11.5px;font-weight:900;color:var(--sub);padding:0 8px 8px;border-bottom:1.5px solid var(--line)}
+.tbl td{padding:10px 8px;border-bottom:1.5px solid var(--line);vertical-align:middle}
+.tbl td b{display:block;font-weight:900}.tbl td small{display:block;font-size:11.5px;color:var(--sub);margin-top:2px}
+.tbl .dr{color:#B4AC9B;font-weight:900;letter-spacing:-2px;width:20px}
+.tt{position:relative;width:44px;height:76px;border-radius:8px;border:1.5px solid var(--ink);overflow:hidden;background:#F3EEE2}
+.tt img{position:absolute;left:50%;bottom:0;width:80px;transform:translateX(-50%)}
+
+/* full-bleed first screen */
+.btn.sm2{height:44px;font-size:13.5px;margin-top:8px}.btn.sm2 svg{width:17px;height:17px}
+.btn.sm3{height:36px;font-size:11.5px;margin-top:6px;width:100%;box-shadow:2px 2px 0 var(--ink)}.btn.sm3 svg{width:14px;height:14px}
+.tpls{display:flex;gap:18px;align-items:flex-start}
+.tpl{width:150px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.tpl b{font-size:13px;font-weight:900;margin-top:8px}.tpl span{font-family:var(--fd);font-size:11px;font-weight:600;color:var(--sub)}.tpl span.dv{font-family:var(--fb);font-weight:700;font-size:11px;margin-top:2px;line-height:1.4}
+.tpl-b{display:flex;flex-direction:column;border:2px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
+.tpl-b>div{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9.5px;font-weight:900;line-height:1.3}
+.tz-s{background:repeating-linear-gradient(45deg,#F0EBDF 0 4px,#fff 4px 8px);color:var(--sub);font-size:8px !important}
+.tz-f{flex:1;background:var(--lav);color:var(--purple)}
+.tz-b{background:repeating-linear-gradient(45deg,#E9E2D2 0 5px,#F6F1E6 5px 10px);color:var(--ink);border-top:2px dashed var(--ink)}
+.tz-b small{font-size:8.5px;font-weight:700;color:var(--sub);margin-top:2px}
+.rule{display:flex;flex-direction:column;gap:9px;background:#fff;border:2px solid var(--ink);border-radius:18px;padding:14px;box-shadow:4px 4px 0 var(--ink)}
+.rule div{position:relative;padding-left:29px;font-size:12.5px;font-weight:700;line-height:1.5}.rule b{font-weight:900}
+.rule i{position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;background:var(--purple);color:#fff;font-style:normal;font-family:var(--fd);font-size:10px;font-weight:800;display:grid;place-items:center;margin-top:1px}
+.bad{background:#fff;border:2px solid var(--ink);border-radius:18px;padding:10px;font-size:12px;font-weight:700;line-height:1.5}
+.bad b{display:block;font-weight:900;margin-top:8px}.bad span{color:var(--sub)}
+.bad-i{position:relative;height:118px;border-radius:10px;overflow:hidden;border:2px solid var(--pink)}
+.bad-i img{width:100%;height:100%;object-fit:cover}
+.bad-i:after{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - 2px),var(--pink) calc(50% - 2px) calc(50% + 2px),transparent calc(50% + 2px))}
+.ups{display:flex;gap:12px;align-items:flex-end}
+.up{width:96px;display:flex;flex-direction:column;align-items:flex-start}
+.up-i{position:relative;width:54px;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden}
+.up b{font-size:12px;font-weight:900;margin-top:6px}.up small{font-size:10.5px;font-weight:700;color:var(--sub)}
+.okk{display:flex;align-items:center;gap:3px;font-size:10.5px;font-weight:900;color:var(--purple);margin-top:2px}
+.chkl{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}
+.chkl div{display:flex;align-items:center;gap:6px;color:var(--ink)}.chkl svg{color:var(--purple);flex:none}
+.chkl .w b{flex:none;width:14px;height:14px;border-radius:50%;background:#E9B800;color:#fff;font-size:10px;font-weight:900;display:grid;place-items:center}
+.minis{display:flex;gap:10px;align-items:flex-start;justify-content:center}
+.mini-ph{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--sub)}
+.mini-in{width:108px;overflow:hidden}
+
+/* link request */
+.lf{margin-top:10px}.lf label{display:block;font-size:11.5px;font-weight:900;margin-bottom:5px}.lf label small{font-weight:700;color:var(--sub);margin-left:4px}
+.li{height:42px;border:2px solid var(--ink);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:14px;font-weight:800}
+.li .vf{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:900;color:var(--purple)}
+.agree{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;font-weight:700;line-height:1.45;margin-bottom:2px}
+.trk{margin-top:14px;display:flex;flex-direction:column;gap:0;padding-left:2px}
+.tk-r{position:relative;display:grid;grid-template-columns:24px 1fr auto;align-items:center;gap:8px;height:34px;font-size:13px}
+.tk-r:not(:last-child):after{content:"";position:absolute;left:10px;top:24px;width:2px;height:20px;background:var(--line)}
+.tk-r i{width:22px;height:22px;border-radius:50%;border:2px solid #CFC6B2;background:#fff;display:grid;place-items:center;z-index:1}
+.tk-r b{font-weight:800;color:#A79F8F}.tk-r span{font-size:11px;font-weight:700;color:#B4AC9B}
+.tk-r.done i{background:var(--purple);border-color:var(--purple);color:#fff}.tk-r.done b{color:var(--ink)}
+.tk-r.now i{border-color:var(--purple);box-shadow:inset 0 0 0 4px #fff;background:var(--purple);animation:pl 1.4s ease-in-out infinite}.tk-r.now b{color:var(--purple);font-weight:900}.tk-r.now span{color:var(--sub)}
+@keyframes pl{50%{box-shadow:inset 0 0 0 4px #fff,0 0 0 5px var(--lav)}}
+@media (prefers-reduced-motion:reduce){.tk-r.now i{animation:none}}
+.mr{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1.5px solid var(--line);font-size:13px;font-weight:700}.mr span{color:var(--sub)}.mr b{font-weight:900}
+.lk-row{display:grid;grid-template-columns:70px 1fr 1.25fr 92px;gap:10px;align-items:center;padding:11px 10px;border-bottom:1.5px solid var(--line);font-size:12.5px;font-weight:700}
+.lk-row.hd{font-size:11px;font-weight:900;color:var(--sub);padding-top:0}
+.lk-row.on{background:var(--lav);border-radius:12px;border-bottom-color:transparent}
+.lk-row b{display:block;font-weight:900}.lk-row small{display:block;font-size:11px;color:var(--sub)}
+.cand{display:flex;align-items:center;gap:6px}.cand .m{font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;background:#E2F2E6;color:#2D6B3C;white-space:nowrap}.cand .m.no{background:#F0EBDF;color:var(--sub)}
+.lk-det{margin-top:14px;display:flex;gap:14px}
+.lk-box{flex:1;border:2px solid var(--ink);border-radius:16px;padding:12px 14px;font-size:12.5px;font-weight:700}
+.lk-box h4{margin:0 0 8px;font-size:12px;font-weight:900;color:var(--sub)}
+.lk-box .mr{font-size:12.5px;padding:5px 0}
+.rsn{display:flex;flex-wrap:wrap;gap:6px}
+</style></head><body>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+ <symbol id="kakao" viewBox="0 0 24 24"><path fill="#000" d="M12 3.2C6.6 3.2 2.3 6.6 2.3 10.8c0 2.7 1.8 5.1 4.5 6.4l-1 3.7c-.1.3.3.6.6.4l4.4-2.9c.4 0 .8.1 1.2.1 5.4 0 9.7-3.4 9.7-7.6S17.4 3.2 12 3.2z"/></symbol>
+ <symbol id="apple" viewBox="0 0 24 24"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></symbol>
+ <symbol id="sparkle" viewBox="0 0 24 24"><path d="M12 1.5c.7 5.3 3.2 7.9 10.5 10.5-7.3 2.6-9.8 5.2-10.5 10.5C11.3 17.2 8.8 14.6 1.5 12 8.8 9.4 11.3 6.8 12 1.5z" fill="currentColor" stroke="#1E1A2B" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+ <symbol id="ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#1E1A2B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="#fff" stroke="#1E1A2B" stroke-width="2.2"/><g fill="#1E1A2B"><circle cx="8.5" cy="8.5" r="1.6"/><circle cx="15.5" cy="15.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="15.5" cy="8.5" r="1.6"/><circle cx="8.5" cy="15.5" r="1.6"/></g></symbol>
+ <symbol id="arr" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="send" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" fill="none" stroke="#1E1A2B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15z" fill="#FFE200" stroke="#1E1A2B" stroke-width="2" stroke-linejoin="round"/><path d="M10 20.5a2.2 2.2 0 004 0" fill="none" stroke="#1E1A2B" stroke-width="2" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<h1>PALLO 첫 화면 · 가입 · 사용 가이드 시안</h1>
+<p class="lead">앱을 받고 처음 열었을 때부터 홈에 들어가기까지예요. <b>첫 화면 그림과 사용 가이드 5장은 운영팀이 관리자 웹에서 직접 올리고 바꿔요</b> (앱 업데이트 없이). 앱은 틀과 로그인 버튼만 갖고 있어요. 카카오 버튼은 카카오 공식 노랑(#FEE500)을 쓰고, PALLO 노랑(#FFE200) 바탕 위에는 올리지 않아요.</p>
+
+<div class="flow">
+ <span class="y">첫 화면 <small style="font-weight:700;margin-left:4px">관리자 웹</small></span><i>→</i><span>카카오 로그인</span><i>→</i>
+ <span class="br"><span>처음 가입 → 약관 · 닉네임 · 캐릭터 · 회원 확인 · <b>지점 연동 요청</b> · 알림 · 환영</span><span>이미 가입 → 바로</span></span><i>→</i>
+ <span class="l">사용 가이드 5장 <small style="font-weight:700;margin-left:4px">관리자 웹</small></span><i>→</i><span class="y">홈</span>
+</div>
+<div class="flow" style="margin-top:4px"><span style="border-style:dashed;background:transparent">사용 가이드는 계정마다 한 번 · 건너뛰기 가능 · 마이 › 설정 › 도움 › 사용 가이드에서 다시 보기</span><span style="border-style:dashed;background:transparent">첫 화면 '먼저 둘러볼게요' → 비회원 구경 모드</span></div>
+
+
+<!-- ============ 1. 첫 화면 ============ -->
+<div class="sec">1 · 첫 화면 (관리자 웹 그림이 화면을 꽉 채워요)</div>
+<p class="secd">그림 한 장을 화면 크기에 맞춰 자르는 대신, <b>화면 비율별로 3장</b>을 올려요. 앱은 기기에 가장 맞는 한 장을 골라 <b>가로 폭에 딱 맞추고</b>, 위에서부터 그려요. 그림이 화면보다 짧으면 남는 맨 아래만 <b>바탕색</b>(그림 맨 아래 색)으로 이어 붙여요. 그래서 어느 기기에서도 잘리는 곳 없이 화면이 다 차요. 로그인 버튼은 그림 위 아래쪽 30%(버튼 자리)에 떠 있어요. 움직이는 첫 화면 예시는 <a href="start-screen-motion.html">start-screen-motion.html</a>.</p>
+<div class="row">
+ <div class="col" style="width:256px"><div class="cap"><b>아이폰 SE · 8 (9:16)</b><span>'짧은 화면' 그림이 딱 맞아요. 이어 붙이는 곳 없음.</span></div><div class="ph" style="width:256px;height:443px;background:#1E1A2B;border-radius:30px"><div class="sb" style="color:#fff">9:41<em><b></b><i></i></em></div>
+ <div style="position:absolute;left:0;top:0;width:240px;height:427px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:326px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:46px;font-family:var(--fd);font-size:34px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:156px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:50px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:116px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:171px;width:150px">
+</div>
+ 
+ <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
+  <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
+  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
+  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
+</div>
+</div></div>
+ <div class="col" style="width:256px"><div class="cap"><b>아이폰 15 · 갤럭시 S24 (9:19.5)</b><span>'기본' 그림. 화면이 3px 더 길어서 맨 아래 3px만 바탕색.</span></div><div class="ph" style="width:256px;height:536px;background:#1E1A2B;border-radius:40px"><div class="sb" style="color:#fff">9:41<em><b></b><i></i></em></div>
+ <div style="position:absolute;left:0;top:0;width:240px;height:517px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:402px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:58px;font-family:var(--fd);font-size:40px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:186px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:62px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:128px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:213px;width:196px">
+</div>
+ 
+ <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
+  <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
+  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
+  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
+</div>
+</div></div>
+ <div class="col" style="width:256px"><div class="cap"><b>갤럭시 Z 플립 (9:22)</b><span>'긴 화면' 그림도 짧아서 맨 아래 53px를 바탕색으로. 버튼 자리라 티가 안 나요.</span></div><div class="ph" style="width:256px;height:602px;background:#1E1A2B;border-radius:40px"><div class="sb" style="color:#fff">9:41<em><b></b><i></i></em></div>
+ <div style="position:absolute;left:0;top:0;width:240px;height:533px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:413px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:60px;font-family:var(--fd);font-size:40px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:188px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:64px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:130px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:224px;width:196px">
+</div>
+ <div style="position:absolute;left:0;right:0;top:533px;height:53px;background:#1E1A2B;border-top:2px dashed var(--yellow);z-index:3"></div><span class="zn up" style="position:absolute;left:8px;top:537px;z-index:5">여기부터 바탕색</span>
+ <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
+  <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
+  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
+  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
+</div>
+</div></div>
+</div>
+
+<div class="row" style="margin-top:30px">
+ <div class="col" style="width:auto"><div class="cap"><b>그림 만드는 틀 (관리자 웹에서 받기)</b><span style="min-height:0">세 장 모두 같은 그림을 비율만 바꿔 만들어요. 위 5%는 시계 · 배터리 자리라 글씨를 두지 않고, 아래 30%는 버튼이 올라가는 자리예요.</span></div>
+  <div class="tpls">
+   <div class="tpl"><div class="tpl-b" style="width:112px;height:199px">
+  <div class="tz-s" style="height:10px">시계 · 배터리</div>
+  <div class="tz-f">그림 자유</div>
+  <div class="tz-b" style="height:60px">버튼 자리 30%<small>중요한 내용 X<br>맨 아래는 바탕색 하나</small></div>
+ </div><b>짧은 화면</b><span>1242 × 2208</span><span class="dv">아이폰 SE · 8 · 옛 안드로이드</span></div>
+   <div class="tpl"><div class="tpl-b" style="width:112px;height:241px">
+  <div class="tz-s" style="height:12px">시계 · 배터리</div>
+  <div class="tz-f">그림 자유</div>
+  <div class="tz-b" style="height:72px">버튼 자리 30%<small>중요한 내용 X<br>맨 아래는 바탕색 하나</small></div>
+ </div><b>기본</b><span>1290 × 2780</span><span class="dv">아이폰 X 이후 · 갤럭시 S</span></div>
+   <div class="tpl"><div class="tpl-b" style="width:112px;height:249px">
+  <div class="tz-s" style="height:12px">시계 · 배터리</div>
+  <div class="tz-f">그림 자유</div>
+  <div class="tz-b" style="height:75px">버튼 자리 30%<small>중요한 내용 X<br>맨 아래는 바탕색 하나</small></div>
+ </div><b>긴 화면</b><span>1290 × 2866</span><span class="dv">긴 안드로이드 · 플립</span></div>
+  </div>
+ </div>
+ <div class="col" style="width:280px"><div class="cap"><b>앱이 고르는 법</b><span style="min-height:0">화면 세로 ÷ 가로 = 화면 비율</span></div>
+  <div class="rule">
+   <div><i>1</i>세 장 중 <b>화면보다 길지 않은 것</b> 가운데 가장 긴 것을 골라요.</div>
+   <div><i>2</i>그림을 <b>화면 가로 폭에 맞춰</b> 위에서부터 그려요. 잘리는 곳이 없어요.</div>
+   <div><i>3</i>남는 맨 아래는 <b>바탕색</b>으로 채워요.</div>
+   <div><i>4</i>태블릿 · 폴더블 펼침처럼 9:16보다 넓으면, 짧은 화면 그림을 <b>세로 높이에 맞추고</b> 양옆을 바탕색으로 채워요.</div>
+   <div><i>5</i>버튼 · 링크 글씨색은 바탕색 밝기를 보고 앱이 정해요(어두우면 흰 테두리 · 흰 글씨).</div>
+  </div>
+ </div>
+ <div class="col" style="width:200px"><div class="cap"><b>못 올리는 그림</b><span style="min-height:0">비율이 다르면 관리자 웹이 올리기 전에 막아요.</span></div>
+  <div class="bad"><div class="bad-i"><img src="assets/lv1-01-lobby.jpg"></div><b>가로 그림 820 × 567</b><span>비율이 달라서 잘려요. 틀에 맞춰 다시 만들어 주세요.</span></div>
+ </div>
+ <div class="col" style="width:180px"><div class="cap"><b>기본 화면 (앱에 넣어 둠)</b><span style="min-height:0">올린 그림이 없거나 아직 못 받았을 때.</span></div>
+  <div class="ph" style="width:176px;height:362px;border-width:6px;border-radius:30px"><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:60px 12px 14px">
+   <div style="font-family:var(--fd);font-size:28px;font-weight:800;letter-spacing:-1.2px">PALLO</div>
+   <img src="assets/c-purple-standard-3d.png" style="width:150px;margin-top:20px">
+   <div class="grow"></div>
+   <div class="btn k sm3"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
+   <div class="btn a sm3"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
+  </div></div>
+ </div>
+</div>
+
+
+<!-- ============ 2. 닉네임 ============ -->
+<div class="sec">2 · 닉네임 정하기</div>
+<p class="secd">카카오 이름을 미리 채워 두고, 바로 '다음'을 누를 수 있게 해요. 규칙은 지금 설정 화면과 같아요: 2~10자, 한글 · 영문 · 숫자, 중복 확인은 입력하면서 바로.</p>
+<div class="row">
+
+<!-- N1 -->
+<div class="col"><div class="cap"><b>1 · 이름표 붙이기<span class="pick">추천</span></b><span>캐릭터 가슴에 'HELLO my name is' 이름표가 붙어 있고, 입력하는 대로 이름표 글자가 바뀌어요. 주사위로 추천 이름.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:25%"></b></span><span class="st">1/4</span></div>
+  <div class="ttl">PALLO에서 쓸<br>이름을 정해요</div>
+  <div class="dsc">라운지 · 랭킹 · 동아리에서 보여요. 나중에 바꿀 수 있어요.</div>
+  <div style="position:relative;height:178px;margin-top:6px">
+   <img src="assets/av/up-purple.png" style="position:absolute;left:50%;top:6px;width:200px;transform:translateX(-50%)">
+   <div style="position:absolute;left:50%;top:104px;width:138px;margin-left:-69px;border:2px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden;transform:rotate(-4deg);box-shadow:3px 3px 0 var(--ink)">
+    <div style="background:var(--pink);color:#fff;text-align:center;padding:3px 0 2px;font-family:var(--fd);font-size:11px;font-weight:800;line-height:1.1">HELLO<div style="font-family:var(--fb);font-size:8.5px;font-weight:900">my name is</div></div>
+    <div style="text-align:center;padding:5px 0 6px;font-size:20px;font-weight:900">서현</div>
+   </div>
+  </div>
+  <div class="fld"><div class="inp">서현<span class="cur"></span><span class="cnt">2/10</span></div><div class="ib"><svg width="26" height="26"><use href="#dice"/></svg></div></div>
+  <div class="help"><svg width="14" height="14"><use href="#ok"/></svg>쓸 수 있는 이름이에요</div>
+  <div class="chips"><span class="chip">말많은망고</span><span class="chip">수다곰</span><span class="chip">Tammy</span></div>
+  <div class="grow"></div>
+  <div class="btn y">다음</div>
+ </div>
+</div></div>
+
+<!-- N2 -->
+<div class="col"><div class="cap"><b>2 · PALLO 여권 만들기</b><span>가입 전체를 여권 한 장 채우기로. 닉네임 → 언어 → 지점 칸이 단계마다 채워지고, 다 채우면 도장이 쾅. 마이의 여권 카드와 이어져요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:25%"></b></span><span class="st">1/4</span></div>
+  <div class="ttl" style="font-size:20px">내 PALLO 여권에<br>쓸 이름은?</div>
+  <div style="margin-top:8px;border:2px solid var(--ink);border-radius:18px;background:#fff;box-shadow:4px 4px 0 var(--ink);overflow:hidden">
+   <div style="height:32px;background:var(--purple);color:var(--yellow);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.5px"><span>PALLO PASSPORT</span><svg width="16" height="16" style="color:var(--yellow)"><use href="#sparkle"/></svg></div>
+   <div style="display:flex;gap:10px;padding:12px">
+    <div style="width:72px;height:88px;border-radius:10px;border:2px solid var(--ink);background:var(--mist);overflow:hidden;flex:none;position:relative"><img src="assets/av/up-sky.png" style="position:absolute;left:50%;top:14px;width:120px;transform:translateX(-50%)"></div>
+    <div style="flex:1;font-size:9.5px;font-weight:900;color:var(--sub);letter-spacing:.4px;font-family:var(--fd)">
+     NAME<div style="font-family:var(--fb);font-size:16px;font-weight:900;color:var(--ink);letter-spacing:0;border-bottom:3px solid var(--yellow);margin:1px 0 7px">서현<span class="cur" style="display:inline-block;width:2px;height:16px;background:var(--purple);margin-left:2px;vertical-align:-2px;animation:bl 1s steps(1) infinite"></span></div>
+     LANGUAGE<div style="height:16px;border-bottom:1.5px dashed #CFC6B2;margin:1px 0 7px"></div>
+     BRANCH<div style="height:16px;border-bottom:1.5px dashed #CFC6B2;margin-top:1px"></div>
+    </div>
+   </div>
+   <div style="padding:0 12px 10px;font-family:var(--fd);font-size:9px;font-weight:600;color:#B4AC9B;letter-spacing:1px;white-space:nowrap;overflow:hidden">P&lt;PALLO&lt;&lt;SEOHYUN&lt;&lt;&lt;2026.11</div>
+  </div>
+  <div class="help"><svg width="14" height="14"><use href="#ok"/></svg>쓸 수 있는 이름이에요 · 2/10</div>
+  <div class="btn y" style="margin-top:12px">다음</div>
+  <div class="kbd"><span>ㅂ</span><span>ㅈ</span><span>ㄷ</span><span>ㄱ</span><span>ㅅ</span><span>ㅛ</span><span>ㅕ</span><span>ㅑ</span><span>ㅐ</span><span>ㅔ</span><span>ㅁ</span><span>ㄴ</span><span>ㅇ</span><span>ㄹ</span><span>ㅎ</span><span>ㅗ</span><span>ㅓ</span><span>ㅏ</span><span>ㅣ</span><span>⌫</span></div>
+ </div>
+</div></div>
+
+<!-- N3 -->
+<div class="col"><div class="cap"><b>3 · 팔로와 대화하기</b><span>가입 전체를 채팅처럼. 캐릭터가 묻고 내가 답하면 다음 질문이 와요. 라운지 채팅과 같은 노랑 말풍선. 가장 친근하지만 단계가 길어 보일 수 있어요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr" style="padding-bottom:16px">
+  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span style="flex:1;font-size:14px;font-weight:900;text-align:center;margin-right:46px">팔로</span></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+   <div style="display:flex;gap:8px;align-items:flex-end">
+    <div style="width:38px;height:38px;border-radius:50%;border:2px solid var(--ink);background:var(--yellow);overflow:hidden;flex:none;position:relative"><img src="assets/av/up-purple.png" style="position:absolute;left:50%;top:4px;width:70px;transform:translateX(-50%)"></div>
+    <div style="display:flex;flex-direction:column;gap:5px">
+     <div style="padding:9px 12px;border-radius:16px 16px 16px 4px;background:#fff;border:2px solid var(--ink);font-size:13.5px;font-weight:700;line-height:1.45">반가워요! 저는 PALLO의 팔로예요.</div>
+     <div style="padding:9px 12px;border-radius:16px 16px 16px 4px;background:#fff;border:2px solid var(--ink);font-size:13.5px;font-weight:700;line-height:1.45">라운지에서 뭐라고 부르면 될까요?</div>
+    </div>
+   </div>
+   <div style="align-self:flex-end;padding:9px 12px;border-radius:16px 16px 4px 16px;background:var(--yellow);border:2px solid var(--ink);font-size:13.5px;font-weight:900">서현이라고 불러 주세요</div>
+   <div style="display:flex;gap:8px;align-items:flex-end">
+    <div style="width:38px;flex:none"></div>
+    <div style="padding:9px 12px;border-radius:16px 16px 16px 4px;background:#fff;border:2px solid var(--ink);font-size:13.5px;font-weight:700;line-height:1.45">좋아요, 서현님! 어떤 언어를 말해 보고 싶어요?</div>
+   </div>
+  </div>
+  <div class="grow"></div>
+  <div class="chips" style="margin-bottom:10px"><span class="chip" style="border-color:var(--en);color:var(--en)">영어</span><span class="chip" style="border-color:var(--ja);color:var(--ja)">일본어</span><span class="chip" style="border-color:var(--zh);color:var(--zh)">중국어</span><span class="chip" style="border-color:var(--es);color:var(--es)">스페인어</span></div>
+  <div style="display:flex;gap:8px;align-items:center"><div style="flex:1;height:44px;border-radius:22px;border:2px solid var(--ink);background:#fff;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:700;color:#A79F8F">직접 입력하기</div><div style="width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);background:var(--yellow);display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink)"><svg width="20" height="20"><use href="#send"/></svg></div></div>
+ </div>
+</div></div>
+</div>
+
+<!-- ============ 3. 나머지 흐름 ============ -->
+<div class="sec">3 · 나머지 단계</div>
+<p class="secd">닉네임 시안 1(이름표) 흐름으로 그렸어요. 진행 바는 4칸: 닉네임 → 캐릭터 → 회원 확인 → 연동 요청(또는 언어 · 레벨). <b>지점 회원은 연동 요청을 보내고, 지점이 전산과 맞춰 연동해야 회원 기능(출석 · 내 팀 · 이용권 · 참여)이 열려요.</b> 그 전까지는 비회원처럼 둘러봐요.</p>
+<div class="row">
+
+<!-- 약관 -->
+<div class="col"><div class="cap"><b>약관 동의 시트</b><span>카카오 동의 창에서 돌아오면 바로 올라오는 시트. '전체 동의' 한 번이면 끝. 필수를 다 체크해야 버튼이 켜져요.</span></div>
+<div class="ph"><div class="sb" style="color:#fff">9:41<em><b></b><i></i></em></div>
+ <div style="position:absolute;inset:0;background:var(--yellow)"><img src="assets/c-purple-jump-3d.png" style="position:absolute;left:50%;top:70px;width:200px;transform:translateX(-50%)"></div>
+ <div style="position:absolute;inset:0;background:rgba(30,26,43,.45)"></div>
+ <div style="position:absolute;left:0;right:0;bottom:0;background:var(--cream);border-top:2px solid var(--ink);border-radius:28px 28px 0 0;padding:10px 18px 20px">
+  <div style="width:40px;height:5px;border-radius:3px;background:#CFC6B2;margin:0 auto 14px"></div>
+  <div style="font-size:18px;font-weight:900;letter-spacing:-.4px">PALLO를 쓰려면<br>동의가 필요해요</div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px;border-radius:16px;border:2px solid var(--purple);background:var(--lav)"><span class="chk on"><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></span><b style="font-size:14.5px;font-weight:900">전체 동의하기</b></div>
+  <div style="padding:4px 4px 0">
+   <div style="display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;font-weight:700"><svg width="16" height="16" style="color:var(--purple)"><use href="#ok"/></svg><span style="flex:1"><span class="tag" style="background:var(--lav);color:var(--purple)">필수</span>만 14세 이상이에요</span></div>
+   <div style="display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;font-weight:700"><svg width="16" height="16" style="color:var(--purple)"><use href="#ok"/></svg><span style="flex:1"><span class="tag" style="background:var(--lav);color:var(--purple)">필수</span>서비스 이용약관</span><svg width="14" height="14" style="color:var(--sub)"><use href="#arr"/></svg></div>
+   <div style="display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;font-weight:700"><svg width="16" height="16" style="color:var(--purple)"><use href="#ok"/></svg><span style="flex:1"><span class="tag" style="background:var(--lav);color:var(--purple)">필수</span>개인정보 수집 · 이용</span><svg width="14" height="14" style="color:var(--sub)"><use href="#arr"/></svg></div>
+   <div style="display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;font-weight:700"><svg width="16" height="16" style="color:var(--purple)"><use href="#ok"/></svg><span style="flex:1"><span class="tag" style="background:#F0EBDF;color:var(--sub)">선택</span>이벤트 · 번개 소식 받기</span><svg width="14" height="14" style="color:var(--sub)"><use href="#arr"/></svg></div>
+  </div>
+  <div class="btn y" style="margin-top:12px">동의하고 시작하기</div>
+ </div>
+</div></div>
+
+<!-- 캐릭터 -->
+<div class="col"><div class="cap"><b>캐릭터 고르기</b><span>이름표를 단 채로 색만 바꿔 봐요. 7가지 중 하나. 옷 · 소품은 나중에 마이에서 꾸며요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:50%"></b></span><span class="st">2/4</span></div>
+  <div class="ttl">서현님과 같이 다닐<br>친구를 골라요</div>
+  <div style="position:relative;height:200px;margin:8px -4px 0;border:2px solid var(--ink);border-radius:22px;background:#FCE3EA;overflow:hidden">
+   <svg class="spark" style="left:18px;top:18px;width:20px;height:20px;color:#fff"><use href="#sparkle"/></svg>
+   <img src="assets/av/up-pink.png" style="position:absolute;left:50%;top:22px;width:230px;transform:translateX(-50%)">
+   <div style="position:absolute;left:50%;top:128px;width:112px;margin-left:-56px;border:2px solid var(--ink);border-radius:10px;background:#fff;overflow:hidden;transform:rotate(-4deg)">
+    <div style="background:var(--pink);color:#fff;text-align:center;padding:2px 0;font-family:var(--fd);font-size:9px;font-weight:800">HELLO</div>
+    <div style="text-align:center;padding:3px 0 4px;font-size:16px;font-weight:900">서현</div>
+   </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:16px">
+   <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-yellow.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
+   <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-purple.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
+   <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-purple-lash.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
+   <div style="height:58px;border-radius:16px;border:2px solid var(--purple);background:var(--lav);position:relative;overflow:hidden;outline:3px solid var(--purple);outline-offset:1px"><img src="assets/av/up-pink.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
+   <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-sky.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
+   <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-green.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
+   <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-coral.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
+  </div>
+  <div class="grow"></div>
+  <div class="btn y">이 친구로 할래요</div>
+ </div>
+</div></div>
+
+<!-- 회원 확인 -->
+<div class="col"><div class="cap"><b>지점 회원이에요?</b><span>여기서 길이 갈려요. 회원은 다니는 지점에 연동을 요청하고, 아니면 체험 신청이나 앱 공부로.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:75%"></b></span><span class="st">3/4</span></div>
+  <div class="ttl">PALLO 지점에<br>다니고 있나요?</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+   <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;border:2px solid var(--purple);background:var(--lav);outline:3px solid var(--purple);outline-offset:1px">
+    <div style="flex:1"><b style="font-size:15px;font-weight:900">네, 지점 회원이에요</b><div class="dsc" style="font-size:12px;margin-top:2px">다니는 지점에 연동을 요청해요</div></div><span class="chk on"><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></span></div>
+   <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;border:2px solid var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink)">
+    <div style="flex:1"><b style="font-size:15px;font-weight:900">체험해 보고 싶어요</b><div class="dsc" style="font-size:12px;margin-top:2px">가까운 지점 체험 세션 1회</div></div><span class="chk"></span></div>
+   <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;border:2px solid var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink)">
+    <div style="flex:1"><b style="font-size:15px;font-weight:900">앱으로만 공부할래요</b><div class="dsc" style="font-size:12px;margin-top:2px">지점 없이 AI와 말하기 연습</div></div><span class="chk"></span></div>
+  </div>
+  <div class="grow"></div>
+  <div class="btn y">다음</div>
+  <div class="link"><u>일단 구경만 할게요</u></div>
+ </div>
+</div></div>
+
+<!-- 연동 요청 -->
+<div class="col"><div class="cap"><b>회원 → 지점 연동 요청</b><span>지점 회원 정보는 지점 전산에 있어요. 앱 계정과 이으려면 지점에 연동을 요청해요. 지점이 맞춰 보고 연동하면 회원처럼 써요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
+  <div class="ttl" style="font-size:20px;margin-top:10px">다니는 지점에<br>연동을 요청해요</div>
+  <div class="dsc">지점에 등록한 이름 · 번호와 같게 적어 주세요.</div>
+  <div class="lf"><label>지점</label><div class="li sel">하남점<svg width="14" height="14" style="transform:rotate(90deg);color:var(--sub)"><use href="#arr"/></svg></div></div>
+  <div class="lf"><label>이름 <small>지점에 등록한 이름</small></label><div class="li">김서현</div></div>
+  <div class="lf"><label>휴대폰</label><div class="li">010-1234-5678<span class="vf"><svg width="11" height="11"><use href="#ok"/></svg>확인됨</span></div></div>
+  <div class="lf"><label>배우는 언어 <small>모르면 비워 둬요</small></label><div class="chips" style="margin-top:0"><span class="chip on">영어</span><span class="chip">일본어</span><span class="chip">중국어</span><span class="chip">스페인어</span></div></div>
+  <div class="grow"></div>
+  <div class="agree"><span class="chk on" style="width:18px;height:18px"><svg width="10" height="10" style="color:#fff"><use href="#ok"/></svg></span><span><span class="tag" style="background:var(--lav);color:var(--purple)">필수</span>하남점에 이름 · 휴대폰 번호를 보내는 데 동의해요</span></div>
+  <div class="btn y">연동 요청 보내기</div>
+ </div>
+</div></div>
+
+<!-- 연동 기다림 -->
+<div class="col"><div class="cap"><b>연동 기다리는 중</b><span>요청을 보내면 바로 이 화면. 지점이 확인하는 동안 막지 않고 둘러볼 수 있어요. 연동되면 알림이 와요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div style="height:44px"></div>
+  <div style="display:grid;place-items:center;margin-top:6px"><img src="assets/c-purple-tilt-3d.png" style="width:150px"></div>
+  <div class="ttl" style="text-align:center;margin-top:8px">하남점에 연동을<br>요청했어요</div>
+  <div class="dsc" style="text-align:center">보통 하루 안에 끝나요. 끝나면 알림으로 알려 드려요.</div>
+  <div class="trk">
+   <div class="tk-r done"><i><svg width="11" height="11"><use href="#ok"/></svg></i><b>요청 보냄</b><span>오늘 21:40</span></div>
+   <div class="tk-r now"><i></i><b>지점에서 확인 중</b><span>하남점</span></div>
+   <div class="tk-r"><i></i><b>연동 완료</b><span>회원 기능이 열려요</span></div>
+  </div>
+  <div class="note" style="margin-top:12px;font-size:11.5px"><b>기다리는 동안</b> 라운지 구경 · 좋아요, 캐릭터 꾸미기, 레슨 맛보기는 바로 돼요.</div>
+  <div class="grow"></div>
+  <div class="btn y">먼저 둘러볼게요</div>
+  <div class="link" style="margin-top:10px"><u>요청 취소</u> · <u>하남점에 전화</u></div>
+ </div>
+</div></div>
+
+<!-- 연동 완료 -->
+<div class="col"><div class="cap"><b>연동 완료</b><span>지점이 연동하면 푸시 알림 → 앱을 열면 이 화면이 한 번 떠요. 출석 · 내 팀 · 이용권 · 라운지 참여가 열려요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div style="height:44px"></div>
+  <div class="ttl" style="margin-top:4px">연동됐어요!<br>이제 하남점 회원이에요</div>
+  <div class="dsc">지점 전산에서 받아 온 정보예요.</div>
+  <div style="position:relative;margin-top:16px;border:2px solid var(--ink);border-radius:20px;background:#fff;box-shadow:6px 6px 0 -2px #fff,6px 6px 0 var(--ink),12px 12px 0 -2px var(--lav),12px 12px 0 var(--ink);overflow:hidden">
+   <div style="height:34px;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:12px;font-weight:900"><span>PALLO 회원증</span><span style="font-family:var(--fd);font-weight:800;color:var(--yellow)">MEMBER</span></div>
+   <div style="padding:12px 14px 14px">
+    <div class="mr"><span>지점</span><b>하남점</b></div>
+    <div class="mr"><span>언어 · 레벨</span><b><span class="tag" style="background:var(--en);color:#fff">EN</span>영어 Lv.3</b></div>
+    <div class="mr"><span>내 팀</span><b>화 · 목 7:30 PM</b></div>
+    <div class="mr" style="border:0"><span>이용권</span><b>남은 세션 18회</b></div>
+   </div>
+  </div>
+  <div class="note" style="margin-top:22px"><b>다음 세션</b> 11월 25일 화요일 7:30 PM · 하남점</div>
+  <div class="grow"></div>
+  <div class="btn y">홈으로</div>
+  <div class="link"><u>제 정보가 아니에요</u></div>
+ </div>
+</div></div>
+
+<!-- 연동 안 됨 -->
+<div class="col"><div class="cap"><b>연동이 안 됐을 때</b><span>지점이 '못 찾음'으로 처리하면 알림 + 이 화면. 지점이 고른 이유를 보여 주고, 고쳐서 다시 요청하거나 지점에 전화해요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div style="height:44px"></div>
+  <div style="display:grid;place-items:center;margin-top:6px"><div style="width:76px;height:76px;border-radius:24px;border:2px solid var(--ink);background:#FCE3EA;box-shadow:4px 4px 0 var(--ink);display:grid;place-items:center;font-family:var(--fd);font-size:30px;font-weight:800;color:var(--ink)">?</div></div>
+  <div class="ttl" style="text-align:center;margin-top:18px">하남점에서 회원 정보를<br>찾지 못했어요</div>
+  <div style="margin-top:14px;padding:12px 14px;border-radius:16px;border:2px solid var(--ink);background:#fff">
+   <div style="font-size:11px;font-weight:900;color:var(--sub)">지점에서 남긴 말</div>
+   <div style="font-size:13.5px;font-weight:800;margin-top:4px;line-height:1.5">등록된 번호가 달라요. 등록할 때 쓴 번호로 다시 요청해 주세요.</div>
+  </div>
+  <div class="dsc" style="margin-top:12px">보낸 정보: 하남점 · 김서현 · 010-1234-5678</div>
+  <div class="grow"></div>
+  <div class="btn y">고쳐서 다시 요청하기</div>
+  <div class="btn">하남점에 전화하기</div>
+  <div class="link" style="margin-top:10px"><u>지금은 둘러볼게요</u></div>
+ </div>
+</div></div>
+
+<!-- 언어 레벨 -->
+<div class="col"><div class="cap"><b>체험 · 앱 → 언어 · 레벨</b><span>회원이 아니면 언어와 지금 실력을 골라요. 레벨은 대략만, 정확한 레벨은 첫 세션이나 앱 테스트에서.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
+  <div class="ttl">어떤 언어로<br>말해 보고 싶어요?</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px">
+   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:var(--en);color:#fff;padding:9px 12px;outline:3px solid var(--purple);outline-offset:2px"><div style="font-family:var(--fd);font-size:15px;font-weight:800">Hello</div><div style="font-size:12px;font-weight:900;margin-top:2px">영어</div></div>
+   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:#fff;padding:9px 12px;box-shadow:3px 3px 0 var(--ink)"><div style="font-size:15px;font-weight:900;color:var(--ja)">こんにちは</div><div style="font-size:12px;font-weight:900;margin-top:2px">일본어</div></div>
+   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:#fff;padding:9px 12px;box-shadow:3px 3px 0 var(--ink)"><div style="font-size:15px;font-weight:900;color:var(--zh)">你好</div><div style="font-size:12px;font-weight:900;margin-top:2px">중국어</div></div>
+   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:#fff;padding:9px 12px;box-shadow:3px 3px 0 var(--ink)"><div style="font-family:var(--fd);font-size:15px;font-weight:800;color:var(--es)">¡Hola!</div><div style="font-size:12px;font-weight:900;margin-top:2px">스페인어</div></div>
+  </div>
+  <div style="font-size:14px;font-weight:900;margin-top:20px">지금 영어 실력은요</div>
+  <div style="display:flex;flex-direction:column;gap:7px;margin-top:9px">
+   <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:13.5px;font-weight:800"><span class="chk"></span>처음이에요</div>
+   <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;border-radius:14px;border:2px solid var(--purple);background:var(--lav);font-size:13.5px;font-weight:900;color:var(--purple)"><span class="chk on"><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></span>짧은 대화는 돼요</div>
+   <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:13.5px;font-weight:800"><span class="chk"></span>자유롭게 말해요</div>
+  </div>
+  <div class="grow"></div>
+  <div class="btn y">다음</div>
+ </div>
+</div></div>
+
+<!-- 알림 -->
+<div class="col"><div class="cap"><b>알림 허용 (시스템 창 전에)</b><span>iOS 알림 창은 한 번 거절하면 다시 못 띄워서, 먼저 어떤 알림이 오는지 보여 주고 '받을게요'를 눌렀을 때만 시스템 창을 띄워요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div style="height:44px"></div>
+  <div style="display:grid;place-items:center;margin-top:10px"><div style="width:84px;height:84px;border-radius:26px;border:2px solid var(--ink);background:#fff;box-shadow:4px 4px 0 var(--ink);display:grid;place-items:center"><svg width="46" height="46"><use href="#bell"/></svg></div></div>
+  <div class="ttl" style="text-align:center;margin-top:20px">세션 전날,<br>잊지 않게 알려 드려요</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+   <div style="padding:10px 12px;border-radius:16px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:800;line-height:1.45;box-shadow:3px 3px 0 var(--yellow)"><span style="color:var(--yellow)">내일 7:30 PM</span> 하남점 영어 세션이에요. 예습 5분 해 볼까요?</div>
+   <div style="padding:10px 12px;border-radius:16px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:800;line-height:1.45;box-shadow:3px 3px 0 var(--yellow)"><span style="color:var(--yellow)">번개</span> 토요일 성수 영어 브런치에 2자리 남았어요</div>
+   <div style="padding:10px 12px;border-radius:16px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:800;line-height:1.45;box-shadow:3px 3px 0 var(--yellow)"><span style="color:var(--yellow)">연속 학습 6일째</span> 오늘도 이어 가요</div>
+  </div>
+  <div class="grow"></div>
+  <div class="btn y">알림 받을게요</div>
+  <div class="link"><u>나중에 할게요</u></div>
+ </div>
+</div></div>
+
+<!-- 환영 -->
+<div class="col"><div class="cap"><b>환영 → 사용 가이드</b><span>노랑 화면에 캐릭터가 이름표를 달고 점프. 첫 스파크를 주고, 버튼을 누르면 사용 가이드 5장 → 홈.</span></div>
+<div class="ph" style="background:var(--yellow)"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <svg class="spark" style="left:26px;top:80px;width:28px;height:28px;color:#fff"><use href="#sparkle"/></svg>
+ <svg class="spark" style="right:30px;top:120px;width:22px;height:22px;color:var(--purple)"><use href="#sparkle"/></svg>
+ <svg class="spark" style="left:44px;top:250px;width:16px;height:16px;color:var(--pink)"><use href="#sparkle"/></svg>
+ <svg class="spark" style="right:44px;top:270px;width:18px;height:18px;color:#fff"><use href="#sparkle"/></svg>
+ <div class="scr">
+  <div style="position:relative;height:270px;margin-top:20px">
+   <img src="assets/av/up-pink.png" style="position:absolute;left:50%;top:20px;width:250px;transform:translateX(-50%)">
+   <div style="position:absolute;left:50%;top:150px;width:120px;margin-left:-60px;border:2px solid var(--ink);border-radius:10px;background:#fff;overflow:hidden;transform:rotate(-4deg)">
+    <div style="background:var(--pink);color:#fff;text-align:center;padding:2px 0;font-family:var(--fd);font-size:9px;font-weight:800">HELLO</div>
+    <div style="text-align:center;padding:3px 0 4px;font-size:17px;font-weight:900">서현</div>
+   </div>
+  </div>
+  <div style="text-align:center;font-size:25px;font-weight:900;letter-spacing:-.6px;line-height:1.3">반가워요, 서현님!</div>
+  <div style="text-align:center;font-size:13px;font-weight:700;margin-top:6px">첫 스파크를 드렸어요</div>
+  <div style="display:flex;justify-content:center;margin-top:12px"><div style="display:flex;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:19px;border:2px solid var(--ink);background:#fff;font-family:var(--fd);font-size:16px;font-weight:800"><svg width="18" height="18" style="color:var(--yellow)"><use href="#sparkle"/></svg>+50</div></div>
+  <div class="grow"></div>
+  <div class="btn" style="background:var(--ink);color:#fff;box-shadow:3px 3px 0 #fff">PALLO 시작하기</div>
+ </div>
+</div></div>
+</div>
+
+<!-- ============ 4. 사용 가이드 ============ -->
+<div class="sec">4 · 사용 가이드 5장 (로그인 성공 뒤)</div>
+<p class="secd">로그인에 성공하면 홈 전에 한 번 보여요. 옆으로 넘기거나 '다음'을 눌러요. 언제든 '건너뛰기'. 그림 · 제목 · 설명 · 배경색은 장마다 관리자 웹에서 바꿔요. 아래 그림은 예시예요.</p>
+<div class="row">
+<div class="col"><div class="cap"><b>1 · 홈 · 출석</b><span>예시 내용: 홈 스터디 카드 · 사전 출석 · QR.</span></div><div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div><div class="scr"><div style="display:flex;justify-content:space-between;align-items:center;height:40px;font-size:12.5px;font-weight:800;color:var(--sub)"><span style="font-family:var(--fd);font-size:11px">1 / 5</span><span style=""><u>건너뛰기</u></span></div><div style="position:relative;height:264px;margin-top:6px;border:2px solid var(--ink);border-radius:24px;background:var(--yellow);overflow:hidden"><svg viewBox="0 0 7 7" style="position:absolute;right:22px;top:22px;width:58px;height:58px;background:#fff;border:2px solid #1E1A2B;border-radius:8px;padding:5px" shape-rendering="crispEdges"><g fill="#1E1A2B"><rect x="0" y="0" width="3" height="3"/><rect x="4" y="0" width="3" height="3"/><rect x="0" y="4" width="3" height="3"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="5" width="1" height="2"/><rect x="5" y="6" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/></g><g fill="#fff"><rect x="1" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/></g></svg><img src="assets/c-upright-yellow.png" style="position:absolute;left:50%;top:70px;width:230px;transform:translateX(-50%)"></div><div style="font-size:21px;font-weight:900;letter-spacing:-.5px;line-height:1.3;margin-top:20px">세션 날엔 QR로 출석</div><div class="dsc" style="font-size:13.5px;margin-top:6px">지점에 도착하면 홈 스터디 카드에서 QR을 찍어요. 전날 미리 '사전 출석'도 돼요.</div><div class="grow"></div><div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px"><i style="width:22px;height:8px;border-radius:4px;background:var(--ink)"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i></div><div class="btn y">다음</div></div></div></div>
+<div class="col"><div class="cap"><b>2 · 라이브러리 · 예습 · 복습</b><span>예시 내용: 예습 → 세션 → 복습.</span></div><div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div><div class="scr"><div style="display:flex;justify-content:space-between;align-items:center;height:40px;font-size:12.5px;font-weight:800;color:var(--sub)"><span style="font-family:var(--fd);font-size:11px">2 / 5</span><span style=""><u>건너뛰기</u></span></div><div style="position:relative;height:264px;margin-top:6px;border:2px solid var(--ink);border-radius:24px;background:var(--lav);overflow:hidden"><img src="assets/c-purple-tilt-3d.png" style="position:absolute;left:50%;top:60px;width:230px;transform:translateX(-50%)"></div><div style="font-size:21px;font-weight:900;letter-spacing:-.5px;line-height:1.3;margin-top:20px">세션 전 5분, 미리 말해 봐요</div><div class="dsc" style="font-size:13.5px;margin-top:6px">라이브러리에서 오늘 배울 과의 예습을 풀어요. 세션이 끝나면 복습으로 한 번 더.</div><div class="grow"></div><div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px"><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:22px;height:8px;border-radius:4px;background:var(--ink)"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i></div><div class="btn y">다음</div></div></div></div>
+<div class="col"><div class="cap"><b>3 · 라운지</b><span>예시 내용: 번개 · 동아리 · 챌린지.</span></div><div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div><div class="scr"><div style="display:flex;justify-content:space-between;align-items:center;height:40px;font-size:12.5px;font-weight:800;color:var(--sub)"><span style="font-family:var(--fd);font-size:11px">3 / 5</span><span style=""><u>건너뛰기</u></span></div><div style="position:relative;height:264px;margin-top:6px;border:2px solid var(--ink);border-radius:24px;background:#FCE3EA;overflow:hidden"><img src="assets/char-tilted.png" style="position:absolute;left:50%;top:56px;width:250px;transform:translateX(-50%)"></div><div style="font-size:21px;font-weight:900;letter-spacing:-.5px;line-height:1.3;margin-top:20px">세션 밖에서도 같이 떠들어요</div><div class="dsc" style="font-size:13.5px;margin-top:6px">라운지에서 번개 · 동아리 · 챌린지로 다른 회원과 이어져요.</div><div class="grow"></div><div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px"><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:22px;height:8px;border-radius:4px;background:var(--ink)"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i></div><div class="btn y">다음</div></div></div></div>
+<div class="col"><div class="cap"><b>4 · 연속 학습 · 스파크</b><span>예시 내용: 연속 학습 · 꾸미기.</span></div><div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div><div class="scr"><div style="display:flex;justify-content:space-between;align-items:center;height:40px;font-size:12.5px;font-weight:800;color:var(--sub)"><span style="font-family:var(--fd);font-size:11px">4 / 5</span><span style=""><u>건너뛰기</u></span></div><div style="position:relative;height:264px;margin-top:6px;border:2px solid var(--ink);border-radius:24px;background:var(--mist);overflow:hidden"><div style="position:absolute;left:18px;top:18px;display:flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:16px;border:2px solid #1E1A2B;background:#fff;font-family:var(--fd);font-size:13px;font-weight:800"><svg width="15" height="15" style="color:var(--yellow)"><use href="#sparkle"/></svg>6일째</div><img src="assets/av/up-green.png" style="position:absolute;left:50%;top:40px;width:260px;transform:translateX(-50%)"></div><div style="font-size:21px;font-weight:900;letter-spacing:-.5px;line-height:1.3;margin-top:20px">하루 하나면 연속 학습</div><div class="dsc" style="font-size:13.5px;margin-top:6px">학습 단계를 하루 1개 이상 하면 이어져요. 모은 스파크로 캐릭터를 꾸며요.</div><div class="grow"></div><div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px"><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:22px;height:8px;border-radius:4px;background:var(--ink)"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i></div><div class="btn y">다음</div></div></div></div>
+<div class="col"><div class="cap"><b>5 · 마이</b><span>예시 내용: 이용권 · 수강 관리 · 프로 노트. 마지막 장은 'PALLO 시작하기' → 홈.</span></div><div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div><div class="scr"><div style="display:flex;justify-content:space-between;align-items:center;height:40px;font-size:12.5px;font-weight:800;color:var(--sub)"><span style="font-family:var(--fd);font-size:11px">5 / 5</span><span style="visibility:hidden"><u>건너뛰기</u></span></div><div style="position:relative;height:264px;margin-top:6px;border:2px solid var(--ink);border-radius:24px;background:#F3EEE2;overflow:hidden"><img src="assets/av/up-coral.png" style="position:absolute;left:50%;top:40px;width:260px;transform:translateX(-50%)"></div><div style="font-size:21px;font-weight:900;letter-spacing:-.5px;line-height:1.3;margin-top:20px">내 스터디는 마이에서</div><div class="dsc" style="font-size:13.5px;margin-top:6px">이용권 · 연기 · 팀 변경 · 프로 노트를 한곳에서 봐요.</div><div class="grow"></div><div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px"><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:22px;height:8px;border-radius:4px;background:var(--ink)"></i></div><div class="btn y">PALLO 시작하기</div></div></div></div>
+</div>
+
+<!-- ============ 5. 관리자 웹 ============ -->
+<div class="sec">5 · 관리자 웹 (운영팀이 올리고 관리)</div>
+<p class="secd">관리자 웹 '홈 운영' 묶음에 시작 화면 · 사용 가이드, '지점 · 수강' 묶음에 연동 요청을 더해요. 올리기 → 폰 미리보기 → 게시(또는 예약). 게시한 것은 앱이 다음에 열릴 때 바로 바뀌어요.</p>
+
+<div class="adm">
+ <div class="adm-top"><i></i><i></i><i></i><span>PALLO 관리자 · 홈 운영 › 사용 가이드</span></div>
+ <div class="adm-body">
+  <nav class="adm-nav">
+   <b>콘텐츠</b><span>교재 · 과</span><span>상황 맵</span>
+   <b>홈 운영</b><span>공지</span><span>앱 시작 팝업</span><span class="new">시작 화면</span><span class="on new">사용 가이드</span><span>시즌 테마</span><span>푸시 보내기</span>
+   <b>지점 · 수강</b><span>지점 · 팀</span><span>체험 시간</span>
+   <b>커뮤니티</b><span>신고함</span><span>이벤트</span>
+  </nav>
+  <div class="adm-main">
+   <div class="adm-hd"><div><div class="adm-t">사용 가이드</div><div class="adm-s"><span class="st on">게시 중 · 3번째 판 · 11.20 · 김매니저</span><span class="st draft">고친 내용 있음 (게시 전)</span></div></div>
+    <div class="adm-btns"><span class="ab">미리보기</span><span class="ab">임시 저장</span><span class="ab y">게시하기</span></div></div>
+   <div class="adm-tabs"><span class="on">전체</span><span>지점 회원</span><span>체험 · 비회원</span><span>앱 구독자</span><em>대상마다 따로 만들 수 있어요. 없으면 '전체'를 보여 줘요.</em></div>
+   <div class="adm-strip">
+    <div class="th"><i>1</i><div style="background:var(--yellow)"><img src="assets/c-upright-yellow.png"></div><span>세션 날엔 QR로 출석</span></div>
+    <div class="th on"><i>2</i><div style="background:var(--lav)"><img src="assets/c-purple-tilt-3d.png"></div><span>세션 전 5분, 미리 말해 봐요</span></div>
+    <div class="th"><i>3</i><div style="background:#FCE3EA"><img src="assets/char-tilted.png"></div><span>세션 밖에서도 같이 떠들어요</span></div>
+    <div class="th"><i>4</i><div style="background:var(--mist)"><img src="assets/av/up-green.png"></div><span>하루 하나면 연속 학습</span></div>
+    <div class="th"><i>5</i><div style="background:#F3EEE2"><img src="assets/av/up-coral.png"></div><span>내 스터디는 마이에서</span></div>
+    <div class="th add">5장 고정<br><small>끌어서 순서 바꾸기</small></div>
+   </div>
+   <div class="adm-edit">
+    <div class="adm-form">
+     <div class="fl"><label>2장 그림 <em>필수</em></label>
+      <div class="drop"><div class="dp" style="background:var(--lav)"><img src="assets/c-purple-tilt-3d.png"></div><div><b>purple-preview.png</b><small>1080 × 1080 · 412KB</small><span class="ab sm">바꾸기</span></div></div>
+      <div class="hint">PNG · JPG · WebP, 정사각형 1080px 이상, 2MB 이하. 글씨는 그림에 넣지 말고 아래 칸에 써요 (글씨 크기 · 화면 읽기 프로그램).</div></div>
+     <div class="fl"><label>배경색</label><div class="sw"><i style="background:var(--yellow)"></i><i class="on" style="background:var(--lav)"></i><i style="background:#FCE3EA"></i><i style="background:var(--mist)"></i><i style="background:#F3EEE2"></i><i style="background:#fff"></i></div></div>
+     <div class="fl"><label>제목 <em>필수</em></label><div class="in">세션 전 5분, 미리 말해 봐요<span>15/20</span></div></div>
+     <div class="fl"><label>설명</label><div class="in ta">라이브러리에서 오늘 배울 과의 예습을 풀어요. 세션이 끝나면 복습으로 한 번 더.<span>44/60</span></div></div>
+     <div class="fl"><label>그림 설명 <em>필수</em></label><div class="in">보라 팔로가 책을 보며 고개를 기울인 그림<span></span></div><div class="hint">화면 읽기 프로그램이 읽어 줘요.</div></div>
+     <div class="fl row2"><label class="cb"><i class="on"></i>게시하면 이미 본 회원에게도 한 번 더 보여 주기</label><span class="hint" style="margin:0">큰 기능이 바뀌었을 때만 켜요.</span></div>
+     <div class="hist"><b>이전 판</b><span>3번째 판 · 11.20 게시 중</span><span>2번째 판 · 11.02 <u>되돌리기</u></span><span>1번째 판 · 10.15 <u>되돌리기</u></span></div>
+    </div>
+    <div class="adm-prev"><div class="pv-cap">폰 미리보기</div>
+     <div class="ph sm"><div class="sb">9:41<em><b></b><i></i></em></div><div class="scr"><div style="display:flex;justify-content:space-between;align-items:center;height:40px;font-size:12.5px;font-weight:800;color:var(--sub)"><span style="font-family:var(--fd);font-size:11px">2 / 5</span><span style=""><u>건너뛰기</u></span></div><div style="position:relative;height:264px;margin-top:6px;border:2px solid var(--ink);border-radius:24px;background:var(--lav);overflow:hidden"><img src="assets/c-purple-tilt-3d.png" style="position:absolute;left:50%;top:60px;width:230px;transform:translateX(-50%)"></div><div style="font-size:21px;font-weight:900;letter-spacing:-.5px;line-height:1.3;margin-top:20px">세션 전 5분, 미리 말해 봐요</div><div class="dsc" style="font-size:13.5px;margin-top:6px">라이브러리에서 오늘 배울 과의 예습을 풀어요. 세션이 끝나면 복습으로 한 번 더.</div><div class="grow"></div><div style="display:flex;justify-content:center;gap:6px;margin-bottom:6px"><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:22px;height:8px;border-radius:4px;background:var(--ink)"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i><i style="width:8px;height:8px;border-radius:4px;background:#D4CBB6"></i></div><div class="btn y">다음</div></div></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="adm" style="margin-top:26px">
+ <div class="adm-top"><i></i><i></i><i></i><span>PALLO 관리자 · 홈 운영 › 시작 화면 › 연말 파티</span></div>
+ <div class="adm-body">
+  <nav class="adm-nav">
+   <b>홈 운영</b><span>공지</span><span>앱 시작 팝업</span><span class="on new">시작 화면</span><span class="new">사용 가이드</span><span>시즌 테마</span>
+  </nav>
+  <div class="adm-main">
+   <div class="adm-hd"><div><div class="adm-t">연말 파티</div><div class="adm-s"><span class="st wait">예약 · 12.1 ~ 12.20</span><span>기간이 겹치면 목록 위에 있는 것을 보여 줘요. 하나도 없으면 앱 기본 화면.</span></div></div>
+    <div class="adm-btns"><span class="ab">틀 파일 받기</span><span class="ab">임시 저장</span><span class="ab y">예약하기</span></div></div>
+   <div class="adm-edit">
+    <div class="adm-form">
+     <div class="fl"><label>그림 3장 <em>모두 필수</em></label>
+      <div class="ups">
+       <div class="up"><div class="up-i" style="height:96px"><div style="transform:scale(.225);transform-origin:top left"><div style="position:absolute;left:0;top:0;width:240px;height:427px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:326px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:46px;font-family:var(--fd);font-size:34px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:156px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:50px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:116px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:171px;width:150px">
+</div></div></div><b>짧은 화면</b><small>1242 × 2208</small><span class="okk"><svg width="12" height="12"><use href="#ok"/></svg>크기 맞음</span></div>
+       <div class="up"><div class="up-i" style="height:116px"><div style="transform:scale(.225);transform-origin:top left"><div style="position:absolute;left:0;top:0;width:240px;height:517px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:402px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:58px;font-family:var(--fd);font-size:40px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:186px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:62px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:128px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:213px;width:196px">
+</div></div></div><b>기본</b><small>1290 × 2780</small><span class="okk"><svg width="12" height="12"><use href="#ok"/></svg>크기 맞음</span></div>
+       <div class="up"><div class="up-i" style="height:120px"><div style="transform:scale(.225);transform-origin:top left"><div style="position:absolute;left:0;top:0;width:240px;height:533px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:413px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:60px;font-family:var(--fd);font-size:40px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:188px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:64px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:130px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:224px;width:196px">
+</div></div></div><b>긴 화면</b><small>1290 × 2866</small><span class="okk"><svg width="12" height="12"><use href="#ok"/></svg>크기 맞음</span></div>
+      </div>
+      <div class="hint">JPG · PNG · WebP, 한 장에 5MB 이하. 크기가 틀과 다르면 올라가지 않아요.</div></div>
+     <div class="fl"><label>바탕색</label><div style="display:flex;align-items:center;gap:10px"><i style="width:28px;height:28px;border-radius:50%;border:2px solid var(--ink);background:#1E1A2B"></i><b style="font-size:13px;font-weight:900">#1E1A2B</b><span class="hint" style="margin:0">세 장의 맨 아래 줄에서 자동으로 뽑았어요. 바꿀 수 있어요.</span></div></div>
+     <div class="fl"><label>그림 설명 <em>필수</em></label><div class="in">연말 랭귀지 파티 포스터. 12월 20일 토요일 저녁 7시, 전 지점.<span></span></div><div class="hint">그림 속 글씨를 그대로 써 주세요. 화면 읽기 프로그램이 읽어 줘요.</div></div>
+     <div class="fl"><label>저절로 확인한 것</label>
+      <div class="chkl">
+       <div><svg width="14" height="14"><use href="#ok"/></svg>세 장 크기가 틀과 같아요</div>
+       <div><svg width="14" height="14"><use href="#ok"/></svg>세 장 맨 아래 줄이 바탕색 한 가지로 이어져요</div>
+       <div><svg width="14" height="14"><use href="#ok"/></svg>버튼 자리에 카카오 노랑과 비슷한 색이 많지 않아요</div>
+       <div class="w"><b>!</b>위 5%(시계 · 배터리 자리)에 글씨가 있는지는 미리보기로 직접 봐 주세요</div>
+      </div></div>
+    </div>
+    <div class="adm-prev" style="width:330px"><div class="pv-cap">기기별 미리보기 (버튼 얹은 모습)</div>
+     <div class="minis">
+      <div class="mini-ph"><div class="mini-in" style="height:186px"><div style="transform:scale(.42);transform-origin:top left"><div class="ph" style="width:256px;height:443px;background:#1E1A2B;border-radius:30px">
+ <div style="position:absolute;left:0;top:0;width:240px;height:427px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:326px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:46px;font-family:var(--fd);font-size:34px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:156px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:50px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:116px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:171px;width:150px">
+</div>
+ 
+ <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
+  <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
+  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
+  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
+</div>
+</div></div></div><span>아이폰 SE</span></div>
+      <div class="mini-ph"><div class="mini-in" style="height:225px"><div style="transform:scale(.42);transform-origin:top left"><div class="ph" style="width:256px;height:536px;background:#1E1A2B;border-radius:40px">
+ <div style="position:absolute;left:0;top:0;width:240px;height:517px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:402px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:58px;font-family:var(--fd);font-size:40px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:186px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:62px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:128px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:213px;width:196px">
+</div>
+ 
+ <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
+  <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
+  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
+  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
+</div>
+</div></div></div><span>아이폰 15</span></div>
+      <div class="mini-ph"><div class="mini-in" style="height:253px"><div style="transform:scale(.42);transform-origin:top left"><div class="ph" style="width:256px;height:602px;background:#1E1A2B;border-radius:40px">
+ <div style="position:absolute;left:0;top:0;width:240px;height:533px;background:#1E1A2B;overflow:hidden">
+  <div style="position:absolute;left:0;top:0;width:240px;height:413px;background:var(--purple);border-radius:0 0 50% 50% / 0 0 40px 40px"></div>
+  <div style="position:absolute;left:18px;top:60px;font-family:var(--fd);font-size:40px;font-weight:800;line-height:.95;letter-spacing:-1.4px;color:var(--yellow)">YEAR<br>END<br>PARTY</div>
+  <div style="position:absolute;left:20px;top:188px;color:#fff;font-size:12px;font-weight:900">12.20 토 19:00 · 전 지점</div>
+  <svg class="spark" style="right:26px;top:64px;width:28px;height:28px;color:var(--yellow)"><use href="#sparkle"/></svg>
+  <svg class="spark" style="right:76px;top:130px;width:14px;height:14px;color:#fff"><use href="#sparkle"/></svg>
+  <img src="assets/c-tilted-yellow.png" style="position:absolute;right:-24px;top:224px;width:196px">
+</div>
+ <div style="position:absolute;left:0;right:0;top:533px;height:53px;background:#1E1A2B;border-top:2px dashed var(--yellow);z-index:3"></div><span class="zn up" style="position:absolute;left:8px;top:537px;z-index:5">여기부터 바탕색</span>
+ <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
+  <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
+  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
+  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
+</div>
+</div></div></div><span>갤럭시 Z 플립</span></div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+
+<div class="adm" style="margin-top:26px">
+ <div class="adm-top"><i></i><i></i><i></i><span>PALLO 관리자 · 지점 · 수강 › 연동 요청 (하남점)</span></div>
+ <div class="adm-body">
+  <nav class="adm-nav">
+   <b>지점 · 수강</b><span>지점 · 팀</span><span class="on new">연동 요청</span><span>체험 시간</span><span>연기 · 변경 승인</span>
+   <b>홈 운영</b><span>공지</span><span>시작 화면</span><span>사용 가이드</span>
+  </nav>
+  <div class="adm-main">
+   <div class="adm-hd"><div><div class="adm-t">연동 요청</div><div class="adm-s">지점 매니저는 자기 지점 요청만 봐요. 24시간 안에 처리해 주세요.</div></div>
+    <div class="adm-btns"><span class="ab">지점 전산에서 찾기</span></div></div>
+   <div class="adm-tabs"><span class="on">기다리는 중 3</span><span>연동됨</span><span>못 찾음</span><em>휴대폰 번호가 같은 지점 회원을 자동으로 찾아 둬요.</em></div>
+   <div style="margin-top:10px">
+    <div class="lk-row hd"><span>요청</span><span>앱에서 보낸 정보</span><span>지점 전산 회원 (자동으로 찾음)</span><span></span></div>
+    <div class="lk-row on"><span><b>21:40</b><small>23시간 남음</small></span><span><b>김서현 · 010-1234-5678</b><small>앱 이름 서현 · 영어</small></span><span class="cand"><span><b>H-0412 김서현</b><small>영어 Lv.3 · 화목 7:30 · 이용권 18회</small></span><span class="m">이름 · 번호 같음</span></span><span class="ab sm y" style="margin:0">연동하기</span></div>
+    <div class="lk-row"><span><b>19:05</b><small>21시간 남음</small></span><span><b>이도윤 · 010-****-2231</b><small>앱 이름 doyoon · 일본어</small></span><span class="cand"><span><b>H-0388 이도윤</b><small>일본어 Lv.1 · 토 11:00</small></span><span class="m">번호 같음 · 이름 다름</span></span><span class="ab sm" style="margin:0">확인하기</span></div>
+    <div class="lk-row"><span><b>어제</b><small>3시간 남음</small></span><span><b>박지아 · 010-****-9014</b><small>앱 이름 지아 · 언어 비움</small></span><span class="cand"><span><b>찾지 못했어요</b><small>이름 · 번호가 같은 회원 없음</small></span><span class="m no">직접 찾기</span></span><span class="ab sm" style="margin:0">확인하기</span></div>
+   </div>
+   <div class="lk-det">
+    <div class="lk-box"><h4>연동하면</h4>
+     <div class="mr"><span>앱 계정</span><b>서현 (카카오)</b></div>
+     <div class="mr"><span>지점 회원</span><b>H-0412 김서현</b></div>
+     <div class="mr" style="border:0"><span>앱에 열리는 것</span><b>출석 · 내 팀 · 이용권 · 라운지 참여</b></div>
+    </div>
+    <div class="lk-box"><h4>못 찾음으로 돌려보낼 때 (회원에게 보여요)</h4>
+     <div class="rsn"><span class="chip on">등록된 번호가 달라요</span><span class="chip">등록된 이름이 달라요</span><span class="chip">우리 지점 회원이 아니에요</span><span class="chip">이미 다른 계정과 연동됐어요</span><span class="chip">직접 쓰기</span></div>
+     <div style="display:flex;justify-content:flex-end;margin-top:10px"><span class="ab sm" style="margin:0">못 찾음으로 보내기</span></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="dec">
+ <h3>정해야 할 것</h3>
+ <ol>
+  <li><b>사용 가이드를 언제 보여 줄지.</b> 시안은 '로그인 성공 → (처음이면 가입 단계) → 가이드 → 홈'이에요. 가입 단계 앞에 보여 주는 쪽도 돼요. 계정마다 한 번, 관리자가 '한 번 더 보여 주기'를 켜면 다시.</li>
+  <li><b>가이드 대상을 나눌지.</b> 지점 회원과 체험 · 앱 구독자는 쓰는 기능이 달라요(출석 · 이용권). 처음엔 '전체' 한 벌로 시작하고, 필요하면 대상별로 더 올려도 돼요.</li>
+  <li><b>관리자 웹 범위 (PRD Q-T10).</b> 시작 화면 · 사용 가이드는 '홈 운영' 묶음에 들어가요. 관리자 웹을 이번에 만들지 않으면, 처음엔 서버에 직접 넣고 관리자 화면은 나중에.</li>
+  <li><b>시작 화면마다 그림 3장.</b> 잘리지 않고 꽉 채우려면 디자인팀이 같은 그림을 비율 3가지(짧은 화면 · 기본 · 긴 화면)로 만들어야 해요. 관리자 웹에서 받는 틀 파일로 만들면 돼요.</li>
+ <li><b>닉네임 시안 1 · 2 · 3 중 어느 것?</b> 추천은 1(이름표)이에요.</li>
+  <li><b>지점 전산 연동 (PRD Q-T1 · Q-T2).</b> 지점 전산에서 회원(이름 · 번호 · 팀 · 이용권)을 읽어 올 수 있어야 해요. 매니저가 요청마다 '연동하기'를 누를지, 이름 · 번호가 같으면 바로 연동할지도 정해야 해요.</li>
+ <li><b>Apple 로그인 · 나이 (Q-L4)</b>는 그대로 열려 있어요.</li>
+ </ol>
+</div>
+
+</body></html>

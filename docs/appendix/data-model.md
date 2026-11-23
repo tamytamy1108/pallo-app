@@ -192,3 +192,28 @@ noSpeakUntil · noListenUntil (datetime, 15분) · sfx(bool) · dailyGoal(int) �
 | TrialBooking | name · phone · level · branchId · lang · date(일요일 제외) · time · consentAt |
 | Terms | kind · version · effectiveAt · body |
 | Settings | `SET0` 키 전부 + mktConsentAt |
+
+## 시작 · 사용 가이드 (관리자 웹에서 올림)
+
+자세한 규칙은 [pages/09-onboarding.md](../pages/09-onboarding.md).
+
+| 모델 | 주요 필드 |
+|---|---|
+| StartScreen | images{short(1242×2208), regular(1290×2780), long(1290×2866)} · bgColor(남는 곳 채우는 색) · imageAlt · from · until? · order · status(`draft` · `scheduled` · `live` · `ended`) · updatedBy · updatedAt |
+| Guide | audience(`all` · `member` · `guest` · `sub`) · version · status(`draft` · `live`) · reshow(이미 본 회원에게 한 번 더) · publishedAt · publishedBy |
+| GuideSlide | guideId · order(1~5) · image(정사각형 1080px+) · imageAlt · bg(`yellow` · `lavender` · `pink` · `mist` · `beige` · `white`) · title(≤20자) · body?(≤60자) |
+| GuideView | memberId · guideVersion · result(`completed` · `skipped`) · lastIndex · viewedAt |
+
+Member에 더할 것: `onboardedAt`(가입 단계 끝난 시각, 없으면 다음 로그인 때 가입 단계로) · `avatarBody`(가입 때 고른 몸 색)
+
+### BranchLinkRequest (지점 연동 요청)
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| id · memberId · branchId | ID | 지점마다 `pending`은 하나만 |
+| name · phone | string | 지점에 등록한 이름 · 휴대폰 (앱이 보낸 값) |
+| lang | enum? | 배우는 언어 (참고용) |
+| status | enum | `pending` · `linked` · `rejected` · `canceled` · `unlinked` |
+| branchMemberRef | string? | 지점 전산 회원 번호 (예: H-0412). 연동하면 채워짐 |
+| reasonCode · reasonText | enum? · string? | 못 찾음 이유 (`phone_mismatch` · `name_mismatch` · `not_member` · `already_linked` · `other`) — 회원에게 보여요 |
+| consentAt | datetime | 지점에 정보 보내기 동의 |
+| requestedAt · handledAt · handledBy | datetime · datetime? · ID? | 처리한 매니저 |
