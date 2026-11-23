@@ -49,37 +49,60 @@ function Legend({ swatch, t }: { swatch: ViewStyle; t: string }) {
   );
 }
 
-/** 내 교재 언어 팀들이 수업하는 요일 (월 = 1 … 일 = 7 로 돌려서 월요일부터 차례로) */
-const teamsOn = (dow: number) => MY_TEAMS.filter((t) => t.lang === '영어' && teamWeekdays(t).includes(dow % 7));
-const CLASS_DOWS = [1, 2, 3, 4, 5, 6, 7].filter((d) => teamsOn(d).length > 0);
+/** 그날 수업하는 내 팀 (내 교재 언어 · getDay 요일) — 날을 누르면 아래에 보여요 */
+const teamsOn = (dow: number) => MY_TEAMS.filter((t) => t.lang === '영어' && teamWeekdays(t).includes(dow));
+
+/**
+ * 반 진도 요일 (getDay: 일 0 … 토 6) → 그 주 몇 번째 과: 월 · 화 · 토 = A과(0), 수 · 목 · 일 = B과(1), 금 = 휴무.
+ * 이번 주 진도는 레벨과 상관없이 늘 두 과예요.
+ */
+const SLOT_OF_DOW: readonly (0 | 1 | null)[] = [1, 0, 0, 1, 1, null, 0];
+const WEEK_LESSONS = 2;
+/** 휴무 공휴일 (임시 · 웹 전산에 등록한 값으로 바뀌어요). 일요일은 공휴일이어도 수업해요 */
+const HOLIDAYS: Record<string, string> = {
+  '2026-12-25': '성탄절',
+  '2027-1-1': '새해 첫날',
+  '2027-2-6': '설날 연휴',
+  '2027-2-8': '설날 연휴',
+  '2027-2-9': '설날 대체공휴일',
+  '2027-3-1': '삼일절',
+};
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 /** 그 주 월요일 */
 const mondayOf = (d: Date) => addDays(d, -((d.getDay() + 6) % 7));
 
-type ClassDay = { date: Date; ls: Lesson; teams: Team[] };
+/** 수업 날 = 과 · 그날 내 팀, 휴무 날 = 쉬는 까닭 */
+type ClassDay = { date: Date; ls?: Lesson; off?: string; teams: Team[] };
 
 /**
- * 반 진도를 날짜에 놓아요: 이번 주 = MY_BOOK.weekLessons 주차, 앞뒤 주는 7일씩.
- * 한 주의 수업 요일을 차례로 그 주 과들에 고르게 나눠요 (주 2과 · 월화수목 → 월화 앞 과 · 수목 뒤 과).
+ * 반 진도를 날짜에 놓아요 (실서비스는 웹 전산에 등록한 진도를 서버가 날짜별로 내려 줘요).
+ * 이번 주 = MY_BOOK.weekLessons 주차, 앞뒤 주는 7일씩. 주마다 A과 · B과 두 과.
  */
 function classCalendar(lessons: Lesson[]) {
   const { weeks, nowWeek } = classSchedule(lessons.length);
-  const perWeek = Math.max(1, MY_BOOK.weekLessons.length);
   const thisMonday = mondayOf(new Date());
   const byDay = new Map<string, ClassDay>();
+  const classDates: Date[] = [];
   for (let w = 1; w <= weeks; w++) {
     const monday = addDays(thisMonday, (w - nowWeek) * 7);
-    CLASS_DOWS.forEach((dow, i) => {
-      const ls = lessons[(w - 1) * perWeek + Math.floor((i * perWeek) / CLASS_DOWS.length)];
-      if (!ls) return;
-      const date = addDays(monday, dow - 1);
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(monday, i);
+      const dow = date.getDay();
+      const slot = SLOT_OF_DOW[dow];
+      const holiday = dow === 0 ? undefined : HOLIDAYS[dayKey(date)];
+      if (slot === null || holiday) {
+        byDay.set(dayKey(date), { date, off: holiday ?? '금요일', teams: [] });
+        continue;
+      }
+      const ls = lessons[(w - 1) * WEEK_LESSONS + slot];
+      if (!ls) continue;
       byDay.set(dayKey(date), { date, ls, teams: teamsOn(dow) });
-    });
+      classDates.push(date);
+    }
   }
-  const all = [...byDay.values()];
-  return { byDay, first: all[0]?.date ?? thisMonday, last: all[all.length - 1]?.date ?? thisMonday };
+  return { byDay, first: classDates[0] ?? thisMonday, last: classDates[classDates.length - 1] ?? thisMonday };
 }
 
 /** 월요일부터 시작하는 달력 칸 (앞뒤 빈칸은 null) */
@@ -167,6 +190,7 @@ function CourseSheet({ open, onClose, L, lessons, steps }: { open: boolean; onCl
           <Legend swatch={styles.swDone} t="다 끝낸 과" />
           <Legend swatch={styles.swHalf} t="하는 중" />
           <Legend swatch={styles.swTodo} t="아직" />
+          <Legend swatch={styles.swOff} t="휴무 (금 · 공휴일)" />
         </View>
       </View>
 
@@ -174,14 +198,16 @@ function CourseSheet({ open, onClose, L, lessons, steps }: { open: boolean; onCl
         <PText style={styles.dayT}>
           {sel.getMonth() + 1}월 {sel.getDate()}일 ({DOW[sel.getDay()]})
         </PText>
-        {picked ? (
+        {picked?.off ? (
+          <PText style={styles.dayS}>{picked.off} 휴무예요</PText>
+        ) : picked?.ls ? (
           <>
             {picked.teams.map((t) => (
               <PText key={t.no} style={styles.dayS}>
                 {t.no} · {t.when.split(' ')[1]} · {t.pro} 프로
               </PText>
             ))}
-            <LessonRow L={L} ls={picked.ls} steps={steps} onPress={() => openUnit(picked.ls.no)} />
+            <LessonRow L={L} ls={picked.ls} steps={steps} onPress={() => picked.ls && openUnit(picked.ls.no)} />
           </>
         ) : (
           <PText style={styles.dayS}>수업이 없는 날이에요</PText>
@@ -191,19 +217,29 @@ function CourseSheet({ open, onClose, L, lessons, steps }: { open: boolean; onCl
   );
 }
 
-/** 달력 한 칸: 날짜 + 그날 과 번호 (내 진도만큼 색) */
+/** 달력 칩 글자: 패턴형 '5과' · 토픽형 '#101' · 토론형 '101' */
+const chipOf = (L: StudyLevel, ls: Lesson) => (L.kind === 'pattern' ? `${ls.no}과` : L.kind === 'topic' ? `#${ls.no}` : String(ls.no));
+
+/** 달력 한 칸: 날짜 + 그날 과 번호 (내 진도만큼 색) · 휴무 날은 회색 '휴무' */
 function DayCell({ d, cd, L, steps, isToday, on, onPress }: { d: Date; cd?: ClassDay; L: StudyLevel; steps: number; isToday: boolean; on: boolean; onPress: () => void }) {
-  const done = useDoneCount(cd ? `${L.lv}:${cd.ls.no}:` : 'none:');
-  const state = !cd ? null : done >= steps ? 'done' : done > 0 ? 'half' : 'todo';
-  const label = cd ? `${d.getMonth() + 1}월 ${d.getDate()}일 · ${lessonName(L, cd.ls)} · ${steps}단계 중 ${done}단계` : `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const ls = cd?.ls;
+  const done = useDoneCount(ls ? `${L.lv}:${ls.no}:` : 'none:');
+  const state = !ls ? null : done >= steps ? 'done' : done > 0 ? 'half' : 'todo';
+  const date = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const label = ls ? `${date} · ${lessonName(L, ls)} · ${steps}단계 중 ${done}단계` : cd?.off ? `${date} · ${cd.off} 휴무` : date;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={label} style={[styles.cell7, styles.dayCell, on && styles.dayOn]}>
       <View style={[styles.dateN, isToday && styles.today]}>
         <PText style={[styles.dateT, isToday && styles.todayT]}>{d.getDate()}</PText>
       </View>
-      {cd && (
+      {ls && (
         <View style={[styles.lsChip, state === 'done' ? styles.swDone : state === 'half' ? styles.swHalf : styles.swTodo]}>
-          <PText style={[styles.lsChipT, state === 'done' && styles.lsChipTDone]}>{cd.ls.no}과</PText>
+          <PText style={[styles.lsChipT, state === 'done' && styles.lsChipTDone]}>{chipOf(L, ls)}</PText>
+        </View>
+      )}
+      {cd?.off && (
+        <View style={[styles.lsChip, styles.swOff]}>
+          <PText style={[styles.lsChipT, styles.offT]}>휴무</PText>
         </View>
       )}
     </Pressable>
@@ -260,6 +296,8 @@ const styles = StyleSheet.create({
   lsChipT: { fontFamily: Font.body900, fontSize: 10, lineHeight: 14, fontVariant: ['tabular-nums'] },
   lsChipTDone: { color: Colors.white },
   swHalf: { backgroundColor: Colors.lavender, borderWidth: 1.5, borderColor: Colors.purple },
+  swOff: { backgroundColor: Colors.line },
+  offT: { color: Colors.inkSub },
   swTodo: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
   day: { padding: 14, borderRadius: 18, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, gap: 2 },
   dayT: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20, marginBottom: 2 },
