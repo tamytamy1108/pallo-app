@@ -12,7 +12,8 @@ import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 
 import { dropRun } from './store';
 
-export type StepCtx = { lv: 3 | 4; unit: number; step: Step34 & { stage: Stage }; source: string };
+/** resume: 앞 화면 팝업에서 이미 '이어서 하기'를 골랐으면 'resume' (다시 묻지 않아요) */
+export type StepCtx = { lv: 3 | 4; unit: number; step: Step34 & { stage: Stage }; source: string; resume?: 'resume' | 'restart' };
 
 export const lesson34Href = (lv: number, unit: number, id: string) => `/lesson34/${id}?lv=${lv}&unit=${unit}` as const;
 
