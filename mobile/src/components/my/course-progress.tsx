@@ -10,18 +10,25 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { DOW, MY_TEAMS, teamWeekdays, type Team } from '@/data/account';
-import { findLevel, lessonName, STAGES, STUDY_STEPS, unitId, type Lesson, type StudyLevel } from '@/data/library';
+import { lessonName, STAGES, STUDY_STEPS, unitId, type Lesson, type StudyLevel } from '@/data/library';
 import { MY_BOOK } from '@/data/mock';
+import { useMe } from '@/state/me';
 import { sfx } from '@/lib/feedback';
 import { useDoneCount } from '@/state/progress';
+
+/** 책장 순서 (라이브러리와 같아요: 영어 · 일본어 · 중국어 · 스페인어) */
+const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
 
 /** 내 교재 레벨 (MY_BOOK.level 'Lv.1' → 1) */
 const MY_LV = Number(MY_BOOK.level.replace('Lv.', ''));
 
-/** 반 진도: 한 주에 나가는 과 수 · 이번 주가 몇 주차인지 (MY_BOOK.weekLessons = 이번 주에 나가는 과 번호) */
-function classSchedule(total: number) {
-  const perWeek = Math.max(1, MY_BOOK.weekLessons.length);
-  return { weeks: Math.ceil(total / perWeek), nowWeek: Math.ceil((MY_BOOK.weekLessons[0] ?? 1) / perWeek) };
+/** 레벨의 이번 주 반 진도 (과 번호 두 개 · 임시 MY_BOOK 값 · 웹 전산 등록 값으로 바뀌어요) */
+const weekOf = (lv: number) => (lv === MY_LV ? MY_BOOK.weekLessons : MY_BOOK.weekByLevel[lv]) ?? [];
+
+/** 반 진도: 주에 두 과 · 이번 주가 몇 주차인지 (이번 주 첫 과가 교재 순서로 몇 번째인지로 셈) */
+function classSchedule(L: StudyLevel, lessons: Lesson[]) {
+  const at = lessons.findIndex((ls) => ls.no === weekOf(L.lv)[0]);
+  return { weeks: Math.ceil(lessons.length / WEEK_LESSONS), nowWeek: at >= 0 ? Math.floor(at / WEEK_LESSONS) + 1 : 1 };
 }
 
 const stepsPerLesson = (L: StudyLevel) => STAGES.reduce((n, s) => n + STUDY_STEPS[L.kind][s].length, 0);
@@ -30,14 +37,49 @@ const stepsPerLesson = (L: StudyLevel) => STAGES.reduce((n, s) => n + STUDY_STEP
 const orderedLessons = (L: StudyLevel) => [...L.lessons].sort((a, b) => a.no - b.no).slice(0, L.total ?? L.lessons.length);
 
 /**
- * 교재 전체 진도 시트 (지점 안내의 '전체 진도' 칸에서 열어요): 달력에 수업 날마다 그날 과 · 내 진도 색.
- * 교재는 17 /library/books 에서 받은 내 레벨 교재예요.
+ * 교재 전체 진도 시트 (지점 안내의 '전체 진도' 칸에서 열어요): 위에서 레벨(Lv.0 ~ 4)을 고르고,
+ * 달력에 수업 날마다 그날 과 · 내 진도 색. 교재는 17 /library/books 에서 받은 내 언어 책장이에요 (처음엔 내 레벨).
  */
 export function CourseProgressSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const shelf = useQuery(bookShelfQuery()).data;
-  const L = shelf ? findLevel(shelf, MY_LV) : undefined;
-  if (!L) return null;
-  return <CourseSheet open={open} onClose={onClose} L={L} lessons={orderedLessons(L)} steps={stepsPerLesson(L)} />;
+  const myLang = useMe((m) => m.lang);
+  const books = shelf?.[LANG_INDEX[myLang]] ?? [];
+  const [pick, setPick] = useState(`Lv.${MY_LV}`);
+  const book = books.find((b) => (b.lab ?? b.l) === pick) ?? books[0];
+  const L = book?.study;
+  return (
+    <Sheet open={open} onClose={onClose} title="전체 진도" tall label="전체 진도">
+      <View style={styles.lvRow} accessibilityRole="tablist">
+        {books.map((b) => {
+          const name = b.lab ?? b.l;
+          const on = b === book;
+          return (
+            <Pressable
+              key={b.id}
+              onPress={() => {
+                sfx('tap');
+                setPick(name);
+              }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${name} ${b.s ?? ''}`}
+              style={[styles.lvBtn, on && styles.lvOn]}>
+              <PText style={[styles.lvT, on && styles.lvTOn]}>{name}</PText>
+            </Pressable>
+          );
+        })}
+      </View>
+      {L ? (
+        <CourseBody key={L.lv} onClose={onClose} L={L} lessons={orderedLessons(L)} steps={stepsPerLesson(L)} />
+      ) : book ? (
+        <View style={[styles.hero, { backgroundColor: book.c }]}>
+          <PText style={styles.heroK}>{book.lab ?? book.l} · 준비 중</PText>
+          <PText style={styles.heroT}>{book.s ?? book.n}</PText>
+          <PText style={styles.heroS}>교재가 들어오면 진도가 여기에 보여요</PText>
+        </View>
+      ) : null}
+    </Sheet>
+  );
 }
 
 function Legend({ swatch, t }: { swatch: ViewStyle; t: string }) {
@@ -80,8 +122,8 @@ type ClassDay = { date: Date; ls?: Lesson; off?: string; teams: Team[] };
  * 반 진도를 날짜에 놓아요 (실서비스는 웹 전산에 등록한 진도를 서버가 날짜별로 내려 줘요).
  * 이번 주 = MY_BOOK.weekLessons 주차, 앞뒤 주는 7일씩. 주마다 A과 · B과 두 과.
  */
-function classCalendar(lessons: Lesson[]) {
-  const { weeks, nowWeek } = classSchedule(lessons.length);
+function classCalendar(L: StudyLevel, lessons: Lesson[]) {
+  const { weeks, nowWeek } = classSchedule(L, lessons);
   const thisMonday = mondayOf(new Date());
   const byDay = new Map<string, ClassDay>();
   const classDates: Date[] = [];
@@ -117,10 +159,10 @@ function monthCells(y: number, m: number) {
 
 const WEEK_HEAD = ['월', '화', '수', '목', '금', '토', '일'];
 
-/** 전체 진도 시트: 달력에 수업 날마다 그날 나가는 과 · 내 진도 색. 날을 누르면 아래에 그날 수업 · 과 */
-function CourseSheet({ open, onClose, L, lessons, steps }: { open: boolean; onClose: () => void; L: StudyLevel; lessons: Lesson[]; steps: number }) {
-  const { weeks, nowWeek } = classSchedule(lessons.length);
-  const cal = useMemo(() => classCalendar(lessons), [lessons]);
+/** 한 레벨의 전체 진도: 달력에 수업 날마다 그날 나가는 과 · 내 진도 색. 날을 누르면 아래에 그날 수업 · 과 */
+function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: StudyLevel; lessons: Lesson[]; steps: number }) {
+  const { weeks, nowWeek } = classSchedule(L, lessons);
+  const cal = useMemo(() => classCalendar(L, lessons), [L, lessons]);
   const today = new Date();
   const [month, setMonth] = useState({ y: today.getFullYear(), m: today.getMonth() });
   const [sel, setSel] = useState(today);
@@ -137,10 +179,10 @@ function CourseSheet({ open, onClose, L, lessons, steps }: { open: boolean; onCl
     router.push(`/unit/${unitId(L.lv, no)}` as Href);
   };
   return (
-    <Sheet open={open} onClose={onClose} title="전체 진도" tall label="전체 진도">
+    <>
       <View style={[styles.hero, { backgroundColor: L.c }]}>
         <PText style={styles.heroK}>
-          Lv.{L.lv} · {lessons.length}과 · {weeks}주 과정
+          Lv.{L.lv} · {lessons.length}{L.kind === 'pattern' ? '과' : '회'} · {weeks}주 과정
         </PText>
         <PText style={styles.heroT}>{L.series}</PText>
         <PText style={styles.heroS}>
@@ -213,7 +255,7 @@ function CourseSheet({ open, onClose, L, lessons, steps }: { open: boolean; onCl
           <PText style={styles.dayS}>수업이 없는 날이에요</PText>
         )}
       </View>
-    </Sheet>
+    </>
   );
 }
 
@@ -272,6 +314,11 @@ const styles = StyleSheet.create({
   sw: { width: 10, height: 10, borderRadius: 3 },
   swDone: { backgroundColor: Colors.purple },
   lgT: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
+  lvRow: { flexDirection: 'row', gap: 6 },
+  lvBtn: { flex: 1, height: 36, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  lvOn: { backgroundColor: Colors.ink },
+  lvT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
+  lvTOn: { color: Colors.white },
   hero: { padding: 16, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, gap: 2 },
   heroK: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: 'rgba(255,255,255,0.85)', letterSpacing: 0.3 },
   heroT: { fontFamily: Font.display, fontSize: 20, lineHeight: 26, color: Colors.white },
