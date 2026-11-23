@@ -1,8 +1,9 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/lounge/icons';
 import { LgButton } from '@/components/lounge/lg-button';
 import { RouteSheetScreen, useRouteSheet } from '@/components/lounge/route-sheet';

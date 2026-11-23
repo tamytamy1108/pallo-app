@@ -1,6 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

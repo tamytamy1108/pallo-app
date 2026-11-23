@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { keepAll } from '@/components/common/sheet-parts';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';

@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/lounge/icons';
 import { LgButton } from '@/components/lounge/lg-button';
 import { RouteSheetScreen, useRouteSheet } from '@/components/lounge/route-sheet';

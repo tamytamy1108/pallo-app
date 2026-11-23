@@ -1,11 +1,13 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
+import { SCREEN } from '@/lib/transitions';
 import { ChxSheet } from '@/components/challenge/chx-sheet';
 import { DailyDetail } from '@/components/challenge/daily-detail';
-import { ChIcon } from '@/components/challenge/icons';
 import { Empty } from '@/components/challenge/parts';
 import { Colors } from '@/constants/theme';
 import { findChallenge, isExpr, useChallengeState, type Challenge } from '@/data/challenge';
@@ -25,11 +27,9 @@ export default function ChallengeScreen() {
   if (!p) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <Stack.Screen options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen options={SCREEN.push} />
         <View style={styles.top}>
-          <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="뒤로" hitSlop={8} style={styles.ib}>
-            <ChIcon name="back" size={22} />
-          </Pressable>
+          <BackButton onPress={back} />
         </View>
         <Empty>챌린지를 찾을 수 없어요.</Empty>
       </SafeAreaView>
@@ -38,7 +38,7 @@ export default function ChallengeScreen() {
   if (isExpr(p)) return <ExprWindow p={p} write={write === '1'} />;
   return (
     <>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <DailyDetail p={p} />
     </>
   );
@@ -49,7 +49,7 @@ function ExprWindow({ p, write }: { p: Challenge; write: boolean }) {
   const [open, setOpen] = useState(true);
   return (
     <>
-      <Stack.Screen options={{ presentation: 'transparentModal', animation: 'none', contentStyle: { backgroundColor: 'transparent' } }} />
+      <Stack.Screen options={SCREEN.overlay} />
       <ChxSheet p={p} open={open} write={write} onClose={() => setOpen(false)} onClosed={back} />
     </>
   );

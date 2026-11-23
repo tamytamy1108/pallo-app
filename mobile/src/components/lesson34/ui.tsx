@@ -1,11 +1,14 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { offerChallenge } from '@/lib/chal-offer';
+import { Pressable } from '@/components/ui/pressable';
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Appear } from '@/components/ui/appear';
+import { StudyButton } from '@/components/ui/study-button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -61,6 +64,7 @@ export function MarkBtn({ en, ko, source }: { en: string; ko: string; source: st
       onPress={() => {
         const now = toggleExpression({ en, ko, source });
         sfx(now ? 'save' : 'tap');
+        if (now) offerChallenge(en);
         haptic('select');
       }}
       accessibilityRole="button"
@@ -131,7 +135,11 @@ export function AskBubble({ ask, soundOff }: { ask: Ask; soundOff: boolean }) {
             <Spk text={ask.en} soundOff={soundOff} />
           </View>
         </View>
-        <View style={s.tail} />
+        {/* 꼬리: 흰 삼각형이 말풍선 테두리를 덮고, 두 선 끝이 테두리 한가운데에서 만나 하나로 이어져요 */}
+        <Svg pointerEvents="none" width={16} height={24} viewBox="0 0 16 24" style={s.tail}>
+          <Path d="M15 -1 L2 12 L15 25 Z" fill={Colors.white} />
+          <Path d="M12 0.5 L1.8 12 L12 23.5" fill="none" stroke={Colors.ink} strokeWidth={2} strokeLinejoin="round" strokeLinecap="butt" />
+        </Svg>
       </View>
     </View>
   );
@@ -338,45 +346,41 @@ export function EndNote({ good, children }: { good: boolean; children: ReactNode
     </View>
   );
 }
-export const EndMsg = ({ bold, rest }: { bold?: string; rest: string }) => (
-  <PText style={s.endMsg}>
-    {bold ? (
-      <PText style={s.endBold} color={PINK_INK}>
-        {bold}
-        {'\n'}
+/**
+ * 결과 줄 글씨: 큰 제목 + 작은 한 줄 (상황 장면 정답 띠와 같은 크기).
+ * title 이 없으면 rest 의 첫 '!' 또는 ' · ' 앞을 제목으로 써요.
+ */
+export function EndMsg({ title, rest, good = false }: { title?: string; rest: string; good?: boolean }) {
+  const [head, sub] = title ? [title, rest.replace(/^ · /, '')] : splitHead(rest);
+  return (
+    <View>
+      <PText style={s.endTitle} color={good ? Colors.purple : PINK_INK}>
+        {head}
       </PText>
-    ) : null}
-    {rest}
-  </PText>
-);
+      {sub ? (
+        <PText style={s.endSub} color={SUB}>
+          {sub}
+        </PText>
+      ) : null}
+    </View>
+  );
+}
+function splitHead(text: string): [string, string] {
+  const m = text.match(/^(.+?[!?.])\s+(.+)$/) ?? text.match(/^(.+?)\s·\s(.+)$/);
+  return m ? [m[1], m[2].replace(/^· /, '')] : [text, ''];
+}
 
 /** 아래 줄 단추: 테두리만(다시 하기 · 넘어가기) + 노랑 넓은 단추 */
 export function FootRow({ children }: { children: ReactNode }) {
   return <View style={s.row}>{children}</View>;
 }
 export function SkipBtn({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
-      {({ pressed }) => (
-        <View style={StyleSheet.flatten([s.skip, pressed && s.pressedBtn])}>
-          <PText style={s.skipT}>{label}</PText>
-        </View>
-      )}
-    </Pressable>
-  );
+  return <StudyButton label={label} onPress={onPress} bg={Colors.white} small />;
 }
+
+/** 노랑 넓은 단추 — 모양은 학습 공용 StudyButton */
 export function GoBtn({ label, onPress, disabled, color = Colors.yellow, compact }: { label: string; onPress: () => void; disabled?: boolean; color?: string; compact?: boolean }) {
-  return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} style={s.flex}>
-      {({ pressed }) => (
-        <View style={StyleSheet.flatten([s.go, { backgroundColor: color }, compact && s.goCompact, disabled && s.goOff, pressed && !disabled && s.pressedBtn])}>
-          <PText style={s.goT} color={disabled ? '#8C8597' : Colors.ink}>
-            {label}
-          </PText>
-        </View>
-      )}
-    </Pressable>
-  );
+  return <StudyButton label={label} onPress={onPress} disabled={disabled} bg={color} compact={compact} style={s.flex} />;
 }
 
 export const s = StyleSheet.create({
@@ -400,7 +404,7 @@ export const s = StyleSheet.create({
   pavT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
   bubWrap: { flex: 1, minWidth: 0, marginBottom: 28 },
   bub: { paddingVertical: 12, paddingLeft: 14, paddingRight: 52, borderWidth: 2, borderColor: Colors.ink, borderRadius: 20, backgroundColor: Colors.white, boxShadow: `3px 3px 0px ${Colors.ink}` },
-  tail: { position: 'absolute', left: -8, bottom: 16, width: 14, height: 14, backgroundColor: Colors.white, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: Colors.ink, transform: [{ rotate: '45deg' }] },
+  tail: { position: 'absolute', zIndex: 2, left: -11, bottom: 14 },
   bubEn: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23.8, letterSpacing: -0.2 },
   bubKo: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.1, marginTop: 6 },
   bubSpk: { position: 'absolute', top: 10, right: 10 },
@@ -438,16 +442,9 @@ export const s = StyleSheet.create({
   mkT: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22 },
   mkCombo: { fontFamily: Font.display, fontSize: 12, lineHeight: 16, marginLeft: 'auto' },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  end: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, marginBottom: 12 },
+  end: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, marginBottom: 18 },
   endImg: { width: 88, height: 82 },
-  endMsg: { fontFamily: Font.body800, fontSize: 15, lineHeight: 21.75 },
-  endBold: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },
+  endTitle: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },
+  endSub: { marginTop: 2, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.75 },
   row: { flexDirection: 'row', gap: 10 },
-  skip: { height: 54, paddingHorizontal: 20, borderRadius: 27, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', boxShadow: `0px 5px 0px ${Colors.ink}`, marginBottom: 5 },
-  skipT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
-  go: { height: 54, borderRadius: 27, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, boxShadow: `0px 5px 0px ${Colors.ink}`, marginBottom: 5 },
-  goCompact: { paddingHorizontal: 14 },
-  goOff: { backgroundColor: '#EEE8DA', borderColor: '#B9B2A3', boxShadow: '0px 5px 0px #B9B2A3' },
-  goT: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
-  pressedBtn: { transform: [{ translateY: 4 }], boxShadow: `0px 1px 0px ${Colors.ink}` },
 });

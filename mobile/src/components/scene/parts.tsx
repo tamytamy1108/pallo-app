@@ -2,11 +2,14 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Tts from 'expo-speech';
 import { useEffect, type ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Modal, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { offerChallenge } from '@/lib/chal-offer';
+import { Pressable } from '@/components/ui/pressable';
 import { Appear } from '@/components/ui/appear';
+import { StudyButton } from '@/components/ui/study-button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -134,6 +137,7 @@ export function SaveBtn({ en, ko, source, shape = 'round' }: { en: string; ko: s
   const toggle = () => {
     const saved = toggleExpression({ en, ko, source });
     sfx(saved ? 'save' : 'tap');
+    if (saved) offerChallenge(en);
     haptic('select');
   };
   return (
@@ -206,6 +210,9 @@ export function Opt({ label, sub, state, onPress }: { label: string; sub?: strin
   );
 }
 
+/** 연속 정답 응원 팔로: 정답 띠 + 버튼(아래 고정 칸) 위에서 나와요 */
+export const CHEER_BOTTOM = 200;
+
 /* ---------- 정답 · 오답 반응 + 다음 버튼 (프로토타입 qFootFB · #study .ls-fb) ---------- */
 export function FeedbackFoot({ ok, title, sub, say, ko, source, next, onNext }: { ok: boolean; title: string; sub: string; say?: string; ko?: string; source: string; next: string; onNext: () => void }) {
   return (
@@ -230,14 +237,7 @@ export function FeedbackFoot({ ok, title, sub, say, ko, source, next, onNext }: 
 
 /** 아래 고정 큰 버튼 (#stBody .st-foot .btn — 높이 54 · 둥글기 27 · 테두리 2.5 · 그림자 0 5) */
 export function BigBtn({ label, onPress, color = Colors.yellow, disabled, icon, textColor = Colors.ink }: { label: string; onPress: () => void; color?: string; disabled?: boolean; icon?: ReactNode; textColor?: string }) {
-  return (
-    <PressDrop onPress={onPress} disabled={disabled} dy={5} radius={27} inner={[styles.big, { backgroundColor: disabled ? '#EEE8DA' : color }, disabled && { borderColor: '#B9B2A3' }]} accessibilityLabel={label}>
-      {icon}
-      <PText style={styles.bigText} color={disabled ? '#8C8597' : textColor}>
-        {label}
-      </PText>
-    </PressDrop>
-  );
+  return <StudyButton label={label} onPress={onPress} disabled={disabled} bg={color} textColor={textColor} left={icon} />;
 }
 
 /** 화면 아래 고정 칸 (.st-foot): 위로 크림색이 번지며 본문을 덮어요 */
@@ -382,8 +382,6 @@ const styles = StyleSheet.create({
   fbChar: { width: 88, height: 82 },
   fbTitle: { fontFamily: Font.display, fontSize: 22, lineHeight: 22 * 1.2, letterSpacing: -0.4 },
   fbSub: { marginTop: 2, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 12.5 * 1.5 },
-  big: { height: 54, borderRadius: 27, borderWidth: 2.5, borderColor: Colors.ink, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 22 },
-  bigText: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
   foot: { paddingTop: 12, paddingHorizontal: 16, gap: 8, backgroundColor: Colors.cream },
   footFade: { position: 'absolute', left: 0, right: 0, top: -22, height: 22 },
   score: { paddingVertical: 20, paddingHorizontal: 16, alignItems: 'center', gap: 4, borderWidth: 2, borderColor: Colors.ink, borderRadius: 22, backgroundColor: Colors.white },

@@ -1,9 +1,11 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
+import { SCREEN } from '@/lib/transitions';
 import { useIsBlocked } from '@/components/common/report-sheet';
-import { LgIcon } from '@/components/lounge/icons';
 import { AbroadCard, PostCard } from '@/components/lounge/post-card';
 import { EmptyState } from '@/components/ui/state-view';
 import { Colors } from '@/constants/theme';
@@ -21,11 +23,9 @@ export default function PostScreen() {
   const back = () => (router.canGoBack() ? router.back() : router.replace('/lounge'));
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <View style={styles.top}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="뒤로" hitSlop={4} style={styles.ib}>
-          <LgIcon name="back" size={24} sw={2.6} />
-        </Pressable>
+        <BackButton onPress={back} />
       </View>
       <ScrollView contentContainerStyle={styles.body}>{!p || blocked || (p.k !== 'post' && p.k !== 'abroad') ? <EmptyState title="글을 볼 수 없어요" /> : p.k === 'post' ? <PostCard p={p} /> : <AbroadCard p={p} />}</ScrollView>
     </SafeAreaView>
@@ -34,7 +34,7 @@ export default function PostScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { height: 52, paddingHorizontal: 10, justifyContent: 'center' },
+  top: { paddingVertical: 8, paddingHorizontal: 12, justifyContent: 'center' },
   ib: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   body: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 60 },
 });

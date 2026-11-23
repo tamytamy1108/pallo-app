@@ -1,6 +1,8 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 
+import { SCREEN } from '@/lib/transitions';
 import { TrialSheet, type TrialStart } from '@/components/common/trial-sheet';
 import { TRIAL_LANG_BY_CODE, TRIAL_LANGS, TRIAL_LEVELS, type TrialLang, type TrialLevel } from '@/data/trial';
 
@@ -15,7 +17,7 @@ export default function TrialScreen() {
   const [open, setOpen] = useState(true);
   return (
     <>
-      <Stack.Screen options={{ presentation: 'transparentModal', animation: 'none', contentStyle: { backgroundColor: 'transparent' } }} />
+      <Stack.Screen options={SCREEN.overlay} />
       <TrialSheet open={open} start={start} onClose={() => setOpen(false)} onClosed={leave} />
     </>
   );

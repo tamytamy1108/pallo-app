@@ -1,12 +1,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import * as Tts from 'expo-speech';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { LR_ORD, LR_SPD, NEXT, listenPrefs, setListenPrefs } from '@/components/library/listen-prefs';
 import { useListenPlayer } from '@/components/library/listen-player';
 import { BookmarkIcon, CheckIcon, CloseIcon } from '@/components/lesson/icons';
@@ -164,7 +167,7 @@ export default function ListeningScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Stack.Screen options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen options={SCREEN.rise} />
       <View style={styles.top}>
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/library'))} accessibilityRole="button" accessibilityLabel="그만하기" style={styles.close} hitSlop={6}>
           <CloseIcon />

@@ -1,8 +1,10 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SCREEN } from '@/lib/transitions';
 import { BankStep } from '@/components/scene/bank';
 import { FlowStep } from '@/components/scene/flow';
 import { MissionStep } from '@/components/scene/mission';
@@ -33,7 +35,7 @@ export default function SceneStepScreen() {
   return (
     <>
       {/* 단계는 장면 화면 위로 쌓여요 (뒤로 가기 = 장면 화면). 스와이프로 닫으면 멈춘 곳을 못 남겨서 막아요 */}
-      <Stack.Screen options={{ animation: 'slide_from_right', gestureEnabled: false }} />
+      <Stack.Screen options={{ ...SCREEN.push, gestureEnabled: false }} />
       <Step key={`${sceneId}-${step}`} sceneId={sceneId} scene={found.scene} />
     </>
   );

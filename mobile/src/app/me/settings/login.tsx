@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Head } from '@/components/account/parts';
 import { toggleLogin, useLogins } from '@/components/account/store';
 import { Button } from '@/components/ui/button';

@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Appear } from '@/components/ui/appear';
 import { showToast } from '@/components/ui/toast';
 import { PText } from '@/components/ui/text';

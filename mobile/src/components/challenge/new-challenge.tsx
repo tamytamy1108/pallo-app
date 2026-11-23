@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { Sheet } from '@/components/ui/sheet';

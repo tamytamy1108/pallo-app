@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -16,6 +16,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, G, Mask, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { BrandIcon, type BrandIconName } from '@/components/lesson/brand-icons';
 import { HomeIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';

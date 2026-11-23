@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';

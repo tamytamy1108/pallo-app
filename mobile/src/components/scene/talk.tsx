@@ -1,9 +1,11 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
+import { offerChallenge } from '@/lib/chal-offer';
+import { Pressable } from '@/components/ui/pressable';
 import { Appear } from '@/components/ui/appear';
 import { showToast } from '@/components/ui/toast';
 import { PText } from '@/components/ui/text';
@@ -430,6 +432,7 @@ function SaveMine({ original, text, fixed, source }: { original: string; text: s
         const saved = toggleExpression({ en: original, ko: fixed ? '내가 고친 문장' : '내가 한 말', fixed: fixed ? text : undefined, source });
         sfx(saved ? 'save' : 'tap');
         haptic('select');
+        if (saved) offerChallenge(original);
       }}
       accessibilityRole="button"
       accessibilityLabel="내 표현함에 저장"

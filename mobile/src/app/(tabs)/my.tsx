@@ -1,8 +1,9 @@
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { MyStudyCard } from '@/components/account/my-study-card';
 import { ProNoteCard } from '@/components/account/pro-note-card';
 import { BranchBoard } from '@/components/my/branch-board';

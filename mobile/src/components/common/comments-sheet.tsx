@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/common/icons';
 import { MemberFace } from '@/components/common/member-face';
 import { keepAll, SheetButton, SheetDesc } from '@/components/common/sheet-parts';

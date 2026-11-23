@@ -4,15 +4,19 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LessonTop } from '@/components/lesson/lesson-top';
+import { Peek } from '@/components/lesson/peek';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { showToast } from '@/components/ui/toast';
 import { Colors } from '@/constants/theme';
+import { CHEER_STREAK, pickOne } from '@/data/lessons';
 import { sfx } from '@/lib/feedback';
 import { setNoSpeak, useLearnPrefs } from '@/state/learn-prefs';
 import { savePos, stepKey, useSavedPos } from '@/state/progress';
 
 import { MatchBlock } from './blocks/match';
 import { BlindBlock, ChooseBlock, DuoBlock, ExplainBlock, ReadBlock, ScoreBlock } from './blocks/misc';
+import { ExprsBlock } from './blocks/exprs';
+import { FillBlock } from './blocks/fill';
 import { PickBlock } from './blocks/pick';
 import { SayBlock } from './blocks/say';
 import { leave34, useSoundToggle, useStepFinish, type StepCtx } from './finish';
@@ -42,6 +46,10 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
   const [askQuit, setAskQuit] = useState(false);
   const [kickOver, setKickOver] = useState<string | null>(null);
   const [combo, setCombo] = useState(0);
+  // 보라 팔로 빼꼼: 2문제 연속 맞히면 응원 · 처음 틀리면 안내 (Lv.1·2 와 같은 규칙)
+  const [peek, setPeek] = useState<{ n: number; line: [string, string] } | null>(null);
+  const streak = useRef(0);
+  const showPeek = (line: [string, string]) => setPeek((p) => ({ n: (p?.n ?? 0) + 1, line }));
   const res = useRef<Record<number, boolean>>(snap?.res ?? {});
   const logs = useRef<LogItem[]>([]);
   const score = useRef<{ right: number; total: number } | null>(null);
@@ -81,8 +89,13 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
       goLabel: last ? '완료하기' : '다음',
       next,
       mark: (ok) => {
+        const first = !(i in res.current);
         res.current = { ...res.current, [i]: ok };
+        if (!first) return;
+        streak.current = ok ? streak.current + 1 : 0;
+        if (ok && streak.current >= 2 && streak.current % 2 === 0) setTimeout(() => showPeek([pickOne(CHEER_STREAK), '']), 900);
       },
+      peek: showPeek,
       combo,
       setCombo,
       log: (x) => logs.current.push(x),
@@ -125,6 +138,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
           <Block key={`${i}:${nonce}:${noSpeak ? 1 : 0}${soundOff ? 1 : 0}`} task={t} />
         </View>
       </RunnerCtx.Provider>
+      <Peek n={peek?.n ?? 0} line={peek?.line ?? null} bottom={PEEK_BOTTOM} />
       <ConfirmDialog
         open={askQuit && !finished}
         variant="card"
@@ -181,8 +195,15 @@ function Block({ task }: { task: Task34 }) {
       return <ScoreBlock task={task} />;
     case 'read':
       return <ReadBlock task={task} />;
+    case 'exprs':
+      return <ExprsBlock task={task} />;
+    case 'fill':
+      return <FillBlock task={task} />;
   }
 }
+
+/** 아래 고정 칸(버튼 · 마이크) 위쪽 빈 곳에서 나와요 */
+const PEEK_BOTTOM = 150;
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },

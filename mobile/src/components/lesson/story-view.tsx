@@ -1,8 +1,10 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
+import { GrowInput } from '@/components/ui/grow-input';
+import { Pressable } from '@/components/ui/pressable';
 import { SparkIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { LessonModal } from '@/components/lesson/lesson-modal';
 import { L, MicButton, ModeTabs, YellowButton } from '@/components/lesson/lesson-ui';
@@ -10,6 +12,7 @@ import { StudyLayout } from '@/components/lesson/study-layout';
 import { StudyTop } from '@/components/lesson/study-top';
 import { say, useDictation, useSoundToggle } from '@/components/lesson/voice';
 import { showToast } from '@/components/ui/toast';
+import { StudyButton } from '@/components/ui/study-button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -284,7 +287,7 @@ export function StoryView({ D, skey, onParagraph, onLeave }: { D: LessonData; sk
                 </Pressable>
               )}
             </View>
-            <TextInput
+            <GrowInput
               value={sv.para}
               onChangeText={(v) => setSv((s) => ({ ...s, para: v }))}
               onContentSizeChange={(e) => setTaH(Math.max(160, Math.ceil(e.nativeEvent.contentSize.height) + 4))}
@@ -351,15 +354,7 @@ function BuildButton({ ready, onPress }: { ready: boolean; onPress: () => void }
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.get() }] }));
   return (
     <Animated.View style={a}>
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="키워드로 문단 만들기">
-        {({ pressed }) => (
-          <View style={StyleSheet.flatten([styles.build, !ready && styles.buildIdle, pressed && styles.buildDown])}>
-            <PText style={styles.buildText} color={ready ? Colors.ink : '#A39C8E'}>
-              키워드로 문단 만들기
-            </PText>
-          </View>
-        )}
-      </Pressable>
+      <StudyButton label="키워드로 문단 만들기" onPress={onPress} bg={ready ? Colors.yellow : '#EDE8DD'} textColor={ready ? Colors.ink : '#A39C8E'} />
     </Animated.View>
   );
 }
@@ -462,10 +457,6 @@ const styles = StyleSheet.create({
   opts: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   opt: { height: 34, paddingHorizontal: 16, borderRadius: 17, borderWidth: 1.5, borderColor: '#C9BDEB', borderBottomWidth: 3.5, backgroundColor: Colors.white, justifyContent: 'center' },
   optText: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 19 },
-  build: { height: 56, borderRadius: 28, borderWidth: 2.5, borderColor: Colors.ink, borderBottomWidth: 6, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
-  buildIdle: { backgroundColor: '#EDE8DD', borderColor: '#CFC7B6' },
-  buildDown: { borderBottomWidth: 2.5, marginTop: 3.5 },
-  buildText: { fontFamily: Font.body900, fontSize: 16, lineHeight: 21 },
   problem: { textAlign: 'center', fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17 },
   para: { marginTop: 6, gap: 12, paddingTop: 18, paddingHorizontal: 16, paddingBottom: 16, borderWidth: 2, borderColor: Colors.ink, borderRadius: 22, backgroundColor: Colors.white, boxShadow: '4px 4px 0 #1E1A2B' },
   spHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },

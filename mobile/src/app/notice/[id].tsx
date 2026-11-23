@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
 import { BottomBar } from '@/components/bottom-bar';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
 import { markNoticeRead } from '@/components/home/noti-state';
@@ -32,11 +33,7 @@ export default function NoticeDetailScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.top}>
-        <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="뒤로" hitSlop={10} style={styles.back}>
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-            <Path d="M15 5l-7 7 7 7" />
-          </Svg>
-        </Pressable>
+        <BackButton onPress={() => router.back()} />
         <PText variant="bodyStrong" style={styles.topTitle}>
           공지
         </PText>
@@ -86,7 +83,7 @@ function Detail({ notice }: { notice: Notice }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderBottomWidth: 1.5, borderColor: Colors.line },
+  top: { paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderBottomWidth: 1.5, borderColor: Colors.line },
   back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   topTitle: { fontFamily: Font.body900, fontSize: 16 },
   sp: { flex: 1 },

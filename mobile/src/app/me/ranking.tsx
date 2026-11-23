@@ -1,11 +1,14 @@
 import { Image } from 'expo-image';
-import { router, Stack, type Href } from 'expo-router';
+import { router, type Href } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { MemberFace } from '@/components/character/avatar';
 import { ExprRows } from '@/components/my/expr-rows';
 import { LgIcon } from '@/components/my/icons';
@@ -133,7 +136,7 @@ export default function RankingScreen() {
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <ScrollView contentContainerStyle={[styles.body, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 60 }]}>
         <View style={styles.head}>
           <Pressable

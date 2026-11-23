@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Colors } from '@/constants/theme';
 import { SPRING } from '@/lib/motion';
 

@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { ReportSheet, useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { Sheet } from '@/components/ui/sheet';

@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { router, Stack, type Href } from 'expo-router';
+import { router, type Href } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

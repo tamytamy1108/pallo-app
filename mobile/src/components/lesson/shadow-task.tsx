@@ -1,17 +1,20 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
+import { offerChallenge } from '@/lib/chal-offer';
+import { Pressable } from '@/components/ui/pressable';
 import { AskBubble, MyTurnBubble } from '@/components/lesson/bubbles';
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Peek } from '@/components/lesson/peek';
 import { say } from '@/components/lesson/voice';
 import { WordCard } from '@/components/lesson/word-card';
 import { Appear } from '@/components/ui/appear';
+import { StudyButton } from '@/components/ui/study-button';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -290,7 +293,7 @@ export function ShadowTask({
     const on = toggleExpression({ en: task.en, ko: task.para ? '' : task.ko, source });
     if (on) {
       sfx('save');
-      showToast('내 표현함에 문장을 저장했어요');
+      offerChallenge(task.en, '내 표현함에 문장을 저장했어요');
     } else showToast('표현함에서 뺐어요');
   };
 
@@ -619,16 +622,9 @@ function WaveBar({ delay }: { delay: number }) {
   return <Animated.View style={[styles.waveBar, s]} />;
 }
 
+/** 다음 · 계속 버튼 — 모양은 학습 공용 StudyButton */
 function BigButton({ label, color, onPress }: { label: string; color: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
-      {({ pressed }) => (
-        <View style={StyleSheet.flatten([styles.big, styles.bigCenter, { backgroundColor: color }, pressed && styles.bigDown])}>
-          <PText style={styles.bigText}>{label}</PText>
-        </View>
-      )}
-    </Pressable>
-  );
+  return <StudyButton label={label} bg={color} onPress={onPress} />;
 }
 
 const styles = StyleSheet.create({
@@ -697,7 +693,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 18,
   },
-  bigCenter: { justifyContent: 'center' },
   bigDown: { borderBottomWidth: 2.5, marginTop: 3.5 },
   bigText: { fontFamily: Font.body900, fontSize: 17, lineHeight: 22 },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 22 },

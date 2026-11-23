@@ -1,7 +1,8 @@
 import { type ReactNode, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { type LayoutChangeEvent, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { Sheet } from '@/components/ui/sheet';

@@ -1,10 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { PanResponder, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

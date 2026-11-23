@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { MemberFace } from '@/components/account/member-face';
 import { AccountPage, Bar, Box, Icon, Lift, TextLink } from '@/components/account/parts';
 import { DiaryCard, noteExpression } from '@/components/account/pro-note-parts';

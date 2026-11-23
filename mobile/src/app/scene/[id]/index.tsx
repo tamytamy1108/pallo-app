@@ -1,8 +1,10 @@
-import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SCREEN } from '@/lib/transitions';
 import { HubBody, HubTop, SceneListSheet, StepPopup } from '@/components/scene/hub';
 import { LevelPick } from '@/components/scene/level-pick';
 import { getBest, pickLevel, useLevelPicked, useQuizLevel, clearQuizPos } from '@/components/scene/scene-store';
@@ -57,7 +59,7 @@ function SceneHub({ sceneId }: { sceneId: string }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <HubTop
         map={map}
         onBack={() => {

@@ -1,7 +1,9 @@
+import * as Tts from 'expo-speech';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { CloseIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -18,6 +20,11 @@ export type PageApi = { soundOff: boolean; finish: (score?: { right: number; tot
 export function StudyShell({ ctx, title, children }: { ctx: StepCtx; title: string; children: (api: PageApi) => ReactNode }) {
   const { soundOff, toggleSound } = useSoundToggle();
   const { finish, celebrate } = useStepFinish(ctx);
+  // 다 하면 읽던 소리부터 멈추고 축하 화면으로
+  const finishQuiet: PageApi['finish'] = (sc) => {
+    Tts.stop();
+    finish(sc);
+  };
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.top}>
@@ -37,7 +44,7 @@ export function StudyShell({ ctx, title, children }: { ctx: StepCtx; title: stri
           <SpeakerIcon off={soundOff} color={soundOff ? '#5B4BA8' : Colors.ink} />
         </Pressable>
       </View>
-      <View style={styles.flex}>{children({ soundOff, finish })}</View>
+      <View style={styles.flex}>{children({ soundOff, finish: finishQuiet })}</View>
       {celebrate}
     </SafeAreaView>
   );

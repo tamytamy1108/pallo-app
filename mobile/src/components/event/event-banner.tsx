@@ -1,9 +1,10 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useReducedMotion } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Poster, posterSlides } from '@/components/meet/poster';
 import { Shadowed } from '@/components/meet/parts';
 import { PText } from '@/components/ui/text';

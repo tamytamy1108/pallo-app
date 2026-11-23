@@ -1,7 +1,9 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
+import { SCREEN } from '@/lib/transitions';
 import { ProfileSheet } from '@/components/my/profile-sheet';
 import { getMe } from '@/state/me';
 
@@ -28,7 +30,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack.Screen options={{ presentation: 'transparentModal', animation: 'none', contentStyle: { backgroundColor: 'transparent' } }} />
+      <Stack.Screen options={SCREEN.overlay} />
       {!mine && <ProfileSheetHost name={name} open={open} onClose={close} onClosed={leave} onOpen={(n) => (n === getMe().name ? leave() : setName(n))} />}
     </View>
   );

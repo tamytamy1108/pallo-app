@@ -1,9 +1,12 @@
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useEffect, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { SheetFooterContext } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Colors, Radius } from '@/constants/theme';
@@ -33,7 +36,7 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
   };
   return (
     <View style={styles.root}>
-      <Stack.Screen options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
+      <Stack.Screen options={SCREEN.overlayFade} />
       <Pressable style={styles.dim} onPress={close} accessibilityRole="button" accessibilityLabel="닫기" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
         <Animated.View style={[styles.sheet, { marginTop: insets.top + 40 }, st]} accessibilityLabel={label} accessibilityViewIsModal>

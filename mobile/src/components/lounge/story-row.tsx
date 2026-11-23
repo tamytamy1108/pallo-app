@@ -1,6 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';

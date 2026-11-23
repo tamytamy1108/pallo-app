@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/common/icons';
 import { FieldLabel, keepAll, SheetButton, SheetButtons, SheetDesc, SheetLink, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
 import { Checkbox, TextField } from '@/components/ui/field';

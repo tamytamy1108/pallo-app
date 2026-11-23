@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
 import { MonthCalendar, PlacePicker, PosterPicker, type Place } from '@/components/event/form-parts';
 import { SheetPage } from '@/components/event/sheet-page';

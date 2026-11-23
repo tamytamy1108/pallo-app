@@ -23,16 +23,19 @@ export type Lv3Unit = {
   daily: DailyQ[];
   keywords: Keyword[];
   /** 지난주 단어: [단어, 뜻, 예문] */
-  prev: [string, string, string][];
+  /** [낱말, 뜻, 예문, 빈칸 예문 더…] — 지난주 단어 빈칸 채우기에 예문을 다 써요 */
+  prev: [string, string, string, ...string[]][];
   topic: {
     title: string;
     follow: [string, string];
     lines: [string, string][];
     expr: [string, string][];
     /** 독해 질문: [질문, 뜻, 모범 답] */
-    check: [string, string, string][];
+    /** [질문, 뜻, 정답, 오답 보기] — 독해 질문은 3개 중 고르기 */
+    check: [string, string, string, string[]?][];
   };
-  journal: { title: string; q: string; ko: string; use: string[]; sample: string };
+  /** fill: 미리 써 둔 일기 · 문장마다 빈칸(___) 하나 [문장, 정답 표현, 뜻] */
+  journal: { title: string; q: string; ko: string; use: string[]; sample: string; fill: [string, string, string][] };
   live: LiveFix[];
 };
 
@@ -68,7 +71,7 @@ export const STEPS34: Record<3 | 4, Record<Stage, Step34[]>> = {
   3: {
     pre: [
       { id: 'kwl', t: 'KEYWORDS 익히기', d: '키워드 12개 · 예문 듣고 뜻 고르기', min: 4, xp: 5 },
-      { id: 'tread', t: 'TOPIC 지문 읽기', d: 'Forgotten Name · 듣고 읽기', min: 4, xp: 5 },
+      { id: 'tread', t: 'JOURNAL 지문 읽기', d: 'Forgotten Name · 듣고 읽기', min: 4, xp: 5 },
       { id: 'match', t: 'USEFUL EXPRESSIONS', d: '지문 표현 6개 짝 맞추기', min: 2, xp: 5 },
       { id: 'pick6', t: '오늘의 질문 미리 보기', d: '질문 6개 훑고 3개 별표 · 답은 본학습에서', min: 2, xp: 5 },
     ],
@@ -79,7 +82,7 @@ export const STEPS34: Record<3 | 4, Record<Stage, Step34[]>> = {
     ],
     post: [
       { id: 'quiz', t: '스피킹 퀴즈', d: '키워드 · 표현 문장을 한국어 보고 영어로', min: 5, xp: 10 },
-      { id: 'journal', t: 'JOURNAL · 말하는 일기', d: '요즘 내 일상 · AI가 현재형을 고쳐 정리 · 다시 읽기', min: 6, xp: 15 },
+      { id: 'journal', t: 'JOURNAL · 말하는 일기', d: '요즘 내 일상 · 빈칸에 표현 넣어 일기 완성', min: 6, xp: 15 },
       { id: 'ba', t: 'Before / After', d: 'AI 대화 때 답과 지금 답 비교', min: 3, xp: 10 },
     ],
   },

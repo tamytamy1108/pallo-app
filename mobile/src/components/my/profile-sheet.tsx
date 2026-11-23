@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { ReportSheet } from '@/components/common/report-sheet';
 import { AvatarChar, AvatarStage, MemberFace } from '@/components/character/avatar';
 import { Sheet } from '@/components/ui/sheet';

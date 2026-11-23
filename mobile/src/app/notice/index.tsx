@@ -1,7 +1,9 @@
 import { router, type Href } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
 import { useNoticeRead } from '@/components/home/noti-state';
 import { PText } from '@/components/ui/text';
@@ -17,9 +19,7 @@ export default function NoticeListScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.top}>
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="뒤로" style={styles.iconBtn}>
-          <LineIcon d={ICON_PATH.back} size={22} />
-        </Pressable>
+        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
         <PText style={styles.topTitle} accessibilityRole="header">
           공지사항
         </PText>
@@ -60,7 +60,7 @@ function Row({ id, tag, pinned, title, meta }: { id: string; tag: string; pinned
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 2, paddingBottom: 8, borderBottomWidth: 1.5, borderColor: Colors.line },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8, borderBottomWidth: 1.5, borderColor: Colors.line },
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   topTitle: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
   body: { paddingTop: 4, paddingHorizontal: 16, paddingBottom: 110 },

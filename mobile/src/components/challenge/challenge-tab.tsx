@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';

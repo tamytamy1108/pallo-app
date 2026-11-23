@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
+import { Pressable } from '@/components/ui/pressable';
 import { CheckIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { LessonModal } from '@/components/lesson/lesson-modal';
 import { BulbButton, GhostButton, MicButton, ModeTabs, YellowButton } from '@/components/lesson/lesson-ui';
@@ -175,7 +177,7 @@ export function ChalView({ D, title, onShadow, onFinish, onLeave }: { D: LessonD
         <PText style={styles.timer} color={over || (run && left <= 5) ? '#C2416B' : Colors.ink} accessibilityLabel={`남은 시간 ${left}초`}>
           {mm(left)}
         </PText>
-        <TextInput
+        <GrowInput
           value={text}
           onChangeText={setText}
           multiline

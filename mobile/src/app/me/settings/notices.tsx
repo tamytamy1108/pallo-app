@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Icon } from '@/components/account/parts';
 import { markNoticeRead, useNoticeRead } from '@/components/account/store';
 import { PText } from '@/components/ui/text';

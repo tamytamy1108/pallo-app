@@ -950,15 +950,47 @@ a { color: inherit; }
 .kw-big { font-family: var(--f-display); font-size: 24px; font-weight: 800; padding: 6px 0 2px; }
 .l3-ex { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; padding: 10px 12px; border-radius: 12px; background: #F6F1E4; } .l3-ex span { font-size: 14.5px; font-weight: 800; line-height: 1.5; } .l3-ex small { font-size: 12.5px; font-weight: 700; color: var(--sub); }
 .l3-tk { background: #F2C79E; }
-.l3-read { padding: 6px 14px; } .l3-read .st-line { display: flex; align-items: flex-start; gap: 8px; padding: 9px 0; border-top: 1.5px solid var(--line); } .l3-read .st-line:first-child { border-top: 0; } .l3-read .t { flex: 1; } .l3-read .e { font-size: 15px; font-weight: 700; line-height: 1.55; } .l3-read .k { font-size: 12.5px; font-weight: 700; color: var(--sub); margin-top: 2px; } .l3-read.no-ko .k { display: none; } .l3-read .st-line.now { background: #FFF6BF; border-radius: 10px; }
+.l3-read { padding: 6px 14px; } .l3-read .st-line { display: flex; align-items: flex-start; gap: 8px; padding: 11px 12px; margin: 0 -6px; border-top: 1.5px solid var(--line); border-radius: 0; } .l3-read .st-line:first-child { border-top: 0; } .l3-read .t { flex: 1; } .l3-read .e { font-size: 15px; font-weight: 700; line-height: 1.55; } .l3-read .k { font-size: 12.5px; font-weight: 700; color: var(--sub); margin-top: 2px; } .l3-read.no-ko .k { display: none; } .l3-read .st-line.now { background: #FFF6BF; border-radius: 14px; border-top-color: transparent; } .l3-read .st-line.now + .st-line { border-top-color: transparent; }
 .l3-qs { display: flex; flex-direction: column; gap: 10px; }
 .l3-q { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 14px; font: inherit; text-align: left; color: var(--ink); cursor: pointer; }
 .l3-q.on { background: #FFF6BF; } .l3-q .star { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-size: 15px; font-weight: 900; background: #fff; } .l3-q.on .star { background: var(--yellow); }
 .l3-q .tx { flex: 1; display: flex; flex-direction: column; gap: 3px; } .l3-q small { font-size: 11.5px; font-weight: 900; color: var(--sub); } .l3-q b { font-size: 15px; font-weight: 900; line-height: 1.45; } .l3-q em { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--sub); } .l3-q i { font-style: normal; display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; } .l3-q i span { font-size: 12px; font-weight: 800; color: var(--purple); }
 .l3-nopre { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #FFF1F3; font-size: 12.5px; font-weight: 800; color: #B4233A; } .l3-nopre .lg-link { padding: 0; font-size: 12.5px; }
-.l3-qc { position: sticky; top: 0; z-index: 3; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; background: #fff; }
-.l3-qc .hd { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 900; color: var(--sub); } .l3-qc .hd span { color: var(--purple); } .l3-qc > b { font-size: 15.5px; font-weight: 900; line-height: 1.45; } .l3-qc > em { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--sub); }
-.l3-qc .kws { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.l3-qc { position: sticky; top: 0; z-index: 3; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; background: #fff; border-radius: 22px; }
+.l3-qc .hd, .l3-qa .hd { display: flex; align-items: center; gap: 8px; }
+.l3-qc .qn, .l3-qa .qn { flex: none; font-family: var(--f-display); font-size: 11px; font-weight: 800; color: #fff; background: var(--purple); border-radius: 999px; padding: 3px 9px; }
+.l3-qc .hd small { flex: 1; font-size: 11.5px; font-weight: 800; color: var(--sub); letter-spacing: .2px; }
+.l3-qc .hd .kc { font-size: 11.5px; font-weight: 900; color: var(--purple); }
+.l3-qc .qt { display: flex; align-items: flex-start; gap: 8px; } .l3-qc .qt b { flex: 1; font-size: 17px; font-weight: 900; line-height: 1.4; letter-spacing: -.2px; }
+.l3-qc > em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--sub); line-height: 1.45; }
+.l3-qc .kws { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.l3-kc { border: 1.5px solid var(--purple); background: #F1ECFB; color: var(--purple); border-radius: 999px; padding: 4px 11px; font-size: 13px; font-weight: 800; cursor: pointer; }
+.l3-kc[aria-expanded="true"] { background: var(--purple); color: #fff; }
+.l3-kc.on { border-color: #2F6B2A; background: #EAF6E7; color: #2F6B2A; }
+.l3-kx[hidden] { display: none; }
+.st-msg.me:has(.l3-fix) { flex-direction: column; align-items: flex-end; }
+.l3-kx { margin-top: 2px; padding: 10px 12px; border-radius: 14px; background: var(--cream); display: flex; flex-direction: column; gap: 2px; }
+.l3-kx b { font-size: 14px; font-weight: 900; } .l3-kx small { font-size: 12.5px; font-weight: 700; color: var(--sub); } .l3-kx span { font-size: 13.5px; font-weight: 600; line-height: 1.45; }
+.l3-fb { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.l3-fbh { display: flex; align-items: center; gap: 8px; } .l3-fbh img { width: 40px; } .l3-fbh b { font-family: var(--f-display); font-size: 16px; font-weight: 800; }
+.l3-fbs { display: flex; flex-direction: column; gap: 4px; padding-left: 12px; border-left: 3px solid var(--line); }
+.l3-fbs small { font-size: 12px; font-weight: 900; }
+.l3-fbs p { margin: 0; font-size: 13.5px; font-weight: 700; line-height: 1.5; }
+.l3-fbs.good { border-color: #6BBF59; } .l3-fbs.good small { color: #2F6B2A; }
+.l3-fbs.weak { border-color: #E59AAE; } .l3-fbs.weak small { color: #C2416B; }
+.l3-fbs.next { border-color: var(--purple); } .l3-fbs.next small { color: var(--purple); }
+.l3-qah { margin-top: 6px; }
+.l3-qa { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: none; }
+.l3-qa .hd small { font-size: 12.5px; font-weight: 800; color: var(--sub); line-height: 1.4; }
+.l3-qa .mine { margin: 0; font-size: 14.5px; font-weight: 700; line-height: 1.5; color: var(--sub); }
+.l3-qa .fx { padding: 9px 12px; border-radius: 12px; background: #EAF6E7; display: flex; flex-direction: column; gap: 2px; }
+.l3-qa .fx small { font-size: 11.5px; font-weight: 900; color: #2F6B2A; } .l3-qa .fx b { font-size: 14.5px; font-weight: 800; line-height: 1.5; }
+.jr-guide { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+.jr-guide > div { display: grid; grid-template-columns: 26px 1fr; column-gap: 10px; align-items: center; padding: 9px 12px; border: 2px solid var(--ink); border-radius: 14px; background: #fff; }
+.jr-guide b { grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; background: var(--yellow); border: 2px solid var(--ink); display: grid; place-items: center; font-family: var(--f-display); font-size: 12px; box-sizing: border-box; }
+.jr-guide span { font-size: 14px; font-weight: 900; }
+.jr-guide em { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--sub); }
+.tk-blank { color: var(--purple); font-weight: 900; letter-spacing: 1px; }
 .l3-kw summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 6px; font-size: 13px; } .l3-kw summary b { font-weight: 900; color: var(--purple); } .l3-kw.on summary b { color: #2F6B2A; } .l3-kw summary small { font-size: 12px; font-weight: 700; color: var(--ink); } .l3-kw summary i { margin-left: auto; font-style: normal; font-size: 11px; font-weight: 800; color: var(--sub); } .l3-kw[open] summary i { visibility: hidden; } .l3-kw summary::-webkit-details-marker { display: none; } .l3-kw small { display: block; font-size: 12px; font-weight: 800; color: var(--ink); } .l3-kw span { display: block; font-size: 12.5px; font-weight: 700; color: var(--sub); line-height: 1.45; }
 .l3-av { padding: 0; overflow: hidden; background: #FFF6BF !important; } .l3-av img { width: 130%; margin: 10% 0 0 -15%; }
 .st-msg .b small { display: block; margin-top: 3px; font-size: 12px; font-weight: 700; color: var(--sub); }
@@ -980,7 +1012,26 @@ a { color: inherit; }
 .st-used .off i { border-color: #B9B2A3; }
 
 /* Before / After · 입장 */
-.st-cmp { display: flex; flex-direction: column; gap: 8px; }
+.st-cmp { display: flex; flex-direction: column; gap: 10px; }
+#stCmpOut { display: flex; flex-direction: column; gap: 18px; }
+.xp-grid { display: flex; flex-direction: column; gap: 12px; }
+.xp-box { border: 2px solid var(--ink); border-radius: 18px; background: #fff; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 3px 3px 0 var(--ink); transition: background-color .2s; }
+.xp-box.on { background: #FFF6BF; }
+.xp-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.xp-h b { font-size: 16px; font-weight: 900; }
+.xp-h small { font-size: 12.5px; font-weight: 700; color: var(--sub); }
+.xp-ok { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #C9C2B3; display: grid; place-items: center; flex-shrink: 0; }
+.xp-ok svg { width: 12px; height: 12px; opacity: 0; }
+.xp-box.on .xp-ok { background: var(--yellow); border-color: var(--ink); }
+.xp-box.on .xp-ok svg { opacity: 1; }
+.xp-ta { width: 100%; box-sizing: border-box; resize: none; border: 1.5px solid var(--line); border-radius: 12px; padding: 9px 11px; font-family: inherit; font-size: 14.5px; font-weight: 600; line-height: 1.45; background: var(--cream); color: var(--ink); }
+.xp-ta:focus { outline: none; border-color: var(--ink); }
+.xp-ex summary { cursor: pointer; font-size: 12px; font-weight: 800; color: var(--purple); list-style: none; }
+.xp-ex summary::-webkit-details-marker { display: none; }
+.xp-ex span { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--sub); line-height: 1.45; }
+.st-cmp .after { margin-right: 3px; }
+.ba-next { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--sub); text-align: center; }
+.ba-next b { color: var(--ink); }
 .st-cmp .b { padding: 12px 14px; border-radius: 16px; font-size: 14.5px; font-weight: 700; line-height: 1.55; }
 .st-cmp .b small { display: block; margin-bottom: 3px; font-family: var(--f-display); font-size: 10px; font-weight: 800; letter-spacing: .3px; }
 .st-cmp .before { border: 2px dashed #B9B2A3; color: var(--sub); }
@@ -5997,7 +6048,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       lgMkChal(i);
     }, 260);
   }
-  const chalToast = (t, ko, head) => { const dup = chalDupFor(t, ko); toast(dup ? `${head} · 같은 표현 챌린지가 있어요` : `${head} · 챌린지로 열 수 있어요`, { label: dup ? '참여하기' : '챌린지 열기', fn: () => goChalFrom(t, ko) }); };
+  const chalToast = (t, ko, head) => { if (typeof TK !== 'undefined' && TK && TK.tasks[TK.i] && TK.tasks[TK.i].noChal) { toast(head); return; } const dup = chalDupFor(t, ko); toast(dup ? `${head} · 같은 표현 챌린지가 있어요` : `${head} · 챌린지로 열 수 있어요`, { label: dup ? '참여하기' : '챌린지 열기', fn: () => goChalFrom(t, ko) }); };
   function toggleMark(t, ko, kind = '표현', parts = null) {
     if (isMarked(t)) { S.marks = S.marks.filter((m) => m.t !== t); toast('표현함에서 뺐어요'); }
     else { sfx('save'); S.marks.unshift({ t, ko, b: S.book, ls: S.lesson, kind, parts, card: cardOf(t, ko) }); chalToast(t, ko, `내 표현함에 ${kind}을 저장했어요`); }
@@ -6618,8 +6669,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         ['change the perspective', '나의 관점을 바꾸다'], ['live in the moment', '현재 순간을 즐기다'], ['create a healthier relationship', '더 건강한 관계를 만들다']
       ],
       check: [
-        ['Why was the writer disappointed after arriving in Shanghai?', '상하이에 도착한 뒤 글쓴이는 왜 실망했나요?', 'Because Instagram was unavailable, so the writer couldn’t upload travel stories in real time.'],
-        ['How did the writer’s perspective change after spending time without Instagram?', '인스타그램 없이 지낸 뒤 글쓴이의 관점은 어떻게 바뀌었나요?', 'The writer started to follow their own curiosity and learned to live in the moment.']
+        ['Why was the writer disappointed after arriving in Shanghai?', '상하이에 도착한 뒤 글쓴이는 왜 실망했나요?', 'Because Instagram was unavailable, so the writer couldn’t upload travel stories in real time.', ['Because the famous restaurants were closed during the trip.', 'Because the hotel was too far from the city center.']],
+        ['How did the writer’s perspective change after spending time without Instagram?', '인스타그램 없이 지낸 뒤 글쓴이의 관점은 어떻게 바뀌었나요?', 'The writer started to follow their own curiosity and learned to live in the moment.', ['The writer decided to post even more photos than before.', 'The writer thought the trip was a waste of time.']]
       ]
     }
   };
@@ -6664,7 +6715,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ['peer pressure', '또래 압박', 'Many students feel peer pressure to go to expensive cram schools because all their friends go.', '친구들이 다 다니니까 많은 학생이 비싼 학원에 가야 한다는 또래 압박을 느껴요.'],
       ['the norm', '당연한 일, 보통', 'Working late used to be the norm in Korea, but that is slowly changing these days.', '한국에선 야근이 당연한 일이었지만 요즘은 조금씩 바뀌고 있어요.']
     ],
-    prev: [['reminisce', '추억하다, 옛일을 회상하다', 'My friends and I love to reminisce about our college days.'], ['rebellious', '반항적인', 'I was a bit rebellious as a teenager.'], ['curfew', '통금 시간', 'My parents gave me a 10 p.m. curfew in high school.'], ['romanticize', '미화하다', 'People often romanticize life in the countryside.']],
+    prev: [['reminisce', '추억하다, 옛일을 회상하다', 'My friends and I love to reminisce about our college days.', 'Old songs always make me reminisce about high school.'], ['rebellious', '반항적인', 'I was a bit rebellious as a teenager.', 'My little brother is going through a rebellious phase.'], ['curfew', '통금 시간', 'My parents gave me a 10 p.m. curfew in high school.', 'The dorm has a midnight curfew on weekdays.'], ['romanticize', '미화하다', 'People often romanticize life in the countryside.', 'It’s easy to romanticize the past when you miss it.']],
     topic: {
       title: 'Forgotten Name',
       follow: ['Have you ever forgotten someone’s name right after meeting them?', '누군가를 만나자마자 이름을 잊어버린 적이 있나요?'],
@@ -6691,11 +6742,11 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ],
       expr: [['on the tip of my tongue', '생각날 듯 말 듯하다'], ['play it cool', '태연한 척하다'], ['sneak a peek', '몰래 보다'], ['dodge', '피하다'], ['come clean', '사실대로 털어놓다'], ['save face', '체면을 지키다']],
       check: [
-        ['How did the writer try to find out the coworker’s name?', '글쓴이는 동료 이름을 알아내려고 어떻게 했나요?', 'The writer tried to sneak a peek at his ID card and searched the company chat for hours.'],
-        ['How did the coworker know the writer’s name?', '동료는 글쓴이 이름을 어떻게 알았나요?', 'He read it off the writer’s coffee mug.']
+        ['How did the writer try to find out the coworker’s name?', '글쓴이는 동료 이름을 알아내려고 어떻게 했나요?', 'The writer tried to sneak a peek at his ID card and searched the company chat for hours.', ['The writer asked the manager to introduce him again.', 'The writer called him by a nickname until he said his name.']],
+        ['How did the coworker know the writer’s name?', '동료는 글쓴이 이름을 어떻게 알았나요?', 'He read it off the writer’s coffee mug.', ['He checked the writer’s ID card at lunch.', 'A friend told him the writer’s name.']]
       ]
     },
-    journal: { title: 'JOURNAL TOPIC', q: 'What does your life look like these days?', ko: '요즘 내 일상은 어떤가요? 현재형 · 현재진행형으로 써 봐요',
+    journal: { title: 'JOURNAL', q: 'What does your life look like these days?', ko: '요즘 내 일상은 어떤가요? 현재형 · 현재진행형으로 써 봐요',
       use: ['hooked on', 'daily grind', 'slow down', 'grow on', 'breathing room', 'the norm'],
       sample: 'These days, I’m working on a big project, so the daily grind feels heavy. I usually wake up at seven and do my commute on autopilot. Lately, yoga has really grown on me, and it helps me slow down.' }
   };
@@ -7749,7 +7800,12 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   const lsReact = (good, rx, sub, en) => `<div class="ls-react${good ? '' : ' no'}" role="status"><img src="assets/${good ? 'c-upright-yellow.png' : 'c-upright-purple.png'}" alt=""><div class="t"><b lang="en">${stEsc(rx[0])}</b><small>${stEsc(rx[1])}${sub ? ' · ' + sub : ''}</small>${en ? `<span class="tl"><button type="button" data-say="${stEsc(en)}">${ICO.spk}듣기</button><button type="button" data-lsmark aria-pressed="${isMarked(en)}">${ICO_MARK}표현 저장</button></span>` : ''}</div></div>`;
   // 패턴 머리글: '+' 앞 패턴 부분에 노랑 형광펜 (C 시안)
   const headHL = (p) => { const i = String(p).indexOf(' + '); return i < 0 ? stEsc(p) : `<span class="hl">${stEsc(p.slice(0, i))}</span>${stEsc(p.slice(i))}`; };
-  const endFB = (msg, good) => `<div class="ls-fb ls-fb-end${good ? '' : ' ls-fb-no'}" role="status"><div class="ls-fb-t"><span class="ls-ok">${good ? ICO.check : ICO.x}</span><div class="t"><p class="tk-endmsg">${msg}</p></div></div>`;
+  // 끝 메시지도 다른 피드백처럼 큰 제목 + 작은 한 줄 ('첫 기록이에요! 한 번 더 하면 더 빨라져요' → 제목 · 아랫줄)
+  const endFB = (msg, good) => {
+    const v = String(msg), m = v.match(/^<b>(.*?)<\/b>\s*(?:·\s*)?(.*)$/) || v.match(/^([^<]+?[!?.])\s+(.+)$/) || v.match(/^([^<]+?)\s·\s(.+)$/);
+    const [ti, sub] = m ? [m[1], m[2]] : [msg, ''];
+    return `<div class="ls-fb ls-fb-end${good ? '' : ' ls-fb-no'}" role="status"><div class="ls-fb-t"><span class="ls-ok">${good ? ICO.check : ICO.x}</span><div class="t"><b>${ti}</b>${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  };
   const retryFB = (msg) => `<div class="ls-fb ls-fb-no" role="status"><div class="ls-fb-t"><span class="ls-ok">${ICO.x}</span><div class="t"><b lang="en">Not quite!</b><small>${msg || '한 번 더 해 봐요 · 기회가 한 번 남았어요'}</small></div></div>`;
   const wbText = (wb) => wb.picked.map((id) => wb.toks[id].w).join(' ');
   // 단어 카드가 아래 고정 버튼(답변하기 · 탭 · 힌트)에 가리면 그만큼만 위로 올려 보여 줘요
@@ -8229,6 +8285,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     }));
   }
   const allSteps = () => ORDER3.flatMap((k) => stepsOf(SV.L)[k]);
+  // 개발용: 콘솔에서 window.__palloOpen(3, 101, 'dtalk') 처럼 단계를 바로 열어요 (화면 점검 · 녹화)
+  window.__palloOpen = (lv, no, id) => { openStudy(lv, no); if (id) setTimeout(() => openStep(id), 400); };
   function openStep(id) {
     stStop();
     $('#stBody').classList.remove('ft-on');
@@ -9542,7 +9600,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         <div class="card st-q"><span class="st-qn">Now I think…</span>
           <div class="st-sides">${['A', 'B'].map((k) => `<button class="st-side" role="radio" aria-checked="${t.now === k}" data-now="${k}"><small>SIDE ${k}</small><b lang="en">${stEsc(deb[k].t)}</b><span>${stEsc(deb[k].ko)}</span></button>`).join('')}</div>
           <textarea class="st-ta" id="stAfter" lang="en" placeholder="${B && t.now && t.now !== B.side ? '○○’s point changed my mind because ___.' : 'I still think ___ because ___.'}">${stEsc(ST.after[SV.lk + ':final'] || '')}</textarea></div>
-        <button class="btn wide yellow press" id="stCmp">비교하기</button><div id="stCmpOut"></div>`;
+        <div id="stCmpOut"></div><div class="st-foot" id="baFoot"><button class="btn wide yellow press" id="stCmp">비교하기</button></div>`;
       $$('#stBody [data-now]').forEach((b) => b.addEventListener('click', () => { const v = $('#stAfter').value; ST.after[SV.lk + ':final'] = v; t.now = b.dataset.now; sfx('tap'); STEP_VIEW.ba(s); }));
       $('#stCmp').addEventListener('click', () => {
         const a = $('#stAfter').value.trim(); ST.after[SV.lk + ':final'] = a;
@@ -9553,7 +9611,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
             <div class="b before"><small>BEFORE</small><span lang="en">${B ? stEsc(B.text || '-') : '-'}</span></div>
             <div class="b after"><small>NOW</small><span lang="en">${stEsc(a)}</span></div></div>
           <div class="card st-stats"><span><b>${B ? (changed ? '바뀜' : '그대로') : '-'}</b>입장</span><span><b>${B ? words(B.text) : 0}→${words(a)}</b>단어 수</span><span><b>${keys.length}</b>KEY 표현</span></div>
-          <p class="st-intro">${changed ? '생각이 바뀐 이유를 말할 수 있다면 토론을 제대로 들은 거예요.' : '같은 입장이어도 이유가 더 단단해졌는지 비교해 보세요.'}${keys.length ? ` 쓴 표현: ${keys.join(', ')}` : ' 다음엔 KEY EXPRESSIONS를 하나 넣어 봐요.'}</p>${doneBtn()}`;
+          <p class="st-intro">${changed ? '생각이 바뀐 이유를 말할 수 있다면 토론을 제대로 들은 거예요.' : '같은 입장이어도 이유가 더 단단해졌는지 비교해 보세요.'}${keys.length ? ` 쓴 표현: ${keys.join(', ')}` : ' 다음엔 KEY EXPRESSIONS를 하나 넣어 봐요.'}</p>`;
+        $('#baFoot').innerHTML = doneBtn();
         stReveal($('#stCmpOut'), 'start');
         $('#stDone').addEventListener('click', () => finishStep(s));
       });
@@ -9571,7 +9630,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       ${idx.map((i) => `<div class="card st-q"><div class="st-qh"><span class="st-qn">Q${i + 1}</span>${saySpan(qs[i].en)}</div><div class="st-qen" lang="en">${stEsc(qs[i].en)}</div>
         ${before[i] ? `<div class="st-cmp"><div class="b before"><small>BEFORE · 예습 때</small><span lang="en">${stEsc(before[i])}</span></div></div>` : ''}
         <textarea class="st-ta" data-after="${i}" lang="en" placeholder="지금 다시 답해 보세요">${stEsc(after[i] || '')}</textarea></div>`).join('')}
-      <button class="btn wide yellow press" id="stCmp">비교하기</button><div id="stCmpOut"></div>`;
+      <div id="stCmpOut"></div><div class="st-foot" id="baFoot"><button class="btn wide yellow press" id="stCmp">비교하기</button></div>`;
     const collect = () => { const a = []; $$('#stBody [data-after]').forEach((x) => { a[+x.dataset.after] = x.value.trim(); }); return a; };
     $$('#stBody [data-after]').forEach((x) => x.addEventListener('input', () => { ST.after[stKey(s.id)] = collect(); }));
     $('#stCmp').addEventListener('click', () => {
@@ -9585,9 +9644,10 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       $('#stCmpOut').innerHTML = `
         <div class="card st-stats"><span><b>${words(old)}→${words(all)}</b>단어 수</span><span><b>${used.length}</b>${useLabel}</span><span><b>${sAvg}</b>${L.kind === 'topic' ? '문장 / 답' : '문장 수'}</span></div>
         ${idx.filter((i) => a[i]).map((i) => `<div class="st-cmp"><div class="b before"><small>BEFORE</small><span lang="en">${stEsc(before[i] || '(예습 답변 없음)')}</span></div><div class="b after"><small>AFTER</small><span lang="en">${stEsc(a[i])}</span></div></div>`).join('')}
-        <p class="st-intro">${words(all) > words(old) ? '답이 더 길고 구체적이 됐어요! ' : ''}${used.length ? `쓴 ${useLabel}: ${used.join(', ')}` : `다음엔 ${useLabel}를 하나 넣어 말해 봐요.`}${L.kind === 'topic' ? (sAvg >= 3 ? ' · 선택 + 이유 + 예시 기준을 채웠어요.' : ' · 이유와 예시를 붙여 3문장을 채워 봐요.') : ''}</p>
-        <p class="st-intro" style="font-size:12.5px">앱에서는 AI가 두 답을 비교해 성장 포인트와 한 단계 더 나은 문장을 알려줘요.</p>
-        ${doneBtn()}`;
+        ${(() => { const tips = [used.length ? '' : `${useLabel} 하나 넣기`, L.kind === 'topic' && sAvg < 3 ? '이유 · 예시로 3문장' : ''].filter(Boolean);
+          return `<p class="ba-next">${words(all) > words(old) ? '답이 더 길어졌어요! ' : ''}${used.length ? `쓴 ${useLabel} <b lang="en">${stEsc(used.join(', '))}</b>` : ''}${tips.length ? `${used.length ? ' · ' : ''}<b>다음엔</b> ${tips.join(' · ')}` : ''}</p>`; })()}
+        `;
+      $('#baFoot').innerHTML = doneBtn();
       stReveal($('#stCmpOut'), 'start');
       if (L.kind === 'pattern') $('#stDone').textContent = '짝 맞추기 1판으로 마무리';
       $('#stDone').addEventListener('click', () => (L.kind === 'pattern' ? runMatchFinish(s, 'Before / After') : finishStep(s)));
@@ -9978,6 +10038,10 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
           <button class="btn wide yellow press" id="wcSend">보내기</button>` : `<div class="st-wb" id="wcWB"></div>`}
         </div>`}`;
     const box = $('#stBody'); box.scrollTop = box.scrollHeight;
+    // 키워드를 누르면 뜻 · 예문이 상자 안에 펼쳐져요 (다시 그리지 않아서 쓰던 답이 그대로)
+    $$('#stBody [data-kwo]').forEach((b) => b.addEventListener('click', () => { const k = b.dataset.kwo, open = b.getAttribute('aria-expanded') !== 'true';
+      $$('#stBody [data-kwo]').forEach((x) => x.setAttribute('aria-expanded', 'false')); $$('#stBody [data-kwx]').forEach((x) => { x.hidden = true; });
+      if (open) { b.setAttribute('aria-expanded', 'true'); $(`#stBody [data-kwx="${k}"]`).hidden = false; } }));
     // 단어 카드: 다음 칸에 맞는 카드만 들어가요
     const wcKey = (x) => String(x).replace(/[’‘]/g, "'").toLowerCase();
     const wsAns = cur ? cur[2].trim().split(/\s+/) : [];
@@ -10354,7 +10418,7 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
         ${st.append ? `<div class="st-cmp"><div class="b before"><small>먼저 말한 내용</small><span lang="en">${stEsc(st.base)}</span></div></div>` : ''}
         <p class="tk-msg">${st.append ? `<b>${stEsc(st.missing.join(' · '))}</b>만 이어서 써요` : stEsc((t.prompt || '영어로 내 생각을 써요') + (needSent(t) ? ` · ${MIN_SENT}문장 이상` : ''))}${noSpeak() ? ' · 시간 제한 없이 풀어요' : ''}</p>
         <textarea class="st-ta" id="tkW" lang="en" placeholder="${stEsc(t.ph || 'I think ___ because ___. For example, ___.')}" style="min-height:${t.limit > 30 ? 130 : 90}px">${stEsc(st.draft || '')}</textarea>`;
-      $('#lsFoot').innerHTML = noSpeakHTML() + modes + `<div class="ls-row"><button class="btn wide yellow press" id="tkCheck" ${(st.draft || '').trim() ? '' : 'disabled'}>확인</button></div>`;
+      $('#lsFoot').innerHTML = modes + `<div class="ls-row"><button class="btn wide yellow press" id="tkCheck" ${(st.draft || '').trim() ? '' : 'disabled'}>확인</button></div>`;
       bindModes();
       $('#tkW').addEventListener('input', (e) => { st.draft = e.target.value; $('#tkCheck').disabled = !e.target.value.trim(); });
       $('#tkSkip')?.addEventListener('click', tkNext);
@@ -10374,7 +10438,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <p class="tk-msg" id="tkTip">${st.ph === 'ready' || st.ph === 'prep' ? stEsc(t.prepTip || '무엇을 말할지 머릿속으로 정리해요 · 주장 → 이유 → 예시') : st.append ? `<b>${stEsc(st.missing.join(' · '))}</b>만 이어서 말해요` : [t.prompt || '', needSent(t) ? `${MIN_SENT}문장 이상` : ''].filter(Boolean).map(stEsc).join(' · ')}</p>
       ${st.ph === 'go' || st.ph === 'rec' ? `<div class="st-voice"><div class="st-said" id="tkSaid" lang="en"></div></div><input type="hidden" id="tkIn">` : ''}`;
     bindModes();
-    const foot = (inner) => { $('#lsFoot').innerHTML = noSpeakHTML() + modes + inner; bindModes(); };
+    // 말하기 · 쓰기 탭이 있으니 '말하기가 어려워요' 버튼은 따로 두지 않아요 (AI 대화 · 다른 쓰기 화면과 같게)
+    const foot = (inner) => { $('#lsFoot').innerHTML = modes + inner; bindModes(); };
     if (st.ph === 'ready') {
       foot(`<div class="ls-row"><button class="btn wide yellow press" id="tkPrep">준비 시작 · ${t.prep}초</button></div>`);
       $('#tkPrep').addEventListener('click', () => { st.ph = 'prep'; tkRender(); tkCount(t.prep, '준비 시간', () => { st.ph = 'go'; st.left = null; sfx('tap'); tkRender(); }); });
@@ -10574,6 +10639,26 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     }));
   };
 
+  // ---- exprs: 표현마다 칸 하나 · 그 표현을 넣어 내 예문 만들기 (need 개 이상 채우면 확인) ----
+  TKV.exprs = (t) => {
+    const st = TK.st; st.v = st.v || {};
+    const ok = (i) => phraseRe(t.items[i][0]).test(nrm(st.v[i] || '')) && words(st.v[i]) >= 4;
+    const cnt = () => t.items.filter((_, i) => ok(i)).length;
+    $('#lsBody').innerHTML = `${tkHead(t)}
+      <p class="tk-msg">표현을 넣어 내 예문을 만들어요 · ${t.need}개 이상</p>
+      <div class="xp-grid">${t.items.map(([w, m, ex], i) => `<div class="xp-box${ok(i) ? ' on' : ''}" data-xpb="${i}">
+        <div class="xp-h"><span class="xp-ok" aria-hidden="true">${ICO.check}</span><b lang="en">${stEsc(w)}</b><small>${stEsc(m)}</small></div>
+        <textarea class="xp-ta" data-xp="${i}" lang="en" rows="2" placeholder="${stEsc(w)} 를 넣어 한 문장">${stEsc(st.v[i] || '')}</textarea>
+        ${ex ? `<details class="xp-ex"><summary>지문 예문</summary><span lang="en">${stEsc(ex)}</span></details>` : ''}</div>`).join('')}</div>`;
+    const foot = () => { const n = cnt(); $('#lsFoot').innerHTML = `<button class="btn wide yellow press" id="tkGo" ${n >= t.need ? '' : 'disabled'}>${n >= t.need ? `예문 ${n}개 완성` : `예문 ${n}/${t.need}`}</button>`;
+      $('#tkGo').addEventListener('click', () => { tkMark(true); TK.log = TK.log || []; TK.log.push({ k: t.kick, v: Object.values(st.v).join(' '), ok: true }); sfx('correct'); tkNext(); }); };
+    foot();
+    $$('#lsBody [data-xp]').forEach((x) => x.addEventListener('input', () => {
+      const i = +x.dataset.xp, was = ok(i); st.v[i] = x.value;
+      if (ok(i) !== was) { x.closest('.xp-box').classList.toggle('on', ok(i)); if (ok(i)) sfx('pick'); foot(); }
+    }));
+  };
+
   // ---- explain: 설명 카드 (규칙 · 혀 위치 · 단어 차이 · 활동 규칙) ----
   TKV.explain = (t) => {
     $('#lsBody').innerHTML = `${tkHead(t)}
@@ -10736,7 +10821,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       <div class="card l3-read${t.noKo ? ' no-ko' : ''}" id="stLines">${T.lines.map(([e, k]) => `<div class="st-line" data-en="${stEsc(e)}"><div class="t"><div class="e" lang="en">${T.expr.reduce((h, [x]) => h.replace(new RegExp(escRe(x), 'i'), (m) => `<mark class="note-hl">${m}</mark>`), stEsc(e))}</div><div class="k">${stEsc(k)}</div></div>${saySpan(e)}</div>`).join('')}</div>
       <div class="st-foot">${doneBtn('다 읽었어요')}</div>`;
     $('#stPlayAll').addEventListener('click', () => playAll($$('#stLines .st-line'), (i) => T.lines[i][0]));
-    $('#stKo').addEventListener('click', () => { t.noKo = !t.noKo; STEP_VIEW.tread(s); });
+    // 한국어 켜고 끄기는 다시 그리지 않고 줄만 숨겨요 — 전체 듣기 중 노란 표시가 그대로 남아요
+    $('#stKo').addEventListener('click', (e) => { t.noKo = !t.noKo; $('#stLines').classList.toggle('no-ko', t.noKo); e.currentTarget.setAttribute('aria-pressed', String(!t.noKo)); });
     $('#stDone').addEventListener('click', () => finishStep(s));
   };
   // 예습 ④ 오늘의 질문 미리 보기: 6개 훑고 말하고 싶은 3개에 별표 (답은 본학습에서)
@@ -10755,30 +10841,76 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     }));
     $('#stDone').addEventListener('click', () => finishStep(s));
   };
-  // 본학습 ① 지난주 단어로 말하기: 5초 안에 뜻 → 그 단어로 한 문장
+  // 본학습 ① 지난주 단어: 5초 안에 뜻 고르기 → 준비된 예문 빈칸에 알맞은 단어 넣기
+  const blankOf = (ex, w) => stEsc(ex).replace(new RegExp('\\b' + escRe(w.split(' ')[0].replace(/e$/, '')) + '\\w*', 'i'), '<span class="tk-blank">_____</span>');
   STEP_VIEW.warm = (s) => {
-    const P = SV.D.prev;
-    go34(s, '지난주 단어', P.map(([w, m, ex], i) => ({
-      type: 'pick', kick: `지난주 단어 · ${i + 1}/${P.length}`, label: '뜻을 골라요', q: { en: w, html: `<div class="kw-big" lang="en">${stEsc(w)}</div>` }, limit: 5,
-      opts: [m, P[(i + 1) % P.length][1], P[(i + 2) % P.length][1]], ans: 0, sayAns: ex, noCards: true, mark: [ex, ''],
-      then: () => [{ type: 'say', kick: `지난주 단어 · ${w} 로 말하기`, ask: { en: `Tell me something using “${w}”.`, ko: `${w}(${m})로 내 이야기를 한 문장 말해요` }, checks: [[w, wordRe(w)]], model: ex, need: 1 }]
-    })), fin(s));
+    const P = SV.D.prev, W = P.map((p) => p[0]);
+    const meaning = P.map(([w, m, ex], i) => ({
+      type: 'pick', kick: `지난주 단어 · 뜻 ${i + 1}/${P.length}`, label: '뜻을 골라요', q: { en: w, html: `<div class="kw-big" lang="en">${stEsc(w)}</div>` }, limit: 5,
+      opts: [m, P[(i + 1) % P.length][1], P[(i + 2) % P.length][1]], ans: 0, sayAns: ex, noCards: true
+    }));
+    const blanks = stShuffle(P.flatMap(([w, m, ...exs]) => exs.map((ex) => ({ w, m, ex })))).map(({ w, m, ex }, i, all) => ({
+      type: 'pick', kick: `지난주 단어 · 빈칸 ${i + 1}/${all.length}`, label: '빈칸에 알맞은 단어는?', keep: true,
+      q: { en: ex, html: `<div class="tk-sent" lang="en" style="font-size:18px">${blankOf(ex, w)}</div>` },
+      opts: W, ans: W.indexOf(w), sayAns: ex, noCards: true, mark: [ex, ''], explain: `${w} · ${m}`
+    }));
+    go34(s, '지난주 단어', [...meaning, ...blanks], fin(s));
     showHub();
   };
-  // 본학습 ③ 지문 이야기하기: 꼬리 질문 → 독해 질문 2개 → 표현으로 내 질문 만들기
+  // 본학습 ③ 지문 이야기하기: 꼬리 질문 → 독해 질문(답 3개 중 고르기) → 표현 칸마다 예문 만들기 (이 코너에서는 챌린지 열기 없음)
   STEP_VIEW.ttalk = (s) => {
-    const T = SV.D.topic, exRe = new RegExp(T.expr.map(([x]) => escRe(x).replace(/\bmy\b/, '\\w+')).join('|'), 'i');
+    const T = SV.D.topic;
     if (!doneCount(SV.L, SV.ls, 'pre') || !ST.done[stKey('tread')]) toast('지문을 아직 안 읽었다면 예습 ③에서 먼저 봐도 좋아요');
+    const lineOf = (x) => (T.lines.find(([e]) => phraseRe(x).test(nrm(e))) || [])[0] || '';
     go34(s, `TOPIC · ${T.title}`, [
-      { type: 'say', kick: 'TOPIC · 꼬리 질문', ask: { en: T.follow[0], ko: T.follow[1] }, minWords: 15, need: 0, model: 'Yes! I once forgot a new coworker’s name right after lunch. It was on the tip of my tongue, so I played it cool for a week.', prompt: '내 경험으로 3문장 이상 말해요' },
-      ...T.check.map(([en, ko, model], i) => ({ type: 'say', kick: `TOPIC · 독해 질문 ${i + 1}/${T.check.length}`, ask: { en, ko }, minWords: 6, need: 0, model, prompt: '지문을 떠올려 말해요' })),
-      { type: 'say', kick: 'TOPIC · 내 질문 만들기', head: { k: 'MY QUESTION', p: T.expr.map(([x]) => x).join(' · '), m: '표현 하나를 넣어 멤버에게 물을 질문을 만들어 말해요' }, need: 2,
-        checks: [['표현 넣기', exRe], ['질문으로', /\?\s*$|^\s*(do|did|have|has|what|how|why|when|where|who|is|are|can|could|would|will)\b/i]], model: 'Have you ever had to play it cool when you forgot someone’s name?' }
+      { type: 'say', kick: 'TOPIC · 꼬리 질문', ask: { en: T.follow[0], ko: T.follow[1] }, minWords: 15, need: 0, model: 'Yes! I once forgot a new coworker’s name right after lunch. It was on the tip of my tongue, so I played it cool for a week.', prompt: '내 경험으로 3문장 이상 말해요', noChal: true },
+      ...T.check.map(([en, ko, model, wrong = []], i) => ({ type: 'pick', kick: `TOPIC · 독해 질문 ${i + 1}/${T.check.length}`, label: '지문 내용에 맞는 답을 골라요',
+        q: { en, html: `<div class="tk-sent" lang="en" style="font-size:17px">${stEsc(en)}</div><p class="tk-ko" style="margin:8px 0 0;font-size:14px;font-family:inherit">${stEsc(ko)}</p>` },
+        opts: [model, ...wrong], ans: 0, sayAns: model, noCards: true, noChal: true })),
+      { type: 'exprs', kick: 'TOPIC · 표현으로 예문 만들기', items: T.expr.map(([w, m]) => [w, m, lineOf(w)]), need: 3, noChal: true }
     ], fin(s));
     showHub();
   };
   // 본학습 ② AI DAILY TOPIC 대화 (메인 · 필수): 질문 6개를 차례로 · 질문마다 꼬리 질문 · 주제 밖이면 다시 데려와요 · 예습 안 했으면 질문 고르기 + 예시 도움
   const L3_REACT = ['Oh, interesting!', 'I see.', 'Nice!', 'That makes sense.', 'Ha, I totally get that.', 'Good point.'];
+  // 답 교정 (앱에서는 AI가 해요 · 프로토타입은 자주 나오는 오타 · 문법 규칙으로 흉내)
+  const AI_TYPO = [[/\balot\b/gi, 'a lot'], [/\b(cuz|coz|cos|bc)\b/gi, 'because'], [/\bgonna\b/gi, 'going to'], [/\bwanna\b/gi, 'want to'], [/\bgotta\b/gi, 'have to'],
+    [/\bdont\b/gi, "don't"], [/\bdoesnt\b/gi, "doesn't"], [/\bdidnt\b/gi, "didn't"], [/\bcant\b/gi, "can't"], [/\bwont\b/gi, "won't"], [/\bisnt\b/gi, "isn't"],
+    [/\bim\b/gi, "I'm"], [/\bive\b/gi, "I've"], [/\bthats\b/gi, "that's"], [/\bu\b/g, 'you'], [/\bur\b/g, 'your'], [/\bvirall\b/gi, 'viral'], [/\bthier\b/gi, 'their'],
+    [/\b(beacuse|becuase|becasue)\b/gi, 'because'], [/\bdefinately\b/gi, 'definitely'], [/\bwierd\b/gi, 'weird'], [/\brecieve\b/gi, 'receive'], [/\buntill\b/gi, 'until'], [/\btommorow\b/gi, 'tomorrow']];
+  const AI_GRAM = [
+    [/\b(he|she|it|this|that)\s+don't\b/gi, (m, a) => `${a} doesn't`, 'he · she · it 뒤엔 doesn’t'],
+    [/\bI\s+(is|are)\b/g, 'I am', 'I 뒤엔 am'],
+    [/\bI\s+am\s+agree\b/gi, 'I agree', 'agree 는 am 없이'],
+    [/\bevery\s+(weekends|days|weeks|mornings|nights|months)\b/gi, (m, w) => `every ${w.replace(/s$/, '')}`, 'every 뒤엔 단수'],
+    [/\b(he|she|it)\s+((?:just|really|always|never|also|usually)\s+)?(like|want|need|taste|look|feel|make|seem|work|get|have|do|go)\b/gi,
+      (m, a, adv, v) => `${a} ${adv || ''}${v === 'have' ? 'has' : v === 'do' ? 'does' : v === 'go' ? 'goes' : v + 's'}`, 'he · she · it 뒤 동사엔 -s'],
+    [/\bmore\s+(better|easier|bigger|faster|happier|worse)\b/gi, '$1', '비교급엔 more 없이'],
+    [/\bvery\s+very\b/gi, 'really', 'very very → really'],
+    [/\bin\s+(weekend|weekends)\b/gi, 'on weekends', 'on weekends'],
+    [/\ba\s+(?=[aeio]\w)/gi, 'an ', '모음 앞엔 an'],
+    [/\b(\w{2,})\s+\1\b/gi, '$1', '같은 단어가 두 번']
+  ];
+  function aiFix(v, D) {
+    let out = nrm(v).trim(); const why = [];
+    for (const [re, fx, w] of D.live || []) if (re.test(out)) { out = fx(out); why.push(w); break; }
+    let typo = false; AI_TYPO.forEach(([re, b]) => { if (re.test(out)) { out = out.replace(re, b); typo = true; } re.lastIndex = 0; });
+    if (typo) why.push('맞춤법');
+    AI_GRAM.forEach(([re, b, w]) => { const y = out.replace(re, b); if (y !== out) { out = y; why.push(w); } re.lastIndex = 0; });
+    const cap = out.replace(/(^|[.!?]\s+)([a-z])/g, (m, p2, c) => p2 + c.toUpperCase()).replace(/\bi\b/g, 'I');
+    if (cap !== out && !why.length) why.push('대문자');
+    out = cap; if (!/[.!?]$/.test(out)) out += '.';
+    const same = out.replace(/[.!?]$/, '').toLowerCase() === nrm(v).trim().replace(/[.!?]$/, '').toLowerCase();
+    return { text: out, why: [...new Set(why)], changed: !same || why.length > 0 };
+  }
+  // 꼬리 질문: 방금 한 말을 짚어서 (같은 문장 반복 없이 질문마다 다르게)
+  const bitOf = (v) => { const first = nrm(v).split(/[.!?]/)[0].replace(/^\s*(yes|yeah|no|well|um+|uh+|so|i think|actually)[,\s]+/i, '').trim(); const w = first.split(/\s+/); return (w.length > 7 ? w.slice(0, 7).join(' ') + '…' : first).replace(/^./, (c) => c.toLowerCase()); };
+  const NUDGE = [
+    (b) => [`You said “${b}” — why do you feel that way?`, `“${b}” — 왜 그렇게 느껴요?`],
+    (b) => [`“${b}” — can you tell me about one time that happened?`, `그런 일이 있었던 때를 하나 말해 줄래요?`],
+    (b) => [`Interesting! How does “${b}” change your day?`, `그게 하루를 어떻게 바꾸나요?`],
+    (b) => [`Tell me a bit more about “${b}”. What do you mean?`, `조금 더 자세히 말해 줄래요?`]
+  ];
   STEP_VIEW.dtalk = (s) => {
     const D = SV.D, t = SV.t, Q = D.daily, prep = l3Pre(), stars = l3Stars();
     t.cm = t.cm || (noSpeak() ? 'write' : 'voice');
@@ -10810,12 +10942,25 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     if (t.done) {
       const mine = t.log.filter((m) => m.me), best = mine.slice().sort((a, b) => (Object.keys(b.kw || {}).length - Object.keys(a.kw || {}).length) || (words(b.en) - words(a.en)))[0];
       ST.ans[stKey('dtalk')] = Q.map((_, i) => (t.ans[i] || []).join(' '));
+      const usedW = D.keywords.filter(([w]) => t.used[w]).map(([w]) => w), unused = D.keywords.filter(([w]) => !t.used[w]);
+      const qa = Q.map((qq, i) => ({ qq, i, raw: (t.ans[i] || []).join(' '), fixed: ((t.fx || {})[i] || []).join(' ') })).filter((x) => x.raw);
+      const shortN = qa.filter((x) => sentN(x.raw) < 3).length, longest = Math.max(0, ...qa.map((x) => words(x.raw)));
+      const whys = [...new Set(t.fixes.flatMap(([, , w]) => String(w).split(' / ')))].slice(0, 3);
+      const good = [`질문 ${answered}개에 끝까지 답했어요`, usedW.length ? `키워드 ${usedW.length}개를 자연스럽게 넣었어요 · ${usedW.slice(0, 3).join(', ')}` : '', longest >= 25 ? `가장 긴 답이 ${longest}단어예요 · 생각을 길게 이어 갔어요` : ''].filter(Boolean);
+      const weak = [shortN ? `짧게 끝난 답이 ${shortN}개 · 이유나 예시가 빠졌어요` : '', whys.length ? `자주 틀린 곳 · ${whys.join(' / ')}` : '', usedW.length < 2 ? '키워드를 거의 안 썼어요' : ''].filter(Boolean);
+      const tip = unused[0];
       $('#stBody').innerHTML = `
-        <div class="card st-stats"><span><b>${answered}/6</b>질문</span><span><b>${mine.length}</b>내 발화</span><span><b>${usedN}/12</b>키워드</span></div>
-        <div class="card st-used"><span class="st-kick2">질문별 내 답</span>${Q.map((qq, i) => t.ans[i] ? `<div class="on l3-sum"><i>${ICO.check}</i><span><small>Q${i + 1} · ${stEsc(qq.ko)}</small><b lang="en">${stEsc(t.ans[i][0])}</b></span></div>` : '').join('')}</div>
-        <div class="st-chk">키워드 ${D.keywords.map(([w]) => `<span class="${t.used[w] ? 'on' : ''}" lang="en">${t.used[w] ? '✓ ' : ''}${stEsc(w)}</span>`).join('')}</div>
-        ${t.fixes.length ? `<div class="card st-used"><span class="st-kick2">AI가 고쳐 준 문장 ${t.fixes.length}개</span>${t.fixes.map(([a, b, why]) => `<div class="on"><i>${ICO.check}</i><span><s lang="en">${stEsc(a)}</s><br><b lang="en">${stEsc(b)}</b><small>${stEsc(why)}</small></span></div>`).join('')}</div>` : ''}
-        ${best ? `<div class="sh-sent"><div class="t"><small>오늘의 내 문장</small><b lang="en">${stEsc(best.fixed || best.en)}</b></div><button type="button" class="sp" data-say="${stEsc(best.fixed || best.en)}" aria-label="듣기">${ICO.spk}</button><button type="button" class="sp" data-l3mk aria-label="표현함에 저장">${lgI('save', 18)}</button></div>` : ''}
+        <div class="card st-stats"><span><b>${answered}/6</b>질문</span><span><b>${mine.length}</b>내 발화</span><span><b>${t.fixes.length}</b>교정</span></div>
+        <div class="card l3-fb"><div class="l3-fbh"><img src="assets/c-upright-yellow.png" alt=""><b>AI 피드백</b></div>
+          <div class="l3-fbs good"><small>잘했어요</small>${good.map((x) => `<p>${stEsc(x)}</p>`).join('')}</div>
+          ${weak.length ? `<div class="l3-fbs weak"><small>아쉬워요</small>${weak.map((x) => `<p>${stEsc(x)}</p>`).join('')}</div>` : ''}
+          <div class="l3-fbs next"><small>이렇게 해 봐요</small><p>선택 → 이유(Because) → 예시(For example), 3문장으로 답해요</p>${tip ? `<p>안 쓴 키워드 <b lang="en">${stEsc(tip[0])}</b> 넣어 보기 · <span lang="en">${stEsc(tip[2])}</span></p>` : ''}</div>
+          ${best ? `<div class="sh-sent"><div class="t"><small>오늘의 내 문장</small><b lang="en">${stEsc(best.fixed || best.en)}</b></div><button type="button" class="sp" data-say="${stEsc(best.fixed || best.en)}" aria-label="듣기">${ICO.spk}</button><button type="button" class="sp" data-l3mk aria-label="표현함에 저장">${lgI('save', 18)}</button></div>` : ''}
+        </div>
+        <span class="st-kick2 l3-qah">질문별 내 답</span>
+        ${qa.map((x) => `<div class="card l3-qa"><div class="hd"><span class="qn">Q${x.i + 1}</span><small>${stEsc(x.qq.ko)}</small></div>
+          <p class="mine" lang="en">${stEsc(x.raw)}</p>
+          ${x.fixed && x.fixed !== x.raw ? `<div class="fx"><small>AI 교정</small><b lang="en">${stEsc(x.fixed)}</b></div>` : ''}</div>`).join('')}
         <div class="st-foot">${doneBtn('대화 완료')}</div>`;
       $('#stBody [data-l3mk]')?.addEventListener('click', () => toggleMark(best.fixed || best.en, '', '문장'));
       $('#stDone').addEventListener('click', () => finishStep(s));
@@ -10823,8 +10968,10 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
     }
     $('#stBody').innerHTML = `
       ${prep ? '' : `<div class="l3-nopre"><span>예습을 안 했어요 · 키워드를 눌러 뜻을 봐요</span></div>`}
-      <div class="card l3-qc"><div class="hd"><small>${t.extra ? '더 이야기하기' : `질문 ${Math.min(t.p + 1, 6)}/6`} · DAILY TOPIC</small><span>키워드 ${usedN}/12</span></div><b lang="en">${stEsc(q.en)}</b><em>${stEsc(q.ko)}</em>
-        <div class="kws">${q.kw.map((k) => { const [w, m, ex] = D.keywords[k]; return `<details class="l3-kw${t.used[w] ? ' on' : ''}"><summary><b lang="en">${t.used[w] ? '✓ ' : ''}${stEsc(w)}</b>${prep ? '' : `<small>${stEsc(m)}</small>`}<i>예문</i></summary>${prep ? `<small>${stEsc(m)}</small>` : ''}<span lang="en">${stEsc(ex)}</span></details>`; }).join('')}</div></div>
+      <div class="card l3-qc"><div class="hd"><span class="qn">${t.extra ? 'MORE' : `Q${Math.min(t.p + 1, 6)}`}</span><small>DAILY TOPIC · ${t.extra ? '더 이야기하기' : `${Math.min(t.p + 1, 6)}/6`}</small><span class="kc">키워드 ${usedN}/12</span></div>
+        <div class="qt"><b lang="en">${stEsc(q.en)}</b>${saySpan(q.en)}</div><em>${stEsc(q.ko)}</em>
+        <div class="kws">${q.kw.map((k) => { const [w] = D.keywords[k]; return `<button type="button" class="l3-kc${t.used[w] ? ' on' : ''}" data-kwo="${k}" aria-expanded="false" lang="en">${t.used[w] ? '✓ ' : ''}${stEsc(w)}</button>`; }).join('')}</div>
+        ${q.kw.map((k) => { const [w, m, ex] = D.keywords[k]; return `<div class="l3-kx" data-kwx="${k}" hidden><b lang="en">${stEsc(w)}</b><small>${stEsc(m)}</small><span lang="en">${stEsc(ex)}</span></div>`; }).join('')}</div>
       <div class="st-chat" id="stChat">${t.log.map((m) => m.me
         ? `<div class="st-msg me"><div class="b" lang="en">${stEsc(m.en)}</div>${m.fixed ? `<div class="l3-fix"><b lang="en">${stEsc(m.fixed)}</b><small>${stEsc(m.why)}</small></div>` : ''}</div>`
         : `<div class="st-msg"><span class="st-av l3-av"><img src="assets/c-upright-yellow.png" alt=""></span><div><div class="who">PALLO AI</div><div class="b"><span lang="en">${stEsc(m.en)}</span>${m.ko ? `<small>${stEsc(m.ko)}</small>` : ''}</div></div></div>`).join('')}</div>
@@ -10845,14 +10992,14 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
       const v = ($('#stMsg').value || '').trim(); if (!v) { toast(t.cm === 'voice' ? '마이크를 누르고 말해 보세요' : '영어로 적어 주세요'); return; }
       const msg = { me: 1, en: v, kw: {} }; t.log.push(msg); t.draft = ''; sfx('tap');
       D.keywords.forEach(([w]) => { if (wordRe(w).test(v.replace(/[’]/g, "'"))) { t.used[w] = 1; msg.kw[w] = 1; } });
-      for (const [re, fx, why] of D.live) if (re.test(v.replace(/[’]/g, "'"))) { msg.fixed = capFirst(fx(v.replace(/[’]/g, "'"))); msg.why = why; t.fixes.push([v, msg.fixed, why]); break; }
-      (t.ans[qi] = t.ans[qi] || []).push(v);
+      const F = aiFix(v, D); if (F.changed) { msg.fixed = F.text; msg.why = F.why.join(' / ') || '문장 다듬기'; t.fixes.push([v, msg.fixed, msg.why]); }
+      (t.ans[qi] = t.ans[qi] || []).push(v); t.fx = t.fx || {}; (t.fx[qi] = t.fx[qi] || []).push(msg.fixed || v);
       const shortA = sentN(v) < 3 && words(v) < 20, offT = !q.tw.test(v) && !Object.keys(msg.kw).length && words(v) >= 5;
-      const R = L3_REACT[(t.log.length + qi) % L3_REACT.length];
+      const kwHit = Object.keys(msg.kw)[0], R = kwHit ? `Nice use of “${kwHit}”!` : L3_REACT[(t.log.length + qi) % L3_REACT.length];
       if (offT && !t.steer[qi]) { t.steer[qi] = 1; ai(`Ha, that sounds fun! But back to the question — ${q.en}`, '재밌네요! 그런데 다시 질문으로 돌아가 볼게요'); }
       else if (shortA && !t.nudged[qi]) {
-        t.nudged[qi] = 1; const [w, , ex] = D.keywords[q.kw[0]];
-        ai(prep ? 'Tell me more — why? Can you give me an example?' : `Tell me more! For example: “${ex}” Now your turn — try using “${w}”.`, prep ? '조금 더 말해 줄래요? 왜요? 예를 들어 줄래요?' : `예시를 보고 ‘${w}’를 넣어 3문장으로 말해 봐요`);
+        t.nudged[qi] = 1; t.nk = (t.nk || 0) + 1; const [w, , ex] = D.keywords[q.kw[0]], [en, ko] = NUDGE[(t.nk - 1) % NUDGE.length](bitOf(msg.fixed || v));
+        ai(prep ? en : `${en} Try using “${w}” — like: “${ex}”`, prep ? ko : `${ko} · ‘${w}’를 넣어 봐요`);
       } else if (t.extra) { ai(`${R} Thanks for sharing more. Pick another question below, or finish the chat.`, '좋아요! 아래에서 다른 질문을 고르거나 대화를 마쳐요'); t.extra = false; }
       else if (t.fu < q.fq.length) { const [en, ko] = q.fq[t.fu]; t.fu += 1; ai(`${R} ${en}`, ko); }
       else if (t.p < t.order.length - 1 && t.p < 5) { t.p += 1; t.fu = 0; const nq = Q[t.order[t.p]]; ai(`${R} Okay, next one — ${nq.en}`, `다음 질문 · ${nq.ko}`); }
@@ -10908,14 +11055,8 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   }
   function exprMatch(s) {
     const E = SV.D.topic.expr;
-    const models = ['Have you ever been obsessed with a trend?', 'Do you like sharing your trips in real time?', 'What helps you live in the moment?'];
     go34(s, 'USEFUL EXPRESSIONS', [
-      { type: 'match', id: 'expr', pairs: E, time: 30, kick: 'USEFUL EXPRESSIONS · ① 30초 타임어택' },
-      { type: 'say', kick: 'USEFUL EXPRESSIONS · ② 질문 만들기', head: { k: 'READING CHECK 3', p: '표현 하나로 옆 사람에게 할 질문', m: '내가 직접 만든 질문을 말해요' }, need: 2,
-        card: `<div class="st-chk" style="justify-content:center">${E.map(([w]) => `<span lang="en">${stEsc(w)}</span>`).join('')}</div>`,
-        checks: [['질문 형태 (Have you / Do you / What …?)', /^(have|do|does|did|what|why|how|when|where|would|is|are|can|if)\b|\?$/i], ['USEFUL EXPRESSION 하나', (v) => E.some(([w]) => phraseRe(w).test(v))]],
-        marks: E.map(([w]) => phraseRe(w)), model: models[0], modelLabel: '이런 질문도 좋아요', ph: 'Have you ever ___?',
-        alt: { type: 'pick', label: '표현을 바르게 쓴 질문은?', opts: [models[0], 'Have you ever obsessed a trend?', 'Do you obsessed with trends?'], ans: 0 } }
+      { type: 'match', id: 'expr', pairs: E, time: 30, kick: 'USEFUL EXPRESSIONS · 30초 타임어택' }
     ], fin(s));
   }
 
@@ -10932,10 +11073,13 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
   function journalSpeak(s) {
     const D = SV.D, J = D.journal, key = stKey(s.id);
     const kwRes = [...J.use, ...D.keywords.map((k) => k[0])].map(wordRe);
-    go34(s, 'JOURNAL · 말하는 일기', [
-      { type: 'say', kick: 'JOURNAL · ① 1분 말하기', head: { k: J.title, p: J.q, m: J.ko }, limit: 60, need: 0, minWords: 15, marks: kwRes,
-        card: `<div class="st-chk" style="justify-content:center">넣어 볼 단어 ${J.use.map((w) => `<span lang="en">${stEsc(w)}</span>`).join('')}</div>`,
-        prompt: '1분 동안 말로 일기를 써요 · AI가 받아 적어 문단으로 정리해요', ph: 'If I had a day without responsibilities, I would ___.', noMsg: '15단어 이상 말해 봐요',
+    // 말하는 일기: 3칸 순서(요즘 하는 일 → 좋은 점 · 힘든 점 → 요즘 느끼는 것)를 보고 1분 동안 말해요
+    const guide = [['요즘 하는 일', 'These days, I’m …'], ['좋은 점 · 힘든 점', 'I like … / It’s hard to …'], ['요즘 느끼는 것', 'Lately, … has grown on me.']];
+    go34(s, 'JOURNAL', [
+      { type: 'say', kick: 'JOURNAL · 1분 말하기', head: { k: J.title, p: J.q, m: J.ko }, limit: 60, need: 0, minWords: 15, marks: kwRes,
+        card: `<div class="jr-guide">${guide.map(([k, en], i) => `<div><b>${i + 1}</b><span>${k}</span><em lang="en">${stEsc(en)}</em></div>`).join('')}</div>
+          <div class="st-chk" style="justify-content:center">넣어 볼 단어 ${J.use.map((w) => `<span lang="en">${stEsc(w)}</span>`).join('')}</div>`,
+        prompt: '위 순서대로 한 문장씩 · AI가 일기로 정리해요', ph: 'These days, I’m ___. I like ___. Lately, ___.', noMsg: '15단어 이상 말해 봐요',
         save: (v, st) => {
           const P = polishLive(v, D), used = J.use.filter((w) => wordRe(w).test(P.text));
           ST.ans[key] = [P.text];
@@ -10943,8 +11087,6 @@ form > textarea[rows="1"], .ft-inp > textarea[rows="1"] { width: auto !important
             <div class="st-chk">오늘 단어 ${J.use.map((w) => `<span class="${used.includes(w) ? 'on' : ''}" lang="en">${used.includes(w) ? '✓ ' : ''}${w}</span>`).join('')}</div></div>
             <div class="card st-used"><span class="st-kick2">고칠 문장 ${Math.min(2, P.fixes.length)}개</span>${P.fixes.slice(0, 2).map(([a, b]) => `<div class="on"><i>${ICO.check}</i><span><s lang="en">${stEsc(a)}</s> → <b lang="en">${stEsc(b)}</b></span></div>`).join('') || '<div class="on"><i>' + ICO.check + '</i><span>고칠 곳이 없어요! 키워드를 하나 더 넣어 볼까요?</span></div>'}</div>`;
           if (!S.marks.some((m) => m.t === P.text)) markEn(P.text, `JOURNAL · ${new Date().toLocaleDateString('ko-KR')}`, `Lv.3 ${lessonName(SV.L, SV.ls)} · JOURNAL`);
-          const sents = P.text.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 4);
-          TK.tasks.splice(TK.i + 1, TK.tasks.length, { type: 'shadow', kick: 'JOURNAL · ② 다듬은 저널 다시 읽기', en: sents.join(' '), ko: '다듬은 문장으로 다시 읽어 녹음해요 · 날짜별로 표현함에 쌓여요', label: '다듬은 저널 읽기', pass: 1, pool: sents.join(' ').split(' ') });
         } }
     ], fin(s));
   }
