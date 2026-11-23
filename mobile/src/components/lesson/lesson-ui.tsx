@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'rea
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { BookmarkIcon, BulbIcon, CardsIcon, KeyboardIcon, MicIcon, MicOffIcon, SpeakerIcon } from '@/components/lesson/icons';
+import { StudyButton } from '@/components/ui/study-button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -52,54 +53,39 @@ export function Avatar({ name, size }: { name: string; size: number }) {
 
 type BtnProps = { label: string; onPress: () => void; disabled?: boolean; style?: StyleProp<ViewStyle>; children?: ReactNode; accessibilityLabel?: string };
 
-/** 노랑 큰 버튼 (확인 · 다음 · 계속하기) */
+/** 노랑 큰 버튼 (확인 · 다음 · 계속하기) — 모양은 학습 공용 StudyButton */
 export function YellowButton({ label, onPress, disabled = false, style, children, accessibilityLabel }: BtnProps) {
   return (
-    <Pressable
+    <StudyButton
+      label={label}
       onPress={() => {
         sfx('big');
         haptic('tap');
         onPress();
       }}
       disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled }}
-      style={style}>
-      {({ pressed }) => (
-        <View style={StyleSheet.flatten([styles.big, { backgroundColor: disabled ? L.disabledBg : Colors.yellow }, disabled && styles.bigDisabled, pressed && !disabled && styles.bigDown])}>
-          <PText style={styles.bigText} color={disabled ? L.disabledInk : Colors.ink}>
-            {label}
-          </PText>
-          {children}
-        </View>
-      )}
-    </Pressable>
+      style={style}
+      right={children}
+      accessibilityLabel={accessibilityLabel}
+    />
   );
 }
 
 /** 흰 테두리 버튼 (그만하기 · 한 번 더 · 정답 확인하기 · 넘어가기) */
 export function GhostButton({ label, onPress, disabled = false, style, children }: BtnProps) {
   return (
-    <Pressable
+    <StudyButton
+      label={label}
       onPress={() => {
         sfx('tap');
         onPress();
       }}
       disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      style={style}>
-      {({ pressed }) => (
-        <View style={StyleSheet.flatten([styles.big, styles.ghost, disabled && styles.bigDisabled, pressed && !disabled && styles.bigDown])}>
-          {children}
-          <PText style={styles.ghostText} color={disabled ? L.disabledInk : Colors.ink}>
-            {label}
-          </PText>
-        </View>
-      )}
-    </Pressable>
+      bg={Colors.white}
+      small
+      style={style}
+      left={children}
+    />
   );
 }
 
@@ -296,10 +282,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   bigDown: { borderBottomWidth: 2.5, marginTop: 3.5 },
-  bigDisabled: { borderColor: L.muted, borderBottomColor: Colors.ink },
   bigText: { fontFamily: Font.body900, fontSize: 17, lineHeight: 22 },
-  ghost: { backgroundColor: Colors.white, paddingHorizontal: 20 },
-  ghostText: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
   mic: { gap: 10 },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 22 },
   waveBar: { width: 3, borderRadius: 2, backgroundColor: Colors.white },

@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Appear } from '@/components/ui/appear';
+import { StudyButton } from '@/components/ui/study-button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -355,28 +356,12 @@ export function FootRow({ children }: { children: ReactNode }) {
   return <View style={s.row}>{children}</View>;
 }
 export function SkipBtn({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
-      {({ pressed }) => (
-        <View style={StyleSheet.flatten([s.skip, pressed && s.pressedBtn])}>
-          <PText style={s.skipT}>{label}</PText>
-        </View>
-      )}
-    </Pressable>
-  );
+  return <StudyButton label={label} onPress={onPress} bg={Colors.white} small />;
 }
+
+/** 노랑 넓은 단추 — 모양은 학습 공용 StudyButton */
 export function GoBtn({ label, onPress, disabled, color = Colors.yellow, compact }: { label: string; onPress: () => void; disabled?: boolean; color?: string; compact?: boolean }) {
-  return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} style={s.flex}>
-      {({ pressed }) => (
-        <View style={StyleSheet.flatten([s.go, { backgroundColor: color }, compact && s.goCompact, disabled && s.goOff, pressed && !disabled && s.pressedBtn])}>
-          <PText style={s.goT} color={disabled ? '#8C8597' : Colors.ink}>
-            {label}
-          </PText>
-        </View>
-      )}
-    </Pressable>
-  );
+  return <StudyButton label={label} onPress={onPress} disabled={disabled} bg={color} compact={compact} style={s.flex} />;
 }
 
 export const s = StyleSheet.create({
@@ -443,11 +428,4 @@ export const s = StyleSheet.create({
   endMsg: { fontFamily: Font.body800, fontSize: 15, lineHeight: 21.75 },
   endBold: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },
   row: { flexDirection: 'row', gap: 10 },
-  skip: { height: 54, paddingHorizontal: 20, borderRadius: 27, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', boxShadow: `0px 5px 0px ${Colors.ink}`, marginBottom: 5 },
-  skipT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
-  go: { height: 54, borderRadius: 27, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, boxShadow: `0px 5px 0px ${Colors.ink}`, marginBottom: 5 },
-  goCompact: { paddingHorizontal: 14 },
-  goOff: { backgroundColor: '#EEE8DA', borderColor: '#B9B2A3', boxShadow: '0px 5px 0px #B9B2A3' },
-  goT: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
-  pressedBtn: { transform: [{ translateY: 4 }], boxShadow: `0px 1px 0px ${Colors.ink}` },
 });
