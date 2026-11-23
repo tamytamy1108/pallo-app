@@ -18,30 +18,31 @@ import { WorldPhoto } from './world-photo';
 import { canTryWorld3D, devCapture, GL_START_TIMEOUT, liteWorld } from './world-support';
 
 /** 이름표를 가운데 맞추려고 두는 상자 너비 (프로토타입 translate(-50%)) */
-/** 지도를 고르고 이만큼 머물면 만들기 시작 (빠르게 넘기는 동안의 지도는 만들지 않아요) · 맵 버튼을 눌러 바꾼 지도는 기다리지 않고 바로 만들어요 */
-const SETTLE_MS = 180;
 /** 그리기 판이 이만큼(ms) 안 오면 판을 새로 만들어 다시 (두 번까지 · 그래도 안 되면 GL_START_TIMEOUT 에 2D) */
 const GL_RETRY_MS = 800;
-/**
- * 맵을 바꿀 때 새 3D 가 이만큼(ms) 안에 그려지면 사진판 없이 프로토타입처럼 3D 인트로(옆으로 돌며 커지기)로 들어와요.
- * 그동안은 앞 지도가 그대로 있어요. 넘으면(느린 폰 · 처음 그리기) 사진판이 먼저 떠요 — library-world 의 FadeLayer 도 같은 시간을 써요.
- */
-export const SWAP_WAIT_MS = 1200;
+/** 바깥(library-world)에서 지도를 다루는 손잡이 */
+export type WorldCtl = {
+  /** 지금 바로 보여 줄 수 있어요 (만들어 그렸고 · GL 판이 살아 있어요) */
+  ready: () => boolean;
+  /** 이 지도로 바꿔 들어올 때: 처음 자리에서 도는 인트로를 다시 (dir: 1 시계 · -1 반대) */
+  replay: (dir: number) => void;
+};
 
 type Props = {
   /** BUILD 이름 (study2 · travel · biz …) */
   id: string;
   sc: WorldSC;
-  /** 맵을 바꿔 들어올 때 도는 방향 */
-  swapDir: number;
   /** 아래 카드의 버튼 (교재 보기 · 장면 열기) */
   onOpen: (no: number) => void;
   /** false 면 그리기를 멈춰요 (스크롤해서 지도가 화면 밖일 때) */
   visible?: boolean;
-  /** 다른 지도에서 바꿔 들어왔어요 (처음 뜰 때만 봐요) */
-  swap?: boolean;
-  /** 바꿔 들어온 3D 가 SWAP_WAIT_MS 안에 그려져서 인트로를 시작했어요 → 지금 서서히 띄워 주세요 */
-  onSpinIn?: () => void;
+  /** false 면 미리 만들어 두기만 하는 숨은 지도: 그리기를 멈추고, 탭에 돌아와도 보일 때까지 GL 판을 새로 만들지 않아요 */
+  active?: boolean;
+  /** 사진판을 서서히가 아니라 바로 치워요 (3D 가 돌며 들어오는 중) */
+  coverNow?: boolean;
+  /** 첫 장면을 그렸어요 (GL 판을 새로 붙여 다시 그렸을 때도) */
+  onDrawn?: () => void;
+  ctlRef?: { current: WorldCtl | null };
 };
 
 /**
@@ -51,6 +52,17 @@ type Props = {
  */
 export function WorldView(props: Props) {
   const [flat, setFlat] = useState(() => !canTryWorld3D());
+  const { onDrawn, ctlRef } = props;
+  const drawnCb = useRef(onDrawn);
+  useEffect(() => {
+    drawnCb.current = onDrawn;
+  });
+  // 2D 지도는 만들 것 없이 바로 보여 줄 수 있어요 (돌기 없이)
+  useEffect(() => {
+    if (!flat) return;
+    if (ctlRef) ctlRef.current = { ready: () => true, replay: () => {} };
+    drawnCb.current?.();
+  }, [flat, ctlRef]);
   if (flat) return <WorldFlat id={props.id} sc={props.sc} onOpen={props.onOpen} />;
   return (
     <GLBoundary onFail={() => setFlat(true)}>
@@ -78,7 +90,7 @@ class GLBoundary extends Component<{ onFail: () => void; children: ReactNode }, 
  * 3D 섬 지도 (프로토타입 .m3-layer): GL 그림 + 이름표 · 내 캐릭터 · 확대 카드(.m3-zp).
  * 크기는 부모가 정해요. 화면을 떠나면(탭 이동 · 앱 내려감) 그리기를 멈춰요.
  */
-function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpinIn, onFail }: Props & { onFail: () => void }) {
+function World3D({ id, sc, onOpen, visible = true, active = true, coverNow = false, onDrawn, ctlRef, onFail }: Props & { onFail: () => void }) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [lite] = useState(liteWorld);
   const fail = useRef(onFail);
@@ -111,24 +123,27 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
     const m = FLAT_MAPS[id];
     return m && sc.length <= m.stops.length ? m : null;
   });
-  /** 바꿔 들어온 지도인지 (처음 값만) · 언제 떴는지 · 제때 그려져 3D 인트로로 들어왔는지 */
-  const [swapIn] = useState(swap);
-  const mountedAt = useRef(0);
-  const [spinIn, setSpinIn] = useState(false);
-  const spinCb = useRef(onSpinIn);
+  const drawnCb = useRef(onDrawn);
 
   useEffect(() => {
     open.current = onOpen;
     fail.current = onFail;
-    spinCb.current = onSpinIn;
+    drawnCb.current = onDrawn;
   });
   useEffect(() => {
-    mountedAt.current = Date.now();
-  }, []);
-  // 사진판을 먼저 치우고(아래 PhotoCover 효과가 먼저 돌아요) 층을 띄워요 → 돌며 들어오는 3D 만 보여요
+    if (!ctlRef) return;
+    ctlRef.current = {
+      ready: () => drawnNow.current && !gone.current && stage.current != null,
+      replay: (dir) => stage.current?.replay(dir),
+    };
+    return () => {
+      ctlRef.current = null;
+    };
+  }, [ctlRef]);
+  // 사진판 효과(자식)가 먼저 돌고 나서 알려요 → 바깥에서 바로 띄워도 사진판이 겹치지 않아요
   useEffect(() => {
-    if (drawn && spinIn) spinCb.current?.();
-  }, [drawn, spinIn]);
+    if (drawn) drawnCb.current?.();
+  }, [drawn]);
   // GL 이 시작하지 않으면 (오래된 폰 · GL 없는 에뮬레이터) 2D 지도로. 탭에 돌아와 판을 새로 만들 때(glKey)도 같아요.
   // 앱이 움직일 수 있던 시간만 세요: 다른 지도를 만드느라 JS 가 멈춘 동안(프레임 사이는 최대 0.1초만) · 다른 탭에 가 있던 동안은 빼요.
   // 다 기다렸으면 이미 와 있던 '판 준비됨' 신호를 먼저 받게 두 프레임 더 보고 정해요.
@@ -161,10 +176,11 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
   }, [size, glKey]);
   // 탭을 떠나거나 앱이 내려가면 그리기 멈춤.
   // 폰은 그때 그리기 판(GL)이 사라져서, 돌아오면 판만 새로 만들어 붙여요 (지도는 다시 만들지 않아요 · stage.rebind)
+  // 숨은 지도(active=false)는 보일 차례가 올 때 붙여요 — 돌아올 때 숨은 지도까지 한꺼번에 붙이면 멈칫해요
   useEffect(() => {
     const set = (appActive: boolean) => {
       if (!focused || !appActive) gone.current = true;
-      else if (gone.current && stage.current && Platform.OS !== 'web') {
+      else if (gone.current && active && stage.current && Platform.OS !== 'web') {
         gone.current = false;
         if (host.current) host.current.paused = true;
         drawnNow.current = false;
@@ -175,12 +191,12 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
         setGlKey((k) => k + 1);
         return;
       }
-      if (host.current) host.current.paused = !(focused && visible && appActive);
+      if (host.current) host.current.paused = !(focused && visible && active && appActive);
     };
     set(AppState.currentState === 'active');
     const sub = AppState.addEventListener('change', (st) => set(st === 'active'));
     return () => sub.remove();
-  }, [focused, visible]);
+  }, [focused, visible, active]);
   useEffect(
     () => () => {
       left.current = true;
@@ -195,7 +211,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
     glStarted.current = true;
     if (stage.current && host.current) {
       // 다시 만든 판: 이미 만든 지도를 새 GL 에 붙이기만
-      host.current.paused = !(focused && visible && AppState.currentState === 'active');
+      host.current.paused = !(focused && visible && active && AppState.currentState === 'active');
       try {
         stage.current.rebind(gl);
       } catch (e) {
@@ -210,17 +226,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
       height: size.h,
       reduced,
       lite,
-      swapDir,
-      // 첫 장면을 그릴 때 정해요: 바꿔 들어와 제때 그려졌으면 프로토타입처럼 돌며 들어오고,
-      // 사진판을 이미 보여 줬으면(처음 들어옴 · 늦게 그려짐) 도는 인트로 없이 사진과 같은 구도에서 시작해요
-      noIntro: () => {
-        const waited = Date.now() - mountedAt.current;
-        const inTime = swapIn && waited < SWAP_WAIT_MS;
-        if (__DEV__ && swapIn) console.log(`[gl] ${id} 바꾼 뒤 ${waited}ms 에 그리기 시작 → ${inTime ? '돌며 들어와요' : '사진판 먼저'}`);
-        setSpinIn(inTime);
-        return cover != null && !inTime;
-      },
-      paused: !focused,
+      paused: !(focused && active),
       onLabels: (l) => setLabels(l.map((x) => x.spec)),
       onFrame: (lxy, r, z) => {
         if (!drawnNow.current) {
@@ -242,7 +248,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
     };
     host.current = h;
     if (building.current) clearTimeout(building.current);
-    // 지도를 만드는 동안(폰에서 1~5초) JS 가 멈춰요 → 빠르게 다른 지도로 넘어가면 만들지 않게 잠깐 기다렸다가 시작해요
+    // 지도를 만드는 동안(폰에서 0.4~0.8초) JS 가 멈춰요 → 지금 화면(버튼 · 사진판)이 먼저 그려지게 다음 차례에 시작해요
     building.current = setTimeout(() => {
       building.current = null;
       if (left.current) return;
@@ -256,7 +262,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
         stage.current = null;
         fail.current();
       }
-    }, swapIn ? 0 : SETTLE_MS);
+    }, 0);
   };
 
   // 짧게 누르면 확대 · 옆으로 끌면 빙 돌기 (세로로 끌면 페이지 스크롤에 양보)
@@ -285,7 +291,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, swap = false, onSpin
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       {size && <SafeGLView key={glKey} style={styles.fill} onContextCreate={onContextCreate} msaaSamples={lite ? 0 : 2} />}
-      {cover != null && <PhotoCover map={cover} sc={sc} hide={drawn} now={spinIn} />}
+      {cover != null && <PhotoCover map={cover} sc={sc} hide={drawn} now={coverNow} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />

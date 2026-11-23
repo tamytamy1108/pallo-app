@@ -10,7 +10,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { EmptyIsland } from '@/components/library/empty-island';
 import { LibHead, MapTabs, SitChips } from '@/components/library/lib-head';
 import { CurrPanel, EmptyBlock, PanelCard, SitPanel, levelProgress } from '@/components/library/lib-panel';
-import { LibraryWorld } from '@/components/library/library-world';
+import { LibraryWorld, type LibWorld } from '@/components/library/library-world';
 import { islandFor, libStore, markMapSeen, nextSceneNo, pickIsland, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
 import { ToTop } from '@/components/library/to-top';
 import { MAP_PRESETS } from '@/components/library/world/presets';
@@ -71,19 +71,24 @@ export default function LibraryScreen() {
 
   // 3D 지도에 넘길 섬 · 장면 상태
   // React Compiler 가 알아서 기억해 둬요 (진도가 바뀌면 다시 계산)
-  const world = (() => {
-    if (sitMap) {
-      const nx = nextSceneNo(sitMap);
-      const sc: WorldSC = sitMap.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) ? 'soon' : sceneDone(sitMap, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
-      return { id: MAP_PRESETS[sitMap.preset].build, sc, order: allSits.indexOf(sitMap) };
-    }
-    if (!st.sitMode && books.length) {
-      const sc: WorldSC = books.map((b) => [bookTag(b), b.study ? levelProgress(b.study) : '커밍순', !b.study ? 'soon' : b.mine ? 'cur' : 'open']);
-      sc.sel = bi;
-      return { id: MAP_PRESETS['island-study'].build, sc, order: -1 };
-    }
-    return null;
+  const sitWorld = (m: SituationMap): LibWorld => {
+    const nx = nextSceneNo(m);
+    const sc: WorldSC = m.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) ? 'soon' : sceneDone(m, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
+    return { slot: `sit:${m.id}`, id: MAP_PRESETS[m.preset].build, sc, order: allSits.indexOf(m) };
+  };
+  const studyWorld = ((): LibWorld | null => {
+    if (!books.length) return null;
+    const sc: WorldSC = books.map((b) => [bookTag(b), b.study ? levelProgress(b.study) : '커밍순', !b.study ? 'soon' : b.mine ? 'cur' : 'open']);
+    sc.sel = bi;
+    return { slot: 'study', id: MAP_PRESETS['island-study'].build, sc, order: -1 };
   })();
+  const world = sitMap ? sitWorld(sitMap) : !st.sitMode ? studyWorld : null;
+  // 한 번에 갈 수 있는 지도를 미리 만들어 둬요 (바로 바뀌게): 가까운 상황 맵부터 · 스터디 맵
+  const here = world?.order ?? -1;
+  const warm: LibWorld[] = [
+    ...sits.map(sitWorld).sort((a, b) => Math.abs(a.order - here) - Math.abs(b.order - here)),
+    ...(studyWorld ? [studyWorld] : []),
+  ];
 
   const onOpen = (no: number) => {
     if (sitMap) {
@@ -120,7 +125,7 @@ export default function LibraryScreen() {
           <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
         ) : world ? (
           <View onLayout={(e) => setWorldBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-            <LibraryWorld id={world.id} sc={world.sc} order={world.order} onOpen={onOpen} visible={worldSeen} />
+            <LibraryWorld world={world} warm={warm} onOpen={onOpen} visible={worldSeen} />
           </View>
         ) : (
           <Raised radius={26}>
