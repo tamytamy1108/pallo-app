@@ -2,7 +2,7 @@ import { type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
 import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, AppState, PanResponder, Platform, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { MyCharacter } from '@/components/character/my-character';
 import { Colors } from '@/constants/theme';
@@ -22,6 +22,10 @@ import { canTryWorld3D, devCapture, GL_START_TIMEOUT, liteWorld } from './world-
 const SETTLE_MS = 180;
 /** 그리기 판이 이만큼(ms) 안 오면 판을 새로 만들어 다시 (두 번까지 · 그래도 안 되면 GL_START_TIMEOUT 에 2D) */
 const GL_RETRY_MS = 800;
+/** 사진판이 돌며 들어오는 시간 · 처음 기울기 — 3D 인트로(stage.ts: 0.42 라디안 돌고 0.78 배에서 커지기, 약 45 프레임)를 사진으로 흉내 내요 */
+const SPIN_MS = 760;
+const SPIN_SKEW = 17;
+const SPIN_ZOOM = 0.78;
 
 type Props = {
   /** BUILD 이름 (study2 · travel · biz …) */
@@ -256,7 +260,7 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
   return (
     <View style={styles.fill} onLayout={(e) => !size && setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
       {size && <SafeGLView key={glKey} style={styles.fill} onContextCreate={onContextCreate} msaaSamples={lite ? 0 : 2} />}
-      {cover != null && <PhotoCover map={cover} sc={sc} hide={drawn} />}
+      {cover != null && <PhotoCover map={cover} sc={sc} dir={swapDir} still={reduced} hide={drawn} />}
       <View style={styles.fill} {...pan.panHandlers} accessible={false} />
       <View style={styles.fill} pointerEvents="none">
         <RiderView rider={rider} />
@@ -274,15 +278,38 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
   );
 }
 
-/** 지도 사진판: 3D 가 그려질 때까지 덮어 두고(누르기는 3D 로), 그려지면 서서히 사라져요. 탭에 돌아와 판을 새로 만들 때도 다시 덮어요 */
-function PhotoCover({ map, sc, hide }: { map: FlatMap; sc: WorldSC; hide: boolean }) {
+/**
+ * 지도 사진판: 3D 가 그려질 때까지 덮어 두고(누르기는 3D 로), 그려지면 서서히 사라져요. 탭에 돌아와 판을 새로 만들 때도 다시 덮어요.
+ * 처음 뜰 때 3D 인트로처럼 옆으로 돌며 들어와요 (UI 스레드라 3D 를 만드느라 JS 가 멈춰도 움직여요).
+ * 섬을 옆으로 돌리면 가까운 쪽(아래)과 먼 쪽(위)이 서로 반대로 밀려요 → 기울이기(skewX) + 작게에서 커지기로 흉내 내요.
+ * 3D 는 인트로 없이 끝 자세로 그려 두니, 사진이 다 돈 다음에 사라져야 구도가 이어져요.
+ */
+function PhotoCover({ map, sc, dir, still, hide }: { map: FlatMap; sc: WorldSC; dir: number; still: boolean; hide: boolean }) {
   const o = useSharedValue(1);
+  const spin = useSharedValue(still ? 1 : 0);
+  const spinEnd = useRef(0);
   useEffect(() => {
-    o.set(hide ? withTiming(0, { duration: 260 }) : 1);
+    if (still) return;
+    spinEnd.current = Date.now() + SPIN_MS;
+    spin.set(withTiming(1, { duration: SPIN_MS, easing: Easing.out(Easing.poly(4)) }));
+  }, [still, spin]);
+  useEffect(() => {
+    if (!hide) {
+      o.set(1);
+      return;
+    }
+    const wait = Math.max(0, spinEnd.current - Date.now());
+    o.set(withDelay(wait, withTiming(0, { duration: 260 })));
   }, [hide, o]);
-  const fade = useAnimatedStyle(() => ({ opacity: o.value }));
+  const style = useAnimatedStyle(() => {
+    const k = spin.value;
+    return {
+      opacity: o.value,
+      transform: [{ scale: SPIN_ZOOM + (1 - SPIN_ZOOM) * k }, { skewX: `${-dir * SPIN_SKEW * (1 - k)}deg` }],
+    };
+  });
   return (
-    <Animated.View style={[styles.fill, fade]} pointerEvents="none">
+    <Animated.View style={[styles.fill, style]} pointerEvents="none">
       <WorldPhoto map={map} sc={sc} onOpen={() => {}} />
     </Animated.View>
   );
