@@ -34,6 +34,9 @@ import { StopPopup, type StartMode } from './stop-popup';
 
 const NODE = 64;
 const NODE_CUR = 78;
+/** 정류장 이름 칸 최대 폭 · 카드 가장자리에서 띄울 거리 */
+const LABEL_MAX = 180;
+const LABEL_EDGE = 8;
 const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
 /** 내 교재 레벨 (MY_BOOK.level 'Lv.1' → 1) — 아직 아무 단계도 안 열었을 때 홈 맵 레벨 */
 const MY_LV = Number(MY_BOOK.level.replace('Lv.', ''));
@@ -339,7 +342,12 @@ export function StudyMap() {
                           </NodeHop>
                         )}
                       </Pressable>
-                      <PText style={StyleSheet.flatten([styles.nodeLabel, xmas && styles.labelXmas])}>{step.title}</PText>
+                      {/* 이름은 정류장 가운데 기준 · 카드 밖으로 안 나가게 폭을 줄이고 길면 두 줄 (Lv.4 'SAY IT BETTER 즉시 변환' 같은 긴 이름) */}
+                      <View style={{ width: Math.min(LABEL_MAX, 2 * (Math.min(n.x, width - n.x) - LABEL_EDGE)) }}>
+                        <PText numberOfLines={2} style={StyleSheet.flatten([styles.nodeLabel, xmas && styles.labelXmas])}>
+                          {step.title}
+                        </PText>
+                      </View>
                       {isCur && (
                         <View style={{ position: 'absolute', left: size / 2, top: size / 2, zIndex: 4 }}>
                           <Rider />
@@ -710,7 +718,6 @@ const styles = StyleSheet.create({
     fontFamily: Font.body800,
     fontSize: 12,
     lineHeight: 16,
-    width: 180,
     textAlign: 'center',
   },
   chestWrap: {
