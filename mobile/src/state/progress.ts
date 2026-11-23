@@ -48,7 +48,7 @@ export function markDone(key: string) {
   return first;
 }
 
-/** 그만둘 때 멈춘 문제 번호를 남겨요 → 다시 열면 '이어서 할까요?'. total: 전체 문제 수 */
+/** 멈춘 문제 번호를 남겨요 (문제를 넘길 때마다 · 그만둘 때) → 다시 열면 '이어서 할까요?'. total: 전체 문제 수 */
 export const savePos = (key: string, index: number, total?: number) =>
   store.set((s) => ({ ...s, pos: { ...s.pos, [key]: index }, posOf: total == null ? s.posOf : { ...s.posOf, [key]: total } }));
 export const useSavedPos = (key: string) => store.useStore((s) => s.pos[key]);

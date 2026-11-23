@@ -101,6 +101,7 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 | `sound` · `listen-prefs` · `learn-prefs` · `library` · `stage-line` · `popup-hidden` | 기기 설정 · 화면 기억 | 기기에 그대로 둬도 돼요 (A17) |
 
 - 저장 모양을 바꾸면 `persist.version` 을 올려요 → 예전 저장은 버리고 처음 값으로 시작해요
+- 레슨 · 스피킹 퀴즈 · 상황 퀴즈는 문제를 넘길 때마다 멈춘 곳을 남겨요 → '그만하기' 없이 앱이 꺼져도(쓸어 닫기 · 시스템 종료) 이어서 해요
 - Lv.3·4 '그만둔 곳'의 문제 목록은 함수가 들어 있어 못 남겨요 → 다시 켜면 처음 목록에서 멈춘 번호부터
 
 ## 지켜야 할 것

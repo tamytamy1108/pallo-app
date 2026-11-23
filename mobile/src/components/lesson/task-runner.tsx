@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AnswerTask } from '@/components/lesson/answer-task';
@@ -82,6 +82,13 @@ export function TaskRunner({
   const timesRef = useRef(times);
   const task = tasks[i];
   const lim = taskLimit(task, noSpeak);
+
+  // 문제를 넘길 때마다 멈춘 곳을 남겨요 — 그만하기를 누르지 않고 앱이 꺼져도(폰에서 쓸어 닫기 · 시스템 종료) 이어서 해요
+  useEffect(() => {
+    if (i <= 0 || i >= tasks.length) return;
+    savePos(skey, i, tasks.length);
+    saveSnapshot(skey, { tasks, i, res: resRef.current, times: timesRef.current } satisfies Snap);
+  }, [i, tasks, skey]);
 
   const goTo = (k: number) => {
     stopSay();
