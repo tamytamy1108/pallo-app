@@ -1,0 +1,1955 @@
+{
+ "items": {
+  "hr-sprout": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.541,
+    -0.2229,
+    0.1346,
+    0.3273
+   ],
+   "side": [
+    0.3705,
+    0.0321,
+    0.4128,
+    0.1928
+   ]
+  },
+  "hr-spiky": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.3833,
+    -0.2068,
+    0.3872,
+    0.3474
+   ],
+   "cap": [
+    0.3885,
+    0.1285,
+    0.3769,
+    0.012
+   ],
+   "side": [
+    0.3679,
+    0.0321,
+    0.4179,
+    0.2169
+   ]
+  },
+  "hr-bowl": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.3795,
+    -0.0884,
+    0.3949,
+    0.2651
+   ],
+   "front": [
+    0.391,
+    -0.0542,
+    0.3718,
+    0.1747
+   ],
+   "cap": [
+    0.3795,
+    0.1285,
+    0.3949,
+    0.0482
+   ],
+   "side": [
+    0.3705,
+    0.0321,
+    0.4128,
+    0.1928
+   ]
+  },
+  "hr-bun": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.3872,
+    -0.2851,
+    0.3795,
+    0.4438
+   ],
+   "front": [
+    0.3949,
+    -0.0341,
+    0.3641,
+    0.1446
+   ],
+   "cap": [
+    0.3872,
+    0.1285,
+    0.3795,
+    0.0301
+   ],
+   "side": [
+    0.3705,
+    0.0321,
+    0.4128,
+    0.1928
+   ]
+  },
+  "hr-quiff": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.3808,
+    -0.2129,
+    0.4205,
+    0.3775
+   ],
+   "cap": [
+    0.3821,
+    -0.1566,
+    0.4192,
+    0.3213
+   ],
+   "side": [
+    0.3705,
+    0.0321,
+    0.4128,
+    0.1928
+   ]
+  },
+  "hr-bob": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.3564,
+    -0.1707,
+    0.441,
+    0.3956
+   ],
+   "front": [
+    0.3846,
+    -0.0683,
+    0.3846,
+    0.2711
+   ],
+   "cap": [
+    0.3564,
+    -0.004,
+    0.441,
+    0.2289
+   ],
+   "side": [
+    0.3564,
+    0.0201,
+    0.441,
+    0.3012
+   ]
+  },
+  "hr-pig": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.2013,
+    -0.0683,
+    0.7513,
+    0.3112
+   ],
+   "front": [
+    0.3987,
+    -0.0763,
+    0.3564,
+    0.1747
+   ],
+   "cap": [
+    0.2013,
+    -0.0683,
+    0.7513,
+    0.3112
+   ],
+   "side": [
+    0.3705,
+    0.0321,
+    0.4128,
+    0.1928
+   ]
+  },
+  "hr-pony": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.1756,
+    -0.1084,
+    0.5949,
+    0.3454
+   ],
+   "front": [
+    0.3949,
+    -0.0341,
+    0.3641,
+    0.1446
+   ],
+   "cap": [
+    0.1756,
+    -0.1084,
+    0.5949,
+    0.3454
+   ],
+   "side": [
+    0.3705,
+    0.0321,
+    0.4128,
+    0.1928
+   ]
+  },
+  "hr-curly": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.3269,
+    -0.3815,
+    0.5,
+    0.6426
+   ],
+   "front": [
+    0.3987,
+    -0.0241,
+    0.3564,
+    0.1426
+   ],
+   "cap": [
+    0.3269,
+    -0.3815,
+    0.5,
+    0.6426
+   ],
+   "side": [
+    0.3564,
+    0.0482,
+    0.441,
+    0.2369
+   ]
+  },
+  "hr-long": {
+   "k": "box",
+   "hair": true,
+   "back": [
+    0.3,
+    -0.0723,
+    0.5538,
+    0.8614
+   ],
+   "front": [
+    0.3718,
+    -0.0964,
+    0.4103,
+    0.3213
+   ],
+   "cap": [
+    0.3,
+    0.1285,
+    0.5538,
+    0.6606
+   ],
+   "side": [
+    0.3526,
+    0.0201,
+    0.4487,
+    0.4398
+   ]
+  },
+  "e-sparkle": {
+   "k": "box",
+   "r": [
+    0.4744,
+    0.0783,
+    0.2282,
+    0.1847
+   ]
+  },
+  "e-lash": {
+   "k": "box",
+   "r": [
+    0.3897,
+    -0.0462,
+    0.3705,
+    0.1867
+   ]
+  },
+  "e-liner": {
+   "k": "box",
+   "r": [
+    0.3577,
+    0.0361,
+    0.4346,
+    0.1325
+   ]
+  },
+  "e-sleepy": {
+   "k": "none"
+  },
+  "e-calm": {
+   "k": "none"
+  },
+  "e-happy": {
+   "k": "none"
+  },
+  "e-wink": {
+   "k": "box",
+   "r": [
+    0.4949,
+    0.1165,
+    0.2513,
+    0.2992
+   ]
+  },
+  "e-heart": {
+   "k": "box",
+   "r": [
+    0.4538,
+    0.1185,
+    0.2872,
+    0.1827
+   ]
+  },
+  "e-star": {
+   "k": "box",
+   "r": [
+    0.4641,
+    0.1185,
+    0.2654,
+    0.1667
+   ]
+  },
+  "e-teary": {
+   "k": "box",
+   "r": [
+    0.4821,
+    0.1124,
+    0.2603,
+    0.3173
+   ]
+  },
+  "h-beanie": {
+   "k": "box",
+   "r": [
+    0.3756,
+    -0.4177,
+    0.4026,
+    0.5402
+   ]
+  },
+  "h-cap": {
+   "k": "box",
+   "r": [
+    0.3526,
+    -0.3333,
+    0.4487,
+    0.4618
+   ]
+  },
+  "h-beret": {
+   "k": "box",
+   "r": [
+    0.3859,
+    -0.2329,
+    0.4282,
+    0.3835
+   ]
+  },
+  "h-straw": {
+   "k": "box",
+   "r": [
+    0.2718,
+    -0.2129,
+    0.6103,
+    0.3896
+   ]
+  },
+  "h-bunny": {
+   "k": "box",
+   "r": [
+    0.3949,
+    -0.4739,
+    0.3641,
+    0.5843
+   ]
+  },
+  "h-phones": {
+   "k": "box",
+   "r": [
+    0.3141,
+    -0.2369,
+    0.5256,
+    0.4257
+   ]
+  },
+  "h-grad": {
+   "k": "box",
+   "r": [
+    0.3333,
+    -0.2731,
+    0.4872,
+    0.4618
+   ]
+  },
+  "h-witch": {
+   "k": "box",
+   "r": [
+    0.3064,
+    -0.5442,
+    0.541,
+    0.7028
+   ]
+  },
+  "h-santa": {
+   "k": "box",
+   "r": [
+    0.3756,
+    -0.257,
+    0.5256,
+    0.4217
+   ]
+  },
+  "h-crown": {
+   "k": "box",
+   "r": [
+    0.3872,
+    -0.243,
+    0.3795,
+    0.3474
+   ]
+  },
+  "f-cheek": {
+   "k": "box",
+   "r": [
+    0.3821,
+    0.3614,
+    0.3936,
+    0.1145
+   ]
+  },
+  "f-cheek3": {
+   "k": "box",
+   "r": [
+    0.3872,
+    0.3675,
+    0.3833,
+    0.1044
+   ]
+  },
+  "f-freck": {
+   "k": "box",
+   "r": [
+    0.4013,
+    0.3574,
+    0.3513,
+    0.0843
+   ]
+  },
+  "f-bandaid": {
+   "k": "box",
+   "r": [
+    0.659,
+    0.3494,
+    0.1218,
+    0.1265
+   ]
+  },
+  "f-mono": {
+   "k": "box",
+   "r": [
+    0.5551,
+    0.002,
+    0.2064,
+    0.5924
+   ]
+  },
+  "f-stache": {
+   "k": "box",
+   "r": [
+    0.4564,
+    0.4076,
+    0.241,
+    0.0863
+   ]
+  },
+  "f-glasses": {
+   "k": "box",
+   "r": [
+    0.3474,
+    -0.004,
+    0.4551,
+    0.4096
+   ]
+  },
+  "f-shades": {
+   "k": "box",
+   "r": [
+    0.3513,
+    -0.0261,
+    0.4474,
+    0.3795
+   ]
+  },
+  "f-patch": {
+   "k": "box",
+   "r": [
+    0.3744,
+    0.0161,
+    0.4436,
+    0.3775
+   ]
+  },
+  "f-beard": {
+   "k": "box",
+   "r": [
+    0.4256,
+    0.3896,
+    0.3026,
+    0.3353
+   ]
+  },
+  "w-tee": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.0261,
+    0.5897,
+    0.6707
+   ]
+  },
+  "w-hoodie": {
+   "k": "box",
+   "r": [
+    0.0872,
+    0.0261,
+    0.791,
+    0.6867
+   ]
+  },
+  "w-overall": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.1506,
+    0.6256,
+    0.7912
+   ]
+  },
+  "w-sweater": {
+   "k": "box",
+   "r": [
+    0.0923,
+    0.0261,
+    0.7808,
+    0.6747
+   ]
+  },
+  "w-suit": {
+   "k": "box",
+   "r": [
+    0.1038,
+    0.0261,
+    0.7449,
+    0.7008
+   ]
+  },
+  "w-hanbok": {
+   "k": "box",
+   "r": [
+    0.1244,
+    0.0261,
+    0.7167,
+    0.9438
+   ]
+  },
+  "w-apron": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.1486,
+    0.5923,
+    0.753
+   ]
+  },
+  "w-jersey": {
+   "k": "box",
+   "r": [
+    0.1897,
+    0.0261,
+    0.6013,
+    0.7048
+   ]
+  },
+  "w-sailor": {
+   "k": "box",
+   "r": [
+    0.1513,
+    0.0261,
+    0.7167,
+    0.8574
+   ]
+  },
+  "w-santa": {
+   "k": "box",
+   "r": [
+    0.0833,
+    0.0261,
+    0.7949,
+    0.9096
+   ]
+  },
+  "g-red": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1506,
+    0.9269,
+    0.3675
+   ]
+  },
+  "g-knit": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1506,
+    0.9269,
+    0.3675
+   ]
+  },
+  "g-white": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1506,
+    0.9269,
+    0.3675
+   ]
+  },
+  "g-oven": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1506,
+    0.9269,
+    0.3675
+   ]
+  },
+  "g-garden": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1506,
+    0.9269,
+    0.3675
+   ]
+  },
+  "g-stripe": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1506,
+    0.9269,
+    0.3675
+   ]
+  },
+  "g-bear": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1506,
+    0.9269,
+    0.3675
+   ]
+  },
+  "g-box": {
+   "k": "box",
+   "r": [
+    0.0077,
+    0.1506,
+    0.9513,
+    0.3675
+   ]
+  },
+  "g-rubber": {
+   "k": "box",
+   "r": [
+    0.0167,
+    0.1486,
+    0.9269,
+    0.5542
+   ]
+  },
+  "g-gold": {
+   "k": "box",
+   "r": [
+    -0.0256,
+    0.1165,
+    1.0154,
+    0.4418
+   ]
+  },
+  "s-purple": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.7309,
+    0.5923,
+    0.239
+   ]
+  },
+  "s-hightop": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.7048,
+    0.5923,
+    0.2651
+   ]
+  },
+  "s-loafer": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.741,
+    0.5923,
+    0.2289
+   ]
+  },
+  "s-stripe": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.6627,
+    0.5923,
+    0.3072
+   ]
+  },
+  "s-maryjane": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.7129,
+    0.5923,
+    0.257
+   ]
+  },
+  "s-sandal": {
+   "k": "box",
+   "r": [
+    0.2064,
+    0.8072,
+    0.5795,
+    0.1627
+   ]
+  },
+  "s-boot": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.6627,
+    0.5923,
+    0.3072
+   ]
+  },
+  "s-slipper": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.7349,
+    0.5923,
+    0.2349
+   ]
+  },
+  "s-snow": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.6506,
+    0.5923,
+    0.3193
+   ]
+  },
+  "s-roller": {
+   "k": "box",
+   "r": [
+    0.1974,
+    0.6948,
+    0.5923,
+    0.3976
+   ]
+  },
+  "d-flag": {
+   "k": "box",
+   "r": [
+    0.8756,
+    -0.512,
+    0.2833,
+    0.9418
+   ]
+  },
+  "d-book": {
+   "k": "box",
+   "r": [
+    0.7872,
+    -0.243,
+    0.2731,
+    0.5261
+   ]
+  },
+  "d-coffee": {
+   "k": "box",
+   "r": [
+    0.8026,
+    -0.3976,
+    0.2103,
+    0.7369
+   ]
+  },
+  "d-boba": {
+   "k": "box",
+   "r": [
+    0.8026,
+    -0.4578,
+    0.2103,
+    0.7369
+   ]
+  },
+  "d-mic": {
+   "k": "box",
+   "r": [
+    0.8295,
+    -0.2671,
+    0.1564,
+    0.6968
+   ]
+  },
+  "d-balloon": {
+   "k": "box",
+   "r": [
+    0.8462,
+    -0.5321,
+    0.2615,
+    0.8715
+   ]
+  },
+  "d-icecream": {
+   "k": "box",
+   "r": [
+    0.8256,
+    -0.5201,
+    0.1641,
+    0.8594
+   ]
+  },
+  "d-flower": {
+   "k": "box",
+   "r": [
+    0.8077,
+    -0.3514,
+    0.1974,
+    0.6908
+   ]
+  },
+  "d-passport": {
+   "k": "box",
+   "r": [
+    0.7949,
+    -0.2992,
+    0.3128,
+    0.5663
+   ]
+  },
+  "d-umbrella": {
+   "k": "box",
+   "r": [
+    0.5718,
+    -0.6406,
+    0.6641,
+    1.261
+   ]
+  },
+  "a-bow": {
+   "k": "box",
+   "r": [
+    0.4821,
+    0.4478,
+    0.1897,
+    0.1406
+   ]
+  },
+  "a-scarf": {
+   "k": "box",
+   "r": [
+    0.3833,
+    0.3896,
+    0.3872,
+    0.4639
+   ]
+  },
+  "a-lei": {
+   "k": "box",
+   "r": [
+    0.3731,
+    0.3273,
+    0.4154,
+    0.2972
+   ]
+  },
+  "a-medal": {
+   "k": "box",
+   "r": [
+    0.4487,
+    0.3775,
+    0.2564,
+    0.3835
+   ]
+  },
+  "a-wings": {
+   "k": "box",
+   "r": [
+    -0.0628,
+    -0.2149,
+    1.2795,
+    0.4337
+   ]
+  },
+  "a-cape": {
+   "k": "box",
+   "r": [
+    0.1295,
+    -0.008,
+    0.8949,
+    0.9799
+   ]
+  },
+  "a-bag": {
+   "k": "box",
+   "r": [
+    0.2487,
+    0.1305,
+    0.5372,
+    0.6185
+   ]
+  },
+  "a-tie": {
+   "k": "box",
+   "r": [
+    0.5333,
+    0.4739,
+    0.0872,
+    0.2932
+   ]
+  },
+  "a-pearl": {
+   "k": "box",
+   "r": [
+    0.3885,
+    0.3373,
+    0.3769,
+    0.2932
+   ]
+  },
+  "a-watch": {
+   "k": "box",
+   "r": [
+    0.1731,
+    0.1606,
+    0.1038,
+    0.3534
+   ]
+  },
+  "fx-spark": {
+   "k": "stage",
+   "r": [
+    0.0344,
+    0.0197,
+    0.9578,
+    0.8515
+   ]
+  },
+  "fx-hearts": {
+   "k": "stage",
+   "r": [
+    0.0589,
+    0.0439,
+    0.9111,
+    0.7788
+   ]
+  },
+  "fx-notes": {
+   "k": "stage",
+   "r": [
+    0.0578,
+    0.1242,
+    0.8778,
+    0.7682
+   ]
+  }
+ },
+ "bgs": {},
+ "meta": [
+  {
+   "id": "hr-sprout",
+   "cat": "hair",
+   "name": "새싹 한 가닥",
+   "price": 0,
+   "rare": "기본",
+   "layer": "back",
+   "hair": true,
+   "front": false
+  },
+  {
+   "id": "hr-spiky",
+   "cat": "hair",
+   "name": "삐죽 머리",
+   "price": 0,
+   "rare": "기본",
+   "layer": "back",
+   "hair": true,
+   "front": false
+  },
+  {
+   "id": "hr-bowl",
+   "cat": "hair",
+   "name": "바가지 머리",
+   "price": 100,
+   "rare": "일반",
+   "layer": "back",
+   "hair": true,
+   "front": true
+  },
+  {
+   "id": "hr-bun",
+   "cat": "hair",
+   "name": "똥머리",
+   "price": 100,
+   "rare": "일반",
+   "layer": "back",
+   "hair": true,
+   "front": true
+  },
+  {
+   "id": "hr-quiff",
+   "cat": "hair",
+   "name": "올린 앞머리",
+   "price": 120,
+   "rare": "일반",
+   "layer": "back",
+   "hair": true,
+   "front": false
+  },
+  {
+   "id": "hr-bob",
+   "cat": "hair",
+   "name": "단발",
+   "price": 120,
+   "rare": "일반",
+   "layer": "back",
+   "hair": true,
+   "front": true
+  },
+  {
+   "id": "hr-pig",
+   "cat": "hair",
+   "name": "양갈래",
+   "price": 150,
+   "rare": "일반",
+   "layer": "back",
+   "hair": true,
+   "front": true
+  },
+  {
+   "id": "hr-pony",
+   "cat": "hair",
+   "name": "포니테일",
+   "price": 150,
+   "rare": "일반",
+   "layer": "back",
+   "hair": true,
+   "front": true
+  },
+  {
+   "id": "hr-curly",
+   "cat": "hair",
+   "name": "뽀글 펌",
+   "price": 200,
+   "rare": "레어",
+   "layer": "back",
+   "hair": true,
+   "front": true
+  },
+  {
+   "id": "hr-long",
+   "cat": "hair",
+   "name": "긴 생머리",
+   "price": 250,
+   "rare": "레어",
+   "layer": "back",
+   "hair": true,
+   "front": true
+  },
+  {
+   "id": "e-sparkle",
+   "cat": "eye",
+   "name": "반짝 눈",
+   "price": 0,
+   "rare": "기본",
+   "layer": "eye",
+   "front": false
+  },
+  {
+   "id": "e-lash",
+   "cat": "eye",
+   "name": "긴 속눈썹",
+   "price": 120,
+   "rare": "일반",
+   "layer": "eye",
+   "front": false
+  },
+  {
+   "id": "e-liner",
+   "cat": "eye",
+   "name": "아이라인",
+   "price": 120,
+   "rare": "일반",
+   "layer": "eye",
+   "front": false
+  },
+  {
+   "id": "e-sleepy",
+   "cat": "eye",
+   "name": "졸린 눈",
+   "price": 100,
+   "rare": "일반",
+   "layer": "eye",
+   "lid": {
+    "t": 0.46
+   },
+   "front": false
+  },
+  {
+   "id": "e-calm",
+   "cat": "eye",
+   "name": "느긋한 눈",
+   "price": 100,
+   "rare": "일반",
+   "layer": "eye",
+   "lid": {
+    "t": 0.27
+   },
+   "front": false
+  },
+  {
+   "id": "e-happy",
+   "cat": "eye",
+   "name": "웃는 눈",
+   "price": 150,
+   "rare": "일반",
+   "layer": "eye",
+   "lid": {
+    "b": 0.5
+   },
+   "front": false
+  },
+  {
+   "id": "e-wink",
+   "cat": "eye",
+   "name": "찡긋 윙크",
+   "price": 200,
+   "rare": "레어",
+   "layer": "eye",
+   "lid": {
+    "t": 1.04,
+    "only": 1
+   },
+   "front": false
+  },
+  {
+   "id": "e-heart",
+   "cat": "eye",
+   "name": "하트 눈",
+   "price": 250,
+   "rare": "레어",
+   "layer": "eye",
+   "front": false
+  },
+  {
+   "id": "e-star",
+   "cat": "eye",
+   "name": "별 눈",
+   "price": 250,
+   "rare": "레어",
+   "layer": "eye",
+   "front": false
+  },
+  {
+   "id": "e-teary",
+   "cat": "eye",
+   "name": "감동 눈물",
+   "price": 200,
+   "rare": "레어",
+   "layer": "eye",
+   "front": false
+  },
+  {
+   "id": "h-beanie",
+   "cat": "hat",
+   "name": "털 비니",
+   "price": 0,
+   "rare": "기본",
+   "layer": "back",
+   "hat": true,
+   "cover": true,
+   "clipY": 38,
+   "front": false
+  },
+  {
+   "id": "h-cap",
+   "cat": "hat",
+   "name": "야구 모자",
+   "price": 120,
+   "rare": "일반",
+   "layer": "back",
+   "hat": true,
+   "cover": true,
+   "clipY": 30,
+   "front": false
+  },
+  {
+   "id": "h-beret",
+   "cat": "hat",
+   "name": "화가 베레모",
+   "price": 120,
+   "rare": "일반",
+   "layer": "back",
+   "hat": true,
+   "cover": true,
+   "clipY": 40,
+   "front": false
+  },
+  {
+   "id": "h-straw",
+   "cat": "hat",
+   "name": "밀짚모자",
+   "price": 180,
+   "rare": "일반",
+   "layer": "back",
+   "hat": true,
+   "cover": true,
+   "clipY": 54,
+   "front": false
+  },
+  {
+   "id": "h-bunny",
+   "cat": "hat",
+   "name": "토끼 귀 머리띠",
+   "price": 300,
+   "rare": "레어",
+   "layer": "back",
+   "hat": true,
+   "front": false
+  },
+  {
+   "id": "h-phones",
+   "cat": "hat",
+   "name": "헤드폰",
+   "price": 300,
+   "rare": "레어",
+   "layer": "back",
+   "hat": true,
+   "front": false
+  },
+  {
+   "id": "h-grad",
+   "cat": "hat",
+   "name": "학사모",
+   "price": 400,
+   "rare": "레어",
+   "layer": "back",
+   "hat": true,
+   "cover": true,
+   "clipY": 30,
+   "front": false
+  },
+  {
+   "id": "h-witch",
+   "cat": "hat",
+   "name": "마녀 모자",
+   "price": 500,
+   "rare": "에픽",
+   "layer": "back",
+   "hat": true,
+   "cover": true,
+   "clipY": 48,
+   "front": false
+  },
+  {
+   "id": "h-santa",
+   "cat": "hat",
+   "name": "산타 모자",
+   "price": 0,
+   "rare": "시즌",
+   "lock": "12월 출석 7일 보상",
+   "layer": "back",
+   "hat": true,
+   "cover": true,
+   "clipY": 42,
+   "front": false
+  },
+  {
+   "id": "h-crown",
+   "cat": "hat",
+   "name": "황금 왕관",
+   "price": 0,
+   "rare": "시즌",
+   "lock": "주간 랭킹 TOP 3 보상",
+   "layer": "back",
+   "hat": true,
+   "front": false
+  },
+  {
+   "id": "f-cheek",
+   "cat": "face",
+   "name": "발그레 볼",
+   "price": 0,
+   "rare": "기본",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-cheek3",
+   "cat": "face",
+   "name": "하트 볼",
+   "price": 150,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-freck",
+   "cat": "face",
+   "name": "주근깨",
+   "price": 80,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-bandaid",
+   "cat": "face",
+   "name": "반창고",
+   "price": 80,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-mono",
+   "cat": "face",
+   "name": "외알 안경",
+   "price": 250,
+   "rare": "레어",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-stache",
+   "cat": "face",
+   "name": "멋쟁이 콧수염",
+   "price": 120,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-glasses",
+   "cat": "face",
+   "name": "동그란 안경",
+   "price": 200,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-shades",
+   "cat": "face",
+   "name": "하트 선글라스",
+   "price": 300,
+   "rare": "레어",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-patch",
+   "cat": "face",
+   "name": "해적 안대",
+   "price": 200,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "f-beard",
+   "cat": "face",
+   "name": "산타 수염",
+   "price": 0,
+   "rare": "시즌",
+   "lock": "12월 출석 7일 보상",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "w-tee",
+   "cat": "wear",
+   "name": "줄무늬 티셔츠",
+   "price": 0,
+   "rare": "기본",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-hoodie",
+   "cat": "wear",
+   "name": "포근 후드티",
+   "price": 200,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-overall",
+   "cat": "wear",
+   "name": "청 멜빵바지",
+   "price": 200,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-sweater",
+   "cat": "wear",
+   "name": "꽈배기 니트",
+   "price": 250,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-suit",
+   "cat": "wear",
+   "name": "정장 재킷",
+   "price": 350,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-hanbok",
+   "cat": "wear",
+   "name": "색동 한복",
+   "price": 350,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-apron",
+   "cat": "wear",
+   "name": "카페 앞치마",
+   "price": 200,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-jersey",
+   "cat": "wear",
+   "name": "야구 저지",
+   "price": 250,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-sailor",
+   "cat": "wear",
+   "name": "세일러 교복",
+   "price": 300,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-santa",
+   "cat": "wear",
+   "name": "산타 옷",
+   "price": 0,
+   "rare": "시즌",
+   "lock": "12월 출석 7일 보상",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-red",
+   "cat": "mitt",
+   "name": "빨강 벙어리장갑",
+   "price": 0,
+   "rare": "기본",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-knit",
+   "cat": "mitt",
+   "name": "노르딕 니트장갑",
+   "price": 150,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-white",
+   "cat": "mitt",
+   "name": "하얀 장갑",
+   "price": 150,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-oven",
+   "cat": "mitt",
+   "name": "체크 오븐장갑",
+   "price": 150,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-garden",
+   "cat": "mitt",
+   "name": "꽃무늬 원예장갑",
+   "price": 120,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-stripe",
+   "cat": "mitt",
+   "name": "무지개 줄무늬장갑",
+   "price": 200,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-bear",
+   "cat": "mitt",
+   "name": "곰발바닥 장갑",
+   "price": 250,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-box",
+   "cat": "mitt",
+   "name": "복싱 글러브",
+   "price": 300,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-rubber",
+   "cat": "mitt",
+   "name": "분홍 고무장갑",
+   "price": 100,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "g-gold",
+   "cat": "mitt",
+   "name": "황금 장갑",
+   "price": 500,
+   "rare": "에픽",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-purple",
+   "cat": "shoe",
+   "name": "보라 운동화",
+   "price": 0,
+   "rare": "기본",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-hightop",
+   "cat": "shoe",
+   "name": "빨강 하이탑",
+   "price": 150,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-loafer",
+   "cat": "shoe",
+   "name": "반짝 로퍼",
+   "price": 150,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-stripe",
+   "cat": "shoe",
+   "name": "줄무늬 양말",
+   "price": 100,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-maryjane",
+   "cat": "shoe",
+   "name": "메리제인 구두",
+   "price": 200,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-sandal",
+   "cat": "shoe",
+   "name": "여름 샌들",
+   "price": 120,
+   "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-boot",
+   "cat": "shoe",
+   "name": "빨강 장화",
+   "price": 250,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-slipper",
+   "cat": "shoe",
+   "name": "토끼 털 슬리퍼",
+   "price": 200,
+   "rare": "레어",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-snow",
+   "cat": "shoe",
+   "name": "털 부츠",
+   "price": 0,
+   "rare": "시즌",
+   "lock": "12월 출석 7일 보상",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "s-roller",
+   "cat": "shoe",
+   "name": "롤러스케이트",
+   "price": 450,
+   "rare": "에픽",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "d-flag",
+   "cat": "hand",
+   "name": "PALLO 깃발",
+   "price": 0,
+   "rare": "기본",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-book",
+   "cat": "hand",
+   "name": "원서 책",
+   "price": 0,
+   "rare": "기본",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-coffee",
+   "cat": "hand",
+   "name": "테이크아웃 커피",
+   "price": 120,
+   "rare": "일반",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-boba",
+   "cat": "hand",
+   "name": "버블티",
+   "price": 150,
+   "rare": "일반",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-mic",
+   "cat": "hand",
+   "name": "반짝 마이크",
+   "price": 150,
+   "rare": "일반",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-balloon",
+   "cat": "hand",
+   "name": "하트 풍선",
+   "price": 180,
+   "rare": "일반",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-icecream",
+   "cat": "hand",
+   "name": "3단 아이스크림",
+   "price": 150,
+   "rare": "일반",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-flower",
+   "cat": "hand",
+   "name": "꽃다발",
+   "price": 250,
+   "rare": "레어",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-passport",
+   "cat": "hand",
+   "name": "여권 · 비행기표",
+   "price": 200,
+   "rare": "일반",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "d-umbrella",
+   "cat": "hand",
+   "name": "물방울 우산",
+   "price": 300,
+   "rare": "레어",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "a-bow",
+   "cat": "acc",
+   "name": "물방울 나비넥타이",
+   "price": 0,
+   "rare": "기본",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "a-scarf",
+   "cat": "acc",
+   "name": "줄무늬 목도리",
+   "price": 180,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "a-lei",
+   "cat": "acc",
+   "name": "꽃목걸이",
+   "price": 200,
+   "rare": "레어",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "a-medal",
+   "cat": "acc",
+   "name": "금메달",
+   "price": 0,
+   "rare": "시즌",
+   "lock": "지점 대항전 우승 보상",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "a-wings",
+   "cat": "acc",
+   "name": "천사 날개",
+   "price": 700,
+   "rare": "에픽",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "a-cape",
+   "cat": "acc",
+   "name": "히어로 망토",
+   "price": 350,
+   "rare": "레어",
+   "layer": "back",
+   "front": false
+  },
+  {
+   "id": "a-bag",
+   "cat": "acc",
+   "name": "미니 크로스백",
+   "price": 200,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "a-tie",
+   "cat": "acc",
+   "name": "줄무늬 넥타이",
+   "price": 120,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "a-pearl",
+   "cat": "acc",
+   "name": "진주 목걸이",
+   "price": 250,
+   "rare": "레어",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "a-watch",
+   "cat": "acc",
+   "name": "손목시계",
+   "price": 150,
+   "rare": "일반",
+   "layer": "front",
+   "front": false
+  },
+  {
+   "id": "fx-spark",
+   "cat": "fx",
+   "name": "반짝반짝",
+   "price": 400,
+   "rare": "에픽",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-hearts",
+   "cat": "fx",
+   "name": "하트 뿅뿅",
+   "price": 400,
+   "rare": "에픽",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-notes",
+   "cat": "fx",
+   "name": "음표 둥둥",
+   "price": 300,
+   "rare": "레어",
+   "layer": "fx",
+   "front": false
+  }
+ ],
+ "bgMeta": [
+  {
+   "id": "cream",
+   "name": "크림 룸",
+   "price": 0,
+   "rare": "기본",
+   "face": "#FBF6EA"
+  },
+  {
+   "id": "yellow",
+   "name": "팔로 옐로",
+   "price": 0,
+   "rare": "기본",
+   "face": "#FFE200"
+  },
+  {
+   "id": "sky",
+   "name": "맑은 하늘",
+   "price": 100,
+   "rare": "일반",
+   "face": "#BFE0F2"
+  },
+  {
+   "id": "sea",
+   "name": "여름 바다",
+   "price": 150,
+   "rare": "일반",
+   "face": "#BFE0F2"
+  },
+  {
+   "id": "cherry",
+   "name": "벚꽃길",
+   "price": 200,
+   "rare": "레어",
+   "face": "#FCE4EC"
+  },
+  {
+   "id": "cafe",
+   "name": "단골 카페",
+   "price": 200,
+   "rare": "레어",
+   "face": "#D9B48F"
+  },
+  {
+   "id": "class",
+   "name": "외국어 교실",
+   "price": 200,
+   "rare": "레어",
+   "face": "#F3E6CC"
+  },
+  {
+   "id": "snow",
+   "name": "눈 오는 밤",
+   "price": 0,
+   "rare": "시즌",
+   "lock": "12월 출석 7일 보상",
+   "face": "#3D4B85"
+  },
+  {
+   "id": "night",
+   "name": "서울 야경",
+   "price": 400,
+   "rare": "에픽",
+   "face": "#2A2148"
+  },
+  {
+   "id": "space",
+   "name": "우주 정거장",
+   "price": 500,
+   "rare": "에픽",
+   "face": "#120F24"
+  }
+ ]
+}
