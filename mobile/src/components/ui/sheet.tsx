@@ -47,6 +47,15 @@ export const SheetFooterContext = createContext(false);
  * 시트가 떠 있는 동안 토스트는 시트 안에 그려요 (네이티브 Modal 위로 보이게).
  * 담당: 공통 부품. props 는 바꾸지 않아요(늘리기만).
  */
+/** 시트가 다 닫힌 뒤에 할 일 (다른 화면으로 가기 등). 시트를 닫는 onClose() 바로 다음에 불러요 */
+const afterClose: (() => void)[] = [];
+export function runAfterSheetClose(fn: () => void) {
+  afterClose.push(fn);
+}
+function flushAfterClose() {
+  afterClose.splice(0).forEach((fn) => fn());
+}
+
 export function Sheet({ open, onClose, title, children, footer, tall = false, scroll = true, gap = 12, onClosed, label, dismissible = true, contentStyle, scrollKey }: SheetProps) {
   const insets = useSafeAreaInsets();
   const { height: winH } = useWindowDimensions();
@@ -66,10 +75,16 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   useEffect(() => {
     closedRef.current = onClosed;
   }, [onClosed]);
+  // 아이폰은 Modal 이 실제로 내려간 뒤(onDismiss)에 알려요 — 그 전에 다른 화면 · 시트를 열면 막혀서 아무 일도 안 일어나요
+  const closed = useCallback(() => {
+    closedRef.current?.();
+    flushAfterClose();
+  }, []);
   const finishClose = useCallback(() => {
     setMounted(false);
-    closedRef.current?.();
-  }, []);
+    if (Platform.OS !== 'ios') closed();
+  }, [closed]);
+  const onDismiss = closed;
 
   const wasOpen = useRef(false);
   useEffect(() => {
@@ -131,7 +146,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   );
 
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={requestClose} statusBarTranslucent navigationBarTranslucent>
+    <Modal visible={mounted} transparent animationType="none" onRequestClose={requestClose} onDismiss={Platform.OS === 'ios' ? onDismiss : undefined} statusBarTranslucent navigationBarTranslucent>
       <GestureHandlerRootView style={styles.fill}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dimAnim]}>
           <Pressable style={styles.fill} onPress={requestClose} accessibilityRole="button" accessibilityLabel="닫기" />
