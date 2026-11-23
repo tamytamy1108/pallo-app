@@ -5,8 +5,12 @@
  * - 되는 것: 사각형 · 경로(선 · 원호 · 타원 · 곡선 · 둥근 사각형) 채우기와 선 긋기, 선형 · 원형 그라데이션, 투명도, 지우기, 이동 · 회전 · 크기, 다른 그림판 붙이기, SVG 경로(Path2D)
  * - 안 되는 것: 글자 (fillText 는 그냥 지나가요 — 간판 글자는 폰에서 비어 보여요)
  * - 메모리 · 속도 때문에 긴 변이 512px 를 넘으면 줄여서 칠해요 (그리는 좌표는 그대로).
+ * - 칠하기는 미뤄요: 그리기 명령을 모아 두고(서명도 함께) 픽셀이 필요할 때(텍스처 올리기 · 다른 그림판에 붙이기) 한 번에 칠해요.
+ *   같은 서명의 그림을 전에 칠했으면 texture-cache 에서 꺼내 써요 (지도를 다시 열 때 · 앱을 다시 켤 때 빨라요).
  */
 import * as THREE from 'three';
+
+import { cachedPixels, rememberPixels, VER } from './texture-cache';
 
 type RGBA = [number, number, number, number];
 type Pt = [number, number];
@@ -18,6 +22,39 @@ const SAMPLES = 4; // 한 줄을 세로로 4번 나눠 재서 가장자리를 �
 
 /** 그라데이션 색을 픽셀마다 담아 두는 칸 (다시 써요) */
 const GRAD_COL = new Float64Array(4);
+/* ───────── 그리기 명령 서명 ───────── */
+
+const HF = new Float64Array(1);
+const HU = new Uint32Array(HF.buffer);
+/** 명령을 차례로 섞은 64비트(32비트 둘) 서명 — 같은 명령 순서면 같은 값 */
+export class Sig {
+  a: number;
+  b: number;
+  constructor(seed: number) {
+    this.a = (0x811c9dc5 ^ seed) >>> 0;
+    this.b = (0x2545f491 ^ Math.imul(seed, 0x9e3779b1)) >>> 0;
+  }
+  u(v: number) {
+    this.a = Math.imul(this.a ^ v, 0x01000193) >>> 0;
+    const b = Math.imul((this.b ^ v) + 0x7f4a7c15, 0x85ebca6b) >>> 0;
+    this.b = (b ^ (b >>> 13)) >>> 0;
+  }
+  n(x: number) {
+    HF[0] = x;
+    this.u(HU[0]);
+    this.u(HU[1]);
+  }
+  key() {
+    return `${this.a.toString(36)}-${this.b.toString(36)}`;
+  }
+}
+
+/** 미뤄 둔 칠하기 하나 (칠할 때 필요한 상태는 그때 값으로 담아 둬요) */
+type Op =
+  | { k: 0; subs: Sub[]; b: Brush }
+  | { k: 1; ax: number; ay: number; bx: number; by: number; b: Brush | null }
+  | { k: 2; src: Uint8ClampedArray; spw: number; sph: number; ax: number; ay: number; bx: number; by: number; alpha: number };
+
 const NAMED: Record<string, RGBA> = { white: [255, 255, 255, 1], black: [0, 0, 0, 1], transparent: [0, 0, 0, 0], red: [255, 0, 0, 1] };
 const colorCache = new Map<string, RGBA>();
 
@@ -63,6 +100,12 @@ class SoftGradient {
       }
     }
     return s[s.length - 1].c;
+  }
+  /** 지금 모양 그대로 떼어 두기 (칠하기를 미루는 동안 색 멈춤이 바뀌어도 그대로) */
+  copy() {
+    const g = new SoftGradient(this.kind, this.a.slice());
+    g.stops = this.stops.slice();
+    return g;
   }
   /** at() 과 같은 색을 out 에 써요 (픽셀마다 배열을 만들지 않게) */
   atInto(t: number, out: Float64Array) {
@@ -139,7 +182,14 @@ export class SoftCanvas {
   pw = 300;
   ph = 150;
   k = 1;
-  px: Uint8ClampedArray = new Uint8ClampedArray(0);
+  /** 지금 픽셀 (미뤄 둔 칠하기는 아직 안 들어 있어요 — 밖에서는 px 로 읽어요) */
+  buf: Uint8ClampedArray = new Uint8ClampedArray(0);
+  /** 처음부터 지금까지의 그리기 명령 서명 */
+  sig: Sig = new Sig(VER);
+  private ops: Op[] = [];
+  /** buf 를 기억칸과 같이 쓰는 중 → 칠하기 전에 복사 */
+  private shared = false;
+  private flushing = false;
   private ctx: SoftContext | null = null;
 
   constructor(w = 300, h = 150) {
@@ -161,22 +211,69 @@ export class SoftCanvas {
     this.h = v;
     this.alloc();
   }
+  /** 다 칠한 픽셀 (미뤄 둔 칠하기를 먼저 해요) */
+  get px() {
+    this.flush();
+    return this.buf;
+  }
   private alloc() {
     this.k = Math.min(1, MAX_SIDE / Math.max(this.w, this.h, 1));
     this.pw = Math.max(1, Math.round(this.w * this.k));
     this.ph = Math.max(1, Math.round(this.h * this.k));
-    this.px = new Uint8ClampedArray(this.pw * this.ph * 4);
+    this.buf = new Uint8ClampedArray(this.pw * this.ph * 4);
+    this.ops = [];
+    this.shared = false;
+    this.sig = new Sig(VER);
+    this.sig.n(this.pw);
+    this.sig.n(this.ph);
     this.ctx?.reset();
   }
   getContext(_kind?: string) {
     if (!this.ctx) this.ctx = new SoftContext(this);
     return this.ctx;
   }
+  /** 칠하기 하나 미뤄 두기 */
+  record(op: Op) {
+    this.ops.push(op);
+  }
+  /** 다른 그림판이 이 픽셀을 붙여 쓰기로 했어요 → 이 뒤에 칠하면 복사해서 칠해요 */
+  lend() {
+    this.flush();
+    this.shared = true;
+    return this.buf;
+  }
+  /** 미뤄 둔 칠하기를 지금: 같은 서명을 기억하면 꺼내 쓰고, 아니면 칠해서 기억해요 */
+  flush() {
+    if (!this.ops.length || this.flushing) return;
+    const key = `${this.pw}x${this.ph}-${this.sig.key()}`;
+    const hit = cachedPixels(key, this.buf.length);
+    if (hit) {
+      this.buf = hit;
+      this.shared = true;
+      this.ops = [];
+      return;
+    }
+    if (this.shared) {
+      this.buf = this.buf.slice();
+      this.shared = false;
+    }
+    this.flushing = true;
+    const t0 = Date.now();
+    const ctx = this.getContext();
+    try {
+      for (const op of this.ops) ctx.run(op);
+    } finally {
+      this.flushing = false;
+      this.ops = [];
+    }
+    if (rememberPixels(key, this.buf, Date.now() - t0)) this.shared = true;
+  }
   /** GL 로 올릴 픽셀 (위아래 뒤집기: 텍스처는 아래 줄부터) */
   glPixels() {
-    const out = new Uint8Array(this.px.length);
+    const px = this.px;
+    const out = new Uint8Array(px.length);
     const row = this.pw * 4;
-    for (let y = 0; y < this.ph; y++) out.set(this.px.subarray(y * row, (y + 1) * row), (this.ph - 1 - y) * row);
+    for (let y = 0; y < this.ph; y++) out.set(px.subarray(y * row, (y + 1) * row), (this.ph - 1 - y) * row);
     return out;
   }
   /** three 텍스처로 (다시 그린 뒤 needsUpdate = true 하면 새 픽셀이 올라가요) */
@@ -482,21 +579,45 @@ export class SoftContext {
     const h = dh ?? src.height;
     const [ax, ay] = this.tp(dx, dy);
     const [bx, by] = this.tp(dx + w, dy + h);
+    const op: Op = { k: 2, src: src.lend(), spw: src.pw, sph: src.ph, ax, ay, bx, by, alpha: this.st.globalAlpha };
+    const g = this.canvas.sig;
+    g.n(2);
+    g.u(src.sig.a);
+    g.u(src.sig.b);
+    g.n(op.spw);
+    g.n(op.sph);
+    g.n(ax);
+    g.n(ay);
+    g.n(bx);
+    g.n(by);
+    g.n(op.alpha);
+    this.canvas.record(op);
+  }
+
+  /** 미뤄 둔 칠하기 하나를 지금 (SoftCanvas.flush 가 불러요) */
+  run(op: Op) {
+    if (op.k === 0) this.rasterNow(op.subs, op.b);
+    else if (op.k === 1) this.rectNow(op.ax, op.ay, op.bx, op.by, op.b);
+    else this.imageNow(op);
+  }
+
+  private imageNow(op: Extract<Op, { k: 2 }>) {
+    const { src, spw, sph, ax, ay, bx, by, alpha } = op;
     const x0 = Math.max(0, Math.floor(Math.min(ax, bx)));
     const x1 = Math.min(this.canvas.pw, Math.ceil(Math.max(ax, bx)));
     const y0 = Math.max(0, Math.floor(Math.min(ay, by)));
     const y1 = Math.min(this.canvas.ph, Math.ceil(Math.max(ay, by)));
-    const sx = (src.pw / (bx - ax || 1)) * 1;
-    const sy = src.ph / (by - ay || 1);
+    const sx = (spw / (bx - ax || 1)) * 1;
+    const sy = sph / (by - ay || 1);
     for (let y = y0; y < y1; y++) {
       const v = Math.floor((y + 0.5 - ay) * sy);
-      if (v < 0 || v >= src.ph) continue;
+      if (v < 0 || v >= sph) continue;
       for (let x = x0; x < x1; x++) {
         const u = Math.floor((x + 0.5 - ax) * sx);
-        if (u < 0 || u >= src.pw) continue;
-        const i = (v * src.pw + u) * 4;
-        const a = (src.px[i + 3] / 255) * this.st.globalAlpha;
-        if (a > 0) this.blend((y * this.canvas.pw + x) * 4, src.px[i], src.px[i + 1], src.px[i + 2], a);
+        if (u < 0 || u >= spw) continue;
+        const i = (v * spw + u) * 4;
+        const a = (src[i + 3] / 255) * alpha;
+        if (a > 0) this.blend((y * this.canvas.pw + x) * 4, src[i], src[i + 1], src[i + 2], a);
       }
     }
   }
@@ -565,7 +686,29 @@ export class SoftContext {
    * 모양 칠하기 (nonzero 규칙 · 세로 4번 재서 가장자리 부드럽게).
    * 빠르게: 줄마다 그 줄에 걸친 변만 보고(위에서부터 차례로 넣고 지난 변은 빼요), 교차점은 다시 쓰는 배열에 모아요.
    */
+  /** 모양 칠하기 미뤄 두기 (조각은 지금 모양 그대로 떼어 둬요 — 뒤에 closePath 등이 바꿔도 그대로) */
   private raster(subs: Sub[], paint: Paint) {
+    const b = this.brush(paint);
+    const copy: Sub[] = new Array(subs.length);
+    const g = this.canvas.sig;
+    g.n(0);
+    g.n(subs.length);
+    for (let i = 0; i < subs.length; i++) {
+      const s = subs[i];
+      const pts = s.pts.slice();
+      copy[i] = { pts, closed: s.closed };
+      g.n(s.closed ? 1 : 0);
+      g.n(pts.length);
+      for (let j = 0; j < pts.length; j++) {
+        g.n(pts[j][0]);
+        g.n(pts[j][1]);
+      }
+    }
+    signBrush(g, b);
+    this.canvas.record({ k: 0, subs: copy, b });
+  }
+
+  private rasterNow(subs: Sub[], b: Brush) {
     const W = this.canvas.pw;
     const H = this.canvas.ph;
     let total = 0;
@@ -614,7 +757,6 @@ export class SoftContext {
     const cx = new Float64Array(n);
     const cd = new Int8Array(n);
     const cov = new Float32Array(W + 1);
-    const b = this.brush(paint);
     for (let y = y0; y < y1; y++) {
       // 이 줄(y ~ y+1)에 걸친 변만
       while (next < n && E[order[next] * 7 + 5] < y + 1) active[na++] = order[next++];
@@ -678,14 +820,26 @@ export class SoftContext {
 
   /** 축에 나란한 사각형: 가장자리 픽셀은 덮인 넓이만큼 */
   private rectFast(ax: number, ay: number, bx: number, by: number, paint: Paint, clear: boolean) {
+    const b = clear ? null : this.brush(paint);
+    const g = this.canvas.sig;
+    g.n(1);
+    g.n(ax);
+    g.n(ay);
+    g.n(bx);
+    g.n(by);
+    if (b) signBrush(g, b);
+    else g.n(-1);
+    this.canvas.record({ k: 1, ax, ay, bx, by, b });
+  }
+
+  private rectNow(ax: number, ay: number, bx: number, by: number, b: Brush | null) {
     const W = this.canvas.pw;
     const H = this.canvas.ph;
     const x0 = Math.max(0, Math.floor(ax));
     const x1 = Math.min(W, Math.ceil(bx));
     const y0 = Math.max(0, Math.floor(ay));
     const y1 = Math.min(H, Math.ceil(by));
-    const b = clear ? null : this.brush(paint);
-    const px = this.canvas.px;
+    const px = this.canvas.buf;
     if (b && b.solid && !b.erase) {
       // 단색 사각형: put() 과 같은 계산을 함수 부르지 않고 바로 (작은 사각형 수천 개를 칠하는 지도가 있어요)
       const col = b.solid;
@@ -765,7 +919,7 @@ export class SoftContext {
     const m = this.st.m;
     return {
       solid: typeof paint === 'string' ? parseColor(paint) : null,
-      grad: typeof paint === 'string' ? null : paint,
+      grad: typeof paint === 'string' ? null : paint.copy(),
       m0: m[0],
       m1: m[1],
       m2: m[2],
@@ -795,7 +949,7 @@ export class SoftContext {
     const a = col[3] * c * b.alpha;
     if (a <= 0) return;
     const i = (y * this.canvas.pw + x) * 4;
-    const p = this.canvas.px;
+    const p = this.canvas.buf;
     if (b.erase) {
       p[i + 3] = p[i + 3] * (1 - a);
       return;
@@ -813,7 +967,7 @@ export class SoftContext {
 
   /** source-over 섞기 (곱하지 않은 색으로 보관) */
   private blend(i: number, r: number, g: number, b: number, a: number) {
-    const p = this.canvas.px;
+    const p = this.canvas.buf;
     const da = p[i + 3] / 255;
     const oa = a + da * (1 - a);
     if (oa <= 0) return;
@@ -822,6 +976,38 @@ export class SoftContext {
     p[i + 2] = (b * a + p[i + 2] * da * (1 - a)) / oa;
     p[i + 3] = oa * 255;
   }
+}
+
+/** 칠하는 붓을 서명에 섞기 */
+function signBrush(g: Sig, b: Brush) {
+  if (b.solid) {
+    g.n(1);
+    g.n(b.solid[0]);
+    g.n(b.solid[1]);
+    g.n(b.solid[2]);
+    g.n(b.solid[3]);
+  } else {
+    const gr = b.grad as SoftGradient;
+    g.n(gr.kind === 'lin' ? 2 : 3);
+    g.n(gr.a.length);
+    for (const v of gr.a) g.n(v);
+    g.n(gr.stops.length);
+    for (const st of gr.stops) {
+      g.n(st.o);
+      g.n(st.c[0]);
+      g.n(st.c[1]);
+      g.n(st.c[2]);
+      g.n(st.c[3]);
+    }
+  }
+  g.n(b.m0);
+  g.n(b.m1);
+  g.n(b.m2);
+  g.n(b.m3);
+  g.n(b.m4);
+  g.n(b.m5);
+  g.n(b.alpha);
+  g.n(b.erase ? 1 : 0);
 }
 
 type Brush = {

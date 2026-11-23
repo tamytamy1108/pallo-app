@@ -49,7 +49,10 @@ function bgTex(top, bot, draw) {
   if (draw) draw(g, c.width, c.height);
   const t = canvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
-const rnd = (() => { let s = 7; return () => (s = (s * 9301 + 49297) % 233280) / 233280; })();
+// 지도를 만들 때마다 같은 씨앗에서 (mountWorld 가 되돌려요) → 같은 지도는 늘 같은 모습 · 텍스처 그림 기억(texture-cache)이 맞아요
+const RND_SEED = 7;
+let rndS = RND_SEED;
+const rnd = () => (rndS = (rndS * 9301 + 49297) % 233280) / 233280;
 const puff = (g, x, y, r, col = 'rgba(255,255,255,.85)') => { g.fillStyle = col; [[0, 0, 1], [r * .9, r * .2, .75], [-r * .9, r * .25, .7], [r * .3, -r * .45, .7]].forEach(([a, b, k]) => { g.beginPath(); g.arc(x + a, y + b, r * k, 0, 7); g.fill(); }); };
 
 function drawSun(g, x, y, r) {
@@ -1024,6 +1027,7 @@ export function mountWorld(host, id, SC, onOpen) {
     if (__DEV__) console.warn(`[maps] BUILD '${id}' 가 없어요 — presets.ts 의 build 이름을 확인하세요. 여행 모양으로 그려요`);
     f = BUILD.travel;
   }
+  rndS = RND_SEED;
   const S = f(host, SC);
   S.draw();
   return S;

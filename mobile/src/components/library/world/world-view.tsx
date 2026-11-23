@@ -18,6 +18,8 @@ import { canTryWorld3D, devCapture, GL_START_TIMEOUT, liteWorld } from './world-
 /** 이름표를 가운데 맞추려고 두는 상자 너비 (프로토타입 translate(-50%)) */
 /** 지도를 고르고 이만큼 머물면 만들기 시작 (빠르게 넘기는 동안의 지도는 만들지 않아요) */
 const SETTLE_MS = 180;
+/** 그리기 판이 이만큼(ms) 안 오면 판을 새로 만들어 다시 (두 번까지 · 그래도 안 되면 GL_START_TIMEOUT 에 2D) */
+const GL_RETRY_MS = 800;
 
 type Props = {
   /** BUILD 이름 (study2 · travel · biz …) */
@@ -89,24 +91,45 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
   const gone = useRef(false);
   /** GL 판이 한 번이라도 붙었어요 (시간 초과 2D 판단용) */
   const glStarted = useRef(false);
+  /** 판을 기다린 시간(앱이 움직일 수 있던 시간만) · 판을 새로 만든 횟수 */
+  const glWaited = useRef(0);
+  const glTries = useRef(0);
   const [glKey, setGlKey] = useState(0);
 
   useEffect(() => {
     open.current = onOpen;
     fail.current = onFail;
   });
-  // GL 이 시작하지 않으면 (오래된 폰 · GL 없는 에뮬레이터) 2D 지도로.
-  // 화면에 보이는 동안 GL 판이 끝내 안 붙었을 때만 (다른 탭에 가 있느라 늦은 건 빼요)
+  // GL 이 시작하지 않으면 (오래된 폰 · GL 없는 에뮬레이터) 2D 지도로. 탭에 돌아와 판을 새로 만들 때(glKey)도 같아요.
+  // 앱이 움직일 수 있던 시간만 세요: 다른 지도를 만드느라 JS 가 멈춘 동안(프레임 사이는 최대 0.1초만) · 다른 탭에 가 있던 동안은 빼요.
+  // 다 기다렸으면 이미 와 있던 '판 준비됨' 신호를 먼저 받게 두 프레임 더 보고 정해요.
+  // 그리기 판이 안 오면 판을 새로 만들어 다시 (GL_RETRY_MS 마다 · 두 번까지) — 지도를 바꾸는 0.4초 동안은 두 지도가 GPU 를 같이 써서
+  // 에뮬레이터 · 느린 폰에서 새 판이 안 만들어질 때가 있어요. 아래 지도가 치워진 뒤 다시 만들면 붙어요.
   useEffect(() => {
     if (!size) return;
-    const t = setTimeout(() => {
-      if (!glStarted.current && !stage.current && !gone.current && !left.current) {
+    let raf = 0;
+    let last = Date.now();
+    let grace = 0;
+    const tick = () => {
+      if (glStarted.current || left.current) return;
+      const now = Date.now();
+      if (!gone.current) glWaited.current += Math.min(now - last, 100);
+      last = now;
+      if (glTries.current < 2 && glWaited.current >= (glTries.current + 1) * GL_RETRY_MS) {
+        glTries.current += 1;
+        setGlKey((k) => k + 1);
+        return;
+      }
+      if (glWaited.current >= GL_START_TIMEOUT && grace++ >= 2) {
         console.warn('3D 지도가 시작하지 않아서 2D 지도로 바꿔요');
         fail.current();
+        return;
       }
-    }, GL_START_TIMEOUT);
-    return () => clearTimeout(t);
-  }, [size]);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [size, glKey]);
   // 탭을 떠나거나 앱이 내려가면 그리기 멈춤.
   // 폰은 그때 그리기 판(GL)이 사라져서, 돌아오면 판만 새로 만들어 붙여요 (지도는 다시 만들지 않아요 · stage.rebind)
   useEffect(() => {
@@ -117,6 +140,9 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
         if (host.current) host.current.paused = true;
         drawnNow.current = false;
         setDrawn(false);
+        glStarted.current = false;
+        glWaited.current = 0;
+        glTries.current = 0;
         setGlKey((k) => k + 1);
         return;
       }
@@ -144,8 +170,8 @@ function World3D({ id, sc, swapDir, onOpen, visible = true, onFail }: Props & { 
       try {
         stage.current.rebind(gl);
       } catch (e) {
-        console.warn('3D 지도를 다시 붙이지 못했어요', e);
-        setDrawn(true);
+        console.warn('3D 지도를 다시 붙이지 못해서 2D 지도로 바꿔요', e);
+        fail.current();
       }
       return;
     }
