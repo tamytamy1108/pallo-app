@@ -481,7 +481,7 @@ function SayResult({ t, st, res, top, sIn, onAgain }: { t: SayTask; st: St; res:
       </Body>
       <Foot>
         <EndNote good={res.ok && !res.late}>
-          <EndMsg bold={bold} rest={rest} />
+          <EndMsg title={bold} rest={rest} good={res.ok && !res.late} />
         </EndNote>
         <FootRow>
           {re ? (

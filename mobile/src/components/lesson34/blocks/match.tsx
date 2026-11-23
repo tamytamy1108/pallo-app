@@ -172,7 +172,14 @@ function MatchResult({ task, nDone, used, best, miss, onAgain }: { task: MatchTa
     sfx(all ? 'correct' : 'wrong');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const msg = all && prev && sec < prev ? `지난 기록 ${prev}초를 깼어요!` : prev ? `내 최고 기록 ${Math.min(prev, all ? sec : prev)}초` : all ? '첫 기록이에요! 한 번 더 하면 더 빨라져요' : '시간이 끝났어요 · 한 번 더 해 볼까요?';
+  const [title, msg] =
+    all && prev && sec < prev
+      ? [`${sec}초 신기록!`, `지난 기록 ${prev}초를 깼어요`]
+      : all && prev
+        ? [`${sec}초`, `내 최고 기록 ${prev}초`]
+        : all
+          ? ['첫 기록!', '한 번 더 하면 더 빨라져요']
+          : ["Time's up!", prev ? `내 최고 기록 ${prev}초 · 한 번 더 해 볼까요?` : '시간이 끝났어요 · 한 번 더 해 볼까요?'];
   return (
     <>
       <Body>
@@ -193,7 +200,7 @@ function MatchResult({ task, nDone, used, best, miss, onAgain }: { task: MatchTa
       </Body>
       <Foot>
         <EndNote good={all}>
-          <EndMsg rest={msg} />
+          <EndMsg title={title} rest={msg} good={all} />
         </EndNote>
         <FootRow>
           <SkipBtn label="한 번 더" onPress={onAgain} />

@@ -339,17 +339,32 @@ export function EndNote({ good, children }: { good: boolean; children: ReactNode
     </View>
   );
 }
-export const EndMsg = ({ bold, rest }: { bold?: string; rest: string }) => (
-  <PText style={s.endMsg}>
-    {bold ? (
-      <PText style={s.endBold} color={PINK_INK}>
-        {bold}
-        {'\n'}
+/**
+ * 결과 줄 글씨: 큰 제목 + 작은 한 줄 (상황 장면 정답 띠와 같은 크기).
+ * title 이 없으면 rest 의 첫 '!' 또는 ' · ' 앞을 제목으로 써요.
+ */
+export function EndMsg({ title, rest, good }: { title?: string; rest: string; good: boolean }) {
+  const [head, sub] = title ? [title, rest.replace(/^ · /, '')] : splitHead(rest);
+  return (
+    <View>
+      <PText style={s.endTitle} color={good ? Colors.purple : PINK_INK}>
+        {head}
       </PText>
-    ) : null}
-    {rest}
-  </PText>
-);
+      {sub ? (
+        <PText style={s.endSub} color={SUB}>
+          {sub}
+        </PText>
+      ) : null}
+    </View>
+  );
+}
+function splitHead(text: string): [string, string] {
+  const bang = text.indexOf('! ');
+  if (bang > 0) return [text.slice(0, bang + 1), text.slice(bang + 2).replace(/^· /, '')];
+  const dot = text.indexOf(' · ');
+  if (dot > 0) return [text.slice(0, dot), text.slice(dot + 3)];
+  return [text, ''];
+}
 
 /** 아래 줄 단추: 테두리만(다시 하기 · 넘어가기) + 노랑 넓은 단추 */
 export function FootRow({ children }: { children: ReactNode }) {
@@ -425,7 +440,7 @@ export const s = StyleSheet.create({
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   end: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, marginBottom: 12 },
   endImg: { width: 88, height: 82 },
-  endMsg: { fontFamily: Font.body800, fontSize: 15, lineHeight: 21.75 },
-  endBold: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },
+  endTitle: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },
+  endSub: { marginTop: 2, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.75 },
   row: { flexDirection: 'row', gap: 10 },
 });
