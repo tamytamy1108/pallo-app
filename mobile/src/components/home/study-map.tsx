@@ -50,18 +50,21 @@ function makeLevelMap(lvWanted: number) {
   const lv = L.lv;
   const steps = STAGES.flatMap((g) => STUDY_STEPS[L.kind][g.key].map((s) => ({ id: s.id, stage: g.key, title: s.t, min: s.min, xp: s.xp })));
   const units = L.lessons.map((ls) => ls.no);
-  /** 제목 줄 (1과 Cafe Complaint · #54 Activities · Behind the Mask) */
+  /** 제목 줄 (1과 Cafe Complaint · #102 Activities · Behind the Mask) */
   const unitName = (n: number) => {
     const ls = L.lessons.find((x) => x.no === n);
     return ls ? lessonName(L, ls) : '';
   };
-  /** 칩 글자 (1과 · #54 · 2회) */
+  /** 칩 글자 (1과 · #102 · 2회) */
   const chipLabel = (n: number) => (L.kind === 'topic' ? `#${n}` : L.kind === 'debate' ? `${units.indexOf(n) + 1}회` : `${n}과`);
   /** 과의 단계마다 끝냈는지. count 는 다시 읽을 때를 알리는 값이에요 (끝낸 수가 바뀌면 새로 읽어요) */
   const readDone = (unit: number, count: number) => steps.map((s) => count > 0 && isDone(stepKey(lv, unit, s.id)));
   const stageOf = (i: number) => STAGES.findIndex((g) => g.key === steps[i].stage);
   const stepHref = (unit: number, step: string) => (lv <= 2 ? `/lesson/${step}?lv=${lv}&unit=${unit}` : `/lesson34/${step}?lv=${lv}&unit=${unit}`);
-  return { lv, steps, units, unitName, chipLabel, readDone, stageOf, stepHref, mine: lv === MY_LV };
+  /** 이번 주 반 진도 (과 번호들) · 칩 글자: 패턴형 '5 & 6챕터', 토픽 · 토론형 '#102' · '2회' */
+  const week = (lv === MY_LV ? MY_BOOK.weekLessons : MY_BOOK.weekByLevel[lv]) ?? [];
+  const weekText = L.kind === 'pattern' ? `${week.join(' & ')}챕터` : week.map(chipLabel).join(' & ');
+  return { lv, steps, units, unitName, chipLabel, readDone, stageOf, stepHref, week, weekText };
 }
 type LevelMap = ReturnType<typeof makeLevelMap>;
 const levelMaps = new Map<number, LevelMap>();
@@ -150,7 +153,7 @@ export function StudyMap() {
   };
   /** 이번 주 진도 칩: 5과 · 6과가 가운데로 오고 통통 (프로토타입 weekChip 클릭) */
   const showWeek = () => {
-    const bs = MY_BOOK.weekLessons.map((n) => chipXs.current[n]).filter(Boolean);
+    const bs = M.week.map((n) => chipXs.current[n]).filter(Boolean);
     if (!bs.length) return;
     const mid = (bs[0].x + bs[bs.length - 1].x + bs[bs.length - 1].w) / 2;
     chipRow.current?.scrollTo({ x: Math.max(0, mid - rowW.current / 2), animated: !still });
@@ -245,11 +248,10 @@ export function StudyMap() {
                   스터디 맵 · Lv.{LV}
                 </PText>
               </View>
-              {/* 반 진도는 내 교재 레벨 것만 */}
-              {M.mine && (
-                <Pressable onPress={showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${MY_BOOK.weekLessons.join(', ')}과 보기`} hitSlop={6}>
+              {M.week.length > 0 && (
+                <Pressable onPress={showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${M.weekText} 보기`} hitSlop={6}>
                   <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }])}>
-                    <PText style={styles.weekText}>이번 주 진도 {MY_BOOK.weekLessons.join(' & ')}챕터</PText>
+                    <PText style={styles.weekText}>이번 주 진도 {M.weekText}</PText>
                   </View>
                 </Pressable>
               )}
@@ -271,7 +273,7 @@ export function StudyMap() {
 
           <ScrollView ref={chipRow} horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow} onLayout={(e) => (rowW.current = e.nativeEvent.layout.width)}>
             {M.units.map((n) => (
-              <ChapChip key={n} M={M} n={n} on={n === lesson} week={M.mine && MY_BOOK.weekLessons.includes(n)} bounce={bounce} onPress={() => pickLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
+              <ChapChip key={n} M={M} n={n} on={n === lesson} week={M.week.includes(n)} bounce={bounce} onPress={() => pickLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
             ))}
           </ScrollView>
 
@@ -430,7 +432,7 @@ function ChapChip({ M, n, on, week, bounce, onPress, onLayout }: { M: LevelMap; 
   const count = useDoneCount(`${M.lv}:${n}:`);
   const full = count >= M.steps.length;
   const part = count > 0 && !full;
-  const k = MY_BOOK.weekLessons.indexOf(n);
+  const k = M.week.indexOf(n);
   const anim = week && bounce > 0 && !still ? wkAnim[k === 0 ? 0 : 1] : null;
   return (
     // 이번 주 칩은 누를 때마다 key 를 바꿔 처음부터 다시 통통

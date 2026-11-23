@@ -73,9 +73,9 @@ export const STUDY_LEVELS: StudyLevel[] = [
     about: "DAILY TOPIC · AI 대화 · 지문 · 표현",
     lessons: [
       {"no":101,"title":"The Present","sub":"DAILY TOPIC - The Present · JOURNAL TOPIC Forgotten Name","data":{"kind":"topic","topicTitle":"Forgotten Name","pdf":{"path":"assets/lv3-101-the-present.pdf","name":"PALLO Lv.3 #101 The Present.pdf","size":"748KB · 2쪽"}}},
-      {"no":54,"title":"Activities","sub":"JOURNAL TOPIC · Digital detox"},
-      {"no":89,"title":"Hometowns","sub":"JOURNAL TOPIC · Fan Culture"},
-      {"no":47,"title":"Health","sub":"DAILY TOPIC · Health"},
+      {"no":102,"title":"Activities","sub":"JOURNAL TOPIC · Digital detox"},
+      {"no":103,"title":"Hometowns","sub":"JOURNAL TOPIC · Fan Culture"},
+      {"no":104,"title":"Health","sub":"DAILY TOPIC · Health"},
     ],
   },
   {
@@ -86,8 +86,8 @@ export const STUDY_LEVELS: StudyLevel[] = [
     about: "FREE TALK · 찬반 토론",
     lessons: [
       {"no":101,"title":"The Present","sub":"DEBATE · Should concerts go phone-free?","data":{"kind":"debate","q":"Should concerts go phone-free?","qKo":"콘서트는 휴대폰 금지여야 할까요?","pdf":{"path":"assets/lv4-101-the-present.pdf","name":"PALLO Lv.4 #101 The Present.pdf","size":"1.5MB · 2쪽"}}},
-      {"no":1,"title":"Behind the Mask","sub":"DEBATE · Should adults be allowed to sell an organ?","data":{"kind":"debate","q":"Should adults be allowed to sell an organ?","qKo":"성인의 장기 판매를 허용해야 할까요?"}},
-      {"no":2,"title":"Role Models and Heroes","sub":"DEBATE · Talent or Effort"},
+      {"no":102,"title":"Behind the Mask","sub":"DEBATE · Should adults be allowed to sell an organ?","data":{"kind":"debate","q":"Should adults be allowed to sell an organ?","qKo":"성인의 장기 판매를 허용해야 할까요?"}},
+      {"no":103,"title":"Role Models and Heroes","sub":"DEBATE · Talent or Effort"},
     ],
   },
 ];

@@ -154,7 +154,7 @@ export const LISTEN_ITEMS: Record<string, ListenItem[]> = {
     {"en":"The new song leaked online before the album came out.","ko":"(공개 전 자료가) 유출되다","tag":"KEY EXPRESSIONS"},
     {"en":"Phones held up high can spoil the show for people behind you.","ko":"남의 경험을 망치다","tag":"KEY EXPRESSIONS"},
   ],
-  "4-1": [
+  "4-102": [
     {"en":"Why do you think Halloween took off in Korea despite having no roots?","ko":"뿌리가 없는데도 핼러윈이 한국에서 유행한 이유는 뭘까요?","tag":"FREE TALK"},
     {"en":"What scary story did your generation grow up with, and why did it catch on?","ko":"우리 세대가 자라며 듣던 무서운 이야기는? 왜 퍼졌을까요?","tag":"FREE TALK"},
     {"en":"Have you ever had a spooky experience that still defies logic?","ko":"아직도 설명이 안 되는 오싹한 경험이 있나요?","tag":"FREE TALK"},
