@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
@@ -5,19 +6,20 @@ import { useEffect, useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { popupsQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { LAUNCH_POPUPS } from '@/data/home';
+import type { LaunchPopup as Popup } from '@/data/home';
 
 import { nowDate } from './attendance';
 
 /*
  * 앱을 열 때 팝업 공지 (프로토타입 POPS · popShow · .pop-wrap · .pop-c).
  * 본사 관리자가 올린 공지를 0.9초 뒤 보여 줘요. 여러 개면 ‹ › 로 넘겨요. '오늘은 그만 보기'를 누르면 오늘은 다시 안 떠요.
- * 만드는 화면은 관리자용이라 나중에 (여기선 보여 주기만).
+ * 만드는 화면은 관리자용이라 나중에 (여기선 보여 주기만). 데이터: A1 GET /popups (받기 전 · 실패면 안 떠요).
  */
 
 const today = () => {
@@ -30,8 +32,15 @@ const hiddenOn: Record<string, string> = {};
 let shownOnce = false;
 
 export function LaunchPopup() {
+  const { data } = useQuery(popupsQuery());
+  if (!data) return null;
+  return <PopupHost popups={data} />;
+}
+
+function PopupHost({ popups }: { popups: Popup[] }) {
   const still = useReducedMotion();
-  const [list] = useState(() => LAUNCH_POPUPS.filter((p) => p.until >= today() && hiddenOn[p.id] !== today()));
+  // 처음 받은 목록으로 한 번 정해요 (보는 중에 '오늘은 그만 보기'를 눌러도 목록이 줄지 않게)
+  const [list] = useState(() => popups.filter((p) => p.until >= today() && hiddenOn[p.id] !== today()));
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   const fade = useSharedValue(0);
