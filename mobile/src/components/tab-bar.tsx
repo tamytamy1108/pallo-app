@@ -1,10 +1,13 @@
-import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
-import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps, type TabsDescriptor, type TabsSlotRenderOptions } from 'expo-router/ui';
+import { usePathname } from 'expo-router';
+import { type ReactNode, useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { css, cubicBezier, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { Screen } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Colors } from '@/constants/theme';
 import { SPRING } from '@/lib/motion';
 
@@ -17,13 +20,25 @@ const TABS = [
   { name: 'my', href: '/my', label: '마이', d: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 21a7.5 7.5 0 0 1 15 0' },
 ] as const;
 
+/** 지금 탭 번호: 주소의 첫 칸으로 (/ → 0, /library → 1 …) */
+function tabIndexOf(path: string) {
+  const first = `/${path.split('/')[1] ?? ''}`;
+  const i = TABS.findIndex((t) => t.href === first);
+  return i < 0 ? 0 : i;
+}
+
 export default function TabBar() {
   const insets = useSafeAreaInsets();
+  const at = tabIndexOf(usePathname());
+  const [barW, setBarW] = useState(0);
+  const slotW = barW ? (barW - 12) / TABS.length : 0;
   return (
     <Tabs>
-      <TabSlot style={styles.slot} />
+      <TabSlot style={styles.slot} renderFn={renderTab} />
       <TabList asChild>
-        <View style={StyleSheet.flatten([styles.bar, { bottom: Math.max(insets.bottom, 12) }])}>
+        <View style={StyleSheet.flatten([styles.bar, { bottom: Math.max(insets.bottom, 12) }])} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
+          {/* 고른 탭 알약: 누른 탭으로 스프링처럼 살짝 지나쳤다 돌아오며 미끄러져요 (프로토타입 .tab-ind · transform .45s var(--spring)) */}
+          {slotW ? <Animated.View pointerEvents="none" style={[styles.ind, { width: slotW, transform: [{ translateX: at * slotW }] }, indSlide]} /> : null}
           {TABS.map((t) => (
             <TabTrigger key={t.name} name={t.name} href={t.href} asChild>
               <TabButton icon={t.d} label={t.label} />
@@ -33,6 +48,40 @@ export default function TabBar() {
       </TabList>
     </Tabs>
   );
+}
+
+/**
+ * 탭을 바꾸면 새 화면이 살짝 아래에서 떠오르며 나타나요 (프로토타입 .page → .page.active:
+ * 투명도 .35초 · 14px 올라오기 .45초).
+ */
+function renderTab(descriptor: TabsDescriptor, { isFocused, loaded, detachInactiveScreens }: TabsSlotRenderOptions) {
+  const { lazy = true } = descriptor.options;
+  if (lazy && !loaded && !isFocused) return null;
+  return (
+    <Screen key={descriptor.route.key} enabled={detachInactiveScreens} activityState={isFocused ? 2 : 0} freezeOnBlur={false} style={[styles.screen, isFocused ? styles.focused : styles.unfocused]}>
+      <TabPage focused={isFocused}>{descriptor.render()}</TabPage>
+    </Screen>
+  );
+}
+
+const PAGE_EASE = Easing.bezier(0.16, 1, 0.3, 1);
+
+/** 프로토타입 --spring: cubic-bezier(.2,.9,.3,1.3) — 끝에서 살짝 지나쳤다 돌아와요 */
+const indSlide = css.create({ t: { transitionProperty: 'transform', transitionDuration: '450ms', transitionTimingFunction: cubicBezier(0.2, 0.9, 0.3, 1.3) } }).t;
+
+function TabPage({ focused, children }: { focused: boolean; children: ReactNode }) {
+  const still = useReducedMotion();
+  const fade = useSharedValue(1);
+  const rise = useSharedValue(0);
+  useEffect(() => {
+    if (!focused || still) return;
+    fade.set(0);
+    rise.set(14);
+    fade.set(withTiming(1, { duration: 350, easing: PAGE_EASE }));
+    rise.set(withTiming(0, { duration: 450, easing: PAGE_EASE }));
+  }, [focused, still, fade, rise]);
+  const style = useAnimatedStyle(() => ({ opacity: fade.get(), transform: [{ translateY: rise.get() }] }));
+  return <Animated.View style={[styles.page, style]}>{children}</Animated.View>;
 }
 
 type TabButtonProps = TabTriggerSlotProps & { icon: string; label: string };
@@ -50,10 +99,11 @@ function TabButton({ icon, label, isFocused, ref: _ref, ...props }: TabButtonPro
   return (
     <Pressable
       {...props}
+      sound="nav"
       accessibilityRole="tab"
       accessibilityLabel={label}
       accessibilityState={{ selected: isFocused }}
-      style={({ pressed }) => StyleSheet.flatten([styles.tab, isFocused && styles.tabOn, pressed && styles.pressed])}>
+      style={({ pressed }) => StyleSheet.flatten([styles.tab, pressed && styles.pressed])}>
       <Animated.View style={bounce}>
         <Svg width={21} height={21} viewBox="0 0 24 24">
           <Path d={icon} fill={isFocused ? Colors.yellow : 'none'} stroke={isFocused ? Colors.ink : '#3A3A48'} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" />
@@ -68,6 +118,10 @@ function TabButton({ icon, label, isFocused, ref: _ref, ...props }: TabButtonPro
 
 const styles = StyleSheet.create({
   slot: { flex: 1 },
+  screen: { flex: 1, position: 'relative', height: '100%' },
+  focused: { zIndex: 1, display: 'flex', flexShrink: 0, flexGrow: 1 },
+  unfocused: { zIndex: -1, display: 'none', flexShrink: 1, flexGrow: 0 },
+  page: { flex: 1 },
   bar: {
     position: 'absolute',
     left: 14,
@@ -86,7 +140,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: 24 },
-  tabOn: { backgroundColor: 'rgba(30,26,43,0.06)' },
+  ind: { position: 'absolute', top: 6, bottom: 6, left: 6, borderRadius: 24, backgroundColor: '#ECEAE6' },
   pressed: { transform: [{ scale: 0.92 }] },
   label: { fontSize: 11.5, fontWeight: '600', color: '#3A3A48' },
   labelOn: { fontWeight: '900', color: Colors.ink },

@@ -1,14 +1,13 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
 import { BottomBar } from '@/components/bottom-bar';
-import { LgIcon } from '@/components/common/icons';
 import { SheetLink } from '@/components/common/sheet-parts';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/field';
-import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -71,22 +70,7 @@ export default function PhoneLoginScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* 프로토타입 하위 화면 머리 (.dtop.mp-top · .icon-btn) */}
       <View style={styles.top}>
-        <Pressable
-          onPress={() => {
-            sfx('back');
-            if (router.canGoBack()) router.back();
-            else router.replace('/login');
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="뒤로">
-          {({ pressed }) => (
-            <Raised radius={14} pressed={pressed}>
-              <View style={styles.iconBtn}>
-                <LgIcon name="back" size={22} />
-              </View>
-            </Raised>
-          )}
-        </Pressable>
+        <BackButton onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/login'); }} />
       </View>
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <PText variant="title" accessibilityRole="header">

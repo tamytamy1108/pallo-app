@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { saveExpressionToggle } from '@/components/lesson/bubbles';
 import { GuestMsg, MyMsg } from '@/components/lesson/chat';
 import { SpeakerIcon } from '@/components/lesson/icons';

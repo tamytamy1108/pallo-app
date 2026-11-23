@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { FadeUp, GhostButton, TaskMsg, YellowButton } from '@/components/lesson/lesson-ui';
 import { ClockIcon, XIcon } from '@/components/lesson/icons';
 import { TaskLayout, useTask } from '@/components/lesson/task-layout';

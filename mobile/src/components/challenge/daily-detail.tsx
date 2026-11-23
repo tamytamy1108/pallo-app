@@ -1,10 +1,12 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
 import { BottomBar } from '@/components/bottom-bar';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { ReportSheet, useBlockedNames } from '@/components/common/report-sheet';
@@ -99,9 +101,7 @@ export function DailyDetail({ p }: { p: Challenge }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={[styles.dtop, titled && styles.dtopSolid]}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="뒤로" style={({ pressed }) => [styles.ib, pressed && styles.ibOn]}>
-          <ChIcon name="back" size={22} />
-        </Pressable>
+        <BackButton onPress={back} />
         <TopTitle text={p.name} on={titled} />
         <Pressable onPress={() => showToast('링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={({ pressed }) => [styles.ib, pressed && styles.ibOn]}>
           <ChIcon name="send" size={19} />

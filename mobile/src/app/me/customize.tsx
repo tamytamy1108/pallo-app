@@ -1,7 +1,9 @@
-import { Stack } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
 import { AvatarStage, BodyArt, ItemArt, MiniWear, StageArt } from '@/components/character/avatar';
 import { ColorPick } from '@/components/my/color-pick';
@@ -258,7 +260,7 @@ export default function CustomizeScreen() {
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <PageTop
         title="꾸미기"
         right={

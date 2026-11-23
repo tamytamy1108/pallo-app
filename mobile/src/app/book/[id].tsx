@@ -1,8 +1,12 @@
-import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
 import { MiniCover } from '@/components/library/unit-parts';
 import { Raised } from '@/components/ui/raised';
@@ -29,13 +33,9 @@ export default function BookScreen() {
   const jp = !!b?.jp;
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <View style={styles.top}>
-        <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="뒤로" hitSlop={10} style={styles.back}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">
-            <Path d="m15 6-6 6 6 6" />
-          </Svg>
-        </Pressable>
+        <BackButton onPress={back} />
         <PText style={styles.topTitle}>{b ? `${b.l} 교재` : ''}</PText>
       </View>
       {!b ? (
@@ -105,7 +105,7 @@ function LgButton({ label, white = false, onPress }: { label: string; white?: bo
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderBottomWidth: 1.5, borderColor: Colors.line },
+  top: { paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderBottomWidth: 1.5, borderColor: Colors.line },
   back: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   topTitle: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
   body: { paddingHorizontal: 16, paddingBottom: 30 },

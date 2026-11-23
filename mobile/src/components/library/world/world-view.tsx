@@ -1,10 +1,11 @@
 import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, PanResponder, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { MyCharacter } from '@/components/character/my-character';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

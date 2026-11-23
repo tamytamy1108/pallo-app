@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { CloseIcon } from '@/components/lesson/icons';
 import { SoundButton } from '@/components/lesson/lesson-top';
 import { PText } from '@/components/ui/text';

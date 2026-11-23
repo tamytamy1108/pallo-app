@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
+import { StyleSheet, TextInput, View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Toggle } from '@/components/account/parts';
 import { setMarketing, updateSettings, useLogins, useSettings } from '@/components/account/store';
 import { Button } from '@/components/ui/button';

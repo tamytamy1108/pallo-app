@@ -1,9 +1,13 @@
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { Modal, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -77,7 +81,7 @@ export function DetailFrame({ id, club, posters, title, kicker, heading, childre
 
   return (
     <View style={styles.root} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: 24 }}>
         <PosterStack id={id} slides={slides} height={posterH} onOpen={(i) => setView(i)} />
         <View style={styles.dbd}>
@@ -98,9 +102,7 @@ export function DetailFrame({ id, club, posters, title, kicker, heading, childre
 
       {/* 위 막대: 뒤로 · (모임 이름) · 공유 */}
       <View style={[styles.dtop, { paddingTop: insets.top + 8, height: topH }, solid && styles.dtopSolid]} pointerEvents="box-none">
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="뒤로" style={styles.ib} hitSlop={4}>
-          <Icon name="back" size={22} color={ink} />
-        </Pressable>
+        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} color={ink} />
         <FadeTitle show={titled} text={title} />
         <Pressable onPress={() => showToast('링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={styles.ib} hitSlop={4}>
           <Icon name="send" size={19} color={ink} />
@@ -167,36 +169,58 @@ function FadeIn({ children }: { children: ReactNode }) {
   return <Animated.View style={[StyleSheet.absoluteFill, st]}>{children}</Animated.View>;
 }
 
-/** 포스터 크게 보기: 옆으로 넘기며 전체 포스터 · '1 / 3' (프로토타입 lgPview) */
+/**
+ * 포스터 크게 보기 (프로토타입 lgPview): 위 ‹ · '1 / 2' · 옆으로 넘기는 포스터 · 아래 점.
+ * 손가락으로 넘기면 숫자 · 점이 바로 따라와요. 점을 눌러도 그 장으로 가요.
+ */
 function PosterViewer({ id, slides, start, onClose }: { id: string; slides: Slide[]; start: number | null; onClose: () => void }) {
   const [w, setW] = useState(0);
   const [i, setI] = useState(0);
   const insets = useSafeAreaInsets();
+  const track = useRef<ScrollViewInstance>(null);
+  const goTo = (n: number, animated = true) => {
+    setI(n);
+    track.current?.scrollTo({ x: n * w, animated });
+  };
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const n = Math.round(e.nativeEvent.contentOffset.x / (w || 1));
+    if (n !== i && n >= 0 && n < slides.length) setI(n);
+  };
   return (
     <Modal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.pv} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-        <View style={[styles.pvTop, { paddingTop: insets.top + 10 }]}>
+      <View style={styles.pv}>
+        <View style={[styles.pvTop, { paddingTop: insets.top + 4 }]}>
+          <BackButton onPress={onClose} color="#fff" label="닫기" />
           <PText style={styles.pvN}>{`${i + 1} / ${slides.length}`}</PText>
-          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기" style={styles.pvX} hitSlop={8}>
-            <Icon name="x" size={22} color="#fff" strokeWidth={2.6} />
-          </Pressable>
         </View>
-        {w ? (
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            contentOffset={{ x: (start ?? 0) * w, y: 0 }}
-            onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / w))}
-            onLayout={() => setI(start ?? 0)}>
-            {slides.map((s) => (
-              <View key={s.v} style={{ width: w, paddingHorizontal: 20, justifyContent: 'center' }}>
-                <View style={styles.pvArt}>
-                  <Poster id={id} slide={s} aspectRatio={4 / 5} wordSize={54} wordStyle={styles.pw} />
+        <View style={styles.pvBody} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+          {w ? (
+            <ScrollView
+              ref={track}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+              onLayout={() => goTo(start ?? 0, false)}>
+              {slides.map((s) => (
+                <View key={s.v} style={[styles.pvSlide, { width: w }]}>
+                  <View style={styles.pvArt}>
+                    <Poster id={id} slide={s} aspectRatio={4 / 5} wordSize={54} wordStyle={styles.pw} />
+                  </View>
                 </View>
-              </View>
+              ))}
+            </ScrollView>
+          ) : null}
+        </View>
+        {slides.length > 1 ? (
+          <View style={[styles.pvDots, { paddingBottom: 22 + insets.bottom }]}>
+            {slides.map((s, k) => (
+              <Pressable key={s.v} onPress={() => goTo(k)} sound="pick" accessibilityRole="button" accessibilityLabel={`${k + 1}번째 포스터`} hitSlop={8}>
+                <View style={[styles.pvDot, k === i && styles.pvDotOn]} />
+              </Pressable>
             ))}
-          </ScrollView>
+          </View>
         ) : null}
       </View>
     </Modal>
@@ -218,9 +242,13 @@ const styles = StyleSheet.create({
   dtt: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   pinTabs: { position: 'absolute', left: 0, right: 0, paddingHorizontal: 18, backgroundColor: Colors.cream, zIndex: 2 },
   cta: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
-  pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.94)', justifyContent: 'center' },
-  pvTop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingBottom: 10, zIndex: 2 },
-  pvN: { fontFamily: Font.display, fontSize: 13, lineHeight: 18, color: '#fff' },
-  pvX: { position: 'absolute', right: 14, bottom: 4, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.96)' },
+  pvTop: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 6 },
+  pvN: { fontFamily: Font.display, fontSize: 14, lineHeight: 20, color: '#fff' },
+  pvBody: { flex: 1 },
+  pvSlide: { flex: 1, justifyContent: 'center', paddingHorizontal: 14, paddingBottom: 20 },
   pvArt: { borderWidth: 2, borderColor: '#fff', borderRadius: 18, overflow: 'hidden' },
+  pvDots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  pvDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.35)' },
+  pvDotOn: { width: 18, backgroundColor: '#fff' },
 });

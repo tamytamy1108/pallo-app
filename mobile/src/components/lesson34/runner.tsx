@@ -15,6 +15,8 @@ import { savePos, stepKey, useSavedPos } from '@/state/progress';
 
 import { MatchBlock } from './blocks/match';
 import { BlindBlock, ChooseBlock, DuoBlock, ExplainBlock, ReadBlock, ScoreBlock } from './blocks/misc';
+import { ExprsBlock } from './blocks/exprs';
+import { FillBlock } from './blocks/fill';
 import { PickBlock } from './blocks/pick';
 import { SayBlock } from './blocks/say';
 import { leave34, useSoundToggle, useStepFinish, type StepCtx } from './finish';
@@ -193,6 +195,10 @@ function Block({ task }: { task: Task34 }) {
       return <ScoreBlock task={task} />;
     case 'read':
       return <ReadBlock task={task} />;
+    case 'exprs':
+      return <ExprsBlock task={task} />;
+    case 'fill':
+      return <FillBlock task={task} />;
   }
 }
 

@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import type { SurveyAnswers } from '@/components/meet/meet-store';
 import { Icon } from '@/components/meet/icons';
 import { PText } from '@/components/ui/text';

@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

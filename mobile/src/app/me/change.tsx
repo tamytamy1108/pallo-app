@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { BackHandler, Pressable, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { BackHandler, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { ChangeCalendar } from '@/components/account/change-calendar';
 import { AccountPage, Box, ChoiceChip, Icon, Lift, type IconName } from '@/components/account/parts';
 import { submitChangeRequest } from '@/components/account/store';

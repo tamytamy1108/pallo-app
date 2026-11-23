@@ -1,9 +1,11 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { offerChallenge } from '@/lib/chal-offer';
+import { Pressable } from '@/components/ui/pressable';
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Appear } from '@/components/ui/appear';
 import { StudyButton } from '@/components/ui/study-button';
@@ -62,6 +64,7 @@ export function MarkBtn({ en, ko, source }: { en: string; ko: string; source: st
       onPress={() => {
         const now = toggleExpression({ en, ko, source });
         sfx(now ? 'save' : 'tap');
+        if (now) offerChallenge(en);
         haptic('select');
       }}
       accessibilityRole="button"
@@ -132,7 +135,11 @@ export function AskBubble({ ask, soundOff }: { ask: Ask; soundOff: boolean }) {
             <Spk text={ask.en} soundOff={soundOff} />
           </View>
         </View>
-        <View style={s.tail} />
+        {/* 꼬리: 흰 삼각형이 말풍선 테두리를 덮고, 두 선 끝이 테두리 한가운데에서 만나 하나로 이어져요 */}
+        <Svg pointerEvents="none" width={16} height={24} viewBox="0 0 16 24" style={s.tail}>
+          <Path d="M15 -1 L2 12 L15 25 Z" fill={Colors.white} />
+          <Path d="M12 0.5 L1.8 12 L12 23.5" fill="none" stroke={Colors.ink} strokeWidth={2} strokeLinejoin="round" strokeLinecap="butt" />
+        </Svg>
       </View>
     </View>
   );
@@ -343,7 +350,7 @@ export function EndNote({ good, children }: { good: boolean; children: ReactNode
  * 결과 줄 글씨: 큰 제목 + 작은 한 줄 (상황 장면 정답 띠와 같은 크기).
  * title 이 없으면 rest 의 첫 '!' 또는 ' · ' 앞을 제목으로 써요.
  */
-export function EndMsg({ title, rest, good }: { title?: string; rest: string; good: boolean }) {
+export function EndMsg({ title, rest, good = false }: { title?: string; rest: string; good?: boolean }) {
   const [head, sub] = title ? [title, rest.replace(/^ · /, '')] : splitHead(rest);
   return (
     <View>
@@ -359,11 +366,8 @@ export function EndMsg({ title, rest, good }: { title?: string; rest: string; go
   );
 }
 function splitHead(text: string): [string, string] {
-  const bang = text.indexOf('! ');
-  if (bang > 0) return [text.slice(0, bang + 1), text.slice(bang + 2).replace(/^· /, '')];
-  const dot = text.indexOf(' · ');
-  if (dot > 0) return [text.slice(0, dot), text.slice(dot + 3)];
-  return [text, ''];
+  const m = text.match(/^(.+?[!?.])\s+(.+)$/) ?? text.match(/^(.+?)\s·\s(.+)$/);
+  return m ? [m[1], m[2].replace(/^· /, '')] : [text, ''];
 }
 
 /** 아래 줄 단추: 테두리만(다시 하기 · 넘어가기) + 노랑 넓은 단추 */
@@ -400,7 +404,7 @@ export const s = StyleSheet.create({
   pavT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
   bubWrap: { flex: 1, minWidth: 0, marginBottom: 28 },
   bub: { paddingVertical: 12, paddingLeft: 14, paddingRight: 52, borderWidth: 2, borderColor: Colors.ink, borderRadius: 20, backgroundColor: Colors.white, boxShadow: `3px 3px 0px ${Colors.ink}` },
-  tail: { position: 'absolute', left: -8, bottom: 16, width: 14, height: 14, backgroundColor: Colors.white, borderLeftWidth: 2, borderBottomWidth: 2, borderColor: Colors.ink, transform: [{ rotate: '45deg' }] },
+  tail: { position: 'absolute', zIndex: 2, left: -11, bottom: 14 },
   bubEn: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23.8, letterSpacing: -0.2 },
   bubKo: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.1, marginTop: 6 },
   bubSpk: { position: 'absolute', top: 10, right: 10 },
@@ -438,7 +442,7 @@ export const s = StyleSheet.create({
   mkT: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22 },
   mkCombo: { fontFamily: Font.display, fontSize: 12, lineHeight: 16, marginLeft: 'auto' },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  end: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, marginBottom: 12 },
+  end: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingTop: 8, marginBottom: 18 },
   endImg: { width: 88, height: 82 },
   endTitle: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, letterSpacing: -0.4 },
   endSub: { marginTop: 2, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18.75 },

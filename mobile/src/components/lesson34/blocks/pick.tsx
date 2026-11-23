@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { FeedbackBand } from '@/components/lesson/feedback-band';
 import { SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
@@ -144,11 +146,13 @@ function PickInner({ t, from }: { t: PickTask; from?: SayTask }) {
                 accessibilityState={{ selected: sel === i, disabled: done || miss.includes(i) }}
                 style={t.ox ? styles.oxCell : undefined}>
                 {({ pressed }) => (
-                  <View style={StyleSheet.flatten([styles.opt, t.ox && styles.oxOpt, isRight && styles.right, isWrong && styles.wrong, pressed && !done && styles.optOn])}>
-                    <PText style={t.ox ? styles.oxT : styles.optT} color={isWrong ? '#8A6170' : Colors.ink}>
-                      {t.opts[i]}
-                    </PText>
-                  </View>
+                  <Shake on={isWrong}>
+                    <View style={StyleSheet.flatten([styles.opt, t.ox && styles.oxOpt, isRight && styles.right, isWrong && styles.wrong, pressed && !done && styles.optOn])}>
+                      <PText style={t.ox ? styles.oxT : styles.optT} color={isWrong ? '#8A6170' : Colors.ink}>
+                        {t.opts[i]}
+                      </PText>
+                    </View>
+                  </Shake>
                 )}
               </Pressable>
             );
@@ -181,8 +185,20 @@ function PickInner({ t, from }: { t: PickTask; from?: SayTask }) {
   );
 }
 
+/** 틀린 보기: 좌우로 부르르 (Lv.1 단어 카드 흔들림과 같은 움직임) */
+function Shake({ on, children }: { on: boolean; children: ReactNode }) {
+  const x = useSharedValue(0);
+  const still = useReducedMotion();
+  useEffect(() => {
+    if (!on || still) return;
+    x.set(withSequence(withTiming(-8, { duration: 60 }), withTiming(8, { duration: 80 }), withTiming(-6, { duration: 70 }), withTiming(4, { duration: 60 }), withTiming(0, { duration: 60 })));
+  }, [on, still, x]);
+  const st = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
+  return <Animated.View style={st}>{children}</Animated.View>;
+}
+
 const styles = StyleSheet.create({
-  card: { gap: 10 },
+  card: { gap: 10, marginBottom: 14 },
   big: { fontFamily: 'Unbounded_800ExtraBold', fontSize: 24, lineHeight: 30, paddingTop: 6, paddingBottom: 2 },
   ex: { backgroundColor: '#F6F1E4', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, gap: 3, marginTop: 6 },
   exEn: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 21.75 },

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { AvatarStage } from '@/components/character/avatar';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';

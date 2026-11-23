@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { FeedbackBand } from '@/components/lesson/feedback-band';
 import { GripIcon } from '@/components/lesson/icons';
 import { GhostButton, L, TaskMsg, YellowButton } from '@/components/lesson/lesson-ui';

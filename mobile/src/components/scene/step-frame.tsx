@@ -1,9 +1,10 @@
 import * as Tts from 'expo-speech';
 import { router, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
 import { LessonTop } from '@/components/lesson/lesson-top';
 import { PText } from '@/components/ui/text';

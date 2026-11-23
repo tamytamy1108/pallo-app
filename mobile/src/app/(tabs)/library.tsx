@@ -1,8 +1,9 @@
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
 import { EmptyIsland } from '@/components/library/empty-island';
 import { LibHead, MapTabs, SitChips } from '@/components/library/lib-head';
 import { CurrPanel, EmptyBlock, PanelCard, SitPanel, levelProgress } from '@/components/library/lib-panel';

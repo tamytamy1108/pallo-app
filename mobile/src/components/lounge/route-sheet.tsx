@@ -1,4 +1,7 @@
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
+
+import { SCREEN } from '@/lib/transitions';
 import { useState } from 'react';
 
 /*
@@ -8,7 +11,7 @@ import { useState } from 'react';
 
 /** 투명 화면 옵션 (라운지가 뒤에 그대로 보여요) */
 export function RouteSheetScreen() {
-  return <Stack.Screen options={{ presentation: 'transparentModal', animation: 'none', contentStyle: { backgroundColor: 'transparent' } }} />;
+  return <Stack.Screen options={SCREEN.overlay} />;
 }
 
 /** close() 를 부르면 시트가 내려가고, 움직임이 끝나면 뒤로 가요 */

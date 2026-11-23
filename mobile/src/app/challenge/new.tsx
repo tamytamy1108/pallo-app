@@ -1,6 +1,8 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useRef, useState } from 'react';
 
+import { SCREEN } from '@/lib/transitions';
 import { NewChallengeSheet } from '@/components/challenge/new-challenge';
 import type { Challenge } from '@/data/challenge';
 
@@ -24,7 +26,7 @@ export default function NewChallengeScreen() {
   };
   return (
     <>
-      <Stack.Screen options={{ presentation: 'transparentModal', animation: 'none', contentStyle: { backgroundColor: 'transparent' } }} />
+      <Stack.Screen options={SCREEN.overlay} />
       <NewChallengeSheet
         open={open}
         preset={preset}

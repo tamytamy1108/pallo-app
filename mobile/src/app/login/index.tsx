@@ -1,9 +1,12 @@
 import { Image } from 'expo-image';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { SocialButton } from '@/components/auth/social-buttons';
 import { Logo } from '@/components/logo';
 import { Appear } from '@/components/ui/appear';
@@ -32,7 +35,7 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }]}>
-      <Stack.Screen options={{ animation: 'fade', gestureEnabled: false }} />
+      <Stack.Screen options={SCREEN.fade} />
       <View style={styles.hero}>
         <Appear kind="reactHop">
           <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.char} contentFit="contain" accessible={false} />

@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { SheetDesc } from '@/components/common/sheet-parts';
 import { guardMember } from '@/components/common/trial-guide';

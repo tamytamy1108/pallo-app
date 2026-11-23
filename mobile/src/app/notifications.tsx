@@ -1,8 +1,12 @@
-import { router, Stack, type Href } from 'expo-router';
+import { router, type Href } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
 import { MemberFace } from '@/components/home/member-face';
 import { markAllNotiRead, markNotiRead, useNotiRead, useUnreadCount } from '@/components/home/noti-state';
@@ -31,11 +35,9 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <View style={styles.top}>
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="뒤로" style={styles.iconBtn}>
-          <LineIcon d={ICON_PATH.back} size={22} />
-        </Pressable>
+        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
         <PText style={styles.topTitle} accessibilityRole="header">
           알림
         </PText>
@@ -112,7 +114,7 @@ function Row({ n, unread, onPress }: { n: Noti; unread: boolean; onPress: () => 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   // .lg-det.mp .dtop.mp-top: 크림 바탕 · 아래 1.5px 선
-  top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 2, paddingBottom: 8, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: Colors.line },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: Colors.line },
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   topTitle: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
   sp: { flex: 1 },

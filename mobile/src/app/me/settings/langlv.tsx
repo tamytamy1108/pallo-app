@@ -1,7 +1,8 @@
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, ChoiceChip, Head, Icon } from '@/components/account/parts';
 import { requestLevelChange, useLevelRequest, useSettings } from '@/components/account/store';
 import { Button } from '@/components/ui/button';

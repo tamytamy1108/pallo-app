@@ -101,7 +101,7 @@ export const STUDY_STEPS: Record<StudyKind, Record<StageKey, Step[]>> = {
   topic: {
     pre: [
       { id: 'kwl', t: 'KEYWORDS 익히기', d: '키워드 12개 · 예문 듣고 뜻 고르기', min: 4, xp: 5 },
-      { id: 'tread', t: 'TOPIC 지문 읽기', d: 'Forgotten Name · 듣고 읽기', min: 4, xp: 5 },
+      { id: 'tread', t: 'JOURNAL 지문 읽기', d: 'Forgotten Name · 듣고 읽기', min: 4, xp: 5 },
       { id: 'match', t: 'USEFUL EXPRESSIONS', d: '지문 표현 6개 짝 맞추기', min: 2, xp: 5 },
       { id: 'pick6', t: '오늘의 질문 미리 보기', d: '질문 6개 훑고 3개 별표 · 답은 본학습에서', min: 2, xp: 5 },
     ],
@@ -112,7 +112,7 @@ export const STUDY_STEPS: Record<StudyKind, Record<StageKey, Step[]>> = {
     ],
     post: [
       { id: 'quiz', t: '스피킹 퀴즈', d: '키워드 · 표현 문장을 한국어 보고 영어로', min: 5, xp: 10 },
-      { id: 'journal', t: 'JOURNAL · 말하는 일기', d: '요즘 내 일상 · AI가 현재형을 고쳐 정리 · 다시 읽기', min: 6, xp: 15 },
+      { id: 'journal', t: 'JOURNAL · 말하는 일기', d: '요즘 내 일상 · 빈칸에 표현 넣어 일기 완성', min: 6, xp: 15 },
       { id: 'ba', t: 'Before / After', d: 'AI 대화 때 답과 지금 답 비교', min: 3, xp: 10 },
     ],
   },

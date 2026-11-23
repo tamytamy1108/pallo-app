@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Icon, Lift } from '@/components/account/parts';
 import { DiaryList } from '@/components/account/diary-list';
 import { NoteRow, noteExpression, savedNoteItems } from '@/components/account/pro-note-parts';

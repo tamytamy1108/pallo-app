@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';

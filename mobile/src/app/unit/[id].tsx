@@ -1,9 +1,13 @@
-import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { BackButton } from '@/components/ui/back-button';
+import { Pressable } from '@/components/ui/pressable';
+import { SCREEN } from '@/lib/transitions';
 import { LessonSheet } from '@/components/library/lesson-sheet';
 import { openStep } from '@/components/library/open-step';
 import { StepPopup } from '@/components/library/step-popup';
@@ -61,7 +65,7 @@ function UnitBody({ L, ls }: { L: StudyLevel; ls: Lesson }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Stack.Screen options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen options={SCREEN.push} />
       <TopBar title={`LV.${L.lv} ${L.series}`} onList={() => setSheet(true)} />
       <ScrollView contentContainerStyle={styles.body}>
         <UnitHero L={L} ls={ls} />
@@ -100,11 +104,7 @@ function PopupFor({ stepK, info, onClose, onGo }: { stepK: string; info: { kick:
 function TopBar({ title, onList }: { title: string; onList: () => void }) {
   return (
     <View style={styles.top}>
-      <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="라이브러리로" style={styles.backBtn}>
-        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
-          <Path d="m15 6-6 6 6 6" />
-        </Svg>
-      </Pressable>
+      <BackButton onPress={back} label="라이브러리로" />
       {title ? (
         <Pressable
           onPress={() => {
@@ -195,7 +195,7 @@ function StepCard({ L, ls, s, i, stage, next, onPress }: { L: StudyLevel; ls: Le
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 16, paddingHorizontal: 16, paddingBottom: 10 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 8, paddingHorizontal: 12, paddingBottom: 10 },
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   mid: { flex: 1, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 },
   midText: { flexShrink: 1, fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },

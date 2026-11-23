@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
+import { Pressable } from '@/components/ui/pressable';
 import { CloseIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';

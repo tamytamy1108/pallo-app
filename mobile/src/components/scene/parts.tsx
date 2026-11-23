@@ -2,10 +2,12 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Tts from 'expo-speech';
 import { useEffect, type ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Modal, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { offerChallenge } from '@/lib/chal-offer';
+import { Pressable } from '@/components/ui/pressable';
 import { Appear } from '@/components/ui/appear';
 import { StudyButton } from '@/components/ui/study-button';
 import { PText } from '@/components/ui/text';
@@ -135,6 +137,7 @@ export function SaveBtn({ en, ko, source, shape = 'round' }: { en: string; ko: s
   const toggle = () => {
     const saved = toggleExpression({ en, ko, source });
     sfx(saved ? 'save' : 'tap');
+    if (saved) offerChallenge(en);
     haptic('select');
   };
   return (

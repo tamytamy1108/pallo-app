@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { FieldLabel, keepAll, SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
 import { TextField } from '@/components/ui/field';

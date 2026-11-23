@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { Pressable } from '@/components/ui/pressable';
 import { Peek, useStreakCheer } from '@/components/lesson/peek';
 import { showToast } from '@/components/ui/toast';
 import { PText } from '@/components/ui/text';

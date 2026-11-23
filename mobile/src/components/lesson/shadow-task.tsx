@@ -1,11 +1,13 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
+import { offerChallenge } from '@/lib/chal-offer';
+import { Pressable } from '@/components/ui/pressable';
 import { AskBubble, MyTurnBubble } from '@/components/lesson/bubbles';
 import { BookmarkIcon, CardsIcon, MicIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { Peek } from '@/components/lesson/peek';
@@ -291,7 +293,7 @@ export function ShadowTask({
     const on = toggleExpression({ en: task.en, ko: task.para ? '' : task.ko, source });
     if (on) {
       sfx('save');
-      showToast('내 표현함에 문장을 저장했어요');
+      offerChallenge(task.en, '내 표현함에 문장을 저장했어요');
     } else showToast('표현함에서 뺐어요');
   };
 
