@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -7,6 +7,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, hashId, type Club } from '@/data/meet';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { AlbumThumb } from '../album-art';
 import { Icon } from '../icons';
@@ -58,7 +59,7 @@ function AlbumViewer({ list, who, start, onClose }: { list: ReturnType<typeof cl
   const [i, setI] = useState(0);
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.pv} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
         <View style={[styles.pvTop, { paddingTop: insets.top + 10 }]}>
           <PText style={styles.pvN}>{`${i + 1} / ${list.length}`}</PText>
@@ -79,7 +80,7 @@ function AlbumViewer({ list, who, start, onClose }: { list: ReturnType<typeof cl
           </ScrollView>
         ) : null}
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

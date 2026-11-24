@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   field: { gap: 6 },
   label: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
   // .lg-fl input { height: 46px; border-radius: 14px; padding: 0 14px; font-size: 14px; font-weight: 700 }
-  input: { height: 46, paddingHorizontal: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  input: { height: 46, paddingHorizontal: 14, paddingVertical: 0, includeFontPadding: false, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   round: { borderRadius: 23, paddingHorizontal: 16, fontFamily: Font.body600 },
   // 한 줄 높이(46)에서 시작해 길게 쓰면 늘어나는 칸
   oneToMany: { height: undefined, minHeight: 46, paddingTop: 11, paddingBottom: 11, lineHeight: 20 },

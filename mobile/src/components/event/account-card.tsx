@@ -16,7 +16,7 @@ export function AccountCard({ acct, note = '한국어 이름으로 신청해주�
           {bank} · 예금주 {holder}
         </PText>
         <PText style={styles.b}>{no}</PText>
-        <PText style={[styles.n, keepAll]}>{note}</PText>
+        {note ? <PText style={[styles.n, keepAll]}>{note}</PText> : null}
       </View>
       <CopyBtn text={`${bank} ${no}`} msg="계좌번호를 복사했어요" label="복사" />
     </View>
@@ -30,7 +30,7 @@ export function NumberCard({ top, no, note }: { top: string; no: string; note: s
       <View style={styles.tx}>
         <PText style={styles.s}>{top}</PText>
         <PText style={styles.b}>{no}</PText>
-        <PText style={[styles.n, keepAll]}>{note}</PText>
+        {note ? <PText style={[styles.n, keepAll]}>{note}</PText> : null}
       </View>
       <CopyBtn text={no} msg="번호를 복사했어요" label="번호 복사" />
     </View>

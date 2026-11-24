@@ -33,6 +33,7 @@ import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
+import { useTabReselect } from '@/lib/tab-reselect';
 
 const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
 
@@ -51,6 +52,7 @@ export default function HomeScreen() {
   const plan = useMe((m) => m.plan);
   const unread = useUnreadCount();
   const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('home', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const mapY = useRef(0);
 
   // 출석: 시트(사전 출석 · 출석 · 완료) → QR 스캐너 (프로토타입 openSheet · openScanner)

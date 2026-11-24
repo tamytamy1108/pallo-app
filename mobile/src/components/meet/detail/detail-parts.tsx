@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
@@ -11,6 +12,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 import { Icon, type IconName } from '../icons';
 import { CrownFace } from '../member-face';
@@ -21,13 +23,11 @@ import { LgButton } from '../parts';
  * 상세 화면 조각들 (프로토타입 .lg-drows · .lg-drow · .dsec · .ddesc · .lg-mlist · .lg-mrow · .lg-hiform · .dnote · .lg-dcta).
  */
 
-/** 복사 (웹은 클립보드에 넣고, 앱은 expo-clipboard 가 생기면 넣어요) */
+/** 복사: 클립보드에 넣고 알려 줘요 (폰 · 웹 모두) */
 export function copyText(text: string, msg: string) {
-  if (Platform.OS === 'web') {
-    const nav = (globalThis as { navigator?: { clipboard?: { writeText: (t: string) => Promise<void> } } }).navigator;
-    nav?.clipboard?.writeText(text).catch(() => {});
-  }
-  showToast(msg);
+  Clipboard.setStringAsync(text)
+    .then(() => showToast(msg))
+    .catch(() => showToast('복사하지 못했어요'));
 }
 
 /** 정보 줄 묶음 (흰 칸 · 잉크 2px · 둥글기 18) */
@@ -75,14 +75,20 @@ export function DSec({ children, right }: { children: ReactNode; right?: ReactNo
   );
 }
 
-/** 소개 (8줄 넘으면 더보기 / 접기) */
+/**
+ * 소개 (길면 더보기 / 접기). 접혀 있을 땐 첫 문단까지만 보여요
+ * — 줄 수로 자르면 '[이렇게 진행돼요]' 같은 제목만 덩그러니 남아서요.
+ */
 export function Desc({ text }: { text: string }) {
   const [more, setMore] = useState(false);
   const long = text.length > 220;
+  const cut = text.indexOf('\n\n');
+  const firstPara = cut > 0 && cut <= 400 ? text.slice(0, cut).trimEnd() : null;
+  const shown = long && !more && firstPara ? firstPara : text;
   return (
     <View>
-      <PText numberOfLines={long && !more ? 8 : undefined} style={[styles.desc, keepAll]}>
-        {text}
+      <PText numberOfLines={long && !more && !firstPara ? 8 : undefined} style={[styles.desc, keepAll]}>
+        {shown}
       </PText>
       {long ? (
         <Pressable onPress={() => setMore(!more)} accessibilityRole="button" style={styles.dmore} hitSlop={6}>
@@ -211,7 +217,7 @@ export function SafetyNote() {
 
 /** 찜 (하트 · 54 × 54) */
 export function SaveBtn({ on, onPress }: { on: boolean; onPress: () => void }) {
-  return <LgButton variant={on ? 'on' : 'wh'} height={54} width={57} paddingH={0} shadow={3} icon={<Icon name="heart" size={22} fill={on ? Colors.rosePink : 'none'} />} accessibilityLabel="찜하기" pressedState={on} onPress={onPress} radius={20} />;
+  return <LgButton variant={on ? 'on' : 'wh'} height={54} width={57} paddingH={0} shadow={3} icon={<HeartPop on={on}><Icon name="heart" size={22} fill={on ? Colors.rosePink : 'none'} /></HeartPop>} accessibilityLabel="찜하기" pressedState={on} onPress={onPress} radius={20} />;
 }
 
 /** 참가비 (아래 고정 바: 작은 '참가비 ~~원래가~~' + 큰 금액) */
@@ -261,7 +267,7 @@ const styles = StyleSheet.create({
   mallT: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 19, color: Colors.inkSub },
   hi0: { marginTop: 8, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 19, color: Colors.inkSub },
   hiform: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 },
-  hiIn: { flex: 1, minWidth: 0, minHeight: 46, paddingHorizontal: 14, paddingVertical: 11, lineHeight: 20, borderRadius: 14, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  hiIn: { flex: 1, minWidth: 0, minHeight: 46, paddingHorizontal: 14, paddingVertical: 11, lineHeight: 20, includeFontPadding: false, borderRadius: 14, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   hia: { paddingHorizontal: 4, height: 44, justifyContent: 'center' },
   hiaT: { fontFamily: Font.body800, fontSize: 12.5, color: Colors.inkSub },
   dnote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 14 },

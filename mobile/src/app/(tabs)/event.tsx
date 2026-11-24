@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -18,6 +18,8 @@ import { Font } from '@/constants/fonts';
 import { Colors, TabBarSpace } from '@/constants/theme';
 import { EVENT_FILTERS, EVENTS, type EventKind } from '@/data/events';
 import { useMe } from '@/state/me';
+import { useTabReselect } from '@/lib/tab-reselect';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /**
  * 이벤트 탭 (docs/pages/06-event.md): 지점 · 본사가 여는 파티 · 클래스 · 여행.
@@ -28,6 +30,8 @@ import { useMe } from '@/state/me';
 const EVENT_PEEK = 640;
 
 export default function EventScreen() {
+  const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('event', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const role = useMe((m) => m.role);
   const [branch, setBranch] = useState('전체');
   const [kind, setKind] = useState<EventKind | 'all'>('all');
@@ -41,13 +45,13 @@ export default function EventScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.page} onScroll={() => checkScrollLock('event')} scrollEventThrottle={64}>
+      <ScrollView ref={scroll} contentContainerStyle={styles.page} onScroll={() => checkScrollLock('event')} scrollEventThrottle={64}>
         <View style={styles.hd}>
           <PText variant="headline" accessibilityRole="header" style={styles.h1}>
             이벤트
           </PText>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
+        <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
           <BranchSelect value={branch} onChange={setBranch} />
           <View style={styles.sep} />
           {EVENT_FILTERS.map(([k, l]) => {
@@ -58,7 +62,7 @@ export default function EventScreen() {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </ChipScroll>
         {/* 비회원은 배너 · 이벤트 한두 개까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
         <View style={styles.feedWrap}>
           <ScrollLock screen="event" peek={EVENT_PEEK}>

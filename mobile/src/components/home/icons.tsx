@@ -49,7 +49,7 @@ export function CoinIcon({ size = 30 }: { size?: number }) {
     <Svg width={size} height={size} viewBox="0 0 48 48">
       <Circle cx={24} cy={24} r={19} fill={Colors.yellow} stroke={Colors.ink} strokeWidth={2.8} />
       <Circle cx={24} cy={24} r={13.5} fill="none" stroke={Colors.ink} strokeWidth={1.6} />
-      <Svg x={14} y={15.5} width={20} height={20 * 0.887} viewBox="0 0 426.31 377.94">
+      <Svg x={13.48} y={14.98} width={21.03} height={18.77} viewBox="-11 -11 448.31 399.94">
         <Path d={SYMBOL} fill={Colors.purple} stroke={Colors.ink} strokeWidth={22} />
       </Svg>
     </Svg>

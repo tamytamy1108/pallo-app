@@ -28,6 +28,8 @@ import { Colors } from '@/constants/theme';
 import { ALL_SUBS, type AbroadPerson, branchOk, COM_SUBS, type FeedItem, LG_TABS, type LoungeTab, TRIP_SUBS } from '@/data/lounge';
 import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge } from '@/data/lounge-store';
 import { EASE } from '@/lib/motion';
+import { useTabReselect } from '@/lib/tab-reselect';
+import { useCenterChip } from '@/lib/center-chip';
 
 /**
  * 라운지 (docs/pages/04-lounge.md · 프로토타입 renderLounge · bindLounge, 탭 id azit).
@@ -55,6 +57,7 @@ export default function LoungeScreen() {
   const region = useLounge((s) => s.region);
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('lounge', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const tabsY = useRef(0);
   const [scrolled, setScrolled] = useState(false);
   const [sheet, setSheetRaw] = useState<null | 'create' | 'trip' | 'abroad'>(null);
@@ -138,13 +141,21 @@ export default function LoungeScreen() {
 
 /** 밑줄 탭 · 오른쪽 끝을 흐리게 해서 더 넘길 수 있다는 표시 (프로토타입 #lgTabs) */
 function Tabs({ tab, onPick }: { tab: LoungeTab; onPick: (k: LoungeTab) => void }) {
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
   return (
     <View style={styles.tabsWrap}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+      <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
         {LG_TABS.map(([k, l]) => {
           const on = tab === k;
           return (
-            <Pressable key={k} onPress={() => onPick(k)} accessibilityRole="tab" accessibilityState={{ selected: on }} hitSlop={{ top: 4, bottom: 4 }} style={[styles.tab, on && styles.tabOn]}>
+            <Pressable
+              key={k}
+              onLayout={(e) => onChip(k, e)}
+              onPress={() => {
+                centerChip(k);
+                onPick(k);
+              }}
+              accessibilityRole="tab" accessibilityState={{ selected: on }} hitSlop={{ top: 4, bottom: 4 }} style={[styles.tab, on && styles.tabOn]}>
               <PText style={[styles.tabText, on && { color: Colors.ink }]}>{l}</PText>
             </Pressable>
           );
@@ -164,8 +175,9 @@ function SubRow({ tab, branchBtn }: { tab: LoungeTab; branchBtn: ReactNode }) {
       : tab === 'trip'
         ? TRIP_SUBS.map(([v, l]) => ({ v, l, on: sub.trip === v, pick: () => setTripMode(v) }))
         : ALL_SUBS.map(([v, l]) => ({ v, l, on: sub.all === v, pick: () => setAllSub(v) }));
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subs}>
+    <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subs}>
       {tab === 'trip' ? null : (
         <>
           {branchBtn}
@@ -173,7 +185,14 @@ function SubRow({ tab, branchBtn }: { tab: LoungeTab; branchBtn: ReactNode }) {
         </>
       )}
       {chips.map((c) => (
-        <Pressable key={c.v} onPress={c.pick} accessibilityRole="button" accessibilityState={{ selected: c.on }} hitSlop={7} style={({ pressed }) => [styles.chip, c.on && styles.chipOn, pressed && { transform: [{ scale: 0.96 }] }]}>
+        <Pressable
+          key={c.v}
+          onLayout={(e) => onChip(c.v, e)}
+          onPress={() => {
+            centerChip(c.v);
+            c.pick();
+          }}
+          accessibilityRole="button" accessibilityState={{ selected: c.on }} hitSlop={7} style={({ pressed }) => [styles.chip, c.on && styles.chipOn, pressed && { transform: [{ scale: 0.96 }] }]}>
           <PText style={[styles.chipText, c.on && { color: Colors.purple }]}>{c.l}</PText>
         </Pressable>
       ))}

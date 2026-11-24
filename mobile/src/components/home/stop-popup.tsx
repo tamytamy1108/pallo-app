@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { css, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -9,6 +9,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { LESSON_STEPS } from '@/data/mock';
 import { useIsDone, useSavedPos } from '@/state/progress';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { CLOSE_PATH, CoinIcon, LineIcon } from './icons';
 import { WideButton } from './parts';
@@ -64,7 +65,7 @@ export function StopPopup({
 
   if (!shown) return null;
   return (
-    <Modal visible={!!step} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
+    <LayerModal visible={!!step} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
       <View style={styles.root}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel="닫기" />
@@ -109,7 +110,7 @@ export function StopPopup({
           </View>
         </Animated.View>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

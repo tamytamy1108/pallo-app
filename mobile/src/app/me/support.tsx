@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
@@ -14,6 +14,8 @@ import { Colors } from '@/constants/theme';
 import { ASK_TYPES, BRANCH_PHONE, FAQ, FAQ_CATS, type Ask } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
+import { ChipScroll } from '@/components/ui/chip-scroll';
+import { openTel } from '@/lib/open-out';
 
 /**
  * 고객센터 (프로토타입 helpHTML · askHTML).
@@ -42,7 +44,7 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
   const ways: [IconName, string, string, () => void][] = [
     ['edit', '1:1 문의하기', `보통 하루 안에 답해요 · 내 문의 ${asks.length}건`, ask],
     ['cmt', '카카오톡 상담', '평일 10:00 ~ 19:00', () => showToast('카카오톡 PALLO 채널로 이어져요')],
-    ['phone', '내 지점 전화', `${me.branch} · ${BRANCH_PHONE}`, () => showToast(`${me.branch}에 전화를 걸어요`)],
+    ['phone', '내 지점 전화', `${me.branch} · ${BRANCH_PHONE}`, () => openTel(BRANCH_PHONE)],
   ];
 
   return (
@@ -51,7 +53,7 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
         <Icon name="search" size={16} />
         <TextInput value={q} onChangeText={setQ} placeholder="궁금한 걸 찾아요 · 예) 환불, 연기" placeholderTextColor="#9B94A6" autoComplete="off" accessibilityLabel="자주 묻는 질문 찾기" style={styles.findIn} />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsWrap} contentContainerStyle={styles.chips}>
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.chipsWrap} contentContainerStyle={styles.chips}>
         {FAQ_CATS.map((k) => {
           const on = cat === k;
           return (
@@ -70,7 +72,7 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ChipScroll>
       {L.length ? (
         L.map(([c, t, a]) => {
           const on = openQ === t;
@@ -202,7 +204,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   body: { paddingTop: 14, paddingBottom: 40 },
   find: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, paddingHorizontal: 16, borderRadius: 24, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
-  findIn: { flex: 1, height: 44, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  findIn: { flex: 1, height: 44, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   chipsWrap: { marginTop: 8, flexGrow: 0 },
   chips: { gap: 6 },
   chip: { height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, justifyContent: 'center' },

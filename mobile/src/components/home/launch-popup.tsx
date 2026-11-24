@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { popupsQuery } from '@/api/queries';
@@ -14,6 +14,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { LaunchPopup as Popup } from '@/data/home';
 import { createStore } from '@/lib/store';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { nowDate } from './attendance';
 
@@ -77,7 +78,7 @@ function PopupHost({ popups }: { popups: Popup[] }) {
   const step = (by: number) => setI((k) => (k + by + list.length) % list.length);
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={close} statusBarTranslucent>
+    <LayerModal visible transparent animationType="none" onRequestClose={close} statusBarTranslucent>
       <Animated.View style={[styles.wrap, dim]} accessibilityViewIsModal accessibilityLabel="공지 팝업">
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel="닫기" />
         <View style={styles.cardBox}>
@@ -152,7 +153,7 @@ function PopupHost({ popups }: { popups: Popup[] }) {
           </View>
         </View>
       </Animated.View>
-    </Modal>
+    </LayerModal>
   );
 }
 

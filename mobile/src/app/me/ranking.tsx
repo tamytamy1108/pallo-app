@@ -38,7 +38,7 @@ function Trophy({ size = 30 }: { size?: number }) {
       <Path d="M13 6h22v10a11 11 0 0 1-22 0z" fill="#FFE200" stroke={INK} strokeWidth={2.8} strokeLinejoin="round" />
       <Path d="M21 27h6v7h-6z" fill="#FFE200" stroke={INK} strokeWidth={2.4} />
       <Rect x={14} y={34} width={20} height={8} rx={3} fill="#493087" stroke={INK} strokeWidth={2.6} />
-      <Svg x={18.5} y={9.5} width={11} height={11 * 0.887} viewBox="0 0 426.31 377.94">
+      <Svg x={18.22} y={9.22} width={11.57} height={10.32} viewBox="-11 -11 448.31 399.94">
         <Path fill="#fff" stroke={INK} strokeWidth={22} d={SYMBOL} />
       </Svg>
     </Svg>

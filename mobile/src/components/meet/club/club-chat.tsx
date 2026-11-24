@@ -126,8 +126,8 @@ const styles = StyleSheet.create({
   p: { flexShrink: 1, fontFamily: Font.body600, fontSize: 14, lineHeight: 20.3, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: Colors.line, borderRadius: 16, borderTopLeftRadius: 4, backgroundColor: Colors.white, overflow: 'hidden' },
   pMe: { backgroundColor: Colors.yellow, borderColor: Colors.ink, borderTopLeftRadius: 16, borderTopRightRadius: 4 },
   time: { flexShrink: 0, fontFamily: Font.body700, fontSize: 10.5, lineHeight: 15, color: Colors.inkSub },
-  // 길게 쓰면 칸이 위로 늘고 보내기는 아래 줄에 맞춰요
+  // 길게 쓰면 칸이 위로 늘고 보내기는 아래 줄에 맞춰요 · 안드로이드 글자 잘림 없게 includeFontPadding 끔
   in: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 14 },
-  input: { flex: 1, minWidth: 0, minHeight: 46, borderWidth: 1.5, borderColor: Colors.line, borderRadius: 23, paddingHorizontal: 16, paddingVertical: 11, fontFamily: Font.body700, fontSize: 14, lineHeight: 20, backgroundColor: Colors.white, color: Colors.ink },
+  input: { flex: 1, minWidth: 0, minHeight: 46, borderWidth: 1.5, borderColor: Colors.line, borderRadius: 23, paddingHorizontal: 16, paddingVertical: 11, includeFontPadding: false, fontFamily: Font.body700, fontSize: 14, lineHeight: 20, backgroundColor: Colors.white, color: Colors.ink },
   send: { width: 46, height: 46, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
 });

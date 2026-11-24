@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ScrollView, type ScrollViewInstance, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { applyDevMe } from '@/components/home/dev';
@@ -28,6 +28,7 @@ import { clearSavedData } from '@/lib/store';
 import { useSavedCount } from '@/state/expressions';
 import { canUse, isMember } from '@/state/access';
 import { useMe } from '@/state/me';
+import { useTabReselect } from '@/lib/tab-reselect';
 
 // 마이 B 화면(설정 · 고객센터 · 이용권)은 아직 없을 수 있어서 주소 타입을 넓혀 둬요
 const go = (href: string) => () => {
@@ -43,6 +44,8 @@ const go = (href: string) => () => {
 const MY_PEEK = 300;
 
 export default function MyScreen() {
+  const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('my', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const { width } = useWindowDimensions();
   // 개발용 ?link= · ?name= (웹에서만)
   const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string }>();
@@ -66,7 +69,7 @@ export default function MyScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.body} onScroll={() => checkScrollLock('my')} scrollEventThrottle={64}>
+      <ScrollView ref={scroll} contentContainerStyle={styles.body} onScroll={() => checkScrollLock('my')} scrollEventThrottle={64}>
         <Appear kind="rise" style={styles.head}>
           <PText variant="headline" accessibilityRole="header">
             마이

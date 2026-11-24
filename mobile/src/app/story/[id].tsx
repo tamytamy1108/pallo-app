@@ -3,10 +3,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, type TextInputInstance, View } from 'react-native';
+import { StyleSheet, type TextInputInstance, useWindowDimensions, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
@@ -26,6 +27,8 @@ import { Colors } from '@/constants/theme';
 import { branchOk, LG_C, LG_SCAT, type Story, STORY_CATS } from '@/data/lounge';
 import { addStoryComment, dropStory, getLounge, isRecent, markSeen, restoreStory, setStoryPin, storyComments, type StoryGroup, storyGroups, toggleStoryLike, useLounge } from '@/data/lounge-store';
 import { useMe } from '@/state/me';
+import { HeartPop } from '@/components/ui/heart-pop';
+import { useKeyboardHeight, useKeyboardShown } from '@/lib/keyboard';
 
 const DUR = 5000;
 
@@ -38,6 +41,9 @@ export default function StoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const me = useMe();
   const insets = useSafeAreaInsets();
+  // 키보드가 올라오면 홈 바 자리 여백은 빼요 (입력칸과 키보드 사이가 뜨지 않게)
+  const kb = useKeyboardShown();
+  const kbH = useKeyboardHeight();
   // 연 순간의 묶음 순서를 그대로 써요 (보는 동안 '본 것'이 바뀌어도 순서가 흔들리지 않게)
   const [groups, setGroups] = useState<StoryGroup[]>(() => {
     const s = getLounge();
@@ -105,6 +111,39 @@ export default function StoryScreen() {
     if (now && !was) cancelAnimation(prog);
     if (!now && was) run(prog.get());
   };
+  // ---- 아래로 끌어 닫기 (인스타 스토리처럼) ----
+  const { height: winH } = useWindowDimensions();
+  const pullY = useSharedValue(0);
+  // 끄는 동안은 진행 막대를 멈춰요
+  const [pulling, setPulling] = useState(false);
+  useEffect(() => {
+    pause('pull', pulling);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pulling]);
+  const pullDown = Gesture.Pan()
+    .activeOffsetY(14)
+    .failOffsetX([-24, 24])
+    .onStart(() => {
+      scheduleOnRN(setPulling, true);
+    })
+    .onUpdate((e) => {
+      pullY.set(Math.max(0, e.translationY));
+    })
+    .onEnd((e) => {
+      if (e.translationY > 110 || e.velocityY > 900) {
+        pullY.set(withTiming(winH, { duration: 220 }, (done) => {
+          if (done) scheduleOnRN(close);
+        }));
+      } else {
+        pullY.set(withTiming(0, { duration: 200 }));
+        scheduleOnRN(setPulling, false);
+      }
+    });
+  const pullStyle = useAnimatedStyle(() => {
+    const y = pullY.get();
+    return { transform: [{ translateY: y }, { scale: 1 - Math.min(y / winH, 1) * 0.12 }], borderRadius: y > 0 ? 24 : 0 };
+  });
+
   useEffect(() => {
     if (!st) return;
     markSeen(st.id);
@@ -158,8 +197,11 @@ export default function StoryScreen() {
   const top = Math.max(insets.top, 16);
   const recent = isRecent(st);
   const manager = me.role === 'manager';
+  // 노란 · 밝은 배경에서는 노란 글씨가 안 보여요 → 흰 글씨로
+  const accent = { color: isDarkBg(st.art[0]) ? Colors.yellow : '#fff' };
   return (
-    <View style={[styles.root, { backgroundColor: c.bg }]}>
+    <GestureDetector gesture={pullDown}>
+    <Animated.View style={[styles.root, { backgroundColor: c.bg }, pullStyle]}>
       <Stack.Screen options={{ ...SCREEN.fade, cardStyle: { ...CARD, backgroundColor: c.bg } }} />
       {/* 사진이 화면을 꽉 채우고 (예시는 큰 글씨 그림), 위 · 아래만 살짝 어둡게 */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: st.art[0] }]}>
@@ -169,7 +211,7 @@ export default function StoryScreen() {
       {st.img ? null : <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.char} contentFit="contain" pointerEvents="none" />}
 
       <View style={[styles.content, { paddingBottom: 190 + insets.bottom }]} pointerEvents="none">
-        <PText style={styles.kick}>
+        <PText style={[styles.kick, accent]}>
           {c.name}
           {st.pin ? ' · 매니저 고정' : ''}
         </PText>
@@ -214,8 +256,8 @@ export default function StoryScreen() {
           <View style={styles.nm}>
             <View style={styles.nmRow}>
               <PText style={styles.name}>{st.mine ? '내 스토리' : st.who}</PText>
-              {fresh ? <PText style={styles.newtag}>● 새 글</PText> : null}
-              {st.role ? <PText style={styles.role}>{st.role}</PText> : null}
+              {fresh ? <PText style={[styles.newtag, accent]}>● 새 글</PText> : null}
+              {st.role ? <PText style={[styles.role, accent]}>{st.role}</PText> : null}
             </View>
             <PText style={styles.small} numberOfLines={1}>
               {group.kind === 'c' ? `${c.name} 하이라이트 ${pos.i + 1}/${group.list.length}` : c.name} · {st.br} · {st.time}
@@ -227,7 +269,8 @@ export default function StoryScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.foot, { paddingBottom: 22 + insets.bottom }]} pointerEvents="box-none">
+      {/* 댓글 줄: 키보드가 올라오면 그 높이만큼 위로 (가리지 않게) */}
+      <View style={[styles.foot, { bottom: kbH, paddingBottom: kb ? 12 : 22 + insets.bottom }]} pointerEvents="box-none">
         {st.mine ? (
           <View style={styles.mgr}>
             <LgIcon name="cal" size={15} color="#fff" />
@@ -280,16 +323,17 @@ export default function StoryScreen() {
             </Pressable>
           </View>
           <SquareButton label="좋아요" selected={liked} onPress={() => toggleStoryLike(st.id)}>
-            <LgIcon name="heart" size={20} fill={liked ? LG_C.pk : 'none'} />
+            <HeartPop on={liked}><LgIcon name="heart" size={20} fill={liked ? LG_C.pk : 'none'} /></HeartPop>
           </SquareButton>
           <SquareButton label="댓글 보기" onPress={() => openCmts(true)}>
             <LgIcon name="cmt" size={20} />
           </SquareButton>
         </View>
-      </KeyboardAvoidingView>
+      </View>
 
       <CommentsSheet open={cmtOpen} onClose={() => openCmts(false)} comments={cmts} onSend={(t) => guardMember(() => addStoryComment(st.id, me.name, t), '댓글을 달려면')} />
-    </View>
+    </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -341,9 +385,9 @@ const styles = StyleSheet.create({
   mgrBtnText: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
   sf: { flexDirection: 'row', gap: 10, marginTop: 14 },
   sfc: { gap: 8 },
-  // 길게 쓰면 위로 한 줄씩 늘어요 (4줄까지) · 보내기는 아래 줄에 맞춰요
+  // 길게 쓰면 위로 한 줄씩 늘어요 (4줄까지) · 보내기는 아래 줄에 맞춰요 · 안드로이드 글자 잘림 없게 includeFontPadding 끔
   sin: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'flex-end', backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 24, paddingLeft: 16, paddingRight: 5, boxShadow: `3px 3px 0px ${Colors.ink}` },
-  sinInput: { flex: 1, minHeight: 44, paddingVertical: 12, fontFamily: Font.body700, fontSize: 14, lineHeight: 20, color: Colors.ink },
+  sinInput: { flex: 1, minHeight: 44, paddingVertical: 12, includeFontPadding: false, fontFamily: Font.body700, fontSize: 14, lineHeight: 20, color: Colors.ink },
   sinSend: { width: 36, height: 36, marginBottom: 4, borderRadius: 18, backgroundColor: Colors.yellow, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   sq: { width: 48, height: 48, borderRadius: 20, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', boxShadow: `3px 3px 0px ${Colors.ink}` },
   sqDown: { transform: [{ translateX: 3 }, { translateY: 3 }], boxShadow: `0px 0px 0px ${Colors.ink}` },
