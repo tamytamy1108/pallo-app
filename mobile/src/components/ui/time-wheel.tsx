@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
@@ -8,8 +8,8 @@ import { Colors } from '@/constants/theme';
 import { haptic } from '@/lib/feedback';
 
 /** 한 칸 높이 · 보이는 칸 수 (가운데가 고른 값) */
-const ITEM = 40;
-const ROWS = 5;
+const ITEM = 32;
+const ROWS = 3;
 /** 끌기를 멈춘 뒤 이만큼 지나면 고른 값으로 (웹은 '굴림 끝' 신호가 없어서) */
 const SETTLE_MS = 140;
 
@@ -17,7 +17,7 @@ const SETTLE_MS = 140;
  * 위아래로 끌어서 고르는 휠 (iOS 시간 고르기처럼): 가운데 줄이 고른 값 · 칸마다 딱 멈춰요 · 칸을 눌러도 거기로.
  * label: 칸 글자 (예: '20:00' → '오후 8:00')
  */
-export function Wheel({ items, value, onChange, label = (v) => v }: { items: readonly string[]; value: string; onChange: (v: string) => void; label?: (v: string) => string }) {
+export function Wheel({ items, value, onChange, label = (v) => v, style }: { items: readonly string[]; value: string; onChange: (v: string) => void; label?: (v: string) => string; style?: StyleProp<ViewStyle> }) {
   const ref = useRef<ScrollViewInstance>(null);
   const at = Math.max(0, items.indexOf(value));
   const [cur, setCur] = useState(at);
@@ -53,7 +53,7 @@ export function Wheel({ items, value, onChange, label = (v) => v }: { items: rea
   };
 
   return (
-    <View style={styles.box} accessibilityRole="adjustable" accessibilityValue={{ text: label(items[cur] ?? value) }}>
+    <View style={[styles.box, style]} accessibilityRole="adjustable" accessibilityValue={{ text: label(items[cur] ?? value) }}>
       <View style={styles.band} pointerEvents="none" />
       <ScrollView
         ref={ref}
@@ -78,11 +78,11 @@ export function Wheel({ items, value, onChange, label = (v) => v }: { items: rea
 }
 
 const styles = StyleSheet.create({
-  box: { height: ITEM * ROWS, borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: '#fff', overflow: 'hidden' },
-  band: { position: 'absolute', left: 8, right: 8, top: ITEM * Math.floor(ROWS / 2), height: ITEM, borderRadius: 12, backgroundColor: '#F3EEFB', borderWidth: 2, borderColor: Colors.purple },
+  box: { height: ITEM * ROWS + 4, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: '#fff', overflow: 'hidden' },
+  band: { position: 'absolute', left: 6, right: 6, top: ITEM * Math.floor(ROWS / 2), height: ITEM, borderRadius: 10, backgroundColor: '#F3EEFB', borderWidth: 2, borderColor: Colors.purple },
   row: { height: ITEM, alignItems: 'center', justifyContent: 'center' },
-  t: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
-  tOn: { fontFamily: Font.display, fontSize: 17, color: Colors.purple },
+  t: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
+  tOn: { fontFamily: Font.display, fontSize: 14.5, color: Colors.purple },
   tNear: { color: Colors.ink, opacity: 0.55 },
   tFar: { color: Colors.ink, opacity: 0.25 },
 });
