@@ -58,7 +58,7 @@ export const AVC_LIST: readonly (readonly [string, string, number])[] = [
   ['sky', '스카이', 0],
   ['green', '민트 그린', 0],
   ['coral', '코랄', 0],
-  ['purple-lash', '속눈썹 퍼플', 400],
+  ['purple-lash', '속눈썹 퍼플', 0],
 ];
 export const AV_COLOR_HEX: Record<string, string> = { yellow: '#FFE200', purple: '#493087', pink: '#F28CB1', sky: '#7FA7E8', green: '#5CBF8A', coral: '#FF7A59', 'purple-lash': '#493087' };
 export const AV_SW = ['#FFE200', '#FFB800', '#FF7A59', '#E5484D', '#F28CB1', '#D16BD6', '#8B5CF6', '#493087', '#2F6FD0', '#7FA7E8', '#38BDF8', '#2DD4BF', '#5CBF8A', '#9BCB3C', '#B5651D', '#3A3A48', '#A7ABB8', '#FFF4D6'];
