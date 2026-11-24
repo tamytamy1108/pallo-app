@@ -32,8 +32,6 @@ export type Host = {
   width: number;
   height: number;
   reduced: boolean;
-  /** 맵을 바꿀 때 들어오는 방향 (1 · -1), 처음이면 1 */
-  swapDir: number;
   paused: boolean;
   /** 가벼운 그림 (메모리가 적거나 오래된 폰): 그림자 · 안티에일리어싱을 꺼요 */
   lite?: boolean;
@@ -57,6 +55,9 @@ function quietPixelStore(gl: ExpoWebGLRenderingContext) {
     if (p === gl.UNPACK_FLIP_Y_WEBGL || p === gl.UNPACK_ALIGNMENT) raw(p, v as number);
   };
 }
+
+/** 들어올 때 도는 인트로: 한 프레임에 이만큼 (약 0.5초 · 프로토타입은 0.022 로 0.75초였는데 앱에서는 느리게 느껴져서 빠르게) */
+const INTRO_STEP = 0.032;
 
 export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts) {
   const { width: w, height: h } = host;
@@ -115,6 +116,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     cam.lookAt(tgt);
   };
   applyOrbit();
+  const theta0 = sph.theta;
 
   const labels: { p: THREE.Vector3; spec: LabelSpec; dy: number }[] = [];
   const ticks: ((t: number) => void)[] = [];
@@ -127,7 +129,8 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const home = tgt.clone();
   const ray = new THREE.Raycaster();
   let tw: { a: THREE.Vector3; b: THREE.Vector3; za: number; zb: number; t: number } | null = null;
-  let intro: { t: number; a: number; base?: THREE.Vector3 } | null = host.reduced ? null : { t: 0, a: 0.42 * (host.swapDir || 1) };
+  // 도는 인트로(프로토타입: 옆으로 0.42 라디안 돌며 0.78 → 1 배)는 replay 로만 시작해요 — 처음 그림은 늘 끝 자세 (지도 사진판과 같은 구도)
+  let intro: { t: number; a: number; base?: THREE.Vector3 } | null = null;
   const fly = (to: THREE.Vector3, z: number) => {
     tw = { a: tgt.clone(), b: to.clone(), za: cam.zoom, zb: z, t: 0 };
   };
@@ -218,7 +221,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   };
   const step = () => {
     if (intro) {
-      intro.t = Math.min(1, intro.t + 0.022);
+      intro.t = Math.min(1, intro.t + INTRO_STEP);
       const k = 1 - Math.pow(1 - intro.t, 4);
       const off = cam.position.clone().sub(tgt);
       const base = intro.base || (intro.base = off.clone());
@@ -262,17 +265,8 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     }
     if (render()) report();
   };
-  // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게
+  // 첫 장면 바로 그리기 — 다음 프레임까지 빈 화면이 보이지 않게 (셰이더 · 텍스처도 이때 GPU 에 올라가요)
   const draw = () => {
-    if (intro && !intro.base) {
-      const off = cam.position.clone().sub(tgt);
-      intro.base = off.clone();
-      off.applyAxisAngle(new THREE.Vector3(0, 1, 0), intro.a);
-      cam.position.copy(tgt).add(off);
-      cam.lookAt(tgt);
-      cam.zoom = 0.78;
-      cam.updateProjectionMatrix();
-    }
     ticks.forEach((f) => f(0));
     host.onLabels?.(labels.map(({ spec }) => ({ spec })));
     if (!render()) return;
@@ -297,6 +291,30 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     if (!render()) return;
     report();
     raf = requestAnimationFrame(loop);
+  };
+  /**
+   * 이 지도로 바꿔 들어올 때 (미리 만들어 둔 지도 · 방금 만든 지도): 처음 자리로 돌려놓고
+   * 프로토타입 인트로를 처음부터 — 옆으로 0.42 라디안(dir 방향) 돌아간 채 0.78 배에서 시작해요. 시작 자세를 바로 한 장 그려요.
+   */
+  const replay = (dir: number) => {
+    tw = null;
+    spin = 0;
+    host.onFocus?.(null);
+    tgt.copy(home);
+    sph.theta = theta0;
+    applyOrbit();
+    cam.zoom = 1;
+    intro = host.reduced ? null : { t: 0, a: 0.42 * (dir || 1) };
+    if (intro) {
+      const off = cam.position.clone().sub(tgt);
+      intro.base = off.clone();
+      off.applyAxisAngle(new THREE.Vector3(0, 1, 0), intro.a);
+      cam.position.copy(tgt).add(off);
+      cam.lookAt(tgt);
+      cam.zoom = 0.78;
+    }
+    cam.updateProjectionMatrix();
+    if (render()) report();
   };
   /** 닫을 때: 루프 멈추고 GPU 자원 정리 */
   const dispose = () => {
@@ -363,6 +381,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     drag,
     release,
     reset,
+    replay,
     rebind,
     dispose,
     onFocus: null as ((info: FocusInfo) => void) | null,
