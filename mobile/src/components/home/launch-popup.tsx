@@ -247,8 +247,9 @@ const styles = StyleSheet.create({
   t: { marginTop: 10, fontFamily: Font.display, fontSize: 28, lineHeight: 31.4 },
   s: { marginTop: 10, fontFamily: Font.body800, fontSize: 13, lineHeight: 18, opacity: 0.9 },
   char: { position: 'absolute', right: -12, bottom: -10, width: 150, height: (150 * 306) / 480 },
-  nx: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
-  nxText: { fontFamily: Font.body900, fontSize: 22, lineHeight: 26 },
+  // 화살표만 (동그란 바탕 없이) · 밝은 포스터에서도 보이게 옅은 그림자
+  nx: { width: 34, height: 44, alignItems: 'center', justifyContent: 'center' },
+  nxText: { fontFamily: Font.body900, fontSize: 30, lineHeight: 34, textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
   goBox: { margin: 12 },
   goShadow: { position: 'absolute', left: 0, right: 0, top: 3, bottom: -3, borderRadius: 24, backgroundColor: Colors.ink },
   go: { height: 48, borderRadius: 24, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
