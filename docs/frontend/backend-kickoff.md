@@ -3,6 +3,7 @@
 프론트는 **Expo(React Native) + TypeScript** 로 만들어요. 코드는 저장소의 `mobile/` 폴더예요.
 이미 정리된 자료가 있어서, 회의 전에 백엔드 개발자에게 아래 자료를 먼저 보내요.
 
+- **`docs/api/` — 화면별 API Swagger (`openapi.yaml`) · 화면 지도 (`screens.md`)**. 아래 자료는 이걸 만들 때 쓴 처음 제안이에요
 - `docs/PRD.md` — 기능 전체와 **9장 열린 질문** (특히 기술 Q-T1 ~ Q-T11)
 - `docs/appendix/api-inventory.md` — 화면에서 거꾸로 뽑은 API 제안 목록
 - `docs/frontend/api-additions.md` — 위 목록에 빠진 API 18개(A1 ~ A18) · 관리자 웹 API 개요 7묶음
