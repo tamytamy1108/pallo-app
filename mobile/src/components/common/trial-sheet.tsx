@@ -8,7 +8,7 @@ import { LgIcon } from '@/components/common/icons';
 import { FieldLabel, keepAll, SheetButton, SheetButtons, SheetDesc, SheetLink, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
 import { Checkbox, TextField } from '@/components/ui/field';
 import { Raised } from '@/components/ui/raised';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -221,7 +221,7 @@ export function TrialSheet({ open, start, onClose, onClosed }: { open: boolean; 
                 label="보기"
                 onPress={() => {
                   onClose();
-                  router.push(PRIVACY_HREF);
+                  runAfterSheetClose(() => router.push(PRIVACY_HREF));
                 }}
               />
             }
