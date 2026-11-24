@@ -75,6 +75,14 @@ export function avatarCost(d: Avatar, own: readonly string[]) {
 const look = (a: Avatar) => JSON.stringify([a.color, a.bg, a.eq, a.flip, a.hc, a.say]);
 export const avatarChanged = (d: Avatar, saved: Avatar) => look(d) !== look(saved);
 
+/**
+ * 몸 색만 바꿔 저장 (가입 끝에 캐릭터 고르기에서 고른 색을 옮겨요). 그 색은 가진 것으로 쳐요 — 가입 때 고른 색은 값을 받지 않아요.
+ * 맞는 API: 4 `PATCH /me` 의 캐릭터 값을 서버가 /me/avatar 에도 반영.
+ */
+export function setAvatarBody(color: string) {
+  store.set(({ saved, own }) => ({ saved: { ...cloneAvatar(saved), color }, own: own.includes(color) ? own : [...own, color] }));
+}
+
 /** 사고 저장하기: 스파크가 모자라면 저장하지 않고 모자란 수를 돌려줘요 */
 export function buyAndSave(d: Avatar): { ok: true; cost: number; need: string[] } | { ok: false; short: number } {
   const { own } = store.get();

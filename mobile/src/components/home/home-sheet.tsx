@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +7,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { Colors } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { CLOSE_PATH, LineIcon } from './icons';
 
@@ -42,7 +43,7 @@ export function HomeSheet({ open, onClose, label, children }: { open: boolean; o
   const sheet = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - p.get()) * h * 1.1 }] }));
 
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal visible={mounted} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.root}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기" />
@@ -59,7 +60,7 @@ export function HomeSheet({ open, onClose, label, children }: { open: boolean; o
           </ScrollView>
         </Animated.View>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

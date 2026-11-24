@@ -1,5 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { Pressable } from '@/components/ui/pressable';
 import { guardMember } from '@/components/common/trial-guide';
@@ -9,6 +12,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { allChallenges, challengeSrc, CH_CATS, isExpr, isJoined, isPre, toggleChecked, unitOf, useChallengeState, type ChCatKey, type Challenge, type ChView } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
+import { useCenterChip } from '@/lib/center-chip';
 
 import { DailyCard, ExprCard, HotBox } from './cards';
 import { CheckSheet } from './check-sheet';
@@ -59,7 +63,12 @@ export function ChallengeTab({ branch, header }: { branch: string; header?: Reac
       showToast(on ? (p.day ? `오늘 체크했어요 · ${p.day + 1}${unitOf(p)}째` : `${p.name} 신청했어요 · ${p.start}`) : '취소했어요');
     }, '챌린지에 인증하려면');
 
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
+  // 표현 모두 보기에서 오른쪽으로 밀면 보던 칩으로 돌아가요
+  const [prevSub, setPrevSub] = useState<Sub>('all');
   const pickSub = (v: Sub) => {
+    if (v === 'study' && sub !== 'study') setPrevSub(sub);
+    centerChip(v);
     sfx('tap');
     haptic('select');
     setSub(v);
@@ -68,7 +77,7 @@ export function ChallengeTab({ branch, header }: { branch: string; header?: Reac
   return (
     <View>
       {/* .lg-subs: 지점 버튼 · 구분선 · 서브 칩 */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subs}>
+      <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subs}>
         {header ? (
           <>
             {header}
@@ -78,6 +87,7 @@ export function ChallengeTab({ branch, header }: { branch: string; header?: Reac
         {SUBS.map(([v, l]) => (
           <Pressable
             key={v}
+            onLayout={(e) => onChip(v, e)}
             onPress={() => pickSub(v)}
             accessibilityRole="button"
             accessibilityState={{ selected: sub === v }}
@@ -89,7 +99,9 @@ export function ChallengeTab({ branch, header }: { branch: string; header?: Reac
 
       <View style={styles.feed} onLayout={(e) => setFeedW(e.nativeEvent.layout.width - 32)} key={sub}>
         {sub === 'study' ? (
-          <ExprSearch list={base.filter(isExpr)} s={s} q={q} setQ={setQ} onOpen={openExpr} />
+          <SwipeBack onBack={() => pickSub(prevSub)}>
+            <ExprSearch list={base.filter(isExpr)} s={s} q={q} setQ={setQ} onOpen={openExpr} />
+          </SwipeBack>
         ) : (
           <Body base={base} s={s} sub={sub} seg={seg} setSeg={setSeg} feedW={feedW} onCheck={onCheck} onOpen={openExpr} onAll={() => pickSub('study')} />
         )}
@@ -147,8 +159,8 @@ function Body({
     );
   }
 
-  // 진행 중 | 참여 중 을 한 자리에서 탭으로 (처음엔 참여 중인 게 있으면 참여 중)
-  const cur = seg ?? (mine.length ? 'on' : 'run');
+  // 처음엔 늘 '진행 중' 먼저 (참여 중은 눌러서)
+  const cur = seg ?? 'run';
   const segList = cur === 'on' ? mine : run;
   const cardW = Math.round(feedW * 0.892);
   return (
@@ -167,6 +179,9 @@ function Body({
               horizontal
               showsHorizontalScrollIndicator={false}
               snapToInterval={cardW + 12}
+              snapToAlignment="start"
+              // 한 번 밀면 한 장씩 (중간에 걸쳐 멈추지 않게)
+              disableIntervalMomentum
               decelerationRate="fast"
               style={styles.hs}
               contentContainerStyle={styles.hsIn}
@@ -243,6 +258,33 @@ function ExprSearch({ list, s, q, setQ, onOpen }: { list: Challenge[]; s: ChView
         )}
       </LgIn>
     </>
+  );
+}
+
+/** 오른쪽으로 밀면 손가락을 따라 밀려나며 이전 화면으로 (아이폰 뒤로 가기처럼) */
+function SwipeBack({ onBack, children }: { onBack: () => void; children: ReactNode }) {
+  const { width } = useWindowDimensions();
+  const x = useSharedValue(0);
+  const pan = Gesture.Pan()
+    .activeOffsetX(18)
+    .failOffsetY([-14, 14])
+    .onUpdate((e) => {
+      x.set(Math.max(0, e.translationX));
+    })
+    .onEnd((e) => {
+      if (e.translationX > 90 || e.velocityX > 700) {
+        x.set(
+          withTiming(width, { duration: 180 }, (done) => {
+            if (done) scheduleOnRN(onBack);
+          }),
+        );
+      } else x.set(withTiming(0, { duration: 180 }));
+    });
+  const st = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }], opacity: 1 - Math.min(x.get() / width, 1) * 0.5 }));
+  return (
+    <GestureDetector gesture={pan}>
+      <Animated.View style={st}>{children}</Animated.View>
+    </GestureDetector>
   );
 }
 

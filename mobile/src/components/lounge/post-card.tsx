@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { type ReportMenuItem, ReportSheet } from '@/components/common/report-sheet';
@@ -16,6 +17,7 @@ import { type Abroad, LANG_COLOR, LG_C, LG_LIKERS, memberLangs, nameHash, type P
 import { addPostComment, hideMember, likeOn, postComments, toggleLike, toggleSave, unhideMember, useLounge } from '@/data/lounge-store';
 import { kfc, SPRING } from '@/lib/motion';
 import { useMe } from '@/state/me';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 import { Face } from './face';
 import { LgIcon } from './icons';
@@ -73,7 +75,7 @@ function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number;
   return (
     <View style={styles.acts}>
       <PopButton label="좋아요" pressed={liked} onPress={() => toggleLike(id)} popKey={liked ? 1 : 0}>
-        <LgIcon name="heart" size={25} fill={liked ? LG_C.pk : 'none'} />
+        <HeartPop on={liked}><LgIcon name="heart" size={25} fill={liked ? LG_C.pk : 'none'} /></HeartPop>
       </PopButton>
       <Pressable onPress={onLikers} accessibilityRole="button" accessibilityLabel="좋아요 누른 사람 보기" style={styles.cnt}>
         <PText style={styles.cntText}>{n || ''}</PText>
@@ -84,12 +86,9 @@ function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number;
       <Pressable onPress={onCmt} accessibilityRole="button" accessibilityLabel="댓글 보기" style={styles.cnt}>
         <PText style={styles.cntText}>{cmts || ''}</PText>
       </Pressable>
-      <Pressable onPress={() => showToast('링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="보내기" style={styles.ib}>
-        <LgIcon name="send" size={23} />
-      </Pressable>
       <View style={styles.sp} />
       <Pressable onPress={() => showToast(toggleSave(id) ? '라운지 저장함에 담았어요' : '저장을 취소했어요')} accessibilityRole="button" accessibilityLabel="저장" accessibilityState={{ selected: saved }} style={styles.ib}>
-        <LgIcon name="save" size={23} fill={saved ? LG_C.y : 'none'} />
+        <HeartPop on={saved}><LgIcon name="save" size={23} fill={saved ? LG_C.y : 'none'} /></HeartPop>
       </Pressable>
     </View>
   );
@@ -312,7 +311,7 @@ export function AskSheet({ open, who, sub, onClose }: { open: boolean; who: stri
         {sub}
         {'\n'}답이 오면 알림으로 알려 드려요.
       </PText>
-      <TextInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="질문 입력" />
+      <GrowInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="질문 입력" />
     </Sheet>
   );
 }

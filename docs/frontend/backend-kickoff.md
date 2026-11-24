@@ -4,9 +4,9 @@
 이미 정리된 자료가 있어서, 회의 전에 백엔드 개발자에게 아래 자료를 먼저 보내요.
 
 - **`docs/api/` — 화면별 API Swagger (`openapi.yaml`) · 화면 지도 (`screens.md`)**. 아래 자료는 이걸 만들 때 쓴 처음 제안이에요
-- `docs/PRD.md` — 기능 전체와 **9장 열린 질문** (특히 기술 Q-T1 ~ Q-T11)
+- `docs/PRD.md` — 기능 전체와 **9장 열린 질문** (특히 기술 Q-T1 ~ Q-T12)
 - `docs/appendix/api-inventory.md` — 화면에서 거꾸로 뽑은 API 제안 목록
-- `docs/frontend/api-additions.md` — 위 목록에 빠진 API 18개(A1 ~ A18) · 관리자 웹 API 개요 7묶음
+- `docs/frontend/api-additions.md` — 위 목록에 빠진 API 23개(A1 ~ A23) · 관리자 웹 API 개요 7묶음
 - `docs/appendix/data-model.md` · `enum-dictionary.md` — 데이터 모양과 값 목록
 
 회의에서는 아래만 정하면 프론트가 바로 움직일 수 있어요.

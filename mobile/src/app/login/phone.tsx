@@ -82,7 +82,7 @@ export default function PhoneLoginScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* 프로토타입 하위 화면 머리 (.dtop.mp-top · .icon-btn) */}
       <TopBar fallback="/login" />
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <PText variant="title" accessibilityRole="header">
           휴대폰 번호로 시작해요
         </PText>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
   timer: { fontFamily: Font.display, fontSize: 13, lineHeight: 18 },
   code: {
-    height: 56,
+    height: 56, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center',
     paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 2,

@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { ReportSheet, useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
-import { Sheet } from '@/components/ui/sheet';
+import { Sheet, SheetBottom } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -32,6 +32,7 @@ import {
 } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 import { Face } from './face';
 import { ChIcon } from './icons';
@@ -47,7 +48,6 @@ type Mode = { t: 'reply' | 'edit'; e: ChEntry } | null;
 export function ChxSheet({ p, open, onClose, onClosed, write = false }: { p: Challenge; open: boolean; onClose: () => void; onClosed?: () => void; write?: boolean }) {
   const s = useChallengeState();
   const me = useMe();
-  const insets = useSafeAreaInsets();
   const hide = useBlockedNames();
   const L = entriesOf(p, s, hide);
   const [text, setText] = useState('');
@@ -188,13 +188,15 @@ export function ChxSheet({ p, open, onClose, onClosed, write = false }: { p: Cha
           </View>
         ) : null}
         {/* .csf: 내 얼굴 · 입력칸 · 보내기 */}
-        <View style={[styles.csf, { paddingBottom: 14 + insets.bottom }]}>
+        <SheetBottom base={14} style={styles.csf}>
           <Face name={me.name} color={Colors.yellow} size={38} />
-          <TextInput
+          <GrowInput
             ref={input}
+            maxLines={6}
             value={text}
             onChangeText={setText}
-            placeholder={`${p.hl}로 나만의 문장을 만들어 봐요…`}
+            // 안내 글이 두 줄이 되면 입력칸에서 잘려요 → 한 줄로 짧게
+            placeholder={`${p.hl}로 문장 만들기…`}
             placeholderTextColor="#9B94A6"
             multiline
             accessibilityLabel="댓글 쓰기"
@@ -203,7 +205,7 @@ export function ChxSheet({ p, open, onClose, onClosed, write = false }: { p: Cha
           <Pressable onPress={send} accessibilityRole="button" accessibilityLabel="올리기" style={({ pressed }) => [styles.sendBtn, pressed && styles.pressed]}>
             <ChIcon name="send" size={18} />
           </Pressable>
-        </View>
+        </SheetBottom>
       </Sheet>
       <ReportSheet
         open={!!report}
@@ -293,7 +295,7 @@ function Row({
         accessibilityState={{ selected: liked }}
         hitSlop={6}
         style={styles.cl}>
-        <ChIcon name="heart" size={18} fill={liked ? Colors.rosePink : 'none'} />
+        <HeartPop on={liked}><ChIcon name="heart" size={18} fill={liked ? Colors.rosePink : 'none'} /></HeartPop>
         <PText style={styles.clN}>{e.lk + (liked ? 1 : 0) || ''}</PText>
       </Pressable>
     </Pressable>
@@ -354,8 +356,9 @@ const styles = StyleSheet.create({
   csm: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 18, backgroundColor: Colors.lavender },
   csmT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
   csmX: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18 },
-  csf: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10, paddingHorizontal: 18, borderTopWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
-  csIn: { flex: 1, minHeight: 46, maxHeight: 110, paddingTop: 12, paddingBottom: 12, paddingHorizontal: 16, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, lineHeight: 21, color: Colors.ink },
+  // 칸이 여러 줄로 늘면 얼굴 · 보내기는 아래 줄에 맞춰요 (최대 줄 수는 GrowInput maxLines)
+  csf: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingTop: 10, paddingHorizontal: 18, borderTopWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
+  csIn: { flex: 1, minHeight: 46, paddingTop: 12, paddingBottom: 12, paddingHorizontal: 16, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, lineHeight: 21, color: Colors.ink, includeFontPadding: false },
   sendBtn: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   pressed: { transform: [{ scale: 0.94 }] },
 });

@@ -12,7 +12,7 @@
 - 시각은 UTC (ISO 8601), 화면 표시는 앱이 기기 시간대로 바꿔요
 - 로그인 토큰은 `Authorization: Bearer <accessToken>`
 
-## 1. 회원 앱에 더 필요한 API (16가지 + 인증 2개)
+## 1. 회원 앱에 더 필요한 API (21가지 + 인증 2개)
 
 | # | 방법 | 경로 | 하는 일 | 앱 코드 |
 |---|---|---|---|---|
@@ -34,6 +34,11 @@
 | A16 | POST | `/auth/refresh` | 토큰 갱신 (`refreshToken` → 새 토큰) | `src/api/auth.ts` |
 | A17 | 결정 필요 | — | 말하기 어려움 · 소리 끄기(15분 유지): 기기에만 둘지, 서버 설정(30)에 넣을지 | `state/learn-prefs.ts` |
 | A18 | GET | `/config` · `/config/:key` | 규칙 숫자 · 목록 한 곳에서: 설문 템플릿 · 모임 분류 · 장소 · 입금 계좌 · 오늘 목표 수 · 출석 포인트 · QR 창 | `data/events.ts` · `data/home.ts` |
+| A19 | GET | `/app/start-screen` | 첫 화면 그림(비율별 3장) · 바탕색 · 그림 설명. **로그인 없이** 불러요. 지금 것 + 다음 예약 1개 | (새로) 시안 `prototype/onboarding-options.html` |
+| A20 | GET | `/me/guide` | 사용 가이드: 내 대상에 맞는 게시 판 + 5장 + `shouldShow`(아직 안 본 판인지) | (새로) |
+| A21 | POST | `/me/guide/views` | 가이드 본 기록 `{ version, result: completed \| skipped, lastIndex }` | (새로) |
+| A22 | GET | `/members/nickname-check?q=` | 닉네임 쓸 수 있는지 (2~10자 · 중복 · 금칙어) | (새로) 가입 · 설정 |
+| A23 | POST · GET · DELETE | `/me/branch-links` · `/me/branch-links/:id` | 지점 연동 요청 보내기 · 내 요청 상태(이유 포함) · 기다리는 중 취소. 처리되면 푸시 | (새로) 가입 · 설정 › 내 지점 |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 
@@ -44,6 +49,26 @@
 [{ "id": "pop-party", "kicker": "YEAR END PARTY", "title": "PALLO\n연말 랭귀지 파티",
    "sub": "11.29 토 19:00 · 전 지점", "bg": ["#493087", "#1E1A2B"],
    "cta": "자세히 보기", "href": "/events/m2", "until": "2026-11-29" }]
+
+// A19 GET /app/start-screen — 없으면 current: null (앱 기본 화면)
+// 앱은 화면 비율에 맞는 한 장만 받아요 (09-onboarding '잘리지 않고 화면을 꽉 채우는 법')
+{ "current": { "id": "ss-party",
+               "images": { "short": "https://cdn.example/ss-party-1242x2208.jpg",
+                           "regular": "https://cdn.example/ss-party-1290x2780.jpg",
+                           "long": "https://cdn.example/ss-party-1290x2866.jpg" },
+               "bgColor": "#1E1A2B", "imageAlt": "연말 랭귀지 파티 포스터. 12월 20일 토요일 저녁 7시, 전 지점.",
+               "from": "2026-12-01", "until": "2026-12-20" },
+  "next": null }
+
+// A23 POST /me/branch-links  { "branchId": "hanam", "name": "김서현", "phone": "01012345678", "consent": true }
+{ "id": "bl-91", "status": "pending", "branch": "하남점", "requestedAt": "2026-11-23T12:40:00Z" }
+// 못 찾음이면 GET /me/branch-links/bl-91
+{ "id": "bl-91", "status": "rejected", "reasonCode": "phone_mismatch", "reasonText": "등록된 번호가 달라요. 등록할 때 쓴 번호로 다시 요청해 주세요." }
+
+// A20 GET /me/guide
+{ "version": 3, "audience": "all", "shouldShow": true,
+  "slides": [{ "image": "https://cdn.example/g3-1.png", "imageAlt": "QR을 든 노랑 팔로", "bg": "yellow",
+               "title": "세션 날엔 QR로 출석", "body": "지점에 도착하면 홈 스터디 카드에서 QR을 찍어요." } /* 5장 */] }
 
 // 10 POST /sessions/:id/attendance  { "qr": "...", "lang": "en" }
 { "firstTime": true, "points": 30, "weekCount": 2 }
@@ -57,8 +82,8 @@
 | 묶음 | 하는 일 | 경로 (제안) | 앱이 읽는 API |
 |---|---|---|---|
 | **1. 콘텐츠** (먼저) | 교재 · 레벨 · 과 편집 (문제 JSON + 그림 + 음원), 상황 맵 · 장면, 리스닝 문장, 단계별 포인트표 하나로 | `/admin/books` · `/admin/lessons/:id` · `/admin/maps` · `/admin/scenes` · `/admin/listen-items` · `/admin/uploads` | 16 · 17 · 18 · 24 |
-| **2. 홈 운영** | 공지(띠 노출 · 고정 · 대상 지점 · 예약), 앱 시작 팝업(기간 · 그림 · 순서), 시즌 테마, 알림 · 푸시 보내기 · 예약 | `/admin/notices` · `/admin/popups` · `/admin/themes` · `/admin/pushes` | 12 · A1 · A2 · 13 |
-| **3. 지점 · 수강** | 지점 · 팀 · 프로 · 시간표 · 자리, 팀별 이번 주 진도, 이용권 상품, 입금 계좌, 체험 시간, 연기 · 변경 · 홀딩 승인 | `/admin/branches` · `/admin/teams` · `/admin/week-lessons` · `/admin/passes` · `/admin/trial-slots` · `/admin/change-requests/:id` | 8 · 11 · 37 · 38 · 39 · 48 |
+| **2. 홈 운영** | 공지(띠 노출 · 고정 · 대상 지점 · 예약), 앱 시작 팝업(기간 · 그림 · 순서), 시즌 테마, 알림 · 푸시 보내기 · 예약, **첫 화면**(그림 · 문구 · 아래 칸 색 · 기간 · 순서), **사용 가이드**(대상 · 5장 · 판 · 한 번 더 보여 주기 · 되돌리기) | `/admin/notices` · `/admin/popups` · `/admin/themes` · `/admin/pushes` · `/admin/start-screens` · `/admin/guides` · `/admin/guides/:id/publish` · `/admin/uploads` | 12 · A1 · A2 · 13 · A19 · A20 |
+| **3. 지점 · 수강** | **지점 연동 요청**(자동 후보 찾기 · 연동하기 · 못 찾음 이유 · 연동 풀기), 지점 · 팀 · 프로 · 시간표 · 자리, 팀별 이번 주 진도, 이용권 상품, 입금 계좌, 체험 시간, 연기 · 변경 · 홀딩 승인 | `/admin/branches` · `/admin/teams` · `/admin/week-lessons` · `/admin/passes` · `/admin/trial-slots` · `/admin/change-requests/:id` · `/admin/link-requests` · `/admin/link-requests/:id/link` · `/admin/link-requests/:id/reject` | 8 · 11 · 37 · 38 · 39 · 48 |
 | **4. 보상 · 상점** | 꾸미기 아이템(가격 · 등급 · 판매 기간 · 그림), 배지 조건, 보상 상자 내용, 시즌 보상, 포인트 · 스파크 지급 규칙, 원장 조정(회수) | `/admin/avatar-items` · `/admin/badges` · `/admin/rewards` · `/admin/reward-rules` · `/admin/members/:id/ledger` | 33 · 35 · A3 · A4 |
 | **5. 커뮤니티 운영** | 신고함(있음), 동아리 승인, 이벤트 열기 · 제안 검토 · 설문 템플릿 · 결과 받기, 입금 확인, 분류 · 장소 목록 | `/admin/reports`(76) · `/admin/clubs/:id/approve` · `/admin/events` · `/admin/event-proposals` · `/admin/event-applications/:id` · `/admin/config/places` | 63 · 64 · 86 ~ 92 · A18 |
 | **6. 권한** | 리더 · 매니저 지정, 서브 호스트 바꾸기, 이용 제한 걸기 · 풀기 | `/admin/members/:id/role` · `/admin/clubs/:id/staff` · `/admin/members/:id/restrictions` | 3 · 66 |

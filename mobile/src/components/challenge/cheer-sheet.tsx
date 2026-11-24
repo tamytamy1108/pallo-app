@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle } from 'react-native-reanimated';
 
@@ -30,7 +31,9 @@ export function CheerSheet({ p, open, onClose, onGo, onClosed }: { p: Challenge;
       label="챌린지 참여 완료">
       <View style={styles.cheer}>
         <View style={styles.art}>
-          <Image source={require('@/assets/images/challenge/c-upright-yellow.png')} style={styles.char} contentFit="contain" accessibilityElementsHidden />
+          <Hop>
+            <Image source={require('@/assets/images/challenge/c-upright-yellow.png')} style={styles.charImg} contentFit="contain" accessibilityElementsHidden />
+          </Hop>
           <Twinkle style={styles.s1} size={18} color={Colors.yellow} delay={0} />
           <Twinkle style={styles.s2} size={12} color={Colors.rosePink} delay={400} />
           <Twinkle style={styles.s3} size={10} color={Colors.sky} delay={800} />
@@ -55,6 +58,22 @@ export function CheerSheet({ p, open, onClose, onGo, onClosed }: { p: Challenge;
   );
 }
 
+/** 팔로가 신나서 통통 뛰어요: 쭈그렸다 → 위로 점프(살짝 늘어남) → 착지 · 1.2초마다 */
+function Hop({ children }: { children: ReactNode }) {
+  const t = useLoop(1200);
+  const anim = useAnimatedStyle(() => {
+    const v = t.get();
+    return {
+      transform: [
+        { translateY: kfc(v, [0, 18, 50, 82, 100], [0, 2, -16, 0, 0], TW_EASE) },
+        { scaleX: kfc(v, [0, 18, 50, 82, 92, 100], [1, 1.08, 0.95, 1.06, 1, 1], TW_EASE) },
+        { scaleY: kfc(v, [0, 18, 50, 82, 92, 100], [1, 0.9, 1.06, 0.93, 1, 1], TW_EASE) },
+      ],
+    };
+  });
+  return <Animated.View style={[styles.char, anim]}>{children}</Animated.View>;
+}
+
 /** @keyframes chTw: 1.8초마다 커졌다 돌았다 (scale 1.35 · 20도) */
 function Twinkle({ size, color, delay, style }: { size: number; color: string; delay: number; style: object }) {
   const t = useLoop(1800, { delay });
@@ -72,6 +91,7 @@ const styles = StyleSheet.create({
   cheer: { alignItems: 'center', paddingTop: 6, paddingHorizontal: 4, paddingBottom: 4 },
   art: { width: 132, height: 120, marginBottom: 4 },
   char: { position: 'absolute', left: 4, bottom: 0, width: 124, height: 124 * (306 / 480) },
+  charImg: { width: '100%', height: '100%' },
   tw: { position: 'absolute' },
   btns: { flexDirection: 'row', gap: 10 },
   slot: { flex: 1 },

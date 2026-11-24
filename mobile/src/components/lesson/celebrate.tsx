@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -25,6 +25,7 @@ import { Colors } from '@/constants/theme';
 import { CEL_TITLE, pickOne } from '@/data/lessons';
 import { haptic, sfx } from '@/lib/feedback';
 import { kfc } from '@/lib/motion';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 export type CelebrateResult = {
   /** 최종 점수: 맞힌 수 / 전체 (전체 0 이면 정확도 칸 없이) */
@@ -108,7 +109,7 @@ export function Celebrate({
   boxes.push({ k: 'gl', label: '오늘 목표', icon: 'flag', to: gd, fmt: (n) => `${n}/${result.goalTotal}`, gauge: result.goalTotal ? (gd / result.goalTotal) * 100 : 0 });
 
   return (
-    <Modal visible={visible} animationType="fade" onRequestClose={onHome} statusBarTranslucent>
+    <LayerModal visible={visible} animationType="fade" onRequestClose={onHome} statusBarTranslucent>
       <View style={StyleSheet.flatten([styles.root, big && styles.rootBig, { paddingTop: 40 + insets.top, paddingBottom: 26 + insets.bottom }])}>
         {visible && <Confetti big={big} />}
         <Stage big={big} />
@@ -171,7 +172,7 @@ export function Celebrate({
           </Nudge>
         </Rise>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

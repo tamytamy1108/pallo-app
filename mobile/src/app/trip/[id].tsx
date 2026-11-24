@@ -1,7 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { guardMember } from '@/components/common/trial-guide';
+import { GrowInput } from '@/components/ui/grow-input';
 import { LgIcon } from '@/components/lounge/icons';
 import { LgButton } from '@/components/lounge/lg-button';
 import { RouteSheetScreen, useRouteSheet } from '@/components/lounge/route-sheet';
@@ -26,15 +28,17 @@ export default function TripApplyScreen() {
   const [msg, setMsg] = useState('');
   const all = ok.every(Boolean);
   if (!p || p.k !== 'trip') return <RouteSheetScreen />;
-  const apply = () => {
-    setTripState(p.id, 'wait');
+  // 주소로 바로 들어와도 비회원은 보내기 전에 체험 안내 (trial-guide guardMember)
+  const apply = () => guardMember(() => send(p.id, p.who), '동행을 신청하려면');
+  const send = (id: string, who: string) => {
+    setTripState(id, 'wait');
     close();
-    showToast(`${p.who}에게 동행 신청을 보냈어요`);
+    showToast(`${who}에게 동행 신청을 보냈어요`);
     // 예시: 잠시 뒤 수락 (실제로는 호스트가 수락하면 알림)
     setTimeout(() => {
-      if (getLounge().trip[p.id] !== 'wait') return;
-      setTripState(p.id, 'ok');
-      showToast(`${p.who}님이 수락했어요 · 오픈채팅 링크가 왔어요`);
+      if (getLounge().trip[id] !== 'wait') return;
+      setTripState(id, 'ok');
+      showToast(`${who}님이 수락했어요 · 오픈채팅 링크가 왔어요`);
     }, 2600);
   };
   return (
@@ -58,7 +62,7 @@ export default function TripApplyScreen() {
             ))}
           </CheckBoxList>
         </View>
-        <TextInput value={msg} onChangeText={setMsg} multiline placeholder="간단한 자기소개와 함께 가고 싶은 이유를 적어 주세요" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="신청 메시지" />
+        <GrowInput value={msg} onChangeText={setMsg} multiline placeholder="간단한 자기소개와 함께 가고 싶은 이유를 적어 주세요" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="신청 메시지" />
       </Sheet>
     </>
   );

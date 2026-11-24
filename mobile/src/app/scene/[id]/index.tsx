@@ -15,13 +15,14 @@ import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { MY_QUIZ_LEVELS, SCENE_STEPS, sceneIdOf, sceneStepKey, type SceneStep, type SceneWithContent, type SituationMap } from '@/data/situation';
 import { clearPos, isDone, sceneKey, useSavedPos } from '@/state/progress';
+import { ChapterGate } from '@/components/common/member-lock';
 
 /**
  * 상황 맵 장면 화면 (프로토타입 openStudy → showHub, 상황 맵이면 '장면' 화면).
  * 장면에 처음 들어오면 장면 화면보다 먼저 '내 레벨을 골라요'. 단계를 누르면 단계 팝업 → /scene/[id]/[단계].
  * id = '맵 id-장면 번호' (예: travel-1). 맵은 16 `/library/maps`, 장면 콘텐츠는 18 `/lessons/:id` 로 받아요.
  */
-export default function SceneScreen() {
+function SceneScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const load = useScene(id);
   if (load.state !== 'ready') {
@@ -133,3 +134,15 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   flex: { flex: 1 },
 });
+
+/** 비회원은 맵마다 첫 장면만 (components/common/member-lock ChapterGate) */
+export default function SceneScreenGate() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  // 장면 id = '맵 id-장면 번호' (예: travel-2)
+  const no = Number(id?.slice(id.lastIndexOf('-') + 1)) || 1;
+  return (
+    <ChapterGate no={no} label={`장면 ${no}`}>
+      <SceneScreen />
+    </ChapterGate>
+  );
+}

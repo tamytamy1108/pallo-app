@@ -1,15 +1,17 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
-import { MultiPills, PosterPicker } from '@/components/event/form-parts';
+import { MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyClub } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
+import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
+import { Colors } from '@/constants/theme';
 import { CLUB_CATS, REGIONS, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
@@ -17,10 +19,14 @@ import { useMe } from '@/state/me';
 const LANGS = ['영어', '일본어', '중국어', '스페인어'];
 const DAYS = ['월', '화', '수', '목', '금', '토', '일'];
 const CONDS = ['누구나', 'Lv.2 이상', '수강생만'];
+/** 모이는 시간: 아침 7시 ~ 밤 10시 반, 30분 간격 */
+const TIMES = Array.from({ length: 32 }, (_, i) => `${String(7 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+const MAX_MIN = 3;
+const MAX_MAX = 40;
 
 /**
  * 동아리 만들기 (docs/pages/04-lounge.md '동아리 만들기' — 프로토타입 lgMkClub).
- * 이름 · 카테고리 · 언어 · 지역 · 모이는 때 · 요일(여러 개) · 가입 조건 · 채팅방 공지 · 포스터 → [승인 요청하기].
+ * 이름 · 카테고리 · 언어 · 지역 · 요일(여러 개) · 시간 · 최대 인원 · 가입 조건 · 채팅방 공지 · 포스터 → [승인 요청하기].
  * 올리면 매니저 승인 대기 (목록에 NEW · 가입 버튼은 '승인 대기'). 맞는 API: 63 POST `/clubs` (+ `/uploads/images`)
  */
 export default function NewClub() {
@@ -29,7 +35,8 @@ export default function NewClub() {
   const [cat, setCat] = useState<string>(CLUB_CATS[0][1]);
   const [lang, setLang] = useState('영어');
   const [reg, setReg] = useState<Region>('서울');
-  const [when, setWhen] = useState('');
+  const [time, setTime] = useState('20:00');
+  const [max, setMax] = useState(12);
   const [days, setDays] = useState<string[]>(['수']);
   const [cond, setCond] = useState('누구나');
   const [memo, setMemo] = useState('');
@@ -44,9 +51,10 @@ export default function NewClub() {
       name: name.trim(),
       lang,
       br: me.branch,
-      when: when.trim() || '시간 정하는 중',
+      // 예) 매주 수 · 금 20:00 (요일을 안 고르면 시간만)
+      when: days.length ? `매주 ${[...days].sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)).join(' · ')} ${time}` : time,
       n: 1,
-      max: 12,
+      max,
       cond,
       host: me.name,
       days: days.map((d) => '일월화수목금토'.indexOf(d)),
@@ -73,9 +81,14 @@ export default function NewClub() {
       <Field label="지역">
         <SheetPills options={REGIONS.map(([r]) => r)} value={reg} onChange={setReg} />
       </Field>
-      <TextField label="언제 모여요?" value={when} onChangeText={setWhen} placeholder="예) 매주 수 20:00" />
       <Field label="모이는 요일 · 여러 개 골라요">
         <MultiPills options={DAYS} value={days} onChange={setDays} />
+      </Field>
+      <Field label="몇 시에 모여요?">
+        <TimeChips times={TIMES} value={time} onChange={setTime} />
+      </Field>
+      <Field label="최대 인원 · 나 포함">
+        <Stepper value={max} min={MAX_MIN} max={MAX_MAX} unit="명" onChange={setMax} />
       </Field>
       <Field label="가입 조건">
         <SheetPills options={CONDS} value={cond} onChange={setCond} />
@@ -87,6 +100,37 @@ export default function NewClub() {
     </SheetPage>
   );
 }
+
+/** − 12명 + (누르면 하나씩, 끝에 닿으면 흐리게) */
+function Stepper({ value, min, max, unit, onChange }: { value: number; min: number; max: number; unit: string; onChange: (v: number) => void }) {
+  const step = (d: number) => {
+    const v = Math.min(max, Math.max(min, value + d));
+    if (v === value) return;
+    sfx('tap');
+    onChange(v);
+  };
+  const btn = (d: number, label: string, off: boolean) => (
+    <Pressable onPress={() => step(d)} disabled={off} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [st.b, off && st.off, pressed && st.on]}>
+      <PText style={st.bt}>{d < 0 ? '−' : '+'}</PText>
+    </Pressable>
+  );
+  return (
+    <View style={st.row} accessibilityRole="adjustable" accessibilityValue={{ min, max, now: value, text: `${value}${unit}` }}>
+      {btn(-1, '한 명 줄이기', value <= min)}
+      <PText style={st.v}>{`${value}${unit}`}</PText>
+      {btn(1, '한 명 늘리기', value >= max)}
+    </View>
+  );
+}
+
+const st = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 14 },
+  b: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  bt: { fontFamily: Font.body900, fontSize: 20, lineHeight: 24 },
+  v: { minWidth: 56, textAlign: 'center', fontFamily: Font.display, fontSize: 18, lineHeight: 24 },
+  off: { opacity: 0.35 },
+  on: { transform: [{ scale: 0.94 }] },
+});
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

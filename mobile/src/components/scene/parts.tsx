@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Tts from 'expo-speech';
 import { useEffect, type ReactNode } from 'react';
-import { Modal, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,6 +16,7 @@ import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { useLearnPrefs } from '@/state/learn-prefs';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { Check, Mark, Spk, XMark } from './icons';
 
@@ -322,7 +323,7 @@ export function Avatar({ who, size, color }: { who: string; size: number; color:
 export function QuitSheet({ open, onStay, onQuit }: { open: boolean; onStay: () => void; onQuit: () => void }) {
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={onStay} statusBarTranslucent>
+    <LayerModal visible={open} transparent animationType="fade" onRequestClose={onStay} statusBarTranslucent>
       <View style={[styles.quitDim, { paddingBottom: 16 + insets.bottom }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onStay} accessibilityLabel="계속하기" />
         <Drop dy={6} radius={26} style={styles.full}>
@@ -341,7 +342,7 @@ export function QuitSheet({ open, onStay, onQuit }: { open: boolean; onStay: () 
         </View>
         </Drop>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

@@ -4,6 +4,7 @@
  */
 import { CODE_LENGTH, CODE_SECONDS, type LoginProvider } from '@/data/auth';
 import { updateMe } from '@/state/me';
+import { getOnboarding } from '@/state/onboarding';
 
 import { http } from './client';
 import { apiConfig } from './config';
@@ -21,7 +22,8 @@ export async function loginWithProvider(provider: LoginProvider, providerToken =
   const res = apiConfig.useMock
     ? await mock('login', () => {
         updateMe({ role: 'member' }); // 가짜 서버: 로그인하면 회원
-        return { accessToken: `mock-${provider}`, refreshToken: 'mock-refresh', isNewMember: false };
+        // 가짜 서버: 가입 과정을 아직 안 끝냈으면 처음 가입한 사람
+        return { accessToken: `mock-${provider}`, refreshToken: 'mock-refresh', isNewMember: !getOnboarding().done };
       })
     : await http.post<LoginResponse>(`/auth/login/${provider}`, { providerToken }, { auth: false });
   await saveTokens(res);

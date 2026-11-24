@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Modal, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,12 +10,11 @@ import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
-import { Icon } from '../icons';
 import { Poster, posterFg, posterSlides, type Slide } from '../poster';
 
 /*
@@ -82,7 +81,15 @@ export function DetailFrame({ id, club, posters, title, kicker, heading, childre
   return (
     <View style={styles.root} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Stack.Screen options={SCREEN.push} />
-      <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView
+        ref={scroll}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        // 인사 · 댓글 입력칸을 누르면 키보드 위로 올려 보여요 (iOS) · 끌어내리면 키보드가 내려가요
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive">
         <PosterStack id={id} slides={slides} height={posterH} onOpen={(i) => setView(i)} />
         <View style={styles.dbd}>
           <View style={styles.dk}>{kicker}</View>
@@ -100,13 +107,12 @@ export function DetailFrame({ id, club, posters, title, kicker, heading, childre
         </View>
       </ScrollView>
 
-      {/* 위 막대: 뒤로 · (모임 이름) · 공유 */}
+      {/* 위 막대: 뒤로 · (모임 이름) */}
       <View style={[styles.dtop, { paddingTop: insets.top + 8, height: topH }, solid && styles.dtopSolid]} pointerEvents="box-none">
         <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} color={ink} />
         <FadeTitle show={titled} text={title} />
-        <Pressable onPress={() => showToast('링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={styles.ib} hitSlop={4}>
-          <Icon name="send" size={19} color={ink} />
-        </Pressable>
+        {/* 공유 버튼은 웹 주소가 생기면 다시 (지금은 자리만 맞춰요) */}
+        <View style={styles.ib} />
       </View>
       {tabs && pinned ? <View style={[styles.pinTabs, { top: topH }]}>{tabs}</View> : null}
 
@@ -187,7 +193,7 @@ function PosterViewer({ id, slides, start, onClose }: { id: string; slides: Slid
     if (n !== i && n >= 0 && n < slides.length) setI(n);
   };
   return (
-    <Modal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.pv}>
         <View style={[styles.pvTop, { paddingTop: insets.top + 4 }]}>
           <BackButton onPress={onClose} color="#fff" label="닫기" />
@@ -223,7 +229,7 @@ function PosterViewer({ id, slides, start, onClose }: { id: string; slides: Slid
           </View>
         ) : null}
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

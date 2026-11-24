@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Icon, Lift } from '@/components/account/parts';
@@ -15,13 +15,15 @@ import { Colors } from '@/constants/theme';
 import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, teamLabel, teamNameByNo } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
+import { MemberOnly } from '@/components/common/member-lock';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /**
  * PRO'S NOTE 모아 보기 (프로토타입 pnListHTML): 오늘 준비 중 · 나의 스터디 일기 · 저장한 표현 · 전체 / 팀별 / 저장한 표현 탭.
  * ?view=diary 면 나의 스터디 일기 모아 보기 (프로토타입 내 활동 › 일기 diaryHTML).
  * 맞는 API: 44 `/me/pro-notes`
  */
-export default function ProNotesScreen() {
+function ProNotesScreen() {
   const { view } = useLocalSearchParams<{ view?: string }>();
   if (view === 'diary') return <DiaryList />;
   return <NotesList />;
@@ -76,7 +78,7 @@ function NotesList() {
           }}
         />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
         {tabs.map(([k, l]) => {
           const on = tab === k;
           return (
@@ -95,7 +97,7 @@ function NotesList() {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ChipScroll>
       {tab === 'saved' ? (
         saved.length ? (
           saved.map(({ n, i }) => {
@@ -193,3 +195,12 @@ const styles = StyleSheet.create({
   mkOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
   empty: { paddingVertical: 30, paddingHorizontal: 10, textAlign: 'center', fontFamily: Font.body700, fontSize: 14, lineHeight: 21, color: Colors.inkSub },
 });
+
+/** 회원 전용 화면 (state/access 'proNote'): 비회원이 알림 · 주소로 바로 들어와도 '지점 회원이 되면 열려요' 칸만 보여요 */
+export default function ProNotesScreenGate() {
+  return (
+    <MemberOnly feature="proNote" title="PRO'S NOTE">
+      <ProNotesScreen />
+    </MemberOnly>
+  );
+}

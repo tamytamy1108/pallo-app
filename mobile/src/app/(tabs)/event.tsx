@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
+import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { guardMember } from '@/components/common/trial-guide';
 import { EventBanner } from '@/components/event/event-banner';
 import { splitEvents } from '@/components/event/event-model';
@@ -17,13 +18,20 @@ import { Font } from '@/constants/fonts';
 import { Colors, TabBarSpace } from '@/constants/theme';
 import { EVENT_FILTERS, EVENTS, type EventKind } from '@/data/events';
 import { useMe } from '@/state/me';
+import { useTabReselect } from '@/lib/tab-reselect';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /**
  * 이벤트 탭 (docs/pages/06-event.md): 지점 · 본사가 여는 파티 · 클래스 · 여행.
  * 프로토타입은 라운지 화면을 이벤트만 보이게 써요 (lgMode('event') — 탭 줄 · 스토리 · 지도는 숨김).
  * 위 → 아래: 제목 · 내가 제안한 이벤트 · 지점 선택 + 종류 칩 · 배너 · 다가오는/지난 탭 · 목록 · 오른쪽 아래 [오픈하기].
  */
+/** 비회원이 볼 수 있는 높이 (제안 카드 · 배너 · 이벤트 한두 개) */
+const EVENT_PEEK = 640;
+
 export default function EventScreen() {
+  const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('event', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const role = useMe((m) => m.role);
   const [branch, setBranch] = useState('전체');
   const [kind, setKind] = useState<EventKind | 'all'>('all');
@@ -37,13 +45,13 @@ export default function EventScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.page}>
+      <ScrollView ref={scroll} contentContainerStyle={styles.page} onScroll={() => checkScrollLock('event')} scrollEventThrottle={64}>
         <View style={styles.hd}>
           <PText variant="headline" accessibilityRole="header" style={styles.h1}>
             이벤트
           </PText>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
+        <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
           <BranchSelect value={branch} onChange={setBranch} />
           <View style={styles.sep} />
           {EVENT_FILTERS.map(([k, l]) => {
@@ -54,32 +62,37 @@ export default function EventScreen() {
               </Pressable>
             );
           })}
-        </ScrollView>
-        <View style={styles.feed}>
-          <ProposalCards />
-          {/* 칩 · 지점을 바꾸면 배너를 처음(1 / n)부터 */}
-          <EventBanner key={up.slice(0, 5).map((e) => e.id).join()} list={up.slice(0, 5)} />
-          <View style={styles.tabs} accessibilityRole="tablist">
-            <TabBtn on={!isPastTab} label="다가오는 이벤트" n={up.length} onPress={() => setTab('up')} />
-            <TabBtn on={isPastTab} label="지난 이벤트" onPress={() => setTab('past')} />
-          </View>
-          <PText style={styles.sort}>{isPastTab ? '최근에 끝난 순 · 누르면 후기와 사진을 볼 수 있어요' : '마감 임박한 순'}</PText>
-          {L.length ? (
-            <View style={styles.list}>
-              {L.map((e) => (
-                <EventRow key={e.id} e={e} />
-              ))}
+        </ChipScroll>
+        {/* 비회원은 배너 · 이벤트 한두 개까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
+        <View style={styles.feedWrap}>
+          <ScrollLock screen="event" peek={EVENT_PEEK}>
+            <View style={styles.feed}>
+              <ProposalCards />
+              {/* 칩 · 지점을 바꾸면 배너를 처음(1 / n)부터 */}
+              <EventBanner key={up.slice(0, 5).map((e) => e.id).join()} list={up.slice(0, 5)} />
+              <View style={styles.tabs} accessibilityRole="tablist">
+                <TabBtn on={!isPastTab} label="다가오는 이벤트" n={up.length} onPress={() => setTab('up')} />
+                <TabBtn on={isPastTab} label="지난 이벤트" onPress={() => setTab('past')} />
+              </View>
+              <PText style={styles.sort}>{isPastTab ? '최근에 끝난 순 · 누르면 후기와 사진을 볼 수 있어요' : '마감 임박한 순'}</PText>
+              {L.length ? (
+                <View style={styles.list}>
+                  {L.map((e) => (
+                    <EventRow key={e.id} e={e} />
+                  ))}
+                </View>
+              ) : (
+                <PText style={styles.empty}>{isPastTab ? '지난 이벤트가 없어요.' : '예정된 이벤트가 없어요.'}</PText>
+              )}
             </View>
-          ) : (
-            <PText style={styles.empty}>{isPastTab ? '지난 이벤트가 없어요.' : '예정된 이벤트가 없어요.'}</PText>
-          )}
+          </ScrollLock>
         </View>
       </ScrollView>
       {/* 오픈하기: 라운지 + 버튼과 같은 자리 · 멤버는 제안서, 리더 · 매니저는 바로 열기(관리자 화면이라 나중에) */}
       <SafeAreaInsetsContext.Consumer>
         {(insets) => (
           <Pressable
-            onPress={() => guardMember(() => router.push('/events/propose'))}
+            onPress={() => guardMember(() => router.push('/events/propose'), '이벤트를 제안하려면')}
             accessibilityRole="button"
             accessibilityLabel={staff ? '이벤트 오픈하기' : '이벤트 제안하기'}
             style={({ pressed }) => [styles.fab, { bottom: Math.max(insets?.bottom ?? 0, 12) + 62 + 32 }, pressed && styles.fabPressed]}>
@@ -113,7 +126,8 @@ const styles = StyleSheet.create({
   chip: { height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: '#CFC6B4', paddingHorizontal: 12, justifyContent: 'center' },
   chipOn: { backgroundColor: Colors.lavender, borderColor: Colors.purple },
   chipT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17, color: Colors.inkSub },
-  feed: { paddingTop: 12, paddingHorizontal: 16, gap: 22 },
+  feedWrap: { paddingHorizontal: 16 },
+  feed: { paddingTop: 12, gap: 22 },
   tabs: { flexDirection: 'row', gap: 18, height: 39, borderBottomWidth: 1, borderColor: Colors.line, marginBottom: -10 },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 2, height: 38 },
   tabT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },

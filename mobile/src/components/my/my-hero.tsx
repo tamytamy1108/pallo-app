@@ -1,5 +1,8 @@
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
 import { AvatarStage } from '@/components/character/avatar';
@@ -9,6 +12,8 @@ import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
 import { followLists } from '@/data/my';
 import { sfx } from '@/lib/feedback';
+import { EASE, SPRING } from '@/lib/motion';
+import { finishMyMoment, useLinkEvents } from '@/state/link-events';
 import { useMyAvatar } from '@/state/avatar';
 import { useMe } from '@/state/me';
 
@@ -54,9 +59,13 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
         </View>
         <View style={styles.id}>
           <PText style={styles.name}>{me.name}</PText>
-          <PText style={styles.sub}>
-            {me.branch} · {LANG_NAME[me.lang]} {me.level} · 회원
-          </PText>
+          <View style={styles.subRow}>
+            <PText style={styles.sub}>
+              {me.branch} · {LANG_NAME[me.lang]} {me.level}
+              {me.link === 'linked' ? ' · 회원' : ''}
+            </PText>
+            {me.link !== 'none' && <LinkTag link={me.link} />}
+          </View>
           <PText style={styles.bio}>{me.bio || '한 줄 소개를 남겨 보세요'}</PText>
           <View style={styles.fol}>
             <Pressable onPress={() => onFollow('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${lists.fing.length}명`} hitSlop={10} style={styles.folBtn}>
@@ -72,6 +81,47 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
       </View>
     </Raised>
   );
+}
+
+const TAG_LABEL = { pending: '연동 확인 중', linked: '연동됨', rejected: '연동 안 됨' } as const;
+
+/**
+ * 지점 연동 표시: 연동됨(초록 · 체크) · 연동 확인 중(라벤더 · 점) · 연동 안 됨(분홍 · 점). '회원' 바로 옆에 작게.
+ * 방금 연동됐으면(state/link-events myMoment) 마이가 처음 보일 때 '연동됨'이 톡 튀어나와요 (한 번만 · 움직임 줄이기면 그냥 보여요).
+ */
+function LinkTag({ link }: { link: 'pending' | 'linked' | 'rejected' }) {
+  const label = TAG_LABEL[link];
+  const pop = usePopOnce(link === 'linked');
+  return (
+    <Animated.View style={[styles.tag, link === 'pending' && styles.tagWait, link === 'rejected' && styles.tagFail, pop]} accessible accessibilityLabel={`지점 ${label}`}>
+      {link === 'linked' ? (
+        <Svg width={8} height={8} viewBox="0 0 24 24">
+          <Path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={Colors.white} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
+        </Svg>
+      ) : (
+        <View style={[styles.tagDot, link === 'rejected' && styles.tagDotFail]} />
+      )}
+      <PText style={[styles.tagText, link === 'pending' && styles.tagTextWait, link === 'rejected' && styles.tagTextFail]}>{label}</PText>
+    </Animated.View>
+  );
+}
+
+/** 연동 직후 마이가 보이는 첫 순간: 0 → 1.25 → 1 로 튀어나와요 */
+function usePopOnce(linked: boolean) {
+  const focused = useIsFocused();
+  const still = useReducedMotion();
+  const moment = useLinkEvents((s) => s.myMoment);
+  const play = linked && moment && focused;
+  const s = useSharedValue(1);
+  useEffect(() => {
+    if (!play) return;
+    finishMyMoment();
+    if (still) return;
+    sfx('pick');
+    s.set(0);
+    s.set(withDelay(450, withSequence(withTiming(1.25, { duration: 380, easing: EASE }), withTiming(1, { duration: 360, easing: SPRING }))));
+  }, [play, still, s]);
+  return useAnimatedStyle(() => ({ opacity: Math.min(s.get() * 2, 1), transform: [{ scale: s.get() }] }));
 }
 
 const styles = StyleSheet.create({
@@ -91,7 +141,17 @@ const styles = StyleSheet.create({
   sparkN: { fontFamily: Font.display, fontSize: 13, lineHeight: 17 },
   id: { paddingHorizontal: 6, paddingBottom: 6, gap: 2 },
   name: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
+  subRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5 },
   sub: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
+  // 연동됨: 초록 (흰 글자 10px 가 잘 읽히게 진한 초록)
+  tag: { height: 17, paddingLeft: 5, paddingRight: 6, borderRadius: 9, backgroundColor: '#24834B', flexDirection: 'row', alignItems: 'center', gap: 3 },
+  tagWait: { backgroundColor: Colors.lavender },
+  tagFail: { backgroundColor: '#FCE3EA' },
+  tagDotFail: { backgroundColor: Colors.rosePink },
+  tagTextFail: { color: '#A8485F' },
+  tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.purple },
+  tagText: { fontFamily: Font.body900, fontSize: 10, lineHeight: 13, letterSpacing: -0.2, color: Colors.white },
+  tagTextWait: { color: Colors.purple },
   bio: { marginTop: 4, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
   fol: { flexDirection: 'row', gap: 16, marginTop: 8 },
   folBtn: { flexDirection: 'row', alignItems: 'baseline' },

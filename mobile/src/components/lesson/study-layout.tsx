@@ -28,7 +28,7 @@ export function StudyLayout({
   return (
     <View style={styles.flex}>
       <View style={styles.flex}>
-        <ScrollView
+        <ScrollView automaticallyAdjustKeyboardInsets
           ref={scrollRef}
           style={styles.flex}
           contentContainerStyle={[styles.body, !foot && { paddingBottom: 30 + insets.bottom }, bodyStyle]}

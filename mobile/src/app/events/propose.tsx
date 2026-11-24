@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
 import { MonthCalendar, PlacePicker, PosterPicker, type Place } from '@/components/event/form-parts';
@@ -87,7 +88,7 @@ export default function ProposeEvent() {
       </Field>
       <TextField label="이벤트 제목 *" value={title} onChangeText={setTitle} placeholder="예) 한강 영어 피크닉" />
       <Field label="어떤 이벤트인가요?">
-        <TextInput value={body} onChangeText={setBody} multiline maxLength={500} placeholder="예) 돗자리 펴고 영어로 수다 떠는 피크닉이에요. 도시락은 각자, 게임은 제가 준비할게요." placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="어떤 이벤트인가요?" />
+        <GrowInput value={body} onChangeText={setBody} multiline maxLength={500} placeholder="예) 돗자리 펴고 영어로 수다 떠는 피크닉이에요. 도시락은 각자, 게임은 제가 준비할게요." placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="어떤 이벤트인가요?" />
       </Field>
       <Field label="예상 인원">
         <SheetPills options={CAPS} value={cap} onChange={setCap} label="예상 인원" />

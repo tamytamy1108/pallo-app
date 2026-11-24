@@ -1,3 +1,4 @@
+import { setAudioModeAsync } from 'expo-audio';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router/js-stack';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,12 +9,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { ApiProvider, useStartData } from '@/api/provider';
 import { TrialGuideHost } from '@/components/common/trial-guide';
+import { DevNotch } from '@/components/dev-notch';
+import { LinkPushHost } from '@/components/home/link-push';
 import { ToastHost } from '@/components/ui/toast';
 import { FontAssets } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { CARD, SCREEN } from '@/lib/transitions';
 
 SplashScreen.preventAutoHideAsync();
+// 아이폰 무음 모드(옆 스위치)에서도 표현 듣기 · 효과음이 나와요 (게임 · 학습 앱처럼). 다른 앱 음악은 끊지 않아요
+setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
 
 /**
  * 가장 바깥 틀: 글꼴을 다 불러온 뒤 화면을 보여 줘요. 탭 화면 위로 다른 화면이 쌓여요(Stack).
@@ -35,6 +40,7 @@ export default function RootLayout() {
   return (
     <ApiProvider>
       <GestureHandlerRootView style={styles.root}>
+        <DevNotch>
         <StatusBar style="dark" />
         {/* 화면 넘김은 프로토타입처럼 (src/lib/transitions.ts): 기본은 오른쪽에서 밀려 들어오기 */}
         <Stack screenOptions={{ headerShown: false, cardStyle: { ...CARD, backgroundColor: Colors.cream }, ...SCREEN.push }}>
@@ -46,9 +52,10 @@ export default function RootLayout() {
           <Stack.Screen name="lesson34/[step]" options={SCREEN.rise} />
           <Stack.Screen name="listening" options={SCREEN.rise} />
           <Stack.Screen name="login/index" options={SCREEN.fade} />
+          {/* 첫 화면 (YOUR FIRST STAGE) · 가입 단계 */}
+          <Stack.Screen name="welcome" options={SCREEN.fade} />
           <Stack.Screen name="story/[id]" options={SCREEN.fade} />
           {/* 뒤 화면 위에 시트 · 창만 겹쳐요 */}
-          <Stack.Screen name="trial/index" options={SCREEN.overlay} />
           <Stack.Screen name="me/profile/[id]" options={SCREEN.overlay} />
           <Stack.Screen name="challenge/new" options={SCREEN.overlay} />
           <Stack.Screen name="compose" options={SCREEN.overlay} />
@@ -61,6 +68,9 @@ export default function RootLayout() {
         {/* 어디서든 부르는 공통 창: 토스트 · 비회원 체험 안내 */}
         <TrialGuideHost />
         <ToastHost />
+        {/* 지점 연동 결과 푸시 띠: 어느 화면에 있어도 위에서 내려와요 */}
+        <LinkPushHost />
+        </DevNotch>
       </GestureHandlerRootView>
     </ApiProvider>
   );
