@@ -251,7 +251,7 @@ export const AV_BG_ART: Record<string, number> = {
   'space': require('@/assets/characters/av/bg-space.png'),
 };
 
-/** 원본 3D 몸 PNG (색마다 따로 그린 원본) */
+/** 몸 PNG: 원본 3D (색마다 따로 그린 원본) + 그라데이션 (bodies.json) */
 export const AV_BODY: Record<string, number> = {
   'yellow': require('@/assets/characters/av/body-yellow.png'),
   'purple': require('@/assets/characters/av/body-purple.png'),
@@ -260,6 +260,13 @@ export const AV_BODY: Record<string, number> = {
   'green': require('@/assets/characters/av/body-green.png'),
   'coral': require('@/assets/characters/av/body-coral.png'),
   'purple-lash': require('@/assets/characters/av/body-purple-lash.png'),
+  'g-sunset': require('@/assets/characters/av/body-g-sunset.png'),
+  'g-ocean': require('@/assets/characters/av/body-g-ocean.png'),
+  'g-cotton': require('@/assets/characters/av/body-g-cotton.png'),
+  'g-peach': require('@/assets/characters/av/body-g-peach.png'),
+  'g-aurora': require('@/assets/characters/av/body-g-aurora.png'),
+  'g-galaxy': require('@/assets/characters/av/body-g-galaxy.png'),
+  'g-rainbow': require('@/assets/characters/av/body-g-rainbow.png'),
 };
 
 /** 직접 고른 몸 색: 노랑 원본에서 노랑 몸 픽셀만 떼어 낸 4장 (프로토타입 avTintMake 와 같은 기준) */
