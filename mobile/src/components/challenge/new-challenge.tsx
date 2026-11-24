@@ -18,6 +18,7 @@ import {
   chPbgOf,
   CH_SRC,
   createDaily,
+  draftDaily,
   createExpression,
   DUR_OPTS,
   entriesOf,
@@ -43,6 +44,7 @@ import { CountStepper, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 
+import { ChLoungePreview } from './cards';
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
 
@@ -264,7 +266,17 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           <View style={styles.fl}>
             <FieldLabel>대표 이미지 · 사진 또는 카드</FieldLabel>
             <PosterPicker uris={covers} onChange={setCovers} emptyLabel="사진 넣기" max={1} />
-            <CardMaker value={card} onChange={setCard} hasPhoto={covers.length > 0} defaultColor={chPbgOf(cat)} example={pwDef} square clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요." />
+            <CardMaker value={card} onChange={setCard} hasPhoto={covers.length > 0} defaultColor={chPbgOf(cat)} example={pwDef} square clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요."
+              listPreview={{
+                label: '라운지에서는 이렇게 보여요 · 누르기 전 모습',
+                render: (c) => (
+                  <ChLoungePreview
+                    s={s}
+                    p={{ ...draftDaily({ cat: cat as DailyCatKey, name: name.trim() || '챌린지 이름', way: photo ? 'photo' : 'cmt', guide: '', ...cardOf(usedCard(card ? c : null, covers.length > 0, chPbgOf(cat))), plan, cover: covers[0] }), id: 'preview', mine: false }}
+                  />
+                ),
+              }}
+            />
             <PText style={styles.wayd}>{covers.length && !card ? '순위 · 카드 · 상세의 네모 칸에 이 사진이 보여요.' : '순위 · 카드 · 상세의 네모 칸에 이 카드가 보여요.'}</PText>
           </View>
         </>
