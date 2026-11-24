@@ -80,6 +80,20 @@ export function Wheel({ items, value, onChange, label = (v) => v, style, bare }:
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => commit(i), WEB_SETTLE_MS);
   };
+  // 웹: 한 번 굴릴 때 칸마다 꼭 멈추게 (scroll-snap-stop) — 트랙패드 · 마우스 관성으로 여러 칸 넘어가지 않아요
+  useEffect(() => {
+    if (!WEB) return;
+    const node = (ref.current as unknown as { getScrollableNode?: () => HTMLElement } | null)?.getScrollableNode?.();
+    const rows = node?.firstElementChild?.children;
+    if (!node || !rows) return;
+    node.style.scrollSnapType = 'y mandatory';
+    for (const r of Array.from(rows)) {
+      const el = r as HTMLElement;
+      el.style.scrollSnapAlign = 'center';
+      el.style.scrollSnapStop = 'always';
+    }
+  });
+
   const pick = (i: number) => {
     ref.current?.scrollTo({ y: i * ITEM, animated: true });
     commit(i);
@@ -92,7 +106,8 @@ export function Wheel({ items, value, onChange, label = (v) => v, style, bare }:
         ref={ref}
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM}
-        decelerationRate="normal"
+        // 빨리 멈춰서 원하는 칸에 서기 쉽게 (normal 은 너무 멀리 굴러가요)
+        decelerationRate="fast"
         onScroll={onScroll}
         onMomentumScrollEnd={(e) => commit(indexOf(e))}
         scrollEventThrottle={16}
