@@ -15,7 +15,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { C, MONTHS, REGIONS, WEEK, type Region } from '@/data/meet';
+import { C, MONTHS, NO_LIMIT, REGIONS, WEEK, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -50,6 +50,7 @@ export default function NewMeet() {
   const [place, setPlace] = useState<Place | null>(null);
   const [addr2, setAddr2] = useState('');
   const [cap, setCap] = useState(6);
+  const [noCap, setNoCap] = useState(false);
   const [pics, setPics] = useState<string[]>([]);
   // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
   const [card, setCard] = useState<MadeCard | null>(null);
@@ -73,7 +74,7 @@ export default function NewMeet() {
       addr2: addr2.trim() || undefined,
       host: me.name,
       cur: 1,
-      max: cap,
+      max: noCap ? NO_LIMIT : cap,
       mine: true,
       posters: pics.length ? pics : undefined,
       card: usedCard(card, pics.length > 0),
@@ -95,7 +96,7 @@ export default function NewMeet() {
   return (
     <SheetPage title="번개 열기" label="번개 열기" footer={<SheetButton label="번개 열기 · 지도에 표시" size="foot" onPress={open} />}>
       <SheetDesc>지도와 번개 목록에 바로 보여요. 오늘 배운 표현을 쓰는 자리면 더 좋아요.</SheetDesc>
-      <Field label="지역">
+      <Field label="지역" req>
         <SheetPills
           options={REGIONS.map(([r]) => r)}
           value={reg}
@@ -105,8 +106,8 @@ export default function NewMeet() {
           }}
         />
       </Field>
-      <TextField label="제목" value={title} onChangeText={setTitle} placeholder="예) 퇴근 후 영어 맥주 번개" />
-      <Field label="날짜 · 오늘부터 1주 안에서 골라요">
+      <TextField label="제목 *" value={title} onChangeText={setTitle} placeholder="예) 퇴근 후 영어 맥주 번개" />
+      <Field label="날짜 · 오늘부터 1주 안에서 골라요" req>
         <View style={styles.cal}>
           <View style={styles.calH}>
             <PText style={styles.calB}>
@@ -140,18 +141,18 @@ export default function NewMeet() {
           </View>
         </View>
       </Field>
-      <Field label="시간 · 시작 ~ 끝">
+      <Field label="시간 · 시작 ~ 끝" req>
         <TimeRange start={time} end={endTime} onChange={(s, e) => { setTime(s); setEndTime(e); }} />
       </Field>
       <PText style={styles.when}>{when}</PText>
-      <Field label="장소 · 지도에서 골라요">
+      <Field label="장소 · 지도에서 골라요" req>
         <PlacePicker region={reg} value={place} onChange={setPlace} />
       </Field>
       <TextField label="상세 주소 · 직접 적어요 (선택)" value={addr2} onChangeText={setAddr2} placeholder="예) 3층 창가 긴 테이블 · 입구에서 오른쪽" />
-      <Field label="정원 · 나 포함">
-        <CountStepper value={cap} min={CAP_MIN} max={CAP_MAX} format={(v) => `${v}명`} onChange={setCap} less="한 명 줄이기" more="한 명 늘리기" />
+      <Field label="정원 · 나 포함" req>
+        <CountStepper value={cap} min={CAP_MIN} max={CAP_MAX} format={(v) => `${v}명`} onChange={setCap} less="한 명 줄이기" more="한 명 늘리기" unlimited={{ on: noCap, onChange: setNoCap, label: '인원 무관' }} />
       </Field>
-      <Field label="대표 이미지 · 사진 여러 장 또는 카드">
+      <Field label="대표 이미지 · 사진 여러 장 또는 카드" req>
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
         <CardMaker
           value={card}
@@ -174,10 +175,14 @@ export default function NewMeet() {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+/** 칸 이름 · req 면 빨간 * (꼭 정해요) */
+function Field({ label, req, children }: { label: string; req?: boolean; children: ReactNode }) {
   return (
     <View style={{ gap: 6 }}>
-      <PText style={styles.lb}>{label}</PText>
+      <PText style={styles.lb}>
+        {label}
+        {req ? <PText style={styles.req}> *</PText> : null}
+      </PText>
       {children}
     </View>
   );
@@ -185,6 +190,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 const styles = StyleSheet.create({
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 19 },
+  req: { fontFamily: Font.body900, fontSize: 12.5, color: '#E5484D' },
   cal: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: '#fff', paddingTop: 12, paddingHorizontal: 10, paddingBottom: 10 },
   calH: { gap: 1, paddingHorizontal: 4, paddingBottom: 8 },
   calB: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },

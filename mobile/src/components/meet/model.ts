@@ -112,7 +112,8 @@ export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, spa
     const d = new Date(t0);
     d.setDate(d.getDate() + k);
     if (!c.days.includes(d.getDay())) continue;
-    const cap = Math.min(c.max, 8);
+    // 인원 무관(0)이면 예시 인원 8명 기준
+    const cap = Math.min(c.max || 8, 8);
     const base = out.length === 1 && h % 3 === 0 ? cap : out.length === 3 ? 1 + (h % 2) : 2 + ((h + k) % (cap - 2));
     const th = (SESSION_THEME[c.cc] || SESSION_THEME.study)[out.length % 4];
     const id = `${c.id}@${d.getMonth() + 1}-${d.getDate()}`;

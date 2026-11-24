@@ -15,7 +15,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { DESC, dday, isPast, MONTHS } from '@/data/meet';
+import { DESC, dday, isPast, MONTHS, capFull, capText } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -41,7 +41,7 @@ export default function MeetDetail() {
   if (!m) return <EmptyState title="모임을 찾을 수 없어요" />;
   const past = isPast(m);
   const cur = m.cur + (joined ? 1 : 0);
-  const full = cur >= m.max && !joined;
+  const full = capFull(cur, m.max) && !joined;
   const members = membersOf(m, cur, joined || !!m.mine, myHi, { name: me.name, branch: me.branch });
   const dd = dday(m);
 
@@ -69,7 +69,7 @@ export default function MeetDetail() {
       }
     />
   ) : (
-    <MainBtn label={joined ? '참여 완료' : `참여하기 · 남은 자리 ${m.max - cur}`} variant={joined ? 'done' : 'y'} onPress={() => (joined ? setCancel(true) : guardMember(() => setJoin(true), '번개에 참여하려면'))} />
+    <MainBtn label={joined ? '참여 완료' : m.max > 0 ? `참여하기 · 남은 자리 ${m.max - cur}` : '참여하기'} variant={joined ? 'done' : 'y'} onPress={() => (joined ? setCancel(true) : guardMember(() => setJoin(true), '번개에 참여하려면'))} />
   );
 
   return (
@@ -113,7 +113,7 @@ export default function MeetDetail() {
             end={<CopyBtn text={[m.addr || m.place, m.addr2].filter(Boolean).join(' · ')} />}
           />
           <InfoRow icon="heart" main="참가비 없음 · 각자 계산" />
-          <InfoRow icon="users" main={`${cur} / ${m.max}명 ${cur >= m.max ? '· 마감' : `· 남은 자리 ${m.max - cur}`}`} sub={<CapBar cur={cur} max={m.max} width={140} />} />
+          <InfoRow icon="users" main={m.max > 0 ? `${capText(cur, m.max)} ${cur >= m.max ? '· 마감' : `· 남은 자리 ${m.max - cur}`}` : capText(cur, m.max)} sub={m.max > 0 ? <CapBar cur={cur} max={m.max} width={140} /> : '누구나 함께해요'} />
           <InfoRow icon="crown" main={`호스트 ${m.host}`} />
         </InfoRows>
         <DSec>소개</DSec>

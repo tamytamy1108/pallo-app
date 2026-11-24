@@ -8,7 +8,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { dday, isPast, monthDay, type Meet } from '@/data/meet';
+import { dday, isPast, monthDay, type Meet, capFull, capText } from '@/data/meet';
 
 import { Icon } from './icons';
 import { toggleIn, useMeetStore } from './meet-store';
@@ -27,7 +27,7 @@ export function MeetCard({ m, width }: { m: Meet; width: number }) {
   const slide = posterSlides(m.id, false, m.posters, m.card)[0];
   const fg = posterFg(slide.bg);
   const open = () => router.push(`/meet/${m.id}`);
-  const full = cur >= m.max && !joined;
+  const full = capFull(cur, m.max) && !joined;
 
   const btn = past ? (
     <LgButton label="후기 보기" variant="wh" height={36} onPress={open} />
@@ -90,9 +90,9 @@ export function MeetCard({ m, width }: { m: Meet; width: number }) {
           <View style={styles.foot}>
             <View>
               <PText style={styles.n}>
-                {cur}/{m.max}명 · {m.host}
+                {capText(cur, m.max)} · {m.host}
               </PText>
-              <CapBar cur={cur} max={m.max} />
+              {m.max > 0 ? <CapBar cur={cur} max={m.max} /> : null}
             </View>
             <View style={styles.sp} />
             {btn}

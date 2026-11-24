@@ -11,6 +11,13 @@ import type { MadeCard } from './poster-colors';
 
 export const C = { y: '#FFE200', pk: '#D0798E', pu: '#493087', sky: '#8FA6DC', lpu: '#E5DDF6', lsky: '#E3EAF8', ink: '#1E1A2B', cream: '#FBF6EA' } as const;
 
+/** 정원 · 최대 인원 0 = 인원 무관 (개설할 때 '인원 무관'을 고르면 0) */
+export const NO_LIMIT = 0;
+/** 자리가 다 찼나요 (인원 무관이면 늘 아니에요) */
+export const capFull = (cur: number, max: number) => max > 0 && cur >= max;
+/** '3 / 6명' · 인원 무관이면 '3명 · 인원 무관' */
+export const capText = (cur: number, max: number) => (max > 0 ? `${cur} / ${max}명` : `${cur}명 · 인원 무관`);
+
 export type Region = '서울' | '경기' | '천안' | '대전' | '대구' | '울산' | '부산';
 export type ClubCat = 'run' | 'book' | 'drama' | 'food' | 'study';
 /** 포스터 큰 글자 줄들 · 바탕색 (프로토타입 LG_PW) */
