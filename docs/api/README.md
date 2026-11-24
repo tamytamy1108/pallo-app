@@ -5,8 +5,8 @@
 
 | 파일 | 내용 |
 |---|---|
-| [`openapi.yaml`](openapi.yaml) | API 269개: 요청 · 응답 모양, 쓰는 화면, 규칙 |
-| [`screens.md`](screens.md) | 화면 54개마다 무슨 API를 부르는지 · 지금 가짜 데이터가 어디 있는지 · 열린 질문 |
+| [`openapi.yaml`](openapi.yaml) | API 275개: 요청 · 응답 모양, 쓰는 화면, 규칙 |
+| [`screens.md`](screens.md) | 화면 67개마다 무슨 API를 부르는지 · 지금 가짜 데이터가 어디 있는지 · 열린 질문 |
 | [`index.html`](index.html) | Swagger UI로 보기 |
 
 ## 보는 법
@@ -21,16 +21,16 @@ cd docs/api && npx -y http-server -p 8090 .
 
 | 값 | 개수 | 뜻 |
 |---|---:|---|
-| `existing` | 65 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
-| `change` | 43 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
-| `new` | 161 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
+| `existing` | 63 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
+| `change` | 45 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
+| `new` | 167 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
 
 `existing` · `change` 108개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음).
 각 API에 붙은 다른 표시: `x-screens`(쓰는 화면 파일) · `x-app-code`(지금 가짜 데이터 위치) · `x-inventory`(예전 목록 `docs/appendix/api-inventory.md` 번호, `docs/frontend/api-additions.md` A번호).
 
 묶음별 개수는 [`screens.md` 맨 위 표](screens.md#한눈에)에 있어요. 큰 덩어리로 보면:
 - **거의 있음**: 로그인 · `/me` · 출석(`/study`) · 커뮤니티 글 · 번개(`/hangouts`) · 동아리(`/clubs`) · 챌린지(`/challenges`) · 수강 변경 · 연기 · 지점 이동
-- **전부 새로**: 학습 콘텐츠 · 진도 · 보상, 음성 · AI, 스토리, 여행 · 해외살이, 이벤트, 캐릭터 · 상점, 랭킹 · 배지, 신고 · 차단, 공지
+- **전부 새로**: 첫 화면 · 가입 마무리 · 닉네임 확인 · 사용 가이드, 학습 콘텐츠 · 진도 · 보상, 음성 · AI, 스토리, 여행 · 해외살이, 이벤트, 캐릭터 · 상점, 랭킹 · 배지, 신고 · 차단, 공지
 
 ## 공통 약속 (지금 백엔드 방식 그대로)
 
@@ -38,7 +38,7 @@ cd docs/api && npx -y http-server -p 8090 .
 - 새 목록 API: `?cursor=&size=` → `{ rows, nextCursor }`. 있는 API는 지금 모양 그대로
 - 시간 UTC ISO 8601 · 사진은 `POST /uploads/images/{purpose}` 먼저 (새 purpose 필요한 것은 설명에 적었어요)
 - 포인트 · 스파크 · 랭킹 · 연속 학습 · 정원 · 자격은 **서버가 계산**. 앱이 지금 기기에서 하는 규칙을 각 API 설명에 옮겨 적었어요
-- 공개 API(약관 등 `/public/api/v1`)는 그 API에만 `servers` 를 따로 달았어요
+- 공개 API(약관 · 지점 목록 · 체험 접수 · 첫 화면, `/public/api/v1`)는 그 API에만 `servers` 를 따로 달았어요. 체험 접수는 로그인 토큰이 있으면 같이 보내 계정과 이어요
 
 ## 백엔드가 정해 줘야 할 것 (큰 것만 — 나머지는 screens.md 각 화면의 '열린 질문')
 
@@ -58,6 +58,7 @@ cd docs/api && npx -y http-server -p 8090 .
 - `api/errors.ts` 의 `{code,message}` → `{error,message}`, `api/client.ts` 의 `Page {items,nextCursor}` → `{rows,nextCursor}`
 - 로그인 `/auth/login/:provider` → `POST /auth/login`, `isNewMember` → `GET /me` 의 `needsOnboarding`. 온보딩 화면(약관 → 닉네임) 새로 만들기
 - `PATCH /me` → `PATCH /me/profile`
+- 가입 끝내기 `POST /me/onboarding` (고른 몸 색은 공짜로 지급) · 지점 연동 거절 화면은 `GET /me/branch-link-requests`
 
 ## 고치는 법
 

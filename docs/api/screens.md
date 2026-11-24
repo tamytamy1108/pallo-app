@@ -1,16 +1,17 @@
 # 화면별 API 지도
 
-앱 `mobile/src/app/` 의 화면 54개를 하나씩 열어 **서버가 필요한 곳**을 적었어요. API 자세한 모양은 [`openapi.yaml`](openapi.yaml) (Swagger)에 있어요.
-상태: `existing` 이미 있음 · `change` 있는 것에 필드 · 동작 추가 · `new` 새로 필요. 경로는 모두 `/app/api/v1` 뒤에 붙어요.
+앱 `mobile/src/app/` 의 화면 67개를 하나씩 열어 **서버가 필요한 곳**을 적었어요. API 자세한 모양은 [`openapi.yaml`](openapi.yaml) (Swagger)에 있어요.
+상태: `existing` 이미 있음 · `change` 있는 것에 필드 · 동작 추가 · `new` 새로 필요. 경로는 `/app/api/v1` 뒤에 붙어요 (공개 API는 `/public/api/v1`).
 
 ## 한눈에
 
 | 묶음 (Swagger 태그) | existing | change | new | 합계 |
 |---|---:|---:|---:|---:|
-| 인증 · 시작 | 8 | 3 | 4 | 15 |
+| 인증 · 시작 | 7 | 4 | 4 | 15 |
 | 홈 | 5 | 2 | 4 | 11 |
 | 알림 · 공지 | 1 | 1 | 3 | 5 |
 | 공통 · 설정값 | 5 | 1 | 3 | 9 |
+| 가입 · 온보딩 | 0 | 0 | 6 | 6 |
 | 라이브러리 | 1 | 0 | 3 | 4 |
 | 학습 · 레슨 | 0 | 0 | 3 | 3 |
 | 진도 · 보상 | 0 | 0 | 7 | 7 |
@@ -28,12 +29,12 @@
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
 | 캐릭터 · 상점 | 0 | 0 | 6 | 6 |
-| 수강 · 결제 | 8 | 5 | 7 | 20 |
+| 수강 · 결제 | 7 | 6 | 7 | 20 |
 | 프로 노트 | 1 | 2 | 7 | 10 |
 | 설정 · 지원 | 1 | 1 | 10 | 12 |
-| **합계** | **65** | **43** | **161** | **269** |
+| **합계** | **63** | **45** | **167** | **275** |
 
-목차: [인증 · 홈 · 알림 · 공통](#core) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my)
+목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my)
 
 
 <a id="core"></a>
@@ -53,21 +54,21 @@
 | 백오피스 문구 캐시 (필요 화면만) | GET /contents · GET /contents/{key} | existing | 앱은 하드코딩 |
 
 기기에만 저장 (API 없음): access · refresh 토큰 (SecureStore · 웹은 localStorage)
-열린 질문: 온보딩 화면(약관 → 닉네임)이 앱에 없어요 — needsOnboarding=true 일 때 어디로 보낼지 프론트가 먼저 만들어야 해요 (API 는 GET /public/api/v1/consents/app-onboarding + POST /me/consents 로 이미 있음).
+가입 단계 화면(약관 → 닉네임 → 캐릭터 → 지점 회원?)은 이제 앱에 있어요 → onboarding-screens.md. GET /me 에 linkStatus · trialBooking · role guest 가 더 필요해요 (권한 · 홈 카드).
 
 ### 탭 틀 — `app/(tabs)/_layout.tsx`
-서버 호출 없음 (TabBar 만).
+서버 호출 없음. 기기에 토큰이 없고 가입 단계를 안 끝냈으면 첫 화면(/welcome)으로 보내요 (api/token.ts getTokens · state/onboarding.ts done). 토큰이 있으면 needsOnboarding 은 GET /me 로.
 
 ### 로그인 — `app/login/index.tsx`
+서버 호출 없음 — 예전 주소라 첫 화면(/welcome)으로 보내기만 해요. 로그인은 `app/welcome.tsx` '카카오로 시작하기' 하나 (onboarding-screens.md 첫 화면):
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 카카오로 시작 | POST /auth/login (provider=kakao, authCode) | change | api/auth.ts loginWithProvider (경로 /auth/login/:provider → 버림) |
-| Apple · Google 로 시작 | POST /auth/login (provider=apple/google) | change (백엔드 미지원) | 같은 함수 |
-| 로그인 뒤 온보딩 필요 여부 | GET /me needsOnboarding | change | 앱은 isNewMember 를 기대 → 버림 |
-| 먼저 둘러볼게요 (비회원) | 없음 | — | data/auth.ts browseAsGuest (role=guest) |
+| 카카오로 시작 (welcome.tsx) | POST /auth/login (kakao authCode) | change (응답 isNewMember 추가) | api/auth.ts loginWithProvider (경로 /auth/login/:provider → 버림) |
+| 로그인 뒤 가입 단계로 갈지 | 응답 isNewMember (= GET /me needsOnboarding) | change | isNewMember: !getOnboarding().done (가짜) |
 
+Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 열린 질문:
-- Apple · Google 로그인을 백엔드에 추가할지 (iOS 는 다른 소셜 로그인이 있으면 Apple 로그인이 사실상 필수).
+- 로그인을 카카오 하나로 두면 iOS 심사(4.8)에 걸려요 — iOS 에만 Apple 로그인을 더할지 (Q-O11).
 - 비회원 둘러보기에서 홈 GET 들(공지 · 팝업 · 라운지 미리보기 · 테마 · 체험 시간)을 토큰 없이 열지 — 스펙에는 "토큰 있으면 붙이고 없어도 됨"(security `{}` + bearer)으로 적었어요. /study · /me/notifications 는 로그인 필요.
 - 지점 QR(카카오싱크) 유입 시 응답 inquiryBranchName 으로 가는 "상담 접수 확인 화면"과 POST /qr-inquiries/{candidateId}/preference · GET /public/api/v1/branches/{code}/consultation-hours 는 백엔드에 있지만 앱 화면이 없어요.
 
@@ -80,16 +81,20 @@
 참고 (백엔드에 있고 앱 화면 없음): POST /auth/signup · GET /auth/signup/options · POST /auth/email-login (existing).
 열린 질문: 휴대폰 OTP 로그인을 새로 만들지, 이 화면을 이메일 가입/로그인으로 바꿀지.
 
-### 체험 신청 — `app/trial/index.tsx` (+ `components/common/trial-sheet.tsx`, `trial-guide.tsx`)
+### 체험 예약 (앱 안) — `app/trial/index.tsx` (+ `components/onboarding/trial-form.tsx` · `trial-slots.tsx` · `branch-sheet.tsx`, `components/common/trial-guide.tsx`)
+가입 단계 체험 예약(`app/onboarding/trial.tsx`)과 같은 한 장이에요. 들어오는 곳: 홈 둘러보기 카드 · 체험 권유 시트 [상담 예약하기] · 마이 잠김 칸 · 체험 안내 시트(guardMember) · 교재 소개 · /trial?lang=ja. 이름 · 번호는 가입 때 적은 값으로 미리 채워요.
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 1단계 지점 고르기 | GET /public/api/v1/branches | existing | data/trial.ts TRIAL_BRANCHES |
-| 언어 칩 | GET /public/api/v1/candidate-inquiries/options | existing | TRIAL_LANGS |
-| 2단계 날짜 · 시간 · 마감 | GET /trial-slots?branchCode=&from= | new | trialDays · TRIAL_TIMES · trialFull (가짜 마감) |
-| 동의 (필수 · 시트에 단계 추가 필요) | GET /public/api/v1/consents/app-onboarding (또는 별도 배치) | existing | 없음 |
-| 3단계 신청하기 | POST /public/api/v1/candidate-inquiries | change (level · 마감 확인 · 계정 연결) | data/trial.ts submitTrial |
+| 지점 선택하기 → 지점 목록 시트 (검색 · 권역 칩 · 전체 n) | GET /public/api/v1/branches | change (region · phone) | data/account.ts BRANCHES · BRANCH_REGIONS |
+| 희망 언어 (하나) | GET /public/api/v1/candidate-inquiries/options | existing | app-parts.tsx ONB_LANGS |
+| 상담 시간 (날짜 5일 → 시간 칸 · 마감 흐리게) — 지점 · 언어를 바꾸면 다시 | GET /trial-slots?branchCode=&lang=&days=5 | new | trial-slots.tsx TIMES · trialSlots (가짜 마감) |
+| 배우고 싶은 이유 (여러 개 · 선택) · 전달 사항 (200자 · 선택) | (예약 보내기에 같이) | — | app-parts.tsx WHY_REASONS |
+| [체험 예약하기] → 예약 확정(/trial/done) | POST /public/api/v1/candidate-inquiries (+ Bearer) | change (reasons · note · 마감 확인 · 계정 연결) | state/trial-booking.ts setLastTrial · updateMe({trial}) |
 
-열린 질문: 체험 동의 약관은 어떤 배치(app-onboarding? 빠른 문의용?)를 쓸지. 체험 시간표 · 정원은 지점별 운영 데이터인지(Q-B1 · Q-T2).
+열린 질문: 체험 동의 약관 — 앱 체험 화면엔 동의 칸이 없어요. 가입 때 동의(app-onboarding)로 갈음할지, 체험용 배치를 따로 둘지. 이미 다가오는 체험이 있는데 또 예약하면 막을지 · 바꿀지(예약 변경은 지금 '지점에 전화'). 체험 시간표 · 정원 · 언어별 프로 일정은 어디서 읽을지(Q-O10).
+
+### 체험 예약 확정 (앱 안) — `app/trial/done.tsx`
+서버 호출 없음 — 방금 보낸 값(state/trial-booking.ts useLastTrial)으로 '첫 무대 입장권'을 그려요 (가입 때 `app/onboarding/trial-done.tsx` 와 같은 TrialDoneView). 다시 열면 GET /me trialBooking.
 
 ### 홈 — `app/(tabs)/index.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -98,6 +103,9 @@
 | 종 분홍 점 | GET /me/notifications?pageSize=1 → unreadCount | change | noti-state.ts useUnreadCount |
 | Notice board 띠 (3개 순환) | GET /notices?board=true&size=3 | new | data/mock.ts BOARD_NOTICES |
 | 오늘 스터디 카드 (스터디 회원) | GET /study/courses?date=오늘 | change (qrOpensAt · qrClosesAt · regular) | data/home.ts SLOTS · MY_SLOT · MY_LANG · attendance.ts |
+| 오늘 스터디 자리를 누구냐에 따라 (components/home/home-card.tsx): 회원 출석 카드 · 연동 대기 잠긴 라벤더 · 못 찾음 '다시 요청하기' · 체험 D-n · 둘러보기 카드 | GET /me (role · linkStatus · trialBooking) | change | state/me.ts link · trial · state/access.ts userKind |
+| 지점 연동 결과 푸시 배너 · 잠긴 카드가 풀리는 순간 | 푸시 + GET /me/notifications (BRANCH_LINK_*) → GET /me 다시 | change | state/link-events.ts · components/home/link-push.tsx · link-unlock.tsx · link-admin-dev.tsx(개발용 '지점 처리 흉내') |
+| 출석 · 사전 출석 막기 (비회원) | 없음 (앱 guardMember) — 서버도 403 member_only | — | components/common/trial-guide.tsx |
 | 오늘의 목표 카드 (앱 구독자) | learn 도메인 (/me/progress) + GET /config rules.dailyGoal | — | state/today-goal.ts · TODAY_GOAL |
 | 스터디 맵 진도 · 마지막 단계 · 건너뛰기 | learn 도메인 | — | state/progress.ts · map-state.ts · skip-sheet.tsx |
 | 맵의 이번 주 과 | GET /me/week-lessons | new | data/mock.ts MY_BOOK.weekLessons · weekByLevel |
@@ -132,7 +140,9 @@
 | 목록 · 탭(전체 · 공지 · 학습 · 라운지 · 이벤트) | GET /me/notifications?category=&page= | change (category · actor · type 추가) | data/home.ts NOTIS · NOTI_TABS |
 | 행 누르기 → 읽음 → 이동 | PATCH /me/notifications/{id}/read | existing | noti-state.ts markNotiRead · Noti.href (→ type+reference 로 앱이 경로 계산) |
 | 모두 읽음 | POST /me/notifications/read-all | new | noti-state.ts markAllNotiRead |
-| 알림 설정 (톱니) | my 도메인 (설정 › 알림) | — | /me/settings?section=noti |
+| 알림 설정 (톱니) — 비회원은 흐리게 · 누르면 체험 안내 시트 | my 도메인 (설정 › 알림) | — | /me/settings?section=noti · state/access.ts canUse('settings') |
+| 지점 연동 결과 알림 (연동됨 ✓ → /my · 못 찾음 ? → /link-rejected) | GET /me/notifications (type BRANCH_LINK_APPROVED · BRANCH_LINK_REJECTED) | change | state/link-events.ts addNoti · LinkBadge |
+| 회원 전용 화면 알림(/me/notes · pass · study · change)을 비회원이 누름 | 없음 (앱이 memberGate) | — | MEMBER_HREFS |
 
 참고: GET /me/notifications/{id} (existing) 는 앱이 상세 화면이 없어 안 써요.
 열린 질문: type → category 매핑과 새 type 값(내일 세션 · 예습 남음 · 댓글 · 챌린지 인증 남음 · 이벤트 마감 · 공지 새 글 · 번개 확정 · 동행 수락)을 백엔드가 정해야 해요.
@@ -155,7 +165,7 @@
 서버 호출 없음 (개발용 화면).
 
 ### 공통 컴포넌트 — `components/common/**`
-- `trial-sheet.tsx` · `trial-guide.tsx`: 위 체험 신청 참고.
+- `trial-guide.tsx` (guardMember · memberGate · openTrial) · `trial-booking.tsx` (체험 예약 내용 시트 — GET /me trialBooking) · `upsell-sheet.tsx` · `member-lock.tsx` · `scroll-lock.tsx`: 서버 호출 없음 (권한은 GET /me, 잠김 본 수는 기기에만 — onboarding-screens.md 참고). `trial-sheet.tsx` 는 없어졌어요 → 위 체험 예약.
 - `comments-sheet.tsx` · `report-sheet.tsx`: 지금 서버 호출 없음 (state/me 만 읽음). 댓글 · 신고 API 는 그 시트를 여는 도메인(lounge 등)이 정의해요.
 - `member-face.tsx` · `sheet-parts.tsx` · `icons.tsx`: 서버 호출 없음.
 
@@ -168,6 +178,118 @@
 | 로그아웃 (설정 화면 버튼) | POST /auth/logout | new |
 
 PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정의하지 않았어요 → my 도메인의 PATCH /me/profile (existing) 과 지점 이동 신청으로 대신해요.
+
+<a id="onboarding"></a>
+
+## onboarding — 화면별 API (가입 · 온보딩)
+
+기준: docs/pages/09-onboarding.md · api-additions A19 ~ A23. 다른 태그에 있는 API 는 그대로 가리켜요 (core: 인증 · 시작 / my: 마이 · 수강 · 결제).
+흐름: 첫 화면 → 카카오 로그인 → (처음이면) 약관 → 닉네임 → 캐릭터 → 지점 회원이에요? → 회원 · 체험 · 앱 구경 → POST /me/onboarding → 홈.
+
+### 첫 화면 — `app/welcome.tsx`
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 관리자 웹 그림(비율별 3장 중 하나) · 바탕색 · 그림 설명, 다음 예약 미리 받기 | GET /public/api/v1/start-screen | new | 앱 고정 'YOUR FIRST STAGE' 움직이는 포스터만 (기본 화면) |
+| 카카오로 시작하기 → 처음이면 약관, 아니면 홈 | POST /auth/login → 응답 isNewMember (core loginWithProvider) | change | api/auth.ts loginWithProvider · isNewMember: !getOnboarding().done (가짜) |
+| 로그인 뒤 내 정보 | GET /me (core getMe) | change | queryKeys.me 다시 받기 |
+
+기기에만 저장 (API 없음): 받아 둔 시작 화면 그림 한 장 + 다음 예약 그림 (다음에 열 때 바로 띄우기). 카카오 동의 창 취소 토스트.
+열린 질문: 지금 첫 화면은 움직이는 포스터(앱 고정)예요 — 관리자 그림으로 덮을지, 움직임을 영상 · Lottie 로 받을지 (09-onboarding 1장 '앱에 넣는 방식'). 그림 저장소 · CDN · 기기 저장 기간 (Q-O4). 로그인을 카카오 하나로 두면 iOS 심사 4.8 (Q-O11).
+
+### 약관 동의 — `app/onboarding/terms.tsx` (+ `components/onboarding/start-terms.tsx`)
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 체크 줄 (만 14세 · 이용약관 · 개인정보 필수 / 이벤트 · 번개 소식 선택) · › 전문 | GET /public/api/v1/consents/app-onboarding (core listAppOnboardingConsents) | existing | ITEMS 고정 4개 · 전문은 '준비 중' 토스트 |
+| [동의하고 시작하기] (필수 다 체크해야 켜짐) | POST /me/consents (core submitOnboardingConsents) | existing | state/onboarding.ts agreed (지금은 기기에만) |
+
+열린 질문: 선택 동의(이벤트 · 번개 소식)를 설정 › 알림 광고 동의(GET · PATCH /me/settings)와 같은 값으로 묶는 방법 — 동의 이력(/me/consents)이 기준인지, settings 시각인지. 지금 앱은 동의 제출을 가입 끝까지 미뤄요(뒤로 가면 다시 고칠 수 있게) — 서버는 시트를 닫을 때 바로 받아도 돼요.
+
+### 닉네임 — `app/onboarding/nickname.tsx` (+ `components/onboarding/start-nickname.tsx` · `start-stage.tsx`)
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 카카오 이름 미리 채우기 (규칙에 안 맞으면 빈칸) | 카카오 SDK 프로필 (서버 없음) | — | state/onboarding.ts nickname '서현' (가짜) |
+| 입력하는 동안 중복 확인 (0.4초 뒤) | GET /members/nickname-check?q= | new | start-nickname.tsx TAKEN (가짜) |
+| 저장 (가입 끝에 한 번) | PATCH /me/profile nickname (my updateMyProfile) | change (2~10자 · 한글/영문/숫자 · 중복 409) | finishOnboarding → updateMe({name}) |
+
+### 캐릭터 고르기 — `app/onboarding/character.tsx`
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 몸 색 7가지 중 하나 → 마이 캐릭터 기본 몸 색 | POST /me/onboarding bodyColor (가입 끝에) | new | state/onboarding.ts color · state/avatar.ts setAvatarBody |
+
+몸 그림 7장은 앱 번들 (서버 없음). PUT /me/avatar(my saveMyAvatar) 는 쓰지 않아요 — 가입 때 고른 색은 무료로 가진 목록에 더해야 해서 completeOnboarding 이 같이 해요.
+
+### 지점 회원이에요? — `app/onboarding/member.tsx`
+서버 호출 없음. 고른 길(member · trial · app)은 POST /me/onboarding path 로 가입 끝에 보내요 (state/onboarding.ts path).
+
+### 지점 연동 요청 (회원) — `app/onboarding/link.tsx` (+ `components/onboarding/branch-sheet.tsx` · `link-consent.tsx` · `parts.tsx`)
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 지점 칸 → 지점 목록 시트 (검색 · 권역 칩 · 이미 연동 · 요청 중은 못 고름) | GET /me/branch-link-requests/branches (my listLinkableBranches) | change (region) | data/account.ts BRANCHES · BRANCH_REGIONS |
+| 이름(지점에 등록한 이름 2~20자) · 휴대폰(로그인 번호 미리 채움) · [필수] 정보 보내기 동의 | (아래 보내기에 같이) | — | state/onboarding.ts realName · phone · data/trial.ts isPhone · formatPhone |
+| [연동 요청 보내기] → 확인 중 화면 | POST /me/branch-link-requests {branchCode, name, phone, consent} (my createBranchLinkRequest) | change (name · phone · consent 추가 · note 선택) | 지금은 값만 쌓아요 (가짜) |
+
+열린 질문: 휴대폰을 로그인 때 받은 번호로 채우려면 카카오 로그인에서 번호를 받아 GET /me 에 실어야 해요 (지금 Me 에 phone 없음). 이름 · 번호가 둘 다 같으면 매니저 없이 바로 연동할지 (Q-O7).
+
+### 지점에서 확인 중 — `app/onboarding/link-wait.tsx` (+ `components/onboarding/link-tracker.tsx` · `start-palloro.tsx`)
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| '○○점에 연동을 요청했어요!' · 진행 표시(요청 보냄 시각 → 확인 중 → 연동 완료) | POST 응답 (createdAt · branchName) · 다시 열면 GET /me/branch-link-requests | new | nowHHMM() · state/onboarding.ts branch |
+| [시작하기] (안드로이드 뒤로도) → 가입 끝 → 홈 | POST /me/onboarding {path: member, bodyColor} | new | state/onboarding.ts finishOnboarding (link 'pending' · role 'guest') |
+
+지점이 처리하면: 푸시 + 알림함 맨 위 알림(BRANCH_LINK_APPROVED → /my · BRANCH_LINK_REJECTED → /link-rejected) → GET /me linkStatus 다시 (core listMyNotifications · getMe). 앱 흉내: state/link-events.ts receiveLinkResult · components/home/link-admin-dev.tsx(개발용).
+열린 질문: 24시간 넘게 안 되면 '조금 늦어지고 있어요' 문구로 바꾸려면 서버가 늦음 여부를 줘야 해요(createdAt 으로 앱이 계산해도 됨) · 주말 · 휴무일 기준 (Q-O8).
+
+### 연동 안 됨 — `app/link-rejected.tsx`
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| '○○점에서 회원 정보를 찾지 못했어요' · 지점에서 남긴 말 · 보낸 정보 | GET /me/branch-link-requests (가장 최근 · rejectionReason · name · phone) | new | state/link-events.ts note(REJECT_NOTE_MOCK) · state/onboarding.ts |
+| [고쳐서 다시 요청하기] → 연동 요청 화면 (값 미리 채움) | POST /me/branch-link-requests (my createBranchLinkRequest) | change | restartLinkRequest · updateOnboarding({path: member}) |
+| [○○점에 전화하기] | 응답 branchPhone | new | BRANCH_TEL_MOCK |
+| 지금은 둘러볼게요 → 홈 | 없음 | — | — |
+
+### 체험 예약 (가입) — `app/onboarding/trial.tsx` (+ `components/onboarding/trial-form.tsx` · `trial-slots.tsx` · `branch-sheet.tsx`)
+앱 안 체험 예약(`app/trial/index.tsx`, core-screens.md)과 같은 한 장이에요.
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 지점 선택하기 → 지점 목록 시트 (전체 n · 권역 칩) | GET /public/api/v1/branches (core listPublicBranches) | change (region · phone) | data/account.ts BRANCHES |
+| 이름 · 휴대폰 (카카오 값 미리 채움) | (보내기에 같이) | — | state/onboarding.ts realName · phone |
+| 희망 언어 (하나) — 바꾸면 시간표가 바뀌어요 | GET /public/api/v1/candidate-inquiries/options (core getTrialInquiryOptions) | existing | app-parts.tsx ONB_LANGS |
+| 상담 시간: 날짜 5일 → 시간 칸 (지점 · 언어 프로님 일정 · 마감 흐리게) | GET /trial-slots?branchCode=&lang=&days=5 (core listTrialSlots) | new | trial-slots.tsx TIMES · trialSlots (가짜) |
+| 배우고 싶은 이유(여러 개 · 선택) · 전달 사항(200자 · 선택) | (보내기에 같이) | — | WHY_REASONS · note |
+| [체험 예약하기] → 예약 확정 | POST /public/api/v1/candidate-inquiries + Bearer (core submitTrialBooking) | change (reasons · note · 계정 연결 · 마감 확인) | updateOnboarding({...b, path: trial}) |
+
+### 체험 예약 확정 (가입) — `app/onboarding/trial-done.tsx` (+ `components/onboarding/trial-done-view.tsx` · `done-ticket.tsx` · `done-stage.tsx` · `done-notice.tsx`)
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| '첫 무대 입장권' (지점 · 날짜 · 시간 · 상담 언어 · 예약자 · 전달 사항) | 서버 호출 없음 — 방금 보낸 값 | — | state/onboarding.ts |
+| [앱 둘러보기] (안드로이드 뒤로도) → 가입 끝 → 홈 (홈 맨 위 D-n 체험 카드) | POST /me/onboarding {path: trial, bodyColor, langs[1], reasons} → GET /me trialBooking | new | finishOnboarding → updateMe({trial}) |
+
+### 희망 언어 (앱 구경) — `app/onboarding/langs.tsx` (+ `components/onboarding/app-langs.tsx` · `app-parts.tsx`)
+서버 호출 없음 — 여러 개 고른 순서(맨 앞 = 홈 첫 언어)를 가입 끝에 POST /me/onboarding langs 로 보내요. 언어 4개는 앱 고정 (Lang enum).
+
+### 배우고 싶은 이유 (앱 구경) — `app/onboarding/why.tsx`
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 이유 여러 개 (안 골라도 돼요) | (보내기에 같이) | — | WHY_REASONS · state/onboarding.ts why |
+| [앱 둘러보기] → 가입 끝 → 홈 | POST /me/onboarding {path: app, bodyColor, langs, reasons} | new | finishOnboarding (plan study · role guest) |
+
+### 사용 가이드 5장 — (앱 화면 아직 없음)
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 로그인 뒤 홈 전에 (안 본 판일 때만) · 설정 › 도움 › 사용 가이드 다시 보기 | GET /me/guide | new | 없음 |
+| [PALLO 시작하기] · [건너뛰기] 기록 | POST /me/guide/views | new | 없음 |
+
+열린 질문: 가이드를 가입 단계 앞 · 뒤 어디에 둘지 (Q-O1) · 대상별로 나눌지 (Q-O2) · 알림 허용 · 환영(+50 스파크)을 어디에 끼울지 (Q-O9 — 지금 앱은 세 길 모두 바로 홈).
+
+### 회원 · 비회원 권한 (여러 화면) — `state/access.ts` · `state/lock-hits.ts` · `components/common/trial-guide.tsx` · `member-lock.tsx` · `scroll-lock.tsx` · `upsell-sheet.tsx` · `trial-booking.tsx`
+| 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 누구인지(회원 · 연동 대기 · 못 찾음 · 체험 예약 · 앱 구독 · 비회원) | GET /me (role · linkStatus · trialBooking · plan) (core getMe) | change | state/access.ts userKind · canUse |
+| 회원 전용을 누르면 체험 안내 시트 · 토스트 | 없음 (앱) — 서버도 회원 전용 API 에서 403 member_only | — | trial-guide.tsx guardMember · memberGate |
+| 체험 예약 내용 시트 (지점 · 날짜 · 시간 · 언어 · 전달 사항 · 지점 전화) | GET /me trialBooking (MyTrialBooking) | change | Me.trial · state/onboarding.ts note · BRANCH_TEL_MOCK |
+
+기기에만 저장 (API 없음): 스크롤로 잠김 칸을 본 수(3 · 6 · 9 … 번째면 '체험해 보시겠어요?' 권유 시트 · 앱을 켠 동안만) · 시트 한 번에 하나(state/lock-hits.ts) · 가입 중 고른 값(state/onboarding.ts — 끝나면 서버로) · 방금 한 체험 예약(state/trial-booking.ts — 확정 화면용) · 연동 결과 '톡 튀어나오는 순간'을 봤는지(state/link-events.ts homeMoment · myMoment).
+열린 질문: 비회원(role guest)에게 로그아웃 · 탈퇴 입구를 어디에 둘지 (설정이 잠겨 있어요). 체험 예약 변경 · 취소 API — 지금은 '지점에 전화'뿐. 요청 취소(A23 DELETE /me/branch-link-requests/{id}) 는 앱 버튼이 없어 넣지 않았어요.
 
 <a id="learn"></a>
 
@@ -459,7 +581,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 포스터 올리기 | POST /uploads/images/club-photo (공통) | existing | 기기 uri |
-| [승인 요청하기] → 승인 대기 카드 | POST /clubs | change | addMyClub |
+| [승인 요청하기] → 승인 대기 카드 (요일 · 시간 칩 meetTime · 최대 인원 스테퍼 3~40 maxMembers) | POST /clubs | change | addMyClub · TIMES · Stepper |
 
 열린 질문: 동아리를 지점 · 지역에 묶을지(지금 백엔드는 전역 — 앱은 지점 · 지역 필터와 지도 숫자에 써요). 앱 폼에 '소개(description)' 칸이 없어요. 가입 조건 'Lv.2 이상 · 수강생만'을 서버가 검증할지, 표시 + 승인제로만 둘지. 매니저 승인은 콘솔(apphub) 몫 — 앱에는 승인 화면이 없어요.
 
@@ -632,9 +754,11 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 찜한 모임 시트 | (라운지 찜 API 몫) | — | state/me.ts savedMeets |
 | 내가 쓴 글 → 라운지로 | (라운지 몫) | — | state/me.ts postCount |
 | 내 표현함 개수 | GET /me/mypage (summary.savedExpressionCount) · 목록은 학습 도메인 표현함 API | change | state/expressions useSavedCount |
-| PRO'S NOTE 카드 · 내 스터디 카드 · 지점 안내 | 아래 각 컴포넌트 | | |
+| PRO'S NOTE 카드 · 내 스터디 카드 · 지점 안내 (회원만 보여요) | 아래 각 컴포넌트 | | |
+| 비회원: 랭킹 윗부분 아래 '지점 회원이 되면 열려요' 칸 · 톱니 흐리게 · 메뉴 '이용권 · 결제 내역'은 회원만(앱 구독자는 '결제 내역') | GET /me (role · linkStatus · trialBooking · plan) | change | state/access.ts isMember · canUse · components/common/member-lock.tsx · scroll-lock.tsx |
+| 잠김 칸 아래 버튼: 연동 대기 '연동 확인 중이에요' · 못 찾음 '다시 요청하기'(→ /link-rejected) · 체험 예약 '체험 예약 보기' · 그 밖 '체험 신청하기' + '이미 회원이에요 · 연동 요청'(→ /onboarding/link) | GET /me | change | components/common/member-lock.tsx |
 
-기기에만 저장 (API 없음): '기기에 저장한 기록 지우기' · '디자인 부품 보기' (개발용 입구, 출시 전 삭제).
+기기에만 저장 (API 없음): '기기에 저장한 기록 지우기' · '디자인 부품 보기' (개발용 입구, 출시 전 삭제). 스크롤로 잠김 칸을 본 수(3 · 6 · 9 번째 권유 시트 · state/lock-hits.ts).
 
 ### 캐릭터 카드 · 팔로우 시트 · 배지 시트 · 스파크 시트 — `components/my/my-hero.tsx` · `my-sheets.tsx` · `my-blocks.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
@@ -644,6 +768,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 목록에서 팔로우 · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
 | 배지 모두 보기 | GET /me/badges | new | data/my.ts MY_BADGES |
 | 스파크 모으는 방법 | GET /me/sparks (earnRules) | new | data/my.ts SPARK_EARN |
+| 프로필 카드 이름 아래 줄 '○○점 · 언어 Lv.n · 회원' + 작은 표시 ● 연동 확인 중 · ✓ 연동됨(처음 한 번 톡 튀어나옴) · 연동 안 됨 | GET /me (linkStatus) | change | state/me.ts link · state/link-events.ts myMoment |
 
 ### 멤버 프로필 — `app/me/profile/[id].tsx` · `components/my/profile-sheet.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
@@ -772,7 +897,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 닉네임 · 한 줄 소개 저장 | PATCH /me/profile | change | updateMe · updateSettings({bio}) |
-| 내 지점 (최대 2곳 · 매니저 확인) 선택지 | GET /me/branch-link-requests/branches | existing | BRANCHES |
+| 내 지점 (최대 2곳 · 매니저 확인) 선택지 | GET /me/branch-link-requests/branches | change (region) | BRANCHES |
 | 내 지점 저장 → 요청 | POST /me/branch-link-requests | change | updateSettings({branches}) |
 | 내 지점 요청 상태 | GET /me/inquiries (BRANCH_LINK) | existing | settings.branches |
 | 학습 언어 · 레벨 값 | GET /me/study-level (또는 /me) | new | set.lang · me.level |
@@ -781,7 +906,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 차단한 멤버 n명 시트 | GET /me/blocks | new | '0명' 고정 |
 | 이용권 'n회 남음' | GET /me/memberships | change | getMembership |
 | 앱 버전 '1.0.0 최신' | GET /app-version?platform= | new | APP_VERSION |
-| 로그아웃 | (인증 도메인 — 토큰 지우기 · 서버 refresh 폐기 API 가 있으면 그쪽) | — | router.replace('/login') |
+| 로그아웃 → 첫 화면(/welcome) | POST /auth/logout (core) | new | router.replace('/welcome') |
 | 회원 탈퇴 → /me/delete | | | |
 
 기기에만 저장 (API 없음): 말하기가 어려워요(15분) · 소리 끄기(15분) · 효과음 (state/learn-prefs · lib/feedback).
@@ -850,7 +975,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 회원 탈퇴 — `app/me/delete.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 이유 고르기 → 탈퇴 | DELETE /me?reason= | new | api/me.ts deleteAccount · LEAVE_REASONS |
+| 이유 고르기 → 탈퇴 → 첫 화면(/welcome) | DELETE /me?reason= | new | api/me.ts deleteAccount · LEAVE_REASONS |
 
 열린 질문: 이용 중 멤버십이 있으면 막을지(409 active_membership_exists) · 남은 횟수 환불 안내.
 
@@ -861,3 +986,4 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 4. 멤버십이 여러 개(ACTIVE 2개)일 때 마이 카드 · 이용권 화면이 무엇을 보여 줄지.
 5. 프로 노트 모양(items vs questions) — 위 프로 노트 참고.
 6. GET /me 를 다른 도메인(인증 · 공통)도 정의할 수 있어요 — 합칠 때 MeDetail 하나로.
+7. 회원 전용 화면(`app/me/change.tsx` · `study.tsx` · `pass.tsx` · `notes/index.tsx` · `notes/[id].tsx`)은 지점 연동 전(GET /me role guest)이면 앱이 'MemberOnly · 지점 회원이 되면 열려요' 칸만 보여 주고 API 를 부르지 않아요 (components/common/member-lock.tsx). 서버도 그 API 들에서 비회원이면 403 member_only 로 막아 주세요.
