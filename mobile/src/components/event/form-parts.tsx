@@ -309,51 +309,29 @@ const mp = StyleSheet.create({
  * − 12명 + : 숫자 직접 정하기 (번개 정원 · 동아리 최대 인원 · 챌린지 주 몇 회 — 개설 화면 공통).
  * 누르면 하나씩, 끝에 닿으면 흐리게. format: 가운데 글자 (예: v => `${v}명`)
  */
-/** unlimited: '인원 무관' 같은 제한 없음 칸 — 켜면 숫자 칸이 흐려지고 못 눌러요 */
-export function CountStepper({ value, min, max, format, onChange, less = '하나 줄이기', more = '하나 늘리기', unlimited }: { value: number; min: number; max: number; format: (v: number) => string; onChange: (v: number) => void; less?: string; more?: string; unlimited?: { on: boolean; onChange: (on: boolean) => void; label: string } }) {
-  const off = !!unlimited?.on;
+export function CountStepper({ value, min, max, format, onChange, less = '하나 줄이기', more = '하나 늘리기' }: { value: number; min: number; max: number; format: (v: number) => string; onChange: (v: number) => void; less?: string; more?: string }) {
   const step = (d: number) => {
     const v = Math.min(max, Math.max(min, value + d));
     if (v === value) return;
     sfx('tap');
     onChange(v);
   };
-  const btn = (d: number, label: string, end: boolean) => (
-    <Pressable onPress={() => step(d)} disabled={off || end} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [st.b, (off || end) && st.off, pressed && st.on]}>
+  const btn = (d: number, label: string, off: boolean) => (
+    <Pressable onPress={() => step(d)} disabled={off} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [st.b, off && st.off, pressed && st.on]}>
       <PText style={st.bt}>{d < 0 ? '−' : '+'}</PText>
     </Pressable>
   );
   return (
-    <View style={st.wrap}>
-      <View style={[st.row, off && st.dim]} accessibilityRole="adjustable" accessibilityValue={{ min, max, now: value, text: off ? unlimited?.label : format(value) }}>
-        {btn(-1, less, value <= min)}
-        <PText style={st.v}>{format(value)}</PText>
-        {btn(1, more, value >= max)}
-      </View>
-      {unlimited ? (
-        <Pressable
-          onPress={() => {
-            sfx('pick');
-            unlimited.onChange(!off);
-          }}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: off }}
-          style={[st.free, off && st.freeOn]}>
-          <PText style={[st.freeT, off && st.freeTOn]}>{unlimited.label}</PText>
-        </Pressable>
-      ) : null}
+    <View style={st.row} accessibilityRole="adjustable" accessibilityValue={{ min, max, now: value, text: format(value) }}>
+      {btn(-1, less, value <= min)}
+      <PText style={st.v}>{format(value)}</PText>
+      {btn(1, more, value >= max)}
     </View>
   );
 }
 
 const st = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: 14, flexWrap: 'wrap' },
   row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 14 },
-  dim: { opacity: 0.35 },
-  free: { height: 38, paddingHorizontal: 14, borderRadius: 19, borderWidth: 2, borderColor: Colors.ink, backgroundColor: '#fff', justifyContent: 'center' },
-  freeOn: { backgroundColor: C.pu },
-  freeT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
-  freeTOn: { color: '#fff' },
   b: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   bt: { fontFamily: Font.body900, fontSize: 20, lineHeight: 24 },
   v: { minWidth: 56, textAlign: 'center', fontFamily: Font.display, fontSize: 18, lineHeight: 24 },

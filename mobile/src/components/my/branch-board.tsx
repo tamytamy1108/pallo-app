@@ -526,7 +526,8 @@ function PosterViewer({ list, start, name, onClose }: { list: PartnerPoster[]; s
   return (
     <LayerModal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.pv} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-        <View style={[styles.pvTop, { paddingTop: insets.top + 10 }]}>
+        {/* 위 이름 줄의 빈 곳을 눌러도 닫혀요 (X 만 따로 받아요) */}
+        <View pointerEvents="box-none" style={[styles.pvTop, { paddingTop: insets.top + 10 }]}>
           <PText style={styles.pvN}>{name}</PText>
           {list.length > 1 && <PText style={styles.pvC}>{`${i + 1} / ${list.length}`}</PText>}
           <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기" style={styles.pvX} hitSlop={8}>

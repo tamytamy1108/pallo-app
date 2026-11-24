@@ -8,8 +8,8 @@
  *   const [scrollRef, boxRef, onScroll, reveal, keep] = useFormScroll(room)
  * - 알약 줄 등은 useRevealNext(), 글 칸은 useKeepVisible() 로 받아요.
  */
-import { createContext, useContext, useRef, type RefObject } from 'react';
-import { Keyboard, Platform, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
+import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
+import { Keyboard, Platform, TextInput, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 
 /** 고른 칸 아래로 이만큼은 보여야 '다음 칸이 보인다' (다음 질문 제목 + 알약 한 줄쯤) */
 const NEXT_ROOM = 150;
@@ -38,8 +38,9 @@ const keyboardTop = () => (Platform.OS === 'web' ? Infinity : (Keyboard.metrics(
  * target 아래 끝 + room 이 box(보이는 스크롤 칸) · 키보드 위로 들어오게 scroll 을 내려요. 위로는 안 올려요.
  * 글을 쓰는 중이라 움직임 없이 바로 (쓰는 줄이 출렁이지 않게).
  * scrollY: 지금 스크롤 위치. 스크롤 알림은 늦게 와서, 내린 자리를 바로 적어 둬요 (빨리 쓰면 한 줄씩 밀리지 않게).
+ * animated: 칸을 눌러 키보드가 올라온 뒤처럼 한 번 옮길 때는 부드럽게.
  */
-export function keepInView(target: ViewInstance | null, box: ViewInstance | null, scroll: ScrollViewInstance | null, scrollY: RefObject<number>, room: number) {
+export function keepInView(target: ViewInstance | null, box: ViewInstance | null, scroll: ScrollViewInstance | null, scrollY: RefObject<number>, room: number, animated = false) {
   if (!target || !box || !scroll) return;
   target.measureInWindow((_tx, ty, _tw, th) => {
     box.measureInWindow((_bx, by, _bw, bh) => {
@@ -50,7 +51,7 @@ export function keepInView(target: ViewInstance | null, box: ViewInstance | null
       const node: unknown = scroll.getScrollableNode?.();
       const now = typeof HTMLElement !== 'undefined' && node instanceof HTMLElement ? node.scrollTop : scrollY.current;
       scrollY.current = now + over;
-      scroll.scrollTo({ y: scrollY.current, animated: false });
+      scroll.scrollTo({ y: scrollY.current, animated });
     });
   });
 }
@@ -79,5 +80,40 @@ export function useFormScroll(room = CARET_ROOM) {
     }, 60);
   };
   const keep: KeepVisible = (target) => keepInView(target, box.current, scroll.current, y, room);
-  return [scroll, box, onScroll, reveal, keep] as const;
+  // 칸을 눌렀을 때 (키보드가 다 올라온 뒤 한 번): 부드럽게
+  const show: KeepVisible = (target) => keepInView(target, box.current, scroll.current, y, room, true);
+  return [scroll, box, onScroll, reveal, keep, show] as const;
+}
+
+/**
+ * 칸을 눌러 키보드가 다 올라오면, 지금 쓰는 칸이 키보드 · 아래 버튼 위로 다 보이게 내려요 (KeyboardAvoidingView 가 화면을 줄인 다음에 재요).
+ * box 안의 칸만 (다른 시트 · 화면의 칸이면 그대로). 칸을 옮겨 다닐 때는 GrowInput 이 포커스 때 맞춰요.
+ */
+export function useShowFocusedOnKeyboard(box: RefObject<ViewInstance | null>, show: KeepVisible) {
+  const showRef = useRef(show);
+  useEffect(() => {
+    showRef.current = show;
+  });
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const target = TextInput.State.currentlyFocusedInput();
+        const b = box.current;
+        if (!target || !b) return;
+        // box 안에 없는 칸이면 measureLayout 이 실패해요
+        target.measureLayout(
+          b,
+          () => showRef.current(target),
+          () => {},
+        );
+      }, 60);
+    });
+    return () => {
+      sub.remove();
+      clearTimeout(t);
+    };
+  }, [box]);
 }

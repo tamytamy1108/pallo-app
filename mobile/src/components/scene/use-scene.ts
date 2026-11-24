@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { ClientErrorCode, errorMessage, isApiError } from '@/api/errors';
+import { apiErrorMessage, isNotFound } from '@/api/errors';
 import { sceneContentQuery, situationMapsQuery } from '@/api/queries';
 import { findScene, type SceneWithContent, type SituationMap } from '@/data/situation';
 
@@ -24,12 +24,12 @@ export function useScene(id: string | undefined): SceneLoad {
   const scene = useMemo(() => (found && content.data ? { ...found.scene, content: content.data } : null), [found, content.data]);
 
   if (maps.isPending) return { state: 'loading' };
-  if (maps.isError) return { state: 'error', message: errorMessage(maps.error), retry: () => void maps.refetch() };
+  if (maps.isError) return { state: 'error', message: apiErrorMessage(maps.error), retry: () => void maps.refetch() };
   if (!found || !contentId) return { state: 'soon' };
   if (content.isPending) return { state: 'loading' };
   if (content.isError) {
-    if (isApiError(content.error) && content.error.code === ClientErrorCode.notFound) return { state: 'soon' };
-    return { state: 'error', message: errorMessage(content.error), retry: () => void content.refetch() };
+    if (isNotFound(content.error)) return { state: 'soon' };
+    return { state: 'error', message: apiErrorMessage(content.error), retry: () => void content.refetch() };
   }
   return scene ? { state: 'ready', map: found.map, scene } : { state: 'loading' };
 }

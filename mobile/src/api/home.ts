@@ -76,7 +76,7 @@ export function fetchNotices(params: PageParams = {}, { signal }: Opts = {}): Pr
   return http.get('/notices', { query: params, signal });
 }
 
-/** 12 GET /notices/:id — 없으면 ApiError(NOT_FOUND) */
+/** 12 GET /notices/:id — 없으면 ApiError(404 · isNotFound) */
 export function fetchNotice(id: string, { signal }: Opts = {}): Promise<Notice> {
   if (apiConfig.useMock)
     return mock('notice', () => {

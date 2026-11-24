@@ -48,7 +48,6 @@ export function StoryView({ D, skey, onParagraph, onLeave }: { D: LessonData; sk
   const [keep, setKeep] = useState<Record<number, string>>({});
   const [flash, setFlash] = useState<{ k: number | 'chips'; n: number } | null>(null);
   const [quit, setQuit] = useState(false);
-  const [taH, setTaH] = useState(160);
   const scroll = useRef<ScrollViewInstance>(null);
   const ys = useRef<Record<string, number>>({});
   const listY = useRef(0);
@@ -291,10 +290,9 @@ export function StoryView({ D, skey, onParagraph, onLeave }: { D: LessonData; sk
             <GrowInput
               value={sv.para}
               onChangeText={(v) => setSv((s) => ({ ...s, para: v }))}
-              onContentSizeChange={(e) => setTaH(Math.max(160, Math.ceil(e.nativeEvent.contentSize.height) + 4))}
               multiline
-              scrollEnabled={false}
-              style={StyleSheet.flatten([styles.spTa, { height: taH }])}
+              // 높이는 GrowInput 이 글에 맞춰요 (spTa minHeight 160 부터)
+              style={styles.spTa}
               accessibilityLabel="내 문단"
             />
           </View>

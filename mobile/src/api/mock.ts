@@ -8,7 +8,7 @@
 import { Platform } from 'react-native';
 
 import { apiConfig } from './config';
-import { ApiError, ClientErrorCode } from './errors';
+import { ApiError } from './errors';
 
 let delayMs = apiConfig.mockDelayMs;
 let failing = new Set<string>();
@@ -33,12 +33,12 @@ const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /**
  * 가짜 응답 하나. name = API 이름 (?mockFail= 에 쓰는 이름) · make = 돌려줄 값 (부를 때마다 새로 만들어요)
- * make 안에서 ApiError 를 던지면 서버 오류처럼 보여요 (예: 없는 공지 → NOT_FOUND)
+ * make 안에서 ApiError 를 던지면 서버 오류처럼 보여요 (예: 없는 공지 → not_found)
  */
 export async function mock<T>(name: string, make: () => T): Promise<T> {
   if (delayMs > 0) await wait(delayMs);
-  if (failing.has(name) || failing.has('all')) throw new ApiError({ code: 'MOCK_FAIL', message: '불러오지 못했어요', status: 500 });
+  if (failing.has(name) || failing.has('all')) throw new ApiError({ kind: 'server', status: 500, code: 'mock_fail', message: '불러오지 못했어요' });
   return make();
 }
 
-export const mockNotFound = () => new ApiError({ code: ClientErrorCode.notFound, status: 404 });
+export const mockNotFound = () => new ApiError({ kind: 'client', status: 404, code: 'not_found', message: '찾을 수 없어요' });

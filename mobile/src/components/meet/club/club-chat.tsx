@@ -45,7 +45,7 @@ export function useClubChat(c: Club, joinedOnce: boolean, myName: string) {
 export function ClubChat({ c, inC, myName, staff }: { c: Club; inC: boolean; myName: string; staff: string[] }) {
   const M = useClubChat(c, inC, myName);
   const [v, setV] = useState('');
-  const role = (n?: string, h?: boolean) => (h ? '호스트' : n && staff.includes(n) ? '서브 호스트' : '');
+  const role = (n?: string, h?: boolean) => (h ? '호스트' : n && staff.includes(n) ? '코호스트' : '');
   const msg = (m: ChatMsg, i: number, peek = false) => {
     if (m.day) return <PText key={i} style={styles.day}>{m.day}</PText>;
     if (m.sys) return <PText key={i} style={styles.sys}>{m.sys}</PText>;

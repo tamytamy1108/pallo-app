@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { memberGate } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
@@ -28,38 +28,25 @@ export const pad = (n: number) => String(n).padStart(2, '0');
 /**
  * 클래퍼보드 줄무늬 팔 (프로토타입 .hero-arm: repeating-linear-gradient(-55deg, ink 0 22px, cream 22px 44px)).
  * 체험 · 둘러보기 카드도 같이 써요 (home-card).
- * SVG Pattern + 회전은 아이폰에서 삼각형처럼 깨져 보여서, 줄마다 평행사변형으로 직접 그려요.
+ * SVG 로 그리면 아이폰에서 줄이 뭉개지고 오른쪽 끝이 잘려서, 기울인 막대(View · skewX)를 나란히 놓아요.
+ * 테두리 안쪽 폭(onLayout 은 안쪽 칸에서 재요)만큼만 채워요.
  */
 const ARM_H = 32;
 const STRIPE = 22;
-// CSS -55deg: 색이 바뀌어 가는 방향 (화면 좌표, y 는 아래로)
-const DX = Math.sin((-55 * Math.PI) / 180);
-const DY = -Math.cos((-55 * Math.PI) / 180);
+// -55deg 줄무늬: 줄은 세로에서 35° 기울고, 가로로 재면 한 줄 폭이 STRIPE / sin55°
+const SIN55 = Math.sin((55 * Math.PI) / 180);
+const BAR_W = STRIPE / SIN55;
+const PERIOD = BAR_W * 2;
 export function ClapperArm() {
   const [w, setW] = useState(0);
-  // p = x·DX + y·DY 가 [k·44, k·44+22) 인 띠가 잉크색. 띠 경계선 위에서 y 를 알 때 x 를 구해요
-  const xAt = (p: number, y: number) => (p - y * DY) / DX;
-  const bands: string[] = [];
-  if (w) {
-    const ps = [0, w * DX, ARM_H * DY, w * DX + ARM_H * DY];
-    const lo = Math.floor(Math.min(...ps) / (STRIPE * 2)) - 1;
-    const hi = Math.ceil(Math.max(...ps) / (STRIPE * 2)) + 1;
-    for (let k = lo; k <= hi; k++) {
-      const a = k * STRIPE * 2;
-      const b = a + STRIPE;
-      const y0 = -2;
-      const y1 = ARM_H + 2;
-      bands.push(`M${xAt(a, y0).toFixed(2)},${y0} L${xAt(b, y0).toFixed(2)},${y0} L${xAt(b, y1).toFixed(2)},${y1} L${xAt(a, y1).toFixed(2)},${y1} Z`);
-    }
-  }
+  const n = w ? Math.ceil((w + ARM_H) / PERIOD) + 2 : 0;
   return (
-    <View style={styles.arm} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      {w ? (
-        <Svg width={w} height={ARM_H}>
-          <Rect width={w} height={ARM_H} fill={Colors.cream} />
-          <Path d={bands.join(' ')} fill={Colors.ink} />
-        </Svg>
-      ) : null}
+    <View style={styles.arm}>
+      <View style={StyleSheet.absoluteFill} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+        {Array.from({ length: n }, (_, i) => (
+          <View key={i} style={[styles.armBar, { left: (i - 1) * PERIOD }]} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -482,7 +469,8 @@ export function Field({ label, value, big, divider, narrow, color }: { label: st
 
 const styles = StyleSheet.create({
   wrap: { marginTop: 4, paddingTop: 35 },
-  arm: { position: 'absolute', left: 0, right: 0, top: 0, height: 32, borderWidth: 2.5, borderColor: Colors.ink, borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 4, borderBottomRightRadius: 4, overflow: 'hidden' },
+  arm: { position: 'absolute', left: 0, right: 0, top: 0, height: 32, borderWidth: 2.5, borderColor: Colors.ink, borderTopLeftRadius: 10, borderTopRightRadius: 10, borderBottomLeftRadius: 4, borderBottomRightRadius: 4, overflow: 'hidden', backgroundColor: Colors.cream },
+  armBar: { position: 'absolute', top: -4, height: ARM_H + 8, width: BAR_W, backgroundColor: Colors.ink, transform: [{ skewX: '-35deg' }] },
   shadowBox: { marginRight: 4, marginBottom: 4 },
   shadow: { position: 'absolute', top: 4, left: 4, right: -4, bottom: -4, backgroundColor: Colors.ink, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   body: { borderWidth: 2.5, borderColor: Colors.ink, borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden', backgroundColor: Colors.rosePink },

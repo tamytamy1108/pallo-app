@@ -8,23 +8,39 @@
 | 파일 | 하는 일 |
 |---|---|
 | `api/config.ts` | 어느 서버(dev · staging · prod)인지, mock 을 쓸지. `app.json › expo.extra.api` 와 `.env` 의 `EXPO_PUBLIC_API_ENV` · `EXPO_PUBLIC_API_MOCK` |
-| `api/client.ts` | 공통 요청 함수 `http.get/post/put/patch/delete`. 토큰 붙이기 · 15초 시간 초과 · 오류를 `ApiError` 로. 목록 모양 `Page<T>` |
-| `api/errors.ts` | `ApiError { code, message, status }` · `errorMessage(e)` (화면에 띄울 한 줄) |
-| `api/token.ts` | 로그인 토큰 저장 (폰: expo-secure-store · 웹 미리보기: localStorage `pallo-tokens` — 새로고침해도 로그인 유지) |
+| `api/client.ts` | 공용 `@academy/api-client` 의 `createHttpClient` 로 만든 `http`. 주소 = 오리진 + `/app/api/v2`, 토큰 붙이기, 401 이면 `/auth/refresh` 한 번(동시 401 도 한 번) → 원 요청 재시도, 15초 시간 초과. 목록 모양 `Page<T>` |
+| `api/errors.ts` | 공용 `ApiError { code, message, status }`(code = 서버 `error`) · `apiErrorMessage(e)` · `isNotFound(e)`(404) 를 화면에 내보내요 |
+| `api/token.ts` | 공용 `tokenStorage` 에 꽂는 저장소 (메모리 + 폰: expo-secure-store · 웹 미리보기: localStorage `pallo-tokens`). 시작 때 `hydrateTokens()` |
 | `api/mock.ts` | 가짜 응답 · 늦추기 · 실패시키기 |
 | `api/auth.ts` · `me.ts` · `home.ts` · `learn.ts` | API 하나 = 함수 하나 (번호는 `api-inventory.md` · `api-additions.md`) |
 | `api/queries.ts` | 화면이 쓰는 Query 키 · 옵션 (`meQuery()`, `noticesQuery()` …) |
-| `api/query-client.ts` | QueryClient 하나 · 앱으로 돌아오면 다시 받기 · 스플래시 동안 홈 데이터 미리 받기 |
-| `api/provider.tsx` | `ApiProvider` (app/_layout.tsx) · 받은 `/me` 를 `state/me` 에 넣는 `MeSync` |
+| `api/query-client.ts` | QueryClient 하나 · 앱으로 돌아오면 다시 받기 |
+| `api/session.tsx` | 로그인 상태 `useSession()` = `restoring` · `signedOut` · `signedIn { needsOnboarding }` · `error { retry }` (토큰 유무 + `/me`). 토큰이 사라지면 캐시를 비우고, 받은 `/me` 를 `state/me` 에 넣어요. 가입 끝내기 `useCompleteOnboarding()` |
+| `api/provider.tsx` | `ApiProvider` (app/_layout.tsx) = QueryClientProvider + SessionProvider |
 
 ## 화면에서 쓰는 법
 
 ```tsx
 const { data, isPending, isError, error, refetch } = useQuery(noticesQuery());
 if (isPending) return <LoadingState />;
-if (isError) return <ErrorState message={errorMessage(error)} onRetry={() => refetch()} />;
+if (isError) return <ErrorState message={apiErrorMessage(error)} onRetry={() => refetch()} />;
 if (data.items.length === 0) return <EmptyState title="아직 공지가 없어요." />;
 ```
+
+## 로그인 상태와 화면 묶음
+
+`app/_layout.tsx` 가 `useSession()` 으로 화면 묶음(그룹 폴더, 주소엔 안 나와요)을 열고 닫아요 (`Stack.Protected`). 화면은 로그인 · 로그아웃 뒤에 직접 이동하지 않아요 — 토큰을 저장하거나 지우면 상태가 바뀌고 알맞은 첫 화면으로 가요.
+
+| 묶음 | 열리는 때 | 첫 화면 |
+|---|---|---|
+| `(auth)` | 로그아웃 | `/welcome` |
+| `(onboarding)` | 로그인 · 가입 전 | `/onboarding/terms` |
+| `(app)` | 로그인 · 가입 끝 | `/` (탭) |
+| `(link)` | 로그인 (가입 중 · 뒤 모두) | — |
+
+- 막힌 화면을 열면 지금 상태의 첫 화면으로 보내요 (`redirectTo`). guest 는 없어요
+- `/me` 가 인터넷 · 서버 오류로 실패하면 로그아웃시키지 않고 다시 시도 화면
+- 가입 끝 여부는 서버 `/me` 의 `needsOnboarding` (mock 은 기기에 저장한 `onboarding.done`). v2 가입 완료 API 는 아직 없어요
 
 바꾸는 요청은 `useMutation` → 성공하면 관련 Query 를 다시 받아요 (`queryClient.invalidateQueries({ queryKey: queryKeys.me })`).
 
@@ -36,10 +52,10 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 
 ## 서버가 생기면
 
-1. `app.json › expo.extra.api.baseUrls` 에 dev · staging · prod 주소 (B3)
+1. `app.json › expo.extra.api.baseUrls` 에 dev · staging · prod **오리진**만 (예: `https://api.example.com`). 경로 접두사 `/app/api/v2` 는 `client.ts` 의 `APP_API_PREFIX` 가 붙여요 (옛 앱의 `/app/api/v1` 과 따로 가요. 백엔드에 v2 접두사가 생기면 그 값과 같아야 해요)
 2. `.env.local` 에 `EXPO_PUBLIC_API_MOCK=0` (또는 `app.json` 의 `mock: false`) — 이것만으로 모든 함수가 `http.*` 쪽으로 가요
 3. 응답 타입을 OpenAPI 에서 만든 타입으로 바꾸기 (B2) — 지금은 `data/*.ts` 의 타입을 그대로 써요
-4. 토큰 갱신(B4): `client.ts` 에서 401 이면 `refreshTokens()` 한 번 → 다시 요청, 그래도 401 이면 로그인 화면으로
+4. 토큰 갱신: 됐어요 (`client.ts` `refreshSession`, 우리 백엔드 `POST /auth/refresh` = access 15분 · refresh 30일). 갱신까지 실패하면 토큰을 지우고, 로그인 상태가 `signedOut` 이 돼 첫 화면으로 가요
 5. `expo-secure-store` 는 네이티브 모듈이라 폰에서 보려면 **개발 빌드를 다시** 만들어야 해요 (`npx expo run:ios` 또는 `eas build --profile development`)
 
 ## 옮기기 체크리스트
@@ -49,16 +65,17 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 
 ### 1. 로그인 · /me (1 ~ 7)
 
-- ✅ 1 로그인 — `app/login/index.tsx` → `loginWithProvider` (useMutation) → 토큰 저장 → `/me` 다시 받기
-- ✅ 2 휴대폰 확인 — `app/login/phone.tsx` → `sendPhoneCode` · `verifyPhoneCode` (틀리면 `INVALID_CODE`)
-- ✅ 3 `/me` — `MeSync` 가 받아서 `state/me` 에 넣어요. 홈은 불러오는 중 · 오류 화면을 보여요
-- ◐ 4 `PATCH /me` · 5 로그인 수단 연결 · 6 탈퇴 — `api/me.ts` 함수만. 설정 화면(`app/me/settings/*`, `me/delete.tsx`)은 아직
+- ✅ 1 로그인 — `app/(auth)/welcome.tsx` · `(auth)/login/index.tsx` → `loginWithProvider` (useMutation) → 토큰 저장 → 로그인 상태가 `/me` 를 받아 가입 · 홈으로
+- ✅ 2 휴대폰 확인 — `app/(auth)/login/phone.tsx` → `sendPhoneCode` · `verifyPhoneCode` (틀리면 `INVALID_CODE`)
+- ✅ 3 `/me` — `api/session.tsx` 가 받아서 로그인 상태를 정하고 `state/me` 에 넣어요. 실패하면 다시 시도 화면
+- ◐ 4 `PATCH /me` · 5 로그인 수단 연결 · 6 탈퇴 — `api/me.ts` 함수만. 설정 화면(`app/(app)/me/settings/*`, `me/delete.tsx`)은 아직 (로그아웃 버튼 · 탈퇴 끝 `처음으로` 는 `logout()`)
 - ☐ 7 `/members/:id` — `app/me/profile/[id].tsx`
-- ☐ 로그인 안 했으면 `/login` 으로 보내기 (지금은 앱 첫 화면이 홈) · 로그아웃 버튼에 `logout()` + `queryClient.clear()`
+- ✅ 로그인 안 했으면 `/welcome`, 가입 전이면 가입 화면으로 (`api/session.tsx` + `Stack.Protected`) · 로그아웃 = `logout()` (캐시 비우기는 로그인 상태가)
+- ☐ 가입 완료 API (v2) — 지금은 mock 만
 
 ### 2. 홈 · 출석 (8 ~ 15)
 
-- ◐ 8 오늘 세션 — `fetchTodaySessions` 있음, 미리 받기도 함. 출석 카드(`session-card.tsx` · `attendance.ts`)는 아직 `data/home.ts` 의 `SLOTS` 를 직접 읽어요 → 규칙 함수가 slots 를 인자로 받게 바꿔야 해요
+- ◐ 8 오늘 세션 — `fetchTodaySessions` 있음. 출석 카드(`session-card.tsx` · `attendance.ts`)는 아직 `data/home.ts` 의 `SLOTS` 를 직접 읽어요 → 규칙 함수가 slots 를 인자로 받게 바꿔야 해요
 - ✅ 9 사전 출석 — 홈 `rsvp` useMutation
 - ✅ 10 QR 출석 — 홈 `attendance` useMutation (응답 `points` · `weekCount` 는 아직 화면에 안 씀)
 - ☐ 11 이번 주 진도 — `data/mock.ts` `MY_BOOK.weekLessons`
@@ -77,7 +94,7 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
   - **백엔드에 제안**: 인벤토리에는 `/library/books/:id/lessons` 만 있어요. 섬 지도가 모든 권의 진도(3/20과)를 한 번에 그려서, 책장 전체를 한 번에 주는 `GET /library/books` 가 있으면 좋아요
 - ✅ 18 과 콘텐츠 — `GET /lessons/:id` 하나를 세 함수로: `fetchPatternLesson`(Lv.1 · 2, id `1-1`) · `fetchUnit34`(Lv.3 · 4, id `3-101`) · `fetchSceneContent`(상황 장면, id = 맵 데이터의 `contentId`). 레슨 · Lv.3/4 레슨 · 장면 · 장면 단계 화면 (`components/scene/use-scene.ts`). 없는 id = `NOT_FOUND` → '준비 중' · '곧 열려요'
   - 서버 응답으로 바꿀 때: Lv.3 `liveFix` 가 정규식 · 함수라 JSON 으로 못 와요 → 서버 모양(패턴 문자열 등)을 따로 정해야 해요 (B2)
-- 스플래시 동안 책장 · 맵 목록을 미리 받아요 (`prefetchStartData`). 교재 · 맵 · 과 콘텐츠는 10분 동안 다시 받지 않아요
+- 미리 받기는 없어요 (화면이 열릴 때 받아요). 교재 · 맵 · 과 콘텐츠는 10분 동안 다시 받지 않아요
 - ☐ 19 · 20 · 21 진도 · 저장 · 완료 — `state/progress.ts` · 포인트 장부(`state/ledger.ts`)와 같이 옮겨요 (다음 차례)
 - ☐ 22 건너뛰기 테스트 · A5 문제 받기
 - ☐ 23 · 26 · 27 · 28 답변 저장 · 음성 · AI — 엔진 정해지면 (Q-T4)

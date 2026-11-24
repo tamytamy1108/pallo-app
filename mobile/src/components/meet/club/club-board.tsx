@@ -59,7 +59,7 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
   const all = useBoard(c, inC, myName);
   const L = all.filter((q) => f === 'all' || q.k === f);
   const host = clubHost(c);
-  const roleOf = (w: string) => (w === host ? '호스트' : staff.includes(w) ? '서브 호스트' : '');
+  const roleOf = (w: string) => (w === host ? '호스트' : staff.includes(w) ? '코호스트' : '');
 
   const post = (q: BoardPost, i: number) => {
     if (q.pin)

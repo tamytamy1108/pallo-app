@@ -18,8 +18,8 @@ describe('가짜 API', () => {
     expect(rest.nextCursor).toBeNull();
   });
 
-  it('없는 공지는 NOT_FOUND', async () => {
-    await expect(fetchNotice('nope')).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+  it('없는 공지는 not_found', async () => {
+    await expect(fetchNotice('nope')).rejects.toMatchObject({ code: 'not_found', status: 404 });
   });
 
   it('/me 는 state/me 값을 돌려줘요', async () => {
@@ -28,7 +28,7 @@ describe('가짜 API', () => {
 
   it('?mockFail 처럼 실패시킬 수 있어요', async () => {
     setMockOptions({ fail: ['notices'] });
-    await expect(fetchNotices()).rejects.toMatchObject({ code: 'MOCK_FAIL' });
+    await expect(fetchNotices()).rejects.toMatchObject({ code: 'mock_fail' });
     await expect(fetchMe()).resolves.toBeTruthy();
   });
 });

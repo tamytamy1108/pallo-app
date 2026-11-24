@@ -1,11 +1,11 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BackButton } from '@/components/ui/back-button';
+import { FramedImage } from '@/components/ui/photo-frame';
 import { Pressable } from '@/components/ui/pressable';
 import { BottomBar } from '@/components/bottom-bar';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
@@ -69,6 +69,7 @@ export function DailyDetail({ p }: { p: Challenge }) {
   const scroll = useRef<ScrollViewInstance>(null);
   const scrollY = useRef(0);
   const tabsY = useRef(0);
+  const tabsH = useRef(0);
   useEffect(() => {
     if (scrollY.current > tabsY.current) scroll.current?.scrollTo({ y: tabsY.current, animated: false });
   }, [tab]);
@@ -80,6 +81,18 @@ export function DailyDetail({ p }: { p: Challenge }) {
   const [checkFor, setCheckFor] = useState<Challenge | null>(null);
   const [thread, setThread] = useState<ChCheckin | null>(null);
   const [report, setReport] = useState<string | null>(null);
+  // 방금 올린 내 인증으로 화면을 옮길지 (인증 탭에서 그 글이 그려지면 한 번)
+  const [revealMine, setRevealMine] = useState(false);
+  const revealRow = (row: ViewInstance | null) => {
+    setRevealMine(false);
+    const inner = scroll.current?.getInnerViewRef();
+    if (!row || !inner) return;
+    row.measureLayout(inner, (_x, ry) => {
+      // 탭 줄이 위에 붙으면 그 아래로 글 머리(얼굴)가 보이게. 맨 위 글이면 탭 줄 바로 아래(인증 탭 첫머리)부터
+      const under = ry - tabsH.current - 12;
+      scroll.current?.scrollTo({ y: under < tabsY.current + 60 ? tabsY.current : under, animated: true });
+    });
+  };
 
   const C = chCat(p.cat);
   const jn = isJoined(p, s);
@@ -162,7 +175,12 @@ export function DailyDetail({ p }: { p: Challenge }) {
         </View>
 
         {/* .lg-dtabs: 위에 붙는 탭. 위에 붙는 칸은 RN 이 스타일을 바꿔 끼워서(아이폰에서 세로로 쌓여요) 바깥 상자로 한 번 감싸요 */}
-        <View style={styles.tabsSticky} onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>
+        <View
+          style={styles.tabsSticky}
+          onLayout={(e) => {
+            tabsY.current = e.nativeEvent.layout.y;
+            tabsH.current = e.nativeEvent.layout.height;
+          }}>
         <View style={styles.tabs} accessibilityRole="tablist">
           {TABS.map(([k, l]) => (
             <Pressable
@@ -182,7 +200,7 @@ export function DailyDetail({ p }: { p: Challenge }) {
 
         <View style={styles.body}>
           {tab === 'home' ? <HomeTab p={p} s={s} onAll={() => setTab('feed')} onThread={setThread} onReport={setReport} /> : null}
-          {tab === 'feed' ? <FeedTab p={p} s={s} onThread={setThread} onReport={setReport} /> : null}
+          {tab === 'feed' ? <FeedTab p={p} s={s} onThread={setThread} onReport={setReport} onMineShown={revealMine ? revealRow : undefined} /> : null}
           {tab === 'rank' ? <RankTab p={p} s={s} /> : null}
         </View>
       </ScrollView>
@@ -221,7 +239,15 @@ export function DailyDetail({ p }: { p: Challenge }) {
           setGoCheck(false);
         }}
       />
-      <CheckSheet challenge={checkFor} onClose={() => setCheckFor(null)} />
+      <CheckSheet
+        challenge={checkFor}
+        onClose={() => setCheckFor(null)}
+        onPosted={() => {
+          // 올리고 나면 인증 탭의 내 글로
+          setTab('feed');
+          setRevealMine(true);
+        }}
+      />
       <CommentsSheet
         open={!!thread}
         onClose={() => setThread(null)}
@@ -345,16 +371,24 @@ function HomeTab({ p, s, onAll, onThread, onReport }: { p: Challenge; s: ChView;
 }
 
 // ---- 인증 탭 ----
-function FeedTab({ p, s, onThread, onReport }: { p: Challenge; s: ChView; onThread: (q: ChCheckin) => void; onReport: (n: string) => void }) {
+function FeedTab({ p, s, onThread, onReport, onMineShown }: { p: Challenge; s: ChView; onThread: (q: ChCheckin) => void; onReport: (n: string) => void; onMineShown?: (row: ViewInstance | null) => void }) {
   const F = feedOf(p, s, useBlockedNames());
+  // 맨 위 내 글 (방금 올린 인증 — 최근 순이라 맨 앞)
+  const mineRow = useRef<ViewInstance>(null);
   if (!F.length) return <Empty>{isPre(p) ? `${p.start}하면 여기에 인증이 모여요.` : '아직 오늘 인증이 없어요.'}</Empty>;
   return (
     <>
       <PText style={styles.evsort}>{`오늘 인증 ${todayCount(p, s)}명 · 최근 순`}</PText>
       <View>
-        {F.map((q, i) => (
-          <CheckinRow key={q.key + i} p={p} q={q} i={i} s={s} onThread={onThread} onReport={onReport} />
-        ))}
+        {F.map((q, i) =>
+          i === 0 && q.me && onMineShown ? (
+            <View key={q.key + i} ref={mineRow} collapsable={false} onLayout={() => onMineShown(mineRow.current)}>
+              <CheckinRow p={p} q={q} i={i} s={s} onThread={onThread} onReport={onReport} />
+            </View>
+          ) : (
+            <CheckinRow key={q.key + i} p={p} q={q} i={i} s={s} onThread={onThread} onReport={onReport} />
+          ),
+        )}
       </View>
     </>
   );
@@ -369,15 +403,16 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
   const photo = q.photos?.[0];
   return (
     <Pressable onLongPress={q.me ? undefined : () => onReport(q.n)} delayLongPress={450} style={[styles.chf, i > 0 && styles.chfLine]}>
-      <Face name={q.n} color={q.c} size={34} />
+      {/* 위 줄: 얼굴 · 이름 · 시간 — 사진 · 버튼 · 글은 그 아래 폭 전체 (라운지 글처럼 왼쪽을 비우지 않아요) */}
+      <View style={styles.chfHd}>
+        <Face name={q.n} color={q.c} size={34} />
+        <PText style={styles.chfN} numberOfLines={1}>{`${q.n}${q.me ? ' (나)' : ''}`}</PText>
+        <PText style={styles.chfT}>{q.t}</PText>
+      </View>
       <View style={styles.chfB}>
-        <View style={styles.chfHd}>
-          <PText style={styles.chfN}>{`${q.n}${q.me ? ' (나)' : ''}`}</PText>
-          <PText style={styles.chfT}>{q.t}</PText>
-        </View>
         {photo ? (
           <View style={[styles.pic, { aspectRatio: photo.ratio }]}>
-            <Image source={{ uri: photo.uri }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={`${q.n}의 인증 사진`} />
+            <FramedImage uri={photo.uri} framing={photo.framing} accessibilityLabel={`${q.n}의 인증 사진`} />
             {(q.photos?.length ?? 0) > 1 ? (
               <View style={styles.picN}>
                 <PText style={styles.picNT}>{`1 / ${q.photos?.length}`}</PText>
@@ -560,11 +595,11 @@ const styles = StyleSheet.create({
   sp: { flex: 1 },
   chfl: { marginTop: 8 },
   evsort: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 19, color: SUB },
-  chf: { flexDirection: 'row', gap: 10, paddingVertical: 12 },
+  chf: { paddingVertical: 12 },
   chfLine: { borderTopWidth: 1.5, borderColor: LINE },
-  chfB: { flex: 1, minWidth: 0 },
-  chfHd: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  chfN: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 20 },
+  chfB: { minWidth: 0 },
+  chfHd: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chfN: { flexShrink: 1, fontFamily: Font.body900, fontSize: 13.5, lineHeight: 20 },
   chfT: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: SUB },
   pic: { marginTop: 8, width: '100%', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, overflow: 'hidden', backgroundColor: Colors.ink },
   picEx: { alignItems: 'center', justifyContent: 'center' },

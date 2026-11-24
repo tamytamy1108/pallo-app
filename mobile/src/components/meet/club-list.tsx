@@ -50,6 +50,7 @@ export function ClubRow({ c, first }: { c: Club; first?: boolean }) {
           {cat ? cat[1] + ' · ' : ''}
           {c.br}
           {c.reg ? ' · ' + c.reg : ''} · 멤버 {c.n + (inC ? 1 : 0)}
+          {c.max > 0 ? '' : ' · 인원 무관'}
           <PText style={styles.em}>{'  ' + x.act}</PText>
         </PText>
       </View>
