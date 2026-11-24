@@ -49,6 +49,10 @@ export const SheetFooterContext = createContext(false);
  */
 /** 시트가 다 닫힌 뒤에 할 일 (다른 화면으로 가기 등). 시트를 닫는 onClose() 바로 다음에 불러요 */
 const afterClose: (() => void)[] = [];
+const IOS = Platform.OS === 'ios';
+/** 아이폰 Modal 신호(onShow · onDismiss)가 안 올 때 기다리는 시간 */
+const SHOW_FALLBACK_MS = 400;
+const DISMISS_FALLBACK_MS = 500;
 export function runAfterSheetClose(fn: () => void) {
   afterClose.push(fn);
 }
@@ -60,9 +64,17 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   const insets = useSafeAreaInsets();
   const { height: winH } = useWindowDimensions();
   const still = useReducedMotion();
-  // 닫히는 움직임 동안에도 Modal 을 남겨 둬요 (열릴 땐 그리는 중에 바로 켜요)
-  const [mounted, setMounted] = useState(open);
-  if (open && !mounted) setMounted(true);
+  // 닫히는 움직임 동안에도 Modal 을 남겨 둬요 (열릴 땐 그리는 중에 바로 켜요).
+  // 아이폰: 처음부터 열린 채로 그려지는 시트(챌린지 열기 등 겹쳐 뜨는 화면)는 화면이 자리 잡은 다음 프레임에 Modal 을 띄워요.
+  // 같은 커밋에 띄우면 아이폰이 Modal 을 못 띄우고, 투명한 겹친 화면만 남아 화면이 멈춘 것처럼 돼요
+  const [ready, setReady] = useState(!IOS);
+  useEffect(() => {
+    if (ready) return;
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, [ready]);
+  const [mounted, setMounted] = useState(open && ready);
+  if (open && ready && !mounted) setMounted(true);
   const showToastHere = useToastLayer(mounted);
 
   const shown = useSharedValue(0);
@@ -75,25 +87,55 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   useEffect(() => {
     closedRef.current = onClosed;
   }, [onClosed]);
-  // 아이폰은 Modal 이 실제로 내려간 뒤(onDismiss)에 알려요 — 그 전에 다른 화면 · 시트를 열면 막혀서 아무 일도 안 일어나요
+  // 아이폰은 Modal 이 실제로 내려간 뒤(onDismiss)에 알려요 — 그 전에 다른 화면 · 시트를 열면 막혀서 아무 일도 안 일어나요.
+  // onDismiss 가 안 오는 경우를 대비해 잠깐 뒤에는 그냥 알려요 (두 번은 안 불러요)
+  const closing = useRef(false);
+  // Modal 이 지금 떠 있는지 (아이폰 onShow) · 최신 open
+  const presented = useRef(false);
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
   const closed = useCallback(() => {
+    if (!closing.current) return;
+    closing.current = false;
     closedRef.current?.();
     flushAfterClose();
   }, []);
   const finishClose = useCallback(() => {
+    closing.current = true;
+    presented.current = false;
     setMounted(false);
-    if (Platform.OS !== 'ios') closed();
+    if (!IOS) closed();
+    else setTimeout(closed, DISMISS_FALLBACK_MS);
   }, [closed]);
   const onDismiss = closed;
+
+  // 올라오는 움직임: 아이폰은 Modal 이 실제로 뜬 뒤(onShow)에 시작해요 (뜨기 전에 움직이면 시트가 화면 밖에 남을 수 있어요)
+  const enter = useCallback(() => {
+    drag.set(0);
+    // .sheet { transition: transform .55s var(--ease) } · .lg-dim { transition: opacity .3s }
+    shown.set(withTiming(1, { duration: still ? 0 : 550, easing: EASE }));
+    dim.set(withTiming(1, { duration: still ? 0 : 300 }));
+  }, [drag, shown, dim, still]);
+  const onShow = useCallback(() => {
+    presented.current = true;
+    if (openRef.current) enter();
+  }, [enter]);
 
   const wasOpen = useRef(false);
   useEffect(() => {
     if (open) {
       wasOpen.current = true;
-      drag.set(0);
-      // .sheet { transition: transform .55s var(--ease) } · .lg-dim { transition: opacity .3s }
-      shown.set(withTiming(1, { duration: still ? 0 : 550, easing: EASE }));
-      dim.set(withTiming(1, { duration: still ? 0 : 300 }));
+      if (!IOS || presented.current) {
+        enter();
+        return;
+      }
+      // onShow 가 안 오는 경우를 대비해 잠깐 뒤에는 그냥 올려요
+      const t = setTimeout(() => {
+        if (openRef.current && !presented.current) enter();
+      }, SHOW_FALLBACK_MS);
+      return () => clearTimeout(t);
     } else if (wasOpen.current) {
       wasOpen.current = false;
       dim.set(withTiming(0, { duration: still ? 0 : 300 }));
@@ -103,7 +145,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
         }),
       );
     }
-  }, [open, still, shown, dim, drag, finishClose]);
+  }, [open, still, shown, dim, enter, finishClose]);
 
   const scrollRef = useRef<ScrollViewInstance>(null);
   useEffect(() => {
@@ -147,7 +189,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   );
 
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={requestClose} onDismiss={Platform.OS === 'ios' ? onDismiss : undefined} statusBarTranslucent navigationBarTranslucent>
+    <Modal visible={mounted} transparent animationType="none" onRequestClose={requestClose} onShow={IOS ? onShow : undefined} onDismiss={IOS ? onDismiss : undefined} statusBarTranslucent navigationBarTranslucent>
       <SafeAreaProvider>
         <SafeAreaInsetsContext.Consumer>
           {(modalInsets) => {
