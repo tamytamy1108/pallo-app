@@ -211,7 +211,6 @@ Member에 더할 것: `onboardedAt`(가입 단계 끝난 시각, 없으면 다�
 |---|---|---|
 | id · memberId · branchId | ID | 지점마다 `pending`은 하나만 |
 | name · phone | string | 지점에 등록한 이름 · 휴대폰 (앱이 보낸 값) |
-| lang | enum? | 배우는 언어 (참고용) |
 | status | enum | `pending` · `linked` · `rejected` · `canceled` · `unlinked` |
 | branchMemberRef | string? | 지점 전산 회원 번호 (예: H-0412). 연동하면 채워짐 |
 | reasonCode · reasonText | enum? · string? | 못 찾음 이유 (`phone_mismatch` · `name_mismatch` · `not_member` · `already_linked` · `other`) — 회원에게 보여요 |

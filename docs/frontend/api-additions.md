@@ -60,7 +60,7 @@
                "from": "2026-12-01", "until": "2026-12-20" },
   "next": null }
 
-// A23 POST /me/branch-links  { "branchId": "hanam", "name": "김서현", "phone": "01012345678", "lang": "en", "consent": true }
+// A23 POST /me/branch-links  { "branchId": "hanam", "name": "김서현", "phone": "01012345678", "consent": true }
 { "id": "bl-91", "status": "pending", "branch": "하남점", "requestedAt": "2026-11-23T12:40:00Z" }
 // 못 찾음이면 GET /me/branch-links/bl-91
 { "id": "bl-91", "status": "rejected", "reasonCode": "phone_mismatch", "reasonText": "등록된 번호가 달라요. 등록할 때 쓴 번호로 다시 요청해 주세요." }

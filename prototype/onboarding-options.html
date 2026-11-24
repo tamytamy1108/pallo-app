@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PALLO 첫 화면 · 가이드 시안</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@400;600;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Unbounded:wght@600;800&family=Noto+Sans+KR:wght@400;600;700;900&display=swap">
 <style>
 :root{--cream:#FBF6EA;--ink:#1E1A2B;--sub:#5A5366;--line:#E3DCCB;--yellow:#FFE200;--purple:#493087;--pink:#D0798E;--sky:#8FA6DC;--lav:#E5DDF6;--mist:#E3EAF8;
 --en:#4463A8;--ja:#F06593;--zh:#EA373F;--es:#69BE5F;--kakao:#FEE500;--fd:'Unbounded','Noto Sans KR',sans-serif;--fb:'Noto Sans KR',system-ui,sans-serif}
@@ -41,7 +41,9 @@ h1{font-family:var(--fd);font-size:22px;font-weight:800;margin:0 0 6px;letter-sp
 
 /* step top bar */
 .tb{display:flex;align-items:center;gap:12px;height:44px}
-.tb .bk{width:34px;height:34px;border-radius:12px;border:2px solid var(--ink);background:#fff;display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink)}
+/* 앱 공통 뒤로 버튼 (mobile/src/components/ui/back-button.tsx): 44 칸 · 상자 없음 · ‹ 22px · 선 2.1 */
+.tb .bk{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none;margin-left:-11px;cursor:pointer;transition:transform .15s}
+.tb .bk:active{transform:scale(.9)}
 .tb .bar{flex:1;height:8px;border-radius:4px;background:#EAE2CF;border:1.5px solid var(--ink);overflow:hidden}
 .tb .bar b{display:block;height:100%;background:var(--purple)}
 .tb .st{font-family:var(--fd);font-size:11px;font-weight:800;color:var(--sub)}
@@ -197,6 +199,318 @@ img{display:block}
 .lk-box h4{margin:0 0 8px;font-size:12px;font-weight:900;color:var(--sub)}
 .lk-box .mr{font-size:12.5px;padding:5px 0}
 .rsn{display:flex;flex-wrap:wrap;gap:6px}
+
+/* nickname v2 */
+.ph.dk{background:#333033}
+.dk-bk{background:transparent !important;border-color:#fff !important;box-shadow:none !important}
+.dk-bar{background:#4A464C !important;border-color:#fff !important}.dk-bar b{background:#E0D121 !important}
+.dk-inp{background:#2A272B;color:#fff;border-color:#fff;outline-color:#E0D121}
+.dk-inp .cnt{color:#B9B3BD}
+.dk-chip{background:transparent;border-color:#5C575E;color:#E4E0E6}
+.nk-stage{position:relative;height:150px;margin:6px -18px 0;overflow:hidden}
+.nk-beam{position:absolute;left:0;right:0;top:-40px;bottom:22px;background:#E0D121;clip-path:polygon(45% 0,55% 0,73% 100%,27% 100%);transform-origin:50% 0;animation:sway 2.8s ease-in-out infinite alternate}
+.nk-floor{position:absolute;left:50%;bottom:6px;width:180px;height:36px;margin-left:-90px;border-radius:50%;background:#DE7593}
+.nk-hero{position:absolute;left:50%;bottom:22px;width:112px;margin-left:-56px;animation:nkBob 2.6s ease-in-out infinite alternate;transform-origin:50% 100%}
+.nk-big{margin-top:8px;line-height:.95}
+.nk-big span{display:block;font-family:'Anton',sans-serif;font-size:28px;color:#fff;letter-spacing:.2px}
+.nk-big b{display:block;font-size:40px;font-weight:900;color:#E0D121;letter-spacing:-1px}
+@keyframes sway{from{transform:rotate(-1.6deg)}to{transform:rotate(1.6deg)}}
+@keyframes nkBob{from{transform:translateY(0)}to{transform:translateY(-6px) rotate(-2deg)}}
+.mq{position:relative;margin:16px 0 4px}
+.mq-in{position:relative;height:132px;border:2px solid var(--ink);border-radius:20px;background:var(--purple);box-shadow:4px 4px 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;
+ background-image:radial-gradient(circle,#FFE200 3.2px,transparent 3.6px),radial-gradient(circle,#FFE200 3.2px,transparent 3.6px),radial-gradient(circle,#FFE200 3.2px,transparent 3.6px),radial-gradient(circle,#FFE200 3.2px,transparent 3.6px);
+ background-size:16px 12px,16px 12px,12px 16px,12px 16px;background-repeat:repeat-x,repeat-x,repeat-y,repeat-y;background-position:4px 0,4px 100%,0 6px,100% 6px;animation:bulb 1s steps(1) infinite}
+.mq-k{font-family:'Anton',sans-serif;font-size:15px;letter-spacing:1.5px;color:#FFE200}
+.mq-n{font-size:44px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1.1}
+.mq-hero{position:absolute;right:-14px;bottom:-22px;width:92px;transform:rotate(8deg)}
+@keyframes bulb{50%{background-position:12px 0,12px 100%,0 14px,100% 14px}}
+.iv-top{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;font-weight:800;color:#B9B3BD}
+.iv-live{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px 0 7px;border-radius:11px;background:#EC2A2E;color:#fff;font-family:'Anton',sans-serif;font-size:12px;letter-spacing:.4px}
+.iv-live i{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s steps(1) infinite}
+@keyframes blink{50%{opacity:.15}}
+.iv-q{position:relative;display:flex;align-items:flex-end;gap:4px;margin:6px -18px 0;padding:24px 18px 0 0;overflow:hidden}
+.iv-q:before{content:"";position:absolute;left:8px;top:0;width:118px;bottom:8px;background:#E0D121;clip-path:polygon(40% 0,60% 0,100% 100%,0 100%)}
+.iv-q:after{content:"";position:absolute;left:6px;bottom:0;width:122px;height:22px;border-radius:50%;background:#DE7593}
+.iv-q img{position:relative;z-index:1;width:112px;flex:none;margin:0 0 10px 10px}
+.iv-q .iv-b{z-index:1}
+.iv-b{position:relative;margin-bottom:46px;padding:10px 12px;border-radius:16px 16px 16px 4px;background:#fff;color:var(--ink);font-size:14px;font-weight:800;line-height:1.4}
+.iv-a{align-self:flex-end;margin-top:14px;padding:12px 16px;border-radius:18px 18px 4px 18px;background:#E0D121;color:var(--ink);font-size:18px;font-weight:800;border:2px solid #fff}
+.iv-a b{font-size:24px;font-weight:900}
+.iv-in{flex:1;height:46px;border-radius:23px;border:2px solid #fff;background:#2A272B;display:flex;align-items:center;padding:0 16px;font-size:16px;font-weight:900;color:#fff}
+.iv-send{width:46px;height:46px;border-radius:50%;border:2px solid #fff;background:#E0D121;display:grid;place-items:center;box-shadow:2px 2px 0 #fff}
+@media (prefers-reduced-motion:reduce){.nk-beam,.nk-hero,.mq-in,.iv-live i{animation:none}}
+
+/* nickname v3 */
+.ul-d{width:34px;height:34px;border-radius:11px;border:2px solid var(--ink);background:var(--yellow);display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink);flex:none}
+.gb{display:flex;align-items:center;gap:6px;margin-top:16px}.gb img{width:70px}
+.gb-b{position:relative;padding:8px 13px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:15px;font-weight:800}.gb-b b{font-weight:900;color:var(--purple)}
+.gb-b:before{content:"";position:absolute;left:-8px;top:50%;margin-top:-6px;border:6px solid transparent;border-right:8px solid var(--ink);border-left:0}
+.kb{margin:8px -18px 0;background:#D3D0D9;padding:6px 3px 16px;display:flex;flex-direction:column;gap:6px}
+.kr{display:flex;gap:4px}
+.kr span{flex:1;height:32px;border-radius:6px;background:#fff;font-size:14px;font-weight:600;display:grid;place-items:center;box-shadow:0 1px 0 #8E8A96;color:#111}
+.kr span.fn{flex:1.4;background:#ADA9B5}.kr span.w{flex:2.2;font-size:12px}.kr span.w2{flex:2.2;font-size:12px;background:#ADA9B5}.kr span.sp{flex:6;font-size:12px}
+.kb-dk{background:#2B292D}.kb-dk .kr span{background:#5B585E;color:#fff;box-shadow:0 1px 0 #1A191B}.kb-dk .kr span.fn,.kb-dk .kr span.w2{background:#403D42}
+.kb-btn{margin-top:0}
+.ul-in{display:flex;align-items:center;gap:8px;margin-top:22px;padding-bottom:8px;border-bottom:3px solid var(--purple);font-size:26px;font-weight:900}
+.ul-in>span:first-child{flex:1}.ul-in em{font-style:normal;font-size:12px;font-weight:800;color:var(--sub)}
+.ul-in i{font-style:normal;width:22px;height:22px;border-radius:50%;background:#CFC6B2;color:#fff;font-size:15px;font-weight:900;display:grid;place-items:center;line-height:1}
+.ul-in .cur{height:26px;vertical-align:-3px}
+.sug{display:flex;align-items:center;gap:6px;margin-top:14px}
+.sug-k{font-size:12px;font-weight:900;color:var(--sub);margin-right:2px}
+.sug-d{margin-left:auto;width:34px;height:34px;border-radius:12px;border:2px solid var(--ink);background:var(--yellow);display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink)}
+.gs{position:relative;height:176px;margin:4px -18px 0;overflow:hidden}
+.gs-b{position:absolute;left:50%;top:10px;transform:translateX(-50%);padding:8px 14px;border-radius:16px;background:#fff;color:var(--ink);font-size:16px;font-weight:800;white-space:nowrap;z-index:2}
+.gs-b:after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-top-color:#fff;border-bottom:0}
+.gs-b b{font-weight:900;color:var(--purple)}
+.pv-k{margin-top:14px;font-size:11.5px;font-weight:900;color:var(--sub)}
+.pv-post{display:flex;gap:10px;align-items:center;margin-top:6px;padding:10px 12px;border:2px solid var(--ink);border-radius:16px;background:#fff}
+.pv-av{position:relative;width:34px;height:34px;flex:none;border-radius:50%;border:2px solid var(--ink);background:var(--yellow);overflow:hidden}
+.pv-av img{position:absolute;left:50%;top:5px;width:56px;transform:translateX(-50%)}
+.pv-av.sm{width:26px;height:26px}.pv-av.sm img{width:44px;top:4px}
+.pv-n{display:flex;align-items:baseline;gap:6px}.pv-n b{font-size:13.5px;font-weight:900;background:#FFF6C2;padding:0 3px;border-radius:4px}.pv-n span{font-size:11px;font-weight:700;color:var(--sub)}
+.pv-t{font-size:12.5px;font-weight:600;color:var(--ink);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-rank{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border-radius:14px;background:var(--lav);font-size:13px}
+.pv-rank b{flex:1;font-weight:900;color:var(--purple)}
+.pv-no{font-family:var(--fd);font-size:13px;font-weight:800;width:20px}
+.pv-p{font-family:var(--fd);font-size:12px;font-weight:800}
+
+/* nickname v4 */
+.nk-lb{margin-top:10px;font-size:12px;font-weight:900;color:var(--sub)}
+.h4{position:relative;height:132px;margin-top:8px;border:2px solid var(--ink);border-radius:22px;overflow:hidden}
+.h4-s{position:absolute}
+.h4a{background:var(--lav)}
+.h4a img{position:absolute;left:50%;top:14px;width:170px;margin-left:-85px}
+.h4-tag{position:absolute;left:50%;top:66px;width:104px;margin-left:-52px;border:2px solid var(--ink);border-radius:10px;background:#fff;overflow:hidden;transform:rotate(-4deg);box-shadow:2px 2px 0 var(--ink)}
+.h4-tag div{background:var(--pink);color:#fff;text-align:center;padding:2px 0 1px;font-family:var(--fd);font-size:9.5px;font-weight:800;line-height:1.05}
+.h4-tag div small{display:block;font-family:var(--fb);font-size:7.5px;font-weight:900}
+.h4-tag b{display:block;text-align:center;padding:3px 0 4px;font-size:17px;font-weight:900}
+.h4b{background:#333033}
+.h4b-beam{position:absolute;left:14px;top:-10px;width:110px;bottom:22px;background:#E0D121;clip-path:polygon(42% 0,58% 0,88% 100%,12% 100%);transform-origin:50% 0;animation:sway 2.8s ease-in-out infinite alternate}
+.h4b-floor{position:absolute;left:10px;bottom:8px;width:118px;height:28px;border-radius:50%;background:#DE7593}
+.h4b img{position:absolute;left:14px;bottom:22px;width:94px;animation:nkBob 2.6s ease-in-out infinite alternate;transform-origin:50% 100%}
+.h4b-t{position:absolute;right:14px;top:50%;transform:translateY(-50%);text-align:left;line-height:.95}
+.h4b-t span{display:block;font-family:'Anton',sans-serif;font-size:24px;color:#DE7593}
+.h4b-t b{display:block;font-size:30px;font-weight:900;color:#fff;letter-spacing:-1px}
+.h4c{background:#FFF3A3}
+.h4c img{position:absolute;left:-6px;bottom:-4px;width:150px;transform:rotate(-6deg)}
+.h4c-b{position:absolute;right:14px;top:22px;max-width:136px;padding:10px 12px;border:2px solid var(--ink);border-radius:16px 16px 16px 4px;background:#fff;font-size:16px;font-weight:800;line-height:1.3;box-shadow:2px 2px 0 var(--ink)}
+.h4c-b b{font-weight:900;color:var(--purple)}
+.h4c-b small{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-top:3px}
+@media (prefers-reduced-motion:reduce){.h4b-beam,.h4b img{animation:none}}
+
+/* nickname v5 */
+.sg{flex:none;height:48px;padding:0 12px;border-radius:14px;border:2px solid var(--ink);background:var(--yellow);box-shadow:2px 2px 0 var(--ink);display:flex;align-items:center;gap:4px;font-size:13px;font-weight:900}
+.sg-dk{border-color:#fff;box-shadow:2px 2px 0 #fff}
+.d-top{position:absolute;left:0;right:0;top:0;height:228px;background:#333033;overflow:hidden}
+.d-tb{position:absolute;left:18px;right:18px;top:38px;z-index:3}
+.d-beam{position:absolute;left:0;right:0;top:0;bottom:30px;background:#E0D121;clip-path:polygon(44% 0,56% 0,72% 100%,28% 100%);transform-origin:50% 0;animation:sway 2.8s ease-in-out infinite alternate}
+.d-floor{position:absolute;left:50%;bottom:14px;width:190px;height:34px;margin-left:-95px;border-radius:50%;background:#DE7593}
+.d-hero{position:absolute;left:50%;bottom:30px;width:112px;margin-left:-94px;animation:nkBob 2.6s ease-in-out infinite alternate;transform-origin:50% 100%}
+.d-t{position:absolute;right:20px;bottom:44px;line-height:.95;text-align:left}
+.d-t span{display:block;font-family:'Anton',sans-serif;font-size:22px;color:#fff}
+.d-t b{display:block;font-size:28px;font-weight:900;color:#E0D121;letter-spacing:-1px}
+.e-st{position:relative;height:150px;margin:2px -18px 0;overflow:hidden}
+.e-beam{position:absolute;left:0;right:0;top:-40px;bottom:22px;background:#E0D121;clip-path:polygon(45% 0,55% 0,70% 100%,30% 100%);transform-origin:50% 0;animation:sway 2.8s ease-in-out infinite alternate}
+.e-floor{position:absolute;left:50%;bottom:6px;width:180px;height:32px;margin-left:-90px;border-radius:50%;background:#DE7593}
+.e-st img{position:absolute;left:50%;bottom:20px;width:108px;margin-left:-54px;animation:nkBob 2.6s ease-in-out infinite alternate;transform-origin:50% 100%}
+.e-live{position:absolute;right:18px;top:10px;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px 0 7px;border-radius:11px;background:#EC2A2E;color:#fff;font-family:'Anton',sans-serif;font-size:12px;letter-spacing:.4px}
+.e-live i{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s steps(1) infinite}
+.e-t{margin-top:8px;line-height:1}
+.e-t span{font-family:'Anton',sans-serif;font-size:30px;color:#fff}
+.e-t b{font-size:34px;font-weight:900;color:#E0D121;letter-spacing:-1px}
+@media (prefers-reduced-motion:reduce){.d-beam,.d-hero,.e-beam,.e-st img,.e-live i{animation:none}}
+
+/* nickname length rules */
+.nk-in{font-size:15px;min-width:0;overflow:hidden;white-space:nowrap}
+.help .hc{margin-left:auto;font-weight:800;color:var(--sub)}
+.ph.dk .help .hc{color:#B9B3BD}
+.sg{padding:0 10px;font-size:12.5px}
+.nk-big{word-break:break-all}
+.h4b-t,.d-t{max-width:104px}
+.h4b-t b.n-m,.d-t b.n-m,.h4b-t b.n-l,.d-t b.n-l{font-size:18px;line-height:1.15;letter-spacing:-.5px;max-width:5.3em}
+.e-t b.n-m{display:block;font-size:30px}
+.e-t b.n-l{display:block;font-size:24px;letter-spacing:-.5px}
+.nk-tg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px;font-size:12.5px;font-weight:900;color:var(--sub)}
+.ctl2{height:32px;padding:0 14px;border-radius:16px;border:2px solid var(--ink);background:#fff;font:900 12.5px var(--fb);color:var(--ink);cursor:pointer}
+.ctl2.on{background:var(--yellow);box-shadow:2px 2px 0 var(--ink)}
+.ctl2:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+/* character stage */
+.ch-st{height:176px;margin:10px -4px 0}
+.ch-st .h4b-beam{left:10px;width:150px;bottom:26px}
+.ch-st .h4b-floor{left:4px;width:162px;height:34px;bottom:9px}
+.ch-st img{left:50%;margin-left:-125px;bottom:24px;width:160px;animation:nkBob 2.6s ease-in-out infinite alternate}
+.ch-st .h4b-t{right:16px}
+/* spotlight glow */
+.h4b-glow{position:absolute;left:-26px;top:-10px;width:190px;bottom:10px;background:radial-gradient(ellipse 34% 100% at 50% 0%,rgba(224,209,33,.42) 0%,rgba(224,209,33,.18) 55%,rgba(224,209,33,0) 82%);transform-origin:50% 0;animation:sway 2.8s ease-in-out infinite alternate}
+.ch-st .h4b-glow{left:-35px;width:240px;bottom:12px}
+.h4b-floor{background:radial-gradient(ellipse 60% 70% at 50% 38%,#F2A3B8 0%,#DE7593 70%) !important}
+.h4b-t b.n-xl{font-size:15px;line-height:1.15;letter-spacing:-.4px;max-width:5.3em}
+.nk-tg-n{font-size:11.5px;font-weight:700;color:var(--sub)}
+@media (prefers-reduced-motion:reduce){.h4b-glow{animation:none}}
+/* character card name sizes */
+.ch-st img{margin-left:-124px !important;width:136px !important}
+.ch-st .h4b-floor{left:2px;width:140px}
+.ch-st .h4b-beam{left:6px;width:132px}
+.ch-st .h4b-glow{left:-40px;width:224px}
+.ch-st .h4b-t{max-width:96px}
+.ch-st .h4b-t b.n-m,.ch-st .h4b-t b.n-l{font-size:17px;line-height:1.15;letter-spacing:-.5px;max-width:5.3em}
+.ch-st .h4b-t b.n-xl{font-size:14px;line-height:1.15;letter-spacing:-.4px;max-width:5.3em}
+.nk-tg-n{flex-basis:100%}
+
+/* member check accordion */
+.mc-go,.mc-ph .link{flex-shrink:0}
+.mc-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.mc{border-radius:18px;border:2px solid var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink);cursor:pointer;transition:background-color .2s,box-shadow .15s,transform .15s}
+.mc:active{transform:translate(3px,3px);box-shadow:none}
+.mc:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+.mc-h{display:flex;align-items:center;gap:12px;padding:10px 14px}
+.mc-h b{font-size:15px;font-weight:900}
+.mc-d{font-size:12px;font-weight:600;color:var(--sub);margin-top:2px}
+.mc.open{border-color:var(--purple);background:var(--lav);box-shadow:none;outline:3px solid var(--purple);outline-offset:1px}
+.mc.open .mc-d{display:none}
+.mc-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s cubic-bezier(.2,.8,.2,1)}
+.mc.open .mc-b{grid-template-rows:1fr}
+.mc-in{overflow:hidden;padding:0 14px}
+.mc.open .mc-in{padding-bottom:10px}
+.mc-x{font-size:12.5px;font-weight:600;line-height:1.5;color:var(--ink)}.mc-x b{font-weight:900;color:var(--purple)}
+.mc-steps{display:flex;align-items:center;gap:4px;margin-top:7px}
+.mc-steps span{font-size:10.5px;font-weight:900;padding:3px 7px;border-radius:8px;background:#fff;border:1.5px solid var(--purple);color:var(--purple);white-space:nowrap}
+.mc-steps i{flex:1;min-width:6px;height:2px;background:var(--purple);opacity:.5}
+.mc-ul{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.mc-ul span{font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;background:#fff;color:var(--ink)}
+.mc-ul span:before{content:"✓";margin-right:3px;color:var(--purple);font-weight:900}
+.mc-f{margin-top:6px;font-size:11px;font-weight:700;color:var(--sub)}
+@media (prefers-reduced-motion:reduce){.mc-b,.mc{transition:none}}
+
+/* branch navigation */
+.go-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.go-opt{display:flex;align-items:center;gap:10px;padding:14px;border-radius:18px;border:2px solid var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink);cursor:pointer;transition:transform .15s,box-shadow .15s}
+.go-opt:active{transform:translate(3px,3px);box-shadow:none}
+.go-opt:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+.go-opt b{font-size:15px;font-weight:900}
+.go-d{font-size:12px;font-weight:600;color:var(--sub);margin-top:2px}
+.go-ar{color:var(--sub);flex:none}
+.tr-step{display:flex;align-items:center;gap:4px;margin-top:6px}
+.tr-step span{font-size:10.5px;font-weight:900;padding:3px 8px;border-radius:9px;border:1.5px solid var(--line);color:var(--sub);background:#fff;white-space:nowrap}
+.tr-step span.on{border-color:var(--purple);background:var(--lav);color:var(--purple)}
+.tr-step i{flex:1;height:2px;background:var(--line)}
+.br-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.br-it{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:16px;border:2px solid var(--ink);background:#fff}
+.br-it b{display:block;font-size:14px;font-weight:900}.br-it span:not(.chk){display:block;font-size:11px;font-weight:700;color:var(--sub);margin-top:2px}
+.br-it.on{border-color:var(--purple);background:var(--lav);outline:3px solid var(--purple);outline-offset:1px}
+.go-ph .scr.slide{animation:goIn .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes goIn{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.go-ph .scr.slide{animation:none}}
+
+
+/* real home in phone */
+.gr-crop{position:relative;width:300px;height:262px;border:8px solid var(--ink);border-bottom:0;border-radius:46px 46px 0 0;overflow:hidden;background:var(--cream)}
+.gr-crop .sb{background:var(--cream)}
+.gr-col .cap>span{min-height:38px}
+.ph.hm-real .sb{background:var(--cream)}
+.hm-if{position:absolute;left:0;top:38px;width:390px;height:805px;border:0;transform:scale(.72821);transform-origin:0 0;background:var(--cream)}
+/* three paths */
+.ph .dsc,.ph .ttl,.agr-t,.nt-row b,.hm-st b{word-break:keep-all}
+.agr{display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 0;font-size:11.5px;font-weight:700;color:var(--sub);cursor:pointer;flex-shrink:0}
+.agr-c{flex:none;width:15px;height:15px;border-radius:50%;border:1.5px solid #CFC6B2;background:#fff;display:grid;place-items:center}.agr-c svg{opacity:0}
+.agr.on .agr-c{background:var(--purple);border-color:var(--purple)}.agr.on .agr-c svg{opacity:1}
+.agr-v{color:var(--sub);text-underline-offset:2px;margin-left:2px}
+
+.lf label .req{display:inline-block;margin-left:5px;padding:0 5px;border-radius:5px;background:var(--lav);color:var(--purple);font-size:10px;font-weight:900;line-height:16px;vertical-align:1px}
+.go-rs{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px;font-weight:700;color:var(--sub)}.go-rs .ctl2{flex:none;white-space:nowrap}
+.sub3{font-family:var(--fd);font-size:14.5px;font-weight:800;margin:34px 0 4px}
+.pickf{cursor:pointer}.pickf .ph-t{color:#A79F8F;font-weight:700}.pickf.got{border-color:var(--purple);background:var(--lav)}.pickf.got .ph-t{color:var(--ink);font-weight:900}
+.bs-dim{position:absolute;inset:0;background:rgba(30,26,43,.45);z-index:6;cursor:pointer}
+.bs{position:absolute;left:0;right:0;bottom:0;height:80%;z-index:7;background:var(--cream);border-top:2px solid var(--ink);border-radius:28px 28px 0 0;padding:8px 16px 0;display:flex;flex-direction:column;box-shadow:0 -6px 0 rgba(30,26,43,.08)}
+.bs-h{width:40px;height:5px;border-radius:3px;background:#CFC6B2;margin:0 auto 6px;flex:none}
+.bs-top{display:flex;align-items:center;justify-content:space-between;flex:none}
+.bs-t{font-size:18px;font-weight:900;letter-spacing:-.4px}
+.bs-x{width:44px;height:44px;margin-right:-10px;display:grid;place-items:center;border-radius:14px;cursor:pointer;transition:transform .15s}.bs-x:active{transform:scale(.9)}
+.bs-q{display:flex;align-items:center;gap:8px;height:44px;margin-top:6px;padding:0 13px;border-radius:14px;border:2px solid var(--ink);background:#fff;box-shadow:2px 2px 0 var(--ink);font-size:13.5px;font-weight:700;color:#A79F8F;flex:none}
+.bs-seg{display:flex;margin-top:10px;padding:3px;border-radius:14px;background:#EFE8D8;flex:none}
+.bs-seg span{flex:1;height:30px;display:grid;place-items:center;border-radius:11px;font-size:12.5px;font-weight:800;color:var(--sub);cursor:pointer}
+.bs-seg span.on{background:#fff;color:var(--ink);font-weight:900;box-shadow:0 0 0 2px var(--ink)}
+.bs-l{flex:1;overflow-y:auto;margin:8px -16px 0;padding:0 16px 24px;scrollbar-width:none;-webkit-mask-image:linear-gradient(#000 calc(100% - 18px),transparent);mask-image:linear-gradient(#000 calc(100% - 18px),transparent)}.bs-l::-webkit-scrollbar{display:none}
+.bs-reg{position:sticky;top:0;z-index:1;display:flex;align-items:baseline;gap:5px;padding:12px 4px 6px;background:var(--cream);font-size:12.5px;font-weight:900}
+.bs-reg small{font-size:11px;font-weight:700;color:var(--sub)}
+.bs-g{border:2px solid var(--ink);border-radius:16px;background:#fff;overflow:hidden}
+.bs-it{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 12px 0 14px;cursor:pointer;font-size:14px}
+.bs-it+.bs-it{border-top:1.5px solid var(--line)}
+.bs-it b{flex:1;font-weight:800}
+.bs-it .chk{width:20px;height:20px;border:2px solid #CFC6B2}
+.bs-it.on{background:var(--lav)}.bs-it.on b{font-weight:900;color:var(--purple)}.bs-it.on .chk{background:var(--purple);border-color:var(--purple)}
+.bs-it:active{background:#F6F1E4}
+.bs-tg{font-size:10px;font-weight:900;padding:2px 7px;border-radius:8px;background:#E2F2E6;color:#2D6B3C}
+.t1{flex:1;min-height:0;overflow-y:auto;margin:0 -18px;padding:0 18px 14px;scrollbar-width:none}.t1::-webkit-scrollbar{display:none}
+.t1 .chips{gap:5px}.t1 .chip{height:30px}
+.t1-wait{height:62px;border-radius:14px;border:2px dashed #CFC6B2;display:grid;place-items:center;text-align:center;font-size:11.5px;font-weight:800;line-height:1.45;color:var(--sub)}
+.t1-slots{display:none}.t1:has(.pickf.got) .t1-slots{display:block}.t1:has(.pickf.got) .t1-wait{display:none}
+.t1-note{margin-top:6px;font-size:10.5px;font-weight:800;color:var(--sub)}
+.t1-ft{flex:none;position:relative;margin:0 -18px;padding:0 18px}.t1-ft::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:18px;background:linear-gradient(rgba(251,246,234,0),var(--cream));pointer-events:none}
+.tr-how{margin-top:18px;padding:12px 14px;border-radius:16px;border:2px dashed #CFC6B2;display:flex;flex-direction:column;gap:7px}
+.tr-how b{font-size:12px;font-weight:900;color:var(--sub)}
+.tr-how div{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800}
+.tr-how i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--fd);font-size:10px;font-weight:800;display:grid;place-items:center}
+.t-lb{font-size:12px;font-weight:900;margin-top:14px}.t-lb small{font-weight:700;color:var(--sub);margin-left:4px}
+[data-opt]{cursor:pointer}
+.dys{display:flex;gap:6px;margin-top:6px}
+.dy{flex:1;height:52px;border-radius:14px;border:2px solid var(--ink);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--fd);font-size:15px;font-weight:800}
+.dy small{font-family:var(--fb);font-size:10.5px;font-weight:800;color:var(--sub)}
+.dy.on{background:var(--purple);border-color:var(--purple);color:#fff}.dy.on small{color:#D9CFF2}
+.sls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.sl{height:38px;border-radius:12px;border:2px solid var(--ink);background:#fff;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--fd);font-size:12.5px;font-weight:800}
+.sl small{font-family:var(--fb);font-size:10px;font-weight:800}
+.sl.on{background:var(--lav);border-color:var(--purple);color:var(--purple);outline:2px solid var(--purple)}
+.sl.x{border-color:var(--line);color:#B4AC9B;background:#F4EFE3;text-decoration:line-through;text-decoration-thickness:1.5px}.sl.x small{text-decoration:none}
+.mvs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px}
+.mv{position:relative;min-height:52px;padding:8px 10px 8px 34px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:12.5px;font-weight:800;line-height:1.3;display:flex;align-items:center}
+.mv i,.lc i{position:absolute;left:9px;top:50%;margin-top:-9px;width:18px;height:18px;border-radius:50%;border:2px solid #CFC6B2;background:#fff;display:grid;place-items:center}
+.mv i svg,.lc i svg{width:10px;height:10px;opacity:0}
+.mv.on,.lc.on{background:var(--lav);border-color:var(--purple);color:var(--purple);font-weight:900}
+.mv.on i,.lc.on i{background:var(--purple);border-color:var(--purple)}.mv.on i svg,.lc.on i svg{opacity:1}
+.lcs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.lc{position:relative;height:86px;border-radius:18px;border:2px solid var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink);padding:12px;display:flex;flex-direction:column;justify-content:flex-end}
+.lc i{left:auto;right:10px;top:10px;margin:0}
+.lc em{font-style:normal;font-size:16px;font-weight:900}.lc b{font-size:12.5px;font-weight:900;color:var(--ink);margin-top:2px}
+.lc.on{box-shadow:none;outline:3px solid var(--purple);outline-offset:1px}
+.tk{margin-top:14px;border:2px solid var(--ink);border-radius:20px;background:#fff;box-shadow:4px 4px 0 var(--ink);overflow:hidden}
+.tk-h{height:32px;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:12px;font-weight:900}
+.tk-h b{font-family:var(--fd);font-weight:800;color:var(--yellow)}
+.tk-b{padding:6px 14px 8px}.tk-b .mr{font-size:12.5px}
+/* home · tab bar */
+.hm-top{display:flex;align-items:center;justify-content:space-between;height:52px}
+.hm-logo{width:92px;height:25px;color:var(--ink)}
+.hm-bell{position:relative;width:44px;height:44px;border-radius:14px;border:2px solid var(--ink);background:#fff;box-shadow:2px 2px 0 var(--ink);display:grid;place-items:center;cursor:pointer}
+.hm-bell i{position:absolute;top:8px;right:9px;width:9px;height:9px;border-radius:50%;background:#E0457B;border:2px solid #fff}
+.hm-hi{font-size:21px;font-weight:900;letter-spacing:-.5px;margin-top:8px}
+.hm-st{display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 12px;border-radius:16px;border:2px solid var(--purple);background:var(--lav)}
+.hm-st b{display:block;font-size:12.5px;font-weight:900;color:var(--purple)}.hm-st span:not(.chip):not(.hm-pl):not(.hm-dd):not(.hm-ad){display:block;font-size:11px;font-weight:700;color:var(--sub);margin-top:1px}
+.hm-pl{flex:none;width:12px;height:12px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 4px #fff;animation:pl2 1.4s ease-in-out infinite}
+@keyframes pl2{50%{box-shadow:0 0 0 4px #fff,0 0 0 8px rgba(73,48,135,.18)}}
+.hm-st.tr{border-color:var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink)}.hm-st.tr b{color:var(--ink)}
+.hm-dd{flex:none;padding:6px 8px;border-radius:10px;background:var(--yellow);border:2px solid var(--ink);font-family:var(--fd);font-size:12px;font-weight:800}
+.hm-st.ln{border:0;background:none;padding:0;gap:6px}.hm-ad{font-size:12px;font-weight:900;color:var(--purple)}
+.hm-sec{font-size:14px;font-weight:900;margin-top:18px}
+.hm-goal{display:flex;align-items:center;gap:10px;margin-top:8px;padding:12px 14px;border-radius:18px;border:2px solid var(--ink);background:var(--yellow);box-shadow:3px 3px 0 var(--ink)}
+.hm-goal div{flex:1}.hm-goal b{display:block;font-size:14px;font-weight:900}.hm-goal span{font-size:11.5px;font-weight:700}
+.hm-goal em{font-style:normal;font-family:var(--fd);font-size:14px;font-weight:800}
+.hm-lg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.hm-ph{height:92px;border-radius:16px;background:#EFE8D8}
+.tbar{position:absolute;left:0;right:0;bottom:0;height:70px;padding-bottom:12px;background:#fff;border-top:2px solid var(--ink);display:flex;z-index:4}
+.tbi{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:600;color:#3A3A48}
+.tbi.on{font-weight:900;color:var(--ink)}
+/* noti */
+.nt-tt{flex:1;font-size:17px;font-weight:900;text-align:center;margin-right:-34px}.nt-all{font-family:var(--fd);font-size:11px;font-weight:800;color:var(--sub)}
+.nt-tabs{display:flex;gap:16px;margin:4px -18px 8px;padding:0 18px;border-bottom:1.5px solid var(--line)}
+.nt-tabs span{padding:6px 0 9px;font-size:13px;font-weight:900;color:var(--sub)}.nt-tabs span.on{color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.nt-row{display:flex;align-items:flex-start;gap:10px;padding:11px 10px;margin:2px -10px 0;border-radius:14px}
+.nt-row div{flex:1;min-width:0}.nt-row b{display:block;font-size:13px;font-weight:800;line-height:1.45}.nt-row div span{font-size:11px;font-weight:700;color:var(--sub)}
+.nt-row.new{background:#FFF8CC;cursor:pointer}.nt-row>i{flex:none;width:8px;height:8px;margin-top:7px;border-radius:50%;background:#E0457B}
+.nt-ic{flex:none;width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);background:#fff;display:grid;place-items:center}
+.nt-ic.ok{background:var(--purple);border-color:var(--purple)}
+.go-ph.slide>*:not(.sb){animation:goIn .28s cubic-bezier(.2,.8,.2,1)}
+.go-ph.go-up .bs{animation:bsUp .3s cubic-bezier(.2,.8,.2,1)}.go-ph.go-up .bs-dim{animation:fdIn .3s}
+@keyframes bsUp{from{transform:translateY(100%)}to{transform:none}}@keyframes fdIn{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.go-ph.slide>*,.go-ph.go-up .bs,.go-ph.go-up .bs-dim,.hm-pl{animation:none}}
 </style></head><body>
 
 <svg width="0" height="0" style="position:absolute"><defs>
@@ -204,10 +518,11 @@ img{display:block}
  <symbol id="apple" viewBox="0 0 24 24"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></symbol>
  <symbol id="sparkle" viewBox="0 0 24 24"><path d="M12 1.5c.7 5.3 3.2 7.9 10.5 10.5-7.3 2.6-9.8 5.2-10.5 10.5C11.3 17.2 8.8 14.6 1.5 12 8.8 9.4 11.3 6.8 12 1.5z" fill="currentColor" stroke="#1E1A2B" stroke-width="1.6" stroke-linejoin="round"/></symbol>
  <symbol id="ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
- <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#1E1A2B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="back" viewBox="0 0 24 24"><path d="M15 4.5L7.5 12l7.5 7.5" fill="none" stroke="#1E1A2B" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
  <symbol id="dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="#fff" stroke="#1E1A2B" stroke-width="2.2"/><g fill="#1E1A2B"><circle cx="8.5" cy="8.5" r="1.6"/><circle cx="15.5" cy="15.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="15.5" cy="8.5" r="1.6"/><circle cx="8.5" cy="15.5" r="1.6"/></g></symbol>
  <symbol id="arr" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
  <symbol id="send" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" fill="none" stroke="#1E1A2B" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+ <symbol id="wordmark" viewBox="0 0 500.78 135.32"><g fill="currentColor"><path d="M51.25,2.55c22.25,0,37.2,15.86,37.2,41.94,0,27.9-16.23,42.12-42.49,42.12h-12.04v46.16H0V6.37c0-2.11,1.71-3.82,3.82-3.82h47.43ZM33.92,62.17h6.2c7.29,0,13.31-4.92,13.31-17.5,0-14.41-8.03-17.68-13.68-17.68h-5.84v35.18Z"/><path d="M156.09,5.47l31.02,127.3h-35.54l-4.04-23.84h-26.99l-4.04,23.84h-35.54L111.99,5.47c.42-1.71,1.95-2.92,3.71-2.92h36.67c1.76,0,3.3,1.2,3.71,2.92ZM124.55,83.4h18.97l-9.23-52.72c-.05-.29-.46-.29-.51,0l-9.230,52.72Z"/><path d="M227.85,6.37v98.67h41.76v27.72h-75.69V6.37c0-2.11,1.71-3.82,3.82-3.82h26.28c2.11,0,3.82,1.71,3.82,3.82Z"/><path d="M312.3,6.37v98.67h41.76v27.72h-75.69V6.37c0-2.11,1.71-3.82,3.82-3.82h26.28c2.11,0,3.82,1.71,3.82,3.82Z"/><path d="M451.94,67.66c0,46.51-10.4,67.66-46.51,67.66s-46.51-21.34-46.51-67.66S370.06,0,405.44,0s46.51,20.97,46.51,67.66ZM405.44,112.34c10.58,0,11.49-10.94,11.49-44.68,0-37.39-1.82-44.68-11.67-44.68-10.58,0-11.31,12.04-11.31,44.68,0,35.56,1.46,44.68,11.49,44.68Z"/><path d="M496.96,3.05c2.13,0,3.85,1.74,3.82,3.87l-.53,45.51c0,1.92-.08,3.85-.23,5.77l-3.03,37.32h-24.44l-2.71-37.59c-.12-1.74-.18-3.48-.18-5.22l-.53-45.790c-.02-2.13,1.69-3.87,3.82-3.87h24ZM499.4,109.28v19.17c0,2.11-1.71,3.82-3.82,3.82h-20.86c-2.11,0-3.82-1.71-3.82-3.82v-19.17c0-2.11,1.71-3.82,3.82-3.82h20.86c2.11,0,3.82,1.71,3.82,3.82Z"/></g></symbol>
  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15z" fill="#FFE200" stroke="#1E1A2B" stroke-width="2" stroke-linejoin="round"/><path d="M10 20.5a2.2 2.2 0 004 0" fill="none" stroke="#1E1A2B" stroke-width="2" stroke-linecap="round"/></symbol>
 </defs></svg>
 
@@ -215,7 +530,7 @@ img{display:block}
 <p class="lead">앱을 받고 처음 열었을 때부터 홈에 들어가기까지예요. <b>첫 화면 그림과 사용 가이드 5장은 운영팀이 관리자 웹에서 직접 올리고 바꿔요</b> (앱 업데이트 없이). 앱은 틀과 로그인 버튼만 갖고 있어요. 카카오 버튼은 카카오 공식 노랑(#FEE500)을 쓰고, PALLO 노랑(#FFE200) 바탕 위에는 올리지 않아요.</p>
 
 <div class="flow">
- <span class="y">첫 화면 <small style="font-weight:700;margin-left:4px">관리자 웹</small></span><i>→</i><span>카카오 로그인</span><i>→</i>
+ <span class="y">첫 화면 <small style="font-weight:700;margin-left:4px">애니메이션 · 관리자 웹</small></span><i>→</i><span>카카오 로그인</span><i>→</i>
  <span class="br"><span>처음 가입 → 약관 · 닉네임 · 캐릭터 · 회원 확인 · <b>지점 연동 요청</b> · 알림 · 환영</span><span>이미 가입 → 바로</span></span><i>→</i>
  <span class="l">사용 가이드 5장 <small style="font-weight:700;margin-left:4px">관리자 웹</small></span><i>→</i><span class="y">홈</span>
 </div>
@@ -223,7 +538,10 @@ img{display:block}
 
 
 <!-- ============ 1. 첫 화면 ============ -->
-<div class="sec">1 · 첫 화면 (관리자 웹 그림이 화면을 꽉 채워요)</div>
+<div class="sec">1 · 첫 화면 (정함: YOUR FIRST STAGE 애니메이션)</div>
+<p class="secd">첫 화면은 보내 주신 포스터를 움직이게 만든 이 화면으로 정했어요(2026-11-23). 폰을 누르면 처음부터 다시 재생돼요. 세 가지 폰 크기 · 움직이는 순서는 <a href="start-screen-motion.html">start-screen-motion.html</a>에 있어요.</p>
+<div class="row" style="margin-bottom:26px"><iframe src="start-screen-motion.html?embed" title="첫 화면 애니메이션" style="width:320px;height:672px;border:0;background:transparent" loading="lazy"></iframe></div>
+<div class="sec" style="font-size:15px;margin-top:10px">첫 화면을 관리자 웹에서 바꿀 때 (그림 · 영상 공통 규칙)</div>
 <p class="secd">그림 한 장을 화면 크기에 맞춰 자르는 대신, <b>화면 비율별로 3장</b>을 올려요. 앱은 기기에 가장 맞는 한 장을 골라 <b>가로 폭에 딱 맞추고</b>, 위에서부터 그려요. 그림이 화면보다 짧으면 남는 맨 아래만 <b>바탕색</b>(그림 맨 아래 색)으로 이어 붙여요. 그래서 어느 기기에서도 잘리는 곳 없이 화면이 다 차요. 로그인 버튼은 그림 위 아래쪽 30%(버튼 자리)에 떠 있어요. 움직이는 첫 화면 예시는 <a href="start-screen-motion.html">start-screen-motion.html</a>.</p>
 <div class="row">
  <div class="col" style="width:256px"><div class="cap"><b>아이폰 SE · 8 (9:16)</b><span>'짧은 화면' 그림이 딱 맞아요. 이어 붙이는 곳 없음.</span></div><div class="ph" style="width:256px;height:443px;background:#1E1A2B;border-radius:30px"><div class="sb" style="color:#fff">9:41<em><b></b><i></i></em></div>
@@ -238,8 +556,6 @@ img{display:block}
  
  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
   <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
-  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
-  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
 </div>
 </div></div>
  <div class="col" style="width:256px"><div class="cap"><b>아이폰 15 · 갤럭시 S24 (9:19.5)</b><span>'기본' 그림. 화면이 3px 더 길어서 맨 아래 3px만 바탕색.</span></div><div class="ph" style="width:256px;height:536px;background:#1E1A2B;border-radius:40px"><div class="sb" style="color:#fff">9:41<em><b></b><i></i></em></div>
@@ -254,8 +570,6 @@ img{display:block}
  
  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
   <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
-  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
-  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
 </div>
 </div></div>
  <div class="col" style="width:256px"><div class="cap"><b>갤럭시 Z 플립 (9:22)</b><span>'긴 화면' 그림도 짧아서 맨 아래 53px를 바탕색으로. 버튼 자리라 티가 안 나요.</span></div><div class="ph" style="width:256px;height:602px;background:#1E1A2B;border-radius:40px"><div class="sb" style="color:#fff">9:41<em><b></b><i></i></em></div>
@@ -270,8 +584,6 @@ img{display:block}
  <div style="position:absolute;left:0;right:0;top:533px;height:53px;background:#1E1A2B;border-top:2px dashed var(--yellow);z-index:3"></div><span class="zn up" style="position:absolute;left:8px;top:537px;z-index:5">여기부터 바탕색</span>
  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
   <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
-  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
-  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
 </div>
 </div></div>
 </div>
@@ -314,92 +626,39 @@ img{display:block}
    <img src="assets/c-purple-standard-3d.png" style="width:150px;margin-top:20px">
    <div class="grow"></div>
    <div class="btn k sm3"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
-   <div class="btn a sm3"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
   </div></div>
  </div>
 </div>
 
 
 <!-- ============ 2. 닉네임 ============ -->
-<div class="sec">2 · 닉네임 정하기</div>
-<p class="secd">카카오 이름을 미리 채워 두고, 바로 '다음'을 누를 수 있게 해요. 규칙은 지금 설정 화면과 같아요: 2~10자, 한글 · 영문 · 숫자, 중복 확인은 입력하면서 바로.</p>
-<div class="row">
-
-<!-- N1 -->
-<div class="col"><div class="cap"><b>1 · 이름표 붙이기<span class="pick">추천</span></b><span>캐릭터 가슴에 'HELLO my name is' 이름표가 붙어 있고, 입력하는 대로 이름표 글자가 바뀌어요. 주사위로 추천 이름.</span></div>
+<div class="sec">2 · 닉네임 정하기 (정함: B 작은 무대)</div>
+<p class="secd">닉네임 화면은 <b>B · 작은 무대</b>로 정했어요(2026-11-24). 첫 화면 무대를 카드 하나로 줄여 이어 가고, 나머지는 앱 본 화면과 같은 크림 바탕이에요. 카카오 이름을 미리 채우고(추천 버튼 없음), 2~10자 한글 · 영문 · 숫자, 입력하는 동안 중복 확인. 위 버튼으로 길이를 바꿔 보면 1~4자는 한 줄로 크게, 5~10자는 5자씩 두 줄로 나뉘어요.</p>
+<div class="nk-tg"><span>닉네임으로 보기</span><button type="button" class="ctl2 on" data-n="서현">한글 2</button><button type="button" class="ctl2" data-n="말많은망고">한글 5</button><button type="button" class="ctl2" data-n="말많은망고수다쟁이곰">한글 10</button><button type="button" class="ctl2" data-n="TalkyMango">영어 10</button><button type="button" class="ctl2" data-n="Mango2026">영어 · 숫자 9</button><span class="nk-tg-n">규칙: 한글 · 영문 · 숫자, 2~10자 (정함 2026-11-24)</span></div>
+<div class="row" id="nk-row">
+<div class="col"><div class="cap"><b>B · 작은 무대<span class="pick">정함</span></b><span>첫 화면 무대를 카드 하나로 줄였어요. 조명 아래 팔로로 옆에 분홍 'HELLO,' + 흰 닉네임. 나머지는 크림 바탕, '다음'은 키보드 바로 위.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
- <div class="scr">
-  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:25%"></b></span><span class="st">1/4</span></div>
-  <div class="ttl">PALLO에서 쓸<br>이름을 정해요</div>
-  <div class="dsc">라운지 · 랭킹 · 동아리에서 보여요. 나중에 바꿀 수 있어요.</div>
-  <div style="position:relative;height:178px;margin-top:6px">
-   <img src="assets/av/up-purple.png" style="position:absolute;left:50%;top:6px;width:200px;transform:translateX(-50%)">
-   <div style="position:absolute;left:50%;top:104px;width:138px;margin-left:-69px;border:2px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden;transform:rotate(-4deg);box-shadow:3px 3px 0 var(--ink)">
-    <div style="background:var(--pink);color:#fff;text-align:center;padding:3px 0 2px;font-family:var(--fd);font-size:11px;font-weight:800;line-height:1.1">HELLO<div style="font-family:var(--fb);font-size:8.5px;font-weight:900">my name is</div></div>
-    <div style="text-align:center;padding:5px 0 6px;font-size:20px;font-weight:900">서현</div>
-   </div>
+ <div class="scr" style="padding-bottom:0">
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:25%"></b></span><span class="st">1/4</span></div>
+  <div class="h4 h4b">
+   <div class="h4b-glow"></div><div class="h4b-beam"></div><div class="h4b-floor"></div>
+   <img src="assets/c-purple-lash-sticker.png" alt="">
+   <div class="h4b-t"><span>HELLO,</span><b class="nk-big">서현!</b></div>
   </div>
-  <div class="fld"><div class="inp">서현<span class="cur"></span><span class="cnt">2/10</span></div><div class="ib"><svg width="26" height="26"><use href="#dice"/></svg></div></div>
-  <div class="help"><svg width="14" height="14"><use href="#ok"/></svg>쓸 수 있는 이름이에요</div>
-  <div class="chips"><span class="chip">말많은망고</span><span class="chip">수다곰</span><span class="chip">Tammy</span></div>
+  <div class="ttl" style="font-size:21px;margin-top:14px">무대에 오를 닉네임은요?</div>
+  <div class="nk-lb">닉네임</div><div class="fld" style="margin-top:6px"><div class="inp nk-in" style="height:48px"><span class="nk-v">서현</span><span class="cur"></span></div></div><div class="help"><svg width="14" height="14"><use href="#ok"/></svg>쓸 수 있는 닉네임이에요<span class="hc"><span class="nk-c">2</span>/<span class="nk-m">10</span></span></div>
   <div class="grow"></div>
-  <div class="btn y">다음</div>
- </div>
-</div></div>
-
-<!-- N2 -->
-<div class="col"><div class="cap"><b>2 · PALLO 여권 만들기</b><span>가입 전체를 여권 한 장 채우기로. 닉네임 → 언어 → 지점 칸이 단계마다 채워지고, 다 채우면 도장이 쾅. 마이의 여권 카드와 이어져요.</span></div>
-<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
- <div class="scr">
-  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:25%"></b></span><span class="st">1/4</span></div>
-  <div class="ttl" style="font-size:20px">내 PALLO 여권에<br>쓸 이름은?</div>
-  <div style="margin-top:8px;border:2px solid var(--ink);border-radius:18px;background:#fff;box-shadow:4px 4px 0 var(--ink);overflow:hidden">
-   <div style="height:32px;background:var(--purple);color:var(--yellow);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-family:var(--fd);font-size:11px;font-weight:800;letter-spacing:.5px"><span>PALLO PASSPORT</span><svg width="16" height="16" style="color:var(--yellow)"><use href="#sparkle"/></svg></div>
-   <div style="display:flex;gap:10px;padding:12px">
-    <div style="width:72px;height:88px;border-radius:10px;border:2px solid var(--ink);background:var(--mist);overflow:hidden;flex:none;position:relative"><img src="assets/av/up-sky.png" style="position:absolute;left:50%;top:14px;width:120px;transform:translateX(-50%)"></div>
-    <div style="flex:1;font-size:9.5px;font-weight:900;color:var(--sub);letter-spacing:.4px;font-family:var(--fd)">
-     NAME<div style="font-family:var(--fb);font-size:16px;font-weight:900;color:var(--ink);letter-spacing:0;border-bottom:3px solid var(--yellow);margin:1px 0 7px">서현<span class="cur" style="display:inline-block;width:2px;height:16px;background:var(--purple);margin-left:2px;vertical-align:-2px;animation:bl 1s steps(1) infinite"></span></div>
-     LANGUAGE<div style="height:16px;border-bottom:1.5px dashed #CFC6B2;margin:1px 0 7px"></div>
-     BRANCH<div style="height:16px;border-bottom:1.5px dashed #CFC6B2;margin-top:1px"></div>
-    </div>
-   </div>
-   <div style="padding:0 12px 10px;font-family:var(--fd);font-size:9px;font-weight:600;color:#B4AC9B;letter-spacing:1px;white-space:nowrap;overflow:hidden">P&lt;PALLO&lt;&lt;SEOHYUN&lt;&lt;&lt;2026.11</div>
-  </div>
-  <div class="help"><svg width="14" height="14"><use href="#ok"/></svg>쓸 수 있는 이름이에요 · 2/10</div>
-  <div class="btn y" style="margin-top:12px">다음</div>
-  <div class="kbd"><span>ㅂ</span><span>ㅈ</span><span>ㄷ</span><span>ㄱ</span><span>ㅅ</span><span>ㅛ</span><span>ㅕ</span><span>ㅑ</span><span>ㅐ</span><span>ㅔ</span><span>ㅁ</span><span>ㄴ</span><span>ㅇ</span><span>ㄹ</span><span>ㅎ</span><span>ㅗ</span><span>ㅓ</span><span>ㅏ</span><span>ㅣ</span><span>⌫</span></div>
- </div>
-</div></div>
-
-<!-- N3 -->
-<div class="col"><div class="cap"><b>3 · 팔로와 대화하기</b><span>가입 전체를 채팅처럼. 캐릭터가 묻고 내가 답하면 다음 질문이 와요. 라운지 채팅과 같은 노랑 말풍선. 가장 친근하지만 단계가 길어 보일 수 있어요.</span></div>
-<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
- <div class="scr" style="padding-bottom:16px">
-  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span style="flex:1;font-size:14px;font-weight:900;text-align:center;margin-right:46px">팔로</span></div>
-  <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
-   <div style="display:flex;gap:8px;align-items:flex-end">
-    <div style="width:38px;height:38px;border-radius:50%;border:2px solid var(--ink);background:var(--yellow);overflow:hidden;flex:none;position:relative"><img src="assets/av/up-purple.png" style="position:absolute;left:50%;top:4px;width:70px;transform:translateX(-50%)"></div>
-    <div style="display:flex;flex-direction:column;gap:5px">
-     <div style="padding:9px 12px;border-radius:16px 16px 16px 4px;background:#fff;border:2px solid var(--ink);font-size:13.5px;font-weight:700;line-height:1.45">반가워요! 저는 PALLO의 팔로예요.</div>
-     <div style="padding:9px 12px;border-radius:16px 16px 16px 4px;background:#fff;border:2px solid var(--ink);font-size:13.5px;font-weight:700;line-height:1.45">라운지에서 뭐라고 부르면 될까요?</div>
-    </div>
-   </div>
-   <div style="align-self:flex-end;padding:9px 12px;border-radius:16px 16px 4px 16px;background:var(--yellow);border:2px solid var(--ink);font-size:13.5px;font-weight:900">서현이라고 불러 주세요</div>
-   <div style="display:flex;gap:8px;align-items:flex-end">
-    <div style="width:38px;flex:none"></div>
-    <div style="padding:9px 12px;border-radius:16px 16px 16px 4px;background:#fff;border:2px solid var(--ink);font-size:13.5px;font-weight:700;line-height:1.45">좋아요, 서현님! 어떤 언어를 말해 보고 싶어요?</div>
-   </div>
-  </div>
-  <div class="grow"></div>
-  <div class="chips" style="margin-bottom:10px"><span class="chip" style="border-color:var(--en);color:var(--en)">영어</span><span class="chip" style="border-color:var(--ja);color:var(--ja)">일본어</span><span class="chip" style="border-color:var(--zh);color:var(--zh)">중국어</span><span class="chip" style="border-color:var(--es);color:var(--es)">스페인어</span></div>
-  <div style="display:flex;gap:8px;align-items:center"><div style="flex:1;height:44px;border-radius:22px;border:2px solid var(--ink);background:#fff;display:flex;align-items:center;padding:0 14px;font-size:13px;font-weight:700;color:#A79F8F">직접 입력하기</div><div style="width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);background:var(--yellow);display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink)"><svg width="20" height="20"><use href="#send"/></svg></div></div>
+  <div class="btn y kb-btn">다음</div>
+  <div class="kb"><div class="kr"><span>ㅂ</span><span>ㅈ</span><span>ㄷ</span><span>ㄱ</span><span>ㅅ</span><span>ㅛ</span><span>ㅕ</span><span>ㅑ</span><span>ㅐ</span><span>ㅔ</span></div><div class="kr" style="padding:0 12px"><span>ㅁ</span><span>ㄴ</span><span>ㅇ</span><span>ㄹ</span><span>ㅎ</span><span>ㅗ</span><span>ㅓ</span><span>ㅏ</span><span>ㅣ</span></div><div class="kr"><span class="fn">⇧</span><span>ㅋ</span><span>ㅌ</span><span>ㅊ</span><span>ㅍ</span><span>ㅠ</span><span>ㅜ</span><span>ㅡ</span><span class="fn">⌫</span></div><div class="kr"><span class="fn w">123</span><span class="sp">스페이스</span><span class="fn w2">완료</span></div></div>
  </div>
 </div></div>
 </div>
 
+
 <!-- ============ 3. 나머지 흐름 ============ -->
 <div class="sec">3 · 나머지 단계</div>
-<p class="secd">닉네임 시안 1(이름표) 흐름으로 그렸어요. 진행 바는 4칸: 닉네임 → 캐릭터 → 회원 확인 → 연동 요청(또는 언어 · 레벨). <b>지점 회원은 연동 요청을 보내고, 지점이 전산과 맞춰 연동해야 회원 기능(출석 · 내 팀 · 이용권 · 참여)이 열려요.</b> 그 전까지는 비회원처럼 둘러봐요.</p>
+<p class="secd">아래 단계도 닉네임 화면(B)처럼 크림 바탕이에요. 진행 바는 4칸: 닉네임 → 캐릭터 → 회원 확인 → 연동 요청(또는 언어 · 레벨). <b>지점 회원은 연동 요청을 보내고, 지점이 전산과 맞춰 연동해야 회원 기능(출석 · 내 팀 · 이용권 · 참여)이 열려요.</b> 그 전까지는 비회원처럼 둘러봐요.</p>
+<div class="nk-tg nk-tg2"><span>닉네임으로 보기</span><button type="button" class="ctl2 on" data-n="서현">한글 2</button><button type="button" class="ctl2" data-n="말많은망고">한글 5</button><button type="button" class="ctl2" data-n="말많은망고수다쟁이곰">한글 10</button><button type="button" class="ctl2" data-n="TalkyMango">영어 10</button><button type="button" class="ctl2" data-n="Mango2026">영어 · 숫자 9</button><span class="nk-tg-n">규칙: 한글 · 영문 · 숫자, 2~10자 (정함 2026-11-24)</span></div>
 <div class="row">
 
 <!-- 약관 -->
@@ -422,18 +681,15 @@ img{display:block}
 </div></div>
 
 <!-- 캐릭터 -->
-<div class="col"><div class="cap"><b>캐릭터 고르기</b><span>이름표를 단 채로 색만 바꿔 봐요. 7가지 중 하나. 옷 · 소품은 나중에 마이에서 꾸며요.</span></div>
+<div class="col"><div class="cap"><b>캐릭터 고르기</b><span>닉네임 화면(B)과 같은 무대 카드에서 색만 바꿔 봐요. 분홍 'HELLO,' + 흰 닉네임도 그대로. 7가지 중 하나, 옷 · 소품은 나중에 마이에서 꾸며요.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
  <div class="scr">
-  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:50%"></b></span><span class="st">2/4</span></div>
-  <div class="ttl">서현님과 같이 다닐<br>친구를 골라요</div>
-  <div style="position:relative;height:200px;margin:8px -4px 0;border:2px solid var(--ink);border-radius:22px;background:#FCE3EA;overflow:hidden">
-   <svg class="spark" style="left:18px;top:18px;width:20px;height:20px;color:#fff"><use href="#sparkle"/></svg>
-   <img src="assets/av/up-pink.png" style="position:absolute;left:50%;top:22px;width:230px;transform:translateX(-50%)">
-   <div style="position:absolute;left:50%;top:128px;width:112px;margin-left:-56px;border:2px solid var(--ink);border-radius:10px;background:#fff;overflow:hidden;transform:rotate(-4deg)">
-    <div style="background:var(--pink);color:#fff;text-align:center;padding:2px 0;font-family:var(--fd);font-size:9px;font-weight:800">HELLO</div>
-    <div style="text-align:center;padding:3px 0 4px;font-size:16px;font-weight:900">서현</div>
-   </div>
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:50%"></b></span><span class="st">2/4</span></div>
+  <div class="ttl">서현님의 팔로로를<br>골라요</div>
+  <div class="h4 h4b ch-st">
+   <div class="h4b-glow"></div><div class="h4b-beam"></div><div class="h4b-floor"></div>
+   <img src="assets/av/up-pink.png" alt="고른 친구: 핑크">
+   <div class="h4b-t"><span>HELLO,</span><b class="nk-big">서현!</b></div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:16px">
    <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-yellow.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
@@ -445,92 +701,106 @@ img{display:block}
    <div style="height:58px;border-radius:16px;border:2px solid var(--ink);background:#fff;position:relative;overflow:hidden"><img src="assets/av/up-coral.png" style="position:absolute;left:50%;top:6px;width:92px;transform:translateX(-50%)"></div>
   </div>
   <div class="grow"></div>
-  <div class="btn y">이 친구로 할래요</div>
+  <div class="btn y">이 팔로로로 할래요</div>
  </div>
 </div></div>
 
 <!-- 회원 확인 -->
-<div class="col"><div class="cap"><b>지점 회원이에요?</b><span>여기서 길이 갈려요. 회원은 다니는 지점에 연동을 요청하고, 아니면 체험 신청이나 앱 공부로.</span></div>
-<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+<div class="col" id="dest-decide"><div class="cap"><b>지점 회원이에요?</b><span>여기서 길이 갈려요. 칸을 누르면 바로 그 길의 첫 화면으로. <b>시안에서 이 폰으로 세 길을 끝까지 눌러 볼 수 있어요</b>(지점 칸 · 버튼 · 종 · 알림 · 고르는 칸). 뒤로 버튼으로 한 칸씩 돌아와요.</span></div>
+<div class="ph go-ph"><div class="sb">9:41<em><b></b><i></i></em></div>
  <div class="scr">
-  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:75%"></b></span><span class="st">3/4</span></div>
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:75%"></b></span><span class="st">3/4</span></div>
   <div class="ttl">PALLO 지점에<br>다니고 있나요?</div>
-  <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
-   <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;border:2px solid var(--purple);background:var(--lav);outline:3px solid var(--purple);outline-offset:1px">
-    <div style="flex:1"><b style="font-size:15px;font-weight:900">네, 지점 회원이에요</b><div class="dsc" style="font-size:12px;margin-top:2px">다니는 지점에 연동을 요청해요</div></div><span class="chk on"><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></span></div>
-   <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;border:2px solid var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink)">
-    <div style="flex:1"><b style="font-size:15px;font-weight:900">체험해 보고 싶어요</b><div class="dsc" style="font-size:12px;margin-top:2px">가까운 지점 체험 세션 1회</div></div><span class="chk"></span></div>
-   <div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;border:2px solid var(--ink);background:#fff;box-shadow:3px 3px 0 var(--ink)">
-    <div style="flex:1"><b style="font-size:15px;font-weight:900">앱으로만 공부할래요</b><div class="dsc" style="font-size:12px;margin-top:2px">지점 없이 AI와 말하기 연습</div></div><span class="chk"></span></div>
+  <div class="dsc">고른 길에 따라 다음 화면이 달라져요.</div>
+  <div class="go-list">
+   <div class="go-opt" role="button" tabindex="0" data-to="dest-link" style="background:#DE7593"><div style="flex:1"><b>네, 지점 회원이에요</b><div class="go-d">다니는 지점에 연동을 요청해요</div></div><svg class="go-ar" width="20" height="20" viewBox="0 0 24 24"><path d="M9 4.5l7.5 7.5L9 19.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+   <div class="go-opt" role="button" tabindex="0" data-to="dest-trial"><div style="flex:1"><b>체험해 보고 싶어요</b><div class="go-d">가까운 지점 체험 세션 1회</div></div><svg class="go-ar" width="20" height="20" viewBox="0 0 24 24"><path d="M9 4.5l7.5 7.5L9 19.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+   <div class="go-opt" role="button" tabindex="0" data-to="dest-lang"><div style="flex:1"><b>앱 구경할래요</b><div class="go-d">지점 없이 앱부터 둘러볼게요</div></div><svg class="go-ar" width="20" height="20" viewBox="0 0 24 24"><path d="M9 4.5l7.5 7.5L9 19.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
   </div>
-  <div class="grow"></div>
-  <div class="btn y">다음</div>
-  <div class="link"><u>일단 구경만 할게요</u></div>
  </div>
-</div></div>
+</div>
+<div class="go-rs"><button type="button" class="ctl2 go-reset">처음 화면으로</button><span>홈 · 마이처럼 뒤로 버튼이 없는 화면에서 다시 시작할 때</span></div>
+</div>
 
-<!-- 연동 요청 -->
-<div class="col"><div class="cap"><b>회원 → 지점 연동 요청</b><span>지점 회원 정보는 지점 전산에 있어요. 앱 계정과 이으려면 지점에 연동을 요청해요. 지점이 맞춰 보고 연동하면 회원처럼 써요.</span></div>
+</div>
+<div class="sub3">3-1 · 지점 회원: 연동 요청 → 확인 중 → 홈 → 알림 → 마이</div>
+<p class="secd">연동 요청을 보내면 '시작하기'로 바로 기존 앱 홈에 가요(출석 카드만 연동 전 내용, 시안 A~D). 지점이 전산과 맞춰 연동하면 알림함에 알림이 오고, 누르면 마이에 '연동됨' 표시가 붙어 있어요.</p>
+<div class="row">
+<div class="col" id="dest-link"><div class="cap"><b>① 연동 요청</b><span>휴대폰 '확인됨' 표시와 배우는 언어는 뺐어요. 지점 칸을 누르면 전체 지점 목록이 아래에서 올라와요. 이름 · 휴대폰은 카카오에서 받은 값으로 채워 둬요.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
  <div class="scr">
-  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
   <div class="ttl" style="font-size:20px;margin-top:10px">다니는 지점에<br>연동을 요청해요</div>
   <div class="dsc">지점에 등록한 이름 · 번호와 같게 적어 주세요.</div>
-  <div class="lf"><label>지점</label><div class="li sel">하남점<svg width="14" height="14" style="transform:rotate(90deg);color:var(--sub)"><use href="#arr"/></svg></div></div>
-  <div class="lf"><label>이름 <small>지점에 등록한 이름</small></label><div class="li">김서현</div></div>
-  <div class="lf"><label>휴대폰</label><div class="li">010-1234-5678<span class="vf"><svg width="11" height="11"><use href="#ok"/></svg>확인됨</span></div></div>
-  <div class="lf"><label>배우는 언어 <small>모르면 비워 둬요</small></label><div class="chips" style="margin-top:0"><span class="chip on">영어</span><span class="chip">일본어</span><span class="chip">중국어</span><span class="chip">스페인어</span></div></div>
+  <div class="lf"><label>지점<span class="req">필수</span></label><div class="li sel pickf" role="button" tabindex="0" data-to="m-sheet" data-field="하남점"><span class="ph-t">다니는 지점을 골라요</span><svg width="14" height="14" style="transform:rotate(90deg);color:var(--sub)"><use href="#arr"/></svg></div></div>
+  <div class="lf"><label>이름<span class="req">필수</span><small>지점에 등록한 이름</small></label><div class="li">김서현</div></div>
+  <div class="lf"><label>휴대폰<span class="req">필수</span></label><div class="li">010-1234-5678</div></div>
   <div class="grow"></div>
-  <div class="agree"><span class="chk on" style="width:18px;height:18px"><svg width="10" height="10" style="color:#fff"><use href="#ok"/></svg></span><span><span class="tag" style="background:var(--lav);color:var(--purple)">필수</span>하남점에 이름 · 휴대폰 번호를 보내는 데 동의해요</span></div>
-  <div class="btn y">연동 요청 보내기</div>
+  <div class="agr on" role="checkbox" aria-checked="true" tabindex="0" data-opt><span class="agr-c"><svg width="9" height="9" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="agr-t">(필수) 지점에 정보 보내기 동의</span><u class="agr-v">보기</u></div>
+  <div class="btn y" role="button" tabindex="0" data-to="m-wait">연동 요청 보내기</div>
  </div>
 </div></div>
 
-<!-- 연동 기다림 -->
-<div class="col"><div class="cap"><b>연동 기다리는 중</b><span>요청을 보내면 바로 이 화면. 지점이 확인하는 동안 막지 않고 둘러볼 수 있어요. 연동되면 알림이 와요.</span></div>
+<div class="col" id="m-sheet"><div class="cap"><b>② 지점 칸을 누르면: 지점 고르기</b><span>25곳을 권역별로 나눠 보여 주고, 위에서 이름으로 찾거나 권역만 골라 볼 수 있어요. 하나를 누르면 시트가 닫히고 지점 칸에 들어가요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+  <div class="scr">
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
+  <div class="ttl" style="font-size:20px;margin-top:10px">다니는 지점에<br>연동을 요청해요</div>
+  <div class="dsc">지점에 등록한 이름 · 번호와 같게 적어 주세요.</div>
+  <div class="lf"><label>지점<span class="req">필수</span></label><div class="li sel pickf" role="button" tabindex="0" data-to="m-sheet" data-field="하남점"><span class="ph-t">다니는 지점을 골라요</span><svg width="14" height="14" style="transform:rotate(90deg);color:var(--sub)"><use href="#arr"/></svg></div></div>
+  <div class="lf"><label>이름<span class="req">필수</span><small>지점에 등록한 이름</small></label><div class="li">김서현</div></div>
+  <div class="lf"><label>휴대폰<span class="req">필수</span></label><div class="li">010-1234-5678</div></div>
+  <div class="grow"></div>
+  <div class="agr on" role="checkbox" aria-checked="true" tabindex="0" data-opt><span class="agr-c"><svg width="9" height="9" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="agr-t">(필수) 지점에 정보 보내기 동의</span><u class="agr-v">보기</u></div>
+  <div class="btn y" role="button" tabindex="0" data-to="m-wait">연동 요청 보내기</div>
+ </div>
+ <div class="bs-dim" data-back role="button" aria-label="닫기"></div>
+ <div class="bs" data-def="하남점">
+  <div class="bs-h"></div>
+  <div class="bs-top"><div class="bs-t">다니는 지점을 골라요</div><span class="bs-x" data-back role="button" aria-label="닫기"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="#1E1A2B" stroke-width="2.4" stroke-linecap="round"/></svg></span></div>
+  <div class="bs-q"><svg width="17" height="17" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="#5A5366" stroke-width="2.4"/><path d="M16 16l4 4" stroke="#5A5366" stroke-width="2.4" stroke-linecap="round"/></svg><span>지점 이름으로 찾기</span></div>
+  <div class="bs-seg"><span class="on">전체 <small style="font-family:var(--fd);font-size:10px">25</small></span><span class="">서울</span><span class="">경기</span><span class="">충청</span><span class="">경상</span></div>
+  <div class="bs-l"><div class="bs-reg">서울<small>4곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="가산점"><b>가산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="연신내점"><b>연신내점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="영등포점"><b>영등포점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="잠실점"><b>잠실점</b><span class="chk"></span></div></div><div class="bs-reg">경기<small>9곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="구리다산점"><b>구리다산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="김포점"><b>김포점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="범계점"><b>범계점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="부천점"><b>부천점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="분당점"><b>분당점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="수원영통점"><b>수원영통점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="수지점"><b>수지점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="일산점"><b>일산점</b><span class="chk"></span></div><div class="bs-it on" role="button" tabindex="0" data-pick="하남점"><b>하남점</b><span class="chk on"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></div><div class="bs-reg">충청<small>4곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="대전 둔산점"><b>대전 둔산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대전 은행점"><b>대전 은행점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="천안 불당점"><b>천안 불당점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="천안 신부점"><b>천안 신부점</b><span class="chk"></span></div></div><div class="bs-reg">경상<small>8곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="구미점"><b>구미점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대구 달서점"><b>대구 달서점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대구 동성로점"><b>대구 동성로점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대구 일본어중국어점"><b>대구 일본어중국어점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="부산 수영점"><b>부산 수영점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="부산대점"><b>부산대점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="울산점"><b>울산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="창원점"><b>창원점</b><span class="chk"></span></div></div></div>
+ </div>
+</div></div>
+
+<div class="col" id="m-wait"><div class="cap"><b>③ 지점에서 확인 중</b><span>요청을 보내면 바로 이 화면. '시작하기'를 누르면 앱 홈으로 가요. 기다리는 동안 안내 문구 · 요청 취소 · 전화 링크는 뺐어요.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
  <div class="scr">
   <div style="height:44px"></div>
-  <div style="display:grid;place-items:center;margin-top:6px"><img src="assets/c-purple-tilt-3d.png" style="width:150px"></div>
-  <div class="ttl" style="text-align:center;margin-top:8px">하남점에 연동을<br>요청했어요</div>
-  <div class="dsc" style="text-align:center">보통 하루 안에 끝나요. 끝나면 알림으로 알려 드려요.</div>
+  <div style="display:grid;place-items:center;margin-top:6px"><img src="assets/c-purple-tilt-3d.png" style="width:150px" alt=""></div>
+  <div class="ttl" style="text-align:center;margin-top:8px">하남점에 연동을<br>요청했어요!</div>
+  <div class="dsc" style="text-align:center">끝나면 알림으로 알려 드려요.</div>
   <div class="trk">
    <div class="tk-r done"><i><svg width="11" height="11"><use href="#ok"/></svg></i><b>요청 보냄</b><span>오늘 21:40</span></div>
    <div class="tk-r now"><i></i><b>지점에서 확인 중</b><span>하남점</span></div>
    <div class="tk-r"><i></i><b>연동 완료</b><span>회원 기능이 열려요</span></div>
   </div>
-  <div class="note" style="margin-top:12px;font-size:11.5px"><b>기다리는 동안</b> 라운지 구경 · 좋아요, 캐릭터 꾸미기, 레슨 맛보기는 바로 돼요.</div>
   <div class="grow"></div>
-  <div class="btn y">먼저 둘러볼게요</div>
-  <div class="link" style="margin-top:10px"><u>요청 취소</u> · <u>하남점에 전화</u></div>
+  <div class="btn y" role="button" tabindex="0" data-to="m-home">시작하기</div>
  </div>
 </div></div>
 
-<!-- 연동 완료 -->
-<div class="col"><div class="cap"><b>연동 완료</b><span>지점이 연동하면 푸시 알림 → 앱을 열면 이 화면이 한 번 떠요. 출석 · 내 팀 · 이용권 · 라운지 참여가 열려요.</span></div>
+<div class="col" id="m-home"><div class="cap"><b>④ 시작하기 → 앱 홈 · 잠긴 출석 카드</b><span>기존 앱 홈 그대로예요(폰 안에서 스크롤 · 탭도 돼요). 출석 카드만 같은 클래퍼보드 모양으로 두고 라벤더로 잠가요. 시간 칸은 '미정', 버튼은 점선으로 꺼 둬요. 연동되면 원래 카드로 바뀌어요.</span></div>
+<div class="ph hm-real"><div class="sb">9:41<em><b></b><i></i></em></div><iframe class="hm-if" src="index.html?pl=a" data-pl="a" title="앱 홈 · 연동 전 A" loading="lazy"></iframe></div></div>
+<div class="col" id="m-my-wait"><div class="cap"><b>④-2 연동 전 마이</b><span>지점이 확인하는 동안에는 '회원'을 빼고 '하남점 · 영어 Lv.1' 끝에 작은 라벤더 <b>연동 확인 중</b>이 붙어요.</span></div>
+<div class="ph hm-real"><div class="sb">9:41<em><b></b><i></i></em></div><iframe class="hm-if" src="index.html?pl=my-wait" data-pl="my-wait" title="마이 · 연동 확인 중" loading="lazy"></iframe></div></div>
+<div class="col" id="m-noti"><div class="cap"><b>⑤ 연동되면: 알림함에 알림</b><span>지점이 연동하면 푸시와 함께 알림함 맨 위에 '연동 완료' 알림이 쌓여요(안 읽음: 노랑 바탕 + 분홍 점). 누르면 마이로 가요.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
  <div class="scr">
-  <div style="height:44px"></div>
-  <div class="ttl" style="margin-top:4px">연동됐어요!<br>이제 하남점 회원이에요</div>
-  <div class="dsc">지점 전산에서 받아 온 정보예요.</div>
-  <div style="position:relative;margin-top:16px;border:2px solid var(--ink);border-radius:20px;background:#fff;box-shadow:6px 6px 0 -2px #fff,6px 6px 0 var(--ink),12px 12px 0 -2px var(--lav),12px 12px 0 var(--ink);overflow:hidden">
-   <div style="height:34px;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:12px;font-weight:900"><span>PALLO 회원증</span><span style="font-family:var(--fd);font-weight:800;color:var(--yellow)">MEMBER</span></div>
-   <div style="padding:12px 14px 14px">
-    <div class="mr"><span>지점</span><b>하남점</b></div>
-    <div class="mr"><span>언어 · 레벨</span><b><span class="tag" style="background:var(--en);color:#fff">EN</span>영어 Lv.3</b></div>
-    <div class="mr"><span>내 팀</span><b>화 · 목 7:30 PM</b></div>
-    <div class="mr" style="border:0"><span>이용권</span><b>남은 세션 18회</b></div>
-   </div>
-  </div>
-  <div class="note" style="margin-top:22px"><b>다음 세션</b> 11월 25일 화요일 7:30 PM · 하남점</div>
-  <div class="grow"></div>
-  <div class="btn y">홈으로</div>
-  <div class="link"><u>제 정보가 아니에요</u></div>
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="nt-tt">알림</span><span class="nt-all">모두 읽음</span></div>
+  <div class="nt-tabs"><span class="on">전체</span><span>공지</span><span>학습</span><span>라운지</span><span>이벤트</span></div>
+  <div class="nt-row new" role="button" tabindex="0" data-to="m-my"><span class="nt-ic ok"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>하남점 연동이 끝났어요. 이제 회원 기능을 쓸 수 있어요</b><span>방금</span></div><i></i></div>
+  <div class="nt-row"><span class="nt-ic"><svg width="16" height="16"><use href="#send"/></svg></span><div><b>하남점에 연동을 요청했어요</b><span>어제 21:40</span></div></div>
+  <div class="nt-row"><span class="nt-ic"><svg width="18" height="18" style="color:var(--yellow)"><use href="#sparkle"/></svg></span><div><b>PALLO에 온 걸 환영해요! 첫 스파크 50개를 드렸어요</b><span>어제 21:38</span></div></div>
  </div>
 </div></div>
 
+<div class="col" id="m-my"><div class="cap"><b>⑥ 알림을 누르면: 마이 · 연동됨</b><span>기존 마이 그대로예요. 이름 아래 '하남점 · 영어 Lv.1 · 회원' 끝에 작은 초록 <b>✓ 연동됨</b>이 붙어요.</span></div>
+<div class="ph hm-real"><div class="sb">9:41<em><b></b><i></i></em></div><iframe class="hm-if" src="index.html?pl=my" data-pl="my" title="마이 · 연동됨" loading="lazy"></iframe></div></div>
+
 <!-- 연동 안 됨 -->
-<div class="col"><div class="cap"><b>연동이 안 됐을 때</b><span>지점이 '못 찾음'으로 처리하면 알림 + 이 화면. 지점이 고른 이유를 보여 주고, 고쳐서 다시 요청하거나 지점에 전화해요.</span></div>
+<div class="col" id="m-fail"><div class="cap"><b>⑦ 연동이 안 됐을 때</b><span>지점이 '못 찾음'으로 처리하면 알림함에 알림 → 누르면 이 화면. 지점이 고른 이유를 보여 주고, 고쳐서 다시 요청하거나 지점에 전화해요.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
  <div class="scr">
   <div style="height:44px"></div>
@@ -548,29 +818,181 @@ img{display:block}
  </div>
 </div></div>
 
-<!-- 언어 레벨 -->
-<div class="col"><div class="cap"><b>체험 · 앱 → 언어 · 레벨</b><span>회원이 아니면 언어와 지금 실력을 골라요. 레벨은 대략만, 정확한 레벨은 첫 세션이나 앱 테스트에서.</span></div>
+</div>
+<div class="sub3">3-1 · 홈 인사말에 긴 닉네임</div>
+<p class="secd">홈 맨 위 'Hey ○○, let’s talk!'에 닉네임 10자가 들어가면 어떻게 보이는지예요. 지금 앱과 같은 글씨(30px)와 같은 폭으로 그렸어요.</p>
+<div class="row">
+<div class="col gr-col"><div class="cap"><b>원래 (5자)</b><span>지금 프로토타입 그대로.</span></div><div class="gr-crop"><div class="sb">9:41<em><b></b><i></i></em></div><iframe class="hm-if" src="index.html?pl=a" data-pl="a" data-nk="Tammy" title="홈 인사말 · 원래 (5자)" loading="lazy"></iframe></div></div>
+<div class="col gr-col"><div class="cap"><b>영어 10자</b><span>영문 · 숫자 10자.</span></div><div class="gr-crop"><div class="sb">9:41<em><b></b><i></i></em></div><iframe class="hm-if" src="index.html?pl=a" data-pl="a" data-nk="TalkyMango" title="홈 인사말 · 영어 10자" loading="lazy"></iframe></div></div>
+<div class="col gr-col"><div class="cap"><b>한글 10자</b><span>한글 이름은 Black Han Sans. 한 줄이 넘치면 이름만 살짝 줄여요(30 → 29.5px).</span></div><div class="gr-crop"><div class="sb">9:41<em><b></b><i></i></em></div><iframe class="hm-if" src="index.html?pl=a" data-pl="a" data-nk="말많은망고수다쟁이곰" title="홈 인사말 · 한글 10자" loading="lazy"></iframe></div></div>
+<div class="col gr-col"><div class="cap"><b>일본어 10자</b><span>일본어 이름은 Dela Gothic One, 27.5px로 줄여 한 줄에 맞춰요. 지금 닉네임 규칙(한글 · 영문 · 숫자)으로는 못 만드는 이름이에요.</span></div><div class="gr-crop"><div class="sb">9:41<em><b></b><i></i></em></div><iframe class="hm-if" src="index.html?pl=a" data-pl="a" data-nk="おしゃべりなマンゴー" title="홈 인사말 · 일본어 10자" loading="lazy"></iframe></div></div>
+</div>
+<div class="sub3">3-2 · 체험: 한 장에서 지점 · 이름 · 번호 · 언어 · 시간 · 이유 → 예약 확정</div>
+<p class="secd">지점부터 배우고 싶은 이유까지 한 화면에서 위에서 아래로 채워요. 버튼은 아래에 붙어 있어요. 예약이 확정되면 '앱 둘러보기'로 홈에 가요.</p>
+<div class="row">
+<div class="col" id="dest-trial"><div class="cap"><b>① 체험 예약 (한 장)</b><span>이름 · 번호는 카카오에서 받은 값으로 채워 두고 고칠 수 있어요. 상담 시간은 지점을 고르기 전엔 비워 두고 안내만 보여 줘요.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
  <div class="scr">
-  <div class="tb"><span class="bk"><svg width="18" height="18"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
-  <div class="ttl">어떤 언어로<br>말해 보고 싶어요?</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px">
-   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:var(--en);color:#fff;padding:9px 12px;outline:3px solid var(--purple);outline-offset:2px"><div style="font-family:var(--fd);font-size:15px;font-weight:800">Hello</div><div style="font-size:12px;font-weight:900;margin-top:2px">영어</div></div>
-   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:#fff;padding:9px 12px;box-shadow:3px 3px 0 var(--ink)"><div style="font-size:15px;font-weight:900;color:var(--ja)">こんにちは</div><div style="font-size:12px;font-weight:900;margin-top:2px">일본어</div></div>
-   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:#fff;padding:9px 12px;box-shadow:3px 3px 0 var(--ink)"><div style="font-size:15px;font-weight:900;color:var(--zh)">你好</div><div style="font-size:12px;font-weight:900;margin-top:2px">중국어</div></div>
-   <div style="height:62px;border-radius:16px;border:2px solid var(--ink);background:#fff;padding:9px 12px;box-shadow:3px 3px 0 var(--ink)"><div style="font-family:var(--fd);font-size:15px;font-weight:800;color:var(--es)">¡Hola!</div><div style="font-size:12px;font-weight:900;margin-top:2px">스페인어</div></div>
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
+  <div class="t1">
+   <div class="ttl" style="margin-top:10px">체험을 예약해요</div>
+   <div class="dsc">매니저님이 재밌고 디테일하게 상담 진행을 도와드려요! 신청이 확정되면 연락드려요.</div>
+   <div class="lf" style="margin-top:14px"><label>지점<span class="req">필수</span></label><div class="li sel pickf" role="button" tabindex="0" data-to="t-sheet" data-field="영등포점"><span class="ph-t">지점 선택하기</span><svg width="14" height="14" style="transform:rotate(90deg);color:var(--sub)"><use href="#arr"/></svg></div></div>
+   <div class="lf"><label>이름<span class="req">필수</span></label><div class="li">김서현</div></div>
+   <div class="lf"><label>휴대폰 번호<span class="req">필수</span></label><div class="li">010-1234-5678</div></div>
+   <div class="lf"><label>희망 언어<span class="req">필수</span></label><div class="chips" data-sel="one" style="margin-top:0"><span class="chip on" data-opt>영어</span><span class="chip" data-opt>일본어</span><span class="chip" data-opt>중국어</span><span class="chip" data-opt>스페인어</span></div></div>
+   <div class="lf"><label>상담 시간<span class="req">필수</span></label>
+    <div class="t1-wait">지점을 고르면 상담할 수 있는<br>날짜 · 시간이 보여요</div>
+    <div class="t1-slots">
+     <div class="dys" data-sel="one" style="margin-top:0"><span class="dy" data-opt><small>수</small>26</span><span class="dy" data-opt><small>목</small>27</span><span class="dy on" data-opt><small>금</small>28</span><span class="dy" data-opt><small>토</small>29</span><span class="dy" data-opt><small>일</small>30</span></div>
+     <div class="sls" data-sel="one"><span class="sl" data-opt>10:00</span><span class="sl x">11:00</span><span class="sl" data-opt>14:00</span><span class="sl on" data-opt>15:00</span><span class="sl" data-opt>19:00</span><span class="sl x">20:00</span></div>
+     <div class="t1-note">영등포점 영어 프로님이 상담할 수 있는 시간이에요</div>
+    </div>
+   </div>
+   <div class="lf"><label>배우고 싶은 이유<small>여러 개 · 골라 주면 상담 때 참고해요</small></label><div class="chips" data-sel="many" style="margin-top:0"><span class="chip on" data-opt>여행 가서 말하기</span><span class="chip" data-opt>일 · 이직</span><span class="chip" data-opt>유학 · 워홀 · 이민</span><span class="chip" data-opt>시험 · 자격증</span><span class="chip on" data-opt>외국인 친구</span><span class="chip" data-opt>새 취미</span><span class="chip" data-opt>말하기 자신감</span><span class="chip" data-opt>기타</span></div></div>
   </div>
-  <div style="font-size:14px;font-weight:900;margin-top:20px">지금 영어 실력은요</div>
-  <div style="display:flex;flex-direction:column;gap:7px;margin-top:9px">
-   <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:13.5px;font-weight:800"><span class="chk"></span>처음이에요</div>
-   <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;border-radius:14px;border:2px solid var(--purple);background:var(--lav);font-size:13.5px;font-weight:900;color:var(--purple)"><span class="chk on"><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></span>짧은 대화는 돼요</div>
-   <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:13.5px;font-weight:800"><span class="chk"></span>자유롭게 말해요</div>
-  </div>
-  <div class="grow"></div>
-  <div class="btn y">다음</div>
+  <div class="t1-ft"><div class="btn y" role="button" tabindex="0" data-to="t-done">체험 예약하기</div></div>
  </div>
 </div></div>
 
+<div class="col" id="t-sheet"><div class="cap"><b>② 지점 칸을 누르면</b><span>회원 연동과 같은 시트예요. 전체 탭 옆에 지점 수(25곳)를 보여 줘요. 고르면 시트가 닫히고 지점 칸에 들어가요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
+  <div class="t1">
+   <div class="ttl" style="margin-top:10px">체험을 예약해요</div>
+   <div class="dsc">매니저님이 재밌고 디테일하게 상담 진행을 도와드려요! 신청이 확정되면 연락드려요.</div>
+   <div class="lf" style="margin-top:14px"><label>지점<span class="req">필수</span></label><div class="li sel pickf" role="button" tabindex="0" data-to="t-sheet" data-field="영등포점"><span class="ph-t">지점 선택하기</span><svg width="14" height="14" style="transform:rotate(90deg);color:var(--sub)"><use href="#arr"/></svg></div></div>
+   <div class="lf"><label>이름<span class="req">필수</span></label><div class="li">김서현</div></div>
+   <div class="lf"><label>휴대폰 번호<span class="req">필수</span></label><div class="li">010-1234-5678</div></div>
+   <div class="lf"><label>희망 언어<span class="req">필수</span></label><div class="chips" data-sel="one" style="margin-top:0"><span class="chip on" data-opt>영어</span><span class="chip" data-opt>일본어</span><span class="chip" data-opt>중국어</span><span class="chip" data-opt>스페인어</span></div></div>
+   <div class="lf"><label>상담 시간<span class="req">필수</span></label>
+    <div class="t1-wait">지점을 고르면 상담할 수 있는<br>날짜 · 시간이 보여요</div>
+    <div class="t1-slots">
+     <div class="dys" data-sel="one" style="margin-top:0"><span class="dy" data-opt><small>수</small>26</span><span class="dy" data-opt><small>목</small>27</span><span class="dy on" data-opt><small>금</small>28</span><span class="dy" data-opt><small>토</small>29</span><span class="dy" data-opt><small>일</small>30</span></div>
+     <div class="sls" data-sel="one"><span class="sl" data-opt>10:00</span><span class="sl x">11:00</span><span class="sl" data-opt>14:00</span><span class="sl on" data-opt>15:00</span><span class="sl" data-opt>19:00</span><span class="sl x">20:00</span></div>
+     <div class="t1-note">영등포점 영어 프로님이 상담할 수 있는 시간이에요</div>
+    </div>
+   </div>
+   <div class="lf"><label>배우고 싶은 이유<small>여러 개 · 골라 주면 상담 때 참고해요</small></label><div class="chips" data-sel="many" style="margin-top:0"><span class="chip on" data-opt>여행 가서 말하기</span><span class="chip" data-opt>일 · 이직</span><span class="chip" data-opt>유학 · 워홀 · 이민</span><span class="chip" data-opt>시험 · 자격증</span><span class="chip on" data-opt>외국인 친구</span><span class="chip" data-opt>새 취미</span><span class="chip" data-opt>말하기 자신감</span><span class="chip" data-opt>기타</span></div></div>
+  </div>
+  <div class="t1-ft"><div class="btn y" role="button" tabindex="0" data-to="t-done">체험 예약하기</div></div>
+ </div>
+ <div class="bs-dim" data-back role="button" aria-label="닫기"></div>
+ <div class="bs" data-def="영등포점">
+  <div class="bs-h"></div>
+  <div class="bs-top"><div class="bs-t">체험할 지점을 골라요</div><span class="bs-x" data-back role="button" aria-label="닫기"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="#1E1A2B" stroke-width="2.4" stroke-linecap="round"/></svg></span></div>
+  <div class="bs-q"><svg width="17" height="17" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="#5A5366" stroke-width="2.4"/><path d="M16 16l4 4" stroke="#5A5366" stroke-width="2.4" stroke-linecap="round"/></svg><span>지점 이름으로 찾기</span></div>
+  <div class="bs-seg"><span class="on">전체 <small style="font-family:var(--fd);font-size:10px">25</small></span><span class="">서울</span><span class="">경기</span><span class="">충청</span><span class="">경상</span></div>
+  <div class="bs-l"><div class="bs-reg">서울<small>4곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="가산점"><b>가산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="연신내점"><b>연신내점</b><span class="chk"></span></div><div class="bs-it on" role="button" tabindex="0" data-pick="영등포점"><b>영등포점</b><span class="chk on"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bs-it" role="button" tabindex="0" data-pick="잠실점"><b>잠실점</b><span class="chk"></span></div></div><div class="bs-reg">경기<small>9곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="구리다산점"><b>구리다산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="김포점"><b>김포점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="범계점"><b>범계점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="부천점"><b>부천점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="분당점"><b>분당점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="수원영통점"><b>수원영통점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="수지점"><b>수지점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="일산점"><b>일산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="하남점"><b>하남점</b><span class="chk"></span></div></div><div class="bs-reg">충청<small>4곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="대전 둔산점"><b>대전 둔산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대전 은행점"><b>대전 은행점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="천안 불당점"><b>천안 불당점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="천안 신부점"><b>천안 신부점</b><span class="chk"></span></div></div><div class="bs-reg">경상<small>8곳</small></div><div class="bs-g"><div class="bs-it" role="button" tabindex="0" data-pick="구미점"><b>구미점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대구 달서점"><b>대구 달서점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대구 동성로점"><b>대구 동성로점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="대구 일본어중국어점"><b>대구 일본어중국어점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="부산 수영점"><b>부산 수영점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="부산대점"><b>부산대점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="울산점"><b>울산점</b><span class="chk"></span></div><div class="bs-it" role="button" tabindex="0" data-pick="창원점"><b>창원점</b><span class="chk"></span></div></div></div>
+ </div>
+</div></div>
+
+<div class="col" id="t-pick"><div class="cap"><b>③ 지점을 고른 뒤 (아래로 스크롤)</b><span>지점과 희망 언어에 맞춰 상담 가능한 날짜 · 시간이 열려요. 언어를 바꾸면 시간표가 바뀌고, 마감된 시간은 흐리게. 이유는 골라도 되고 안 골라도 돼요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">4/4</span></div>
+  <div class="t1" data-st="330">
+   <div class="ttl" style="margin-top:10px">체험을 예약해요</div>
+   <div class="dsc">매니저님이 재밌고 디테일하게 상담 진행을 도와드려요! 신청이 확정되면 연락드려요.</div>
+   <div class="lf" style="margin-top:14px"><label>지점<span class="req">필수</span></label><div class="li sel pickf got" role="button" tabindex="0" data-to="t-sheet" data-field="영등포점"><span class="ph-t">영등포점</span><svg width="14" height="14" style="transform:rotate(90deg);color:var(--sub)"><use href="#arr"/></svg></div></div>
+   <div class="lf"><label>이름<span class="req">필수</span></label><div class="li">김서현</div></div>
+   <div class="lf"><label>휴대폰 번호<span class="req">필수</span></label><div class="li">010-1234-5678</div></div>
+   <div class="lf"><label>희망 언어<span class="req">필수</span></label><div class="chips" data-sel="one" style="margin-top:0"><span class="chip on" data-opt>영어</span><span class="chip" data-opt>일본어</span><span class="chip" data-opt>중국어</span><span class="chip" data-opt>스페인어</span></div></div>
+   <div class="lf"><label>상담 시간<span class="req">필수</span></label>
+    <div class="t1-wait">지점을 고르면 상담할 수 있는<br>날짜 · 시간이 보여요</div>
+    <div class="t1-slots">
+     <div class="dys" data-sel="one" style="margin-top:0"><span class="dy" data-opt><small>수</small>26</span><span class="dy" data-opt><small>목</small>27</span><span class="dy on" data-opt><small>금</small>28</span><span class="dy" data-opt><small>토</small>29</span><span class="dy" data-opt><small>일</small>30</span></div>
+     <div class="sls" data-sel="one"><span class="sl" data-opt>10:00</span><span class="sl x">11:00</span><span class="sl" data-opt>14:00</span><span class="sl on" data-opt>15:00</span><span class="sl" data-opt>19:00</span><span class="sl x">20:00</span></div>
+     <div class="t1-note">영등포점 영어 프로님이 상담할 수 있는 시간이에요</div>
+    </div>
+   </div>
+   <div class="lf"><label>배우고 싶은 이유<small>여러 개 · 골라 주면 상담 때 참고해요</small></label><div class="chips" data-sel="many" style="margin-top:0"><span class="chip on" data-opt>여행 가서 말하기</span><span class="chip" data-opt>일 · 이직</span><span class="chip" data-opt>유학 · 워홀 · 이민</span><span class="chip" data-opt>시험 · 자격증</span><span class="chip on" data-opt>외국인 친구</span><span class="chip" data-opt>새 취미</span><span class="chip" data-opt>말하기 자신감</span><span class="chip" data-opt>기타</span></div></div>
+  </div>
+  <div class="t1-ft"><div class="btn y" role="button" tabindex="0" data-to="t-done">체험 예약하기</div></div>
+ </div>
+</div></div>
+
+<div class="col" id="t-done"><div class="cap"><b>④ 예약 확정</b><span>예약 내용을 한 장으로 보여 주고 '앱 둘러보기'로 홈에 가요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div style="height:44px"></div>
+  <div style="display:grid;place-items:center"><img src="assets/c-purple-jump-3d.png" style="width:132px" alt=""></div>
+  <div class="ttl" style="text-align:center;margin-top:6px">체험 예약이<br>확정됐어요!</div>
+  <div class="tk">
+   <div class="tk-h"><span>PALLO 체험</span><b>TRIAL</b></div>
+   <div class="tk-b">
+    <div class="mr"><span>지점</span><b>영등포점</b></div>
+    <div class="mr"><span>날짜 · 시간</span><b>11월 28일 (금) 15:00</b></div>
+    <div class="mr"><span>상담 언어</span><b><span class="tag" style="background:var(--en);color:#fff">EN</span>영어</b></div>
+    <div class="mr" style="border:0"><span>예약자</span><b>김서현 · 010-1234-5678</b></div>
+   </div>
+  </div>
+  <div class="grow"></div>
+  <div class="btn y" role="button" tabindex="0" data-to="t-home">앱 둘러보기</div>
+ </div>
+</div></div>
+
+<div class="col" id="t-home"><div class="cap"><b>⑤ 앱 둘러보기 → 홈</b><span>맨 위에 체험 예약 카드가 붙어요. 체험 날까지 라운지 · 레슨 맛보기를 둘러봐요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr" style="padding-bottom:80px">
+  <div class="hm-top"><svg class="hm-logo" viewBox="0 0 500.78 135.32"><use href="#wordmark"/></svg><span class="hm-bell" aria-label="알림"><svg width="22" height="22"><use href="#bell"/></svg></span></div>
+  <div class="hm-hi">서현님, 반가워요!</div>
+  <div class="hm-st tr"><span class="hm-dd">D-4</span><div><b>11월 28일 (금) 15:00 체험</b><span>영등포점 · 영어 상담</span></div></div>
+  <div class="hm-sec">오늘의 목표</div>
+  <div class="hm-goal"><div><b>AI와 3분 말하기</b><span>주제 · 주말 이야기</span></div><em>0/2</em></div>
+  <div class="hm-sec">라운지</div>
+  <div class="hm-lg"><div class="hm-ph"></div><div class="hm-ph"></div></div>
+ </div>
+ <div class="tbar"><span class="tbi on"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>홈</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>라이브러리</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>라운지</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 7h18v3.5a1.5 1.5 0 0 0 0 3V17H3v-3.5a1.5 1.5 0 0 0 0-3zM15 7v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>이벤트</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 21a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>마이</span></div>
+</div></div>
+
+</div>
+<div class="sub3">3-3 · 앱으로만: 언어(여러 개) → 이유 → 홈</div>
+<p class="secd">언어는 여러 개 고를 수 있어요. 이유까지 고르면 '앱 둘러보기'로 홈에 가요.</p>
+<div class="row">
+<div class="col" id="dest-lang"><div class="cap"><b>① 희망 언어 (여러 개)</b><span>여러 개 골라도 돼요. 고른 언어마다 오늘의 목표 · 레슨이 나와요. 실력은 묻지 않고 첫 AI 대화에서 맞춰요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:80%"></b></span><span class="st">4/5</span></div>
+  <div class="ttl">어떤 언어를<br>배우고 싶어요?</div>
+  <div class="dsc">여러 개 골라도 돼요.</div>
+  <div class="lcs" data-sel="many"><span class="lc on" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i><em style="color:var(--en);font-family:var(--fd);font-weight:800">Hello</em><b>영어</b></span><span class="lc on" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i><em style="color:var(--ja)">こんにちは</em><b>일본어</b></span><span class="lc" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i><em style="color:var(--zh)">你好</em><b>중국어</b></span><span class="lc" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i><em style="color:var(--es);font-family:var(--fd);font-weight:800">¡Hola!</em><b>스페인어</b></span></div>
+  <div class="grow"></div>
+  <div class="btn y" role="button" tabindex="0" data-to="a-why">다음</div>
+ </div>
+</div></div>
+
+<div class="col" id="a-why"><div class="cap"><b>② 배우고 싶은 이유</b><span>체험 길과 같은 화면. 버튼만 '앱 둘러보기'. 고른 이유로 첫 주제를 골라 줘요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr">
+  <div class="tb"><span class="bk" role="button" aria-label="뒤로"><svg width="22" height="22"><use href="#back"/></svg></span><span class="bar"><b style="width:100%"></b></span><span class="st">5/5</span></div>
+  <div class="ttl" style="margin-top:10px">왜 배우고<br>싶어요?</div>
+  <div class="dsc">여러 개 골라도 돼요. 이유에 맞춰 첫 주제를 골라 드려요.</div>
+  <div class="mvs" data-sel="many"><span class="mv on" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>여행 가서 말하기</span><span class="mv" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>일 · 이직</span><span class="mv" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>유학 · 워홀 · 이민</span><span class="mv" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>시험 · 자격증</span><span class="mv on" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>외국인 친구</span><span class="mv" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>새 취미</span><span class="mv" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>말하기 자신감</span><span class="mv" data-opt><i><svg width="13" height="13" style="color:#fff"><use href="#ok"/></svg></i>기타</span></div>
+  <div class="grow"></div>
+  <div class="btn y" role="button" tabindex="0" data-to="a-home">앱 둘러보기</div>
+ </div>
+</div></div>
+
+<div class="col" id="a-home"><div class="cap"><b>③ 앱 둘러보기 → 홈</b><span>고른 언어가 홈 맨 위에 칩으로. 지점에 다니게 되면 마이에서 연동을 요청해요.</span></div>
+<div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
+ <div class="scr" style="padding-bottom:80px">
+  <div class="hm-top"><svg class="hm-logo" viewBox="0 0 500.78 135.32"><use href="#wordmark"/></svg><span class="hm-bell" aria-label="알림"><svg width="22" height="22"><use href="#bell"/></svg></span></div>
+  <div class="hm-hi">서현님, 반가워요!</div>
+  <div class="hm-st ln"><span class="chip on" style="height:26px">영어</span><span class="chip" style="height:26px">일본어</span><span style="flex:1"></span><span class="hm-ad">+ 언어</span></div>
+  <div class="hm-sec">오늘의 목표</div>
+  <div class="hm-goal"><div><b>AI와 3분 말하기</b><span>주제 · 주말 이야기</span></div><em>0/2</em></div>
+  <div class="hm-sec">라운지</div>
+  <div class="hm-lg"><div class="hm-ph"></div><div class="hm-ph"></div></div>
+ </div>
+ <div class="tbar"><span class="tbi on"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>홈</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>라이브러리</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>라운지</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 7h18v3.5a1.5 1.5 0 0 0 0 3V17H3v-3.5a1.5 1.5 0 0 0 0-3zM15 7v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>이벤트</span><span class="tbi"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 21a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>마이</span></div>
+</div></div>
+
+</div>
+<div class="sub3">3-4 · 공통 화면 (자리 정해야 해요)</div>
+<p class="secd">세 길 모두 마지막 버튼이 홈으로 가요. 아래 알림 허용 · 환영 화면을 어디에 둘지는 아직 열린 질문이에요.</p>
+<div class="row">
 <!-- 알림 -->
 <div class="col"><div class="cap"><b>알림 허용 (시스템 창 전에)</b><span>iOS 알림 창은 한 번 거절하면 다시 못 띄워서, 먼저 어떤 알림이 오는지 보여 주고 '받을게요'를 눌렀을 때만 시스템 창을 띄워요.</span></div>
 <div class="ph"><div class="sb">9:41<em><b></b><i></i></em></div>
@@ -657,7 +1079,7 @@ img{display:block}
      <div class="fl"><label>배경색</label><div class="sw"><i style="background:var(--yellow)"></i><i class="on" style="background:var(--lav)"></i><i style="background:#FCE3EA"></i><i style="background:var(--mist)"></i><i style="background:#F3EEE2"></i><i style="background:#fff"></i></div></div>
      <div class="fl"><label>제목 <em>필수</em></label><div class="in">세션 전 5분, 미리 말해 봐요<span>15/20</span></div></div>
      <div class="fl"><label>설명</label><div class="in ta">라이브러리에서 오늘 배울 과의 예습을 풀어요. 세션이 끝나면 복습으로 한 번 더.<span>44/60</span></div></div>
-     <div class="fl"><label>그림 설명 <em>필수</em></label><div class="in">보라 팔로가 책을 보며 고개를 기울인 그림<span></span></div><div class="hint">화면 읽기 프로그램이 읽어 줘요.</div></div>
+     <div class="fl"><label>그림 설명 <em>필수</em></label><div class="in">보라 팔로로가 책을 보며 고개를 기울인 그림<span></span></div><div class="hint">화면 읽기 프로그램이 읽어 줘요.</div></div>
      <div class="fl row2"><label class="cb"><i class="on"></i>게시하면 이미 본 회원에게도 한 번 더 보여 주기</label><span class="hint" style="margin:0">큰 기능이 바뀌었을 때만 켜요.</span></div>
      <div class="hist"><b>이전 판</b><span>3번째 판 · 11.20 게시 중</span><span>2번째 판 · 11.02 <u>되돌리기</u></span><span>1번째 판 · 10.15 <u>되돌리기</u></span></div>
     </div>
@@ -732,8 +1154,6 @@ img{display:block}
  
  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
   <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
-  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
-  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
 </div>
 </div></div></div><span>아이폰 SE</span></div>
       <div class="mini-ph"><div class="mini-in" style="height:225px"><div style="transform:scale(.42);transform-origin:top left"><div class="ph" style="width:256px;height:536px;background:#1E1A2B;border-radius:40px">
@@ -748,8 +1168,6 @@ img{display:block}
  
  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
   <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
-  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
-  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
 </div>
 </div></div></div><span>아이폰 15</span></div>
       <div class="mini-ph"><div class="mini-in" style="height:253px"><div style="transform:scale(.42);transform-origin:top left"><div class="ph" style="width:256px;height:602px;background:#1E1A2B;border-radius:40px">
@@ -764,8 +1182,6 @@ img{display:block}
  <div style="position:absolute;left:0;right:0;top:533px;height:53px;background:#1E1A2B;border-top:2px dashed var(--yellow);z-index:3"></div><span class="zn up" style="position:absolute;left:8px;top:537px;z-index:5">여기부터 바탕색</span>
  <div style="position:absolute;left:0;right:0;bottom:0;padding:0 14px 12px;z-index:4">
   <div class="btn k sm2" style="box-shadow:3px 3px 0 #fff"><svg><use href="#kakao"/></svg>카카오로 시작하기</div>
-  <div class="btn a sm2" style="border-color:#fff;box-shadow:3px 3px 0 #fff"><svg><use href="#apple"/></svg>Apple로 계속하기</div>
-  <div class="link" style="color:#CFC8DA;margin-top:10px;font-size:11.5px"><u>다른 방법</u> · <u>먼저 둘러볼게요</u></div>
 </div>
 </div></div></div><span>갤럭시 Z 플립</span></div>
      </div>
@@ -815,10 +1231,130 @@ img{display:block}
   <li><b>가이드 대상을 나눌지.</b> 지점 회원과 체험 · 앱 구독자는 쓰는 기능이 달라요(출석 · 이용권). 처음엔 '전체' 한 벌로 시작하고, 필요하면 대상별로 더 올려도 돼요.</li>
   <li><b>관리자 웹 범위 (PRD Q-T10).</b> 시작 화면 · 사용 가이드는 '홈 운영' 묶음에 들어가요. 관리자 웹을 이번에 만들지 않으면, 처음엔 서버에 직접 넣고 관리자 화면은 나중에.</li>
   <li><b>시작 화면마다 그림 3장.</b> 잘리지 않고 꽉 채우려면 디자인팀이 같은 그림을 비율 3가지(짧은 화면 · 기본 · 긴 화면)로 만들어야 해요. 관리자 웹에서 받는 틀 파일로 만들면 돼요.</li>
- <li><b>닉네임 시안 1 · 2 · 3 중 어느 것?</b> 추천은 1(이름표)이에요.</li>
   <li><b>지점 전산 연동 (PRD Q-T1 · Q-T2).</b> 지점 전산에서 회원(이름 · 번호 · 팀 · 이용권)을 읽어 올 수 있어야 해요. 매니저가 요청마다 '연동하기'를 누를지, 이름 · 번호가 같으면 바로 연동할지도 정해야 해요.</li>
  <li><b>Apple 로그인 · 나이 (Q-L4)</b>는 그대로 열려 있어요.</li>
  </ol>
 </div>
 
+<script id="nk-js">
+(() => {
+  const row = document.getElementById('nk-row');
+  // 한글 · 일본어는 1칸, 영문 · 숫자는 0.6칸으로 쳐서 크기를 정해요
+  const width = (n) => [...n].reduce((w, ch) => w + (/[\u0000-\u024F]/.test(ch) ? 0.6 : 1), 0);
+  const size = (n) => { const w = width(n); return w <= 4 ? 'n-s' : w <= 7 ? 'n-m' : w <= 10 ? 'n-l' : 'n-xl'; };
+  const setName = (n, max) => {
+    row.querySelectorAll('.nk-v').forEach((el) => { el.textContent = n; });
+    row.querySelectorAll('.nk-c').forEach((el) => { el.textContent = [...n].length; });
+    row.querySelectorAll('.nk-m').forEach((el) => { el.textContent = max; });
+    document.querySelectorAll('#nk-row .nk-big, .ch-st .nk-big').forEach((el) => { el.textContent = n + '!'; el.classList.remove('n-s', 'n-m', 'n-l', 'n-xl'); el.classList.add(size(n)); });
+    row.querySelectorAll('.nk-in').forEach((el) => { el.scrollLeft = el.scrollWidth; });
+  };
+  document.querySelectorAll('.nk-tg .ctl2').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.nk-tg .ctl2').forEach((x) => x.classList.toggle('on', x.dataset.n === b.dataset.n));
+    setName(b.dataset.n, b.dataset.max || '10');
+  }));
+})();
+</script>
+<script>document.querySelectorAll('[data-st]').forEach((e) => { e.scrollTop = +e.dataset.st; });</script>
+<script id="go-js">
+(() => {
+  const ph = document.querySelector('.go-ph');
+  if (!ph) return;
+  const start = { html: ph.innerHTML, css: ph.getAttribute('style') || '' };
+  const stack = [];
+  const picked = {};
+  const anim = (cls) => { ph.classList.remove('slide', 'go-up'); void ph.offsetWidth; ph.classList.add(cls); };
+  const fill = () => {
+    ph.querySelectorAll('[data-field]').forEach((f) => {
+      const v = picked[f.dataset.field];
+      if (!v) return;
+      f.classList.add('got');
+      f.querySelector('.ph-t').textContent = v;
+    });
+    // 고른 지점 이름을 다음 화면들에도
+    ph.querySelectorAll('.bs[data-def]').forEach((bs) => { const v = picked[bs.dataset.def]; if (!v) return; bs.querySelectorAll('.bs-it').forEach((it) => { const on = it.dataset.pick === v; it.classList.toggle('on', on); const c = it.querySelector('.chk'); c.classList.toggle('on', on); c.innerHTML = on ? '<svg width="12" height="12" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''; }); });
+    const walk = document.createTreeWalker(ph, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (n.parentElement.closest(".bs")) continue;
+      for (const [def, v] of Object.entries(picked)) if (n.nodeValue.includes(def)) n.nodeValue = n.nodeValue.split(def).join(v);
+    }
+  };
+  const toOn = (root) => root.querySelectorAll('.bs-l').forEach((l) => { const on = l.querySelector('.bs-it.on'); if (!on) return; let a = on; for (let i = 0; i < 3 && a.previousElementSibling; i++) a = a.previousElementSibling; const hd = l.querySelector('.bs-reg').offsetHeight; l.scrollTop = a.offsetTop - l.offsetTop - hd; });
+  toOn(document);
+  const render = (s, cls) => { ph.innerHTML = s.html; ph.setAttribute('style', s.css); anim(cls); fill(); toOn(ph); };
+  const screen = (id) => {
+    const src = document.querySelector('#' + id + ' .ph');
+    return { html: src.innerHTML, css: src.getAttribute('style') || '' };
+  };
+  const cur = () => ({ html: ph.innerHTML, css: ph.getAttribute('style') || '' });
+  const go = (id) => { stack.push(cur()); render(screen(id), id.endsWith('sheet') ? 'go-up' : 'slide'); };
+  const back = () => { if (stack.length) render(stack.pop(), 'slide'); };
+  window.__goTo = go;
+  const act = (e) => {
+    const t = e.target;
+    const pick = t.closest('[data-pick]');
+    if (pick) { const def = pick.closest('[data-def]').dataset.def; picked[def] = pick.dataset.pick; back(); return; }
+    const opt = t.closest('[data-opt]');
+    if (opt) {
+      const box = opt.closest('[data-sel]');
+      if (box && box.dataset.sel === 'one') box.querySelectorAll('[data-opt]').forEach((o) => o.classList.toggle('on', o === opt));
+      else opt.classList.toggle('on');
+      return;
+    }
+    const to = t.closest('[data-to]');
+    if (to) { go(to.dataset.to); return; }
+    if (t.closest('.bk, [data-back]')) back();
+  };
+  document.querySelector('.go-reset').addEventListener('click', () => { stack.length = 0; for (const k in picked) delete picked[k]; render(start, 'slide'); });
+  ph.addEventListener('click', act);
+  ph.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-to],[data-pick],[data-opt],.bk')) { e.preventDefault(); act(e); } });
+})();
+</script>
+<script id="hm-js">
+(() => {
+  const V = {"a": "<div class=\"hero pl-hero pl-a\"><span class=\"hero-arm\"></span><div class=\"hero-body\">\n<div class=\"hero-fields\"><div><small>스터디</small><b class=\"pl-dash\">미정</b></div><div><small>연동</small><b class=\"pl-st\"><i class=\"pl-dot\"></i>확인 중</b></div><div><small>DATE</small><b>11.24</b></div></div>\n<div class=\"hero-main\"><span class=\"hero-char\" data-pose=\"tilt\"><img src=\"assets/c-purple-tilt-3d.png\" alt=\"\"></span>\n<div class=\"hero-row\"><span class=\"hero-live\"><i class=\"pl-dot\"></i><span>STANDBY</span></span><span class=\"hero-title\">Almost on stage.</span></div>\n<div class=\"pl-sub\">하남점이 회원 정보를 확인하고 있어요.</div>\n<div class=\"hero-actions\"><span class=\"hero-btn pl-off\"><span class=\"qi\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3\"/></svg></span>연동되면 출석이 열려요</span></div></div></div></div>"};
+  const CSS = "body{margin:0!important}#popWrap{display:none!important}#hero{display:none!important}\n.pl-hero .hero-main{min-height:0}\n.pl-dot{background:#493087!important;border-color:#493087!important;animation:plP 1.4s ease-out infinite}\n@keyframes plP{0%{box-shadow:0 0 0 0 rgba(73,48,135,.45)}100%{box-shadow:0 0 0 8px rgba(73,48,135,0)}}\n.pl-sub{position:relative;margin-top:8px;font-size:13px;font-weight:700;line-height:1.5;max-width:230px;word-break:keep-all}\n.pl-kt{font-size:19px;font-weight:900;line-height:1.3;letter-spacing:-.5px;word-break:keep-all}\n.pl-a .hero-body{background:#E5DDF6}.pl-a .pl-dash{color:#A79F8F}\n.pl-a .pl-st{display:flex;align-items:center;gap:7px;color:#493087;line-height:26px}.pl-a .pl-st .pl-dot{width:9px;height:9px;border-radius:50%;flex:none}\n.pl-hero .hero-live i.pl-dot{border-radius:5px}\n.pl-a .hero-main{padding-top:10px;padding-bottom:10px}.pl-a .hero-row{gap:2px}.pl-a .pl-sub{margin-top:3px}.pl-a .hero-actions{margin-top:8px}.pl-a .hero-btn{height:40px;font-size:14px;box-shadow:none}.pl-a .hero-btn .qi{width:30px;height:30px}.pl-a .hero-btn .qi svg{width:16px;height:16px}\n.hero-btn.pl-off{background:#fff;color:#5A5366;box-shadow:none;border-style:dashed;cursor:default;font-size:15px}.hero-btn.pl-off .qi{background:#CFC6B2}\n@media (prefers-reduced-motion:reduce){.pl-dot{animation:none}}\n.gr-l1{white-space:nowrap}\n.gr-nm{font-family:'Unbounded','Black Han Sans','Dela Gothic One',var(--f-body);font-synthesis:none;letter-spacing:-.5px}\n.pl-lk{display:inline-flex;align-items:center;gap:3px;height:17px;margin-left:5px;padding:0 6px 0 5px;border-radius:9px;vertical-align:1px;font-style:normal;font-size:10px;font-weight:900;letter-spacing:-.2px;white-space:nowrap}\n.pl-lk.done{background:#24834B;color:#fff}\n.pl-lk.wait{background:#E5DDF6;color:#493087}.pl-lk.wait .pl-dot{width:6px;height:6px;border-radius:50%;flex:none}";
+  const setup = (f) => {
+    let d; try { d = f.contentDocument; } catch (e) { return; }
+    if (!d || !d.getElementById('hero') || d.getElementById('plCss')) return;
+    const st = d.createElement('style'); st.id = 'plCss'; st.textContent = CSS; d.head.appendChild(st);
+    const pl = f.dataset.pl || 'a', isMy = pl.startsWith('my');
+    if (!isMy) d.getElementById('hero').insertAdjacentHTML('afterend', V[pl] || V.a);
+    // 마이 프로필 카드에 연동 표시 (홈 A에서 마이 탭을 눌러도 '확인 중')
+    const done = pl === 'my';
+    const mark = () => {
+      const id = d.querySelector('#myRoot .my-id'); if (!id || id.querySelector('.pl-lk')) return;
+      const sub = id.querySelector('span'); if (!sub) return;
+      if (!done) sub.textContent = sub.textContent.replace(/ · 회원$/, '');
+      sub.insertAdjacentHTML('beforeend', done
+        ? '<i class="pl-lk done"><svg width="8" height="8" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>연동됨</i>'
+        : '<i class="pl-lk wait"><i class="pl-dot"></i>연동 확인 중</i>');
+    };
+    const root = d.getElementById('myRoot');
+    if (root) new MutationObserver(mark).observe(root, { childList: true });
+    if (isMy) { const t = d.querySelector('#tabbar button[data-tab="my"]'); if (t) t.click(); mark(); }
+    if (f.dataset.nk) {
+      // 이름: 영문은 Unbounded, 한글은 Black Han Sans, 일본어는 Dela Gothic One. 'Hey 이름,'은 한 줄로 두고 넘치면 이름만 줄여요(최소 20px).
+      const g = d.querySelector('.greet');
+      if (g) {
+        const ln = d.createElement('link'); ln.rel = 'stylesheet'; ln.href = 'https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Dela+Gothic+One&display=swap'; d.head.appendChild(ln);
+        const nm = d.createElement('span'); nm.className = 'gr-nm'; nm.textContent = f.dataset.nk;
+        g.innerHTML = '<span class="gr-l1">Hey </span><br>let’s <mark>talk!</mark>';
+        g.firstChild.append(nm, ',');
+        const fit = () => { nm.style.fontSize = ''; let s = 30; while (g.scrollWidth > g.clientWidth + .5 && s > 20) { s -= .5; nm.style.fontSize = s + 'px'; } };
+        fit(); d.fonts.load('30px "Black Han Sans"', f.dataset.nk).then(() => d.fonts.load('30px "Dela Gothic One"', f.dataset.nk)).then(() => d.fonts.ready).then(fit);
+      }
+    }
+    const bell = d.querySelector('[data-noti]');
+    if (bell) bell.addEventListener('click', (e) => {
+      if (!f.closest('.go-ph') || !window.__goTo) return;
+      e.preventDefault(); e.stopImmediatePropagation(); window.__goTo('m-noti');
+    }, true);
+  };
+  document.addEventListener('load', (e) => { if (e.target.matches && e.target.matches('iframe.hm-if')) setup(e.target); }, true);
+  document.querySelectorAll('iframe.hm-if').forEach((f) => { if (f.contentDocument && f.contentDocument.readyState === 'complete') setup(f); });
+  // 먼저 다 읽힌 iframe도 놓치지 않게 잠깐 동안 다시 확인
+  let k = 0; const tick = setInterval(() => { document.querySelectorAll('iframe.hm-if').forEach((f) => { try { if (f.contentDocument.readyState === 'complete') setup(f); } catch (e) {} }); if (++k > 60) clearInterval(tick); }, 500);
+})();
+</script>
 </body></html>
