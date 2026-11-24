@@ -1028,8 +1028,12 @@ export function mountWorld(host, id, SC, onOpen) {
     f = BUILD.travel;
   }
   rndS = RND_SEED;
+  const t0 = Date.now();
   const S = f(host, SC);
+  const t1 = Date.now();
   S.draw();
+  // 바꾼 지도가 늦게 뜨면 어디가 오래 걸리는지 보려고 (만들기 · 첫 그림 = 셰이더 준비 포함)
+  if (__DEV__) console.log(`[gl] ${id} 지도 만들기 ${t1 - t0}ms · 첫 그림 ${Date.now() - t1}ms`);
   return S;
 }
 export { BUILD, ICO };

@@ -5,7 +5,7 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { bookShelfQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -177,7 +177,7 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
   const openUnit = (no: number) => {
     sfx('tap');
     onClose();
-    router.push(`/unit/${unitId(L.lv, no)}` as Href);
+    runAfterSheetClose(() => router.push(`/unit/${unitId(L.lv, no)}` as Href));
   };
   return (
     <>

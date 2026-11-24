@@ -75,8 +75,16 @@ export default function LoungeScreen() {
     const y = e.nativeEvent.contentOffset.y;
     if (y > 360 !== scrolled) setScrolled(y > 360);
   };
+  // 고른 칸은 시트가 다 닫힌 뒤에 열어요. 닫히는 중에 다른 화면 · 시트를 열면 아이폰에서 아무 일도 안 일어나요
+  const picked = useRef<CreateKind | null>(null);
   const onCreate = (k: CreateKind) => {
+    picked.current = k;
     setSheet(null);
+  };
+  const afterCreateClosed = () => {
+    const k = picked.current;
+    picked.current = null;
+    if (!k) return;
     if (k === 'plane') return setSheet('trip');
     if (k === 'abroad') return setSheet('abroad');
     go({ photo: '/compose', story: '/story/new', bolt: '/meet/new', club: '/club/new', chal: '/challenge/new' }[k]);
@@ -116,7 +124,7 @@ export default function LoungeScreen() {
         )}
       </Pressable>
 
-      <CreateSheet open={sheet === 'create'} tab={tab} onClose={() => setSheet(null)} onPick={onCreate} />
+      <CreateSheet open={sheet === 'create'} tab={tab} onClose={() => setSheet(null)} onPick={onCreate} onClosed={afterCreateClosed} />
       {kept === 'trip' ? <TripMakeSheet open={sheet === 'trip'} onClose={() => setSheet(null)} onClosed={() => setKept(null)} /> : null}
       {kept === 'abroad' ? <AbroadRegSheet open={sheet === 'abroad'} onClose={() => setSheet(null)} onClosed={() => setKept(null)} /> : null}
     </SafeAreaView>

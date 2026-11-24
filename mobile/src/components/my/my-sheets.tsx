@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { MemberFace } from '@/components/character/avatar';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -107,7 +107,7 @@ export function FollowSheet({ name, tab, onTab, onClose, onOpen }: { name: strin
     onClose();
     if (n === me.name) return;
     if (onOpen) onOpen(n);
-    else router.push(`/me/profile/${encodeURIComponent(n)}` as Href);
+    else runAfterSheetClose(() => router.push(`/me/profile/${encodeURIComponent(n)}` as Href));
   };
   return (
     <Sheet open={!!name} onClose={onClose} title={who} tall label={`${who} ${tab === 'fing' ? '팔로잉' : '팔로워'}`}>
