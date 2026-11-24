@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
-import { CountStepper, PlacePicker, PosterPicker, TimeChips, type Place } from '@/components/event/form-parts';
+import { CountStepper, defaultEnd, PlacePicker, PosterPicker, timeLabel, TimeRange, type Place } from '@/components/event/form-parts';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
@@ -20,7 +20,6 @@ import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
 const MEET_MAX = 7; // 오늘부터 1주 뒤까지 (프로토타입 MEET_MAX)
-const TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '19:00', '19:30', '20:00', '20:30', '21:00'];
 /** 정원 (나 포함) — 직접 정해요 */
 const CAP_MIN = 2;
 const CAP_MAX = 20;
@@ -45,7 +44,9 @@ export default function NewMeet() {
   const [reg, setReg] = useState<Region>('서울');
   const [title, setTitle] = useState('');
   const [day, setDay] = useState(3);
+  // 만나는 시간: 시작 ~ 끝
   const [time, setTime] = useState('20:00');
+  const [endTime, setEndTime] = useState(() => defaultEnd('20:00'));
   const [place, setPlace] = useState<Place | null>(null);
   const [addr2, setAddr2] = useState('');
   const [cap, setCap] = useState(6);
@@ -53,8 +54,7 @@ export default function NewMeet() {
   // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
   const [card, setCard] = useState<MadeCard | null>(null);
   const d = addDays(day);
-  const h = Number(time.slice(0, 2));
-  const when = `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) ${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${time.slice(3)}에 만나요 · ${day === 0 ? '오늘' : day === 1 ? '내일' : day + '일 뒤'}`;
+  const when = `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) ${timeLabel(time)} ~ ${timeLabel(endTime)}에 만나요 · ${day === 0 ? '오늘' : day === 1 ? '내일' : day + '일 뒤'}`;
 
   const open = () => {
     if (!title.trim()) return showToast('제목을 적어 주세요');
@@ -66,7 +66,7 @@ export default function NewMeet() {
       reg,
       day: String(d.getDate()).padStart(2, '0'),
       mon: MONTHS[d.getMonth()],
-      wd: `${WEEK[d.getDay()]} ${time}`,
+      wd: `${WEEK[d.getDay()]} ${time}~${endTime}`,
       title: title.trim(),
       place: place.name,
       addr: place.addr,
@@ -140,8 +140,8 @@ export default function NewMeet() {
           </View>
         </View>
       </Field>
-      <Field label="시간">
-        <TimeChips times={TIMES} value={time} onChange={setTime} />
+      <Field label="시간 · 시작 ~ 끝">
+        <TimeRange start={time} end={endTime} onChange={(s, e) => { setTime(s); setEndTime(e); }} />
       </Field>
       <PText style={styles.when}>{when}</PText>
       <Field label="장소 · 지도에서 골라요">

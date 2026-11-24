@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
-import { CountStepper, MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
+import { CountStepper, defaultEnd, MultiPills, PosterPicker, TimeRange } from '@/components/event/form-parts';
 import { ClubThumb } from '@/components/meet/club-list';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
@@ -21,8 +21,6 @@ import { useMe } from '@/state/me';
 const LANGS = ['영어', '일본어', '중국어', '스페인어'];
 const DAYS = ['월', '화', '수', '목', '금', '토', '일'];
 const CONDS = ['누구나', 'Lv.2 이상', '수강생만'];
-/** 모이는 시간: 아침 7시 ~ 밤 10시 반, 30분 간격 */
-const TIMES = Array.from({ length: 32 }, (_, i) => `${String(7 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
 const MAX_MIN = 3;
 const MAX_MAX = 40;
 
@@ -37,7 +35,9 @@ export default function NewClub() {
   const [cat, setCat] = useState<string>(CLUB_CATS[0][1]);
   const [lang, setLang] = useState('영어');
   const [reg, setReg] = useState<Region>('서울');
+  // 모이는 시간: 시작 ~ 끝
   const [time, setTime] = useState('20:00');
+  const [end, setEnd] = useState(() => defaultEnd('20:00'));
   const [max, setMax] = useState(12);
   const [days, setDays] = useState<string[]>(['수']);
   const [cond, setCond] = useState('누구나');
@@ -57,7 +57,7 @@ export default function NewClub() {
       lang,
       br: me.branch,
       // 예) 매주 수 · 금 20:00 (요일을 안 고르면 시간만)
-      when: days.length ? `매주 ${[...days].sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)).join(' · ')} ${time}` : time,
+      when: days.length ? `매주 ${[...days].sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)).join(' · ')} ${time}~${end}` : `${time}~${end}`,
       n: 1,
       max,
       cond,
@@ -90,8 +90,8 @@ export default function NewClub() {
       <Field label="모이는 요일 · 여러 개 골라요">
         <MultiPills options={DAYS} value={days} onChange={setDays} />
       </Field>
-      <Field label="몇 시에 모여요?">
-        <TimeChips times={TIMES} value={time} onChange={setTime} />
+      <Field label="몇 시부터 몇 시까지 모여요?">
+        <TimeRange start={time} end={end} onChange={(s, e) => { setTime(s); setEnd(e); }} />
       </Field>
       <Field label="최대 인원 · 나 포함">
         <CountStepper value={max} min={MAX_MIN} max={MAX_MAX} format={(v) => `${v}명`} onChange={setMax} less="한 명 줄이기" more="한 명 늘리기" />

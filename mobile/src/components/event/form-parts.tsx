@@ -337,3 +337,68 @@ const st = StyleSheet.create({
   off: { opacity: 0.35 },
   on: { transform: [{ scale: 0.94 }] },
 });
+
+// ---------------------------------------------------------------- 시간 ~ 시간 (번개 · 동아리 개설 공통)
+
+/** 30분 칸: 아침 7시 ~ 밤 11시 반 */
+export const HALF_HOURS = Array.from({ length: 34 }, (_, i) => `${String(7 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+const ofMin = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+/** '20:00' → '오후 8:00' */
+export const timeLabel = (t: string) => {
+  const h = Number(t.slice(0, 2));
+  return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${t.slice(3)}`;
+};
+/** 걸리는 시간 글자 (예: '2시간 30분') */
+export const spanLabel = (start: string, end: string) => {
+  const d = toMin(end) - toMin(start);
+  const h = Math.floor(d / 60);
+  return [h ? `${h}시간` : '', d % 60 ? `${d % 60}분` : ''].filter(Boolean).join(' ');
+};
+/** 끝나는 시간 기본: 시작 + 2시간 (밤 11시 반까지) */
+export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, toMin(HALF_HOURS[HALF_HOURS.length - 1])));
+
+/**
+ * 시작 시간 ~ 끝나는 시간: 위 두 칸(시작 · 끝) 중 누른 쪽을 아래 시간 줄에서 골라요.
+ * 시작을 고르면 끝 칸으로 넘어가요. 끝은 시작보다 늦은 시간만 · 시작을 끝보다 늦게 바꾸면 끝이 시작 + 2시간으로 따라가요.
+ */
+export function TimeRange({ start, end, onChange }: { start: string; end: string; onChange: (start: string, end: string) => void }) {
+  const [edit, setEdit] = useState<'s' | 'e'>('s');
+  const starts = HALF_HOURS.slice(0, -1);
+  const ends = HALF_HOURS.filter((t) => toMin(t) > toMin(start));
+  const pickStart = (t: string) => {
+    onChange(t, toMin(end) > toMin(t) ? end : defaultEnd(t));
+    setEdit('e');
+  };
+  const box = (k: 's' | 'e', label: string, t: string) => {
+    const on = edit === k;
+    return (
+      <Pressable onPress={() => { sfx('tap'); setEdit(k); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${label} ${timeLabel(t)} · 바꾸기`} style={[tr.box, on && tr.boxOn]}>
+        <PText style={[tr.k, on && tr.kOn]}>{label}</PText>
+        <PText style={tr.v}>{timeLabel(t)}</PText>
+      </Pressable>
+    );
+  };
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={tr.row}>
+        {box('s', '시작', start)}
+        <PText style={tr.til}>~</PText>
+        {box('e', '끝', end)}
+      </View>
+      <PText style={tr.span}>{`${spanLabel(start, end)} 동안 · ${edit === 's' ? '시작 시간을 골라요' : '끝나는 시간을 골라요'}`}</PText>
+      <TimeChips key={edit} times={edit === 's' ? starts : ends} value={edit === 's' ? start : end} onChange={(t) => (edit === 's' ? pickStart(t) : onChange(start, t))} />
+    </View>
+  );
+}
+
+const tr = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  box: { flex: 1, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 12, gap: 1 },
+  boxOn: { borderColor: C.pu, backgroundColor: '#F3EEFB', boxShadow: '2px 2px 0px #493087' },
+  k: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
+  kOn: { color: C.pu },
+  v: { fontFamily: Font.display, fontSize: 16, lineHeight: 21 },
+  til: { fontFamily: Font.display, fontSize: 16, color: Colors.inkSub },
+  span: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: C.pu },
+});
