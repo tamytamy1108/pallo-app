@@ -107,7 +107,17 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
     setN(next);
     setDays(PICK_DAYS.filter((w) => days.includes(w)).slice(0, next));
   };
-  const toggleDay = (w: string) => setDays((cur) => (cur.includes(w) ? cur.filter((x) => x !== w) : cur.length >= n ? cur : [...cur, w]));
+  const full = days.length >= n;
+  // 다 고른 뒤 다른 요일을 누르면: 안 된다고 알려요 (흔들림 · 경고 진동 · 안내) — 고른 요일을 먼저 빼야 해요
+  const toggleDay = (w: string) => {
+    if (!days.includes(w) && full) {
+      haptic('warning');
+      sfx('tap');
+      showToast(`주 ${n}회라 ${n}개까지 골라요 · 바꾸려면 고른 요일을 먼저 빼 주세요`);
+      return;
+    }
+    setDays((cur) => (cur.includes(w) ? cur.filter((x) => x !== w) : [...cur, w]));
+  };
   const pick = (c: ExprCard) => {
     const on = sel !== c.id;
     sfx(on ? 'pick' : 'tap');
@@ -203,12 +213,18 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             {weekly ? (
               <View style={styles.fx}>
                 <CountStepper value={n} min={1} max={6} format={(v) => `주 ${v}회`} onChange={(v) => changeN(v - n)} less="한 번 줄이기" more="한 번 늘리기" />
-                <PText style={styles.fxl}>
-                  {'인증 요일 '}
-                  <PText style={styles.fxlB}>{`${days.length} / ${n}`}</PText>
-                  개 골랐어요
-                </PText>
-                <Pills options={PICK_DAYS} value={days} onChange={toggleDay} multi />
+                {full ? (
+                  <View style={styles.fullTag}>
+                    <PText style={styles.fullT}>{`인증 요일 ${n}개 다 골랐어요 · 바꾸려면 고른 요일을 먼저 빼요`}</PText>
+                  </View>
+                ) : (
+                  <PText style={styles.fxl}>
+                    {'인증 요일 '}
+                    <PText style={styles.fxlB}>{`${days.length} / ${n}`}</PText>
+                    개 골랐어요 · {n - days.length}개 더 골라요
+                  </PText>
+                )}
+                <Pills options={PICK_DAYS} value={days} onChange={toggleDay} multi locked={(w) => full && !days.includes(w)} />
               </View>
             ) : null}
           </View>
@@ -389,6 +405,8 @@ const styles = StyleSheet.create({
   fx: { gap: 8, marginTop: 4 },
   fxl: { marginTop: 4, fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: SUB },
   fxlB: { fontFamily: Font.body900, fontSize: 12, color: SUB },
+  fullTag: { marginTop: 4, alignSelf: 'flex-start', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 10, backgroundColor: '#F3EEFB' },
+  fullT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: Colors.purple },
   sum: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19.5, color: SUB },
   sumB: { fontFamily: Font.body900, fontSize: 13, color: Colors.purple },
   wayd: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: SUB },
