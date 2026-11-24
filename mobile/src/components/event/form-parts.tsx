@@ -136,11 +136,13 @@ const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 
 /** 달 넘기는 달력 (프로토타입 lgEvCal · .lg-mcal): min ~ max 안의 날만 고를 수 있어요 */
 export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }: { value: string; onChange: (d: string) => void; minDays: number; maxDays: number; hint: string; pick: (d: Date) => string }) {
-  const [cm, setCm] = useState(0);
   const t0 = new Date();
   t0.setHours(0, 0, 0, 0);
   const min = new Date(t0);
   min.setDate(t0.getDate() + minDays);
+  // 고를 수 있는 첫 달부터 열어요 (오늘이 25일이고 1주 뒤부터면 다음 달). 그보다 앞 달로는 못 가요
+  const first = (min.getFullYear() - t0.getFullYear()) * 12 + min.getMonth() - t0.getMonth();
+  const [cm, setCm] = useState(first);
   const max = new Date(t0);
   max.setDate(t0.getDate() + maxDays);
   const m0 = new Date(t0.getFullYear(), t0.getMonth() + cm, 1);
@@ -152,7 +154,7 @@ export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }:
   return (
     <View style={styles.cal}>
       <View style={styles.calH}>
-        <Pressable disabled={cm <= 0} onPress={() => setCm(cm - 1)} accessibilityRole="button" accessibilityLabel="이전 달" style={[styles.calNav, cm <= 0 && { opacity: 0.35 }]}>
+        <Pressable disabled={cm <= first} onPress={() => setCm(cm - 1)} accessibilityRole="button" accessibilityLabel="이전 달" style={[styles.calNav, cm <= first && { opacity: 0.35 }]}>
           <PText style={styles.calNavT}>‹</PText>
         </Pressable>
         <PText style={styles.calT}>

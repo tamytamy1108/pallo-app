@@ -31,13 +31,24 @@ type TextFieldProps = Omit<TextInputProps, 'style'> & {
  * multiline 은 처음부터 큰 칸(110), 아니면 한 줄 높이에서 시작해요 — Enter 는 줄 바꿈 대신 다음으로 (submitBehavior blurAndSubmit).
  * 휴대폰 번호 · 이메일 · 숫자 · 비밀번호 · oneLine 은 한 줄 칸 그대로.
  */
+/** 칸 이름표: '… *' 로 끝나면 * 만 빨강 (꼭 적는 칸) */
+function FieldLabel({ label }: { label: string }) {
+  const req = label.endsWith(' *');
+  return (
+    <PText style={styles.label}>
+      {req ? label.slice(0, -2) : label}
+      {req ? <PText style={styles.req}> *</PText> : null}
+    </PText>
+  );
+}
+
 export function TextField({ label, multiline, variant = 'box', oneLine, ...rest }: TextFieldProps) {
   const focus = useFocusRing(rest);
   const typed = !!rest.secureTextEntry || (rest.keyboardType != null && rest.keyboardType !== 'default');
   if (multiline || (!oneLine && !typed))
     return (
       <View style={styles.field}>
-        {label ? <PText style={styles.label}>{label}</PText> : null}
+        {label ? <FieldLabel label={label} /> : null}
         <GrowInput
           placeholderTextColor="#8C8597"
           selectionColor={Colors.purple}
@@ -51,7 +62,7 @@ export function TextField({ label, multiline, variant = 'box', oneLine, ...rest 
     );
   return (
     <View style={styles.field}>
-      {label ? <PText style={styles.label}>{label}</PText> : null}
+      {label ? <FieldLabel label={label} /> : null}
       <TextInput
         placeholderTextColor="#8C8597"
         selectionColor={Colors.purple}
@@ -151,6 +162,7 @@ export function Switch({ value, onValueChange, label, sub }: SwitchProps) {
 }
 
 const styles = StyleSheet.create({
+  req: { color: '#E5484D' },
   field: { gap: 6 },
   label: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
   // .lg-fl input { height: 46px; border-radius: 14px; padding: 0 14px; font-size: 14px; font-weight: 700 }

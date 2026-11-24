@@ -13,17 +13,19 @@ import { Icon } from '@/components/meet/icons';
 import { addProposal } from '@/components/meet/meet-store';
 import { ProposalCard } from '@/components/event/proposal-cards';
 import { TextField } from '@/components/ui/field';
+import { CountPicker } from '@/components/ui/count-picker';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { BRANCH_REGIONS, BRANCHES, PROPOSAL_CATS } from '@/data/events';
-import { WEEK } from '@/data/meet';
+import { NO_LIMIT, WEEK } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
-const CAPS = ['10명 이하', '20명 정도', '30명 정도', '40명 이상'];
+const CAP_MIN = 2;
+const CAP_MAX = 300;
 const FEES = ['무료', '유료 (금액은 매니저와 정해요)'];
 
 /**
@@ -45,7 +47,8 @@ export default function ProposeEvent() {
   const [cat, setCat] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [cap, setCap] = useState('20명 정도');
+  // 예상 인원: 숫자 (알약 · −/+ · 직접 적기) 또는 null(무관 — 0 으로 보내요)
+  const [cap, setCap] = useState<number | null>(20);
   const [fee, setFee] = useState('무료');
   const region = (BRANCHES.find((b) => b[0] === br) || BRANCHES[0])[2];
 
@@ -53,8 +56,9 @@ export default function ProposeEvent() {
     if (!date) return showToast('희망 날짜를 골라 주세요');
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
+    if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
     if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
-    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0) });
+    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), cap: cap ?? NO_LIMIT, body: body.trim() });
     sfx('save');
     router.back();
     showToast('제안을 보냈어요 · 매니저가 2~3일 안에 연락드려요');
@@ -107,11 +111,11 @@ export default function ProposeEvent() {
         <SheetPills options={PROPOSAL_CATS} value={cat} onChange={setCat} label="카테고리" />
       </Field>
       <TextField label="이벤트 제목 *" value={title} onChangeText={setTitle} placeholder="예) 한강 영어 피크닉" />
-      <Field label="어떤 이벤트인가요?">
+      <Field label="어떤 이벤트인가요?" req>
         <GrowInput value={body} onChangeText={setBody} multiline maxLength={500} placeholder="예) 돗자리 펴고 영어로 수다 떠는 피크닉이에요. 도시락은 각자, 게임은 제가 준비할게요." placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="어떤 이벤트인가요?" />
       </Field>
-      <Field label="예상 인원">
-        <SheetPills options={CAPS} value={cap} onChange={setCap} label="예상 인원" />
+      <Field label="예상 인원 · 나 포함" req>
+        <CountPicker value={cap} presets={[10, 20, 30, 40]} min={CAP_MIN} max={CAP_MAX} typable anyLabel="무관" onChange={setCap} />
       </Field>
       <Field label="참가비">
         <SheetPills options={FEES} value={fee} onChange={setFee} label="참가비" />
