@@ -184,14 +184,16 @@ noSpeakUntil · noListenUntil (datetime, 15분) · sfx(bool) · dailyGoal(int) �
 | 모델 | 주요 필드 |
 |---|---|
 | Notice | tag(공지 · 이벤트 · 새 소식) · target(전 지점 · 지점) · title · body[] · cta{label, link} · pinned · publishedAt · author |
-| Notification | memberId · kind(`notice` · `learn` · `lounge` · `event`) · text · link · readAt |
+| Notification | memberId · kind(`notice` · `learn` · `lounge` · `event`) · type(`session_invite` · `quest_completed` · `branch_link` · …) · actorId? · othersCount? · text · deepLink · action? · readAt |
+| SessionInvite | fromMemberId · toMemberId · slotId · lang · createdAt — 같은 세션 · 같은 사람 한 쌍은 하나만 |
+| QuestEvent | memberId · key(단계 · 장면 키) · title · deepLink · at · fannedOutAt? — 팔로워 알림 묶기 · 한 시간 제한에 써요 |
 | ProNote | memberId · teamId · sessionDate · proName · items[{type: 표현 · 바로잡기 · 뜻 · 질문, text, example}] · closing · thankedAt |
 | Inquiry | memberId · type · body · status(`waiting` · `answered`) · answer |
 | Payment | memberId · date · item · amount · method · status(`paid` · `refunded`) · receipt |
 | LevelChangeRequest | memberId · direction · reason · status |
 | TrialBooking | name · phone · level · branchId · lang · date(일요일 제외) · time · consentAt |
 | Terms | kind · version · effectiveAt · body |
-| Settings | `SET0` 키 전부 + mktConsentAt |
+| Settings | `SET0` 키 전부 + mktConsentAt + `shareProgress`(bool, 기본 true · 퀘스트 성공을 팔로워에게) + `inviteSnoozeUntil`(datetime? · '함께 가자고 할까요?' 2주간 보지 않기, 기기 간 맞출 때만) |
 
 ## 시작 · 사용 가이드 (관리자 웹에서 올림)
 

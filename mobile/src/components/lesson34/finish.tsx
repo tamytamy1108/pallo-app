@@ -11,6 +11,7 @@ import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, stepKey } from '@
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 
 import { dropRun } from './store';
+import { lessonQuestTitle, shareQuest } from '@/state/quest-share';
 
 /** resume: 앞 화면 팝업에서 이미 '이어서 하기'를 골랐으면 'resume' (다시 묻지 않아요) */
 export type StepCtx = { lv: 3 | 4; unit: number; step: Step34 & { stage: Stage }; source: string; resume?: 'resume' | 'restart' };
@@ -45,6 +46,8 @@ export function useStepFinish(ctx: StepCtx) {
     clearPos(key);
     dropRun(key);
     if (first) awardPoints(`step:${key}`, 'step', ctx.step.xp);
+    // 처음 끝낸 단계면 팔로워에게 '퀘스트 성공' (state/quest-share)
+    if (first) shareQuest({ key, title: lessonQuestTitle(ctx.lv, ctx.unit, ctx.step.stage), href: lesson34Href(ctx.lv, ctx.unit, ctx.step.id) });
     const found = findStep34(ctx.lv, ctx.step.id);
     const all = found?.all ?? [];
     const left = all.filter((s) => !isDone(stepKey(ctx.lv, ctx.unit, s.id)));

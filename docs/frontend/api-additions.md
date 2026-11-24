@@ -39,8 +39,22 @@
 | A21 | POST | `/me/guide/views` | 가이드 본 기록 `{ version, result: completed \| skipped, lastIndex }` | (새로) |
 | A22 | GET | `/members/nickname-check?q=` | 닉네임 쓸 수 있는지 (2~10자 · 중복 · 금칙어) | (새로) 가입 · 설정 |
 | A23 | POST · GET · DELETE | `/me/branch-links` · `/me/branch-links/:id` | 지점 연동 요청 보내기 · 내 요청 상태(이유 포함) · 기다리는 중 취소. 처리되면 푸시 | (새로) 가입 · 설정 › 내 지점 |
+| A24 | POST | `/sessions/:id/invites` | **함께 가자**: 사전 출석한 세션에 팔로우한 멤버를 불러요 `{ lang, memberIds[] }` → 받는 사람마다 푸시 + 알림(`session_invite`). 보낸 수 돌려줌 | `api/home.ts` `sendSessionInvite` · `components/home/invite-sheet.tsx` |
+| A25 | POST | `/me/progress/events` | **퀘스트 성공** 이벤트 `{ type: quest_completed, key, title, deepLink }` → 서버가 내 팔로워에게 알림(`quest_completed`). 아래 '보내는 규칙' | `api/home.ts` `sendQuestDone` · `state/quest-share.ts` |
+| A26 | (기존 30에 추가) | `GET · PUT /me/settings` 에 `shareProgress` · `inviteSnoozeUntil` | 퀘스트 성공을 팔로워에게 알리기(기본 켜짐) · '함께 가자고 할까요?' 2주간 보지 않기 기한 | `data/account.ts` `SETTINGS_DEFAULT` · `state/invite-prompt.ts` |
+| A27 | (기존 13에 추가) | `GET /me/notifications` 항목에 `type` · `actor` · `deepLink` · `action` | 새 알림 종류 `session_invite` · `quest_completed` (아래 모양) | `data/home.ts` `Noti` · `app/notifications.tsx` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
+
+### 함께 가자 · 퀘스트 성공 — 보내는 규칙 (제안)
+
+- **A24 함께 가자**: 회원만 · 내가 팔로우하는 사람에게만 · 사전 출석이 된 세션만. 같은 세션 · 같은 사람에게는 한 번만 (두 번째는 무시하고 `sent`에 안 셈). 받는 사람이 그 세션에 이미 사전 출석했으면 알림 대신 건너뛰어요.
+- **A25 퀘스트 성공**: 앱은 처음 끝낸 단계 · 장면마다 이벤트를 하나씩 보내기만 해요 (같은 key 는 앱도 한 번만). 팔로워에게 보낼지는 서버가 정해요:
+  - 보내는 사람 설정 `shareProgress` 가 꺼져 있으면 버려요. 받는 사람 설정 '팔로우 알림'(`nFriend`)이 꺼져 있으면 그 사람에겐 안 보내요.
+  - **한 사람(보낸 쪽)당 한 시간에 한 번**까지만 푸시. 그 사이 이벤트는 모아서 다음 알림 하나로: 같은 사람이 여러 개면 `태미님이 퀘스트 3개를 성공했어요!` (가장 최근 단계로 이동).
+  - **받는 쪽 하루 최대 3개** · 밤 10시 ~ 아침 8시는 알림함에만 쌓고 푸시는 안 보내요. 여러 친구가 같은 시간대에 성공하면 `태미님 외 2명이 퀘스트를 성공했어요` 로 하나.
+  - 30일 넘은 이벤트 · 회원이 아닌(연동 전) 사람의 이벤트는 버려요.
+- **A26 기기 간 맞추기**: `inviteSnoozeUntil` 은 지금 기기에만 남아요 (`state/invite-prompt.ts`). 폰을 바꿔도 2주가 이어져야 하면 서버 설정에 넣어요. `shareProgress` 는 서버 설정이어야 해요 (서버가 보내는 쪽을 거르니까).
 
 ### 응답 모양 예시 (앱이 지금 쓰는 모양)
 
@@ -72,7 +86,27 @@
 
 // 10 POST /sessions/:id/attendance  { "qr": "...", "lang": "en" }
 { "firstTime": true, "points": 30, "weekCount": 2 }
+
+// A24 POST /sessions/s2000/invites  { "lang": "en", "memberIds": ["m-minjun", "m-sora"] }
+{ "sent": 2 }
+
+// A25 POST /me/progress/events  (응답 본문 없음 · 202)
+{ "type": "quest_completed", "key": "1:1:sit", "title": "1과 Cafe Complaint · 본학습",
+  "deepLink": "/lesson/sit?lv=1&unit=1", "at": "2026-11-24T11:20:00Z" }
+
+// A27 GET /me/notifications 의 새 항목 두 가지
+{ "id": "n-881", "type": "session_invite", "kind": "learn",
+  "actor": { "id": "m-minjun", "name": "민준" },
+  "text": "민준님이 오늘 20:00 영어 세션에 가요. 같이 갈래요?",
+  "deepLink": "/?attend=rsvp&slot=1&lang=0",   // 앱 홈이 그 시간 · 언어로 사전 출석 시트를 열어요
+  "session": { "id": "s2000", "lang": "en" }, "action": "같이 가기", "createdAt": "…", "read": false }
+{ "id": "n-882", "type": "quest_completed", "kind": "learn",
+  "actor": { "id": "m-sora", "name": "소라" }, "others": 0,   // 묶이면 '외 n명'
+  "text": "소라님이 「1과 Cafe Complaint · 본학습」 퀘스트를 성공했어요!",
+  "deepLink": "/lesson/sit?lv=1&unit=1", "action": "나도 풀러 가기", "createdAt": "…", "read": false }
 ```
+
+> 딥링크는 앱 안 주소 그대로예요. 비회원 · 둘째 챕터 잠금은 앱 화면이 다시 확인해요 (09-onboarding '회원 · 비회원 권한').
 
 ## 2. 관리자 웹 API 개요 (7묶음)
 

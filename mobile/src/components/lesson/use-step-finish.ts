@@ -6,6 +6,7 @@ import { stopSay } from '@/components/lesson/voice';
 import { nextStepAfter, STAGE_KO, STEP_DEFS, type StepDef } from '@/data/lessons';
 import { awardPoints } from '@/state/ledger';
 import { DAILY_GOAL, getBest, getTodayDone, isDone, markDone, setBest, stepKey } from '@/state/progress';
+import { lessonQuestTitle, shareQuest } from '@/state/quest-share';
 
 export type StepScore = { right: number; total: number; timed?: number; fast?: number };
 
@@ -26,6 +27,8 @@ export function useStepFinish(lv: number, unit: number, step: StepDef) {
     const gain = Math.max(0, speed - (getBest(bestK) ?? 0));
     if (gain) setBest(bestK, speed);
     if (first) awardPoints(`step:${key}`, 'step', step.xp);
+    // 처음 끝낸 단계면 팔로워에게 '퀘스트 성공' (회원 · 설정 켜짐 · 한 번만 — state/quest-share)
+    if (first) shareQuest({ key, title: lessonQuestTitle(lv, unit, step.stage), href: `/lesson/${step.id}?lv=${lv}&unit=${unit}` });
     if (gain) awardPoints(`speed:${key}:${speed}`, 'speed', gain);
     const points = (first ? step.xp : 0) + gain;
 

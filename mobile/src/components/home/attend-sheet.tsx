@@ -25,10 +25,13 @@ export type AttendSheetMode = SheetMode | 'done';
 
 export function AttendSheet({
   mode,
+  preset,
   onClose,
   onConfirm,
 }: {
   mode: AttendSheetMode | null;
+  /** 미리 고를 시간 · 언어 (알림 '같이 갈래요?'로 열 때 · 사전 출석만) */
+  preset?: { slot: number; lang: number } | null;
   onClose: () => void;
   /** 사전 출석: 참석 알리기 · 출석: QR 스캐너 열기 */
   onConfirm: (mode: SheetMode, slot: number, lang: number) => void;
@@ -52,6 +55,10 @@ export function AttendSheet({
         setM(now);
         setSlot(f >= 0 ? f : a.slot);
         setLang(mode === 'checkin' && a.rsvp === 'yes' ? a.lang : null);
+        if (preset && mode === 'rsvp') {
+          setSlot(preset.slot);
+          setLang(preset.lang);
+        }
       }
     }
   }

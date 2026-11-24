@@ -87,6 +87,13 @@ export default function SettingsScreen() {
         <GoRow title="프로필 공개" value={set.profile} onPress={() => updateSettings({ profile: PROFILE_SCOPES[(PROFILE_SCOPES.indexOf(set.profile) + 1) % PROFILE_SCOPES.length] })} />
         <ToggleRow title="랭킹에 내 이름 보이기" sub="끄면 랭킹에 ‘익명 회원’으로 보여요" value={set.rankName} onPress={() => updateSettings({ rankName: !set.rankName })} />
         {flip('showBr', '내 지점 보이기')}
+        {/* 예전 저장에는 이 값이 없어요 → 없으면 켜진 걸로 (state/quest-share) */}
+        <ToggleRow
+          title="내 퀘스트 성공을 팔로워에게 알리기"
+          sub="레슨 단계 · 상황 장면을 끝내면 팔로워 알림함에 떠요"
+          value={set.shareProgress !== false}
+          onPress={() => updateSettings({ shareProgress: set.shareProgress === false })}
+        />
         <GoRow title="차단한 멤버" value="0명" onPress={() => setSheet('block')} />
         <GoRow title="신고 내역" onPress={() => go('/me/settings/reports')} />
       </Sec>

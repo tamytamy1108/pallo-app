@@ -15,6 +15,7 @@ import { SCENE_STEPS, sceneStepKey, type SceneStepId } from '@/data/situation';
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 import { awardPoints } from '@/state/ledger';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, sceneKey } from '@/state/progress';
+import { sceneQuestTitle, shareQuest } from '@/state/quest-share';
 
 import { Sound, XMark } from './icons';
 import { QuitSheet } from './parts';
@@ -37,6 +38,8 @@ export function useStepFinish(sceneId: string, stepId: SceneStepId) {
     if (first) awardPoints(`step:${key}`, 'step', step.xp);
     const allDone = SCENE_STEPS.every((s) => isDone(sceneStepKey(sceneId, s.id)));
     const stamp = allDone ? markDone(sceneKey(sceneId)) : false; // 장면 완료! 지도에 도장이 찍혔어요
+    // 장면을 다 끝낸 순간 팔로워에게 '퀘스트 성공' (state/quest-share)
+    if (stamp) shareQuest({ key: sceneKey(sceneId), title: sceneQuestTitle(sceneId), href: `/scene/${sceneId}` });
     const nextStep = SCENE_STEPS.find((s) => !isDone(sceneStepKey(sceneId, s.id)));
     sfx('fanfare');
     haptic('success');
