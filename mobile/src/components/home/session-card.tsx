@@ -1,26 +1,31 @@
 import { Image } from 'expo-image';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Pattern, Rect, Stop } from 'react-native-svg';
 
+import { memberGate } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { QR_BEFORE, SLOTS } from '@/data/home';
+import { sfx } from '@/lib/feedback';
 import { kf, SPRING, useLoop } from '@/lib/motion';
+import { finishHomeMoment, useLinkEvents } from '@/state/link-events';
+import { useMe } from '@/state/me';
 
 import { countOf, fmtMin, heroOf, useAttend, useClock, type Hero } from './attendance';
 import { ARROW_PATH, CHECK_PATH, LineIcon, QR_PATH } from './icons';
+import { UnlockStage } from './link-unlock';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
-const pad = (n: number) => String(n).padStart(2, '0');
+export const pad = (n: number) => String(n).padStart(2, '0');
 
-/** 클래퍼보드 줄무늬 팔 */
-function ClapperArm() {
+/** 클래퍼보드 줄무늬 팔 (체험 · 둘러보기 카드도 같이 써요 — home-card) */
+export function ClapperArm() {
   return (
     <View style={styles.arm}>
       <Svg width="100%" height="100%">
@@ -47,7 +52,163 @@ function ClapperArm() {
 const STAGE_LINES = ['Take the stage.', 'Your stage is ready.', 'The stage is yours.'];
 let stageTurn = -1;
 
+/** 회원 · 연동 대기 · 연동 안 됨일 때 홈 출석 카드. 체험 · 둘러보기는 home-card 가 골라요 */
 export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
+  const link = useMe((m) => m.link);
+  const branch = useMe((m) => m.branch);
+  // 방금 연동됐으면: 잠긴 카드가 풀리며 원래 카드로 뒤집혀요 (한 번만 · link-unlock)
+  const moment = useLinkEvents((s) => s.homeMoment);
+  return (
+    <UnlockStage play={link === 'linked' && moment} branch={branch} front={<PendingCard />} onDone={finishHomeMoment}>
+      {link === 'pending' ? <PendingCard /> : link === 'rejected' ? <PendingCard rejected /> : <StudyCard onOpen={onOpen} />}
+    </UnlockStage>
+  );
+}
+
+/**
+ * 지점 연동 확인 중일 때 (09-onboarding · A 잠긴 출석 카드): 같은 클래퍼보드를 라벤더로 잠가요.
+ * 칸: 스터디 미정 · 연동 확인 중 · DATE / STANDBY · Almost on stage. · 한 줄 안내 · 점선으로 꺼 둔 버튼.
+ * 연동되면(link → linked) 원래 카드로 돌아와요.
+ * rejected: 지점이 못 찾았을 때 — 같은 잠긴 카드에 '연동 안 됨'과 [다시 요청하기](→ 연동 안 됨 화면)만 열어 둬요.
+ */
+function PendingCard({ rejected = false }: { rejected?: boolean }) {
+  const branch = useMe((m) => m.branch);
+  const now = useClock();
+  if (rejected) return <RejectedCard branch={branch} now={now} />;
+  const off = '연동되면 출석이 열려요';
+  return (
+    <View style={styles.wrap}>
+      <ClapperArm />
+      <View style={styles.shadowBox}>
+        <View style={styles.shadow} />
+        <View style={StyleSheet.flatten([styles.body, styles.bodyWait])}>
+          <View style={styles.fields}>
+            <Field label="스터디" value="미정" big color="#A79F8F" />
+            <View style={StyleSheet.flatten([styles.field, styles.fieldDivider, { flex: 1 }])}>
+              <PText style={styles.fieldLabel} color={Colors.inkSub}>
+                연동
+              </PText>
+              <View style={styles.waitRow}>
+                <PulseDot size={9} />
+                <PText style={styles.fieldValue} color={Colors.purple}>
+                  확인 중
+                </PText>
+              </View>
+            </View>
+            <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider narrow />
+          </View>
+          <View style={StyleSheet.flatten([styles.main, styles.mainWait])}>
+            <HeroChar pose="tilt" />
+            <View style={styles.live}>
+              <PulseDot size={10} square />
+              <PText style={styles.liveText}>STANDBY</PText>
+            </View>
+            <PText variant="title" style={styles.heroTitle}>
+              Almost on stage.
+            </PText>
+            <PText style={styles.waitSub}>{branch}이 회원 정보를 확인하고 있어요.</PText>
+            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])}>
+              {/* 꺼 둔 버튼: 누르면 '출석하려면 지점 연동이 끝나야 해요' 토스트 (trial-guide memberGate) */}
+              <Pressable onPress={() => memberGate('출석하려면')} sound={false} accessibilityRole="button" accessibilityLabel={off} accessibilityState={{ disabled: true }}>
+                <View style={StyleSheet.flatten([styles.btn, styles.btnOff])}>
+                  <View style={StyleSheet.flatten([styles.qr, styles.qrOff])}>
+                    <LineIcon d={QR_PATH} size={16} width={2.2} color={Colors.white} />
+                  </View>
+                  <PText style={styles.btnTextOff} color={Colors.inkSub}>
+                    {off}
+                  </PText>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** 연동 안 됨 (rejected): 권한은 비회원과 같아요. 출석은 잠긴 채, 다시 요청하는 길만 홈에 남겨요 */
+function RejectedCard({ branch, now }: { branch: string; now: Date }) {
+  const again = () => {
+    sfx('tap');
+    router.push('/link-rejected');
+  };
+  return (
+    <View style={styles.wrap}>
+      <ClapperArm />
+      <View style={styles.shadowBox}>
+        <View style={styles.shadow} />
+        <View style={StyleSheet.flatten([styles.body, styles.bodyWait])}>
+          <View style={styles.fields}>
+            <Field label="스터디" value="미정" big color="#A79F8F" />
+            <View style={StyleSheet.flatten([styles.field, styles.fieldDivider, { flex: 1 }])}>
+              <PText style={styles.fieldLabel} color={Colors.inkSub}>
+                연동
+              </PText>
+              <View style={styles.waitRow}>
+                <View style={styles.failDot} />
+                <PText style={styles.fieldValue} color={FAIL_INK}>
+                  안 됨
+                </PText>
+              </View>
+            </View>
+            <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider narrow />
+          </View>
+          <View style={StyleSheet.flatten([styles.main, styles.mainWait])}>
+            <HeroChar pose="standard" />
+            <View style={styles.live}>
+              <View style={StyleSheet.flatten([styles.liveDot, styles.failLive])} />
+              <PText style={styles.liveText}>RETAKE</PText>
+            </View>
+            <PText variant="title" style={styles.heroTitle}>
+              One more take.
+            </PText>
+            <PText style={styles.waitSub}>{branch}에서 회원 정보를 찾지 못했어요.</PText>
+            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])}>
+              <Pressable onPress={again} accessibilityRole="button" accessibilityLabel="연동 안 됨 · 다시 요청하기">
+                {({ pressed }) => (
+                  <View style={StyleSheet.flatten([styles.btn, styles.btnAgain, pressed && styles.btnAgainPressed])}>
+                    <View style={StyleSheet.flatten([styles.qr, styles.qrAgain])}>
+                      <LineIcon d={RETRY_PATH} size={16} width={2.4} color={Colors.white} />
+                    </View>
+                    <PText style={styles.btnTextOff}>다시 요청하기</PText>
+                    <LineIcon d={ARROW_PATH} size={17} width={2.4} />
+                  </View>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** 못 찾음 표시 글자색 (로즈 핑크를 진하게 — 라벤더 위에서 읽히게) */
+const FAIL_INK = '#A8485F';
+const RETRY_PATH = 'M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4';
+
+/** 보라 점: 둘레로 보라 빛이 퍼져요 (기다리는 중 표시 · plP 1.4초) */
+const pulseRing = css.keyframes({
+  '0%': { opacity: 0.45, transform: [{ scale: 1 }] },
+  '100%': { opacity: 0, transform: [{ scale: 2.6 }] },
+});
+function PulseDot({ size, square }: { size: number; square?: boolean }) {
+  const still = useReducedMotion();
+  const shape = { width: size, height: size, borderRadius: square ? 5 : size / 2 };
+  return (
+    <View>
+      {!still && (
+        <Animated.View
+          style={[styles.pulse, shape, { opacity: 0, animationName: pulseRing, animationDuration: '1.4s', animationIterationCount: 'infinite', animationTimingFunction: 'ease-out' }]}
+        />
+      )}
+      <View style={[styles.pulseDot, shape]} />
+    </View>
+  );
+}
+
+function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
   const [stage, setStage] = useState(0);
   useFocusEffect(
     useCallback(() => {
@@ -235,7 +396,7 @@ const breathe = css.keyframes({
   '50%': { transform: [{ scaleX: 1.03 }, { scaleY: 0.97 }] },
 });
 
-type Pose = 'standard' | 'tilt' | 'jump';
+export type Pose = 'standard' | 'tilt' | 'jump';
 const POSES: Pose[] = ['standard', 'tilt', 'jump'];
 /** 포즈마다 이미지 · 크기 · 자리 · 눈 위치 [가운데 x, y, 가로 반지름, 세로 반지름, 기울기°] (원본 픽셀 · 프로토타입 HERO_EYES) */
 const POSE = {
@@ -245,7 +406,7 @@ const POSE = {
 } as const;
 
 /** 보라 팔로: 숨 쉬듯 살짝 눌렸다 펴지고(cornerBreathe 3초), 3초마다 눈을 깜빡여요 (avBlink) */
-function HeroChar({ pose }: { pose: Pose }) {
+export function HeroChar({ pose }: { pose: Pose }) {
   const p = POSE[pose];
   const h = (p.width * p.H) / p.W;
   const still = useReducedMotion();
@@ -283,13 +444,15 @@ function HeroChar({ pose }: { pose: Pose }) {
   );
 }
 
-function Field({ label, value, big, divider, narrow }: { label: string; value: string; big?: boolean; divider?: boolean; narrow?: boolean }) {
+export function Field({ label, value, big, divider, narrow, color }: { label: string; value: string; big?: boolean; divider?: boolean; narrow?: boolean; color?: string }) {
   return (
     <View style={StyleSheet.flatten([styles.field, divider && styles.fieldDivider, { flex: narrow ? 0.8 : 1 }])}>
       <PText style={styles.fieldLabel} color={Colors.inkSub}>
         {label}
       </PText>
-      <PText style={big ? styles.fieldBig : styles.fieldValue}>{value}</PText>
+      <PText style={big ? styles.fieldBig : styles.fieldValue} color={color}>
+        {value}
+      </PText>
     </View>
   );
 }
@@ -326,4 +489,24 @@ const styles = StyleSheet.create({
   linkText: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 18 },
   qr: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.purple, alignItems: 'center', justifyContent: 'center' },
   btnText: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
+  // 연동 확인 중 (PendingCard): 라벤더 · 조금 낮게 · 점선 버튼
+  bodyWait: { backgroundColor: Colors.lavender },
+  mainWait: { paddingTop: 10, paddingBottom: 12, minHeight: 0 },
+  waitRow: { marginTop: 2, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  waitSub: { marginTop: 3, maxWidth: 230, fontFamily: Font.body700, fontSize: 13, lineHeight: 19 },
+  actionsWait: { marginTop: 8 },
+  btnOff: { height: 40, paddingLeft: 5, paddingRight: 16, gap: 8, borderBottomWidth: 2.5, borderStyle: 'dashed', backgroundColor: Colors.white },
+  qrOff: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#CFC6B2' },
+  btnTextOff: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
+  // 연동 안 됨 (RejectedCard): 분홍 점 · 누를 수 있는 '다시 요청하기' (그림자 있음)
+  failDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
+  failLive: { backgroundColor: Colors.rosePink },
+  btnAgain: { height: 42, paddingLeft: 5, paddingRight: 14, gap: 8, borderBottomWidth: 5, backgroundColor: Colors.white },
+  btnAgainPressed: { transform: [{ translateY: 3 }], borderBottomWidth: 2.5 },
+  qrAgain: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.rosePink },
+  pulse: { position: 'absolute', backgroundColor: Colors.purple },
+  pulseDot: { backgroundColor: Colors.purple },
 });
+
+/** 같은 클래퍼보드 틀을 쓰는 다른 카드용 (home-card: 체험 · 둘러보기) */
+export const clapperStyles = styles;

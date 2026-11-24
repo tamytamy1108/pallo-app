@@ -4,9 +4,10 @@ import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 import { loungeHighlightsQuery } from '@/api/queries';
+import { PIC_BG, PostArt } from '@/components/lounge/pics';
 import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
@@ -228,36 +229,11 @@ function SlideCard({ item, d, w, cardW, still, onLayout, onPress }: { item: Loun
 const G160 = { start: { x: 0.33, y: 0 }, end: { x: 0.67, y: 1 } };
 
 function PosterArt({ poster }: { poster: Poster }) {
-  if (poster.kind === 'party') {
+  // 사진 글(할로윈 · 라멘)은 라운지 글 상세와 같은 그림 · 글꼴로 (components/lounge/pics PostArt)
+  if (poster.kind === 'party' || poster.kind === 'ramen') {
     return (
-      <View style={StyleSheet.flatten([styles.ph, { backgroundColor: Colors.purple }])}>
-        <PText style={styles.partyText} color={Colors.yellow}>
-          {'HALLO\nWEEN\nNIGHT'}
-        </PText>
-        <PText style={styles.partyMeta} color={Colors.white}>
-          영등포 · 10.31
-        </PText>
-        <View style={styles.partyBig} />
-        <View style={styles.partySmall} />
-      </View>
-    );
-  }
-  if (poster.kind === 'ramen') {
-    return (
-      <View style={StyleSheet.flatten([styles.ph, { backgroundColor: Colors.rosePink }])}>
-        <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Defs>
-            <Pattern id="ramenStripe" width={36 * Math.SQRT2} height={36 * Math.SQRT2} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <Rect x={18 * Math.SQRT2} width={18 * Math.SQRT2} height={36 * Math.SQRT2} fill="rgba(255,255,255,0.18)" />
-            </Pattern>
-          </Defs>
-          <Rect width="100%" height="100%" fill="url(#ramenStripe)" />
-        </Svg>
-        <PText style={styles.ramenText} color={Colors.white}>
-          {'RAMEN\nIN FUKUOKA'}
-        </PText>
-        <View style={styles.bowl} />
-        <View style={styles.rim} />
+      <View style={StyleSheet.flatten([styles.ph, { backgroundColor: PIC_BG[poster.kind] }])}>
+        <PostArt pic={poster.kind} uid={`home-${poster.kind}`} />
       </View>
     );
   }
@@ -302,8 +278,9 @@ const styles = StyleSheet.create({
   ph: { height: 214, borderBottomWidth: 2, borderColor: Colors.ink, overflow: 'hidden' },
   badge: { position: 'absolute', left: 12, top: 12, height: 28, paddingHorizontal: 12, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, justifyContent: 'center' },
   badgeText: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
-  count: { position: 'absolute', right: 12, top: 214 - 12 - 24, height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.9)', borderWidth: 1.5, borderColor: Colors.ink, justifyContent: 'center' },
-  countText: { fontFamily: Font.display, fontSize: 10, lineHeight: 13 },
+  // 장 수: 라운지 글 상세처럼 오른쪽 위 잉크 알약 (아래에 두면 포스터 글씨 '영등포 · 10.31'과 겹쳐요)
+  count: { position: 'absolute', right: 12, top: 12, height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: Colors.ink, justifyContent: 'center' },
+  countText: { fontFamily: Font.display, fontSize: 10, lineHeight: 13, color: Colors.white },
   body: { paddingTop: 12, paddingHorizontal: 14, paddingBottom: 14, gap: 8 },
   who: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   whoName: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18 },
@@ -319,14 +296,6 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
   dotHit: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   dot: { height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: Colors.ink },
-  // 포스터 글씨: 프로토타입 홈 카드에서는 .w 자리 규칙이 안 걸려 왼쪽 위부터 본문 글꼴로 흘러요 (보이는 그대로)
-  partyBig: { position: 'absolute', right: -30, top: -30, width: 170, height: 170, borderRadius: 85, backgroundColor: Colors.rosePink, borderWidth: 2, borderColor: Colors.ink },
-  partySmall: { position: 'absolute', right: 40, top: 62, width: 62, height: 62, borderRadius: 31, backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink },
-  partyText: { fontFamily: Font.body500, fontSize: 36, lineHeight: 52 },
-  partyMeta: { fontFamily: Font.body500, fontSize: 11, lineHeight: 16 },
-  bowl: { position: 'absolute', left: '21%', top: '42%', marginTop: -48, width: '58%', height: 96, borderBottomLeftRadius: 100, borderBottomRightRadius: 100, backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink },
-  rim: { position: 'absolute', left: '17%', top: '27%', width: '66%', height: 15, borderRadius: 8, backgroundColor: Colors.yellow, borderWidth: 2, borderColor: Colors.ink },
-  ramenText: { fontFamily: Font.body500, fontSize: 26, lineHeight: 38, textShadowColor: Colors.ink, textShadowRadius: 1, textShadowOffset: { width: 0, height: 0 } },
   bigWrap: { position: 'absolute', left: 16, right: 16, top: 0, bottom: 0, justifyContent: 'center' },
   big: { fontFamily: Font.display, fontSize: 22, lineHeight: 26.4, textAlign: 'center' },
   bigSmall: { marginTop: 6, fontFamily: Font.body800, fontSize: 13, lineHeight: 18, textAlign: 'center', opacity: 0.9 },

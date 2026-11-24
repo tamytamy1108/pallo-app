@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { keepAll, SheetButton, SheetDesc } from '@/components/common/sheet-parts';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -74,7 +75,7 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
           setDone(false);
           showToast('언제든 멤버 목록에서 인사를 남길 수 있어요');
         }}>
-        <TextInput value={hi} onChangeText={setHi} multiline maxLength={200} placeholder="예) 안녕하세요! 영어로 말하는 시간을 꾸준히 만들고 싶어요. 잘 부탁드려요!" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="가입 인사" />
+        <GrowInput value={hi} onChangeText={setHi} multiline maxLength={200} placeholder="예) 안녕하세요! 영어로 말하는 시간을 꾸준히 만들고 싶어요. 잘 부탁드려요!" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="가입 인사" />
       </DoneSheet>
     </>
   );

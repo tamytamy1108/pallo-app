@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { type ReportMenuItem, ReportSheet } from '@/components/common/report-sheet';
@@ -312,7 +313,7 @@ export function AskSheet({ open, who, sub, onClose }: { open: boolean; who: stri
         {sub}
         {'\n'}답이 오면 알림으로 알려 드려요.
       </PText>
-      <TextInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="질문 입력" />
+      <GrowInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="질문 입력" />
     </Sheet>
   );
 }

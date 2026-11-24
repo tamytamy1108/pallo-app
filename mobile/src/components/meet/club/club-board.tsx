@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { FieldLabel, keepAll, SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
@@ -211,7 +212,7 @@ function BoardWrite({ open, onClose, c, host, onPost }: { open: boolean; onClose
         <SheetPills options={kinds} value={k} onChange={setK} />
       </View>
       <TextField label="제목" value={ti} onChangeText={setTi} placeholder="예) 토요일 러닝 후기" />
-      <TextInput value={bd} onChangeText={setBd} multiline placeholder="예) 오늘은 5km를 뛰고 카페에서 영어로 20분 이야기했어요!" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="글 내용" />
+      <GrowInput value={bd} onChangeText={setBd} multiline placeholder="예) 오늘은 5km를 뛰고 카페에서 영어로 20분 이야기했어요!" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="글 내용" />
     </Sheet>
   );
 }

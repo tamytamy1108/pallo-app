@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { offerChallenge } from '@/lib/chal-offer';
 import { Pressable } from '@/components/ui/pressable';
 import { Appear } from '@/components/ui/appear';
@@ -261,9 +262,11 @@ export function TalkStep({ sceneId, scene }: { sceneId: string; scene: SceneWith
               </>
             ) : (
               <View style={styles.inp}>
-                <TextInput
+                <GrowInput
                   value={draft}
                   onChangeText={setDraft}
+                  submitBehavior="submit"
+                  maxLines={5}
                   placeholder="영어로 답해 보세요"
                   placeholderTextColor="#A39C8E"
                   style={styles.field}
@@ -489,7 +492,7 @@ const styles = StyleSheet.create({
   tabText: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19 },
   problem: { textAlign: 'center', fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18 },
   inp: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
-  field: { flex: 1, minWidth: 0, height: 50, borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
+  field: { flex: 1, minWidth: 0, minHeight: 50, paddingVertical: 13, lineHeight: 21, borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
   send: { width: 50, height: 50, borderRadius: 25, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 0 #1E1A2B' },
   endFoot: { paddingHorizontal: 16, paddingBottom: 18, paddingTop: 8 },
   end: { marginTop: 14, marginBottom: 22 },

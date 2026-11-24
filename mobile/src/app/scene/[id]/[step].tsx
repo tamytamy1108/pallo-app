@@ -14,6 +14,7 @@ import { useScene } from '@/components/scene/use-scene';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { Colors } from '@/constants/theme';
 import { isSceneStep, sceneIdOf, type SceneStepId, type SceneWithContent } from '@/data/situation';
+import { ChapterGate } from '@/components/common/member-lock';
 
 const STEP_VIEW: Record<SceneStepId, (p: { sceneId: string; scene: SceneWithContent }) => ReactElement> = { mis: MissionStep, flow: FlowStep, bank: BankStep, exq: QuizStep, talk: TalkStep };
 
@@ -21,7 +22,7 @@ const STEP_VIEW: Record<SceneStepId, (p: { sceneId: string; scene: SceneWithCont
  * 상황 장면 단계 화면 (프로토타입 #study openStep): 미션 익히기 · 장면 롤플레이 · Word Bank · 상황 퀴즈 · AI 미션 대화.
  * /scene/travel-1/exq 처럼 열어요. 끝내면 축하 → 다음 단계 또는 장면 화면.
  */
-export default function SceneStepScreen() {
+function SceneStepScreen() {
   const { id, step } = useLocalSearchParams<{ id: string; step: string }>();
   // 장면 화면에서 이미 받은 맵 · 콘텐츠면 기다리지 않아요
   const load = useScene(id);
@@ -46,3 +47,15 @@ export default function SceneStepScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
 });
+
+/** 비회원은 맵마다 첫 장면만 (components/common/member-lock ChapterGate) */
+export default function SceneStepScreenGate() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  // 장면 id = '맵 id-장면 번호' (예: travel-2)
+  const no = Number(id?.slice(id.lastIndexOf('-') + 1)) || 1;
+  return (
+    <ChapterGate no={no} label={`장면 ${no}`}>
+      <SceneStepScreen />
+    </ChapterGate>
+  );
+}

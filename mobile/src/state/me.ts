@@ -19,6 +19,14 @@ export type Me = {
   lang: StudyLang;
   /** 스터디 회원 · 앱 구독자 */
   plan: 'study' | 'app';
+  /**
+   * 지점 연동: 연동 안 함 · 지점이 확인 중 · 연동됨 · 지점이 못 찾음 (A23 `branch-link-requests`).
+   * 확인 중이면 홈 출석 카드가 잠기고, 마이 이름 옆에 '연동 확인 중'이 붙어요.
+   * 못 찾음(rejected)이면 홈 카드는 잠긴 채 '다시 요청'만 열려 있고, 마이에는 '연동 안 됨'이 붙어요 (state/link-events).
+   */
+  link: 'none' | 'pending' | 'linked' | 'rejected';
+  /** 체험 예약 (가입 단계 · 체험). 있으면 홈 출석 카드 자리에 체험 카드가 떠요. day 'YYYY-MM-DD' · time 'HH:MM' */
+  trial: { branch: string; day: string; time: string; lang: StudyLang } | null;
   /** 꾸미기 상점 재화 */
   sparks: number;
   /** 이번 주 포인트 */
@@ -47,6 +55,8 @@ const meStore = createStore<Me>({
   level: 'Lv.1',
   lang: 'en',
   plan: 'study',
+  link: 'linked',
+  trial: null,
   sparks: 1250,
   weekPoints: 0,
   bio: '',

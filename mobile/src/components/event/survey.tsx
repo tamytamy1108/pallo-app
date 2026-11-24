@@ -1,6 +1,7 @@
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import type { SurveyAnswers } from '@/components/meet/meet-store';
 import { Icon } from '@/components/meet/icons';
@@ -44,7 +45,7 @@ export function SurveyForm({ questions, answers, onChange }: { questions: Survey
           </PText>
           {q.t === 'multi' ? <PText style={styles.small}>여러 개 골라도 돼요</PText> : null}
           {q.t === 'text' ? (
-            <TextInput
+            <GrowInput
               value={typeof answers[i] === 'string' ? (answers[i] as string) : ''}
               onChangeText={(t) => onChange({ ...answers, [i]: t })}
               placeholder="답을 적어 주세요"
@@ -105,5 +106,5 @@ const styles = StyleSheet.create({
   bxOne: { borderWidth: 7, borderColor: Colors.purple },
   bxMultiOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
   oT: { fontFamily: Font.body700, fontSize: 14, lineHeight: 20 },
-  in: { height: 48, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body600, fontSize: 14, color: Colors.ink },
+  in: { minHeight: 48, paddingVertical: 12, lineHeight: 20, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body600, fontSize: 14, color: Colors.ink },
 });

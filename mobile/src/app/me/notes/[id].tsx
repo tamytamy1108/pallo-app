@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { MemberFace } from '@/components/account/member-face';
 import { AccountPage, Bar, Box, Icon, Lift, TextLink } from '@/components/account/parts';
@@ -17,13 +18,14 @@ import { noteReactions, PN_TAG_COLOR, PN_THANKS, PRO_NOTES, teamNameByNo, type P
 import { haptic, sfx } from '@/lib/feedback';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useMe } from '@/state/me';
+import { MemberOnly } from '@/components/common/member-lock';
 
 /**
  * PRO'S NOTE 한 장 (프로토타입 pnDetHTML): 표현 · 바로잡기 · 뜻 · 질문 항목(항목별 저장 → 내 표현함) · 스터디 일기 · 프로님께 보낸 마음.
  * 아래 고정: [고마워요] · [감사 인사 보내기]. 알림 · 마이 카드에서 바로 열면 위에 '전체 보기'.
  * 맞는 API: 44 `/pro-notes/:id` · 45 `/pro-notes/:id/thanks`
  */
-export default function ProNoteScreen() {
+function ProNoteScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const n = PRO_NOTES.find((x) => x.id === id);
   useEffect(() => {
@@ -233,7 +235,7 @@ function ThanksSheet({ n, open, onClose }: { n: ProNote; open: boolean; onClose:
             </Pressable>
           );
         })}
-        <TextInput value={typed} onChangeText={setTyped} multiline placeholder="직접 써도 돼요" placeholderTextColor="#9B94A6" accessibilityLabel="감사 인사 직접 쓰기" style={styles.thxIn} />
+        <GrowInput value={typed} onChangeText={setTyped} multiline placeholder="직접 써도 돼요" placeholderTextColor="#9B94A6" accessibilityLabel="감사 인사 직접 쓰기" style={styles.thxIn} />
       </View>
     </Sheet>
   );
@@ -285,3 +287,12 @@ const styles = StyleSheet.create({
   thxText: { flex: 1, fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
   thxIn: { minHeight: 84, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 14, color: Colors.ink, textAlignVertical: 'top' },
 });
+
+/** 회원 전용 화면 (state/access 'proNote'): 비회원이 알림 · 주소로 바로 들어와도 '지점 회원이 되면 열려요' 칸만 보여요 */
+export default function ProNoteScreenGate() {
+  return (
+    <MemberOnly feature="proNote" title="PRO'S NOTE">
+      <ProNoteScreen />
+    </MemberOnly>
+  );
+}

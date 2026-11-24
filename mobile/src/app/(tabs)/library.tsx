@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/api/errors';
 import { bookShelfQuery, situationMapsQuery } from '@/api/queries';
+import { lockedChapter } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { EmptyIsland } from '@/components/library/empty-island';
 import { LibHead, MapTabs, SitChips } from '@/components/library/lib-head';
@@ -20,6 +21,7 @@ import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
+import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
 
 const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
@@ -37,6 +39,8 @@ export default function LibraryScreen() {
   useProgressVersion();
   const shelfQ = useQuery(bookShelfQuery());
   const mapsQ = useQuery(situationMapsQuery());
+  // 비회원은 맵마다 첫 챕터만 (state/access)
+  const allOpen = useMe((m) => canUse(m, 'allChapters'));
   const scroll = useRef<ScrollViewInstance>(null);
   const [showTop, setShowTop] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -72,7 +76,8 @@ export default function LibraryScreen() {
   const world = (() => {
     if (sitMap) {
       const nx = nextSceneNo(sitMap);
-      const sc: WorldSC = sitMap.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) ? 'soon' : sceneDone(sitMap, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
+      // 비회원이 못 여는 장면(둘째부터)은 흐린 섬으로 (state/access)
+      const sc: WorldSC = sitMap.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) || (!allOpen && !isFreeChapter(s.no)) ? 'soon' : sceneDone(sitMap, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
       return { id: MAP_PRESETS[sitMap.preset].build, sc, order: allSits.indexOf(sitMap) };
     }
     if (!st.sitMode && books.length) {
@@ -88,6 +93,10 @@ export default function LibraryScreen() {
       const s = sitMap.scenes.find((x) => x.no === no);
       if (!s || !sceneOpen(s)) {
         showToast(`${s ? s.title : ''} 장면은 곧 열려요`);
+        return;
+      }
+      if (!allOpen && !isFreeChapter(no)) {
+        lockedChapter(`장면 ${no}`, sceneDone(sitMap, FREE_CHAPTER));
         return;
       }
       router.push(`/scene/${sceneId(sitMap.id, no)}` as Href);

@@ -3,11 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, type TextInputInstance, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, type TextInputInstance, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { CARD, SCREEN } from '@/lib/transitions';
 import { CommentsSheet } from '@/components/common/comments-sheet';
@@ -258,8 +259,11 @@ export default function StoryScreen() {
         ) : null}
         <View style={[styles.sf, styles.sfc]}>
           <View style={styles.sin}>
-            <TextInput
+            <GrowInput
               ref={input}
+              maxLines={4}
+              ring={false}
+              submitBehavior="submit"
               value={text}
               onChangeText={setText}
               placeholder={st.mine ? '내 스토리에 댓글 달기' : `${st.who}에게 댓글 달기`}
@@ -337,9 +341,10 @@ const styles = StyleSheet.create({
   mgrBtnText: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
   sf: { flexDirection: 'row', gap: 10, marginTop: 14 },
   sfc: { gap: 8 },
-  sin: { flex: 1, height: 48, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 24, paddingLeft: 16, paddingRight: 5, boxShadow: `3px 3px 0px ${Colors.ink}` },
-  sinInput: { flex: 1, height: 44, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
-  sinSend: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.yellow, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
+  // 길게 쓰면 위로 한 줄씩 늘어요 (4줄까지) · 보내기는 아래 줄에 맞춰요
+  sin: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'flex-end', backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 24, paddingLeft: 16, paddingRight: 5, boxShadow: `3px 3px 0px ${Colors.ink}` },
+  sinInput: { flex: 1, minHeight: 44, paddingVertical: 12, fontFamily: Font.body700, fontSize: 14, lineHeight: 20, color: Colors.ink },
+  sinSend: { width: 36, height: 36, marginBottom: 4, borderRadius: 18, backgroundColor: Colors.yellow, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   sq: { width: 48, height: 48, borderRadius: 20, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', boxShadow: `3px 3px 0px ${Colors.ink}` },
   sqDown: { transform: [{ translateX: 3 }, { translateY: 3 }], boxShadow: `0px 0px 0px ${Colors.ink}` },
 });

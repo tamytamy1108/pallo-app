@@ -93,8 +93,11 @@ function ConfirmCard({ open, title, message, confirmLabel, cancelLabel = '취소
     run();
   };
 
+  // 열려 있을 때만 그려요 (웹은 처음 그린 순서대로 겹쳐서, 미리 그려 두면 나중에 연 시트 밑에 깔려요 · ui/sheet 와 같은 이유)
+  if (!open) return null;
+
   return (
-    <Modal visible={open} transparent animationType="none" onRequestClose={onCancel} statusBarTranslucent navigationBarTranslucent>
+    <Modal visible transparent animationType="none" onRequestClose={onCancel} statusBarTranslucent navigationBarTranslucent>
       <Animated.View style={[styles.root, { paddingBottom: 16 + insets.bottom }, anim]}>
         <View style={styles.cardWrap}>
           <View pointerEvents="none" style={styles.cardShadow} />

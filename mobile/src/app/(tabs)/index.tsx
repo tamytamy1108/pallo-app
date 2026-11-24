@@ -8,25 +8,27 @@ import { errorMessage } from '@/api/errors';
 import { sendAttendance, sendRsvp } from '@/api/home';
 import { meQuery, queryKeys } from '@/api/queries';
 import { queryClient } from '@/api/query-client';
+import { guardMember } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-sheet';
 import { getAttend, summary, type SheetMode } from '@/components/home/attendance';
-import { applyDevParams, applyDevPlan } from '@/components/home/dev';
+import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/components/home/dev';
 import { GoalCard } from '@/components/home/goal-card';
+import { Greeting } from '@/components/home/greeting';
 import { LineIcon } from '@/components/home/icons';
 import { LaunchPopup } from '@/components/home/launch-popup';
+import { LinkAdminDev } from '@/components/home/link-admin-dev';
 import { LoungePreview } from '@/components/home/lounge-preview';
 import { askCurrentStop } from '@/components/home/map-state';
 import { useUnreadCount } from '@/components/home/noti-state';
 import { NoticeStrip } from '@/components/home/notice-strip';
 import { QrScanner } from '@/components/home/qr-scanner';
-import { SessionCard } from '@/components/home/session-card';
+import { HomeCard } from '@/components/home/home-card';
 import { StudyMap } from '@/components/home/study-map';
 import { Logo } from '@/components/logo';
 import { Appear } from '@/components/ui/appear';
 import { Raised } from '@/components/ui/raised';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
-import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
@@ -36,10 +38,12 @@ const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
 
 /** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드(앱 구독자는 오늘의 목표) → 스터디 맵 → 라운지 미리보기. */
 export default function HomeScreen() {
-  // 개발용 주소 값 (?now= · ?season= · ?plan=) — 웹에서만, 화면엔 아무것도 안 그려요
-  const dev = useLocalSearchParams<{ now?: string; season?: string; plan?: string }>();
+  // 개발용 주소 값 (?now= · ?season= · ?plan= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
+  const dev = useLocalSearchParams<{ now?: string; season?: string; plan?: string; link?: string; name?: string; admin?: string; trial?: string }>();
   useState(() => applyDevParams(dev));
   useEffect(() => applyDevPlan(dev.plan), [dev.plan]);
+  useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial }), [dev.link, dev.name, dev.trial]);
+  useEffect(() => applyDevAdmin(dev.admin), [dev.admin]);
 
   // 3 /me — 받아 온 값은 MeSync 가 state/me 에 넣어요 (src/api/provider.tsx). 여기서는 불러오는 중 · 오류만 봐요
   const me = useQuery(meQuery());
@@ -71,6 +75,9 @@ export default function HomeScreen() {
     },
     onError: (e) => showToast(errorMessage(e)),
   });
+
+  // 출석 · 사전 출석은 회원만 (state/access — 카드가 이미 나눠 보여 주지만 한 번 더 막아요)
+  const openAttend = (mode: AttendSheetMode) => guardMember(() => setSheet(mode), '출석하려면');
 
   const confirm = (mode: SheetMode, slot: number, lang: number) => {
     setSheet(null);
@@ -130,7 +137,7 @@ export default function HomeScreen() {
         <Appear kind="rise" delay={60}>
           <NoticeStrip />
         </Appear>
-        <Appear kind="rise" delay={100}>{plan === 'app' ? <GoalCard onContinue={continueGoal} /> : <SessionCard onOpen={setSheet} />}</Appear>
+        <Appear kind="rise" delay={100}>{plan === 'app' ? <GoalCard onContinue={continueGoal} /> : <HomeCard onOpen={openAttend} />}</Appear>
         <Appear kind="rise" delay={140} onLayout={(e) => (mapY.current = e.nativeEvent.layout.y)}>
           <StudyMap />
         </Appear>
@@ -151,22 +158,9 @@ export default function HomeScreen() {
         onScanned={scanned}
       />
       <LaunchPopup />
+      {/* 지점 연동 결과: 개발용 '지점 처리 흉내' 알약 · 위에서 내려오는 푸시 배너 (state/link-events) */}
+      <LinkAdminDev />
     </SafeAreaView>
-  );
-}
-
-/** "Hey Tammy, / let's [talk!]" — talk! 은 노란 형광펜 상자 */
-function Greeting({ name }: { name: string }) {
-  return (
-    <View style={styles.greet} accessibilityRole="header" accessibilityLabel={`Hey ${name}, let’s talk!`}>
-      <PText variant="display">Hey {name},</PText>
-      <View style={styles.greetRow}>
-        <PText variant="display">let’s </PText>
-        <View style={styles.mark}>
-          <PText variant="display">talk!</PText>
-        </View>
-      </View>
-    </View>
   );
 }
 
@@ -178,7 +172,4 @@ const styles = StyleSheet.create({
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   // .icon-btn.has-dot::after: 안 읽은 알림이 있으면 분홍 점
   bellDot: { position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 4.5, backgroundColor: Colors.rosePink, borderWidth: 2, borderColor: Colors.white },
-  greet: { marginTop: 6, marginHorizontal: 2 },
-  greetRow: { flexDirection: 'row', alignItems: 'center' },
-  mark: { backgroundColor: Colors.yellow, borderWidth: 2, borderColor: Colors.ink, borderRadius: 8, paddingHorizontal: 6 },
 });

@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line } from 'react-native-svg';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { ReportSheet, useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
@@ -190,8 +191,9 @@ export function ChxSheet({ p, open, onClose, onClosed, write = false }: { p: Cha
         {/* .csf: 내 얼굴 · 입력칸 · 보내기 */}
         <View style={[styles.csf, { paddingBottom: 14 + insets.bottom }]}>
           <Face name={me.name} color={Colors.yellow} size={38} />
-          <TextInput
+          <GrowInput
             ref={input}
+            maxLines={6}
             value={text}
             onChangeText={setText}
             placeholder={`${p.hl}로 나만의 문장을 만들어 봐요…`}
@@ -354,8 +356,9 @@ const styles = StyleSheet.create({
   csm: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 18, backgroundColor: Colors.lavender },
   csmT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
   csmX: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18 },
-  csf: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10, paddingHorizontal: 18, borderTopWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
-  csIn: { flex: 1, minHeight: 46, maxHeight: 110, paddingTop: 12, paddingBottom: 12, paddingHorizontal: 16, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, lineHeight: 21, color: Colors.ink },
+  // 칸이 여러 줄로 늘면 얼굴 · 보내기는 아래 줄에 맞춰요
+  csf: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingTop: 10, paddingHorizontal: 18, borderTopWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
+  csIn: { flex: 1, minHeight: 46, paddingTop: 12, paddingBottom: 12, paddingHorizontal: 16, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, lineHeight: 21, color: Colors.ink },
   sendBtn: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   pressed: { transform: [{ scale: 0.94 }] },
 });

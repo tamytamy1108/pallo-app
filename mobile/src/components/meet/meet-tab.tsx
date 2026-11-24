@@ -56,8 +56,8 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
   const pre = reg ? reg + ' ' : '';
   const cardW = Math.max(0, (w - 32) * 0.8);
 
-  const mkMeet = () => guardMember(() => router.push('/meet/new'));
-  const mkClub = () => guardMember(() => router.push('/club/new'));
+  const mkMeet = () => guardMember(() => router.push('/meet/new'), '번개를 만들려면');
+  const mkClub = () => guardMember(() => router.push('/club/new'), '동아리를 만들려면');
 
   const chips: [Mode, string, number][] = [
     ['all', '전체', nMeet + nClub],

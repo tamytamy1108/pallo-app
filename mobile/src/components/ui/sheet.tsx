@@ -130,8 +130,12 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
     </>
   );
 
+  // 열려 있을 때만 Modal 을 그려요: 웹(react-native-web)은 Modal 을 처음 그릴 때 body 맨 끝에 자리를 만들어서,
+  // 앱 시작 때부터 그려 두면 나중에 연 시트(댓글 등) 밑에 깔려요. 열 때 새로 그려야 늘 맨 위에 떠요
+  if (!mounted) return null;
+
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={requestClose} statusBarTranslucent navigationBarTranslucent>
+    <Modal visible transparent animationType="none" onRequestClose={requestClose} statusBarTranslucent navigationBarTranslucent>
       <GestureHandlerRootView style={styles.fill}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dimAnim]}>
           <Pressable style={styles.fill} onPress={requestClose} accessibilityRole="button" accessibilityLabel="닫기" />

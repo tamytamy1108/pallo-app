@@ -21,6 +21,7 @@ import { PText } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
 import { bankTasks, chalFinishTasks, dialogueTasks, patternTasks, stepDef, stepTitle, storyTasks, type LessonData, type StepDef, type Task } from '@/data/lessons';
 import { setLastStep, stepKey } from '@/state/progress';
+import { ChapterGate } from '@/components/common/member-lock';
 
 /**
  * 레슨 화면 (프로토타입 #lesson 진행기 · #study 단계 화면). 주소: /lesson/[step]?lv=1&unit=1
@@ -29,7 +30,7 @@ import { setLastStep, stepKey } from '@/state/progress';
  * - 다 끝내면 완료(축하) 화면. resume=resume|restart: 앞 화면(과 화면 팝업)에서 이미 고른 경우
  * 과 콘텐츠는 18 `GET /lessons/:id` (id = '레벨-과') 로 받아요. 같은 과의 다른 단계로 가면 받아 둔 값을 그대로 써요.
  */
-export default function LessonScreen() {
+function LessonScreen() {
   const p = useLocalSearchParams<{ step: string; lv?: string; unit?: string; resume?: string }>();
   const lv = Number(p.lv ?? 1) || 1;
   const unit = Number(p.unit ?? 1) || 1;
@@ -120,3 +121,13 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   safe: { flex: 1, backgroundColor: Colors.cream },
 });
+
+/** 비회원은 맵마다 첫 챕터만 (components/common/member-lock ChapterGate) */
+export default function LessonScreenGate() {
+  const no = Number(useLocalSearchParams<{ unit?: string }>().unit ?? 1);
+  return (
+    <ChapterGate no={no} label={`${no}과`}>
+      <LessonScreen />
+    </ChapterGate>
+  );
+}

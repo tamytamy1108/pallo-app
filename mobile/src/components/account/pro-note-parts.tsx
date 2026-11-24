@@ -4,9 +4,10 @@
  */
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -136,7 +137,7 @@ export function DiaryCard({ n }: { n: ProNote }) {
         </View>
         {ed ? (
           <>
-            <TextInput
+            <GrowInput
               value={draft.t}
               onChangeText={(t) => setDraft({ ...draft, t })}
               multiline

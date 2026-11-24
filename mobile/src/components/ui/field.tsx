@@ -9,6 +9,7 @@ import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { EASE } from '@/lib/motion';
 
+import { GrowInput, useFocusRing } from './grow-input';
 import { PText } from './text';
 
 /**
@@ -21,9 +22,33 @@ type TextFieldProps = Omit<TextInputProps, 'style'> & {
   label?: string;
   /** box: 네모 칸 (.lg-fl input · 둥글기 14) · round: 알약 칸 (.lg-inp · 댓글 · 검색) */
   variant?: 'box' | 'round';
+  /** 늘 한 줄 (이름 · 짧은 값). 번호 · 이메일 · 숫자 · 비밀번호 칸은 저절로 한 줄이에요 */
+  oneLine?: boolean;
 };
 
-export function TextField({ label, multiline, variant = 'box', ...rest }: TextFieldProps) {
+/**
+ * 글 칸. 글로 적는 칸(제목 · 주소 · 공지 …)은 길게 쓰면 줄이 바뀌고 칸이 저절로 늘어나요 (GrowInput · 옆으로 밀리거나 스크롤 막대 없이).
+ * multiline 은 처음부터 큰 칸(110), 아니면 한 줄 높이에서 시작해요 — Enter 는 줄 바꿈 대신 다음으로 (submitBehavior blurAndSubmit).
+ * 휴대폰 번호 · 이메일 · 숫자 · 비밀번호 · oneLine 은 한 줄 칸 그대로.
+ */
+export function TextField({ label, multiline, variant = 'box', oneLine, ...rest }: TextFieldProps) {
+  const focus = useFocusRing(rest);
+  const typed = !!rest.secureTextEntry || (rest.keyboardType != null && rest.keyboardType !== 'default');
+  if (multiline || (!oneLine && !typed))
+    return (
+      <View style={styles.field}>
+        {label ? <PText style={styles.label}>{label}</PText> : null}
+        <GrowInput
+          placeholderTextColor="#8C8597"
+          selectionColor={Colors.purple}
+          cursorColor={Colors.purple}
+          submitBehavior={multiline ? undefined : 'blurAndSubmit'}
+          style={[styles.input, variant === 'round' && styles.round, multiline ? styles.multi : styles.oneToMany]}
+          accessibilityLabel={label ?? rest.placeholder}
+          {...rest}
+        />
+      </View>
+    );
   return (
     <View style={styles.field}>
       {label ? <PText style={styles.label}>{label}</PText> : null}
@@ -31,11 +56,11 @@ export function TextField({ label, multiline, variant = 'box', ...rest }: TextFi
         placeholderTextColor="#8C8597"
         selectionColor={Colors.purple}
         cursorColor={Colors.purple}
-        multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'center'}
-        style={[styles.input, variant === 'round' && styles.round, multiline && styles.multi]}
+        textAlignVertical="center"
         accessibilityLabel={label ?? rest.placeholder}
         {...rest}
+        {...focus}
+        style={[styles.input, variant === 'round' && styles.round, focus.ringStyle]}
       />
     </View>
   );
@@ -131,8 +156,10 @@ const styles = StyleSheet.create({
   // .lg-fl input { height: 46px; border-radius: 14px; padding: 0 14px; font-size: 14px; font-weight: 700 }
   input: { height: 46, paddingHorizontal: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   round: { borderRadius: 23, paddingHorizontal: 16, fontFamily: Font.body600 },
+  // 한 줄 높이(46)에서 시작해 길게 쓰면 늘어나는 칸
+  oneToMany: { height: undefined, minHeight: 46, paddingTop: 11, paddingBottom: 11, lineHeight: 20 },
   // #lgSheet textarea { height: 110px; border-radius: 18px; padding: 12px 14px; line-height: 1.6 }
-  multi: { height: undefined, minHeight: 110, maxHeight: 260, borderRadius: 18, paddingTop: 12, paddingBottom: 12, fontFamily: Font.body600, lineHeight: 14 * 1.6 },
+  multi: { height: undefined, minHeight: 110, borderRadius: 18, paddingTop: 12, paddingBottom: 12, fontFamily: Font.body600, lineHeight: 14 * 1.6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
   checkPress: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
   grow: { flex: 1 },
