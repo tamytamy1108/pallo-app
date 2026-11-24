@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Tts from 'expo-speech';
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
@@ -17,6 +16,7 @@ import { haptic, sfx } from '@/lib/feedback';
 import { useLearnPrefs } from '@/state/learn-prefs';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { LayerModal } from '@/components/ui/sheet-stack';
+import { speak } from '@/lib/tts';
 
 import { Check, Mark, Spk, XMark } from './icons';
 
@@ -42,8 +42,8 @@ export function useSay() {
       return;
     }
     const v = who ? VOICE[who] : undefined;
-    void Tts.stop();
-    Tts.speak(text.replace(/[’‘]/g, "'"), { language: 'en-US', rate: rate * (v?.rate ?? 1), pitch: v?.pitch, onDone: onEnd, onError: onEnd ? () => onEnd() : undefined });
+    // 다 읽었거나 저절로 끊기거나 오류면 onEnd (우리가 멈추거나 다른 소리가 끼어들면 안 불러요)
+    speak(text, { rate: rate * (v?.rate ?? 1), pitch: v?.pitch, onEnd: (why) => why !== 'cancelled' && why !== 'replaced' && onEnd?.() });
   };
 }
 

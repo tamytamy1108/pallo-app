@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
@@ -18,6 +17,7 @@ import type { SceneWithContent } from '@/data/situation';
 import type { Flow, MoreQ } from '@/data/situation-content';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useLearnPrefs } from '@/state/learn-prefs';
+import { stopSpeaking } from '@/lib/tts';
 
 import { Bulb, Check, Kbd, Mark, Mic, Send, Spk } from './icons';
 import { Avatar, BigBtn, SUB, useSay } from './parts';
@@ -125,7 +125,7 @@ export function TalkStep({ sceneId, scene }: { sceneId: string; scene: SceneWith
       speech.stop();
       return;
     }
-    Tts.stop();
+    stopSpeaking();
     sfx('tap');
     showToast('듣고 있어요 · 영어로 말해 보세요');
     void speech.start(C.replies[i] ?? []);

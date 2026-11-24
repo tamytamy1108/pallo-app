@@ -1,4 +1,3 @@
-import * as Speech from 'expo-speech';
 import { router, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,13 +9,13 @@ import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { removeExpression, restoreExpression, type SavedExpression } from '@/state/expressions';
+import { speak } from '@/lib/tts';
 
 import { LgIcon } from './icons';
 
 /** 영어 문장 듣기 (프로토타입 lgSay · 0.92배) */
 export const sayEn = (t: string) => {
-  Speech.stop();
-  Speech.speak(t.replace(/[’]/g, "'"), { language: 'en-US', rate: 0.92 });
+  speak(t);
 };
 
 /** 표현함에서 빼기 + [되돌리기] (프로토타입 data-nbrm) */

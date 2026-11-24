@@ -1,6 +1,5 @@
 import { Image } from "expo-image";
 import Animated, { css, useReducedMotion } from "react-native-reanimated";
-import * as Tts from "expo-speech";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -35,6 +34,7 @@ import {
 } from "../ui";
 import { PCard, PFoot, Stats } from "./common";
 import type { PageApi } from "./study-shell";
+import { stopSpeaking } from '@/lib/tts';
 
 type Msg = {
   me?: boolean;
@@ -168,7 +168,7 @@ export function DailyTalk({
   const [open, setOpen] = useState<string | null>(null);
   const speech = useSpeech({ onText: (text) => setDraft(text) });
 
-  useEffect(() => () => void Tts.stop(), []);
+  useEffect(() => () => stopSpeaking(), []);
 
   const ai = (en: string, ko: string) => {
     setLog((l) => [...l, { en, ko }]);

@@ -1,4 +1,3 @@
-import * as Speech from 'expo-speech';
 import { router } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -36,6 +35,7 @@ import {
   type ChView,
 } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
+import { speak } from '@/lib/tts';
 
 import { Face } from './face';
 import { ChIcon } from './icons';
@@ -188,8 +188,7 @@ export function ExprCard({
   const src = challengeSrc(p);
   const say = () => {
     haptic('tap');
-    Speech.stop();
-    Speech.speak(p.q || p.hl || '', { language: p.lang, rate: 0.95 });
+    speak(p.q || p.hl || '', { language: p.lang, rate: 0.95 });
   };
   const face = carousel ? 22 : 24;
   return (

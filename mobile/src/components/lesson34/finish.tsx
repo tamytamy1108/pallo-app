@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import * as Tts from 'expo-speech';
 import { useState } from 'react';
 
 import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
@@ -12,6 +11,7 @@ import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 
 import { dropRun } from './store';
 import { lessonQuestTitle, shareQuest } from '@/state/quest-share';
+import { stopSpeaking } from '@/lib/tts';
 
 /** resume: 앞 화면 팝업에서 이미 '이어서 하기'를 골랐으면 'resume' (다시 묻지 않아요) */
 export type StepCtx = { lv: 3 | 4; unit: number; step: Step34 & { stage: Stage }; source: string; resume?: 'resume' | 'restart' };
@@ -25,7 +25,7 @@ export const leave34 = () => (router.canGoBack() ? router.back() : router.replac
 export function useSoundToggle() {
   const { noListen } = useLearnPrefs();
   const toggle = () => {
-    Tts.stop();
+    stopSpeaking();
     setNoListen(!noListen);
     sfx('toggle');
     showToast(!noListen ? '15분 동안 소리를 꺼요' : '소리를 다시 켰어요');

@@ -1,10 +1,10 @@
-import * as Tts from 'expo-speech';
 import { useState } from 'react';
 
 import { ShadowTask } from '@/components/lesson/shadow-task';
 import type { SceneWithContent } from '@/data/situation';
 import type { ShadowTask as Task } from '@/data/lessons';
 import { useLearnPrefs } from '@/state/learn-prefs';
+import { stopSpeaking } from '@/lib/tts';
 
 import { useQuizLevel } from './scene-store';
 import { StepShell, useStepFinish } from './step-frame';
@@ -40,7 +40,7 @@ export function MissionStep({ sceneId, scene }: { sceneId: string; scene: SceneW
         soundOff={noListen}
         nextLabel={last ? '완료' : '다음'}
         onNext={() => {
-          Tts.stop();
+          stopSpeaking();
           if (last) finish();
           else setI(i + 1);
         }}

@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import * as Tts from 'expo-speech';
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -13,6 +12,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
+import { speak, stopSpeaking } from '@/lib/tts';
 import { useIsSaved, toggleExpression } from '@/state/expressions';
 
 import type { Ask, Head } from './types';
@@ -38,12 +38,13 @@ const PPL: Record<string, [number, string]> = {
 
 /** 영어 읽어 주기 (소리 끄기면 안 읽어요) */
 export function sayEn(text: string, soundOff: boolean, rate = 0.92, onDone?: () => void) {
-  Tts.stop();
   if (soundOff || !text) {
+    stopSpeaking();
     onDone?.();
     return;
   }
-  Tts.speak(text, { language: 'en-US', rate, onDone, onStopped: undefined });
+  // 다 읽었거나 저절로 끊겨도 onDone (그래야 '말 시작까지' 시계가 멈춰 있지 않아요). 우리가 멈추거나 다른 소리가 끼어들면 안 불러요
+  speak(text, { rate, onEnd: (why) => why !== 'cancelled' && why !== 'replaced' && onDone?.() });
 }
 
 /** 듣기 단추 .ls-spk (32 · 흰 바탕 · 아래 그림자) — 소리 끄기면 숨겨요 */

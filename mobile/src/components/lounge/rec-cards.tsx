@@ -1,4 +1,3 @@
-import * as Speech from 'expo-speech';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -11,6 +10,7 @@ import { Colors } from '@/constants/theme';
 import { daysFrom, LG_C, LG_PW, meetIso, meetMonth, type RecChal, type RecMeet, won } from '@/data/lounge';
 import { addPostComment, postComments, useLounge } from '@/data/lounge-store';
 import { useMe } from '@/state/me';
+import { speak } from '@/lib/tts';
 
 import { Face } from './face';
 import { LgIcon } from './icons';
@@ -121,7 +121,7 @@ export function RecChalCard({ p }: { p: RecChal }) {
               </View>
             </View>
           </Pressable>
-          <Pressable onPress={() => Speech.speak(p.q, { language: p.lang, rate: 0.95 })} accessibilityRole="button" accessibilityLabel="표현 듣기" style={styles.say}>
+          <Pressable onPress={() => speak(p.q, { language: p.lang, rate: 0.95 })} accessibilityRole="button" accessibilityLabel="표현 듣기" style={styles.say}>
             <LgIcon name="spk" size={18} />
           </Pressable>
         </View>

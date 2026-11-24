@@ -1,5 +1,4 @@
 import { Image } from "expo-image";
-import * as Tts from "expo-speech";
 import { useEffect, useRef, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -23,6 +22,7 @@ import { fmtS, nrm, words } from "../text";
 import { ChkRow, GoBtn, ModeTabs, PINK_INK, SUB, sayEn } from "../ui";
 import { Intro, PFoot, Stats } from "./common";
 import type { PageApi } from "./study-shell";
+import { stopSpeaking } from '@/lib/tts';
 
 export const PPL_IMG = {
   Aiden: require("@/assets/images/lesson34/aiden.jpg"),
@@ -128,7 +128,7 @@ export function FreeTalk1({
       clearInterval(tick);
       clearTimeout(first);
       clearTimeout(tm);
-      Tts.stop();
+      stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

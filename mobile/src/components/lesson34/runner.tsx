@@ -1,4 +1,3 @@
-import * as Tts from 'expo-speech';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +11,7 @@ import { CHEER_STREAK, pickOne } from '@/data/lessons';
 import { sfx } from '@/lib/feedback';
 import { setNoSpeak, useLearnPrefs } from '@/state/learn-prefs';
 import { clearPos, savePos, stepKey, useSavedPos } from '@/state/progress';
+import { stopSpeaking } from '@/lib/tts';
 
 import { MatchBlock } from './blocks/match';
 import { BlindBlock, ChooseBlock, DuoBlock, ExplainBlock, ReadBlock, ScoreBlock } from './blocks/misc';
@@ -66,7 +66,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
   const t = tasks[Math.min(i, tasks.length - 1)];
   const last = i >= tasks.length - 1;
 
-  useEffect(() => () => void Tts.stop(), []);
+  useEffect(() => () => stopSpeaking(), []);
 
   // 문제를 넘길 때마다 멈춘 곳을 남겨요 — 그만하기 없이 앱이 꺼져도 다시 켜면 이 번호부터
   useEffect(() => {
@@ -80,7 +80,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
     finish(score.current ?? (r.length ? { right: r.filter(Boolean).length, total: r.length } : null));
   };
   const next = () => {
-    Tts.stop();
+    stopSpeaking();
     setKickOver(null);
     if (i >= tasksRef.current.length - 1) {
       done();
@@ -95,7 +95,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
       noSpeak,
       toggleNoSpeak: () => {
         // 켜고 끄면 지금 문제를 처음부터 (프로토타입 NS_RE)
-        Tts.stop();
+        stopSpeaking();
         setNoSpeak(!noSpeak);
         sfx('toggle');
         setNonce((n) => n + 1);
@@ -133,7 +133,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
   const quit = () => {
     // 슬픈 소리는 확인 창이 내요 (confirmSfx)
     setAskQuit(false);
-    Tts.stop();
+    stopSpeaking();
     if (i > 0 && i < tasks.length) {
       saveRun(key, { tasks, i, res: res.current });
       savePos(key, i);

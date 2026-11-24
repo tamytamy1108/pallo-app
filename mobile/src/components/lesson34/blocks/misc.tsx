@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
@@ -15,6 +14,7 @@ import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { useSpeech } from '@/lib/speech';
 import { matchSpeech, shuffled, wordKey } from '@/lib/words';
+import { readLines, stopSpeaking } from '@/lib/tts';
 
 import { Body, Foot, useRunner } from '../frame';
 import { ModelCard, TopPart } from '../parts';
@@ -30,7 +30,7 @@ export function ExplainBlock({ task: t }: { task: ExplainTask }) {
     const tm = setTimeout(() => sayEn(t.listen ?? '', rt.soundOff, 0.92), 300);
     return () => {
       clearTimeout(tm);
-      Tts.stop();
+      stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -195,31 +195,28 @@ export function BlindBlock({ task: t }: { task: BlindTask }) {
   const max = t.max ?? 2;
   const [plays, setPlays] = useState(0);
   const [now, setNow] = useState<number | null>(null);
-  const tok = useRef(0);
+  // 듣는 중이면 멈추는 함수
+  const cancel = useRef<(() => void) | null>(null);
   const open = rt.noSpeak || rt.soundOff;
   const playing = now != null;
-  useEffect(
-    () => () => {
-      tok.current += 1;
-      Tts.stop();
-    },
-    [],
-  );
+  useEffect(() => () => cancel.current?.(), []);
+  // 소리 끄기 · 말하기가 어려워요로 글이 열리면 듣던 것도 멈춰요
+  useEffect(() => {
+    if (open) cancel.current?.();
+  }, [open]);
   const play = () => {
     setPlays((p) => p + 1);
-    const my = (tok.current += 1);
-    const step = (i: number) => {
-      if (tok.current !== my) return;
-      if (i >= t.lines.length) {
-        setNow(null);
-        return;
-      }
-      setNow(i);
-      Tts.speak(t.lines[i][0], { language: 'en-US', rate: 0.95, onDone: () => {
-          setTimeout(() => step(i + 1), 250);
-        } });
-    };
-    step(0);
+    cancel.current = readLines(
+      t.lines.map(([en]) => en),
+      {
+        rate: 0.95,
+        onLine: setNow,
+        onFinish: () => {
+          cancel.current = null;
+          setNow(null);
+        },
+      },
+    );
   };
   const can = plays >= 1 || open;
   return (
@@ -252,8 +249,7 @@ export function BlindBlock({ task: t }: { task: BlindTask }) {
             label={can ? (t.go ?? '30초 요약하기') : '한 번 들으면 다음'}
             disabled={!can || playing}
             onPress={() => {
-              tok.current += 1;
-              Tts.stop();
+              cancel.current?.();
               rt.next();
             }}
           />
