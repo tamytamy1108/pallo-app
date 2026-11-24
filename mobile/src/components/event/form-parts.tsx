@@ -414,7 +414,6 @@ export function TimeRange({ start, end, onChange }: { start: string; end: string
         <PText style={tr.til}>~</PText>
         {box('e', '끝', end)}
       </View>
-      <PText style={tr.span}>{`${spanLabel(start, end)} 동안${edit ? (edit === 's' ? ' · 끌어서 시작 시간을 골라요' : ' · 끌어서 끝나는 시간을 골라요') : ' · 칸을 눌러 바꿔요'}`}</PText>
       {edit ? (
         // 누른 칸 바로 아래 · 그 칸 폭만큼
         <Wheel key={edit} items={edit === 's' ? starts : ends} value={edit === 's' ? start : end} label={timeLabel} onChange={(t) => (edit === 's' ? pickStart(t) : onChange(start, t))} style={[tr.wheel, edit === 'e' && tr.wheelEnd]} />
@@ -433,5 +432,4 @@ const tr = StyleSheet.create({
   til: { fontFamily: Font.display, fontSize: 16, color: Colors.inkSub },
   wheel: { width: '46%' },
   wheelEnd: { alignSelf: 'flex-end' },
-  span: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: C.pu },
 });
