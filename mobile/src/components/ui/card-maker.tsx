@@ -89,7 +89,7 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, fallback, s
             <View style={[styles.pv, { width: pw, height: ph, borderRadius: square ? 16 : 14 }]}>
               {renderPreview ? renderPreview(card, words, pw, ph) : <ColorCard color={card.color} words={words} size={square ? 18 : 26} width={pw} center={square} style={StyleSheet.absoluteFill} />}
             </View>
-            <View style={styles.ins}>
+            <View style={[styles.ins, { height: ph }]}>
               {[0, 1].map((i) => (
                 <TextInput
                   key={i}
@@ -103,9 +103,9 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, fallback, s
                   style={styles.in}
                 />
               ))}
-              <PText style={styles.hint}>비워 두면 &apos;{fallback.join(' ')}&apos;</PText>
             </View>
           </View>
+          <PText style={styles.hint}>문구를 비워 두면 &apos;{fallback.join(' ')}&apos;로 들어가요.</PText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colors}>
             {CARD_COLORS.map((c) => {
               const sel = c.hex === card.color;
@@ -139,9 +139,10 @@ const styles = StyleSheet.create({
   knobOn: { transform: [{ translateX: 18 }] },
   row: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   pv: { overflow: 'hidden', borderWidth: 2, borderColor: Colors.ink },
-  ins: { flex: 1, gap: 6 },
+  // 문구 칸 두 개를 미리보기 카드 높이 안에서 가운데로 (카드와 위아래가 맞게)
+  ins: { flex: 1, gap: 8, justifyContent: 'center' },
   in: { height: 40, borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
-  hint: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
+  hint: { marginTop: -2, fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   colors: { gap: 8, paddingVertical: 2, paddingRight: 4 },
   dot: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(30,26,43,0.25)', alignItems: 'center', justifyContent: 'center' },
   dotOn: { borderWidth: 2.5, borderColor: Colors.ink },
