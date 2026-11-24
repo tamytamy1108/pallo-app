@@ -27,6 +27,7 @@ import {
   type ClubPost,
   type Meet,
   type Region,
+  ALL_REGIONS,
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
 
@@ -56,6 +57,8 @@ export function regionCounts(meets: Meet[], clubs: Club[], branch: string) {
     if (branchOk(m.br, branch) && c[m.reg] && isOpenMeet(m)) c[m.reg][0]++;
   });
   clubs.forEach((k) => {
+    // 지역 '전체' 동아리는 지역별 숫자에 세지 않아요
+    if (k.reg === ALL_REGIONS) return;
     if (branchOk(k.br, branch) && c[k.reg] && !k.wait) c[k.reg][1]++;
   });
   return c;
@@ -67,7 +70,7 @@ export const clubX = (c: Club) => {
   const h = hashId(c.id);
   return { act: c.mine ? '방금 만듦' : CLUB_ACT[h % 6], j30: c.mine ? 0 : 1 + (h % 5), fresh: !!(c.mine || c.wait) };
 };
-export const clubDesc = (c: Club) => c.memo || DESC[c.id] || `${c.when}에 모여 ${c.lang}로 이야기해요. 처음 와도 편하게 섞일 수 있어요.`;
+export const clubDesc = (c: Club) => c.memo || DESC[c.id] || `${c.when}에 모여 ${c.lang === '언어 무관' ? '어떤 언어로든' : c.lang + '로'} 이야기해요. 처음 와도 편하게 섞일 수 있어요.`;
 export const clubHost = (c: Club) => c.host.split(' ')[0];
 export const clubSpot = (c: Club): [string, string] => CLUB_SPOT[c.id] ?? [c.when.split(' · ')[1] || `${c.br} 근처`, '자세한 주소는 호스트가 정하면 보여요'];
 export const dayNames = (c: Club) => c.days.map((d) => WEEK[d]).join('·');
@@ -112,7 +115,8 @@ export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, spa
     const d = new Date(t0);
     d.setDate(d.getDate() + k);
     if (!c.days.includes(d.getDay())) continue;
-    const cap = Math.min(c.max, 8);
+    // 인원 무관(0)이면 예시 인원 8명 기준
+    const cap = Math.min(c.max || 8, 8);
     const base = out.length === 1 && h % 3 === 0 ? cap : out.length === 3 ? 1 + (h % 2) : 2 + ((h + k) % (cap - 2));
     const th = (SESSION_THEME[c.cc] || SESSION_THEME.study)[out.length % 4];
     const id = `${c.id}@${d.getMonth() + 1}-${d.getDate()}`;

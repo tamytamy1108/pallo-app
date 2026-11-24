@@ -7,7 +7,7 @@ import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { C, isPast, REGIONS, type Meet, type Region } from '@/data/meet';
+import { C, isPast, REGIONS, type Meet, type Region, ALL_REGIONS } from '@/data/meet';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { ClubList } from './club-list';
@@ -47,7 +47,8 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
   const nMeet = meets.filter(isOpenMeet).length;
   const nClub = clubs.filter((c) => !c.wait).length;
 
-  const inReg = (x: { reg: Region }) => !reg || x.reg === reg;
+  // 지역 '전체' 동아리는 어느 지역을 골라도 보여요
+  const inReg = (x: { reg: string }) => !reg || x.reg === reg || x.reg === ALL_REGIONS;
   const allM = mode === 'club' ? [] : meets.filter(inReg);
   const ms = allM.filter((m) => !isPast(m)).sort((a, b) => Number(!!a.closed) - Number(!!b.closed) || meetN(a) - meetN(b));
   const past = allM.filter(isPast).sort((a, b) => meetN(b) - meetN(a));

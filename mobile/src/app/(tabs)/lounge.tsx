@@ -108,7 +108,7 @@ export default function LoungeScreen() {
           <Tabs tab={tab} onPick={pickTab} />
         </View>
         {/* 비회원은 모든 탭에서 위쪽(카드 1~2개)까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
-        <ScrollLock key={tab} screen="lounge" peek={LOUNGE_PEEK}>
+        <ScrollLock key={tab} screen="lounge" peek={LOUNGE_PEEK} inset={16}>
           {tab === 'all' || tab === 'com' ? <StoryRow /> : null}
           {tab === 'chal' ? (
             <ChallengeTab branch={branch} header={branchBtn} />

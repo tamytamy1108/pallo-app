@@ -4,7 +4,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
-import { PlacePicker, PosterPicker, TimeChips, type Place } from '@/components/event/form-parts';
+import { CountStepper, defaultEnd, PlacePicker, PosterPicker, timeLabel, TimeRange, type Place } from '@/components/event/form-parts';
+import { PosterPreview } from '@/components/meet/poster';
+import { CardMaker } from '@/components/ui/card-maker';
+import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyMeet } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
@@ -12,13 +15,14 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { C, MONTHS, REGIONS, WEEK, type Region } from '@/data/meet';
+import { C, MONTHS, NO_LIMIT, REGIONS, WEEK, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
 const MEET_MAX = 7; // 오늘부터 1주 뒤까지 (프로토타입 MEET_MAX)
-const TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '19:00', '19:30', '20:00', '20:30', '21:00'];
-const CAPS = ['4명', '6명', '8명', '10명'];
+/** 정원 (나 포함) — 직접 정해요 */
+const CAP_MIN = 2;
+const CAP_MAX = 20;
 const t0 = () => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -40,34 +44,40 @@ export default function NewMeet() {
   const [reg, setReg] = useState<Region>('서울');
   const [title, setTitle] = useState('');
   const [day, setDay] = useState(3);
+  // 만나는 시간: 시작 ~ 끝
   const [time, setTime] = useState('20:00');
+  const [endTime, setEndTime] = useState(() => defaultEnd('20:00'));
   const [place, setPlace] = useState<Place | null>(null);
   const [addr2, setAddr2] = useState('');
-  const [cap, setCap] = useState('6명');
+  const [cap, setCap] = useState(6);
+  const [noCap, setNoCap] = useState(false);
   const [pics, setPics] = useState<string[]>([]);
+  // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
+  const [card, setCard] = useState<MadeCard | null>(null);
   const d = addDays(day);
-  const h = Number(time.slice(0, 2));
-  const when = `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) ${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${time.slice(3)}에 만나요 · ${day === 0 ? '오늘' : day === 1 ? '내일' : day + '일 뒤'}`;
+  const when = `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) ${timeLabel(time)} ~ ${timeLabel(endTime)}에 만나요 · ${day === 0 ? '오늘' : day === 1 ? '내일' : day + '일 뒤'}`;
 
   const open = () => {
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!place) return showToast('지도에서 장소를 골라 주세요');
+    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     addMyMeet({
       id: 'u' + Date.now(),
       br: me.branch,
       reg,
       day: String(d.getDate()).padStart(2, '0'),
       mon: MONTHS[d.getMonth()],
-      wd: `${WEEK[d.getDay()]} ${time}`,
+      wd: `${WEEK[d.getDay()]} ${time}~${endTime}`,
       title: title.trim(),
       place: place.name,
       addr: place.addr,
       addr2: addr2.trim() || undefined,
       host: me.name,
       cur: 1,
-      max: parseInt(cap, 10) || 6,
+      max: noCap ? NO_LIMIT : cap,
       mine: true,
       posters: pics.length ? pics : undefined,
+      card: usedCard(card, pics.length > 0),
     });
     sfx('save');
     router.back();
@@ -86,7 +96,7 @@ export default function NewMeet() {
   return (
     <SheetPage title="번개 열기" label="번개 열기" footer={<SheetButton label="번개 열기 · 지도에 표시" size="foot" onPress={open} />}>
       <SheetDesc>지도와 번개 목록에 바로 보여요. 오늘 배운 표현을 쓰는 자리면 더 좋아요.</SheetDesc>
-      <Field label="지역">
+      <Field label="지역" req>
         <SheetPills
           options={REGIONS.map(([r]) => r)}
           value={reg}
@@ -96,8 +106,8 @@ export default function NewMeet() {
           }}
         />
       </Field>
-      <TextField label="제목" value={title} onChangeText={setTitle} placeholder="예) 퇴근 후 영어 맥주 번개" />
-      <Field label="날짜 · 오늘부터 1주 안에서 골라요">
+      <TextField label="제목 *" value={title} onChangeText={setTitle} placeholder="예) 퇴근 후 영어 맥주 번개" />
+      <Field label="날짜 · 오늘부터 1주 안에서 골라요" req>
         <View style={styles.cal}>
           <View style={styles.calH}>
             <PText style={styles.calB}>
@@ -131,28 +141,48 @@ export default function NewMeet() {
           </View>
         </View>
       </Field>
-      <Field label="시간">
-        <TimeChips times={TIMES} value={time} onChange={setTime} />
+      <Field label="시간 · 시작 ~ 끝" req>
+        <TimeRange start={time} end={endTime} onChange={(s, e) => { setTime(s); setEndTime(e); }} />
       </Field>
       <PText style={styles.when}>{when}</PText>
-      <Field label="장소 · 지도에서 골라요">
+      <Field label="장소 · 지도에서 골라요" req>
         <PlacePicker region={reg} value={place} onChange={setPlace} />
       </Field>
       <TextField label="상세 주소 · 직접 적어요 (선택)" value={addr2} onChangeText={setAddr2} placeholder="예) 3층 창가 긴 테이블 · 입구에서 오른쪽" />
-      <Field label="정원">
-        <SheetPills options={CAPS} value={cap} onChange={setCap} />
+      <Field label="정원 · 나 포함" req>
+        <CountStepper value={cap} min={CAP_MIN} max={CAP_MAX} format={(v) => `${v}명`} onChange={setCap} less="한 명 줄이기" more="한 명 늘리기" unlimited={{ on: noCap, onChange: setNoCap, label: '인원 무관' }} />
       </Field>
-      <Field label="포스터 · 여러 장 · 누르면 대표로">
-        <PosterPicker uris={pics} onChange={setPics} />
+      <Field label="대표 이미지 · 사진 여러 장 또는 카드" req>
+        <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
+        <CardMaker
+          value={card}
+          onChange={setCard}
+          hasPhoto={pics.length > 0}
+          example={['NEW', 'MEET']}
+          renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
+          listPreview={{
+            label: '번개 목록 카드에서는 이렇게 보여요',
+            // 목록 카드: 폭 ≈ 274 · 포스터 높이 150 · 글자 28 (meet-tab cardW · meet-card)
+            render: (c, words, w) => (
+              <View style={{ borderRadius: 14, overflow: 'hidden', borderWidth: 2, borderColor: Colors.ink, alignSelf: 'flex-start' }}>
+                <PosterPreview card={c} words={words} width={Math.min(w - 4, 274)} realW={274} realH={150} wordSize={28} />
+              </View>
+            ),
+          }}
+        />
       </Field>
     </SheetPage>
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+/** 칸 이름 · req 면 빨간 * (꼭 정해요) */
+function Field({ label, req, children }: { label: string; req?: boolean; children: ReactNode }) {
   return (
     <View style={{ gap: 6 }}>
-      <PText style={styles.lb}>{label}</PText>
+      <PText style={styles.lb}>
+        {label}
+        {req ? <PText style={styles.req}> *</PText> : null}
+      </PText>
       {children}
     </View>
   );
@@ -160,6 +190,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 const styles = StyleSheet.create({
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 19 },
+  req: { fontFamily: Font.body900, fontSize: 12.5, color: '#E5484D' },
   cal: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: '#fff', paddingTop: 12, paddingHorizontal: 10, paddingBottom: 10 },
   calH: { gap: 1, paddingHorizontal: 4, paddingBottom: 8 },
   calB: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },

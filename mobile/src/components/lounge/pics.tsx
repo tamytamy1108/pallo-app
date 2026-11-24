@@ -7,6 +7,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LG_C, type PicKey } from '@/data/lounge';
+import { cardDark } from '@/data/poster-colors';
 
 /*
  * 사진 · 포스터 대신 그리는 브랜드 색 그림 (프로토타입 LG_PICS · lgPoster).
@@ -123,7 +124,8 @@ export function PostArt({ pic, uid }: { pic: PicKey; uid: string }): ReactNode {
 
 // ---- 번개 · 파티 포스터 (프로토타입 lgPoster) ----
 const ACC: Record<string, string> = { [LG_C.pk]: '#fff', [LG_C.pu]: LG_C.pk, [LG_C.y]: LG_C.pk, [LG_C.sky]: LG_C.y, [LG_C.lpu]: LG_C.pu };
-export const isDarkBg = (bg: string) => bg === LG_C.pu || bg === LG_C.pk;
+/** 어두운 바탕 (글자 노랑): 브랜드 퍼플 · 핑크 + 내가 만든 카드의 어두운 색 */
+export const isDarkBg = (bg: string) => bg === LG_C.pu || bg === LG_C.pk || cardDark(bg);
 
 /** 지난 번개 카드: filter grayscale(.9) 를 색마다 직접 섞어요 (안드로이드 · iOS 는 CSS filter 가 없어서) */
 export function gray(hex: string, k = 0.9) {

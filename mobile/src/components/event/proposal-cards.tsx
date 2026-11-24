@@ -7,6 +7,8 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { ColorCard } from '@/components/ui/card-maker';
+import { cardWords } from '@/data/poster-colors';
 import { WEEK } from '@/data/meet';
 
 /** 내가 제안한 이벤트 (보낸 제안이 있을 때만, 프로토타입 lgPropCards · .lg-prop) */
@@ -20,7 +22,7 @@ export function ProposalCards() {
         const d = new Date(q.date + 'T00:00');
         return (
           <View key={q.id} style={styles.card}>
-            {q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
+            {q.card ? <ColorCard color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
             <View style={styles.tx}>
               <PText numberOfLines={1} style={styles.t}>
                 {q.title}

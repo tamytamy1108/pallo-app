@@ -7,7 +7,25 @@
  */
 
 /** 프로토타입 LG_C — 포스터 · 지도에 쓰는 브랜드 색 */
+import type { MadeCard } from './poster-colors';
+
 export const C = { y: '#FFE200', pk: '#D0798E', pu: '#493087', sky: '#8FA6DC', lpu: '#E5DDF6', lsky: '#E3EAF8', ink: '#1E1A2B', cream: '#FBF6EA' } as const;
+
+/** 정원 · 최대 인원 0 = 인원 무관 (개설할 때 '인원 무관'을 고르면 0) */
+export const NO_LIMIT = 0;
+/** 자리가 다 찼나요 (인원 무관이면 늘 아니에요) */
+export const capFull = (cur: number, max: number) => max > 0 && cur >= max;
+/** '3 / 6명' · 인원 무관이면 '3명 · 인원 무관' */
+export const capText = (cur: number, max: number) => (max > 0 ? `${cur} / ${max}명` : `${cur}명 · 인원 무관`);
+
+/** 동아리 지역 '전체' (지역 상관없이) */
+export const ALL_REGIONS = '전체';
+
+/** 동아리 가입 조건: 'PALLO 멤버만' 또는 '개설한 사람 지점 멤버만' (예: '하남점 멤버만') — 옛 '누구나' 는 멤버만과 같아요 */
+export const CLUB_MEMBERS = '멤버만';
+export const branchOnly = (br: string) => `${br} 멤버만`;
+/** 바로 가입되나요: 멤버만이면 누구나 · 지점 멤버만이면 그 지점 사람만 (다른 지점은 호스트 확인) */
+export const joinFree = (cond: string, clubBr: string, myBr: string) => cond === '누구나' || cond === CLUB_MEMBERS || (cond === branchOnly(clubBr) && myBr === clubBr);
 
 export type Region = '서울' | '경기' | '천안' | '대전' | '대구' | '울산' | '부산';
 export type ClubCat = 'run' | 'book' | 'drama' | 'food' | 'study';
@@ -40,6 +58,8 @@ export type Meet = {
   closed?: boolean;
   /** 내가 올린 포스터 사진 (첫 장이 대표) */
   posters?: string[];
+  /** 내가 만든 카드 (있으면 대표 · 사진은 그 뒤에) */
+  card?: MadeCard;
   /** 상세 주소 · 직접 적은 것 */
   addr?: string;
   addr2?: string;
@@ -49,7 +69,8 @@ export type Meet = {
 export type Club = {
   id: string;
   cc: ClubCat;
-  reg: Region;
+  /** '전체' = 지역 상관없이 (모든 지역 목록에 보여요) */
+  reg: Region | typeof ALL_REGIONS;
   name: string;
   lang: string;
   br: string;
@@ -63,6 +84,8 @@ export type Club = {
   wait?: boolean;
   memo?: string;
   posters?: string[];
+  /** 내가 만든 카드 (있으면 대표 · 사진은 그 뒤에) */
+  card?: MadeCard;
 };
 
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];

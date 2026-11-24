@@ -283,8 +283,19 @@ function HomeTab({ p, s, onAll, onThread, onReport }: { p: Challenge; s: ChView;
   ];
   return (
     <>
-      <PText style={styles.dsec}>이렇게 인증해요</PText>
-      <PText style={styles.ddesc}>{p.guide || ''}</PText>
+      <PText style={styles.dsec}>챌린지 소개</PText>
+      <View style={styles.dlist}>
+        {(p.guide || '')
+          .split('\n')
+          .map((l) => l.replace(/^\s*[•·\-*]\s*/, '').trim())
+          .filter(Boolean)
+          .map((l, i) => (
+            <View key={i} style={styles.dli}>
+              <View style={styles.dot} />
+              <PText style={styles.ddesc}>{l}</PText>
+            </View>
+          ))}
+      </View>
       <View style={styles.drows}>
         {rows.map(([ic, a, b], i) => (
           <View key={a} style={[styles.drow, i > 0 && styles.drowLine]}>
@@ -527,7 +538,10 @@ const styles = StyleSheet.create({
   dsec: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   dsecS: { fontFamily: Font.body700, fontSize: 12, color: SUB },
   secGap: { marginTop: 20 },
-  ddesc: { marginTop: 8, fontFamily: Font.body600, fontSize: 14.5, lineHeight: 24.65 },
+  ddesc: { flex: 1, fontFamily: Font.body600, fontSize: 14.5, lineHeight: 24.65 },
+  dlist: { marginTop: 8, gap: 2 },
+  dli: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  dot: { width: 6, height: 6, borderRadius: 3, marginTop: 9.5, backgroundColor: Colors.purple },
   drows: { marginTop: 14, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, paddingVertical: 2, paddingHorizontal: 14 },
   drow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
   drowLine: { borderTopWidth: 1.5, borderColor: LINE },
