@@ -3,10 +3,11 @@
  * 프로토타입 .mp-top · .lg-dcta · lgI() · .st-row.tg i · .cg-chips · .nt-tabs 를 옮겼어요.
  */
 import type { ReactNode, RefObject } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { KeyboardScrollView } from '@/components/ui/form-scroll';
 import { Pressable } from '@/components/ui/pressable';
 import { TopBar } from '@/components/ui/top-bar';
 import { BottomBar } from '@/components/bottom-bar';
@@ -69,9 +70,10 @@ export function AccountPage({ title, onBack, right, children, footer, bottom, bo
         {plain ? (
           <View style={[styles.flex, bodyStyle]}>{children}</View>
         ) : (
-          <ScrollView ref={scrollRef} style={styles.flex} contentContainerStyle={[styles.body, bodyStyle]} keyboardShouldPersistTaps="handled">
+          // 글 칸을 누르면 키보드 · 아래 바 위로 보이게 (KeyboardAvoidingView 가 줄인 뒤에 맞춰요)
+          <KeyboardScrollView ref={scrollRef} style={styles.flex} contentContainerStyle={[styles.body, bodyStyle]}>
             {children}
-          </ScrollView>
+          </KeyboardScrollView>
         )}
         {bottom}
         {footer ? <BottomBar>{footer}</BottomBar> : null}

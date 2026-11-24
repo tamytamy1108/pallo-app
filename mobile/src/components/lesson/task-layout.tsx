@@ -1,9 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { createContext, useContext, type ReactNode, type RefObject } from 'react';
-import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
+import { KeyboardScrollView } from '@/components/ui/form-scroll';
 import { Colors } from '@/constants/theme';
+import { useFootPadding } from '@/lib/keyboard';
 import type { Task } from '@/data/lessons';
 
 /** 레슨 진행기가 문제 화면에 내려 주는 것 (프로토타입 TK · tkMark · tkNext · lsPeek) */
@@ -40,24 +41,24 @@ export function useTask() {
  * 아래 높이를 진행기에 알려 줘요 → 보라 팔로가 버튼 위 빈 곳에서 나와요.
  */
 export function TaskLayout({ children, foot, scrollRef, onScrollY }: { children: ReactNode; foot?: ReactNode; scrollRef?: RefObject<ScrollViewInstance | null>; onScrollY?: (y: number) => void }) {
-  const insets = useSafeAreaInsets();
+  const bottom = useFootPadding(16);
   const { setFootH } = useTask();
   return (
     <View style={styles.flex}>
       <View style={styles.flex}>
-        <ScrollView
+        {/* 글 칸을 누르면 키보드 · 아래 칸 위로 보이게 (아래 칸은 키보드 위로 올라와요) */}
+        <KeyboardScrollView
           ref={scrollRef}
           style={styles.flex}
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          scrollEventThrottle={32}
+          room={34}
           onScroll={onScrollY ? (e) => onScrollY(e.nativeEvent.contentOffset.y) : undefined}>
           {children}
-        </ScrollView>
+        </KeyboardScrollView>
         <LinearGradient colors={['rgba(251,246,234,0)', Colors.cream]} style={styles.fade} pointerEvents="none" />
       </View>
-      <View style={StyleSheet.flatten([styles.foot, { paddingBottom: 16 + insets.bottom }])} onLayout={(e) => setFootH(e.nativeEvent.layout.height)}>
+      <View style={StyleSheet.flatten([styles.foot, { paddingBottom: bottom }])} onLayout={(e) => setFootH(e.nativeEvent.layout.height)}>
         {foot}
       </View>
     </View>

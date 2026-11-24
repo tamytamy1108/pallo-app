@@ -7,7 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { BackButton } from '@/components/ui/back-button';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
-import { CARET_ROOM, KeepVisibleContext, keepInView, useFormScroll, type KeepVisible } from '@/components/ui/form-scroll';
+import { CARET_ROOM, KeepVisibleContext, keepInView, useFormScroll, useShowFocusedOnKeyboard, type KeepVisible } from '@/components/ui/form-scroll';
 import { GrowInput, useFocusRing } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
@@ -164,6 +164,8 @@ export function OnbScreen({
 }) {
   // 양식 확인(form)이 없는 화면도 길게 쓰는 칸이 늘면 쓰는 줄을 따라 내려가요
   const own = useFormScroll(CARET_HIDDEN);
+  // 글 칸을 누르면 키보드가 다 올라온 뒤 그 칸이 키보드 · 아래 버튼 위로 보이게 (양식 확인이 있으면 그 스크롤로)
+  useShowFocusedOnKeyboard(form?.frameRef ?? own[1], (target) => (form ? form.keep(target) : own[5](target)));
   // 제목 줄 → 설명 → 내용 칸 차례로 올라와요 (처음 나타날 때 한 번)
   const lines = typeof title === 'string' ? title.split('\n') : title ? [title] : [];
   const descAt = TITLE_START + lines.length * LINE_STEP;

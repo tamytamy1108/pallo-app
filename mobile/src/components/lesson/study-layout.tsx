@@ -1,9 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode, RefObject } from 'react';
-import { ScrollView, StyleSheet, View, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { KeyboardScrollView } from '@/components/ui/form-scroll';
 import { Colors } from '@/constants/theme';
+import { useFootPadding } from '@/lib/keyboard';
 
 /**
  * 단계 화면 틀 (프로토타입 #study .st-body + .st-foot): 위는 스크롤, 아래 버튼 · 탭은 화면 맨 아래 고정.
@@ -25,22 +27,26 @@ export function StudyLayout({
   bodyStyle?: StyleProp<ViewStyle>;
 }) {
   const insets = useSafeAreaInsets();
+  // 아래 버튼 · 입력 줄: 키보드가 올라오면 칸째로 키보드 위로
+  const footBottom = useFootPadding(16);
   return (
     <View style={styles.flex}>
       <View style={styles.flex}>
-        <ScrollView automaticallyAdjustKeyboardInsets
+        {/* 글 칸을 누르면 키보드 · 아래 칸 위로 보이게. 아래 칸이 없으면 아이폰이 키보드만큼 아래를 띄워요 */}
+        <KeyboardScrollView
+          automaticallyAdjustKeyboardInsets={!foot}
           ref={scrollRef}
           style={styles.flex}
           contentContainerStyle={[styles.body, !foot && { paddingBottom: 30 + insets.bottom }, bodyStyle]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          room={26}
           onContentSizeChange={onContentSize ? (_, h) => onContentSize(h) : undefined}>
           {children}
-        </ScrollView>
+        </KeyboardScrollView>
         {foot ? <LinearGradient colors={['rgba(251,246,234,0)', Colors.cream]} style={styles.fade} pointerEvents="none" /> : null}
       </View>
       {foot ? (
-        <View style={StyleSheet.flatten([styles.foot, { paddingBottom: 16 + insets.bottom }])} onLayout={(e) => onFootH?.(e.nativeEvent.layout.height)}>
+        <View style={StyleSheet.flatten([styles.foot, { paddingBottom: footBottom }])} onLayout={(e) => onFootH?.(e.nativeEvent.layout.height)}>
           {foot}
         </View>
       ) : null}

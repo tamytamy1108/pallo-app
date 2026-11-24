@@ -114,7 +114,8 @@ export default function LoungeScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* 카드 안 댓글 창(Modal)도 이 스크롤 안에 그려져요 — 'handled' 가 없으면 키보드가 떠 있을 때 보내기 버튼을 처음 누르면 키보드만 내려가요 */}
-      <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={64} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
+      {/* 챌린지 찾기 칸을 누르면 아이폰이 키보드만큼 아래를 띄우고 칸을 키보드 위로 올려요 */}
+      <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={64} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={styles.page}>
         <View style={styles.hd}>
           <PText variant="headline" accessibilityRole="header" style={styles.h1}>
             라운지

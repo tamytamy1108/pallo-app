@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { useFootPadding } from '@/lib/keyboard';
 
 import { FootFade } from '../frame';
 import { SUB } from '../ui';
@@ -26,9 +26,10 @@ export const PCard = ({ children, style }: { children: ReactNode; style?: StyleP
 
 /** 아래 고정 칸 .st-foot */
 export function PFoot({ children }: { children: ReactNode }) {
-  const insets = useSafeAreaInsets();
+  // 키보드가 올라오면 칸째로 키보드 위로 (아래 입력 줄 · 버튼이 가리지 않게)
+  const bottom = useFootPadding(16);
   return (
-    <View style={StyleSheet.flatten([s.foot, { paddingBottom: 16 + insets.bottom }])}>
+    <View style={StyleSheet.flatten([s.foot, { paddingBottom: bottom }])}>
       <FootFade />
       {children}
     </View>

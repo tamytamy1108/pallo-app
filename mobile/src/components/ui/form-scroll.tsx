@@ -7,9 +7,10 @@
  * - 스크롤을 가진 쪽(Sheet · SheetPage · OnbScreen)이 useFormScroll 로 만들고 두 Context 로 넘겨요:
  *   const [scrollRef, boxRef, onScroll, reveal, keep] = useFormScroll(room)
  * - 알약 줄 등은 useRevealNext(), 글 칸은 useKeepVisible() 로 받아요.
+ * - 시트가 아닌 화면의 스크롤(레슨 · 코너 · 상황 대화 · 마이 하위 화면)은 KeyboardScrollView 하나로 같은 일을 해요.
  */
-import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
-import { Keyboard, Platform, TextInput, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
+import { createContext, forwardRef, useContext, useEffect, useImperativeHandle, useRef, type ReactNode, type RefObject } from 'react';
+import { Keyboard, Platform, ScrollView, StyleSheet, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ScrollViewProps, type StyleProp, type ViewInstance, type ViewStyle } from 'react-native';
 
 /** 고른 칸 아래로 이만큼은 보여야 '다음 칸이 보인다' (다음 질문 제목 + 알약 한 줄쯤) */
 const NEXT_ROOM = 150;
@@ -117,3 +118,48 @@ export function useShowFocusedOnKeyboard(box: RefObject<ViewInstance | null>, sh
     };
   }, [box]);
 }
+
+type KeyboardScrollProps = ScrollViewProps & {
+  children?: ReactNode;
+  /** 칸 아래로 비워 둘 높이 (스크롤 아래를 덮는 흐림이 있으면 그 높이까지) */
+  room?: number;
+  /** 스크롤을 감싸는 칸의 모양 (기본: 남은 높이를 다 차지) */
+  boxStyle?: StyleProp<ViewStyle>;
+};
+
+/**
+ * 글 칸이 든 화면 스크롤 (시트 밖: 레슨 · 코너 · 상황 대화 · 마이 하위 화면).
+ * - 칸을 누르면 키보드가 다 올라온 뒤 그 칸이 키보드 · 아래 고정 칸 위로 다 보이게 내려요 (useShowFocusedOnKeyboard).
+ * - 길게 써서 칸이 늘어나도 쓰는 줄을 따라 내려가요 (GrowInput ← KeepVisibleContext).
+ * 아래 고정 칸이 키보드 위로 올라오거나(useFootPadding) KeyboardAvoidingView 안이면 스크롤 칸이 줄어서 끝까지 내려가요.
+ * 그 밖(아래 칸 없이 화면 끝까지 닿는 스크롤)은 automaticallyAdjustKeyboardInsets 를 같이 켜요 (아이폰이 키보드만큼 아래를 띄워 줘요).
+ */
+export const KeyboardScrollView = forwardRef<ScrollViewInstance, KeyboardScrollProps>(function KeyboardScrollView({ room = CARET_ROOM, boxStyle, onScroll, children, ...rest }, ref) {
+  const scroll = useRef<ScrollViewInstance>(null);
+  const box = useRef<ViewInstance>(null);
+  const y = useRef(0);
+  // 부르는 쪽(scrollToEnd 등)에는 안쪽 ScrollView 를 그대로 넘겨요
+  useImperativeHandle(ref, () => scroll.current as ScrollViewInstance, []);
+  // 길게 써서 칸이 늘 때: 움직임 없이 바로 · 칸을 눌러 키보드가 다 올라온 뒤: 부드럽게
+  const keep: KeepVisible = (target) => keepInView(target, box.current, scroll.current, y, room);
+  useShowFocusedOnKeyboard(box, (target) => keepInView(target, box.current, scroll.current, y, room, true));
+  return (
+    <View ref={box} collapsable={false} style={[styles.box, boxStyle]}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={32}
+        {...rest}
+        ref={scroll}
+        onScroll={(e) => {
+          y.current = e.nativeEvent.contentOffset.y;
+          onScroll?.(e);
+        }}>
+        <KeepVisibleContext.Provider value={keep}>{children}</KeepVisibleContext.Provider>
+      </ScrollView>
+    </View>
+  );
+});
+
+const styles = StyleSheet.create({
+  box: { flex: 1, minWidth: 0 },
+});

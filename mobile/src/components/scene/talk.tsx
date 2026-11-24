@@ -1,9 +1,10 @@
 import { Image } from 'expo-image';
 import * as Tts from 'expo-speech';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
+import { KeyboardScrollView } from '@/components/ui/form-scroll';
 import { GrowInput } from '@/components/ui/grow-input';
 import { offerChallenge } from '@/lib/chal-offer';
 import { Pressable } from '@/components/ui/pressable';
@@ -13,6 +14,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
+import { useFootPadding } from '@/lib/keyboard';
 import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
 import type { SceneWithContent } from '@/data/situation';
 import type { Flow, MoreQ } from '@/data/situation-content';
@@ -60,7 +62,9 @@ export function TalkStep({ sceneId, scene }: { sceneId: string; scene: SceneWith
   const [draft, setDraft] = useState('');
   const [over, setOver] = useState(false);
   const retried = useRef<Record<number, true>>({});
-  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
+  // 아래 입력 줄: 키보드가 올라오면 키보드 위로
+  const barBottom = useFootPadding(18, { homeBar: false });
   const done = over || i >= N;
 
   const mine = log.filter((m): m is Extract<Msg, { who: 'me' }> => m.who === 'me' && !m.retry);
@@ -136,7 +140,8 @@ export function TalkStep({ sceneId, scene }: { sceneId: string; scene: SceneWith
   return (
     <StepShell sceneId={sceneId} title="AI 미션 대화" finished={finished || done} onQuit={() => speech.stop()}>
       <View style={styles.flex}>
-        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" ref={scroll} style={styles.flex} contentContainerStyle={styles.body} onContentSizeChange={() => !done && log.length > 1 && scroll.current?.scrollToEnd({ animated: true })} showsVerticalScrollIndicator={false}>
+        {/* 아래 입력 줄은 키보드 위로 올라오고, 위 대화는 그만큼 줄어요 */}
+        <KeyboardScrollView ref={scroll} style={styles.flex} contentContainerStyle={styles.body} onContentSizeChange={() => !done && log.length > 1 && scroll.current?.scrollToEnd({ animated: true })} showsVerticalScrollIndicator={false}>
           <View style={styles.head}>
             <Avatar who={X.who} size={36} color={X.c} />
             <PText style={styles.headB} numberOfLines={1}>
@@ -173,14 +178,14 @@ export function TalkStep({ sceneId, scene }: { sceneId: string; scene: SceneWith
               </View>
             </>
           )}
-        </ScrollView>
+        </KeyboardScrollView>
 
         {done ? (
           <View style={styles.endFoot}>
             <BigBtn label="완료하기" onPress={() => finish({ right: used.filter(Boolean).length, total: X.mis.length })} />
           </View>
         ) : (
-          <View style={styles.bar}>
+          <View style={[styles.bar, { paddingBottom: barBottom }]}>
             {ex ? (
               <Appear kind="rise" style={styles.exs}>
                 {exs.map((x, k) => (

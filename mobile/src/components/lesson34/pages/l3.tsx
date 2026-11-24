@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { KeyboardScrollView } from '@/components/ui/form-scroll';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { SpeakerIcon } from '@/components/lesson/icons';
@@ -249,7 +250,7 @@ export function BeforeAfter({ ctx, D, api }: P) {
   }, [out]);
   return (
     <>
-      <ScrollView ref={baScroll} style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <KeyboardScrollView ref={baScroll} style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false} room={36}>
         <Intro text={none ? '예습 답변이 없어요. 지금 답해도 돼요. 다음엔 예습부터 하면 성장을 비교할 수 있어요.' : '예습 때 했던 같은 질문에 다시 답해요. 수업에서 배운 표현을 넣어 보세요.'} />
         {idx.map((i) => (
           <PCard key={i} style={st.baQ}>
@@ -280,7 +281,7 @@ export function BeforeAfter({ ctx, D, api }: P) {
             <BaNext longer={words(view.all) > words(view.old)} used={view.used} sAvg={view.sAvg} />
           </>
         ) : null}
-      </ScrollView>
+      </KeyboardScrollView>
       <PFoot>{out ? <GoBtn label="완료하기" onPress={() => api.finish()} /> : <GoBtn label="비교하기" onPress={compare} />}</PFoot>
     </>
   );

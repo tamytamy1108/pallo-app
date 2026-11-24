@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function useKeyboardShown() {
   const [shown, setShown] = useState(false);
@@ -35,4 +36,14 @@ export function useKeyboardHeight() {
     };
   }, []);
   return h;
+}
+
+/**
+ * 화면 맨 아래 고정 칸(버튼 · 입력 줄)의 아래 여백: 키보드가 올라오면 칸째로 키보드 위로 (아이폰).
+ * 키보드가 없으면 base + 홈 바 자리. 위 스크롤 칸은 그만큼 줄어서, 누른 칸은 KeyboardScrollView 가 보이게 내려요.
+ */
+export function useFootPadding(base: number, { gap = 10, homeBar = true }: { gap?: number; homeBar?: boolean } = {}) {
+  const kb = useKeyboardHeight();
+  const insets = useSafeAreaInsets();
+  return kb ? kb + gap : base + (homeBar ? insets.bottom : 0);
 }

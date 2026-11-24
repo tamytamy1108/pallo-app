@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useRef, type ComponentRef, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
+import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardScrollView } from '@/components/ui/form-scroll';
+import { useFootPadding } from '@/lib/keyboard';
 
 import { Colors } from '@/constants/theme';
 
@@ -45,26 +46,31 @@ export function useRunner() {
   return r;
 }
 
+/** 아래 고정 칸 위 흐림(28)에 글 칸이 가리지 않게 */
+const FADE_ROOM = 36;
+
 /** 문제 본문 (스크롤) · 결과가 아래에 생기면 끝까지 내려가요 */
 export function Body({ children, toEnd }: { children: ReactNode; toEnd?: unknown }) {
-  const ref = useRef<ComponentRef<typeof ScrollView>>(null);
+  const ref = useRef<ScrollViewInstance>(null);
   useEffect(() => {
     if (toEnd == null || toEnd === false) return;
     const t = setTimeout(() => ref.current?.scrollToEnd({ animated: true }), 150);
     return () => clearTimeout(t);
   }, [toEnd]);
   return (
-    <ScrollView ref={ref} style={styles.flex} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    // 글 칸을 누르면 키보드 · 아래 고정 칸 위로 보이게 (아래 칸 Foot 은 키보드 위로 올라와요)
+    <KeyboardScrollView ref={ref} style={styles.flex} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} room={FADE_ROOM}>
       {children}
-    </ScrollView>
+    </KeyboardScrollView>
   );
 }
 
 /** 아래 고정 칸 (프로토타입 #lsFoot): 말하기가 어려워요 · 답하는 방식 · 행동 단추 */
 export function Foot({ children }: { children: ReactNode }) {
-  const insets = useSafeAreaInsets();
+  // 키보드가 올라오면 칸째로 키보드 위로
+  const bottom = useFootPadding(18);
   return (
-    <View style={StyleSheet.flatten([styles.foot, { paddingBottom: 18 + insets.bottom }])}>
+    <View style={StyleSheet.flatten([styles.foot, { paddingBottom: bottom }])}>
       <FootFade />
       {children}
     </View>

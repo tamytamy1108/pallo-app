@@ -15,6 +15,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { BAD_REACTIONS, GOOD_REACTIONS } from '@/data/lessons';
 import type { SpeakItem } from '@/data/lessons34';
+import { KeyboardScrollView } from '@/components/ui/form-scroll';
 import { haptic, sfx } from '@/lib/feedback';
 import { useSpeech } from '@/lib/speech';
 import { useLearnPrefs } from '@/state/learn-prefs';
@@ -120,7 +121,7 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
 
   return (
     <>
-      <ScrollView style={st.flex} contentContainerStyle={st.body} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardScrollView style={st.flex} contentContainerStyle={st.body} showsVerticalScrollIndicator={false} room={36}>
         <View style={st.top}>
           <View style={st.bar}>
             <View style={StyleSheet.flatten([st.fill, { width: `${((i + (res ? 1 : 0)) / order.length) * 100}%` }])} />
@@ -231,7 +232,7 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
             )}
           </>
         )}
-      </ScrollView>
+      </KeyboardScrollView>
       <PFoot>
         {shown && res ? (
           <>
