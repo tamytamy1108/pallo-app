@@ -10,7 +10,11 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import { AppState, Platform } from 'react-native';
 
-const PREFIX = 'pallo-';
+import { devProfile } from './dev-profile';
+
+// 개발용 프로필(lib/dev-profile)은 따로 저장해요 (pallo@linked/ · pallo@linked-<키>)
+const PREFIX = devProfile ? `pallo@${devProfile}-` : 'pallo-';
+const FOLDER = devProfile ? `pallo@${devProfile}` : 'pallo';
 const WRITE_DELAY_MS = 300;
 const web = Platform.OS === 'web';
 // 자동 테스트는 매번 처음 상태에서 시작해요 (파일을 읽지도 쓰지도 않아요)
@@ -22,7 +26,7 @@ let dir: Directory | null | undefined;
 function folder() {
   if (dir !== undefined) return dir;
   try {
-    const d = new Directory(Paths.document, 'pallo');
+    const d = new Directory(Paths.document, FOLDER);
     if (!d.exists) d.create({ intermediates: true, idempotent: true });
     dir = d;
   } catch {

@@ -4,6 +4,7 @@
  * 기기에 남아요 (가짜 서버 · 스파크 · 포인트 · 팔로우 · 소개). 서버가 생기면 MeSync 가 받은 /me 로 덮어써요.
  */
 import { ME } from '@/data/mock';
+import { devProfile } from '@/lib/dev-profile';
 import { createStore } from '@/lib/store';
 import { weekKey } from '@/state/today-goal';
 
@@ -83,6 +84,9 @@ const meStore = createStore<Me>(ME0, {
     },
   },
 });
+
+// 개발용 '연동된 회원' 프로필(lib/dev-profile): 앱을 열 때마다 연동된 회원으로 (리더 · 매니저는 그대로)
+if (devProfile === 'linked') meStore.set((s) => ({ ...s, link: 'linked', role: s.role === 'guest' ? 'member' : s.role, trial: null }));
 
 export const useMe = meStore.useStore;
 export const getMe = meStore.get;
