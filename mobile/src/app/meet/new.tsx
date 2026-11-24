@@ -159,6 +159,15 @@ export default function NewMeet() {
           hasPhoto={pics.length > 0}
           example={['NEW', 'MEET']}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
+          listPreview={{
+            label: '번개 목록 카드에서는 이렇게 보여요',
+            // 목록 카드: 폭 ≈ 274 · 포스터 높이 150 · 글자 28 (meet-tab cardW · meet-card)
+            render: (c, words, w) => (
+              <View style={{ borderRadius: 14, overflow: 'hidden', borderWidth: 2, borderColor: Colors.ink, alignSelf: 'flex-start' }}>
+                <PosterPreview card={c} words={words} width={Math.min(w - 4, 274)} realW={274} realH={150} wordSize={28} />
+              </View>
+            ),
+          }}
         />
       </Field>
     </SheetPage>

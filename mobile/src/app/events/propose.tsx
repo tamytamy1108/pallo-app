@@ -71,7 +71,7 @@ export default function ProposeEvent() {
       </View>
       <Field label="대표 이미지 · 사진 여러 장 또는 카드" hint={pics.length ? (card ? '카드가 대표예요. 사진은 그 뒤에 보여요.' : '첫 장이 대표 사진이 돼요. 사진을 누르면 대표로 바꿔요.') : '사진이 없으면 아래 카드가 대표예요.'}>
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
-        <CardMaker value={card} onChange={setCard} hasPhoto={pics.length > 0} example={['NEW', 'EVENT']} />
+        <CardMaker value={card} onChange={setCard} hasPhoto={pics.length > 0} example={['NEW', 'EVENT']} square />
       </Field>
       <Field label="진행 지점" req>
         <Pressable onPress={() => setBrOpen(true)} accessibilityRole="button" accessibilityLabel={`진행 지점 ${br}`} style={styles.sel}>

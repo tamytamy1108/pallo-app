@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/meet/icons';
@@ -40,13 +40,15 @@ type Props = {
   /** 글자 다듬기 (예: 챌린지는 영어 대문자만) */
   clean?: (t: string) => string;
   maxLength?: number;
+  /** 목록에서 보이는 모양 미리보기 (번개 목록 카드 · 동아리 썸네일) — width: 칸 안쪽 폭 */
+  listPreview?: { label: string; render: (card: MadeCard, words: string[], width: number) => ReactNode };
   /** 처음 색 (챌린지는 카테고리 색) */
   defaultColor?: string;
   /** 사진이 있을 때 카드를 켜면 보이는 안내 */
   onNote?: string;
 };
 
-export function CardMaker({ value, onChange, hasPhoto, defaultColor, example, square = false, renderPreview, clean = (t) => t, maxLength = 12, onNote = '카드가 대표가 되고, 올린 사진은 그 뒤에 보여요.' }: Props) {
+export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor, example, square = false, renderPreview, clean = (t) => t, maxLength = 12, onNote = '카드가 대표가 되고, 올린 사진은 그 뒤에 보여요.' }: Props) {
   const required = !hasPhoto;
   // 사진이 없으면 손대지 않아도 카드가 있어요 (기본 색 · 기본 글자)
   const card = value ?? (required ? newCard(defaultColor) : null);
@@ -62,13 +64,14 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, example, sq
     haptic('select');
     onChange({ ...card, color });
   };
+  const [inW, setInW] = useState(0);
   const pw = square ? 96 : 108;
   const ph = square ? 96 : 135;
   // 아직 안 적었으면 미리보기에 예시를 흐리게
   const typed = card ? card.words.map((w) => w.trim()).filter(Boolean) : [];
   const words = typed.length ? typed : example;
   return (
-    <View style={styles.maker}>
+    <View style={styles.maker} onLayout={(e) => setInW(e.nativeEvent.layout.width - 28)}>
       {required ? (
         <View style={styles.tHead}>
           <PText style={styles.tB}>대표 카드 만들기</PText>
@@ -107,7 +110,6 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, example, sq
               ))}
             </View>
           </View>
-          <PText style={styles.hint}>문구는 꼭 적어요 · 첫 줄만 적어도 돼요.</PText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colors}>
             {CARD_COLORS.map((c) => {
               const sel = c.hex === card.color;
@@ -118,6 +120,13 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, example, sq
               );
             })}
           </ScrollView>
+          <PText style={styles.hint}>문구는 꼭 적어요 · 첫 줄만 적어도 돼요.</PText>
+          {listPreview && inW > 0 ? (
+            <View style={[styles.list, !typed.length && styles.ghost]}>
+              <PText style={styles.listL}>{listPreview.label}</PText>
+              {listPreview.render(card, words, inW)}
+            </View>
+          ) : null}
         </>
       ) : null}
     </View>
@@ -145,6 +154,8 @@ const styles = StyleSheet.create({
   ins: { flex: 1, gap: 8, justifyContent: 'center' },
   in: { height: 40, borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
   ghost: { opacity: 0.45 },
+  list: { gap: 6, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
+  listL: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   hint: { marginTop: -2, fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   colors: { gap: 8, paddingVertical: 2, paddingRight: 4 },
   dot: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(30,26,43,0.25)', alignItems: 'center', justifyContent: 'center' },

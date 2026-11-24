@@ -126,14 +126,17 @@ const styles = StyleSheet.create({
 /** 실제 포스터 폭 (번개 카드 · 상세 무늬가 이 크기에 맞춰져 있어요) — 미리보기는 이 크기로 그려서 줄여요 */
 const PREVIEW_W = 300;
 
-/** 카드 만들기 미리보기: 실제 크기 포스터(4:5)를 칸 폭(width)에 맞게 줄여 보여 줘요 */
-export function PosterPreview({ card, words, width }: { card: MadeCard; words: string[]; width: number }) {
-  const k = width / PREVIEW_W;
-  const h = PREVIEW_W * 1.25;
+/**
+ * 카드 만들기 미리보기: 실제 크기(realW × realH) 포스터를 칸 폭(width)에 맞게 줄여 보여 줘요.
+ * 기본은 상세 맨 위 포스터(4:5 · 글자 54). 번개 목록 카드는 realW 274 · realH 150 · 글자 28.
+ */
+export function PosterPreview({ card, words, width, realW = PREVIEW_W, realH = PREVIEW_W * 1.25, wordSize = 54 }: { card: MadeCard; words: string[]; width: number; realW?: number; realH?: number; wordSize?: number }) {
+  const k = width / realW;
+  const h = realH;
   return (
     <View style={{ width, height: h * k, overflow: 'hidden' }}>
-      <View style={{ position: 'absolute', width: PREVIEW_W, height: h, left: (width - PREVIEW_W) / 2, top: (h * k - h) / 2, transform: [{ scale: k }] }}>
-        <Poster id="card-preview" slide={{ words, bg: card.color, v: 0, made: true }} height={h} wordSize={54} />
+      <View style={{ position: 'absolute', width: realW, height: h, left: (width - realW) / 2, top: (h * k - h) / 2, transform: [{ scale: k }] }}>
+        <Poster id="card-preview" slide={{ words, bg: card.color, v: 0, made: true }} height={h} wordSize={wordSize} />
       </View>
     </View>
   );

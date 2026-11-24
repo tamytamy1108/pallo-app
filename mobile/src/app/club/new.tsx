@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
 import { CountStepper, MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
+import { ClubThumb } from '@/components/meet/club-list';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
@@ -107,6 +108,7 @@ export default function NewClub() {
           hasPhoto={pics.length > 0}
           example={['NEW', 'CLUB']}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
+          listPreview={{ label: '동아리 목록에서는 첫 줄만 보여요', render: (c, words) => <ClubThumb words={words} bg={c.color} /> }}
         />
       </Field>
     </SheetPage>
