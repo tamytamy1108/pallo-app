@@ -81,6 +81,20 @@ describe('라이브러리 지도 바꾸기', () => {
     expect(fakes.map((f) => f.id)).toEqual(['study', 'travel', 'biz']);
   });
 
+  it('미리 만들 지도가 남아 있는 동안 보이는 지도는 멈춰 있다가 다 만들면 움직여요', async () => {
+    await render(<LibraryWorld world={study} warm={[travel, biz]} onOpen={() => {}} />);
+    expect(of('study')[0].active).toBe(true); // 만드는 중 (아직 그리기 전)
+    await draw('study');
+    expect(of('study')[0].active).toBe(false);
+    await tick(1000);
+    await draw('travel');
+    expect(of('study')[0].active).toBe(false); // biz 가 남았어요
+    await tick(1000);
+    await draw('biz');
+    expect(of('study')[0].active).toBe(true);
+    expect(of('travel')[0].active).toBe(false);
+  });
+
   it('미리 만든 지도로 바꾸면 새로 만들지 않고 바로 돌며 들어와요', async () => {
     const r = await render(<LibraryWorld world={study} warm={[travel]} onOpen={() => {}} />);
     await draw('study');

@@ -58,9 +58,14 @@ function quietPixelStore(gl: ExpoWebGLRenderingContext) {
 
 /**
  * 들어올 때 도는 인트로 시간 (프로토타입은 프레임마다 0.022 → 약 0.75초였는데 앱에서는 느리게 느껴져서 빠르게).
- * 프레임 수가 아니라 시계로 세요 — 프레임이 밀려도(다른 지도를 만드는 중 등) 제때 끝나요
+ * 프레임 수가 아니라 움직임 시계(clock)로 세요 — 프레임 사이가 벌어져도 한 프레임에 STEP_MAX_MS 까지만 나아가요
  */
-const INTRO_MS = 380;
+export const INTRO_MS = 380;
+/**
+ * 움직임 시계: 프레임 사이에 이만큼(ms)까지만 흘러요. JS 가 잠깐 멈췄다(다른 지도 만들기 등) 돌아와도
+ * 분수 · 배가 훌쩍 건너뛰지 않고 멈춘 자리에서 이어져요. 멈춰 있던(paused) 동안은 흐르지 않아요
+ */
+const STEP_MAX_MS = 50;
 
 export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts) {
   const { width: w, height: h } = host;
@@ -170,9 +175,11 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   // ---- 그리기 ----
   let raf = 0;
   let alive = true;
+  /** 움직임 시계 (ms) · 지난 프레임 시각 (0 = 멈췄다 다시 시작) */
+  let clock = 0;
+  let lastAt = 0;
   let lastKey = '';
   let lastZoomed = false;
-  const t0 = Date.now();
   const proj = (p: THREE.Vector3): [number, number] => {
     v.copy(p).project(cam);
     return [((v.x + 1) / 2) * w, ((1 - v.y) / 2) * h];
@@ -225,9 +232,8 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const step = () => {
     if (intro) {
       // 시계는 바꾼 뒤 첫 프레임부터 (바꾸는 순간 화면을 다시 그리느라 밀린 시간은 빼요)
-      const now = Date.now();
-      if (intro.at == null) intro.at = now;
-      intro.t = Math.min(1, (now - intro.at) / INTRO_MS);
+      if (intro.at == null) intro.at = clock;
+      intro.t = Math.min(1, (clock - intro.at) / INTRO_MS);
       const k = 1 - Math.pow(1 - intro.t, 4);
       const off = cam.position.clone().sub(tgt);
       const base = intro.base || (intro.base = off.clone());
@@ -257,10 +263,16 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const loop = () => {
     if (!alive) return;
     raf = requestAnimationFrame(loop);
-    if (host.paused) return;
+    if (host.paused) {
+      lastAt = 0;
+      return;
+    }
+    const now = Date.now();
+    clock += lastAt ? Math.min(now - lastAt, STEP_MAX_MS) : 16;
+    lastAt = now;
     try {
       step();
-      const t = (Date.now() - t0) / 1000;
+      const t = clock / 1000;
       ticks.forEach((f) => f(t));
     } catch (e) {
       // 폰에서 프레임 오류가 그대로 올라가면 앱이 꺼져요 → 여기서 멈추고 화면에 알려요 (2D 지도로)
