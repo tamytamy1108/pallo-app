@@ -80,9 +80,9 @@ export default function ProposeEvent() {
           square
           listPreview={{
             label: "이벤트 탭 '내가 제안한 이벤트'에 이렇게 보여요 · 누르기 전 모습",
-            render: () => (
+            render: (c) => (
               <View pointerEvents="none">
-                <ProposalCard q={{ id: 'preview', title: title.trim() || '이벤트 제목', br, date, cat: cat ?? '분류 고르기 전', cover: pics[0], card: usedCard(card, pics.length > 0) }} />
+                <ProposalCard q={{ id: 'preview', title: title.trim() || '이벤트 제목', br, date, cat: cat ?? '분류 고르기 전', cover: pics[0], card: card || !pics.length ? c : undefined }} />
               </View>
             ),
           }}
