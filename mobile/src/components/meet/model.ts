@@ -70,7 +70,7 @@ export const clubX = (c: Club) => {
   const h = hashId(c.id);
   return { act: c.mine ? '방금 만듦' : CLUB_ACT[h % 6], j30: c.mine ? 0 : 1 + (h % 5), fresh: !!(c.mine || c.wait) };
 };
-export const clubDesc = (c: Club) => c.memo || DESC[c.id] || `${c.when}에 모여 ${c.lang}로 이야기해요. 처음 와도 편하게 섞일 수 있어요.`;
+export const clubDesc = (c: Club) => c.memo || DESC[c.id] || `${c.when}에 모여 ${c.lang === '언어 무관' ? '어떤 언어로든' : c.lang + '로'} 이야기해요. 처음 와도 편하게 섞일 수 있어요.`;
 export const clubHost = (c: Club) => c.host.split(' ')[0];
 export const clubSpot = (c: Club): [string, string] => CLUB_SPOT[c.id] ?? [c.when.split(' · ')[1] || `${c.br} 근처`, '자세한 주소는 호스트가 정하면 보여요'];
 export const dayNames = (c: Club) => c.days.map((d) => WEEK[d]).join('·');

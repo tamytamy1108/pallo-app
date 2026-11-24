@@ -363,8 +363,8 @@ const st = StyleSheet.create({
 
 // ---------------------------------------------------------------- 시간 ~ 시간 (번개 · 동아리 개설 공통)
 
-/** 30분 칸: 아침 7시 ~ 밤 11시 반 */
-export const HALF_HOURS = Array.from({ length: 34 }, (_, i) => `${String(7 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+/** 30분 칸: 하루 전체 (오전 12:00 ~ 오후 11:30) */
+export const HALF_HOURS = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
 const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 const ofMin = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 /** '20:00' → '오후 8:00' */
@@ -383,12 +383,13 @@ export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, 
 
 /**
  * 시작 시간 ~ 끝나는 시간: 시작 · 끝 칸을 누르면 그 칸 안에서 휠을 돌려 골라요 (이름 줄 · 완료를 누르면 닫혀요).
- * 끝은 시작보다 늦은 시간만 · 시작을 끝보다 늦게 바꾸면 끝이 시작 + 2시간으로 따라가요.
+ * 끝은 시작 30분 뒤부터만 · 시작을 끝보다 늦게 바꾸면 끝이 시작 + 2시간으로 따라가요.
  */
 export function TimeRange({ start, end, onChange }: { start: string; end: string; onChange: (start: string, end: string) => void }) {
   const [edit, setEdit] = useState<'s' | 'e' | null>(null);
   const starts = HALF_HOURS.slice(0, -1);
-  const ends = HALF_HOURS.filter((t) => toMin(t) > toMin(start));
+  // 끝은 시작 30분 뒤부터만
+  const ends = HALF_HOURS.filter((t) => toMin(t) >= toMin(start) + 30);
   const pickStart = (t: string) => onChange(t, toMin(end) > toMin(t) ? end : defaultEnd(t));
   const box = (k: 's' | 'e', label: string, t: string) => {
     const on = edit === k;
@@ -425,7 +426,8 @@ export function TimeRange({ start, end, onChange }: { start: string; end: string
 
 const tr = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  box: { flex: 1, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 12, gap: 1 },
+  // flexBasis 0 · minWidth 0: 휠을 열어도 두 칸 폭이 그대로 (옆 칸이 화면 밖으로 안 밀려요)
+  box: { flex: 1, flexBasis: 0, minWidth: 0, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 12, gap: 1 },
   boxOn: { borderColor: C.pu, backgroundColor: '#F3EEFB', boxShadow: '2px 2px 0px #493087' },
   k: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   kOn: { color: C.pu },

@@ -29,17 +29,18 @@ export function checkScrollLock(screen: LockScreen) {
  * 흐린 곳을 누르면 늘 체험 안내 시트 (memberGate '끝까지 보려면'). 잠긴 칸까지 스크롤하면 잠김 1번 — 화면에 들어올 때마다 한 번만,
  * 3번째마다 권유 시트 (state/lock-hits lockView).
  */
-export function ScrollLock({ screen, peek, panel, children }: { screen: LockScreen; peek: number; panel?: ReactNode; children: ReactNode }) {
+/** inset: 잠김 칸 양옆 여백 — 바깥에 여백이 없는 화면(라운지)은 16 */
+export function ScrollLock({ screen, peek, panel, inset = 0, children }: { screen: LockScreen; peek: number; panel?: ReactNode; inset?: number; children: ReactNode }) {
   const locked = useMe((m) => !canUse(m, 'fullScroll'));
   if (!locked) return children;
   return (
-    <LockedTail screen={screen} peek={peek} panel={panel}>
+    <LockedTail screen={screen} peek={peek} panel={panel} inset={inset}>
       {children}
     </LockedTail>
   );
 }
 
-function LockedTail({ screen, peek, panel, children }: { screen: LockScreen; peek: number; panel?: ReactNode; children: ReactNode }) {
+function LockedTail({ screen, peek, panel, inset, children }: { screen: LockScreen; peek: number; panel?: ReactNode; inset: number; children: ReactNode }) {
   const { height } = useWindowDimensions();
   const panelRef = useRef<ComponentRef<typeof View>>(null);
   const counted = useRef(false);
@@ -79,7 +80,7 @@ function LockedTail({ screen, peek, panel, children }: { screen: LockScreen; pee
           <LinearGradient colors={['rgba(251,246,234,0)', 'rgba(251,246,234,0.85)', Colors.cream]} locations={[0, 0.55, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
         </Pressable>
       </View>
-      <View ref={panelRef} collapsable={false} style={styles.panel}>
+      <View ref={panelRef} collapsable={false} style={[styles.panel, { paddingHorizontal: inset }]}>
         {panel ?? <MemberLock title={LOCK_TOAST} sub="지금은 위쪽만 미리 볼 수 있어요. 지점에서 연동하면 끝까지 열려요." />}
       </View>
     </View>
