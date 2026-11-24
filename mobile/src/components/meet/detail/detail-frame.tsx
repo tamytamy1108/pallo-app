@@ -15,7 +15,7 @@ import { Colors } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { LayerModal } from '@/components/ui/sheet-stack';
 
-import type { MadeCard } from '@/data/poster-walls';
+import type { MadeCard } from '@/data/poster-colors';
 
 import { Poster, posterFg, posterSlides, type Slide } from '../poster';
 

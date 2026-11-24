@@ -77,8 +77,8 @@ export type Challenge = {
   pw?: string;
   /** 대표 사진: 연 사람이 직접 올린 사진 (앱에 넣은 그림 require 또는 주소). 없으면 기본 배경 + 카드 문구 */
   cover?: number | string;
-  /** 만든 카드 배경 (poster-walls id) — 있으면 사진보다 앞(대표): 이 배경 + 카드 문구 */
-  wall?: string;
+  /** 만든 카드 색 — 있으면 사진보다 앞(대표): 이 색 + 카드 문구 */
+  pbg?: string;
   guide?: string;
   freqT?: string;
   dur?: number;
@@ -261,7 +261,7 @@ export function srcText(src: ChSrc | null | undefined, ls = 0, myLv = 'Lv.1') {
 export const challengeSrc = (p: Challenge) => srcText(p.src, p.ls ?? 0, getMe().level);
 
 /** chPbg: 카드 왼쪽 색 */
-export const posterBg = (p: Challenge) => (p.bg === 'sk' ? CH_C.sky : CH_PBG[p.cat ?? 'study'] || CH_C.y);
+export const posterBg = (p: Challenge) => p.pbg ?? (p.bg === 'sk' ? CH_C.sky : CH_PBG[p.cat ?? 'study'] || CH_C.y);
 /** chPw: 카드 문구 */
 export function posterWords(p: Challenge) {
   if (p.pw) return p.pw;
@@ -459,7 +459,7 @@ export function planOf(start: StartOpt, D: number, weekly: boolean, n: number, d
 }
 
 /** do-chal (일상) */
-export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; wall?: string; plan: ChPlan; cover?: string }) {
+export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; pbg?: string; plan: ChPlan; cover?: string }) {
   const me = getMe();
   const live = !o.plan.off;
   const p: Challenge = {
@@ -469,7 +469,7 @@ export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'p
     rec: true,
     ...(o.pw.length ? { pw: o.pw.map((x) => x.toUpperCase()).join('\n') } : {}),
     ...(o.cover ? { cover: o.cover } : {}),
-    ...(o.wall ? { wall: o.wall } : {}),
+    ...(o.pbg ? { pbg: o.pbg } : {}),
     who: me.name,
     av: CH_C.y,
     br: me.branch.split(' · ')[0],

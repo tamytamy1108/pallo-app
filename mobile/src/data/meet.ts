@@ -7,7 +7,7 @@
  */
 
 /** 프로토타입 LG_C — 포스터 · 지도에 쓰는 브랜드 색 */
-import type { MadeCard } from './poster-walls';
+import type { MadeCard } from './poster-colors';
 
 export const C = { y: '#FFE200', pk: '#D0798E', pu: '#493087', sky: '#8FA6DC', lpu: '#E5DDF6', lsky: '#E3EAF8', ink: '#1E1A2B', cream: '#FBF6EA' } as const;
 

@@ -5,8 +5,9 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
 import { PlacePicker, PosterPicker, TimeChips, type Place } from '@/components/event/form-parts';
-import { CardMaker } from '@/components/ui/poster-wall';
-import type { MadeCard } from '@/data/poster-walls';
+import { PosterPreview } from '@/components/meet/poster';
+import { CardMaker } from '@/components/ui/card-maker';
+import { usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyMeet } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
@@ -47,7 +48,7 @@ export default function NewMeet() {
   const [addr2, setAddr2] = useState('');
   const [cap, setCap] = useState('6명');
   const [pics, setPics] = useState<string[]>([]);
-  // 카드 (선택): 만들면 대표가 되고 사진은 그 뒤에
+  // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
   const [card, setCard] = useState<MadeCard | null>(null);
   const d = addDays(day);
   const h = Number(time.slice(0, 2));
@@ -72,7 +73,7 @@ export default function NewMeet() {
       max: parseInt(cap, 10) || 6,
       mine: true,
       posters: pics.length ? pics : undefined,
-      card: card ?? undefined,
+      card: usedCard(card, pics.length > 0),
     });
     sfx('save');
     router.back();
@@ -147,9 +148,15 @@ export default function NewMeet() {
       <Field label="정원">
         <SheetPills options={CAPS} value={cap} onChange={setCap} />
       </Field>
-      <Field label={card ? '사진 · 선택 · 여러 장 (카드 뒤에 보여요)' : '대표 이미지 · 선택 · 사진 여러 장 · 누르면 대표로'}>
-        <PosterPicker uris={pics} onChange={setPics} coverTaken={!!card} />
-        <CardMaker value={card} onChange={setCard} fallback={['NEW', 'MEET']} />
+      <Field label={pics.length ? (card ? '포스터 사진 · 카드 뒤에 보여요' : '포스터 사진 · 여러 장 · 누르면 대표로') : '포스터 사진 · 없으면 아래 카드가 대표예요'}>
+        <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
+        <CardMaker
+          value={card}
+          onChange={setCard}
+          hasPhoto={pics.length > 0}
+          fallback={['NEW', 'MEET']}
+          renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
+        />
       </Field>
     </SheetPage>
   );

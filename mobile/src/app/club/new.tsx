@@ -4,8 +4,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
 import { MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
-import { CardMaker } from '@/components/ui/poster-wall';
-import type { MadeCard } from '@/data/poster-walls';
+import { PosterPreview } from '@/components/meet/poster';
+import { CardMaker } from '@/components/ui/card-maker';
+import { usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyClub } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
@@ -43,7 +44,7 @@ export default function NewClub() {
   const [cond, setCond] = useState('누구나');
   const [memo, setMemo] = useState('');
   const [pics, setPics] = useState<string[]>([]);
-  // 카드 (선택): 만들면 대표가 되고 사진은 그 뒤에
+  // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
   const [card, setCard] = useState<MadeCard | null>(null);
 
   const ask = () => {
@@ -66,7 +67,7 @@ export default function NewClub() {
       mine: true,
       memo: memo.trim() || undefined,
       posters: pics.length ? pics : undefined,
-      card: card ?? undefined,
+      card: usedCard(card, pics.length > 0),
     });
     sfx('save');
     router.back();
@@ -99,9 +100,15 @@ export default function NewClub() {
         <SheetPills options={CONDS} value={cond} onChange={setCond} />
       </Field>
       <TextField label="채팅방 공지 (가입하면 보여요)" value={memo} onChangeText={setMemo} placeholder="예) 첫 모임은 자기소개만 해도 충분해요." />
-      <Field label={card ? '사진 · 선택 · 여러 장 (카드 뒤에 보여요)' : '대표 이미지 · 선택 · 사진 여러 장 · 누르면 대표로'}>
-        <PosterPicker uris={pics} onChange={setPics} coverTaken={!!card} />
-        <CardMaker value={card} onChange={setCard} fallback={['NEW', 'CLUB']} />
+      <Field label={pics.length ? (card ? '포스터 사진 · 카드 뒤에 보여요' : '포스터 사진 · 여러 장 · 누르면 대표로') : '포스터 사진 · 없으면 아래 카드가 대표예요'}>
+        <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
+        <CardMaker
+          value={card}
+          onChange={setCard}
+          hasPhoto={pics.length > 0}
+          fallback={['NEW', 'CLUB']}
+          renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
+        />
       </Field>
     </SheetPage>
   );

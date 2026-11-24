@@ -15,6 +15,7 @@ import {
   CH_GD,
   CH_PH,
   CH_PW,
+  chPbgOf,
   CH_SRC,
   createDaily,
   createExpression,
@@ -39,8 +40,8 @@ import { haptic, sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { PosterPicker } from '@/components/event/form-parts';
-import { CardMaker } from '@/components/ui/poster-wall';
-import type { MadeCard } from '@/data/poster-walls';
+import { CardMaker } from '@/components/ui/card-maker';
+import { usedCard, type MadeCard } from '@/data/poster-colors';
 
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
@@ -48,6 +49,8 @@ import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
 /** 표현 목록: 이보다 많으면 찾기 · 나온 곳 칩 · 'N개 더 보기' (CH_PAGE) */
 const PAGE = 6;
 const SRC_KEYS = Object.keys(CH_SRC) as ChSrcKind[];
+/** 만든 카드 → createDaily 값 (문구 · 카드 색) */
+const cardOf = (c?: MadeCard) => ({ pw: c ? c.words.map((w) => w.trim()).filter(Boolean) : [], pbg: c?.color });
 /** 카드 문구 칸: 영어 대문자 · 숫자 · 몇 가지 기호만 */
 const cleanPw = (t: string) => t.toUpperCase().replace(/[^A-Z0-9 &:!'’.-]/g, '');
 
@@ -83,7 +86,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
   // 대표 사진 (선택): 순위 · 카드 · 상세의 네모 칸에 보여요. 없으면 카드 문구로
   const [covers, setCovers] = useState<string[]>([]);
   const [guide, setGuide] = useState('');
-  // 카드 (선택): 배경 고르기 + 영어 문구 두 줄. 만들면 사진보다 앞(대표)
+  // 카드: 색 고르기 + 영어 문구 두 줄. 사진이 없으면 꼭 (안 만지면 카테고리 문구) · 사진이 있으면 선택, 켜면 사진보다 앞(대표)
   const [card, setCard] = useState<MadeCard | null>(null);
   // 표현 챌린지는 한 번에 표현 하나 (프로토타입 LG.chs = [i])
   const [sel, setSel] = useState<string | null>(() => preset.find((id) => cards.some((c) => c.id === id)) ?? null);
@@ -123,7 +126,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           showToast('챌린지 이름을 적어 주세요');
           return;
         }
-        createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), pw: card ? card.words.map((w) => w.trim()).filter(Boolean) : [], wall: card?.wall, plan, cover: covers[0] });
+        createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), ...cardOf(usedCard(card, covers.length > 0, chPbgOf(cat))), plan, cover: covers[0] });
         sfx('save');
         haptic('success');
         onClose();
@@ -242,10 +245,10 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <Field value={guide} onChangeText={setGuide} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="어떻게 인증하나요?" />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>대표 이미지 · 선택</FieldLabel>
+            <FieldLabel>대표 이미지</FieldLabel>
             <PosterPicker uris={covers} onChange={setCovers} emptyLabel="사진 넣기" max={1} />
-            <CardMaker value={card} onChange={setCard} fallback={pwDef} shape="square" clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요." />
-            <PText style={styles.wayd}>{card ? '순위 · 카드 · 상세의 네모 칸에 이 카드가 보여요.' : covers.length ? '순위 · 카드 · 상세의 네모 칸에 이 사진이 보여요.' : '둘 다 없으면 카테고리 색 카드로 보여요.'}</PText>
+            <CardMaker value={card} onChange={setCard} hasPhoto={covers.length > 0} defaultColor={chPbgOf(cat)} fallback={pwDef} square clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요." />
+            <PText style={styles.wayd}>{covers.length && !card ? '순위 · 카드 · 상세의 네모 칸에 이 사진이 보여요.' : '순위 · 카드 · 상세의 네모 칸에 이 카드가 보여요.'}</PText>
           </View>
         </>
       )}

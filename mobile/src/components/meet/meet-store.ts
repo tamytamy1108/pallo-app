@@ -4,7 +4,7 @@
  * 맞는 API: 60 `/meetups/:id/join` · `/waitlist` · 65 `/clubs/:id/members` · 69 `/club-sessions/:sid/attend` · 70 한마디 · 인사
  *   · 88 `/events/:id/applications` · 92 `/event-proposals` · 찜 `/events/:id/save`
  */
-import type { MadeCard } from '@/data/poster-walls';
+import type { MadeCard } from '@/data/poster-colors';
 import { createStore } from '@/lib/store';
 import type { Club, Meet } from '@/data/meet';
 

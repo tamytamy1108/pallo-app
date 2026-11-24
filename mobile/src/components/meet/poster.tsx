@@ -4,35 +4,31 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 
-import { fitWordSize, PosterWall } from '@/components/ui/poster-wall';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { EVENT_POSTER_MORE, EVENT_POSTER_WORDS } from '@/data/events';
 import { C, hashId, POSTER_MORE, POSTER_WORDS, type PosterWords } from '@/data/meet';
-import { cardWords, wallMeta, type MadeCard } from '@/data/poster-walls';
+import { cardColor, cardDark, cardWords, fitWordSize, type MadeCard } from '@/data/poster-colors';
 
 /*
  * 브랜드 색 포스터 (프로토타입 lgPoster · LG_PW). 실제 앱에서는 올린 포스터 사진으로 바뀌어요.
  * 무늬 4가지(동그라미 · 사선 띠 · 방울 셋 · 큰 원 + 캐릭터)는 id 로 정해져서 늘 같은 모습이에요.
+ * 내가 만든 카드는 첫 무늬(동그라미) 위에 고른 색 · 적은 문구 (data/poster-colors).
  * '예시 포스터' 표시는 프로토타입 전용이라 넣지 않아요.
  */
 
 /** 바탕색 → 무늬 색 (프로토타입 LG_ACC) */
 const ACC: Record<string, string> = { [C.pk]: '#fff', [C.pu]: C.pk, [C.y]: C.pk, [C.sky]: C.y, [C.lpu]: C.pu };
-export const isDarkBg = (bg: string) => bg === C.pu || bg === C.pk;
+export const isDarkBg = (bg: string) => bg === C.pu || bg === C.pk || cardDark(bg);
 /** 포스터 위 글자색: 어두운 바탕이면 흰색 (프로토타입 lgCardFg · lgPstFg) */
 export const posterFg = (bg: string) => (isDarkBg(bg) || bg === C.ink ? '#fff' : C.ink);
 
-export type Slide = { words: string[]; bg: string; v: number; /** 올린 포스터 사진 */ uri?: string; /** 만든 카드 배경 (poster-walls id) */ wall?: string };
+export type Slide = { words: string[]; bg: string; v: number; /** 올린 포스터 사진 */ uri?: string; /** 내가 만든 카드 (무늬는 늘 첫 무늬 · 긴 글자는 폭에 맞게) */ made?: boolean };
 
 /** 한 모임의 포스터 장들 (첫 장 = 대표, 프로토타입 lgSlides · LG_PW2). 만든 카드가 있으면 카드가 대표, 올린 사진은 그 뒤에 */
 export function posterSlides(id: string, club = false, posters?: string[], card?: MadeCard): Slide[] {
   const photos = (posters ?? []).map((uri, i) => ({ words: [], bg: C.ink, v: i + (card ? 1 : 0), uri }));
-  if (card) {
-    // bg 는 글자색 고르기용 (posterFg): 흰 글자 카드면 잉크 · 아니면 크림
-    const w = wallMeta(card.wall);
-    return [{ words: cardWords(card.words, club ? ['NEW', 'CLUB'] : ['NEW', 'MEET']), bg: w.fg === 'light' ? C.ink : C.cream, v: 0, wall: w.id }, ...photos];
-  }
+  if (card) return [{ words: cardWords(card.words, club ? ['NEW', 'CLUB'] : ['NEW', 'MEET']), bg: card.color, v: 0, made: true }, ...photos];
   if (photos.length) return photos;
   const first: PosterWords = POSTER_WORDS[id] ?? EVENT_POSTER_WORDS[id] ?? [club ? ['NEW', 'CLUB'] : ['NEW', 'MEET'], club ? C.lpu : C.pk];
   const more = POSTER_MORE[id] ?? EVENT_POSTER_MORE[id] ?? [];
@@ -56,22 +52,12 @@ type Props = {
 /** 포스터 한 장 */
 export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRatio, style, children }: Props) {
   const { bg, words } = slide;
-  const acc = ACC[bg] ?? C.y;
-  const v = (hashId(id) + slide.v) % 4;
+  const acc = ACC[bg] ?? cardColor(bg)?.acc ?? C.y;
+  const v = slide.made ? 0 : (hashId(id) + slide.v) % 4;
   const wc = isDarkBg(bg) ? C.y : C.ink;
   // 만든 카드: 긴 글자를 포스터 폭에 맞게 줄여요 (웹은 글자 자동 줄이기가 없어요)
   const [pw, setPw] = useState(0);
-  const ws = slide.wall && pw ? fitWordSize(words, pw, wordSize) : wordSize;
-  if (slide.wall)
-    return (
-      <View onLayout={(e) => setPw(e.nativeEvent.layout.width)} style={StyleSheet.flatten([styles.wrap, { backgroundColor: wallMeta(slide.wall).base, height, aspectRatio }, style])}>
-        <PosterWall id={slide.wall} />
-        <View style={StyleSheet.flatten([styles.words, wordStyle])} pointerEvents="none">
-          <PText style={{ fontFamily: Font.display, fontSize: ws, lineHeight: ws * 0.95, letterSpacing: -1.2, color: posterFg(bg) }}>{words.join('\n')}</PText>
-        </View>
-        {children}
-      </View>
-    );
+  const ws = slide.made && pw ? fitWordSize(words, pw, wordSize) : wordSize;
   if (slide.uri)
     return (
       <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: C.ink, height, aspectRatio }, style])}>
@@ -82,7 +68,7 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
       </View>
     );
   return (
-    <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: bg, height, aspectRatio }, style])}>
+    <View onLayout={slide.made ? (e) => setPw(e.nativeEvent.layout.width) : undefined} style={StyleSheet.flatten([styles.wrap, { backgroundColor: bg, height, aspectRatio }, style])}>
       {v === 0 ? (
         <>
           <View style={[styles.circle, { right: -40, top: -40, width: 190, height: 190, borderRadius: 95, backgroundColor: acc }]} />
@@ -106,7 +92,7 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
         </>
       )}
       <View style={StyleSheet.flatten([styles.words, wordStyle])} pointerEvents="none">
-        <PText style={{ fontFamily: Font.display, fontSize: wordSize, lineHeight: wordSize * 0.95, letterSpacing: -1.2, color: wc }}>{words.join('\n')}</PText>
+        <PText style={{ fontFamily: Font.display, fontSize: ws, lineHeight: ws * 0.95, letterSpacing: -1.2, color: wc }}>{words.join('\n')}</PText>
       </View>
       {children}
     </View>
@@ -136,3 +122,19 @@ const styles = StyleSheet.create({
   shade: { position: 'absolute', left: 0, right: 0, top: 0, height: 64, zIndex: 1 },
   words: { position: 'absolute', left: 16, right: 16, bottom: 16, zIndex: 2 },
 });
+
+/** 실제 포스터 폭 (번개 카드 · 상세 무늬가 이 크기에 맞춰져 있어요) — 미리보기는 이 크기로 그려서 줄여요 */
+const PREVIEW_W = 300;
+
+/** 카드 만들기 미리보기: 실제 크기 포스터(4:5)를 칸 폭(width)에 맞게 줄여 보여 줘요 */
+export function PosterPreview({ card, words, width }: { card: MadeCard; words: string[]; width: number }) {
+  const k = width / PREVIEW_W;
+  const h = PREVIEW_W * 1.25;
+  return (
+    <View style={{ width, height: h * k, overflow: 'hidden' }}>
+      <View style={{ position: 'absolute', width: PREVIEW_W, height: h, left: (width - PREVIEW_W) / 2, top: (h * k - h) / 2, transform: [{ scale: k }] }}>
+        <Poster id="card-preview" slide={{ words, bg: card.color, v: 0, made: true }} height={h} wordSize={54} />
+      </View>
+    </View>
+  );
+}
