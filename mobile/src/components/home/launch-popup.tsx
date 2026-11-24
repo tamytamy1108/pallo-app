@@ -59,6 +59,8 @@ function PopupHost({ popups }: { popups: Popup[] }) {
   const [list] = useState(() => popups.filter((p) => p.until >= today() && hiddenStore.get()[p.id] !== today()));
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
+  /** 공지 카드 전체 높이 (포스터 · 버튼 · 아래 줄) — 넘김 화살표를 카드 한가운데 높이에 둬요 */
+  const [cardH, setCardH] = useState(0);
   const fade = useSharedValue(0);
 
   useEffect(() => {
@@ -86,8 +88,9 @@ function PopupHost({ popups }: { popups: Popup[] }) {
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel="닫기" />
         <View style={styles.cardBox}>
           <View style={styles.cardShadow} />
-          <View style={styles.card}>
-            <Pager list={list} i={i} setI={setI} still={still} />
+          <View style={styles.card} onLayout={(e) => setCardH(e.nativeEvent.layout.height)}>
+            {/* 카드 테두리(2) 안쪽 기준이라 2 를 빼요 */}
+            <Pager list={list} i={i} setI={setI} still={still} arrowY={cardH ? cardH / 2 - 2 : POSTER_H / 2} />
             <Pressable
               onPress={() => {
                 close();
@@ -130,16 +133,21 @@ function PopupHost({ popups }: { popups: Popup[] }) {
 
 /** 손가락을 이만큼(포스터 너비 비율) 넘게 끌거나 빠르게 튕기면 넘어가요 */
 const SWIPE_RATIO = 0.18;
+/** 포스터 높이 · 화살표 누르는 칸 높이 */
+const POSTER_H = 320;
+const ARROW_H = 44;
 const SWIPE_SPEED = 0.45;
 const SLIDE = { duration: 240, easing: Easing.out(Easing.cubic) };
 
 /**
  * 공지 포스터 칸: 여러 개면 옆으로 나란히 놓고 넘겨요.
  * - 옆으로 끌면 손가락을 따라오고, 놓으면 다음 · 이전 공지로 미끄러져요 (끝에서는 처음 · 마지막으로 돌아가요)
- * - ‹ › 는 포스터 양옆 가운데 (누르면 같은 미끄러짐) · 위 오른쪽에 몇 번째인지
+ * - ‹ › 는 포스터 양옆, 높이는 공지 카드 전체의 한가운데 (arrowY · 누르면 같은 미끄러짐) · 위 오른쪽에 몇 번째인지
  * - 움직임 줄이기면 미끄러짐 없이 바로 바꿔요
  */
-function Pager({ list, i, setI, still }: { list: Popup[]; i: number; setI: (i: number) => void; still: boolean }) {
+function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; setI: (i: number) => void; still: boolean; arrowY: number }) {
+  // 화살표가 포스터 밖으로 나가지 않게
+  const navTop = Math.min(POSTER_H - ARROW_H, Math.max(0, arrowY - ARROW_H / 2));
   const [w, setW] = useState(0);
   const many = list.length > 1;
   /** 줄 전체의 왼쪽 위치 (px) — 지금 공지가 i 면 -i × 너비 */
@@ -201,7 +209,7 @@ function Pager({ list, i, setI, still }: { list: Popup[]; i: number; setI: (i: n
               {i + 1} / {list.length}
             </PText>
           </View>
-          <View style={styles.nav} pointerEvents="box-none">
+          <View style={[styles.nav, { top: navTop }]} pointerEvents="box-none">
             <Pressable onPress={() => go(i - 1)} accessibilityRole="button" accessibilityLabel="이전" hitSlop={8} style={styles.nx}>
               <LineIcon d={CHEVRON_L} size={26} color={Colors.white} width={2.6} />
             </Pressable>
@@ -238,10 +246,10 @@ const styles = StyleSheet.create({
   cardBox: { width: '100%', maxWidth: 330 },
   cardShadow: { position: 'absolute', left: 5, top: 5, right: -5, bottom: -5, borderRadius: 24, backgroundColor: Colors.ink },
   card: { backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink, borderRadius: 24, overflow: 'hidden' },
-  im: { height: 320, overflow: 'hidden' },
+  im: { height: POSTER_H, overflow: 'hidden' },
   row: { flexDirection: 'row', height: '100%' },
   poster: { height: '100%', paddingVertical: 22, paddingHorizontal: 20, overflow: 'hidden' },
-  nav: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
+  nav: { position: 'absolute', left: 0, right: 0, height: ARROW_H, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
   n: { position: 'absolute', right: 12, top: 12, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.4)' },
   nText: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
   k: { fontFamily: Font.display, fontSize: 11, lineHeight: 14, letterSpacing: 2 },
@@ -249,7 +257,7 @@ const styles = StyleSheet.create({
   s: { marginTop: 10, fontFamily: Font.body800, fontSize: 13, lineHeight: 18, opacity: 0.9 },
   char: { position: 'absolute', right: -12, bottom: -10, width: 150, height: (150 * 306) / 480 },
   // 화살표만 (동그란 바탕 없이)
-  nx: { width: 34, height: 44, alignItems: 'center', justifyContent: 'center' },
+  nx: { width: 34, height: ARROW_H, alignItems: 'center', justifyContent: 'center' },
   goBox: { margin: 12 },
   goShadow: { position: 'absolute', left: 0, right: 0, top: 3, bottom: -3, borderRadius: 24, backgroundColor: Colors.ink },
   go: { height: 48, borderRadius: 24, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
