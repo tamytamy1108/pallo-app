@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Pressable } from '@/components/ui/pressable';
 import { ChallengeTab } from '@/components/challenge/challenge-tab';
 import { useBlockedNames } from '@/components/common/report-sheet';
+import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { guardMember } from '@/components/common/trial-guide';
 import { BranchSelect, branchList, branchValue } from '@/components/lounge/branch-select';
 import { CreateSheet, type CreateKind } from '@/components/lounge/create-sheet';
@@ -35,6 +36,9 @@ import { useCenterChip } from '@/lib/center-chip';
  * 위에서부터: 제목 → 밑줄 탭 → 스토리 줄(추천 · 커뮤니티) → 지점 선택 + 서브 칩 → 탭별 피드. 오른쪽 아래 노랑 + 와 맨 위로.
  * 챌린지 · 번개 · 동아리 탭 본문은 각 담당 컴포넌트를 그대로 넣어요.
  */
+/** 비회원이 볼 수 있는 탭 아래 높이 (스토리 줄 + 카드 1~2개) */
+const LOUNGE_PEEK = 720;
+
 export default function LoungeScreen() {
   const tab = useLounge((s) => s.tab);
   // /lounge?tab=all|com|chal|meet|trip 로 탭을 바로 열 수 있어요 (랭킹의 챌린지 카드 → ?tab=chal)
@@ -74,6 +78,7 @@ export default function LoungeScreen() {
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
     if (y > 360 !== scrolled) setScrolled(y > 360);
+    checkScrollLock('lounge');
   };
   // 고른 칸은 시트가 다 닫힌 뒤에 열어요. 닫히는 중에 다른 화면 · 시트를 열면 아이폰에서 아무 일도 안 일어나요
   const picked = useRef<CreateKind | null>(null);
@@ -102,17 +107,20 @@ export default function LoungeScreen() {
         <View onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>
           <Tabs tab={tab} onPick={pickTab} />
         </View>
-        {tab === 'all' || tab === 'com' ? <StoryRow /> : null}
-        {tab === 'chal' ? (
-          <ChallengeTab branch={branch} header={branchBtn} />
-        ) : tab === 'meet' ? (
-          <MeetTab branch={branch} header={branchBtn} region={region} />
-        ) : (
-          <>
-            <SubRow tab={tab} branchBtn={branchBtn} />
-            <Feed tab={tab} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
-          </>
-        )}
+        {/* 비회원은 모든 탭에서 위쪽(카드 1~2개)까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
+        <ScrollLock key={tab} screen="lounge" peek={LOUNGE_PEEK}>
+          {tab === 'all' || tab === 'com' ? <StoryRow /> : null}
+          {tab === 'chal' ? (
+            <ChallengeTab branch={branch} header={branchBtn} />
+          ) : tab === 'meet' ? (
+            <MeetTab branch={branch} header={branchBtn} region={region} />
+          ) : (
+            <>
+              <SubRow tab={tab} branchBtn={branchBtn} />
+              <Feed tab={tab} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
+            </>
+          )}
+        </ScrollLock>
       </ScrollView>
 
       <ToTop show={scrolled} bottom={fabBottom + 60 + 14} onPress={() => scroll.current?.scrollTo({ y: 0, animated: true })} />

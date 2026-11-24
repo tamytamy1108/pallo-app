@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, ChoiceChip, Head, Icon, TextLink, UnderTabs, type IconName } from '@/components/account/parts';
 import { addAsk, useAsks } from '@/components/account/store';
@@ -171,7 +172,7 @@ function AskView({ type }: { type?: string }) {
             ))}
           </View>
           <PText style={[styles.lb, styles.lb2]}>내용</PText>
-          <TextInput value={text} onChangeText={setText} multiline placeholder="언제, 어떤 화면에서, 무엇이 문제였는지 적어 주세요" placeholderTextColor="#9B94A6" accessibilityLabel="내용" style={styles.ta} />
+          <GrowInput value={text} onChangeText={setText} multiline placeholder="언제, 어떤 화면에서, 무엇이 문제였는지 적어 주세요" placeholderTextColor="#9B94A6" accessibilityLabel="내용" style={styles.ta} />
         </>
       ) : (
         asks.map((x, i) => {

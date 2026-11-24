@@ -1,6 +1,6 @@
 import { Image, type ImageSource } from 'expo-image';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -93,6 +93,10 @@ function ConfirmCard({ open, title, message, confirmLabel, cancelLabel = '취소
     sfx(isConfirm && confirmSfx ? confirmSfx : base);
     run();
   };
+
+  // 웹에서는 열려 있을 때만 그려요 (웹은 처음 그린 순서대로 겹쳐서, 미리 그려 두면 나중에 연 시트 밑에 깔려요 · ui/sheet 와 같은 이유).
+  // 폰은 LayerModal 이 visible 로 열고 닫아요 (아이폰 시트 위 창 · ui/sheet-stack)
+  if (!open && Platform.OS === 'web') return null;
 
   return (
     <LayerModal visible={open} transparent animationType="none" onRequestClose={onCancel} statusBarTranslucent navigationBarTranslucent>

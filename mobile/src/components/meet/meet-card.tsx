@@ -43,7 +43,7 @@ export function MeetCard({ m, width }: { m: Meet; width: number }) {
         guardMember(() => {
           toggleIn('vac', m.id);
           showToast(vac ? '빈자리 알림을 껐어요' : '자리가 나면 바로 알려 드릴게요');
-        })
+        }, '빈자리 알림을 받으려면')
       }
     />
   ) : (

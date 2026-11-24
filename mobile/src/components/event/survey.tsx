@@ -1,7 +1,8 @@
 import { useRef } from 'react';
-import { StyleSheet, TextInput, View, type ViewInstance } from 'react-native';
+import { StyleSheet, View, type ViewInstance } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import type { SurveyAnswers } from '@/components/meet/meet-store';
 import { Icon } from '@/components/meet/icons';
@@ -55,16 +56,14 @@ export function SurveyForm({ questions, answers, onChange }: { questions: Survey
           </PText>
           {q.t === 'multi' ? <PText style={styles.small}>여러 개 골라도 돼요</PText> : null}
           {q.t === 'text' ? (
-            <TextInput
+            <GrowInput
               value={typeof answers[i] === 'string' ? (answers[i] as string) : ''}
               onChangeText={(t) => onChange({ ...answers, [i]: t })}
               placeholder="답을 적어 주세요"
               placeholderTextColor="#8C8597"
               maxLength={60}
-              // 길게 적어도 옆으로 밀리지 않고 줄이 바뀌어 다 보여요
-              multiline
-              textAlignVertical="top"
-              blurOnSubmit
+              // 길게 적어도 옆으로 밀리지 않고 줄이 바뀌어 다 보여요 (GrowInput) · Enter 는 줄 바꿈 대신 닫기
+              submitBehavior="blurAndSubmit"
               returnKeyType="done"
               style={styles.in}
               accessibilityLabel={q.q}

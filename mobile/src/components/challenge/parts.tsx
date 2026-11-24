@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -192,7 +193,8 @@ export function FieldLabel({ children }: { children: string }) {
 export function Field({ multiline, style, ...rest }: TextInputProps & { style?: StyleProp<ViewStyle> }) {
   return (
     <View style={[styles.field, multiline ? styles.fieldMulti : null, style]}>
-      <TextInput placeholderTextColor="#9B94A6" multiline={multiline} style={[styles.fieldIn, multiline ? styles.fieldInMulti : null]} {...rest} />
+      {/* 여러 줄 칸은 길게 쓰는 만큼 저절로 늘어나요 (GrowInput). 테두리는 바깥 칸이 그려요 */}
+      {multiline ? <GrowInput ring={false} placeholderTextColor="#9B94A6" style={[styles.fieldIn, styles.fieldInMulti]} {...rest} /> : <TextInput placeholderTextColor="#9B94A6" style={styles.fieldIn} {...rest} />}
     </View>
   );
 }

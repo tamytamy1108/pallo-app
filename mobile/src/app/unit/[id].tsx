@@ -23,6 +23,7 @@ import { Colors } from '@/constants/theme';
 import { STAGES, STAGE_COLOR, STAGE_KO, STUDY_STEPS, findLevel, listenItemsOf, parseUnitId, stepTitle, unitId, type StageKey, type Step, type StudyLevel, type Lesson } from '@/data/library';
 import { sfx } from '@/lib/feedback';
 import { isDone, stepKey, useDoneCount, useIsDone, useSavedPos } from '@/state/progress';
+import { ChapterGate } from '@/components/common/member-lock';
 
 const NOTE: Record<StageKey, string> = {
   pre: '스터디 전에 해요. 수업에서 바로 말할 수 있게 표현과 내 답을 미리 준비해요.',
@@ -36,7 +37,7 @@ const back = () => (router.canGoBack() ? router.back() : router.replace('/librar
  * 과 화면 (프로토타입 #study · showHub): 표지 · 제목 → 오늘의 패턴(이번 회차) → 리스닝 룸 → 예습 · 본학습 · 복습 탭 → 단계 카드.
  * 단계 카드: 다음 할 단계 = 연노랑 + '다음', 하다 만 단계 = '이어서', 끝낸 단계 = 체크. 누르면 시작 창 → 레슨.
  */
-export default function UnitScreen() {
+function UnitScreen() {
   // '/unit/1-1' (레벨-과) · 홈 스터디 맵의 '/unit/1?lv=1' 둘 다 받아요
   const { id, lv: lvParam } = useLocalSearchParams<{ id: string; lv?: string }>();
   const { lv, no } = id?.includes('-') ? parseUnitId(id) : { lv: Number(lvParam ?? 1), no: Number(id) };
@@ -231,3 +232,14 @@ const styles = StyleSheet.create({
   minB: { fontFamily: Font.body900, fontSize: 12, lineHeight: 18 },
   minText: { fontFamily: Font.body800, fontSize: 11, lineHeight: 16.5, color: Colors.inkSub },
 });
+
+/** 비회원은 맵마다 첫 챕터만 (components/common/member-lock ChapterGate) */
+export default function UnitScreenGate() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const no = id?.includes('-') ? parseUnitId(id).no : Number(id ?? 1);
+  return (
+    <ChapterGate no={no} label={`${no}과`}>
+      <UnitScreen />
+    </ChapterGate>
+  );
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { keepAll } from '@/components/common/sheet-parts';
 import { PText } from '@/components/ui/text';
@@ -102,7 +103,7 @@ export function ClubChat({ c, inC, myName, staff }: { c: Club; inC: boolean; myN
         {M.map((m, i) => msg(m, i))}
       </View>
       <View style={styles.in}>
-        <TextInput value={v} onChangeText={setV} onSubmitEditing={send} placeholder="멤버들에게 메시지 보내기" placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel="채팅 메시지" returnKeyType="send" />
+        <GrowInput value={v} onChangeText={setV} onSubmitEditing={send} submitBehavior="submit" maxLines={6} placeholder="멤버들에게 메시지 보내기" placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel="채팅 메시지" returnKeyType="send" />
         <Pressable onPress={send} accessibilityRole="button" accessibilityLabel="보내기" style={styles.send}>
           <Icon name="send" size={18} />
         </Pressable>
@@ -125,7 +126,8 @@ const styles = StyleSheet.create({
   p: { flexShrink: 1, fontFamily: Font.body600, fontSize: 14, lineHeight: 20.3, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: Colors.line, borderRadius: 16, borderTopLeftRadius: 4, backgroundColor: Colors.white, overflow: 'hidden' },
   pMe: { backgroundColor: Colors.yellow, borderColor: Colors.ink, borderTopLeftRadius: 16, borderTopRightRadius: 4 },
   time: { flexShrink: 0, fontFamily: Font.body700, fontSize: 10.5, lineHeight: 15, color: Colors.inkSub },
-  in: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  input: { flex: 1, minWidth: 0, height: 46, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', borderWidth: 1.5, borderColor: Colors.line, borderRadius: 23, paddingHorizontal: 16, fontFamily: Font.body700, fontSize: 14, backgroundColor: Colors.white, color: Colors.ink },
+  // 길게 쓰면 칸이 위로 늘고 보내기는 아래 줄에 맞춰요 · 안드로이드 글자 잘림 없게 includeFontPadding 끔
+  in: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 14 },
+  input: { flex: 1, minWidth: 0, minHeight: 46, borderWidth: 1.5, borderColor: Colors.line, borderRadius: 23, paddingHorizontal: 16, paddingVertical: 11, includeFontPadding: false, fontFamily: Font.body700, fontSize: 14, lineHeight: 20, backgroundColor: Colors.white, color: Colors.ink },
   send: { width: 46, height: 46, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
 });

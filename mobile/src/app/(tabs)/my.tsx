@@ -1,10 +1,14 @@
-import { router, type Href } from 'expo-router';
-import { useRef, useState } from 'react';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, type ScrollViewInstance, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { applyDevMe } from '@/components/home/dev';
 import { Pressable } from '@/components/ui/pressable';
 import { MyStudyCard } from '@/components/account/my-study-card';
+import { MemberLock } from '@/components/common/member-lock';
+import { memberGate } from '@/components/common/trial-guide';
+import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { ProNoteCard } from '@/components/account/pro-note-card';
 import { BranchBoard } from '@/components/my/branch-board';
 import { GearIcon, LgIcon } from '@/components/my/icons';
@@ -22,6 +26,7 @@ import { MY_BADGES, rankPeople } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
 import { useSavedCount } from '@/state/expressions';
+import { canUse, isMember } from '@/state/access';
 import { useMe } from '@/state/me';
 import { useTabReselect } from '@/lib/tab-reselect';
 
@@ -35,11 +40,20 @@ const go = (href: string) => () => {
  * 마이 (프로토타입 renderMy): 제목 · 톱니 → 캐릭터 룸 카드 → 숫자 4칸 → PRO'S NOTE → 내 스터디 → 지점 안내
  * → 랭킹 요약 → 배지 → 내 활동 → 설정 · 고객센터 · 이용권. 맨 아래 개발용 입구.
  */
+/** 비회원이 볼 수 있는 잠김 칸 위 높이 (랭킹 윗부분) */
+const MY_PEEK = 300;
+
 export default function MyScreen() {
   const scroll = useRef<ScrollViewInstance>(null);
   useTabReselect('my', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const { width } = useWindowDimensions();
+  // 개발용 ?link= · ?name= (웹에서만)
+  const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string }>();
+  useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial }), [dev.link, dev.name, dev.trial]);
   const me = useMe();
+  const member = isMember(me);
+  const canSettings = canUse(me, 'settings');
+  const openSettings = canSettings ? go('/me/settings') : () => memberGate('설정을 쓰려면');
   const saved = useSavedCount();
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
   const [badges, setBadges] = useState(false);
@@ -55,14 +69,15 @@ export default function MyScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView ref={scroll} contentContainerStyle={styles.body}>
+      <ScrollView ref={scroll} contentContainerStyle={styles.body} onScroll={() => checkScrollLock('my')} scrollEventThrottle={64}>
         <Appear kind="rise" style={styles.head}>
           <PText variant="headline" accessibilityRole="header">
             마이
           </PText>
-          <Pressable onPress={go('/me/settings')} accessibilityRole="button" accessibilityLabel="설정">
+          {/* 설정은 회원만: 비회원은 흐리게 · 누르면 잠김 1번 */}
+          <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="설정" accessibilityHint={canSettings ? undefined : '지점 회원이 되면 쓸 수 있어요'} style={!canSettings && styles.off}>
             {({ pressed }) => (
-              <Raised radius={14} pressed={pressed}>
+              <Raised radius={14} pressed={pressed && canSettings} flat={!canSettings}>
                 <View style={styles.iconBtn}>
                   <GearIcon />
                 </View>
@@ -88,56 +103,67 @@ export default function MyScreen() {
           />
         </Appear>
 
-        <Appear kind="rise" delay={80}>
-          <ProNoteCard />
-        </Appear>
-        <Appear kind="rise" delay={100}>
-          <MyStudyCard />
-        </Appear>
-        <Appear kind="rise" delay={120}>
-          <BranchBoard />
-        </Appear>
+        {/* 회원만: PRO'S NOTE · 내 스터디 · 지점 안내 */}
+        {member && (
+          <>
+            <Appear kind="rise" delay={80}>
+              <ProNoteCard />
+            </Appear>
+            <Appear kind="rise" delay={100}>
+              <MyStudyCard />
+            </Appear>
+            <Appear kind="rise" delay={120}>
+              <BranchBoard />
+            </Appear>
+          </>
+        )}
 
-        <SecHead title="랭킹" more="전체 보기 ›" onMore={go('/me/ranking')} />
-        <Appear kind="rise">
-          <RankSummary people={people} myRank={myRank} branch={me.branch} onPress={go('/me/ranking')} />
-        </Appear>
+        {/* 비회원: 랭킹 윗부분까지만 보이고 아래는 '지점 회원이 되면 열려요' 칸 (스크롤 잠김 · components/common/scroll-lock) */}
+        <ScrollLock screen="my" peek={MY_PEEK} panel={<MemberLock />}>
+          <View style={styles.stack}>
+            <SecHead title="랭킹" more="전체 보기 ›" onMore={go('/me/ranking')} />
+            <Appear kind="rise">
+              <RankSummary people={people} myRank={myRank} branch={me.branch} onPress={go('/me/ranking')} />
+            </Appear>
 
-        <SecHead title="배지" more="모두 보기 ›" onMore={() => setBadges(true)} />
-        <Appear kind="rise">
-          <BadgeGrid list={MY_BADGES.slice(0, 4)} />
-        </Appear>
+            <SecHead title="배지" more="모두 보기 ›" onMore={() => setBadges(true)} />
+            <Appear kind="rise">
+              <BadgeGrid list={MY_BADGES.slice(0, 4)} />
+            </Appear>
 
-        <SecHead title="내 활동" more="전체 보기 ›" onMore={go('/me/expressions')} />
-        <Appear kind="rise">
-          <MyList
-            rows={[
-              { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: `${me.joinedMeets}개`, onPress: () => setMeets('joined') },
-              { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: `${me.savedMeets}개`, onPress: () => setMeets('saved') },
-              {
-                label: '내가 쓴 글',
-                icon: <LgIcon name="image" size={18} />,
-                value: `${me.postCount}개`,
-                onPress: () => {
-                  sfx('tap');
-                  router.push('/lounge');
-                  showToast('내가 쓴 글은 커뮤니티에서 볼 수 있어요');
-                },
-              },
-              { label: '내 표현함', icon: <LgIcon name="save" size={18} />, value: `${saved}개`, onPress: go('/me/expressions') },
-              { label: '랭킹 · 퀘스트', icon: <LgIcon name="flame" size={18} />, onPress: go('/me/ranking') },
-            ]}
-          />
-        </Appear>
-        <Appear kind="rise">
-          <MyList
-            rows={[
-              { label: '설정', onPress: go('/me/settings') },
-              { label: '고객센터 · 자주 묻는 질문', onPress: go('/me/support') },
-              { label: '이용권 · 결제 내역', onPress: go('/me/pass') },
-            ]}
-          />
-        </Appear>
+            <SecHead title="내 활동" more="전체 보기 ›" onMore={go('/me/expressions')} />
+            <Appear kind="rise">
+              <MyList
+                rows={[
+                  { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: `${me.joinedMeets}개`, onPress: () => setMeets('joined') },
+                  { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: `${me.savedMeets}개`, onPress: () => setMeets('saved') },
+                  {
+                    label: '내가 쓴 글',
+                    icon: <LgIcon name="image" size={18} />,
+                    value: `${me.postCount}개`,
+                    onPress: () => {
+                      sfx('tap');
+                      router.push('/lounge');
+                      showToast('내가 쓴 글은 커뮤니티에서 볼 수 있어요');
+                    },
+                  },
+                  { label: '내 표현함', icon: <LgIcon name="save" size={18} />, value: `${saved}개`, onPress: go('/me/expressions') },
+                  { label: '랭킹 · 퀘스트', icon: <LgIcon name="flame" size={18} />, onPress: go('/me/ranking') },
+                ]}
+              />
+            </Appear>
+            <Appear kind="rise">
+              <MyList
+                rows={[
+                  { label: '설정', onPress: openSettings },
+                  { label: '고객센터 · 자주 묻는 질문', onPress: go('/me/support') },
+                  // 이용권은 회원만 · 앱 구독자는 결제 내역만
+                  ...(member ? [{ label: '이용권 · 결제 내역', onPress: go('/me/pass') }] : me.plan === 'app' ? [{ label: '결제 내역', onPress: go('/me/payments') }] : []),
+                ]}
+              />
+            </Appear>
+          </View>
+        </ScrollLock>
 
         {/* 개발용 입구: 출시 전에 빼요 */}
         <View style={styles.dev}>
@@ -172,4 +198,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   dev: { marginTop: 10, gap: 10 },
+  stack: { gap: Spacing.stack },
+  off: { opacity: 0.4 },
 });

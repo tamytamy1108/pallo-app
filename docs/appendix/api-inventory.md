@@ -4,14 +4,14 @@
 
 공통 가정: 로그인 토큰 인증, 서버 시각 기준, 목록은 페이지네이션(`cursor`), 역할 검사는 서버에서.
 
-> 여기 없는 API(앱 시작 팝업 · 시즌 테마 · 스파크 내역 · 팔로우 등 16가지 + 로그아웃 · 토큰 갱신)와 **관리자 웹 API 개요(7묶음)** 는 [`docs/frontend/api-additions.md`](../frontend/api-additions.md) 에 이어서 적었어요 (A1 ~ A18).
+> 여기 없는 API(앱 시작 팝업 · 시즌 테마 · 스파크 내역 · 팔로우 · 첫 화면 · 사용 가이드 · 지점 연동 요청 등 21가지 + 로그아웃 · 토큰 갱신)와 **관리자 웹 API 개요(7묶음)** 는 [`docs/frontend/api-additions.md`](../frontend/api-additions.md) 에 이어서 적었어요 (A1 ~ A23).
 > 앱 쪽에서 어느 API까지 옮겼는지는 [`docs/frontend/api-layer.md`](../frontend/api-layer.md) 체크리스트를 봐요.
 
 ## 인증 · 회원
 
 | # | 방법 | 경로 | 하는 일 | 쓰는 화면 |
 |---|---|---|---|---|
-| 1 | POST | `/auth/login/:provider` | 카카오 · 애플 · 구글 로그인 | 시작 |
+| 1 | POST | `/auth/login/:provider` | 카카오 · 애플 · 구글 로그인 (응답에 처음 가입인지 `isNew`) | 시작 |
 | 2 | POST | `/auth/phone/verify` | 휴대폰 확인 | 로그인 계정 |
 | 3 | GET | `/me` | 내 정보 · 역할 · 유형 · 지점 | 전체 |
 | 4 | PATCH | `/me` | 닉네임 · 소개 · 지점(≤2) | 설정 |

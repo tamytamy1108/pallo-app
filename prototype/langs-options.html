@@ -1,0 +1,106 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>언어 고르기 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Noto+Sans+KR:wght@600;700;800;900&family=Dela+Gothic+One&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@900&text=%E4%BD%A0%E5%A5%BD&display=swap">
+<style>
+:root{--cream:#FBF6EA;--ink:#1E1A2B;--sub:#5A5366;--line:#E3DCCB;--purple:#493087;--pink:#DE7593;--yellow:#FFE200;
+ --en:#4463A8;--ja:#F06593;--zh:#EA373F;--es:#69BE5F;--fd:'Unbounded','Noto Sans KR',sans-serif;--fb:'Noto Sans KR',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#E7E0CF;font-family:var(--fb);color:var(--ink);padding:28px 26px 60px;word-break:keep-all}
+h1{font-family:var(--fd);font-size:22px;margin:0 0 6px;letter-spacing:-.5px}
+.lead{font-size:13.5px;font-weight:700;color:var(--sub);margin:0 0 22px;line-height:1.6;max-width:900px}
+.row{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start}
+.cap{width:390px;margin-bottom:12px}.cap b{font-family:var(--fd);font-size:15px}.cap span{display:block;font-size:12.5px;font-weight:700;color:var(--sub);line-height:1.55;margin-top:4px;min-height:58px}
+.ph{position:relative;width:390px;height:780px;border:8px solid var(--ink);border-radius:48px;background:var(--cream);overflow:hidden}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;padding:52px 22px 22px}
+.tb{display:flex;align-items:center;gap:12px;height:44px}
+.tb .bk{width:22px;height:22px}.tb .bar{flex:1;height:10px;border-radius:5px;border:1.5px solid var(--ink);background:#EAE2CF;overflow:hidden}.tb .bar b{display:block;height:100%;width:80%;background:var(--purple)}
+.tb .st{font-family:var(--fd);font-size:12px;color:var(--sub)}
+.ttl{font-size:26px;font-weight:900;line-height:1.3;letter-spacing:-.8px;margin:14px 0 6px}
+.dsc{font-size:14px;font-weight:600;color:var(--sub)}
+.grow{flex:1}
+.btn{height:60px;border-radius:30px;border:2px solid var(--ink);box-shadow:3px 4px 0 var(--ink);background:var(--yellow);display:grid;place-items:center;font-size:17px;font-weight:900}
+.chk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #CFC6B2;display:grid;place-items:center;transition:.2s}
+.chk svg{opacity:0;width:14px;height:14px}
+.on .chk{background:var(--ink);border-color:var(--ink);transform:scale(1.08)}.on .chk svg{opacity:1}
+.g{font-family:var(--fd);font-weight:800}.g.ja{font-family:'Dela Gothic One',var(--fb)}.g.zh{font-family:'Noto Sans SC',var(--fb);font-weight:900}
+[data-opt]{cursor:pointer;user-select:none;transition:transform .15s,box-shadow .15s,background .2s}
+[data-opt]:active{transform:translate(3px,3px);box-shadow:none!important}
+
+/* A · 굵은 알약 */
+.a-list{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.a-it{height:66px;border-radius:33px;border:2px solid var(--ink);background:#fff;box-shadow:3px 4px 0 var(--ink);display:flex;align-items:center;gap:12px;padding:0 16px 0 14px}
+.a-it .chk{order:-1}
+.a-it b{font-size:18px;font-weight:900;flex:1}
+.a-it .g{font-size:18px}
+.a-it.on{background:var(--pink)}.a-it.on .g{color:var(--ink)!important}
+
+/* B · 큰 글자 타일 */
+.b-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.b-it{position:relative;aspect-ratio:1/1;border-radius:22px;border:2px solid var(--ink);background:#fff;box-shadow:3px 4px 0 var(--ink);padding:16px;display:flex;flex-direction:column}
+.b-it .code{font-family:var(--fd);font-size:52px;line-height:1;letter-spacing:-2px;margin-top:auto}
+.b-it b{font-size:16px;font-weight:900;margin-top:8px}
+.b-it small{font-size:12.5px;font-weight:700;color:var(--sub)}
+.b-it .chk{position:absolute;top:14px;right:14px}
+.b-it .g{font-size:14px}
+.b-it.on{background:var(--pink)}.b-it.on .code{color:#fff!important;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}.b-it.on small,.b-it.on .g{color:rgba(30,26,43,.8)!important}
+
+/* C · 티켓 */
+.c-list{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.c-it{position:relative;height:82px;display:flex;border-radius:16px;border:2px solid var(--ink);background:#fff;box-shadow:3px 4px 0 var(--ink);overflow:hidden}
+.c-stub{width:86px;flex:none;display:grid;place-items:center;border-right:2px dashed var(--ink);font-family:var(--fd);font-size:24px;color:#fff;letter-spacing:-.5px;position:relative;transition:background .2s}
+.c-main{flex:1;display:flex;align-items:center;gap:10px;padding:0 16px}
+.c-main div{flex:1}.c-main b{display:block;font-size:17px;font-weight:900}.c-main .g{font-size:14px}
+.c-it::before,.c-it::after{content:"";position:absolute;left:78px;width:16px;height:16px;border-radius:50%;background:var(--cream);border:2px solid var(--ink);z-index:2}
+.c-it::before{top:-10px}.c-it::after{bottom:-10px}
+.c-it.on .c-stub{background:var(--pink)!important;color:var(--ink)}
+.c-it.on .c-main{background:#FFF4F7}
+</style></head><body>
+<h1>언어 고르기 시안 3개</h1>
+<p class="lead">세 화면 모두 실제 폰 크기(390)예요. 카드를 눌러 고르기 · 해제가 돼요. 공통: 흰 카드 · 잉크 테두리 · 아래 그림자, 고르면 회원 칸과 같은 분홍(#DE7593), 오른쪽 체크. 장식은 빼고 글자로 구분해요.</p>
+<div class="row" id="rows"></div>
+
+<template id="frame">
+ <div class="ph"><div class="scr">
+  <div class="tb"><svg class="bk" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#1E1A2B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="bar"><b></b></span><span class="st">4/5</span></div>
+  <div class="ttl">어떤 언어가<br>궁금해요?</div>
+  <div class="dsc">여러 개 골라도 돼요. 나중에 바꿀 수 있어요.</div>
+  <div class="body"></div>
+  <div class="grow"></div>
+  <div class="btn">다음</div>
+ </div></div>
+</template>
+
+<script>
+const L = [
+  { k: 'en', ko: '영어', code: 'EN', g: 'Hello', sub: '여행 · 비즈니스' },
+  { k: 'ja', ko: '일본어', code: 'JA', g: 'こんにちは', sub: '애니 · 여행' },
+  { k: 'zh', ko: '중국어', code: 'ZH', g: '你好', sub: '비즈니스 · 여행' },
+  { k: 'es', ko: '스페인어', code: 'ES', g: '¡Hola!', sub: '여행 · 라틴 문화' },
+];
+const CHK = '<span class="chk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+const col = (k) => `var(--${k})`;
+const V = [
+  { name: 'A · 굵은 알약', note: '네 줄 알약 버튼. 왼쪽 체크 · 한국어 이름을 크게 · 오른쪽에 인사말을 그 언어 색으로. 제일 단순하고 한눈에 읽혀요.', cls: 'a-list',
+    item: (l) => `<div class="a-it" data-opt>${CHK}<b>${l.ko}</b><span class="g ${l.k}" style="color:${col(l.k)}">${l.g}</span></div>` },
+  { name: 'B · 큰 글자 타일', note: '2×2 네모 타일에 EN · JA · ZH · ES 를 아주 크게. 포스터 같은 글자 중심. 고르면 분홍 바탕에 글자가 흰색 + 잉크 테두리.', cls: 'b-grid',
+    item: (l) => `<div class="b-it" data-opt>${CHK}<span class="g ${l.k}" style="color:${col(l.k)}">${l.g}</span><span class="code" style="color:${col(l.k)}">${l.code}</span><b>${l.ko}</b><small>${l.sub}</small></div>` },
+  { name: 'C · 입장권', note: '체험 확정 화면의 입장권과 같은 모양. 왼쪽 떼는 쪽에 언어 코드(언어 색), 점선 절취선, 오른쪽에 이름 · 인사말. 고르면 떼는 쪽이 분홍.', cls: 'c-list',
+    item: (l) => `<div class="c-it" data-opt><div class="c-stub" style="background:${col(l.k)}">${l.code}</div><div class="c-main"><div><b>${l.ko}</b><span class="g ${l.k}" style="color:${col(l.k)}">${l.g}</span></div>${CHK}</div></div>` },
+];
+const rows = document.getElementById('rows');
+const tpl = document.getElementById('frame');
+V.forEach((v) => {
+  const c = document.createElement('div');
+  c.innerHTML = `<div class="cap"><b>${v.name}</b><span>${v.note}</span></div>`;
+  c.appendChild(tpl.content.cloneNode(true));
+  const body = c.querySelector('.body');
+  body.className = v.cls;
+  body.innerHTML = L.map(v.item).join('');
+  body.children[0].classList.add('on');
+  body.children[1].classList.add('on');
+  body.addEventListener('click', (e) => { const o = e.target.closest('[data-opt]'); if (o) o.classList.toggle('on'); });
+  rows.appendChild(c);
+});
+</script>
+</body></html>

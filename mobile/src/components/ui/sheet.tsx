@@ -261,6 +261,9 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
     </Modal>
   );
   const inParent = useSheetLayer(layerId, mounted, open, node);
+  // 웹에서는 열려 있을 때만 Modal 을 그려요 (아이폰은 닫힘 onDismiss 를 받아야 해서 그대로 둬요): 웹(react-native-web)은 Modal 을 처음 그릴 때 body 맨 끝에 자리를 만들어서,
+  // 앱 시작 때부터 그려 두면 나중에 연 시트(댓글 등) 밑에 깔려요. 열 때 새로 그려야 늘 맨 위에 떠요
+  if (!mounted && Platform.OS === 'web') return null;
   return inParent ? null : node;
 }
 

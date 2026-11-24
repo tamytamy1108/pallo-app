@@ -3,11 +3,11 @@ import Svg, { G, Path } from 'react-native-svg';
 import { Colors } from '@/constants/theme';
 
 /** PALLO! 워드마크 (프로토타입 홈 왼쪽 위 로고와 같은 모양). */
-export function Logo({ width = 92 }: { width?: number }) {
+export function Logo({ width = 92, color = Colors.ink }: { width?: number; color?: string }) {
   const [, , w, h] = '0 0 500.78 135.32'.split(' ').map(Number);
   return (
     <Svg width={width} height={(width * h) / w} viewBox="0 0 500.78 135.32" accessibilityRole="image" accessibilityLabel="PALLO!">
-      <G fill={Colors.ink}>
+      <G fill={color}>
       <Path d="M51.25,2.55c22.25,0,37.2,15.86,37.2,41.94,0,27.9-16.23,42.12-42.49,42.12h-12.04v46.16H0V6.37c0-2.11,1.71-3.82,3.82-3.82h47.43ZM33.92,62.17h6.2c7.29,0,13.31-4.92,13.31-17.5,0-14.41-8.03-17.68-13.68-17.68h-5.84v35.18Z" />
       <Path d="M156.09,5.47l31.02,127.3h-35.54l-4.04-23.84h-26.99l-4.04,23.84h-35.54L111.99,5.47c.42-1.71,1.95-2.92,3.71-2.92h36.67c1.76,0,3.3,1.2,3.71,2.92ZM124.55,83.4h18.97l-9.23-52.72c-.05-.29-.46-.29-.51,0l-9.230,52.72Z" />
       <Path d="M227.85,6.37v98.67h41.76v27.72h-75.69V6.37c0-2.11,1.71-3.82,3.82-3.82h26.28c2.11,0,3.82,1.71,3.82,3.82Z" />

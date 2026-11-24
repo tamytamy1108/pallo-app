@@ -7,28 +7,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TOP_ICON, TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
-import { ICON_PATH, LineIcon } from '@/components/home/icons';
+import { CHECK_PATH, ICON_PATH, LineIcon } from '@/components/home/icons';
 import { MemberFace } from '@/components/home/member-face';
-import { markAllNotiRead, markNotiRead, useNotiRead, useUnreadCount } from '@/components/home/noti-state';
+import { markAllNotiRead, markNotiRead, useNotiList, useNotiRead, useUnreadCount } from '@/components/home/noti-state';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { NOTI_TABS, NOTIS, type Noti, type NotiKind } from '@/data/home';
+import { NOTI_TABS, type Noti, type NotiKind } from '@/data/home';
 import { sfx } from '@/lib/feedback';
+import { canUse, type Feature } from '@/state/access';
+import { memberGate } from '@/components/common/trial-guide';
+import { getMe, useMe } from '@/state/me';
 
 /**
  * 알림함 (프로토타입 notiHTML · .nt-tabs · .nt-row).
  * 최신 순 한 목록 · 안 읽은 알림은 노랑 바탕 + 분홍 점. 누르면 읽음이 되고 그 화면으로 가요.
  */
+/** 회원 전용 화면 주소 → 기능 · 막혔을 때 안내 한 줄 */
+const MEMBER_HREFS: [string, Feature, string][] = [
+  ['/me/notes', 'proNote', '프로 노트를 보려면'],
+  ['/me/pass', 'pass', '이용권을 보려면'],
+  ['/me/study', 'myStudy', '내 스터디를 보려면'],
+  ['/me/change', 'myStudy', '연기 · 변경을 신청하려면'],
+];
+
 export default function NotificationsScreen() {
   const [tab, setTab] = useState<'all' | NotiKind>('all');
   const read = useNotiRead();
   const unread = useUnreadCount();
-  const list = NOTIS.filter((n) => tab === 'all' || n.kind === tab);
+  const canSettings = useMe((m) => canUse(m, 'settings'));
+  // 앱을 쓰는 동안 새로 온 알림(지점 연동 결과 등)이 맨 위에 쌓여요
+  const list = useNotiList().filter((n) => tab === 'all' || n.kind === tab);
 
   const open = (n: Noti) => {
     markNotiRead(n.id);
+    // 회원 전용 화면으로 가는 알림(프로 노트 · 이용권 · 내 스터디)은 비회원이면 열지 않고 체험 안내
+    const gate = MEMBER_HREFS.find(([prefix]) => n.href.startsWith(prefix));
+    if (gate && !canUse(getMe(), gate[1])) {
+      memberGate(gate[2]);
+      return;
+    }
     sfx('tap');
     router.push(n.href as Href);
   };
@@ -52,7 +71,13 @@ export default function NotificationsScreen() {
           <PText style={styles.linkText}>모두 읽음</PText>
         </Pressable>
         {/* 알림 설정: 설정 › 알림 칸으로 */}
-        <Pressable onPress={() => router.push('/me/settings?section=noti' as Href)} accessibilityRole="button" accessibilityLabel="알림 설정" style={TOP_ICON}>
+        {/* 설정은 회원만: 비회원은 흐리게 · 누르면 체험 안내 (trial-guide memberGate) */}
+        <Pressable
+          onPress={() => (canSettings ? router.push('/me/settings?section=noti' as Href) : memberGate('설정을 쓰려면'))}
+          accessibilityRole="button"
+          accessibilityLabel="알림 설정"
+          accessibilityHint={canSettings ? undefined : '지점 회원이 되면 쓸 수 있어요'}
+          style={StyleSheet.flatten([TOP_ICON, !canSettings && styles.linkOff])}>
           <LineIcon d={ICON_PATH.grid} size={19} />
         </Pressable>
           </>
@@ -95,6 +120,8 @@ function Row({ n, unread, onPress }: { n: Noti; unread: boolean; onPress: () => 
       style={({ pressed }) => StyleSheet.flatten([styles.row, unread && styles.rowNew, pressed && styles.rowPressed])}>
       {n.who ? (
         <MemberFace size={38} bg={n.who.bg} body={n.who.body} />
+      ) : n.badge ? (
+        <LinkBadge kind={n.badge} />
       ) : (
         <View style={styles.ic}>
           <LineIcon d={ICON_PATH[n.icon ?? 'tack']} size={18} />
@@ -108,6 +135,21 @@ function Row({ n, unread, onPress }: { n: Noti; unread: boolean; onPress: () => 
       </View>
       {unread && <View style={styles.dot} />}
     </Pressable>
+  );
+}
+
+/** 지점 연동 결과 동그라미 (프로토타입 .nt-ic.ok): 연동됨 보라 + 흰 체크 · 못 찾음 분홍 + ? */
+function LinkBadge({ kind }: { kind: 'ok' | 'fail' }) {
+  if (kind === 'ok')
+    return (
+      <View style={StyleSheet.flatten([styles.ic, styles.icOk])}>
+        <LineIcon d={CHECK_PATH} size={18} width={2.8} color={Colors.white} />
+      </View>
+    );
+  return (
+    <View style={StyleSheet.flatten([styles.ic, styles.icFail])}>
+      <PText style={styles.icQ}>?</PText>
+    </View>
   );
 }
 
@@ -125,6 +167,9 @@ const styles = StyleSheet.create({
   rowNew: { backgroundColor: '#FFF8CC' },
   rowPressed: { opacity: 0.7 },
   ic: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  icOk: { backgroundColor: Colors.purple, borderColor: Colors.purple },
+  icFail: { backgroundColor: '#FCE3EA' },
+  icQ: { fontFamily: Font.display, fontSize: 16, lineHeight: 20 },
   tx: { flex: 1, minWidth: 0 },
   txB: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20.3 },
   txS: { marginTop: 2, fontFamily: Font.body700, fontSize: 12, lineHeight: 17 },

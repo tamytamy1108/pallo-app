@@ -206,6 +206,8 @@ export type Noti = {
   /** 누르면 갈 화면 */
   href: string;
   read: boolean;
+  /** 지점 연동 결과 알림의 동그라미: 연동됨(보라 · 체크) · 못 찾음(분홍 · ?) — 프로토타입 .nt-ic.ok */
+  badge?: 'ok' | 'fail';
 };
 
 export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [

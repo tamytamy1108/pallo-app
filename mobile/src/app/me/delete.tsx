@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -38,7 +38,7 @@ export default function DeleteAccountScreen() {
             wide
             onPress={() => {
               if (router.canDismiss()) router.dismissAll();
-              router.replace('/login' as Href);
+              router.replace('/welcome');
             }}
           />
         </View>

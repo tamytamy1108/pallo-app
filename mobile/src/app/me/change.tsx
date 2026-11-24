@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { BackHandler, StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { BackHandler, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { ChangeCalendar } from '@/components/account/change-calendar';
 import { AccountPage, Box, ChoiceChip, Icon, Lift, type IconName } from '@/components/account/parts';
@@ -34,6 +35,7 @@ import {
   type Team,
 } from '@/data/account';
 import { haptic, sfx } from '@/lib/feedback';
+import { MemberOnly } from '@/components/common/member-lock';
 import { useKeyboardShown } from '@/lib/keyboard';
 
 /**
@@ -66,7 +68,7 @@ const KIND_CARD: [ChangeKind, IconName, string, string][] = [
   ['branch', 'pin', Colors.sky, '이사 · 회사 이동'],
 ];
 
-export default function ChangeScreen() {
+function ChangeScreen() {
   const ms = getMembership();
   const T = MY_TEAMS;
   const [f, setF] = useState<Form>(fresh);
@@ -239,7 +241,7 @@ export default function ChangeScreen() {
         <PText style={styles.q2}>
           운영진에게 남길 말 <PText style={styles.q2s}>선택</PText>
         </PText>
-        <TextInput
+        <GrowInput
           value={f.msg}
           onChangeText={(t) => set({ msg: t })}
           maxLength={200}
@@ -479,3 +481,12 @@ const styles = StyleSheet.create({
   ds: { fontFamily: Font.body700, fontSize: 15, lineHeight: 23, color: Colors.inkSub },
   ds2: { marginTop: 10 },
 });
+
+/** 회원 전용 화면 (state/access 'myStudy'): 비회원이 알림 · 주소로 바로 들어와도 '지점 회원이 되면 열려요' 칸만 보여요 */
+export default function ChangeScreenGate() {
+  return (
+    <MemberOnly feature="myStudy" title="연기 · 변경 신청">
+      <ChangeScreen />
+    </MemberOnly>
+  );
+}

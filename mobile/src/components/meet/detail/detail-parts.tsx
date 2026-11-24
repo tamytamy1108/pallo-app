@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { keepAll } from '@/components/common/sheet-parts';
 import { Sheet } from '@/components/ui/sheet';
@@ -125,7 +126,7 @@ export function HiForm({ initial = '', placeholder, button, onSave, onCancel }: 
   const [v, setV] = useState(initial);
   return (
     <View style={styles.hiform}>
-      <TextInput value={v} onChangeText={setV} placeholder={placeholder} placeholderTextColor="#9B94A6" maxLength={60} style={styles.hiIn} accessibilityLabel={placeholder ?? '인사 고치기'} />
+      <GrowInput value={v} onChangeText={setV} placeholder={placeholder} placeholderTextColor="#9B94A6" maxLength={60} style={styles.hiIn} accessibilityLabel={placeholder ?? '인사 고치기'} />
       <LgButton
         label={button}
         height={46}
@@ -265,8 +266,8 @@ const styles = StyleSheet.create({
   mall: { height: 44, marginTop: 2, borderTopWidth: 1, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
   mallT: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 19, color: Colors.inkSub },
   hi0: { marginTop: 8, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 19, color: Colors.inkSub },
-  hiform: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
-  hiIn: { flex: 1, minWidth: 0, height: 46, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', paddingHorizontal: 14, borderRadius: 14, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  hiform: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 6 },
+  hiIn: { flex: 1, minWidth: 0, minHeight: 46, paddingHorizontal: 14, paddingVertical: 11, lineHeight: 20, includeFontPadding: false, borderRadius: 14, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   hia: { paddingHorizontal: 4, height: 44, justifyContent: 'center' },
   hiaT: { fontFamily: Font.body800, fontSize: 12.5, color: Colors.inkSub },
   dnote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 14 },

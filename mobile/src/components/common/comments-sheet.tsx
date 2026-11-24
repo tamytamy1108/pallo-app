@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, TextInput, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance, type TextInputInstance } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/common/icons';
 import { MemberFace } from '@/components/common/member-face';
@@ -227,8 +228,10 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
       ) : null}
       <SheetBottom base={14} style={styles.csf}>
         <MemberFace name={me.name} me size={38} />
-        <TextInput
+        <GrowInput
           ref={inputRef}
+          maxLines={6}
+          ring={false}
           value={text}
           onChangeText={setText}
           placeholder={hint}
@@ -416,25 +419,26 @@ const styles = StyleSheet.create({
   csmText: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18 },
   csmBtn: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18 },
   // .csf — 아래 고정 입력칸
-  csf: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10, paddingHorizontal: 18, borderTopWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
+  // 칸이 여러 줄로 늘면 얼굴 · 보내기는 아래 줄에 맞춰요
+  csf: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingTop: 10, paddingHorizontal: 18, borderTopWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
   input: {
     flex: 1,
     minWidth: 0,
-    height: 46,
+    minHeight: 46,
     paddingHorizontal: 16,
+    paddingVertical: 11,
     // 안드로이드 기본 위아래 여백 때문에 한글 글자 위가 잘려요
-    paddingVertical: 0,
-    textAlignVertical: 'center',
     includeFontPadding: false,
     borderWidth: 1.5,
     borderColor: Colors.line,
     borderRadius: 23,
+    lineHeight: 20,
     backgroundColor: Colors.white,
     fontFamily: Font.body700,
     fontSize: 14,
     color: Colors.ink,
   },
   inputOn: { borderColor: Colors.ink },
-  send: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
+  send: { width: 42, height: 42, marginBottom: 2, borderRadius: 21, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   pressed: { transform: [{ scale: 0.94 }] },
 });

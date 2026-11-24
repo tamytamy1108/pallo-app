@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { saveExpressionToggle } from '@/components/lesson/bubbles';
 import { GuestMsg, MarkButton, MyMsg } from '@/components/lesson/chat';
@@ -187,7 +188,7 @@ export function TalkView({ D, C, title, source, onFinish, onLeave }: { D: Lesson
         <MicButton listening={mic.listening} label="눌러서 말하기" disabled={!mic.available} onPress={() => mic.toggle(exs.flatMap((x) => x.split(' ')))} />
       ) : (
         <View style={styles.inp}>
-          <TextInput value={draft} onChangeText={setDraft} placeholder="영어로 답해 보세요" placeholderTextColor="#A39C8E" style={styles.f} onSubmitEditing={() => send(draft)} returnKeyType="send" accessibilityLabel="내 대답" />
+          <GrowInput value={draft} onChangeText={setDraft} placeholder="영어로 답해 보세요" placeholderTextColor="#A39C8E" style={styles.f} onSubmitEditing={() => send(draft)} submitBehavior="submit" maxLines={5} returnKeyType="send" accessibilityLabel="내 대답" />
           <Pressable onPress={() => send(draft)} accessibilityRole="button" accessibilityLabel="보내기" style={({ pressed }) => StyleSheet.flatten([styles.send, pressed && styles.sendDown])}>
             <SendIcon />
           </Pressable>
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
   ex: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1.5, borderColor: '#F0E3A6', backgroundColor: '#FFF9D6' },
   exText: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
   inp: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  f: { flex: 1, minWidth: 0, height: 50, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', paddingHorizontal: 14, borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
+  f: { flex: 1, minWidth: 0, minHeight: 50, paddingHorizontal: 14, paddingVertical: 13, lineHeight: 21, includeFontPadding: false, borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
   send: { width: 50, height: 53, borderRadius: 25, borderWidth: 2.5, borderColor: Colors.ink, borderBottomWidth: 5.5, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   sendDown: { borderBottomWidth: 2.5, marginTop: 3 },
   problem: { textAlign: 'center', fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17 },

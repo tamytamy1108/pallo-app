@@ -2,6 +2,7 @@ import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Toggle } from '@/components/account/parts';
 import { setMarketing, updateSettings, useLogins, useSettings } from '@/components/account/store';
@@ -126,7 +127,7 @@ export default function SettingsScreen() {
               onPress={() => {
                 setSheet(null);
                 if (router.canDismiss()) router.dismissAll();
-                router.replace('/login' as Href);
+                router.replace('/welcome');
               }}
             />
           </View>
@@ -224,17 +225,19 @@ function NickSheet({ open, onClose, name, bio }: { open: boolean; onClose: () =>
       }>
       <View style={styles.fields}>
         <Field label="닉네임" value={nick} onChange={setNick} placeholder="2~10자" max={10} />
-        <Field label="한 줄 소개 (프로필에 보여요)" value={line} onChange={setLine} placeholder="예) 주말마다 번개 나가요!" max={40} />
+        <Field label="한 줄 소개 (프로필에 보여요)" value={line} onChange={setLine} placeholder="예) 주말마다 번개 나가요!" max={40} grow />
       </View>
     </Sheet>
   );
 }
 
-function Field({ label, value, onChange, placeholder, max }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; max: number }) {
+/** grow: 길게 쓰면 줄이 바뀌고 칸이 늘어나요 (소개). 닉네임은 한 줄 */
+function Field({ label, value, onChange, placeholder, max, grow }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; max: number; grow?: boolean }) {
+  const Input = grow ? GrowInput : TextInput;
   return (
     <View style={styles.field}>
       <PText style={styles.fieldLabel}>{label}</PText>
-      <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9B94A6" maxLength={max} accessibilityLabel={label} style={styles.input} />
+      <Input value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9B94A6" maxLength={max} accessibilityLabel={label} style={[styles.input, grow && styles.inputGrow]} />
     </View>
   );
 }
@@ -311,6 +314,7 @@ const styles = StyleSheet.create({
   fields: { gap: 14 },
   field: { gap: 6 },
   fieldLabel: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },
+  inputGrow: { paddingVertical: 13, lineHeight: 22 },
   input: { minHeight: 52, paddingHorizontal: 16, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
   rgl: { paddingTop: 12, paddingBottom: 4, fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   chk: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
