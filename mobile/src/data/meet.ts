@@ -18,6 +18,15 @@ export const capFull = (cur: number, max: number) => max > 0 && cur >= max;
 /** '3 / 6명' · 인원 무관이면 '3명 · 인원 무관' */
 export const capText = (cur: number, max: number) => (max > 0 ? `${cur} / ${max}명` : `${cur}명 · 인원 무관`);
 
+/** 동아리 지역 '전체' (지역 상관없이) */
+export const ALL_REGIONS = '전체';
+
+/** 동아리 가입 조건: 'PALLO 멤버만' 또는 '개설한 사람 지점 멤버만' (예: '하남점 멤버만') — 옛 '누구나' 는 멤버만과 같아요 */
+export const CLUB_MEMBERS = '멤버만';
+export const branchOnly = (br: string) => `${br} 멤버만`;
+/** 바로 가입되나요: 멤버만이면 누구나 · 지점 멤버만이면 그 지점 사람만 (다른 지점은 호스트 확인) */
+export const joinFree = (cond: string, clubBr: string, myBr: string) => cond === '누구나' || cond === CLUB_MEMBERS || (cond === branchOnly(clubBr) && myBr === clubBr);
+
 export type Region = '서울' | '경기' | '천안' | '대전' | '대구' | '울산' | '부산';
 export type ClubCat = 'run' | 'book' | 'drama' | 'food' | 'study';
 /** 포스터 큰 글자 줄들 · 바탕색 (프로토타입 LG_PW) */
@@ -60,7 +69,8 @@ export type Meet = {
 export type Club = {
   id: string;
   cc: ClubCat;
-  reg: Region;
+  /** '전체' = 지역 상관없이 (모든 지역 목록에 보여요) */
+  reg: Region | typeof ALL_REGIONS;
   name: string;
   lang: string;
   br: string;

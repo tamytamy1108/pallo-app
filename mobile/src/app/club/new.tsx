@@ -14,14 +14,12 @@ import { TextField } from '@/components/ui/field';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { CLUB_CATS, NO_LIMIT, REGIONS, type Region } from '@/data/meet';
+import { branchOnly, CLUB_MEMBERS, ALL_REGIONS, CLUB_CATS, NO_LIMIT, REGIONS, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
-const LANGS = ['영어', '일본어', '중국어', '스페인어'];
+const LANGS = ['영어', '일본어', '중국어', '스페인어', '한국어'];
 const DAYS = ['월', '화', '수', '목', '금', '토', '일'];
-/** 가입 조건 — 우선 두 가지 (더 넣을 조건은 운영에서 정해요: 우리 지점만 · 레벨 등) */
-const CONDS = ['누구나', '수강생만'];
 const MAX_MIN = 3;
 const MAX_MAX = 40;
 
@@ -35,14 +33,16 @@ export default function NewClub() {
   const [name, setName] = useState('');
   const [cat, setCat] = useState<string>(CLUB_CATS[0][1]);
   const [lang, setLang] = useState('영어');
-  const [reg, setReg] = useState<Region>('서울');
+  const [reg, setReg] = useState<Region | typeof ALL_REGIONS>('서울');
   // 모이는 시간: 시작 ~ 끝
   const [time, setTime] = useState('20:00');
   const [end, setEnd] = useState(() => defaultEnd('20:00'));
   const [max, setMax] = useState(12);
   const [noMax, setNoMax] = useState(false);
   const [days, setDays] = useState<string[]>(['수']);
-  const [cond, setCond] = useState('누구나');
+  // 가입 조건: 멤버만 · (내 지점) 멤버만
+  const conds = [CLUB_MEMBERS, branchOnly(me.branch)];
+  const [cond, setCond] = useState<string>(CLUB_MEMBERS);
   const [memo, setMemo] = useState('');
   const [pics, setPics] = useState<string[]>([]);
   // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
@@ -88,7 +88,7 @@ export default function NewClub() {
         <SheetPills options={LANGS} value={lang} onChange={setLang} />
       </Field>
       <Field label="지역" req>
-        <SheetPills options={REGIONS.map(([r]) => r)} value={reg} onChange={setReg} />
+        <SheetPills options={[ALL_REGIONS, ...REGIONS.map(([r]) => r)]} value={reg} onChange={setReg} />
       </Field>
       <Field label="모이는 요일 · 여러 개 골라요" req>
         <MultiPills options={DAYS} value={days} onChange={setDays} />
@@ -100,7 +100,7 @@ export default function NewClub() {
         <CountStepper value={max} min={MAX_MIN} max={MAX_MAX} format={(v) => `${v}명`} onChange={setMax} less="한 명 줄이기" more="한 명 늘리기" unlimited={{ on: noMax, onChange: setNoMax, label: '인원 무관' }} />
       </Field>
       <Field label="가입 조건" req>
-        <SheetPills options={CONDS} value={cond} onChange={setCond} />
+        <SheetPills options={conds} value={cond} onChange={setCond} />
       </Field>
       <TextField label="채팅방 공지 (가입하면 보여요) · 선택" value={memo} onChangeText={setMemo} placeholder="예) 첫 모임은 자기소개만 해도 충분해요." />
       <Field label="대표 이미지 · 사진 여러 장 또는 카드" req>

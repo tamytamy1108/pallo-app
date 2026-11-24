@@ -27,6 +27,7 @@ import {
   type ClubPost,
   type Meet,
   type Region,
+  ALL_REGIONS,
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
 
@@ -56,6 +57,8 @@ export function regionCounts(meets: Meet[], clubs: Club[], branch: string) {
     if (branchOk(m.br, branch) && c[m.reg] && isOpenMeet(m)) c[m.reg][0]++;
   });
   clubs.forEach((k) => {
+    // 지역 '전체' 동아리는 지역별 숫자에 세지 않아요
+    if (k.reg === ALL_REGIONS) return;
     if (branchOk(k.br, branch) && c[k.reg] && !k.wait) c[k.reg][1]++;
   });
   return c;

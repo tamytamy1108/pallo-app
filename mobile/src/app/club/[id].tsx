@@ -21,7 +21,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { C } from '@/data/meet';
+import { C, joinFree } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -73,7 +73,7 @@ export default function ClubDetail() {
   ) : st === 'ask' ? (
     <MainBtn label="신청 중 · 취소" variant="wh" grow={false} onPress={() => setLeave(true)} />
   ) : (
-    <MainBtn label={c.cond === '누구나' ? '가입하기' : '가입 신청'} variant="pu" onPress={() => guardMember(() => setJoin(true), '동아리에 가입하려면')} />
+    <MainBtn label={joinFree(c.cond, c.br, me.branch) ? '가입하기' : '가입 신청'} variant="pu" onPress={() => guardMember(() => setJoin(true), '동아리에 가입하려면')} />
   );
 
   const tabs = (

@@ -15,6 +15,7 @@ import { C, WEEK } from '@/data/meet';
 import { useCenterChip } from '@/lib/center-chip';
 import { useRevealNext } from '@/components/ui/form-scroll';
 import { sfx } from '@/lib/feedback';
+import { Wheel } from '@/components/ui/time-wheel';
 
 /*
  * 만들기 · 제안 폼 조각 (프로토타입 .lg-pup · .lg-plc · .lg-mpk · lgMapSvg · .lg-mcal).
@@ -381,21 +382,26 @@ export const spanLabel = (start: string, end: string) => {
 export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, toMin(HALF_HOURS[HALF_HOURS.length - 1])));
 
 /**
- * 시작 시간 ~ 끝나는 시간: 위 두 칸(시작 · 끝) 중 누른 쪽을 아래 시간 줄에서 골라요.
- * 시작을 고르면 끝 칸으로 넘어가요. 끝은 시작보다 늦은 시간만 · 시작을 끝보다 늦게 바꾸면 끝이 시작 + 2시간으로 따라가요.
+ * 시작 시간 ~ 끝나는 시간: 시작 · 끝 칸을 누르면 그 아래 휠이 열려요 — 위아래로 끌어서 골라요 (다시 누르면 닫혀요).
+ * 끝은 시작보다 늦은 시간만 · 시작을 끝보다 늦게 바꾸면 끝이 시작 + 2시간으로 따라가요.
  */
 export function TimeRange({ start, end, onChange }: { start: string; end: string; onChange: (start: string, end: string) => void }) {
-  const [edit, setEdit] = useState<'s' | 'e'>('s');
+  const [edit, setEdit] = useState<'s' | 'e' | null>(null);
   const starts = HALF_HOURS.slice(0, -1);
   const ends = HALF_HOURS.filter((t) => toMin(t) > toMin(start));
-  const pickStart = (t: string) => {
-    onChange(t, toMin(end) > toMin(t) ? end : defaultEnd(t));
-    setEdit('e');
-  };
+  const pickStart = (t: string) => onChange(t, toMin(end) > toMin(t) ? end : defaultEnd(t));
   const box = (k: 's' | 'e', label: string, t: string) => {
     const on = edit === k;
     return (
-      <Pressable onPress={() => { sfx('tap'); setEdit(k); }} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${label} ${timeLabel(t)} · 바꾸기`} style={[tr.box, on && tr.boxOn]}>
+      <Pressable
+        onPress={() => {
+          sfx('tap');
+          setEdit(on ? null : k);
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: on }}
+        accessibilityLabel={`${label} ${timeLabel(t)} · ${on ? '닫기' : '바꾸기'}`}
+        style={[tr.box, on && tr.boxOn]}>
         <PText style={[tr.k, on && tr.kOn]}>{label}</PText>
         <PText style={tr.v}>{timeLabel(t)}</PText>
       </Pressable>
@@ -408,8 +414,8 @@ export function TimeRange({ start, end, onChange }: { start: string; end: string
         <PText style={tr.til}>~</PText>
         {box('e', '끝', end)}
       </View>
-      <PText style={tr.span}>{`${spanLabel(start, end)} 동안 · ${edit === 's' ? '시작 시간을 골라요' : '끝나는 시간을 골라요'}`}</PText>
-      <TimeChips key={edit} times={edit === 's' ? starts : ends} value={edit === 's' ? start : end} onChange={(t) => (edit === 's' ? pickStart(t) : onChange(start, t))} />
+      <PText style={tr.span}>{`${spanLabel(start, end)} 동안${edit ? (edit === 's' ? ' · 끌어서 시작 시간을 골라요' : ' · 끌어서 끝나는 시간을 골라요') : ' · 칸을 눌러 바꿔요'}`}</PText>
+      {edit ? <Wheel key={edit} items={edit === 's' ? starts : ends} value={edit === 's' ? start : end} label={timeLabel} onChange={(t) => (edit === 's' ? pickStart(t) : onChange(start, t))} /> : null}
     </View>
   );
 }
