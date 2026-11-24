@@ -51,15 +51,25 @@
   const LIMB = { hl: [[164, 112], [8, 112]], hr: [[346, 112], [494, 112]], ll: [[206, 168], [163, 312]], lr: [[298, 168], [353, 324]] };
   const geo = (k) => { const [[ax, ay], [bx, by]] = LIMB[k]; const dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy); return { ax, ay, ux: dx / L, uy: dy / L, L }; };
   const at = (k, s, w = 0) => { const g = geo(k); return [r1(g.ax + g.ux * g.L * s - g.uy * w), r1(g.ay + g.uy * g.L * s + g.ux * w)]; };
+  /** 다리 사이 가르는 선 (몸 모양에서 잰 가랑이 x). 다리 띠는 이 선을 넘어 반대쪽 다리까지 칠하지 않아요 */
+  const CROTCH_X = 252.5;
+  /** 다리 띠의 안쪽(다른 다리 쪽) 끝 w: 왼다리는 음수 · 오른다리는 양수. 두 다리 띠가 1px 겹쳐 이음매가 안 보여요 */
+  const innerW = (k, s, W) => {
+    const g = geo(k), x0 = g.ax + g.ux * g.L * s, w = (x0 - CROTCH_X + (k === 'll' ? -0.5 : 0.5)) / g.uy;
+    return k === 'll' ? Math.max(-W, w) : Math.min(W, w);
+  };
+  /** 다리 바깥쪽은 다리 두께(≈64)보다 조금만 넓게 — 120 이면 치마 · 바지 윗모서리가 팔 아래까지 올라가 보여요 */
+  const LEG_OUT = 82;
+  const ends = (k, s, W) => (k === 'll' ? [innerW(k, s, W), Math.min(W, LEG_OUT)] : k === 'lr' ? [-Math.min(W, LEG_OUT), innerW(k, s, W)] : [-W, W]);
   /** 팔 · 다리를 s0~s1 (0 = 몸 쪽, 1 = 끝) 만큼 덮는 띠. b = 끝선이 끝 쪽으로 볼록한 정도 */
   const band = (k, s0, s1, b0 = 0.05, b1 = 0.05, W = 120) => {
-    const g = geo(k), A = at(k, s0, -W), B = at(k, s0, W), C = at(k, s1, W), D = at(k, s1, -W);
-    const q0 = at(k, s0 + b0 * 2, 0), q1 = at(k, s1 + b1 * 2, 0);
-    void g;
+    const [a0, c0] = ends(k, s0, W), [a1, c1] = ends(k, s1, W);
+    const A = at(k, s0, a0), B = at(k, s0, c0), C = at(k, s1, c1), D = at(k, s1, a1);
+    const q0 = at(k, s0 + b0 * 2, (a0 + c0) / 2), q1 = at(k, s1 + b1 * 2, (a1 + c1) / 2);
     return `M${A} Q${q0} ${B} L${C} Q${q1} ${D}Z`;
   };
   /** 띠 끝선 하나 (줄 · 시보리 선) */
-  const cut = (k, s, b = 0.05, W = 120) => `M${at(k, s, -W)} Q${at(k, s + b * 2, 0)} ${at(k, s, W)}`;
+  const cut = (k, s, b = 0.05, W = 120) => { const [a, c] = ends(k, s, W); return `M${at(k, s, a)} Q${at(k, s + b * 2, (a + c) / 2)} ${at(k, s, c)}`; };
 
   // 윗옷 자리: 소매 끝 xl · xr, 밑단 hy. 얼굴(목둘레)은 비워요
   const NECK = 'M204 20 C198 142 250 168 300 168 C350 168 402 142 396 20 Z';
@@ -212,17 +222,21 @@
       ln('M222 30 Q234 14 252 10', '#fff', 4, { op: 0.7 }) + ln('M306 30 Q318 14 336 10', '#fff', 4, { op: 0.7 }) + ln('M232 116 l14 -30', '#fff', 5, { op: 0.4 }) + ln('M316 118 l14 -30', '#fff', 5, { op: 0.4 }) },
     { id: 'f-shades', name: '하트 선글라스', price: 300, rare: '레어', art: () =>
       `<linearGradient id="avLens" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A1E3F"/><stop offset="1" stop-color="#C2456E"/></linearGradient>` +
-      P(heart(255, 60, 112), 'url(#avLens)', { rim: 0.5, sw: 6, hi: 0.5 }) + P(heart(343, 61, 112), 'url(#avLens)', { rim: 0.5, sw: 6, hi: 0.5 }) +
-      ln('M290 38 Q299 30 308 38', INK, 6) + ln('M210 40 L188 34', INK, 6) + ln('M388 40 L410 34', INK, 6) + gl(232, 34, 12, 6, -30, 0.7) + gl(320, 35, 12, 6, -30, 0.7) },
+      ln('M286 50 Q299 42 312 50', INK, 5) + ln('M214 58 L190 50', INK, 5) + ln('M384 58 L408 50', INK, 5) +
+      P(heart(254, 70, 72), 'url(#avLens)', { rim: 0.5, sw: 5, hi: 0.5 }) + P(heart(344, 71, 72), 'url(#avLens)', { rim: 0.5, sw: 5, hi: 0.5 }) +
+      gl(240, 54, 8, 4, -30, 0.7) + gl(330, 55, 8, 4, -30, 0.7) },
     { id: 'f-patch', name: '해적 안대', price: 200, rare: '일반', art: () =>
-      ln('M200 18 Q260 8 330 30 L420 58', INK, 7) + P(ell(340, 68, 42, 60), '#2A2533', { rim: 0.4 }) + P(star(340, 66, 13, 0.42), '#FFFFFF', { rim: 0, flat: 1 }) + ln('M330 18 L420 58', '#2A2533', 7) },
+      ln('M304 30 L279 9 A41 62 0 0 0 219 80', '#2A2533', 7) + ln('M380 50 Q398 54 402 72', '#2A2533', 7) +
+      P(ell(340, 68, 42, 60), '#2A2533', { rim: 0.4 }) + P(star(340, 66, 13, 0.42), '#FFFFFF', { rim: 0, flat: 1 }) },
     { id: 'f-beard', name: '산타 수염', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', art: () =>
       [[244, 152, 20], [268, 164, 22], [300, 170, 24], [332, 164, 22], [356, 152, 20], [256, 186, 20], [284, 196, 22], [316, 196, 22], [344, 186, 20], [300, 218, 20], [276, 214, 16], [324, 214, 16]].map(([x, y, r]) => P(ell(x, y, r, r), '#FFFFFF', { rim: 0.1, hi: 0.5 })).join('') +
       P('M300 140 C284 130 256 132 246 146 C262 156 286 154 300 148 C314 154 338 156 354 146 C344 132 316 130 300 140 Z', '#FFFFFF', { rim: 0.16 }) },
   ];
 
   // ---------------------------------------------------------------- 옷 (몸에 칠해요)
-  const pants = (s1 = 0.86) => `${band('ll', 0.26, s1, 0.04, 0.03)} ${band('lr', 0.26, s1, 0.04, 0.03)} M96 190 H420 V236 H96 Z`;
+  /** 아래옷: 두 다리 띠 + 허리 네모. 겹치는 조각을 한 path 로 합치면 감은 방향이 반대인 곳이 지워져 구멍이 나요 → 조각마다 따로 칠해요 */
+  const lower = (s0, s1, waist, c, b = [0.04, 0.03]) => [band('ll', s0, s1, ...b), band('lr', s0, s1, ...b), waist].map((d) => fl(d, c)).join('');
+  const pants = (s1, c) => lower(0.26, s1, 'M96 190 H420 V236 H96 Z', c);
   const WEARS = [
     { id: 'w-tee', name: '줄무늬 티셔츠', price: 0, rare: '기본', art: () => paint(
       fl(top(112, 400), '#FFFFFF') + `<clipPath id="te${U}"><path d="${top(112, 400)}" fill-rule="evenodd"/></clipPath>` +
@@ -236,8 +250,19 @@
       fl('M226 186 Q300 176 374 186 L384 222 Q300 236 216 222 Z', '#A390E6') + ln('M226 186 Q300 176 374 186 L384 222 Q300 236 216 222 Z', INK, 2.4, { op: 0.2 }) +
       ln('M282 168 Q278 186 282 200', '#FFFFFF', 5) + ln('M318 168 Q322 186 318 200', '#FFFFFF', 5) + fl(rr(277, 198, 10, 12, 4), '#E5E0F5') + fl(rr(313, 198, 10, 12, 4), '#E5E0F5') +
       fl('M96 210 H420 V226 Q300 244 96 226 Z', '#A390E6')) },
+    { id: 'w-college', name: '대학생 후드티', price: 300, rare: '레어', art: () => paint(
+      `<path d="${top(56, 446, 216)}" fill="#2B3A73" fill-rule="evenodd"/>` +
+      ln('M84 46 Q94 112 84 178', '#FFCB2E', 9, { cap: 'butt' }) + ln('M100 46 Q110 112 100 178', '#FFFFFF', 6, { cap: 'butt' }) +
+      ln('M418 46 Q408 112 418 178', '#FFCB2E', 9, { cap: 'butt' }) + ln('M402 46 Q392 112 402 178', '#FFFFFF', 6, { cap: 'butt' }) +
+      ln('M56 44 Q66 112 56 180', '#22305F', 22, { cap: 'butt' }) + ln('M446 44 Q436 112 446 180', '#22305F', 22, { cap: 'butt' }) +
+      ln(NECK.replace(' Z', ''), '#3A4C8C', 30) + ln(NECK.replace(' Z', ''), INK, 3, { op: 0.15 }) +
+      ln('M284 168 Q281 176 284 183', '#FFFFFF', 3.5) + ln('M316 168 Q319 176 316 183', '#FFFFFF', 3.5) + `<circle cx="284" cy="184" r="2.6" fill="#E5E0F5"/><circle cx="316" cy="184" r="2.6" fill="#E5E0F5"/>` +
+      `<path id="cgArc${U}" d="M222 208 Q300 186 378 208" fill="none"/>` +
+      `<text font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="27" letter-spacing="1" text-anchor="middle" fill="#FFFFFF" stroke="#FFCB2E" stroke-width="2.4" paint-order="stroke"><textPath href="#cgArc${U}" startOffset="50%">PALLO</textPath></text>` +
+      `<text x="300" y="214" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="9" letter-spacing="2" text-anchor="middle" fill="#FFCB2E">UNIV · 2026</text>` +
+      fl('M96 214 H420 V228 Q300 246 96 228 Z', '#22305F') + rng(32, (i) => ln(`M${102 + i * 10} 214 l0 14`, '#FFFFFF', 1.6, { op: 0.18 }))) },
     { id: 'w-overall', name: '청 멜빵바지', price: 200, rare: '일반', art: () => paint(
-      fl(pants(0.8), '#4A78C2') + fl('M240 166 H360 V214 H240 Z', '#4A78C2') +
+      pants(0.8, '#4A78C2') + fl('M240 166 H360 V214 H240 Z', '#4A78C2') +
       ln('M246 170 L232 50', '#4A78C2', 22, { cap: 'butt' }) + ln('M354 170 L368 50', '#4A78C2', 22, { cap: 'butt' }) +
       ln('M246 170 L232 50', '#F2A93B', 2, { da: '5 5' }) + ln('M354 170 L368 50', '#F2A93B', 2, { da: '5 5' }) +
       ln('M248 172 H352 V210', '#F2A93B', 2, { da: '5 5', cap: 'butt' }) + fl(rr(274, 180, 52, 28, 6), '#3E67AC') + ln(rr(274, 180, 52, 28, 6), '#F2A93B', 2, { da: '4 4' }) +
@@ -258,7 +283,7 @@
       `<circle cx="300" cy="206" r="5" fill="#C9CCD6"/>` + fl('M352 176 l22 -4 l2 8 l-22 4 Z', '#FFE200') +
       ln('M60 44 Q70 112 60 180', '#FFFFFF', 12, { cap: 'butt' })) },
     { id: 'w-hanbok', name: '색동 한복', price: 350, rare: '레어', art: () => paint(
-      fl(band('ll', 0.2, 0.95, 0.04, 0.04) + ' ' + band('lr', 0.2, 0.95, 0.04, 0.04) + ' M90 196 H426 V240 H90 Z', '#3B5BA9') +
+      lower(0.2, 0.95, 'M90 196 H426 V240 H90 Z', '#3B5BA9', [0.04, 0.04]) +
       ln('M96 212 Q300 228 424 212', '#2D4889', 10) +
       `<path d="${top(66, 436, 206, 10)}" fill="#F7B3C9" fill-rule="evenodd"/>` +
       rng(5, (i) => ln(`M${132 - i * 15} 40 Q${142 - i * 15} 112 ${132 - i * 15} 184`, ['#E5484D', '#FFE200', '#5CBF8A', '#7FA7E8', '#B07CE0'][i], 15, { cap: 'butt' })) +
@@ -276,14 +301,14 @@
       ln(NECK.replace(' Z', ''), '#E5484D', 12) + ln('M300 168 L300 232', '#3D5AA8', 3) + rng(3, (i) => `<circle cx="312" cy="${180 + i * 16}" r="4.5" fill="#3D5AA8"/>`) +
       `<path d="${star(254, 196, 16, 0.45)}" fill="#E5484D"/>` + fl('M96 212 H420 V226 Q300 244 96 226 Z', '#E5484D')) },
     { id: 'w-sailor', name: '세일러 교복', price: 300, rare: '레어', art: () => paint(
-      fl(band('ll', 0.22, 0.62, 0.04, 0.05) + ' ' + band('lr', 0.22, 0.62, 0.04, 0.05) + ' M90 196 H426 V240 H90 Z', '#2B3A6B') +
+      lower(0.22, 0.62, 'M90 196 H426 V240 H90 Z', '#2B3A6B', [0.04, 0.05]) +
       rng(10, (i) => ln(`M${130 + i * 26} 226 L${118 + i * 30} 290`, '#1F2B52', 3, { op: 0.7 })) +
-      `<path d="${top(104, 404, 206, 10)}" fill="#FFFFFF" fill-rule="evenodd"/>` +
-      fl('M150 40 L204 40 Q214 150 300 176 Q386 150 396 40 L452 40 L440 120 L300 206 L162 120 Z', '#2B3A6B') +
-      ln('M168 60 L180 116 L300 188 L420 116 L432 60', '#FFFFFF', 4) + ln('M300 176 L300 206', '#2B3A6B', 2),
+      `<path d="${top(104, 448, 206, 10)}" fill="#FFFFFF" fill-rule="evenodd"/>` +
+      fl('M150 40 L204 40 Q214 150 300 176 Q386 150 396 40 L446 40 L436 120 L300 206 L162 120 Z', '#2B3A6B') +
+      ln('M168 60 L180 116 L300 188 L418 116 L428 60', '#FFFFFF', 4) + ln('M300 176 L300 206', '#2B3A6B', 2),
       P('M300 178 L270 196 L274 214 L300 198 L326 214 L330 196 Z', '#E5484D', { rim: 0.25 }) + P('M292 196 L284 236 L300 228 L316 236 L308 196 Z', '#E5484D', { rim: 0.25 }) + P(ell(300, 192, 10, 9), '#C93A44', { rim: 0.25 })) },
     { id: 'w-santa', name: '산타 옷', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', art: () => paint(
-      fl(pants(0.78), '#D93A44') + `<path d="${top(60, 440, 214)}" fill="#E5484D" fill-rule="evenodd"/>` +
+      pants(0.78, '#D93A44') + `<path d="${top(60, 440, 214)}" fill="#E5484D" fill-rule="evenodd"/>` +
       fl('M96 194 H420 V214 H96 Z', '#2A2533') + fl(rr(282, 190, 36, 28, 5), '#FFCB2E') + fl(rr(290, 197, 20, 14, 3), '#2A2533') +
       ln(NECK.replace(' Z', ''), '#FFFFFF', 20) + ln('M300 168 L300 192', '#FFFFFF', 18) +
       rng(7, (i) => `<circle cx="60" cy="${54 + i * 19}" r="15" fill="#FFFFFF"/><circle cx="440" cy="${54 + i * 19}" r="15" fill="#FFFFFF"/>`) +
@@ -326,7 +351,8 @@
     { id: 's-slipper', name: '토끼 털 슬리퍼', price: 200, rare: '레어', art: () => paint(fl(feet(0.72), '#FFD6E2') + legs((k) => rng(6, (i) => { const [x, y] = at(k, 0.74, -60 + i * 24); return `<circle cx="${x}" cy="${y}" r="12" fill="#FFFFFF"/>`; }) + (() => { const [x, y] = at(k, 0.9, 0); return `<circle cx="${x - 8}" cy="${y}" r="3" fill="${INK}"/><circle cx="${x + 8}" cy="${y}" r="3" fill="${INK}"/><ellipse cx="${x}" cy="${y + 8}" rx="4" ry="3" fill="#F28CB1"/>`; })())) },
     { id: 's-snow', name: '털 부츠', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', art: () => paint(fl(feet(0.56), '#B7794A') + legs((k) => rng(7, (i) => { const [x, y] = at(k, 0.58 + (i % 2) * 0.03, -66 + i * 22); return `<circle cx="${x}" cy="${y}" r="15" fill="#FFF8EC"/>`; }) + fl(band(k, 0.98, 1.4, 0.03, 0), '#6E4528'))) },
     { id: 's-roller', name: '롤러스케이트', price: 450, rare: '에픽', art: () => paint(fl(feet(0.58), '#FFFFFF') + legs((k) => fl(band(k, 0.58, 0.64, 0.03, 0.03), '#2DD4BF') + rng(4, (i) => ln(`M${at(k, 0.7 + i * 0.05, -14)} L${at(k, 0.72 + i * 0.05, 14)}`, '#2DD4BF', 4)) + fl(band(k, 0.95, 1.4, 0.03, 0), '#8B5CF6')),
-      legs((k) => [-30, 26].map((w) => { const [x, y] = at(k, 1.0, w); return P(ell(x, y + 10, 17, 17), '#FFE200', { rim: 0.35 }) + `<circle cx="${x}" cy="${y + 10}" r="6" fill="#C9CCD6"/>`; }).join(''))) },
+      legs((k) => { const [a, b] = at(k, 1.0, -30), [c, d] = at(k, 1.0, 28); return ln(`M${a} ${b + 2} L${c} ${d + 2}`, '#8A8FA3', 9) +
+        [[a, b], [c, d]].map(([x, y]) => P(ell(x, y + 12, 15, 15), '#2E2B3A', { rim: 0.5, hi: 0.6 }) + P(ell(x, y + 12, 8, 8), '#2DD4BF', { rim: 0.3, hi: 0.5 }) + `<circle cx="${x}" cy="${y + 12}" r="2.6" fill="#FFFFFF"/>`).join(''); })) },
   ];
 
   // ---------------------------------------------------------------- 손 (오른손 끝에 쥐어요 · 몸 뒤에 그려서 손이 손잡이를 감싸요)
@@ -403,7 +429,7 @@
     { id: 'a-pearl', name: '진주 목걸이', price: 250, rare: '레어', layer: 'front', art: () =>
       rng(17, (i) => { const t = i / 16, x = 212 + t * 176, y = 122 + Math.sin(t * Math.PI) * 52; return P(ell(r1(x), r1(y), 7, 7), '#FBF7F2', { rim: 0.2, hi: 0.9 }) + gl(r1(x - 2), r1(y - 2.5), 2, 1.4, 0, 0.95); }) + P(drop(300, 192, 14), '#F7B6CC', { rim: 0.25 }) + gl(296, 186, 3, 5, 0, 0.9) },
     { id: 'a-watch', name: '손목시계', price: 150, rare: '일반', layer: 'front', art: () =>
-      P(rr(104, 56, 26, 112, 12), '#493087') + P(ell(117, 112, 24, 24), 'url(#avSilver)', { rim: 0.35 }) + P(ell(117, 112, 18, 18), '#FFFFFF', { rim: 0.2, hi: 0.4 }) + ln('M117 112 L117 100 M117 112 L126 117', INK, 3) + `<circle cx="117" cy="112" r="2.2" fill="#E5484D"/>` + gl(110, 104, 5, 3, -30, 0.8) },
+      P(rr(105, 40, 24, 144, 12), '#493087') + rng(3, (i) => `<circle cx="117" cy="${152 + i * 9}" r="2.2" fill="${INK}" opacity=".35"/>`) + P(ell(117, 112, 24, 24), 'url(#avSilver)', { rim: 0.35 }) + P(ell(117, 112, 18, 18), '#FFFFFF', { rim: 0.2, hi: 0.4 }) + ln('M117 112 L117 100 M117 112 L126 117', INK, 3) + `<circle cx="117" cy="112" r="2.2" fill="#E5484D"/>` + gl(110, 104, 5, 3, -30, 0.8) },
   ];
 
   // ---------------------------------------------------------------- 배경 효과 (무대 위에 · 배경과 같이 써요)
@@ -411,6 +437,40 @@
     { id: 'fx-spark', name: '반짝반짝', price: 400, rare: '에픽', art: () => FX([[38, 40, 13, '#FFE200'], [262, 54, 11, '#FFE200'], [30, 160, 9, '#FFFFFF'], [272, 166, 12, '#FFE200'], [150, 22, 8, '#FFFFFF'], [228, 22, 6, '#FFFFFF'], [70, 96, 6, '#FFE200']].map(([x, y, r, c]) => P(star(x, y, r * 2, 0.26, 4, -90), c, { rim: 0.35, sw: 1.6 })).join('')) },
     { id: 'fx-hearts', name: '하트 뿅뿅', price: 400, rare: '에픽', art: () => FX([[44, 60, 34], [256, 44, 28], [266, 160, 38], [34, 168, 24], [210, 22, 18], [96, 26, 16]].map(([x, y, s], i) => glossHeart(x, y, s, i % 2 ? '#FF7AA3' : '#FF5C8A')).join('')) },
     { id: 'fx-notes', name: '음표 둥둥', price: 300, rare: '레어', art: () => FX([[48, 46, '#8B5CF6'], [250, 36, '#2F6FD0'], [262, 146, '#E5484D'], [36, 150, '#2DD4BF']].map(([x, y, c], i) => (i % 2 ? `<path d="M${x} ${y} L${x} ${y + 34} M${x + 26} ${y - 6} L${x + 26} ${y + 28}" stroke="${c}" stroke-width="5"/><path d="M${x - 2} ${y - 2} L${x + 28} ${y - 8} L${x + 28} ${y + 2} L${x - 2} ${y + 8}Z" fill="${c}"/>${P(ell(x - 7, y + 36, 10, 8), c, { t: `rotate(-20 ${x - 7} ${y + 36})` })}${P(ell(x + 19, y + 30, 10, 8), c, { t: `rotate(-20 ${x + 19} ${y + 30})` })}` : `<path d="M${x} ${y} L${x} ${y + 34}" stroke="${c}" stroke-width="5"/><path d="M${x} ${y} q16 4 18 22 q-6 -10 -18 -12z" fill="${c}"/>${P(ell(x - 7, y + 36, 10, 8), c, { t: `rotate(-20 ${x - 7} ${y + 36})` })}`)).join('')) },
+    { id: 'fx-bubble', name: '비눗방울', price: 250, rare: '레어', art: () => FX([[40, 58, 20], [262, 48, 16], [28, 150, 12], [270, 150, 22], [222, 20, 10], [86, 24, 8], [250, 104, 8], [52, 108, 7]].map(([x, y, r]) =>
+      `<circle cx="${x}" cy="${y}" r="${r}" fill="#DFF3FF" fill-opacity=".28" stroke="#9FD4F5" stroke-width="2"/>` +
+      `<path d="M${x - r * 0.72} ${y + r * 0.5} A${r * 0.88} ${r * 0.88} 0 0 0 ${x + r * 0.5} ${y + r * 0.72}" fill="none" stroke="#F7A8C4" stroke-width="${r > 10 ? 3 : 2}" opacity=".8"/>` +
+      `<path d="M${x + r * 0.62} ${y + r * 0.44} A${r * 0.78} ${r * 0.78} 0 0 0 ${x + r * 0.72} ${y - r * 0.2}" fill="none" stroke="#8FE3D0" stroke-width="${r > 10 ? 3 : 2}" opacity=".8"/>` +
+      gl(x - r * 0.38, y - r * 0.4, r * 0.28, r * 0.15, -40, 0.95) + `<circle cx="${x + r * 0.42}" cy="${y - r * 0.5}" r="${r * 0.08 + 0.6}" fill="#fff"/>`).join('')) },
+    { id: 'fx-petal', name: '벚꽃 흩날림', price: 300, rare: '레어', art: () => FX(
+      [[34, 40, 20], [268, 30, -30], [20, 116, 60], [282, 96, 10], [62, 168, -40], [252, 176, 70], [120, 18, 30], [196, 34, -60], [96, 62, 80], [232, 132, -10], [14, 196, 40], [292, 196, -50]].map(([x, y, r], i) => {
+        const c = i % 3 ? '#F7A8C4' : '#FFC7D9';
+        return `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 -11 C9 -8 9 6 0 11 C-9 6 -9 -8 0 -11 Z" fill="${c}"/><path d="M0 -11 L-2 -6 L0 -8 L2 -6 Z" fill="#FFFFFF" opacity=".9"/><path d="M0 -5 L0 6" stroke="#E07AA0" stroke-width="1.2" opacity=".6"/></g>`;
+      }).join('') + blossom(46, 78, 9) + blossom(258, 66, 8, '#FFC7D9')) },
+    { id: 'fx-snow', name: '눈송이', price: 250, rare: '레어', art: () => FX([[38, 44, 14], [264, 38, 12], [24, 140, 10], [276, 130, 15], [150, 14, 8], [220, 18, 7], [88, 20, 7], [50, 196, 8], [252, 192, 9]].map(([x, y, r]) =>
+      `<g transform="translate(${x} ${y})" stroke="#FFFFFF" stroke-linecap="round">${rng(6, (i) => `<g transform="rotate(${i * 60})"><path d="M0 0 V${-r}" stroke-width="${r > 9 ? 3 : 2.2}"/><path d="M0 ${-r * 0.58} l${r * 0.3} ${-r * 0.26} M0 ${-r * 0.58} l${-r * 0.3} ${-r * 0.26}" stroke-width="${r > 9 ? 2.2 : 1.6}"/></g>`)}</g>` +
+      `<g transform="translate(${x} ${y})" stroke="#7FA7E8" stroke-opacity=".55" stroke-width="1" fill="none">${rng(6, (i) => `<path transform="rotate(${i * 60})" d="M0 0 V${-r}"/>`)}</g><circle cx="${x}" cy="${y}" r="${r * 0.16 + 1}" fill="#FFFFFF"/>`).join('') +
+      rng(16, (i) => `<circle cx="${(i * 67 + 13) % 300}" cy="${(i * 41 + 7) % 210}" r="${1.6 + (i % 3) * 0.7}" fill="#FFFFFF" stroke="#9FC0EE" stroke-width=".8"/>`)) },
+    { id: 'fx-confetti', name: '축하 꽃가루', price: 400, rare: '에픽', art: () => FX(
+      [[30, 30, 20], [64, 16, -30], [104, 34, 50], [150, 12, 10], [196, 30, -60], [238, 14, 35], [276, 34, -15], [18, 86, 70], [282, 80, -40], [36, 132, 15], [268, 124, 60], [16, 182, -25], [286, 176, 45], [120, 58, -70], [182, 56, 25]].map(([x, y, r], i) =>
+        `<rect x="${x - 6}" y="${y - 3}" width="12" height="6" rx="1.5" transform="rotate(${r} ${x} ${y})" fill="${['#FFE200', '#FF5C8A', '#2DD4BF', '#8B5CF6', '#FF9F43', '#5B8DEF'][i % 6]}" stroke="${INK}" stroke-opacity=".2" stroke-width="1"/>`).join('') +
+      [[48, 60, '#FF5C8A'], [246, 56, '#2DD4BF'], [26, 106, '#8B5CF6'], [270, 104, '#FFE200']].map(([x, y, c]) => ln(`M${x} ${y} q8 -10 14 0 t14 0 t14 0`, c, 4, { op: 0.95 }) + ln(`M${x} ${y} q8 -10 14 0 t14 0 t14 0`, INK, 1, { op: 0.15 })).join('') +
+      [[86, 96, '#FFE200'], [214, 92, '#FF9F43'], [140, 40, '#FF5C8A']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="4" fill="${c}"/>`).join('')) },
+    { id: 'fx-rainbow', name: '무지개 구름', price: 450, rare: '에픽', art: () => FX(
+      ['#FF6B6B', '#FF9F43', '#FFE200', '#5CBF8A', '#5B8DEF', '#8B5CF6'].map((c, i) => { const r = 58 - i * 6.5; return `<path d="M${74 - r} 84 A${r} ${r} 0 0 1 ${74 + r} 84" fill="none" stroke="${c}" stroke-width="6.8" opacity=".92"/>`; }).join('') +
+      cloud(26, 86, 0.9) + cloud(124, 86, 0.9) +
+      `<g opacity=".95">${cloud(244, 46, 0.75)}</g>` + sp(240, 98, 7, '#FFE200') + sp(178, 22, 6, '#FFFFFF')) },
+    { id: 'fx-hello', name: '인사 말풍선', price: 350, rare: '레어', art: () => FX(
+      [[206, 18, 64, 'Hi!', '#FFFFFF', 'latin'], [232, 92, 62, '안녕!', '#FFE200', 'ko'], [20, 154, 70, 'Hola!', '#FFC7D9', 'latin'], [222, 156, 58, '你好', '#D8CCFF', 'ko']].map(([x, y, w, t, c, f], i) =>
+        `<path d="M${i % 2 ? x + 14 : x + w - 22} ${y + 22} L${i % 2 ? x + 8 : x + w - 12} ${y + 40} L${i % 2 ? x + 28 : x + w - 34} ${y + 22} Z" fill="${c}" stroke="${INK}" stroke-opacity=".55" stroke-width="2.2" stroke-linejoin="round"/>` +
+        P(rr(x, y, w, 30, 13), c, { rim: 0.55, sw: 2.2, hi: 0.5 }) +
+        `<text x="${x + w / 2}" y="${y + 21}" text-anchor="middle" font-family="${f === 'latin' ? 'Arial Black, Arial, sans-serif' : 'Apple SD Gothic Neo, Noto Sans KR, sans-serif'}" font-weight="900" font-size="15" fill="${INK}">${t}</text>`).join('')) },
+    { id: 'fx-meteor', name: '별똥별', price: 450, rare: '에픽', art: () => FX(
+      `<defs><linearGradient id="avTrail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFB627" stop-opacity="0"/><stop offset=".7" stop-color="#FFC83D" stop-opacity=".6"/><stop offset="1" stop-color="#FFE27A" stop-opacity="1"/></linearGradient></defs>` +
+      [[96, 34, 13, 70], [248, 70, 11, 58], [40, 120, 9, 46]].map(([x, y, r, L]) =>
+        `<g transform="rotate(-28 ${x} ${y})"><path d="M${x - L} ${y - 1.5} L${x} ${y - r * 0.8} L${x} ${y + r * 0.8} L${x - L} ${y + 1.5} Z" fill="url(#avTrail)"/></g>` +
+        P(star(x, y, r * 1.5, 0.45, 5, -90), '#FFE200', { rim: 0.4, sw: 1.8 }) + gl(x - r * 0.3, y - r * 0.4, r * 0.22, r * 0.12, -30, 0.9)).join('') +
+      [[176, 20], [280, 22], [20, 60], [284, 150], [150, 56]].map(([x, y], i) => sp(x, y, 4 + (i % 2) * 3, i % 2 ? '#FFFFFF' : '#FFE27A')).join('')) },
   ];
 
   // ---------------------------------------------------------------- 배경 (무대 300 × 220 · 캐릭터 발밑 그림자 포함)
