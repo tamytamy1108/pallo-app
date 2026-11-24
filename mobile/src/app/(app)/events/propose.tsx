@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
-import { MonthCalendar, PlacePicker, PosterPicker, type Place } from '@/components/event/form-parts';
+import { defaultEnd, MonthCalendar, PlacePicker, PosterPicker, TimeRange, type Place } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
@@ -44,6 +44,9 @@ export default function ProposeEvent() {
   const [place, setPlace] = useState<Place | null>(null);
   const [addr, setAddr] = useState('');
   const [date, setDate] = useState('');
+  // 희망 시간: 시작 ~ 끝 (끝은 시작 30분 뒤부터 · 밤 12:00 까지)
+  const [time, setTime] = useState('19:00');
+  const [endTime, setEndTime] = useState(() => defaultEnd('19:00'));
   const [cat, setCat] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -58,7 +61,7 @@ export default function ProposeEvent() {
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
     if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
-    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), cap: cap ?? NO_LIMIT, body: body.trim() });
+    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim() });
     sfx('save');
     router.back();
     showToast('제안을 보냈어요 · 매니저가 2~3일 안에 연락드려요');
@@ -86,7 +89,7 @@ export default function ProposeEvent() {
             label: "이벤트 탭 '내가 제안한 이벤트'에 이렇게 보여요 · 누르기 전 모습",
             render: (c) => (
               <View pointerEvents="none">
-                <ProposalCard q={{ id: 'preview', title: title.trim() || '이벤트 제목', br, date, cat: cat ?? '분류 고르기 전', cover: pics[0], card: card || !pics.length ? c : undefined }} />
+                <ProposalCard q={{ id: 'preview', title: title.trim() || '이벤트 제목', br, date, time: [time, endTime], cat: cat ?? '분류 고르기 전', cover: pics[0], card: card || !pics.length ? c : undefined }} />
               </View>
             ),
           }}
@@ -104,8 +107,18 @@ export default function ProposeEvent() {
         <PlacePicker region={region} value={place} onChange={setPlace} />
       </Field>
       <TextField label="상세 주소 · 직접 적어요 (선택)" value={addr} onChangeText={setAddr} placeholder="예) 3층 세미나실 · 입구에서 오른쪽" />
-      <Field label="희망 날짜" req hint="희망 날짜는 매니저와 이야기하며 바뀔 수 있어요.">
+      <Field label="희망 날짜" req>
         <MonthCalendar value={date} onChange={setDate} minDays={7} maxDays={90} hint="1주 뒤부터 3달 안에서 골라요" pick={(d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) 희망`} />
+      </Field>
+      <Field label="희망 시간 · 시작 ~ 끝" req hint="희망 날짜 · 시간은 매니저와 이야기하며 바뀔 수 있어요.">
+        <TimeRange
+          start={time}
+          end={endTime}
+          onChange={(s, e) => {
+            setTime(s);
+            setEndTime(e);
+          }}
+        />
       </Field>
       <Field label="카테고리" req>
         <SheetPills options={PROPOSAL_CATS} value={cat} onChange={setCat} label="카테고리" />

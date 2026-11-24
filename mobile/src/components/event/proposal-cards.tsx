@@ -28,7 +28,8 @@ export function ProposalCards() {
 /** 제안 한 장 — 제안하기 화면의 '이렇게 보여요' 미리보기도 이걸 써요 (date 가 비면 '날짜 고르기 전') */
 export function ProposalCard({ q }: { q: Proposal }) {
   const d = new Date(q.date + 'T00:00');
-  const when = q.date ? `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) 희망` : '날짜 고르기 전';
+  const hm = q.time ? ` ${q.time[0]}~${q.time[1] === '24:00' ? '24:00' : q.time[1]}` : '';
+  const when = q.date ? `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})${hm} 희망` : '날짜 고르기 전';
   return (
     <View style={styles.card}>
       {q.card ? <ColorCard color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
