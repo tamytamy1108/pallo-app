@@ -27,6 +27,7 @@ import {
   type ClubPost,
   type Meet,
   type Region,
+  ALL_REGIONS,
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
 
@@ -56,6 +57,8 @@ export function regionCounts(meets: Meet[], clubs: Club[], branch: string) {
     if (branchOk(m.br, branch) && c[m.reg] && isOpenMeet(m)) c[m.reg][0]++;
   });
   clubs.forEach((k) => {
+    // 지역 '전체' 동아리는 지역별 숫자에 세지 않아요
+    if (k.reg === ALL_REGIONS) return;
     if (branchOk(k.br, branch) && c[k.reg] && !k.wait) c[k.reg][1]++;
   });
   return c;
@@ -67,7 +70,11 @@ export const clubX = (c: Club) => {
   const h = hashId(c.id);
   return { act: c.mine ? '방금 만듦' : CLUB_ACT[h % 6], j30: c.mine ? 0 : 1 + (h % 5), fresh: !!(c.mine || c.wait) };
 };
-export const clubDesc = (c: Club) => c.memo || DESC[c.id] || `${c.when}에 모여 ${c.lang}로 이야기해요. 처음 와도 편하게 섞일 수 있어요.`;
+/** '영어로 이야기해요' · 언어 무관이면 '어떤 언어든 함께해요' */
+export const clubLangLine = (c: Club) => (c.lang === '무관' || c.lang === '언어 무관' ? '어떤 언어든 함께해요' : `${c.lang}로 이야기해요`);
+/** '최대 12명' · '인원 무관' */
+export const clubCapLine = (c: Club) => (c.max > 0 ? `최대 ${c.max}명` : '인원 무관');
+export const clubDesc = (c: Club) => c.intro || c.memo || DESC[c.id] || `${c.when}에 모여 ${clubLangLine(c)}. 처음 와도 편하게 섞일 수 있어요.`;
 export const clubHost = (c: Club) => c.host.split(' ')[0];
 export const clubSpot = (c: Club): [string, string] => CLUB_SPOT[c.id] ?? [c.when.split(' · ')[1] || `${c.br} 근처`, '자세한 주소는 호스트가 정하면 보여요'];
 export const dayNames = (c: Club) => c.days.map((d) => WEEK[d]).join('·');
@@ -76,7 +83,7 @@ export type Member = { n: string; c: string; b: string; t: string; hi: string; m
 
 type MeArg = { name: string; branch: string };
 /**
- * 함께하는 멤버 (프로토타입 lgMembers): 나(참여했으면) → 호스트 → 예시 멤버. staff 는 서브 호스트 이름들.
+ * 함께하는 멤버 (프로토타입 lgMembers): 나(참여했으면) → 호스트 → 예시 멤버. staff 는 코호스트 이름들.
  */
 export function membersOf(it: { id: string; host: string; br: string; mine?: boolean }, cur: number, inMe: boolean, myHi: string, me: MeArg, staff: string[] = [], club = false) {
   const h = hashId(it.id);
@@ -89,11 +96,11 @@ export function membersOf(it: { id: string; host: string; br: string; mine?: boo
     L.push({ n: i >= pool.length ? n + (Math.floor(i / pool.length) + 1) : n, c, b, t: '', hi: MEMBER_HI[(h + i) % MEMBER_HI.length] });
   }
   L.forEach((m) => {
-    if (!m.t && staff.includes(m.n)) m.t = '서브 호스트';
+    if (!m.t && staff.includes(m.n)) m.t = '코호스트';
   });
   return L.slice(0, cur);
 }
-/** 동아리 서브 호스트 (예시: 첫 멤버 한 명, 프로토타입 lgStaffOf) */
+/** 동아리 코호스트 (예시: 첫 멤버 한 명, 프로토타입 lgStaffOf) */
 export function clubStaff(c: Club, cur: number, me: MeArg) {
   if (c.mine) return [];
   const L = membersOf(c, cur, false, '', me, [], true);
@@ -112,7 +119,7 @@ export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, spa
     const d = new Date(t0);
     d.setDate(d.getDate() + k);
     if (!c.days.includes(d.getDay())) continue;
-    const cap = Math.min(c.max, 8);
+    const cap = Math.min(c.max || 8, 8);
     const base = out.length === 1 && h % 3 === 0 ? cap : out.length === 3 ? 1 + (h % 2) : 2 + ((h + k) % (cap - 2));
     const th = (SESSION_THEME[c.cc] || SESSION_THEME.study)[out.length % 4];
     const id = `${c.id}@${d.getMonth() + 1}-${d.getDate()}`;
@@ -141,7 +148,7 @@ export function clubContent(c: Club) {
   const pick = (i: number) => pool[(h + i * 2) % pool.length];
   const who = { H: [hn, C.pk], A: pick(0), B: pick(1), C: pick(2), D: pick(3) } as Record<string, readonly string[]>;
   const m = CLUB_META[c.id];
-  const E = CLUB_EXPR[c.lang] || CLUB_EXPR['영어'];
+  const E = CLUB_EXPR[c.lang] || CLUB_EXPR[c.langs?.[0] ?? ''] || CLUB_EXPR['영어'];
   const V: Record<string, string> = { D: c.when, T: m?.thing || c.name, S: m?.spot2 || clubSpot(c)[0], L: c.lang, BR: c.br, N: c.name, E1: E[0], E2: E[1], E3: E[2], E4: E[3], E5: E[4], An: who.A[0], Bn: who.B[0], Cn: who.C[0], Dn: who.D[0], Hn: hn };
   const fill = (t: string) => t.replace(/\{(\w+)\}/g, (all, k: string) => V[k] ?? all);
   const R = CLUB_CONTENT[c.cc] || CLUB_CONTENT.study;

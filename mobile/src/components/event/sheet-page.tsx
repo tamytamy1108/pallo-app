@@ -7,12 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
-import { SheetFooterContext } from '@/components/ui/sheet';
+import { KB_FOOT_PAD, KeyboardFill, SheetFooterContext } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Colors, Radius } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { useKeyboardShown } from '@/lib/keyboard';
-import { FormScrollContext, KeepVisibleContext, useFormScroll } from '@/components/ui/form-scroll';
+import { FormScrollContext, KeepVisibleContext, useFormScroll, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
 
 /**
  * 시트 모양 화면 (프로토타입 #lgSheet.tall — 이벤트 제안 · 번개 열기 · 동아리 만들기 같은 긴 폼).
@@ -22,7 +22,9 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
   const insets = useSafeAreaInsets();
   const kb = useKeyboardShown();
   // keepCaret: 길게 쓰는 칸이 늘어나도 쓰는 줄이 아래 버튼 · 키보드에 가리지 않게
-  const [formScroll, formBox, onFormScroll, revealNext, keepCaret] = useFormScroll();
+  const [formScroll, formBox, onFormScroll, revealNext, keepCaret, showFocused] = useFormScroll();
+  // 칸(상세 주소 등)을 눌러 키보드가 올라오면 그 칸이 키보드 · 아래 버튼 위로 다 보이게
+  useShowFocusedOnKeyboard(formBox, showFocused);
   const still = useReducedMotion();
   const y = useSharedValue(still ? 0 : 1);
   useEffect(() => {
@@ -43,6 +45,8 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
     <View style={styles.root}>
       <Stack.Screen options={SCREEN.overlayFade} />
       <Pressable style={styles.dim} onPress={close} accessibilityRole="button" accessibilityLabel="닫기" />
+      {/* 키보드 뒤까지 시트 바탕이 이어지게 (시트와 키보드가 따로 떠 보이지 않게) */}
+      <KeyboardFill />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
         <Animated.View style={[styles.sheet, { marginTop: insets.top + 72 }, st]} accessibilityLabel={label} accessibilityViewIsModal>
           <View style={styles.grab} />
@@ -60,7 +64,7 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
             </ScrollView>
           </View>
           <SheetFooterContext.Provider value>
-            <View style={[styles.foot, { paddingBottom: 22 + (kb ? 0 : insets.bottom) }]}>
+            <View style={[styles.foot, { paddingBottom: kb ? KB_FOOT_PAD : 22 + insets.bottom }]}>
               <View style={{ flex: 1 }}>{footer}</View>
             </View>
           </SheetFooterContext.Provider>

@@ -35,6 +35,7 @@ const useReportStore = reportStore.use;
 export const useBlockedNames = () => useBlockStore();
 export const useIsBlocked = (name: string) => useBlockStore((s) => s.includes(name));
 export const isBlocked = (name: string) => blockStore.get().includes(name);
+export const getBlockedNames = () => blockStore.get();
 export const blockMember = (name: string) => blockStore.set((s) => (s.includes(name) ? s : [...s, name]));
 export const unblockMember = (name: string) => blockStore.set((s) => s.filter((x) => x !== name));
 export const useMyReports = () => useReportStore();

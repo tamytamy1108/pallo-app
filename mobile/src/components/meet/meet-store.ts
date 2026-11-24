@@ -4,13 +4,14 @@
  * 맞는 API: 60 `/meetups/:id/join` · `/waitlist` · 65 `/clubs/:id/members` · 69 `/club-sessions/:sid/attend` · 70 한마디 · 인사
  *   · 88 `/events/:id/applications` · 92 `/event-proposals` · 찜 `/events/:id/save`
  */
+import type { MadeCard } from '@/data/poster-colors';
 import { createStore } from '@/lib/store';
 import type { Club, Meet } from '@/data/meet';
 
 /** 설문 답: 질문 번호 → 고른 보기 번호(하나) · 번호들(여럿) · 글(짧은 답) */
 export type SurveyAnswers = Record<number, number | number[] | string>;
 
-export type Proposal = { id: string; title: string; br: string; date: string; cat: string; cover?: string };
+export type Proposal = { id: string; title: string; br: string; date: string; cat: string; cover?: string; /** 만든 카드 (있으면 대표) */ card?: MadeCard };
 
 export type ChatMsg = { day?: string; sys?: string; n?: string; host?: boolean; x?: string; t?: string; me?: boolean };
 
@@ -106,6 +107,6 @@ export const removeProposal = (id: string) => store.set((s) => ({ ...s, props: s
 export const setBoard = (id: string, L: BoardPost[]) => store.set((s) => ({ ...s, board: { ...s.board, [id]: L } }));
 export const setChat = (id: string, L: ChatMsg[]) => store.set((s) => ({ ...s, chat: { ...s.chat, [id]: L } }));
 
-export const addMyMeet = (m: Meet) => store.set((s) => ({ ...s, myMeets: [m, ...s.myMeets] }));
+export const addMyMeet = (m: Meet) => store.set((s) => ({ ...s, myMeets: [{ ...m, at: m.at ?? Date.now() }, ...s.myMeets] }));
 export const updateMyMeet = (id: string, patch: Partial<Meet>) => store.set((s) => ({ ...s, myMeets: s.myMeets.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
-export const addMyClub = (c: Club) => store.set((s) => ({ ...s, myClubs: [c, ...s.myClubs] }));
+export const addMyClub = (c: Club) => store.set((s) => ({ ...s, myClubs: [{ ...c, at: c.at ?? Date.now() }, ...s.myClubs] }));

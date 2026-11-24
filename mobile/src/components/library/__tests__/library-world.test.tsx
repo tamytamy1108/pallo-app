@@ -134,6 +134,8 @@ describe('라이브러리 지도 바꾸기', () => {
     const r = await render(<LibraryWorld world={travel} onOpen={() => {}} />);
     await draw('travel');
     await r.rerender(<LibraryWorld world={biz} onOpen={() => {}} />);
+    expect(of('biz')).toHaveLength(0); // 탭 · 칩이 먼저 바뀌어 보이게, 새 지도는 두 프레임 뒤에 만들어요
+    await tick(50);
     expect(of('biz')[0].replays).toEqual([]);
     expect(of('travel')[0].active).toBe(true); // 그려질 때까지 앞 지도가 그대로
     await tick(500);
@@ -142,6 +144,7 @@ describe('라이브러리 지도 바꾸기', () => {
     expect(of('travel')[0].active).toBe(false);
 
     await r.rerender(<LibraryWorld world={cafe} onOpen={() => {}} />);
+    await tick(50);
     await tick(1500);
     await draw('cafe');
     expect(of('cafe')[0].replays).toEqual([]); // 사진판이 먼저 떴어요 → 같은 구도로 이어져요

@@ -14,8 +14,10 @@ export function SparkPin({ x, y, n, color, sm = false, scale = 1 }: { x: number;
   const k = w / 426.31;
   const hy = w * 0.4433;
   const tf = (dx: number, dy: number) => `translate(${(x - w / 2 + dx).toFixed(1)} ${(y - hy + dy).toFixed(1)}) scale(${k.toFixed(4)})`;
-  const cx = x + w * 0.36;
-  const cy = y - w * 0.3;
+  // 개수 동그라미는 스파크 팔을 가리지 않게 오른쪽 위 팔 사이 바깥에 붙여요 (로고 모양이 다 보이게)
+  const out = w / 2 + 7;
+  const cx = x + out * 0.89;
+  const cy = y - out * 0.46;
   return (
     // 확대해도 핀은 화면에서 살짝만 커져요 (프로토타입 .lg-pz)
     <G transform={scale !== 1 ? `translate(${x} ${y}) scale(${scale.toFixed(3)}) translate(${-x} ${-y})` : undefined}>

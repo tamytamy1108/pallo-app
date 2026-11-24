@@ -16,9 +16,7 @@ const open: string[] = [];
 /** 부모 시트 id → (자식 시트 id → 그릴 것) */
 const nested = new Map<string, Map<string, ReactNode>>();
 const listeners = new Set<() => void>();
-let version = 0;
 const emit = () => {
-  version++;
   listeners.forEach((l) => l());
 };
 const subscribe = (l: () => void) => {
@@ -49,10 +47,12 @@ export function useSheetLayer(id: string, mounted: boolean, isOpen: boolean, nod
   }, [id, isOpen]);
 
   const host = parent || null;
-  // 그릴 것은 그릴 때마다 새로 넘겨요 (부모 시트 안에서 최신 내용으로 보이게)
+  // 그릴 것은 그릴 때마다 새로 넘겨요 (부모 시트 안에서 최신 내용으로 보이게).
+  // 목록은 고칠 때마다 새 Map 으로 바꿔요 — NestedSheets 가 '목록 자체'를 구독해야
+  // React Compiler 가 옛 결과(빈 자리)를 다시 쓰지 않아요 (같은 Map 을 고치면 아이폰에서 위 시트가 안 떠요)
   useLayoutEffect(() => {
     if (!host) return;
-    const m = nested.get(host) ?? new Map<string, ReactNode>();
+    const m = new Map(nested.get(host));
     m.set(id, node);
     nested.set(host, m);
     emit();
@@ -60,7 +60,11 @@ export function useSheetLayer(id: string, mounted: boolean, isOpen: boolean, nod
   useEffect(() => {
     if (!host) return;
     return () => {
-      nested.get(host)?.delete(id);
+      const prev = nested.get(host);
+      if (!prev?.has(id)) return;
+      const m = new Map(prev);
+      m.delete(id);
+      nested.set(host, m);
       emit();
     };
   }, [host, id]);
@@ -69,8 +73,11 @@ export function useSheetLayer(id: string, mounted: boolean, isOpen: boolean, nod
 
 /** 시트 안에 두는 자리: 이 시트가 떠 있는 동안 열린 시트들이 여기 그려져요 */
 export function NestedSheets({ id }: { id: string }) {
-  useSyncExternalStore(subscribe, () => version, () => version);
-  const m = nested.get(id);
+  const m = useSyncExternalStore(
+    subscribe,
+    () => nested.get(id),
+    () => nested.get(id),
+  );
   if (!m?.size) return null;
   return (
     <>

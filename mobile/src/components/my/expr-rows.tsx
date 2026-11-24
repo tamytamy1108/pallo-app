@@ -8,15 +8,13 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
+import { sayExpression } from '@/lib/say-expression';
 import { removeExpression, restoreExpression, type SavedExpression } from '@/state/expressions';
-import { speak } from '@/lib/tts';
 
 import { LgIcon } from './icons';
 
 /** 영어 문장 듣기 (프로토타입 lgSay · 0.92배) */
-export const sayEn = (t: string) => {
-  speak(t);
-};
+export const sayEn = (t: string) => sayExpression(t, { rate: 0.92 });
 
 /** 표현함에서 빼기 + [되돌리기] (프로토타입 data-nbrm) */
 export function unsave(x: SavedExpression, list: SavedExpression[]) {

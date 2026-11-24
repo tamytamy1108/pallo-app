@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { HeartPop } from '@/components/ui/heart-pop';
 import { Pressable } from '@/components/ui/pressable';
 import { useBlockedNames } from '@/components/common/report-sheet';
 import { PText } from '@/components/ui/text';
@@ -10,6 +11,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { kfc } from '@/lib/motion';
+import { expressionSpeech, sayExpression } from '@/lib/say-expression';
 import {
   CH_C,
   challengeSrc,
@@ -31,11 +33,12 @@ import {
   srcKindOf,
   CH_SRC,
   todayCount,
+  toggleSaved,
+  useChallengeSaved,
   type Challenge,
   type ChView,
 } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
-import { speak } from '@/lib/tts';
 
 import { Face } from './face';
 import { ChIcon } from './icons';
@@ -100,6 +103,24 @@ function FlashWrap({ on, radius, children }: { on: boolean; radius: number; chil
   );
 }
 
+/** 찜 하트 (모임 찜처럼) — 카드 · 표현 창에서 같이 써요. 기기에 남아요 (챌린지 저장소 saved) */
+export function SaveHeart({ id, size = 32 }: { id: string; size?: number }) {
+  const on = useChallengeSaved(id);
+  return (
+    <Pressable
+      onPress={() => showToast(toggleSaved(id) ? '찜했어요 · 마이 > 찜한 챌린지에서 볼 수 있어요' : '찜을 취소했어요')}
+      accessibilityRole="button"
+      accessibilityLabel={on ? '찜 취소' : '찜하기'}
+      accessibilityState={{ selected: on }}
+      hitSlop={6}
+      style={({ pressed }) => [styles.heart, { width: size, height: size, borderRadius: size / 2 }, pressed && styles.heartOn]}>
+      <HeartPop on={on}>
+        <ChIcon name="heart" size={Math.round(size * 0.5)} fill={on ? Colors.rosePink : 'none'} />
+      </HeartPop>
+    </Pressable>
+  );
+}
+
 // ---- 일상 챌린지 가로 카드 ----
 export function DailyCard({ p, s, onCheck }: { p: Challenge; s: ChView; onCheck: (p: Challenge) => void }) {
   const jn = isJoined(p, s);
@@ -121,7 +142,7 @@ export function DailyCard({ p, s, onCheck }: { p: Challenge; s: ChView; onCheck:
     <Shell radius={18} flash={s.flash === p.id}>
       <View style={styles.row}>
         <Pressable onPress={() => openChallenge(p)} accessibilityRole="button" accessibilityLabel={`${p.name} 자세히 보기`} style={[styles.pst, { backgroundColor: bg }]}>
-          {p.cover != null ? (
+          {p.cover != null && !p.pbg ? (
             <ChCover p={p} size={96} style={StyleSheet.absoluteFill} />
           ) : (
             <PText style={[styles.pw, { fontSize: posterFontSize(w), color: isDarkBg(bg) ? CH_C.y : Colors.ink }]}>{w}</PText>
@@ -133,7 +154,10 @@ export function DailyCard({ p, s, onCheck }: { p: Challenge; s: ChView; onCheck:
             {jn && !p.mine ? ' · ' : ''}
             {progressText(p, s)}
           </PText>
-          <Pressable onPress={() => openChallenge(p)} accessibilityRole="button" hitSlop={4}>
+          <View style={styles.dHeart}>
+            <SaveHeart id={p.id} size={30} />
+          </View>
+          <Pressable onPress={() => openChallenge(p)} accessibilityRole="button" hitSlop={4} style={styles.tWrap}>
             <PText numberOfLines={1} style={styles.t}>
               {p.name}
             </PText>
@@ -188,7 +212,7 @@ export function ExprCard({
   const src = challengeSrc(p);
   const say = () => {
     haptic('tap');
-    speak(p.q || p.hl || '', { language: p.lang, rate: 0.95 });
+    sayExpression(expressionSpeech(p), { language: p.lang });
   };
   const face = carousel ? 22 : 24;
   return (
@@ -212,9 +236,12 @@ export function ExprCard({
             <PText style={styles.mean}>{meaningOf(p)}</PText>
             <IconLine icon={CH_SRC[srcKindOf(p.src)].icon} text={src} style={styles.src} textStyle={styles.srcT} />
           </View>
-          <Pressable onPress={say} accessibilityRole="button" accessibilityLabel="표현 듣기" style={({ pressed }) => [styles.say, pressed && styles.sayOn]}>
-            <ChIcon name="spk" size={18} />
-          </Pressable>
+          <View style={styles.exBtns}>
+            <Pressable onPress={say} accessibilityRole="button" accessibilityLabel="표현 듣기" style={({ pressed }) => [styles.say, pressed && styles.sayOn]}>
+              <ChIcon name="spk" size={18} />
+            </Pressable>
+            <SaveHeart id={p.id} size={36} />
+          </View>
         </View>
         <View style={[styles.chxc, carousel && styles.chxcHs]}>
           <Pressable onPress={() => onOpen(p)} accessibilityRole="button" accessibilityLabel="문장 보기" style={StyleSheet.absoluteFill} />
@@ -278,36 +305,60 @@ export function HotBox({ list, s }: { list: Challenge[]; s: ChView }) {
           <PText style={styles.hhB}>지금 핫한 챌린지</PText>
           <PText style={styles.hhS}>참여 · 인증이 많은 순</PText>
         </View>
-        {top.map((p, i) => {
-          return (
-            <Pressable
-              key={p.id}
-              onPress={() => openChallenge(p)}
-              accessibilityRole="button"
-              accessibilityLabel={`${i + 1}위 ${p.name}`}
-              style={({ pressed }) => [styles.hr, i > 0 && styles.hrLine, pressed && { opacity: 0.7 }]}>
-              <PText style={[styles.no, NO_STYLE[i], { lineHeight: NO_STYLE[i].fontSize * 1.25 }]}>{i + 1}</PText>
-              {/* 연 사람이 올린 대표 사진 · 없으면 기본 배경 + 카드 문구 */}
-              <ChCover p={p} size={42} style={styles.hic} />
-              <View style={styles.htx}>
-                <PText numberOfLines={1} style={styles.hb}>
-                  {p.name}
-                </PText>
-                <PText numberOfLines={1} style={styles.hs}>
-                  {`${memberCount(p, s)}명 참여 · ${isPre(p) ? p.start : `오늘 ${todayCount(p, s)}명 인증`}`}
-                </PText>
-              </View>
-              {isJoined(p, s) ? <PText style={styles.hem}>참여 중</PText> : null}
-              <PText style={styles.go}>›</PText>
-            </Pressable>
-          );
-        })}
+        {top.map((p, i) => (
+          <HotRow key={p.id} p={p} s={s} i={i} />
+        ))}
       </View>
     </View>
   );
 }
 
+function HotRow({ p, s, i }: { p: Challenge; s: ChView; i: number }) {
+  return (
+    <Pressable
+      onPress={() => openChallenge(p)}
+      accessibilityRole="button"
+      accessibilityLabel={`${i + 1}위 ${p.name}`}
+      style={({ pressed }) => [styles.hr, i > 0 && styles.hrLine, pressed && { opacity: 0.7 }]}>
+      <PText style={[styles.no, NO_STYLE[i], { lineHeight: NO_STYLE[i].fontSize * 1.25 }]}>{i + 1}</PText>
+      {/* 연 사람이 올린 대표 사진 · 없으면 기본 배경 + 카드 문구 */}
+      <ChCover p={p} size={42} style={styles.hic} />
+      <View style={styles.htx}>
+        <PText numberOfLines={1} style={styles.hb}>
+          {p.name}
+        </PText>
+        <PText numberOfLines={1} style={styles.hs}>
+          {`${memberCount(p, s)}명 참여 · ${isPre(p) ? p.start : `오늘 ${todayCount(p, s)}명 인증`}`}
+        </PText>
+      </View>
+      {isJoined(p, s) ? <PText style={styles.hem}>참여 중</PText> : null}
+      <PText style={styles.go}>›</PText>
+    </Pressable>
+  );
+}
+
+/** 개설 시트 미리보기: 라운지에서 누르기 전 모습 그대로 (지금 핫한 챌린지 한 줄 · 챌린지 카드) — 눌러도 아무 일 없어요 */
+export function ChLoungePreview({ p, s }: { p: Challenge; s: ChView }) {
+  return (
+    <View pointerEvents="none" style={styles.lpv}>
+      <PText style={styles.pvL}>지금 핫한 챌린지</PText>
+      <View>
+        <View style={[styles.shadow, { borderRadius: 20 }]} />
+        <View style={[styles.hot, styles.pvHot]}>
+          <HotRow p={p} s={s} i={0} />
+        </View>
+      </View>
+      <PText style={styles.pvL}>챌린지 카드</PText>
+      <DailyCard p={p} s={s} onCheck={noop} />
+    </View>
+  );
+}
+const noop = () => {};
+
 const styles = StyleSheet.create({
+  lpv: { gap: 8, paddingRight: 4, paddingBottom: 4 },
+  pvL: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: SUB },
+  pvHot: { paddingTop: 0, paddingBottom: 0 },
   shadow: { position: 'absolute', top: 4, left: 4, right: -4, bottom: -4, backgroundColor: Colors.ink },
   shell: { borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, overflow: 'hidden' },
   flashRing: { position: 'absolute', backgroundColor: 'rgb(255,214,0)' },
@@ -317,8 +368,9 @@ const styles = StyleSheet.create({
   pw: { position: 'absolute', top: 12, left: 10, right: 6, fontFamily: Font.display, letterSpacing: -0.3, lineHeight: 14 },
   chav: { position: 'absolute', left: 10, bottom: 10 },
   pcb: { flex: 1, minWidth: 0, paddingTop: 11, paddingHorizontal: 12, paddingBottom: 12 },
-  ck: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: SUB },
+  ck: { marginRight: 30, fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: SUB },
   ckOn: { fontFamily: Font.body900, fontSize: 11.5, color: Colors.purple },
+  tWrap: { marginRight: 30 },
   t: { marginTop: 2, fontFamily: Font.body900, fontSize: 15.5, lineHeight: 20.15 },
   m: { marginTop: 3, flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 3 },
   foot: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -335,6 +387,11 @@ const styles = StyleSheet.create({
   src: { marginTop: 5 },
   srcT: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16 },
   say: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', boxShadow: [{ offsetX: 2, offsetY: 2, blurRadius: 0, color: Colors.ink }] },
+  exBtns: { gap: 8, alignItems: 'center' },
+  // 찜 하트: 흰 동그라미 · 잉크 테두리 (일상 카드는 오른쪽 위에 떠 있어요)
+  heart: { borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', boxShadow: [{ offsetX: 2, offsetY: 2, blurRadius: 0, color: Colors.ink }] },
+  heartOn: { transform: [{ translateX: 2 }, { translateY: 2 }], boxShadow: [] },
+  dHeart: { position: 'absolute', top: 8, right: 8 },
   sayOn: { transform: [{ translateX: 2 }, { translateY: 2 }], boxShadow: [] },
   chxc: { paddingTop: 10, paddingRight: 12, paddingBottom: 12, paddingLeft: 14 },
   chxcHs: { paddingTop: 8, paddingRight: 10, paddingBottom: 10, paddingLeft: 12, marginTop: 'auto' },

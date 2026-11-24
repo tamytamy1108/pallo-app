@@ -390,6 +390,10 @@ export function StoryReplySheet({ open, onClose, who, onSend }: { open: boolean;
   );
 }
 
+/** 댓글 줄: 오른쪽 하트 칸 폭 · 칸 사이 */
+const HEART_COL = 34;
+const ROW_GAP = 10;
+
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 0 },
   // .cst { text-align: center; padding: 2px 0 10px; border-bottom: 1.5px solid line } h2 16px 900
@@ -401,8 +405,9 @@ const styles = StyleSheet.create({
   cs0: { flex: 1, minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 4 },
   cs0b: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
   cs0s: { fontFamily: Font.body700, fontSize: 13, lineHeight: 18, color: Colors.inkSub },
-  cr: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10 },
-  rp: { paddingTop: 8, paddingBottom: 0 },
+  cr: { flexDirection: 'row', alignItems: 'flex-start', gap: ROW_GAP, paddingVertical: 10 },
+  // 답글은 윗댓글 글 칸 안에 들어가요 → 하트 칸(+ 사이) 만큼 오른쪽으로 늘려 윗댓글 하트와 같은 줄에 맞춰요
+  rp: { paddingTop: 8, paddingBottom: 0, marginRight: -(HEART_COL + ROW_GAP) },
   cb: { flex: 1, minWidth: 0 },
   ch: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   chName: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19 },
@@ -412,7 +417,7 @@ const styles = StyleSheet.create({
   caText: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   cmore: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, alignSelf: 'flex-start' },
   cmoreLine: { width: 24, height: 1.5, backgroundColor: Colors.line },
-  cl: { width: 34, alignItems: 'center', gap: 2, paddingTop: 4 },
+  cl: { width: HEART_COL, alignItems: 'center', gap: 2, paddingTop: 4 },
   clN: { minHeight: 14, fontFamily: Font.body800, fontSize: 11.5, lineHeight: 14, color: Colors.inkSub },
   // .csm — 답글 · 수정 중 띠
   csm: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 18, backgroundColor: Colors.lavender },

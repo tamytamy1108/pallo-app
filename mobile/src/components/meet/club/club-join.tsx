@@ -8,7 +8,8 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import type { Club } from '@/data/meet';
+import { joinFree, type Club } from '@/data/meet';
+import { useMe } from '@/state/me';
 import { sfx } from '@/lib/feedback';
 
 import { ConfirmCheck, DoneSheet } from '../detail/sheets';
@@ -25,7 +26,8 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
   const [ok, setOk] = useState(false);
   const [done, setDone] = useState(false);
   const [hi, setHi] = useState('');
-  const free = c.cond === '누구나';
+  const me = useMe();
+  const free = joinFree(c.cond, c.br, me.branch);
   const host = clubHost(c);
   return (
     <>
@@ -48,7 +50,7 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
             }}
           />
         }>
-        <SheetDesc>{free ? '가입하면 정기 모임 참석, 게시판, 사진첩을 함께 써요.' : `가입 조건은 '${c.cond}'이에요. 호스트 ${host}가 확인하면 가입돼요.`}</SheetDesc>
+        <SheetDesc>{free ? '가입하면 정기 모임 참석, 게시판, 사진첩을 함께 써요.' : `가입 조건은 '${c.cond}'이에요. ${c.br} 멤버가 아니라서 호스트 ${host}가 확인하면 가입돼요.`}</SheetDesc>
         <View style={styles.note}>
           <View style={{ marginTop: 2 }}>
             <Icon name="shield" size={15} color={Colors.inkSub} />

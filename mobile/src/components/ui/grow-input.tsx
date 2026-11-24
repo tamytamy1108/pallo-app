@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useLayoutEffect, useRef, useState, type ComponentProps, type ComponentRef } from 'react';
-import { Platform, StyleSheet, TextInput, useWindowDimensions } from 'react-native';
+import { Keyboard, Platform, StyleSheet, TextInput, useWindowDimensions } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
@@ -16,6 +16,11 @@ type Props = ComponentProps<typeof TextInput> & {
 };
 
 const isWeb = Platform.OS === 'web';
+/**
+ * 아이폰(새 구조): 높이를 직접 정하면 글이 늘어도 칸 크기가 안 바뀌어서 onContentSizeChange 가 다시 안 와요 (칸 크기가 바뀔 때만 알려 줘요)
+ * — 그래서 칸이 한 줄에 멈춰 있었어요. 아이폰은 높이를 정하지 않고 minHeight · maxHeight 사이에서 글 높이대로 스스로 늘게 둬요.
+ */
+const selfSizing = Platform.OS === 'ios';
 
 type FocusEvents = Pick<ComponentProps<typeof TextInput>, 'onFocus' | 'onBlur'>;
 
@@ -79,8 +84,28 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
     else if (ref) ref.current = node;
   };
   const { height: screenH } = useWindowDimensions();
-  const focus = useFocusRing({ onFocus, onBlur }, ring);
   const keep = useKeepVisible();
+  /**
+   * 쓰는 줄 따라가기: 포커스 중인 칸이 아래 버튼 · 흐림 · 키보드 뒤로 내려가면 스크롤을 그만큼 내려요.
+   * 아래에 붙은 입력 띠(maxLines)는 스크롤 칸 밖이라 빼요.
+   */
+  const keepCaret = useCallback(() => {
+    if (maxLines) return;
+    if (keep) return keep(inner.current);
+    if (isWeb) keepInViewWeb(textareaOf(inner.current), CARET_ROOM);
+  }, [keep, maxLines]);
+
+  const focus = useFocusRing(
+    {
+      onFocus: (e) => {
+        onFocus?.(e);
+        // 키보드가 이미 떠 있는 채로 칸을 옮기면 (키보드 알림이 안 와요) 이 칸이 키보드 위로 보이게
+        if (!isWeb && Keyboard.isVisible()) setTimeout(() => keepCaret(), 60);
+      },
+      onBlur,
+    },
+    ring,
+  );
   const [contentH, setContentH] = useState(0);
 
   const flat = StyleSheet.flatten(style) ?? {};
@@ -92,7 +117,8 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
   const cap = Math.min(num(flat.maxHeight) ?? Infinity, maxLines ? Math.min(maxLines * lineH + padV + border, Math.round(screenH * 0.4)) : Infinity);
   const want = contentH ? contentH + border : minH;
   const height = Math.min(Math.max(minH, want), cap);
-  const capped = want > cap;
+  // 아이폰은 칸이 최대 높이에 닿으면 더는 크기가 안 바뀌어 글 높이 알림도 멈춰요 — 닿은 순간부터 칸 안에서 스크롤해요
+  const capped = selfSizing ? cap !== Infinity && want >= cap - 1 : want > cap;
 
   // 웹: 잠깐 height:auto 로 두고 글 높이를 잰 뒤 바로 되돌려요 (그려지기 전이라 깜빡이지 않아요)
   const measureWeb = useCallback(() => {
@@ -104,16 +130,6 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
     el.style.height = prev;
     setContentH((p) => (p === h ? p : h));
   }, []);
-
-  /**
-   * 쓰는 줄 따라가기: 포커스 중인 칸이 아래 버튼 · 흐림 · 키보드 뒤로 내려가면 스크롤을 그만큼 내려요.
-   * 아래에 붙은 입력 띠(maxLines)는 스크롤 칸 밖이라 빼요.
-   */
-  const keepCaret = useCallback(() => {
-    if (maxLines) return;
-    if (keep) return keep(inner.current);
-    if (isWeb) keepInViewWeb(textareaOf(inner.current), CARET_ROOM);
-  }, [keep, maxLines]);
 
   // 칸이 늘어난 순간 (줄이 하나 더 생겼을 때)
   const prevHeight = useRef(height);
@@ -133,8 +149,8 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
       {...rest}
       ref={setRef}
       multiline
-      // 웹 <textarea> 기본 2줄 대신 1줄부터 (높이는 글에 맞춰 늘어요)
-      rows={1}
+      // 웹 <textarea> 기본 2줄 대신 1줄부터 (높이는 글에 맞춰 늘어요). 아이폰은 rows 가 '최대 1줄'이 돼서 빼요
+      rows={selfSizing ? undefined : 1}
       scrollEnabled={capped}
       onChangeText={(t) => {
         onChangeText?.(t);
@@ -164,7 +180,7 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
       }}
       onFocus={focus.onFocus}
       onBlur={focus.onBlur}
-      style={[style, { height, textAlignVertical: 'top' }, focus.ringStyle]}
+      style={[style, selfSizing ? { height: undefined, minHeight: minH, maxHeight: cap === Infinity ? undefined : cap } : { height }, { textAlignVertical: 'top' }, focus.ringStyle]}
     />
   );
 });

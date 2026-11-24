@@ -174,7 +174,7 @@ noSpeakUntil · noListenUntil (datetime, 15분) · sfx(bool) · dailyGoal(int) �
 
 | 모델 | 주요 필드 |
 |---|---|
-| Event | hostId(리더 · 매니저) · branchId(또는 전 지점) · cat(파티 · 클래스 · 여행) · title · posters[] · startAt · endInfo · place{…} · capacity · fee · feeBefore(할인 전) · intro · contact · survey[] (≤5) · refundPolicy [TBC] |
+| Event | hostId(프로 · 지점 관리자) · branchId(또는 전 지점) · cat(파티 · 클래스 · 여행) · title · posters[] · startAt · endInfo · place{…} · capacity · fee · feeBefore(할인 전) · intro · contact · survey[] (≤5) · refundPolicy [TBC] |
 | SurveyQuestion | text · type(`one` · `multi` · `text`) · options[] · required |
 | EventApplication | eventId · memberId · answers · status(`pending_payment` · `confirmed` · `canceled` · `expired`) · payDeadline(+24h) · paidConfirmedBy [TBC] |
 | EventProposal | memberId · photos[] · branchId · addressDetail · wishDate(+7일 ~ +3달) · cat · title · desc · expectedSize · feeType · status(`reviewing` · `accepted` · `rejected` · `canceled`) |

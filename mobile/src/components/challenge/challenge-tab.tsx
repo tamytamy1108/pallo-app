@@ -1,8 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import { Pressable } from '@/components/ui/pressable';
 import { guardMember } from '@/components/common/trial-guide';
@@ -64,10 +61,7 @@ export function ChallengeTab({ branch, header }: { branch: string; header?: Reac
     }, '챌린지에 인증하려면');
 
   const [rowRef, onRow, onChip, centerChip] = useCenterChip();
-  // 표현 모두 보기에서 오른쪽으로 밀면 보던 칩으로 돌아가요
-  const [prevSub, setPrevSub] = useState<Sub>('all');
   const pickSub = (v: Sub) => {
-    if (v === 'study' && sub !== 'study') setPrevSub(sub);
     centerChip(v);
     sfx('tap');
     haptic('select');
@@ -99,9 +93,7 @@ export function ChallengeTab({ branch, header }: { branch: string; header?: Reac
 
       <View style={styles.feed} onLayout={(e) => setFeedW(e.nativeEvent.layout.width - 32)} key={sub}>
         {sub === 'study' ? (
-          <SwipeBack onBack={() => pickSub(prevSub)}>
-            <ExprSearch list={base.filter(isExpr)} s={s} q={q} setQ={setQ} onOpen={openExpr} />
-          </SwipeBack>
+          <ExprSearch list={base.filter(isExpr)} s={s} q={q} setQ={setQ} onOpen={openExpr} />
         ) : (
           <Body base={base} s={s} sub={sub} seg={seg} setSeg={setSeg} feedW={feedW} onCheck={onCheck} onOpen={openExpr} onAll={() => pickSub('study')} />
         )}
@@ -238,12 +230,13 @@ function Body({
 function ExprSearch({ list, s, q, setQ, onOpen }: { list: Challenge[]; s: ChView; q: string; setQ: (t: string) => void; onOpen: (p: Challenge, write?: boolean) => void }) {
   const k = q.trim().toLowerCase();
   const hits = list.filter((p) => !k || [p.hl, p.ko, p.q, p.who, challengeSrc(p)].join(' ').toLowerCase().includes(k));
+  // 머리 · 찾기 칸 · 첫 카드 사이를 이 안에서 정해요 (피드 gap 에 기대지 않게)
   return (
-    <>
-      <LgIn>
+    <View style={styles.xWrap}>
+      <LgIn style={styles.xHead}>
         <Sec title="표현 챌린지" sub="표현으로 나만의 문장 완성하기" />
       </LgIn>
-      <LgIn index={1} style={styles.findWrap}>
+      <LgIn index={1}>
         <SearchBox value={q} onChangeText={setQ} placeholder="표현 · 뜻 · 연 사람으로 찾기" label="표현 챌린지 찾기" />
       </LgIn>
       <LgIn index={2}>
@@ -257,34 +250,7 @@ function ExprSearch({ list, s, q, setQ, onOpen }: { list: Challenge[]; s: ChView
           <Empty>{k ? `‘${q.trim()}’에 맞는 표현 챌린지가 없어요.\n직접 열어 보는 건 어때요?` : '아직 표현 챌린지가 없어요.\n내 표현함 표현으로 열어 보세요.'}</Empty>
         )}
       </LgIn>
-    </>
-  );
-}
-
-/** 오른쪽으로 밀면 손가락을 따라 밀려나며 이전 화면으로 (아이폰 뒤로 가기처럼) */
-function SwipeBack({ onBack, children }: { onBack: () => void; children: ReactNode }) {
-  const { width } = useWindowDimensions();
-  const x = useSharedValue(0);
-  const pan = Gesture.Pan()
-    .activeOffsetX(18)
-    .failOffsetY([-14, 14])
-    .onUpdate((e) => {
-      x.set(Math.max(0, e.translationX));
-    })
-    .onEnd((e) => {
-      if (e.translationX > 90 || e.velocityX > 700) {
-        x.set(
-          withTiming(width, { duration: 180 }, (done) => {
-            if (done) scheduleOnRN(onBack);
-          }),
-        );
-      } else x.set(withTiming(0, { duration: 180 }));
-    });
-  const st = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }], opacity: 1 - Math.min(x.get() / width, 1) * 0.5 }));
-  return (
-    <GestureDetector gesture={pan}>
-      <Animated.View style={st}>{children}</Animated.View>
-    </GestureDetector>
+    </View>
   );
 }
 
@@ -310,6 +276,8 @@ const styles = StyleSheet.create({
   segBar: { position: 'absolute', left: 0, right: 0, bottom: -1.5, height: 3, borderRadius: 2, backgroundColor: Colors.ink },
   sp: { flex: 1 },
   segHint: { paddingBottom: 9, fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: SUB },
-  findWrap: { marginTop: 4 },
+  xWrap: { gap: 14 },
+  // Sec 의 아래 여백 -8 (피드 gap 22 용)을 되돌려 찾기 칸과 14 띄워요
+  xHead: { marginBottom: 8 },
   xList: { gap: 14 },
 });

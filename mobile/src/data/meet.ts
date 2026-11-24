@@ -5,9 +5,28 @@
  *   · 63 `/clubs` · 65 `/clubs/:id/members` · 66 `/clubs/:id/staff` · 67 `/clubs/:id/board` · `/photos` · 68 `/clubs/:id/chat`
  *   · 69 `/clubs/:id/sessions` · `/club-sessions/:sid/attend` · 70 `/club-sessions/:sid/one-liner` · 지도 집계 `/lounge/map?kind=meet|club`
  */
+import { SEED_NEW_AT } from './seed-time';
 
 /** 프로토타입 LG_C — 포스터 · 지도에 쓰는 브랜드 색 */
+import type { MadeCard } from './poster-colors';
+
 export const C = { y: '#FFE200', pk: '#D0798E', pu: '#493087', sky: '#8FA6DC', lpu: '#E5DDF6', lsky: '#E3EAF8', ink: '#1E1A2B', cream: '#FBF6EA' } as const;
+
+/** 정원 · 최대 인원 0 = 인원 무관 (개설할 때 '인원 무관'을 고르면 0) */
+export const NO_LIMIT = 0;
+/** 자리가 다 찼나요 (인원 무관이면 늘 아니에요) */
+export const capFull = (cur: number, max: number) => max > 0 && cur >= max;
+/** '3 / 6명' · 인원 무관이면 '3명 · 인원 무관' */
+export const capText = (cur: number, max: number) => (max > 0 ? `${cur} / ${max}명` : `${cur}명 · 인원 무관`);
+
+/** 동아리 지역 '전체' (지역 상관없이) */
+export const ALL_REGIONS = '전체';
+
+/** 동아리 가입 조건: 'PALLO 멤버만' 또는 '개설한 사람 지점 멤버만' (예: '하남점 멤버만') — 옛 '누구나' 는 멤버만과 같아요 */
+export const CLUB_MEMBERS = '멤버만';
+export const branchOnly = (br: string) => `${br} 멤버만`;
+/** 바로 가입되나요: 멤버만이면 누구나 · 지점 멤버만이면 그 지점 사람만 (다른 지점은 호스트 확인) */
+export const joinFree = (cond: string, clubBr: string, myBr: string) => cond === '누구나' || cond === CLUB_MEMBERS || (cond === branchOnly(clubBr) && myBr === clubBr);
 
 export type Region = '서울' | '경기' | '천안' | '대전' | '대구' | '울산' | '부산';
 export type ClubCat = 'run' | 'book' | 'drama' | 'food' | 'study';
@@ -40,29 +59,47 @@ export type Meet = {
   closed?: boolean;
   /** 내가 올린 포스터 사진 (첫 장이 대표) */
   posters?: string[];
+  /** 내가 만든 카드 (있으면 대표 · 사진은 그 뒤에) */
+  card?: MadeCard;
   /** 상세 주소 · 직접 적은 것 */
   addr?: string;
   addr2?: string;
+  /** 올린 때 (ms). 이 탭을 마지막으로 본 뒤면 '새 글' — data/seed-time.ts */
+  at?: number;
 };
 
 /** 동아리 (매주 만나요). days: 모이는 요일 (0 = 일). wait: 매니저 승인 대기 */
 export type Club = {
   id: string;
   cc: ClubCat;
-  reg: Region;
+  /** '전체' = 지역 상관없이 (모든 지역 목록에 보여요) */
+  reg: Region | typeof ALL_REGIONS;
   name: string;
+  /** 보여 줄 언어 한 줄 ('영어' · '영어 · 일본어' · '무관') */
   lang: string;
   br: string;
   when: string;
   n: number;
+  /** 최대 인원 (나 포함). NO_LIMIT(0) = 인원 무관 */
   max: number;
   cond: string;
   host: string;
   days: number[];
   mine?: boolean;
   wait?: boolean;
+  /** 채팅방 공지 (가입하면 보여요) */
   memo?: string;
   posters?: string[];
+  /** 내가 만든 카드 (있으면 대표 · 사진은 그 뒤에) */
+  card?: MadeCard;
+  /** 동아리 소개 (내가 만든 동아리) */
+  intro?: string;
+  /** 고른 언어들 (내가 만든 동아리). ['무관'] 이면 언어 무관 */
+  langs?: string[];
+  /** 모이는 시간 [시작, 끝] ('20:00', '22:00') */
+  time?: [string, string];
+  /** 올린 때 (ms). 이 탭을 마지막으로 본 뒤면 '새 글' — data/seed-time.ts */
+  at?: number;
 };
 
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -103,7 +140,7 @@ export const MEETS: Meet[] = [
   { id: 'm10', br: '영등포', reg: '서울', day: '20', mon: 'NOV', wd: '목 20:00', title: '영등포 영어 보드게임', place: '영등포 앞 보드게임 카페', host: '소라', cur: 3, max: 6 },
   { id: 'm11', br: '대전 둔산점', reg: '대전', day: '16', mon: 'NOV', wd: '일 11:00', title: '둔산동 스몰토크 브런치', place: '둔산동 브런치 카페', host: '지우', cur: 4, max: 6 },
   { id: 'm12', br: '대구 달서점', reg: '대구', day: '22', mon: 'NOV', wd: '토 15:00', title: '달서 카페 영어 수다', place: '두류공원 앞 카페 · 대구 달서점', host: '민서', cur: 2, max: 6 },
-  { id: 'm13', br: '부산 수영점', reg: '부산', day: '23', mon: 'NOV', wd: '일 10:00', title: '광안리 바다 산책 & 영어', place: '광안리 해변 · 부산 수영점', host: '하람', cur: 6, max: 10 },
+  { id: 'm13', at: SEED_NEW_AT, br: '부산 수영점', reg: '부산', day: '23', mon: 'NOV', wd: '일 10:00', title: '광안리 바다 산책 & 영어', place: '광안리 해변 · 부산 수영점', host: '하람', cur: 6, max: 10 },
   { id: 'm14', br: '영등포', reg: '경기', day: '19', mon: 'NOV', wd: '수 19:00', title: '수원 행궁동 영어 산책', place: '행궁동 공방거리', host: '태오', cur: 2, max: 5 },
 ];
 
@@ -114,7 +151,7 @@ export const CLUBS: Club[] = [
   { id: 'cl8', cc: 'study', reg: '대구', name: '스페인어 기초 스터디', lang: '스페인어', br: '대구동성로', when: '월 · 토 19:00', n: 4, max: 8, cond: '누구나', host: '라파', days: [1, 6] },
   { id: 'cl9', cc: 'run', reg: '부산', name: '해운대 러닝 & 영어', lang: '영어', br: '부산 수영점', when: '매주 토 07:00', n: 7, max: 15, cond: '누구나', host: '하람', days: [6] },
   { id: 'cl10', cc: 'book', reg: '서울', name: '하루키 원서 읽기', lang: '일본어', br: '연신내', when: '격주 일 15:00', n: 6, max: 8, cond: '누구나', host: '유키', days: [0] },
-  { id: 'cl11', cc: 'study', reg: '경기', name: '퇴근 후 프리토킹 스터디', lang: '영어', br: '분당점', when: '매주 월 · 수 20:30', n: 5, max: 8, cond: 'Lv.2 이상', host: '소라', days: [1, 3] },
+  { id: 'cl11', at: SEED_NEW_AT, cc: 'study', reg: '경기', name: '퇴근 후 프리토킹 스터디', lang: '영어', br: '분당점', when: '매주 월 · 수 20:30', n: 5, max: 8, cond: 'Lv.2 이상', host: '소라', days: [1, 3] },
   { id: 'cl1', cc: 'book', reg: '서울', name: '원서 북클럽', lang: '영어', br: '영등포', when: '매주 화 20:00', n: 7, max: 10, cond: 'Lv.2 이상', host: '소라', days: [2] },
   { id: 'cl2', cc: 'run', reg: '서울', name: '러닝 동아리', lang: '영어', br: '잠실점', when: '매주 일 08:00 · 석촌호수', n: 9, max: 15, cond: '누구나', host: '태오', days: [0] },
   { id: 'cl3', cc: 'food', reg: '부산', name: '스페인어 타파스 모임', lang: '스페인어', br: '부산대점', when: '격주 토 18:00', n: 6, max: 8, cond: '스페인어 수강생', host: 'Leo', days: [6] },

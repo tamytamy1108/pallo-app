@@ -66,9 +66,15 @@ export type LaunchPopup = {
   href: string;
   /** 이 날까지 보여요 (YYYY-MM-DD) */
   until: string;
+  /** 한 지점 이벤트면 그 지점 (예: '하남점') — 그 지점 멤버에게만, 맨 앞에 떠요. 없으면 전 지점 */
+  branch?: string;
+  /** 이벤트 날짜 (YYYY-MM-DD) — 지점 이벤트끼리는 가까운 날부터 */
+  date?: string;
 };
 
 export const LAUNCH_POPUPS: LaunchPopup[] = [
+  { id: 'pop-hn-xmas', kicker: 'HANAM X-MAS', title: '하남점\n크리스마스 프리토킹', sub: '12.20 토 19:00 · 하남점 라운지 · 선착순 30명', bg: ['#D9849C', '#493087'], cta: '자세히 보기', href: '/events/m2', until: '2026-12-20', branch: '하남점', date: '2026-12-20' },
+  { id: 'pop-js-quiz', kicker: 'JAMSIL QUIZ NIGHT', title: '잠실점\n영어 퀴즈 나이트', sub: '12.6 토 18:00 · 잠실점', bg: ['#5C8FD6', '#1E1A2B'], cta: '자세히 보기', href: '/events/m2', until: '2026-12-06', branch: '잠실점', date: '2026-12-06' },
   { id: 'pop-party', kicker: 'YEAR END PARTY', title: 'PALLO\n연말 랭귀지 파티', sub: '11.29 토 19:00 · 전 지점', bg: ['#493087', '#1E1A2B'], cta: '자세히 보기', href: '/events/m2', until: '2026-11-29' },
   { id: 'pop-dec', kicker: 'DECEMBER', title: '12월\n스터디 일정', sub: '25일 · 31일 휴무 · 27일 보충', bg: ['#8FA6DC', '#493087'], cta: '공지 보기', href: '/notice/n1', until: '2026-12-31' },
 ];
@@ -208,8 +214,10 @@ export type Noti = {
   read: boolean;
   /** 지점 연동 결과 알림의 동그라미: 연동됨(보라 · 체크) · 못 찾음(분홍 · ?) — 프로토타입 .nt-ic.ok */
   badge?: 'ok' | 'fail';
-  /** 줄 오른쪽 작은 노랑 버튼 (누르면 줄을 누른 것과 같아요) — 예) '나도 풀러 가기' · '같이 가기' */
+  /** 줄 오른쪽 작은 노랑 버튼 (누르면 줄을 누른 것과 같아요) — 예) '나도 이어서 하기' · '같이 가기' */
   action?: string;
+  /** 누르면 알림 속 단계가 아니라 내가 마지막으로 공부한 곳으로 (친구 퀘스트 성공 알림) */
+  toMyLast?: boolean;
 };
 
 export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [
@@ -224,7 +232,7 @@ export const NOTIS: Noti[] = [
   // 받는 쪽 예시 (추가 제안 · api-additions): 팔로우한 멤버의 '같이 갈래요?' → 그 시간 · 언어로 사전 출석 시트
   { id: 'inv1', kind: 'learn', who: { name: '민준', bg: '#E3EAF8', body: 'sky' }, text: '민준님이 오늘 20:00 영어 세션에 가요. 같이 갈래요?', time: '5분 전', href: '/?attend=rsvp&slot=1&lang=0', read: false, action: '같이 가기' },
   // 팔로우한 멤버의 퀘스트 성공 → 같은 단계로 (첫 챕터 · 회원 잠금은 레슨 화면이 지켜요)
-  { id: 'qs1', kind: 'learn', who: { name: '소라', bg: '#CDEBD0', body: 'pink' }, text: '소라님이 「1과 Cafe Complaint · 본학습」 퀘스트를 성공했어요!', time: '20분 전', href: '/lesson/sit?lv=1&unit=1', read: false, action: '나도 풀러 가기' },
+  { id: 'qs1', kind: 'learn', who: { name: '소라', bg: '#CDEBD0', body: 'pink' }, text: '소라님이 「1과 Cafe Complaint · 본학습」 퀘스트를 성공했어요!', time: '20분 전', href: '/lesson/sit?lv=1&unit=1', read: false, action: '나도 이어서 하기', toMyLast: true },
   { id: 'nc0', kind: 'notice', icon: 'tack', text: '[공지] 이번 달 스터디 일정 안내', time: '30분 전', href: '/notice/n1', read: false },
   { id: 'n1', kind: 'learn', icon: 'book', text: '내일 20:00 세션이에요. 1과 예습이 남았어요', time: '1시간 전', href: '/unit/1?lv=1', read: false },
   { id: 'n2', kind: 'lounge', who: { name: '하나', bg: '#FFE200', body: 'pink' }, text: '하나님이 내 글에 댓글을 남겼어요 “최고예요!”', time: '2시간 전', href: '/post/p1?comments=1', read: false },

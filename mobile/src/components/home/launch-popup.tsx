@@ -3,8 +3,8 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { PanResponder, StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { popupsQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
@@ -15,6 +15,7 @@ import { Colors } from '@/constants/theme';
 import type { LaunchPopup as Popup } from '@/data/home';
 import { createStore } from '@/lib/store';
 import { LayerModal } from '@/components/ui/sheet-stack';
+import { getMe } from '@/state/me';
 
 import { nowDate } from './attendance';
 import { LineIcon } from './icons';
@@ -44,6 +45,12 @@ function hideToday(ids: string[]) {
     return keep;
   });
 }
+/** 내 지점 · 전 지점만 남기고, 내 지점 이벤트를 앞으로 */
+export function orderForBranch(list: Popup[], branch: string): Popup[] {
+  const mine = list.filter((p) => p.branch && p.branch === branch).sort((a, b) => (a.date ?? a.until).localeCompare(b.date ?? b.until));
+  return [...mine, ...list.filter((p) => !p.branch)];
+}
+
 // 앱을 켠 뒤 한 번만 떠요
 let shownOnce = false;
 
@@ -56,7 +63,8 @@ export function LaunchPopup() {
 function PopupHost({ popups }: { popups: Popup[] }) {
   const still = useReducedMotion();
   // 처음 받은 목록으로 한 번 정해요 (보는 중에 '오늘은 그만 보기'를 눌러도 목록이 줄지 않게)
-  const [list] = useState(() => popups.filter((p) => p.until >= today() && hiddenStore.get()[p.id] !== today()));
+  // 우리 지점 이벤트가 맨 앞 (가까운 날부터) → 전 지점 공지 · 이벤트. 다른 지점 것은 안 띄워요
+  const [list] = useState(() => orderForBranch(popups.filter((p) => p.until >= today() && hiddenStore.get()[p.id] !== today()), getMe().branch));
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   /** 공지 카드 전체 높이 (포스터 · 버튼 · 아래 줄) — 넘김 화살표를 카드 한가운데 높이에 둬요 */
@@ -131,18 +139,14 @@ function PopupHost({ popups }: { popups: Popup[] }) {
   );
 }
 
-/** 손가락을 이만큼(포스터 너비 비율) 넘게 끌거나 빠르게 튕기면 넘어가요 */
-const SWIPE_RATIO = 0.18;
 /** 포스터 높이 · 화살표 누르는 칸 높이 */
 const POSTER_H = 320;
 const ARROW_H = 44;
-const SWIPE_SPEED = 0.45;
-const SLIDE = { duration: 240, easing: Easing.out(Easing.cubic) };
 
 /**
  * 공지 포스터 칸: 여러 개면 옆으로 나란히 놓고 넘겨요.
- * - 옆으로 끌면 손가락을 따라오고, 놓으면 다음 · 이전 공지로 미끄러져요 (끝에서는 처음 · 마지막으로 돌아가요)
- * - ‹ › 는 포스터 양옆, 높이는 공지 카드 전체의 한가운데 (arrowY · 누르면 같은 미끄러짐) · 위 오른쪽에 몇 번째인지
+ * - 옆으로 밀면 한 장씩 넘어가요 (가로 페이지 스크롤 — 아이폰 · 안드로이드 · 웹이 똑같이 움직여요. 라운지 글 사진과 같은 방식)
+ * - ‹ › 는 포스터 양옆, 높이는 공지 카드 전체의 한가운데 (arrowY) · 끝에서 누르면 처음 · 마지막으로 돌아가요 · 위 오른쪽에 몇 번째인지
  * - 움직임 줄이기면 미끄러짐 없이 바로 바꿔요
  */
 function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; setI: (i: number) => void; still: boolean; arrowY: number }) {
@@ -150,57 +154,40 @@ function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; set
   const navTop = Math.min(POSTER_H - ARROW_H, Math.max(0, arrowY - ARROW_H / 2));
   const [w, setW] = useState(0);
   const many = list.length > 1;
-  /** 줄 전체의 왼쪽 위치 (px) — 지금 공지가 i 면 -i × 너비 */
-  const x = useSharedValue(0);
-  const now = useRef({ i, w, n: list.length, still });
-  useEffect(() => {
-    now.current = { i, w, n: list.length, still };
-  });
-  const [go] = useState(() => (to: number) => {
-    const { w: ww, n, still: st } = now.current;
-    const k = (to + n) % n;
+  const ref = useRef<ScrollViewInstance>(null);
+  const go = (to: number) => {
+    const k = (to + list.length) % list.length;
     setI(k);
-    x.set(st ? -k * ww : withTiming(-k * ww, SLIDE));
-  });
-  // ref 는 손가락 이벤트가 올 때만 읽어요 (그리는 중엔 안 읽어요) — 컴파일러가 이걸 구분하지 못해서 이 줄만 규칙을 꺼요
-  // eslint-disable-next-line react-hooks/refs
-  const [pan] = useState(() =>
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => now.current.n > 1 && Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderMove: (_, g) => {
-        const { i: k, w: ww } = now.current;
-        x.set(-k * ww + g.dx);
-      },
-      onPanResponderRelease: (_, g) => {
-        const { i: k, w: ww } = now.current;
-        const far = Math.abs(g.dx) > ww * SWIPE_RATIO || Math.abs(g.vx) > SWIPE_SPEED;
-        if (far && g.dx !== 0) go(k + (g.dx < 0 ? 1 : -1));
-        else x.set(withTiming(-k * ww, SLIDE));
-      },
-      onPanResponderTerminate: () => {
-        const { i: k, w: ww } = now.current;
-        x.set(withTiming(-k * ww, SLIDE));
-      },
-    }),
-  );
-  const row = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));
+    ref.current?.scrollTo({ x: k * w, animated: !still });
+  };
+  // 밀다가 멈춘 자리로 몇 번째인지 맞춰요
+  const settle = (offset: number) => {
+    if (!w) return;
+    const k = Math.max(0, Math.min(list.length - 1, Math.round(offset / w)));
+    if (k !== i) setI(k);
+  };
 
   return (
-    <View
-      style={styles.im}
-      onLayout={(e) => {
-        const ww = e.nativeEvent.layout.width;
-        setW(ww);
-        x.set(-now.current.i * ww);
-      }}
-      {...pan.panHandlers}>
+    <View style={styles.im} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       {w > 0 && (
-        <Animated.View style={[styles.row, { width: w * list.length }, row]}>
+        <ScrollView
+          ref={ref}
+          horizontal
+          pagingEnabled
+          scrollEnabled={many}
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          contentOffset={{ x: i * w, y: 0 }}
+          onScroll={(e) => settle(e.nativeEvent.contentOffset.x)}
+          scrollEventThrottle={32}
+          accessibilityRole="adjustable"
+          accessibilityLabel={`공지 ${i + 1} / ${list.length}`}
+          accessibilityActions={many ? [{ name: 'increment' }, { name: 'decrement' }] : undefined}
+          onAccessibilityAction={(e) => go(i + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}>
           {list.map((p) => (
             <Poster key={p.id} p={p} w={w} />
           ))}
-        </Animated.View>
+        </ScrollView>
       )}
       {many && (
         <>
@@ -227,6 +214,11 @@ function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; set
 function Poster({ p, w }: { p: Popup; w: number }) {
   return (
     <LinearGradient colors={p.bg} start={{ x: 0.33, y: 0 }} end={{ x: 0.67, y: 1 }} style={[styles.poster, { width: w }]}>
+      {!!p.branch && (
+        <View style={styles.mine}>
+          <PText style={styles.mineText}>우리 지점 · {p.branch}</PText>
+        </View>
+      )}
       <PText style={styles.k} color={Colors.yellow}>
         {p.kicker}
       </PText>
@@ -252,6 +244,8 @@ const styles = StyleSheet.create({
   nav: { position: 'absolute', left: 0, right: 0, height: ARROW_H, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
   n: { position: 'absolute', right: 12, top: 12, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.4)' },
   nText: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
+  mine: { alignSelf: 'flex-start', marginBottom: 10, paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow },
+  mineText: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16, color: Colors.ink },
   k: { fontFamily: Font.display, fontSize: 11, lineHeight: 14, letterSpacing: 2 },
   t: { marginTop: 10, fontFamily: Font.display, fontSize: 28, lineHeight: 31.4 },
   s: { marginTop: 10, fontFamily: Font.body800, fontSize: 13, lineHeight: 18, opacity: 0.9 },

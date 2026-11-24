@@ -7,13 +7,14 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { HOST_INTRO, hashId, type Club } from '@/data/meet';
+import { HOST_INTRO, hashId, joinFree, type Club } from '@/data/meet';
+import { useMe } from '@/state/me';
 
 import { ClubRow } from '../club-list';
 import { DSec, InfoRow, InfoRows, MemberSection } from '../detail/detail-parts';
 import { setText, useMeetStore } from '../meet-store';
 import { CrownFace } from '../member-face';
-import { clubContent, clubDesc, clubHost, clubSessions, type Member, type Session } from '../model';
+import { clubCapLine, clubContent, clubDesc, clubHost, clubLangLine, clubSessions, type Member, type Session } from '../model';
 import { LgLink } from '../parts';
 import { SessionRow } from './schedule';
 
@@ -22,6 +23,7 @@ import { SessionRow } from './schedule';
  */
 export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: { c: Club; inC: boolean; members: Member[]; staff: string[]; recs: Club[]; myBranch: string; onSession: (q: Session) => void }) {
   const att = useMeetStore((s) => s.att);
+  const me = useMe();
   const [all, setAll] = useState(false);
   const SS = clubSessions(c, att);
   const S12 = clubSessions(c, att, 12, 85);
@@ -39,9 +41,10 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
       <PText style={[styles.desc, keepAll]}>{clubDesc(c)}</PText>
       <InfoRows>
         <InfoRow first icon="cal" main={c.when} sub="매주 모여요" />
-        <InfoRow icon="pin" main={`${c.br}${c.reg ? ' · ' + c.reg : ''}`} sub={`${c.lang}로 이야기해요`} />
-        <InfoRow icon="crown" main={`호스트 ${host}`} sub={staff.length ? `서브 호스트 ${staff.join(' · ')}` : '서브 호스트는 아직 없어요'} />
-        <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub={c.cond === '누구나' ? '가입 인사만 쓰면 바로 가입돼요' : '호스트가 확인하면 가입돼요'} />
+        <InfoRow icon="pin" main={`${c.br}${c.reg ? ' · ' + c.reg : ''}`} sub={clubLangLine(c)} />
+        <InfoRow icon="users" main={`멤버 ${c.n + (inC ? 1 : 0)}명`} sub={clubCapLine(c)} />
+        <InfoRow icon="crown" main={`호스트 ${host}`} sub={staff.length ? `코호스트 ${staff.join(' · ')}` : '코호스트는 아직 없어요'} />
+        <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub={joinFree(c.cond, c.br, me.branch) ? '가입 인사만 쓰면 바로 가입돼요' : `${c.br} 멤버가 아니면 호스트가 확인하면 가입돼요`} />
       </InfoRows>
 
       <View style={styles.schhd}>

@@ -6,17 +6,17 @@ import { Colors } from '@/constants/theme';
 import { Icon } from './icons';
 
 /**
- * 멤버 얼굴 + 왕관 (프로토타입 lgCrownAv: 호스트 = 노랑 왕관, 서브 호스트 = 흰 왕관 — 프로필 오른쪽 아래).
+ * 멤버 얼굴 + 왕관 (프로토타입 lgCrownAv: 호스트 = 노랑 왕관, 코호스트 = 흰 왕관 — 프로필 오른쪽 아래).
  * 얼굴은 공통 MemberFace 를 그대로 써요.
  */
 export function CrownFace({ name, size = 36, me = false, role = '' }: { name: string; size?: number; me?: boolean; role?: string }) {
-  const crown = role === '호스트' || role === '서브 호스트' || role === '호스트 · 나';
+  const crown = role === '호스트' || role === '코호스트' || role === '호스트 · 나';
   return (
     <View style={{ width: size, height: size }}>
       <MemberFace name={name} size={size} me={me} />
       {crown ? (
-        <View style={[styles.crown, role === '서브 호스트' ? styles.sub : styles.host]} accessibilityLabel={role}>
-          <Icon name="crown" size={11} fill={role === '서브 호스트' ? 'none' : Colors.ink} strokeWidth={2.4} />
+        <View style={[styles.crown, role === '코호스트' ? styles.sub : styles.host]} accessibilityLabel={role}>
+          <Icon name="crown" size={11} fill={role === '코호스트' ? 'none' : Colors.ink} strokeWidth={2.4} />
         </View>
       ) : null}
     </View>

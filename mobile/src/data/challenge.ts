@@ -11,6 +11,9 @@ import { createStore } from '@/lib/store';
 import { exprCard, exprFrom, type SavedExpression } from '@/state/expressions';
 import { getMe } from '@/state/me';
 import { dayKey } from '@/state/today-goal';
+import type { PhotoFraming } from '@/lib/photo-framing';
+
+import { SEED_NEW_AT } from './seed-time';
 
 /** 프로토타입 LG_C */
 export const CH_C = {
@@ -72,11 +75,15 @@ export type Challenge = {
   av: string;
   br: string;
   time: string;
+  /** 올린 때 (ms). 이 탭을 마지막으로 본 뒤면 '새 글' — data/seed-time.ts */
+  at?: number;
   name: string;
   /** 카드 문구 (줄바꿈 \n) */
   pw?: string;
   /** 대표 사진: 연 사람이 직접 올린 사진 (앱에 넣은 그림 require 또는 주소). 없으면 기본 배경 + 카드 문구 */
   cover?: number | string;
+  /** 만든 카드 색 — 있으면 사진보다 앞(대표): 이 색 + 카드 문구 */
+  pbg?: string;
   guide?: string;
   freqT?: string;
   dur?: number;
@@ -106,10 +113,10 @@ export type Challenge = {
 
 /** 예시 챌린지 (LG_FEED 의 챌린지 순서 그대로) */
 export const CHALLENGES: Challenge[] = [
-  { id: 'c1', who: '민준', av: CH_C.sky, br: '잠실점', time: '1시간 전', name: '30일 하루 한 문장', ls: 6, host: '하나', members: 128, day: 17, of: 30, q: 'I’m on the fence about it.', hl: 'on the fence', ko: '그건 아직 결정을 못 하겠어요 · 세션에서 배운 표현', lang: 'en-US', likes: 41, rec: true },
+  { id: 'c1', who: '민준', av: CH_C.sky, br: '잠실점', time: '1시간 전', at: SEED_NEW_AT, name: '30일 하루 한 문장', ls: 6, host: '하나', members: 128, day: 17, of: 30, q: 'I’m on the fence about it.', hl: 'on the fence', ko: '그건 아직 결정을 못 하겠어요 · 세션에서 배운 표현', lang: 'en-US', likes: 41, rec: true },
   { id: 'c2', who: 'Leo', av: CH_C.pk, br: '연신내', time: '3시간 전', name: '주 3회 쉐도잉 · 4주', src: { k: 'free', t: '11.12 영등포 세션' }, unit: '회', bg: 'sk', host: 'Leo', members: 46, day: 9, of: 12, q: 'Could you say that again?', hl: 'say that again', ko: '다시 말해 줄래요? · 이번 주 쉐도잉 문장', lang: 'en-US', likes: 22 },
   { id: 'c4', cat: 'health', way: 'photo', who: '소라', av: CH_C.mint, br: '영등포', time: '5시간 전', name: '14일 아침 건강하게 먹기', guide: '아침 식단 사진 한 장 + 한 줄 소감 · 영어로 쓰면 더 좋아요', freqT: '매일', dur: 14, host: '소라', members: 37, day: 5, of: 14, bg: 'sk', lang: 'en-US', likes: 18 },
-  { id: 'c6', cat: 'move', way: 'photo', who: '하람', av: CH_C.sky, br: '부산 수영점', time: '2시간 전', name: '매일 30분 걷기', pw: 'WALK\n30 MIN', cover: require('@/assets/images/challenge/sample-walk.webp'), guide: '걸음 수 캡처 + 한 줄 · 걸으며 들은 영어 표현도 좋아요', freqT: '매일', dur: 21, host: '하람', members: 64, day: 11, of: 21, bg: 'sk', lang: 'en-US', likes: 33 },
+  { id: 'c6', cat: 'move', way: 'photo', who: '하람', av: CH_C.sky, br: '부산 수영점', time: '2시간 전', at: SEED_NEW_AT, name: '매일 30분 걷기', pw: 'WALK\n30 MIN', cover: require('@/assets/images/challenge/sample-walk.webp'), guide: '걸음 수 캡처 + 한 줄 · 걸으며 들은 영어 표현도 좋아요', freqT: '매일', dur: 21, host: '하람', members: 64, day: 11, of: 21, bg: 'sk', lang: 'en-US', likes: 33 },
   { id: 'c7', cat: 'habit', way: 'cmt', who: '수아', av: CH_C.lpu, br: '잠실점', time: '3시간 전', name: '하루 단어 10개', pw: '10\nWORDS', guide: '오늘 외운 단어 10개 + 그중 하나로 한 문장', freqT: '매일', dur: 30, host: '수아', members: 91, day: 22, of: 30, bg: '', lang: 'en-US', likes: 47 },
   { id: 'c8', cat: 'health', way: 'photo', who: '지우', av: CH_C.sky, br: '대전 둔산점', time: '4시간 전', name: '하루 물 2L 마시기', pw: '2L\nWATER', guide: '물병 사진 한 장 + 몇 잔 마셨는지', freqT: '매일', dur: 14, host: '지우', members: 45, day: 9, of: 14, bg: 'sk', lang: 'en-US', likes: 15 },
   { id: 'c9', cat: 'free', way: 'photo', who: '예린', av: CH_C.sky, br: '잠실점', time: '어제', name: '하루 한 장 하늘 사진', pw: 'LOOK\nUP', guide: '오늘 하늘 사진 + 영어 한 단어로 날씨 표현', freqT: '월·수·금', dur: 21, host: '예린', members: 28, day: 4, of: 9, unit: '회', bg: '', lang: 'en-US', likes: 12 },
@@ -117,7 +124,7 @@ export const CHALLENGES: Challenge[] = [
   { id: 'c11', cat: 'habit', way: 'cmt', who: '민서', av: CH_C.lsky, br: '대구 달서점', time: '2일 전', name: '영어 일기 3줄', pw: '3 LINE\nDIARY', guide: '오늘 있었던 일 3줄 · 틀려도 괜찮아요', freqT: '주 5회', dur: 28, host: '민서', members: 57, day: 12, of: 20, unit: '회', bg: '', lang: 'en-US', likes: 26 },
   { id: 'c12', cat: 'move', way: 'photo', who: '서준', av: CH_C.mint, br: '잠실점', time: '2일 전', name: '주 3회 홈트', pw: 'HOME\nFIT', guide: '운동 끝난 사진 + 무슨 운동 했는지', freqT: '주 3회', dur: 28, host: '서준', members: 33, day: 5, of: 12, unit: '회', bg: 'sk', lang: 'en-US', likes: 9 },
   { id: 'c5', cat: 'morning', way: 'cmt', who: '태오', av: CH_C.lpu, br: '영등포', time: '어제', name: '아침 7시 기상', guide: '일어나면 댓글로 “Good morning!” 한 줄', freqT: '월·화·수·목·금', dur: 21, host: '태오', members: 52, day: 8, of: 15, unit: '회', bg: 'y', lang: 'en-US', likes: 29 },
-  { id: 'c14', who: '소라', av: CH_C.mint, br: '영등포', time: '2시간 전', name: '14일 하루 한 문장', ls: 0, bg: 'sk', host: '소라', members: 24, day: 3, of: 14, q: 'I got hooked on a new podcast.', hl: 'hooked on', ko: '~에 빠지다 · 레벨 3 키워드', lang: 'en-US', likes: 9 },
+  { id: 'c14', who: '소라', av: CH_C.mint, br: '영등포', time: '2시간 전', at: SEED_NEW_AT, name: '14일 하루 한 문장', ls: 0, bg: 'sk', host: '소라', members: 24, day: 3, of: 14, q: 'I got hooked on a new podcast.', hl: 'hooked on', ko: '~에 빠지다 · 레벨 3 키워드', lang: 'en-US', likes: 9 },
   { id: 'c3', who: 'PALLO', av: CH_C.y, br: '전 지점', time: '오늘', name: '7일 영어 일기', ls: 6, cmn: 10, bg: 'y', host: 'PALLO', members: 213, day: 0, of: 7, start: '11.17 월 시작', q: 'Today was a long day.', hl: 'a long day', ko: '오늘은 긴 하루였어요 · 첫날 예시 문장', lang: 'en-US', likes: 75 },
 ];
 
@@ -145,7 +152,8 @@ export const hashOf = (s: string) => [...s].reduce((a, c) => a + c.charCodeAt(0)
 // ---- 상태 ----
 /** 댓글 · 문장 · 답글 한 줄 (프로토타입 [이름, 색, 글, 시간, 좋아요]) */
 export type ChEntry = { id: string; n: string; c: string; x: string; t: string; lk: number; me?: boolean };
-export type ChPhoto = { uri: string; ratio: number };
+/** 인증 사진: ratio = 보여 줄 틀 비율 · framing = 올릴 때 맞춘 확대 · 위치 */
+export type ChPhoto = { uri: string; ratio: number; framing?: PhotoFraming };
 type MyCheckin = { x: string; photos: ChPhoto[] };
 
 type ChState = {
@@ -198,6 +206,10 @@ const store = createStore<ChState>(CH0, {
 });
 export type ChView = ChState;
 export const useChallengeState = () => store.useStore();
+/** 내가 연 챌린지만 지켜봐요 (라운지 '새 글' 배지) */
+export const useCreatedChallenges = () => store.useStore((x) => x.created);
+/** 찜했는지 (챌린지 하나만 지켜봐요 — 라운지 추천 카드 · 하트 버튼) */
+export const useChallengeSaved = (id: string) => store.useStore((x) => !!x.saved[id]);
 export const getChallengeState = store.get;
 const patch = (fn: (s: ChState) => Partial<ChState>) => store.set((s) => ({ ...s, ...fn(s) }));
 const without = <T,>(rec: Record<string, T>, key: string) => {
@@ -259,7 +271,7 @@ export function srcText(src: ChSrc | null | undefined, ls = 0, myLv = 'Lv.1') {
 export const challengeSrc = (p: Challenge) => srcText(p.src, p.ls ?? 0, getMe().level);
 
 /** chPbg: 카드 왼쪽 색 */
-export const posterBg = (p: Challenge) => (p.bg === 'sk' ? CH_C.sky : CH_PBG[p.cat ?? 'study'] || CH_C.y);
+export const posterBg = (p: Challenge) => p.pbg ?? (p.bg === 'sk' ? CH_C.sky : CH_PBG[p.cat ?? 'study'] || CH_C.y);
 /** chPw: 카드 문구 */
 export function posterWords(p: Challenge) {
   if (p.pw) return p.pw;
@@ -434,7 +446,14 @@ export const clearFlash = () => patch(() => ({ flash: null }));
 
 // ---- 챌린지 열기 ----
 export const CH_PH: Record<ChCatKey, string> = { study: '예) 일주일 동안 I’d like to 쓰기', habit: '예) 하루 단어 10개 외우기', health: '예) 아침 건강하게 먹기', move: '예) 하루 30분 걷기', morning: '예) 아침 7시 기상', free: '예) 하루 한 번 하늘 사진' };
-export const CH_GD: Record<DailyCatKey, string> = { habit: '예) 오늘 외운 단어 하나로 문장 만들기', health: '예) 아침 식단 사진 + 한 줄 소감', move: '예) 걸음 수 캡처 + 한 줄', morning: '예) 일어나면 댓글로 Good morning!', free: '예) 오늘 찍은 사진 + 한 줄' };
+/** 챌린지 소개 예시 (한 줄에 하나씩 · 점 목록) */
+export const CH_GD: Record<DailyCatKey, string> = {
+  habit: '• 하루 단어 10개 외우기\n• 외운 단어 하나로 문장 만들기',
+  health: '• 아침 식단 사진 올리기\n• 한 줄 소감 남기기',
+  move: '• 하루 30분 걷기\n• 걸음 수 캡처 + 한 줄',
+  morning: '• 7시 전에 일어나기\n• 댓글로 Good morning!',
+  free: '• 오늘 찍은 사진 한 장\n• 한 줄 소감',
+};
 export const START_OPTS = ['오늘', '내일', '다음 주 월요일'] as const;
 export type StartOpt = (typeof START_OPTS)[number];
 export const DUR_OPTS = [3, 7, 14, 21, 30];
@@ -457,7 +476,7 @@ export function planOf(start: StartOpt, D: number, weekly: boolean, n: number, d
 }
 
 /** do-chal (일상) */
-export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; plan: ChPlan; cover?: string }) {
+export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; pbg?: string; plan: ChPlan; cover?: string }) {
   const me = getMe();
   const live = !o.plan.off;
   const p: Challenge = {
@@ -467,10 +486,12 @@ export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'p
     rec: true,
     ...(o.pw.length ? { pw: o.pw.map((x) => x.toUpperCase()).join('\n') } : {}),
     ...(o.cover ? { cover: o.cover } : {}),
+    ...(o.pbg ? { pbg: o.pbg } : {}),
     who: me.name,
     av: CH_C.y,
     br: me.branch.split(' · ')[0],
     time: '방금',
+    at: Date.now(),
     name: o.name,
     guide: o.guide || (o.way === 'photo' ? '사진 한 장 + 한 줄' : '댓글 한 줄'),
     host: me.name,
@@ -511,6 +532,7 @@ export function createExpression(o: { card: ExprCard; D: number; first: string }
     av: CH_C.y,
     br: me.branch.split(' · ')[0],
     time: '방금',
+    at: Date.now(),
     name: hl,
     host: me.name,
     q: o.card.ex,
