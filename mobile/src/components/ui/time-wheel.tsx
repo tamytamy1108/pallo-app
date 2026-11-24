@@ -31,7 +31,8 @@ const Row = memo(function Row({ text, near, index, onPick }: { text: string; nea
  * label: 칸 글자 (예: '20:00' → '오후 8:00') · bare: 테두리 · 바탕 없이 (다른 칸 안에 넣을 때)
  * 굴리는 동안은 가운데 글자 · 진동만 바뀌고, 값은 멈춘 뒤에 정해요. 휠이 정한 값으로는 다시 맞추지 않아요(툭 튀지 않게).
  */
-export function Wheel({ items, value, onChange, label = (v) => v, style, bare }: { items: readonly string[]; value: string; onChange: (v: string) => void; label?: (v: string) => string; style?: StyleProp<ViewStyle>; bare?: boolean }) {
+/** onTap: 칸을 눌러 고르면 (끌지 않고) — 고른 값을 넣은 뒤 불러요 (예: 휠 닫기) */
+export function Wheel({ items, value, onChange, label = (v) => v, style, bare, onTap }: { items: readonly string[]; value: string; onChange: (v: string) => void; label?: (v: string) => string; style?: StyleProp<ViewStyle>; bare?: boolean; onTap?: () => void }) {
   const ref = useRef<ScrollViewInstance>(null);
   const at = Math.max(0, items.indexOf(value));
   const [cur, setCur] = useState(at);
@@ -97,6 +98,7 @@ export function Wheel({ items, value, onChange, label = (v) => v, style, bare }:
   const pick = (i: number) => {
     ref.current?.scrollTo({ y: i * ITEM, animated: true });
     commit(i);
+    onTap?.();
   };
 
   return (
