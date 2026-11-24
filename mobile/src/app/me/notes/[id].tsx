@@ -17,6 +17,7 @@ import { noteReactions, PN_TAG_COLOR, PN_THANKS, PRO_NOTES, teamNameByNo, type P
 import { haptic, sfx } from '@/lib/feedback';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useMe } from '@/state/me';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 /**
  * PRO'S NOTE 한 장 (프로토타입 pnDetHTML): 표현 · 바로잡기 · 뜻 · 질문 항목(항목별 저장 → 내 표현함) · 스터디 일기 · 프로님께 보낸 마음.
@@ -82,7 +83,7 @@ function Note({ n, fromList }: { n: ProNote; fromList: boolean }) {
             {({ pressed }) => (
               <Lift radius={30} pressed={pressed}>
                 <View style={[styles.ty, ty && styles.tyOn]}>
-                  <Icon name="heart" size={18} color={ty ? '#C2416B' : Colors.ink} fill={ty ? '#C2416B' : 'none'} />
+                  <HeartPop on={ty}><Icon name="heart" size={18} color={ty ? '#C2416B' : Colors.ink} fill={ty ? '#C2416B' : 'none'} /></HeartPop>
                   <PText style={styles.tyText} color={ty ? '#C2416B' : Colors.ink}>
                     {ty ? '보냈어요' : '고마워요'}
                   </PText>
@@ -166,7 +167,7 @@ function NoteItem({ n, i }: { n: ProNote; i: number }) {
         accessibilityLabel={on ? '저장 취소' : '내 표현함에 저장'}
         hitSlop={4}
         style={[styles.mk, on && styles.mkOn]}>
-        <Icon name="save" size={18} color={on ? Colors.white : Colors.inkSub} />
+        <HeartPop on={on}><Icon name="save" size={18} color={on ? Colors.white : Colors.inkSub} /></HeartPop>
       </Pressable>
     </Box>
   );

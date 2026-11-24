@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState, useRef } from 'react';
+import { ScrollView, StyleSheet, View, type ViewInstance } from 'react-native';
 import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -12,17 +12,19 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { PLACE_SPOTS } from '@/data/events';
 import { C, WEEK } from '@/data/meet';
+import { useCenterChip } from '@/lib/center-chip';
+import { useRevealNext } from '@/components/ui/form-scroll';
 
 /*
  * 만들기 · 제안 폼 조각 (프로토타입 .lg-pup · .lg-plc · .lg-mpk · lgMapSvg · .lg-mcal).
  */
 
-/** 포스터 여러 장 (최대 10장 · 첫 장이 대표 · 누르면 대표로 · × 빼기) */
-export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기' }: { uris: string[]; onChange: (u: string[]) => void; emptyLabel?: string }) {
+/** 포스터 여러 장 (최대 max장 · 첫 장이 대표 · 누르면 대표로 · × 빼기). max=1 이면 사진 한 장 */
+export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기', max = 10 }: { uris: string[]; onChange: (u: string[]) => void; emptyLabel?: string; max?: number }) {
   const add = async () => {
-    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 10 - uris.length, quality: 0.8 });
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: max > 1, selectionLimit: max - uris.length, quality: 0.8 });
     if (r.canceled) return;
-    onChange([...uris, ...r.assets.map((a) => a.uri)].slice(0, 10));
+    onChange([...uris, ...r.assets.map((a) => a.uri)].slice(0, max));
   };
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pup} contentContainerStyle={styles.pupIn}>
@@ -38,13 +40,13 @@ export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기' }
           <Pressable onPress={() => onChange(uris.filter((_, k) => k !== i))} accessibilityRole="button" accessibilityLabel={`${i + 1}번째 포스터 빼기`} style={styles.rm} hitSlop={8}>
             <Icon name="x" size={12} color="#fff" strokeWidth={3} />
           </Pressable>
-          <PText style={[styles.ptS, !i && styles.ptSCov]}>{i ? String(i + 1) : '대표'}</PText>
+          {max > 1 ? <PText style={[styles.ptS, !i && styles.ptSCov]}>{i ? String(i + 1) : '대표'}</PText> : null}
         </View>
       ))}
-      {uris.length < 10 ? (
+      {uris.length < max ? (
         <Pressable onPress={add} accessibilityRole="button" accessibilityLabel="포스터 넣기" style={styles.add}>
           <Icon name="plus" size={22} strokeWidth={2.6} />
-          <PText style={styles.addS}>{uris.length ? `${uris.length}/10` : emptyLabel}</PText>
+          <PText style={styles.addS}>{uris.length ? `${uris.length}/${max}` : emptyLabel}</PText>
         </Pressable>
       ) : null}
     </ScrollView>
@@ -229,12 +231,22 @@ const styles = StyleSheet.create({
 
 /** 여러 개 고르는 알약 줄 (.lg-pills multi — 고르면 보라) */
 export function MultiPills({ options, value, onChange, label }: { options: string[]; value: string[]; onChange: (v: string[]) => void; label?: string }) {
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={mp.wrap} contentContainerStyle={mp.row} accessibilityLabel={label}>
+    <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} style={mp.wrap} contentContainerStyle={mp.row} accessibilityLabel={label}>
       {options.map((o) => {
         const on = value.includes(o);
         return (
-          <Pressable key={o} onPress={() => onChange(on ? value.filter((x) => x !== o) : [...value, o])} accessibilityRole="checkbox" accessibilityState={{ checked: on }} style={[mp.pill, on && mp.on]}>
+          <Pressable
+            key={o}
+            onLayout={(e) => onChip(o, e)}
+            onPress={() => {
+              centerChip(o);
+              onChange(on ? value.filter((x) => x !== o) : [...value, o]);
+            }}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: on }}
+            style={[mp.pill, on && mp.on]}>
             <PText style={[mp.t, on && { color: '#fff' }]}>{o}</PText>
           </Pressable>
         );
@@ -243,20 +255,42 @@ export function MultiPills({ options, value, onChange, label }: { options: strin
   );
 }
 
-/** 시간 칩 (.lg-mtm) */
+/** 시간 칩 (.lg-mtm). 고른 시간이 처음부터 보이게 가운데로 데려와요 */
 export function TimeChips({ times, value, onChange }: { times: string[]; value: string; onChange: (t: string) => void }) {
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
+  const shown = useRef(false);
+  const box = useRef<ViewInstance>(null);
+  const revealNext = useRevealNext();
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={mp.wrap} contentContainerStyle={[mp.row, { gap: 6 }]}>
+    <View ref={box} collapsable={false}>
+    <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} style={mp.wrap} contentContainerStyle={[mp.row, { gap: 6 }]}>
       {times.map((t) => {
         const on = t === value;
         const h = Number(t.slice(0, 2));
         return (
-          <Pressable key={t} onPress={() => onChange(t)} accessibilityRole="button" accessibilityState={{ selected: on }} style={[mp.pill, { height: 38 }, on && mp.on]}>
+          <Pressable
+            key={t}
+            onLayout={(e) => {
+              onChip(t, e);
+              if (on && !shown.current) {
+                shown.current = true;
+                centerChip(t, false);
+              }
+            }}
+            onPress={() => {
+              centerChip(t);
+              onChange(t);
+              revealNext(box.current);
+            }}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+            style={[mp.pill, { height: 38 }, on && mp.on]}>
             <PText style={[mp.t, on && { color: '#fff' }]}>{`${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${t.slice(3)}`}</PText>
           </Pressable>
         );
       })}
     </ScrollView>
+    </View>
   );
 }
 

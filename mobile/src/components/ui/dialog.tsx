@@ -1,14 +1,15 @@
 import { Image, type ImageSource } from 'expo-image';
 import { useEffect } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetDesc } from '@/components/common/sheet-parts';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx, type Sfx } from '@/lib/feedback';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { Raised } from './raised';
 import { Sheet } from './sheet';
@@ -94,8 +95,11 @@ function ConfirmCard({ open, title, message, confirmLabel, cancelLabel = '취소
   };
 
   return (
-    <Modal visible={open} transparent animationType="none" onRequestClose={onCancel} statusBarTranslucent navigationBarTranslucent>
-      <Animated.View style={[styles.root, { paddingBottom: 16 + insets.bottom }, anim]}>
+    <LayerModal visible={open} transparent animationType="none" onRequestClose={onCancel} statusBarTranslucent navigationBarTranslucent>
+      {/* 아래 여백은 창 안에서 잰 값으로 (안드로이드 내비게이션 바에 가리지 않게) */}
+      <SafeAreaInsetsContext.Consumer>
+      {(mi) => (
+      <Animated.View style={[styles.root, { paddingBottom: 16 + Math.max(insets.bottom, mi?.bottom ?? 0) }, anim]}>
         <View style={styles.cardWrap}>
           <View pointerEvents="none" style={styles.cardShadow} />
           <View style={styles.card} accessibilityRole="alert" accessibilityViewIsModal accessibilityLabel={title}>
@@ -123,8 +127,10 @@ function ConfirmCard({ open, title, message, confirmLabel, cancelLabel = '취소
           </View>
         </View>
       </Animated.View>
+      )}
+      </SafeAreaInsetsContext.Consumer>
       {showToastHere ? <ToastView /> : null}
-    </Modal>
+    </LayerModal>
   );
 }
 

@@ -7,15 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClientErrorCode, errorMessage, isApiError } from '@/api/errors';
 import type { Page } from '@/api/client';
 import { noticeQuery } from '@/api/queries';
-import { TOP_ICON, TopBar } from '@/components/ui/top-bar';
+import { TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { BottomBar } from '@/components/bottom-bar';
-import { ICON_PATH, LineIcon } from '@/components/home/icons';
 import { markNoticeRead } from '@/components/home/noti-state';
 import { Button } from '@/components/ui/button';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { Notice } from '@/data/mock';
@@ -43,13 +41,6 @@ export default function NoticeDetailScreen() {
       <TopBar
         title="공지"
         fallback="/notice"
-        right={
-          notice && (
-            <Pressable onPress={() => showToast('공지 링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={TOP_ICON}>
-              <LineIcon d={ICON_PATH.send} size={19} />
-            </Pressable>
-          )
-        }
       />
 
       {notice ? (

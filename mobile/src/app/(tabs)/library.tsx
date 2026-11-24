@@ -22,6 +22,7 @@ import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { useMe } from '@/state/me';
 import { useLastStep } from '@/state/progress';
+import { useTabReselect } from '@/lib/tab-reselect';
 
 const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
 const NO_BOOKS: Book[] = [];
@@ -40,6 +41,7 @@ export default function LibraryScreen() {
   const shelfQ = useQuery(bookShelfQuery());
   const mapsQ = useQuery(situationMapsQuery());
   const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('library', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const [showTop, setShowTop] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   // 지도가 화면 위로 다 올라가면 3D 그리기를 멈춰요 (폰 배터리)

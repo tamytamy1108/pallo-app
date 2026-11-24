@@ -14,6 +14,7 @@ import { type AbroadPerson, CC_KEYS, ccOf, type CountryCode, daysFrom, LG_C, LG_
 import { WORLD_MAP } from '@/data/lounge-maps';
 import { addPerson, addTrip, closeTrip, removeMyPerson, setCountry, setTripState, useLounge } from '@/data/lounge-store';
 import { useMe } from '@/state/me';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { Face } from './face';
 import { LgIcon, SparkIcon } from './icons';
@@ -262,7 +263,7 @@ export function PersonSheet({ p, onClose }: { p: AbroadPerson | null; onClose: (
 /** 알약 고르기 줄 (프로토타입 lgPills · 옆으로 넘겨요) */
 export function Pills({ opts, on, onPick, multi = false }: { opts: string[]; on: string[]; onPick: (v: string) => void; multi?: boolean }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsWrap} contentContainerStyle={styles.pills} accessibilityRole={multi ? undefined : 'radiogroup'}>
+    <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.pillsWrap} contentContainerStyle={styles.pills} accessibilityRole={multi ? undefined : 'radiogroup'}>
       {opts.map((o) => {
         const sel = on.includes(o);
         return (
@@ -271,7 +272,7 @@ export function Pills({ opts, on, onPick, multi = false }: { opts: string[]; on:
           </Pressable>
         );
       })}
-    </ScrollView>
+    </ChipScroll>
   );
 }
 
@@ -468,7 +469,7 @@ const styles = StyleSheet.create({
   fl: { gap: 6 },
   fl2: { flexDirection: 'row', gap: 10 },
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
-  input: { height: 46, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  input: { height: 46, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   pillsWrap: { marginHorizontal: -18, flexGrow: 0 },
   pills: { gap: 7, paddingTop: 2, paddingHorizontal: 18, paddingBottom: 4 },
   pill: { height: 36, paddingHorizontal: 13, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: '#fff', justifyContent: 'center' },

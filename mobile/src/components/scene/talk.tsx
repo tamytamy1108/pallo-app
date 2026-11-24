@@ -135,7 +135,7 @@ export function TalkStep({ sceneId, scene }: { sceneId: string; scene: SceneWith
   return (
     <StepShell sceneId={sceneId} title="AI 미션 대화" finished={finished || done} onQuit={() => speech.stop()}>
       <View style={styles.flex}>
-        <ScrollView ref={scroll} style={styles.flex} contentContainerStyle={styles.body} onContentSizeChange={() => !done && log.length > 1 && scroll.current?.scrollToEnd({ animated: true })} showsVerticalScrollIndicator={false}>
+        <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled" ref={scroll} style={styles.flex} contentContainerStyle={styles.body} onContentSizeChange={() => !done && log.length > 1 && scroll.current?.scrollToEnd({ animated: true })} showsVerticalScrollIndicator={false}>
           <View style={styles.head}>
             <Avatar who={X.who} size={36} color={X.c} />
             <PText style={styles.headB} numberOfLines={1}>
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   tabText: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19 },
   problem: { textAlign: 'center', fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18 },
   inp: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
-  field: { flex: 1, minWidth: 0, height: 50, borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
+  field: { flex: 1, minWidth: 0, height: 50, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
   send: { width: 50, height: 50, borderRadius: 25, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 0 #1E1A2B' },
   endFoot: { paddingHorizontal: 16, paddingBottom: 18, paddingTop: 8 },
   end: { marginTop: 14, marginBottom: 22 },

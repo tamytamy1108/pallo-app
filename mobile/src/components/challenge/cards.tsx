@@ -12,10 +12,8 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { kfc } from '@/lib/motion';
 import {
-  CH_BG,
   CH_C,
   challengeSrc,
-  chCat,
   clearFlash,
   dayOf,
   entriesOf,
@@ -42,6 +40,7 @@ import { haptic, sfx } from '@/lib/feedback';
 import { Face } from './face';
 import { ChIcon } from './icons';
 import { CapBar, IconLine, LgBtn, SUB } from './parts';
+import { ChCover } from './cover';
 
 /*
  * 챌린지 카드 (프로토타입 LG_CARD.chal · chHotHTML).
@@ -122,7 +121,11 @@ export function DailyCard({ p, s, onCheck }: { p: Challenge; s: ChView; onCheck:
     <Shell radius={18} flash={s.flash === p.id}>
       <View style={styles.row}>
         <Pressable onPress={() => openChallenge(p)} accessibilityRole="button" accessibilityLabel={`${p.name} 자세히 보기`} style={[styles.pst, { backgroundColor: bg }]}>
-          <PText style={[styles.pw, { fontSize: posterFontSize(w), color: isDarkBg(bg) ? CH_C.y : Colors.ink }]}>{w}</PText>
+          {p.cover != null ? (
+            <ChCover p={p} size={96} style={StyleSheet.absoluteFill} />
+          ) : (
+            <PText style={[styles.pw, { fontSize: posterFontSize(w), color: isDarkBg(bg) ? CH_C.y : Colors.ink }]}>{w}</PText>
+          )}
         </Pressable>
         <View style={styles.pcb}>
           <PText numberOfLines={1} style={styles.ck}>
@@ -199,9 +202,9 @@ export function ExprCard({
             <Face name={p.who} color={p.av} size={38} />
           </Pressable>
           <View style={[styles.exTx, styles.passThrough]}>
-            <PText style={styles.who} numberOfLines={carousel ? 2 : undefined}>
-              <PText style={styles.ms}>나만의 문장 완성하기</PText>
-              {` · ${p.mine ? '내가 연 챌린지' : p.who + (jn ? ' · 참여 중' : '')} · `}
+            {/* 윗줄: 연 사람 · 참여 중 · 남은 날 — 한 줄로 (위 제목이 이미 '나만의 문장 완성하기'라 반복하지 않아요) */}
+            <PText style={styles.who} numberOfLines={1}>
+              {`${p.mine ? '내가 연 챌린지' : p.who}${jn && !p.mine ? ' · 참여 중' : ''} · `}
               <PText style={styles.left}>{leftText(p)}</PText>
             </PText>
             <PText style={styles.e} numberOfLines={carousel ? 1 : undefined}>
@@ -277,7 +280,6 @@ export function HotBox({ list, s }: { list: Challenge[]; s: ChView }) {
           <PText style={styles.hhS}>참여 · 인증이 많은 순</PText>
         </View>
         {top.map((p, i) => {
-          const C = chCat(p.cat);
           return (
             <Pressable
               key={p.id}
@@ -286,9 +288,8 @@ export function HotBox({ list, s }: { list: Challenge[]; s: ChView }) {
               accessibilityLabel={`${i + 1}위 ${p.name}`}
               style={({ pressed }) => [styles.hr, i > 0 && styles.hrLine, pressed && { opacity: 0.7 }]}>
               <PText style={[styles.no, NO_STYLE[i], { lineHeight: NO_STYLE[i].fontSize * 1.25 }]}>{i + 1}</PText>
-              <View style={[styles.hic, { backgroundColor: CH_BG[C.tone] }]}>
-                <ChIcon name={C.icon} size={17} />
-              </View>
+              {/* 연 사람이 올린 대표 사진 · 없으면 기본 배경 + 카드 문구 */}
+              <ChCover p={p} size={42} style={styles.hic} />
               <View style={styles.htx}>
                 <PText numberOfLines={1} style={styles.hb}>
                   {p.name}

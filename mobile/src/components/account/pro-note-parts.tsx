@@ -4,7 +4,7 @@
  */
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -15,6 +15,7 @@ import { Colors } from '@/constants/theme';
 import { DIARY_EXAMPLES, DIARY_QUESTIONS, DIARY_STICKERS, PRO_NOTES, teamNameByNo, type Diary, type ProNote } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import type { SavedExpression } from '@/state/expressions';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { Box, Icon, Lift } from './parts';
 import { saveDiary, useNoteState } from './store';
@@ -117,7 +118,7 @@ export function DiaryCard({ n }: { n: ProNote }) {
       </View>
       <View style={styles.dyBd}>
         {shown.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sts} contentContainerStyle={styles.stsIn}>
+          <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.sts} contentContainerStyle={styles.stsIn}>
             {shown.map(([k, l, p]) => {
               const on = d.st.includes(k);
               return (
@@ -129,7 +130,7 @@ export function DiaryCard({ n }: { n: ProNote }) {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </ChipScroll>
         ) : null}
         <View style={styles.q}>
           <PText style={styles.qText}>{DIARY_QUESTIONS[d.q % DIARY_QUESTIONS.length]}</PText>

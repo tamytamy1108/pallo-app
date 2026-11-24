@@ -3,7 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Pattern, Rect, Stop } from 'react-native-svg';
+import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
@@ -20,19 +20,40 @@ const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** 클래퍼보드 줄무늬 팔 */
+/**
+ * 클래퍼보드 줄무늬 팔 (프로토타입 .hero-arm: repeating-linear-gradient(-55deg, ink 0 22px, cream 22px 44px)).
+ * SVG Pattern + 회전은 아이폰에서 삼각형처럼 깨져 보여서, 줄마다 평행사변형으로 직접 그려요.
+ */
+const ARM_H = 32;
+const STRIPE = 22;
+// CSS -55deg: 색이 바뀌어 가는 방향 (화면 좌표, y 는 아래로)
+const DX = Math.sin((-55 * Math.PI) / 180);
+const DY = -Math.cos((-55 * Math.PI) / 180);
 function ClapperArm() {
+  const [w, setW] = useState(0);
+  // p = x·DX + y·DY 가 [k·44, k·44+22) 인 띠가 잉크색. 띠 경계선 위에서 y 를 알 때 x 를 구해요
+  const xAt = (p: number, y: number) => (p - y * DY) / DX;
+  const bands: string[] = [];
+  if (w) {
+    const ps = [0, w * DX, ARM_H * DY, w * DX + ARM_H * DY];
+    const lo = Math.floor(Math.min(...ps) / (STRIPE * 2)) - 1;
+    const hi = Math.ceil(Math.max(...ps) / (STRIPE * 2)) + 1;
+    for (let k = lo; k <= hi; k++) {
+      const a = k * STRIPE * 2;
+      const b = a + STRIPE;
+      const y0 = -2;
+      const y1 = ARM_H + 2;
+      bands.push(`M${xAt(a, y0).toFixed(2)},${y0} L${xAt(b, y0).toFixed(2)},${y0} L${xAt(b, y1).toFixed(2)},${y1} L${xAt(a, y1).toFixed(2)},${y1} Z`);
+    }
+  }
   return (
-    <View style={styles.arm}>
-      <Svg width="100%" height="100%">
-        <Defs>
-          <Pattern id="stripe" width={44} height={44} patternUnits="userSpaceOnUse" patternTransform="rotate(-55)">
-            <Rect width={22} height={44} fill={Colors.ink} />
-            <Rect x={22} width={22} height={44} fill={Colors.cream} />
-          </Pattern>
-        </Defs>
-        <Rect width="100%" height="100%" fill="url(#stripe)" />
-      </Svg>
+    <View style={styles.arm} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      {w ? (
+        <Svg width={w} height={ARM_H}>
+          <Rect width={w} height={ARM_H} fill={Colors.cream} />
+          <Path d={bands.join(' ')} fill={Colors.ink} />
+        </Svg>
+      ) : null}
     </View>
   );
 }

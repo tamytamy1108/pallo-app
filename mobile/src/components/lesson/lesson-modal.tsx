@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GhostButton, YellowButton } from '@/components/lesson/lesson-ui';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 const IMG = {
   purple: require('@/assets/characters/c-purple-standard-3d.png'),
@@ -38,7 +39,7 @@ export function LessonModal({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={onYes} statusBarTranslucent>
+    <LayerModal visible={open} transparent animationType="fade" onRequestClose={onYes} statusBarTranslucent>
       <View style={StyleSheet.flatten([styles.dim, { paddingBottom: 16 + insets.bottom }])}>
         <View style={styles.card} accessibilityRole="alert" accessibilityLabel={`${title}. ${desc}`}>
           <Image source={IMG[img]} style={styles.img} contentFit="contain" />
@@ -50,7 +51,7 @@ export function LessonModal({
           <GhostButton label={no} onPress={onNo} style={styles.wide} />
         </View>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

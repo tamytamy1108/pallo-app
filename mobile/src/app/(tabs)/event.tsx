@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import { SafeAreaInsetsContext, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -17,6 +17,8 @@ import { Font } from '@/constants/fonts';
 import { Colors, TabBarSpace } from '@/constants/theme';
 import { EVENT_FILTERS, EVENTS, type EventKind } from '@/data/events';
 import { useMe } from '@/state/me';
+import { useTabReselect } from '@/lib/tab-reselect';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /**
  * 이벤트 탭 (docs/pages/06-event.md): 지점 · 본사가 여는 파티 · 클래스 · 여행.
@@ -24,6 +26,8 @@ import { useMe } from '@/state/me';
  * 위 → 아래: 제목 · 내가 제안한 이벤트 · 지점 선택 + 종류 칩 · 배너 · 다가오는/지난 탭 · 목록 · 오른쪽 아래 [오픈하기].
  */
 export default function EventScreen() {
+  const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('event', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const role = useMe((m) => m.role);
   const [branch, setBranch] = useState('전체');
   const [kind, setKind] = useState<EventKind | 'all'>('all');
@@ -37,13 +41,13 @@ export default function EventScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.page}>
+      <ScrollView ref={scroll} contentContainerStyle={styles.page}>
         <View style={styles.hd}>
           <PText variant="headline" accessibilityRole="header" style={styles.h1}>
             이벤트
           </PText>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
+        <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
           <BranchSelect value={branch} onChange={setBranch} />
           <View style={styles.sep} />
           {EVENT_FILTERS.map(([k, l]) => {
@@ -54,7 +58,7 @@ export default function EventScreen() {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </ChipScroll>
         <View style={styles.feed}>
           <ProposalCards />
           {/* 칩 · 지점을 바꾸면 배너를 처음(1 / n)부터 */}

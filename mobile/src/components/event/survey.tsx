@@ -1,4 +1,5 @@
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useRef } from 'react';
+import { StyleSheet, TextInput, View, type ViewInstance } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -9,6 +10,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { SurveyQuestion } from '@/data/events';
 import { sfx } from '@/lib/feedback';
+import { useRevealNext } from '@/components/ui/form-scroll';
 
 /** 필수(*) 질문에 다 답했는지 (프로토타입 svDone) */
 export const surveyDone = (Q: SurveyQuestion[], A: SurveyAnswers) =>
@@ -30,6 +32,9 @@ export const surveyAnswerLines = (Q: SurveyQuestion[], A: SurveyAnswers) =>
 
 /** 신청 설문 답하기 (프로토타입 svAnsHTML · .sv-ans · .sv-a · .sv-o) */
 export function SurveyForm({ questions, answers, onChange }: { questions: SurveyQuestion[]; answers: SurveyAnswers; onChange: (a: SurveyAnswers) => void }) {
+  // 하나만 고르는 질문에 답하면 다음 질문이 보이게 올려 줘요
+  const cards = useRef<(ViewInstance | null)[]>([]);
+  const revealNext = useRevealNext();
   return (
     <View style={styles.wrap}>
       <View style={styles.lb}>
@@ -37,7 +42,13 @@ export function SurveyForm({ questions, answers, onChange }: { questions: Survey
         <PText style={styles.lbT}>신청 설문 · 주최가 준비한 질문이에요</PText>
       </View>
       {questions.map((q, i) => (
-        <View key={q.q} style={styles.card}>
+        <View
+          key={q.q}
+          ref={(el) => {
+            cards.current[i] = el;
+          }}
+          collapsable={false}
+          style={styles.card}>
           <PText style={styles.q}>
             {q.q}
             {q.req ? <PText style={styles.req}> *</PText> : null}
@@ -50,6 +61,11 @@ export function SurveyForm({ questions, answers, onChange }: { questions: Survey
               placeholder="답을 적어 주세요"
               placeholderTextColor="#8C8597"
               maxLength={60}
+              // 길게 적어도 옆으로 밀리지 않고 줄이 바뀌어 다 보여요
+              multiline
+              textAlignVertical="top"
+              blurOnSubmit
+              returnKeyType="done"
               style={styles.in}
               accessibilityLabel={q.q}
             />
@@ -63,7 +79,10 @@ export function SurveyForm({ questions, answers, onChange }: { questions: Survey
                     key={o}
                     onPress={() => {
                       sfx('pick');
-                      if (q.t === 'one') onChange({ ...answers, [i]: j });
+                      if (q.t === 'one') {
+                        onChange({ ...answers, [i]: j });
+                        revealNext(cards.current[i]);
+                      }
                       else {
                         const L = Array.isArray(cur) ? cur : [];
                         onChange({ ...answers, [i]: on ? L.filter((x) => x !== j) : [...L, j].sort() });
@@ -105,5 +124,5 @@ const styles = StyleSheet.create({
   bxOne: { borderWidth: 7, borderColor: Colors.purple },
   bxMultiOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
   oT: { fontFamily: Font.body700, fontSize: 14, lineHeight: 20 },
-  in: { height: 48, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body600, fontSize: 14, color: Colors.ink },
+  in: { minHeight: 48, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white, paddingHorizontal: 14, paddingTop: 13, paddingBottom: 12, lineHeight: 20, fontFamily: Font.body600, fontSize: 14, color: Colors.ink },
 });

@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -8,6 +8,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LANGS, type SituationMap, type SoonMap } from '@/data/library';
 import { sfx } from '@/lib/feedback';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 const NEW_PINK = '#E0486E';
 
@@ -111,7 +112,7 @@ export function MapTabs({ sitMode, sitNew, onMode }: { sitMode: boolean; sitNew:
 /** 상황 맵 고르기 칩 (프로토타입 .st-schips): 새 맵은 NEW, 곧 열릴 맵은 점선 */
 export function SitChips({ maps, soons, current, isNew, onPick, onSoon }: { maps: SituationMap[]; soons: SoonMap[]; current: string; isNew: (m: SituationMap) => boolean; onPick: (id: string) => void; onSoon: () => void }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chips} accessibilityRole="tablist">
+    <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chips} accessibilityRole="tablist">
       {maps.map((m) => {
         const on = m.id === current;
         return (
@@ -137,7 +138,7 @@ export function SitChips({ maps, soons, current, isNew, onPick, onSoon }: { maps
           </PText>
         </Pressable>
       ))}
-    </ScrollView>
+    </ChipScroll>
   );
 }
 

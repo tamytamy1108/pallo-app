@@ -12,6 +12,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, hashId, type Club } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 import { Icon } from '../icons';
 import { CrownFace } from '../member-face';
@@ -97,7 +98,7 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
             accessibilityState={{ selected: on }}
             style={styles.ftB}
             hitSlop={6}>
-            <Icon name="heart" size={17} color={Colors.inkSub} fill={on ? C.pk : 'none'} />
+            <HeartPop on={on}><Icon name="heart" size={17} color={Colors.inkSub} fill={on ? C.pk : 'none'} /></HeartPop>
             <PText style={styles.ftT}>{q.lk + (on ? 1 : 0) || '좋아요'}</PText>
           </Pressable>
           <Pressable disabled={!inC} onPress={() => setCm(q.id)} accessibilityRole="button" style={styles.ftB} hitSlop={6}>

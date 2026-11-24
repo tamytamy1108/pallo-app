@@ -22,6 +22,7 @@ import { SPEECH_PROBLEM_TEXT } from '@/lib/speech';
 import { checkKeyword, type KeywordCheck } from '@/lib/words';
 import { useLearnPrefs } from '@/state/learn-prefs';
 import { getStepData, setStepData } from '@/state/progress';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 type Saved = { pick: number | null; a: string[]; para: string };
 
@@ -172,7 +173,7 @@ export function StoryView({ D, skey, onParagraph, onLeave }: { D: LessonData; sk
         </PText>
         <View onLayout={(e) => (ys.current.chips = e.nativeEvent.layout.y)}>
           <Flash n={flash?.k === 'chips' ? flash.n : 0}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={styles.chipsWrap}>
+            <ChipScroll horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={styles.chipsWrap}>
               {St.options.map((o, i) => (
                 <TopicChip
                   key={o}
@@ -184,7 +185,7 @@ export function StoryView({ D, skey, onParagraph, onLeave }: { D: LessonData; sk
                   }}
                 />
               ))}
-            </ScrollView>
+            </ChipScroll>
           </Flash>
         </View>
         <View style={styles.list} onLayout={(e) => (listY.current = e.nativeEvent.layout.y)}>

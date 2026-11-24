@@ -15,6 +15,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { exprCard, exprFrom, useSavedExpressions, type ExpressionFrom, type SavedExpression } from '@/state/expressions';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /** 나온 곳 4가지 (프로토타입 CH_SRC: 이름 · 아이콘) */
 const SRC: Record<ExpressionFrom, readonly [string, IcName]> = { book: ['교재', 'book'], trip: ['상황', 'pin'], free: ['프리토킹', 'cmt'], listen: ['리스닝 룸', 'spk'] };
@@ -90,7 +91,7 @@ export default function ExpressionsScreen() {
     <View style={styles.screen}>
       <Stack.Screen options={SCREEN.push} />
       <PageTop title="내 표현함" />
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {tools && (
           <>
             <View style={styles.find}>
@@ -108,7 +109,7 @@ export default function ExpressionsScreen() {
                 style={styles.findIn}
               />
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            <ChipScroll horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
               {(['all', ...kinds] as const).map((k) => {
                 const on = chip === k;
                 const n = k === 'all' ? all.length : all.filter((x) => exprFrom(x) === k).length;
@@ -128,7 +129,7 @@ export default function ExpressionsScreen() {
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </ChipScroll>
           </>
         )}
 

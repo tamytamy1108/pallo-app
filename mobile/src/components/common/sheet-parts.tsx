@@ -1,5 +1,5 @@
-import { useContext, type ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { useContext, useRef, type ReactNode } from 'react';
+import { Platform, ScrollView, StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle, type ViewInstance } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { SheetFooterContext } from '@/components/ui/sheet';
@@ -7,6 +7,8 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx, type Sfx } from '@/lib/feedback';
+import { useCenterChip } from '@/lib/center-chip';
+import { useRevealNext } from '@/components/ui/form-scroll';
 
 /*
  * 시트 안에서 자주 쓰는 조각들 (프로토타입 라운지 시트 #lgSheet 의 .lg-btn · .lg-opts · p.ds · .lg-pills · .lg-link).
@@ -156,27 +158,36 @@ export function SheetOptions({
 
 /** 알약 고르기 줄 (.lg-pills): 옆으로 밀어 보는 한 줄 · 고르면 보라 바탕 */
 export function SheetPills<T extends string>({ options, value, onChange, label }: { options: readonly T[]; value: T | null; onChange: (v: T) => void; label?: string }) {
+  // 누른 알약은 가운데로 (끝에 반쯤 잘린 걸 눌러도 다 보이게) · 고른 뒤 다음 칸이 보이게 폼을 올려요
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
+  const box = useRef<ViewInstance>(null);
+  const revealNext = useRevealNext();
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsWrap} contentContainerStyle={styles.pills} accessibilityLabel={label}>
-      {options.map((o) => {
-        const on = o === value;
-        return (
-          <Pressable
-            key={o}
-            onPress={() => {
-              sfx('pick');
-              onChange(o);
-            }}
-            accessibilityRole="button"
-            accessibilityState={{ selected: on }}
-            style={({ pressed }) => [styles.pill, on && styles.pillOn, pressed && styles.pillPressed]}>
-            <PText color={on ? Colors.white : Colors.ink} style={styles.pillText}>
-              {o}
-            </PText>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+    <View ref={box} collapsable={false}>
+      <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} style={styles.pillsWrap} contentContainerStyle={styles.pills} accessibilityLabel={label}>
+        {options.map((o) => {
+          const on = o === value;
+          return (
+            <Pressable
+              key={o}
+              onLayout={(e) => onChip(o, e)}
+              onPress={() => {
+                sfx('pick');
+                centerChip(o);
+                onChange(o);
+                revealNext(box.current);
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              style={({ pressed }) => [styles.pill, on && styles.pillOn, pressed && styles.pillPressed]}>
+              <PText color={on ? Colors.white : Colors.ink} style={styles.pillText}>
+                {o}
+              </PText>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 

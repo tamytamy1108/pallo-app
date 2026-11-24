@@ -1,13 +1,14 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, CLUB_ACT, CLUB_CATS, type Club, type ClubCat } from '@/data/meet';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { Icon, type IconName } from './icons';
 import { useMeetStore } from './meet-store';
@@ -78,7 +79,7 @@ export function ClubList({ clubs }: { clubs: Club[] }) {
   const cats: [ClubCat | 'all', string, IconName][] = [['all', '전체', 'grid'], ...CLUB_CATS.map(([k, l, ic]): [ClubCat, string, IconName] => [k, l, ic])];
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cicons} contentContainerStyle={styles.ciconsIn} accessibilityRole="tablist" accessibilityLabel="동아리 카테고리">
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.cicons} contentContainerStyle={styles.ciconsIn} accessibilityRole="tablist" accessibilityLabel="동아리 카테고리">
         {cats.map(([k, l, ic]) => {
           const on = cat === k;
           return (
@@ -93,8 +94,8 @@ export function ClubList({ clubs }: { clubs: Club[] }) {
             </Pressable>
           );
         })}
-      </ScrollView>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.csort} contentContainerStyle={styles.csortIn}>
+      </ChipScroll>
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.csort} contentContainerStyle={styles.csortIn}>
         {SORTS.map(([k, l]) => {
           const on = sort === k;
           return (
@@ -103,7 +104,7 @@ export function ClubList({ clubs }: { clubs: Club[] }) {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ChipScroll>
       {L.length ? (
         <>
           <View>

@@ -5,30 +5,22 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { EventItem } from '@/data/events';
-import { MONTHS, won } from '@/data/meet';
 
 import { AccountCard } from './account-card';
 import { accountOf } from './event-model';
 
 /**
  * 신청 후 '내 신청' 카드 — 제목 바로 아래 (프로토타입 .lg-mine).
- * 무료: '내 신청 · 참여 확정' · 유료: '내 신청 · 입금 기다리는 중' + 24시간 안에 입금 · 계좌 복사. 내가 보낸 설문 답도 보여요.
+ * '신청되었습니다!' + 노쇼 안내 한 줄 · 유료면 입금 계좌(복사). 내가 보낸 설문 답도 보여요.
  */
 export function MyApplication({ e, answers }: { e: EventItem; answers: [string, string][] }) {
   const pay = !!e.fee;
   return (
     <View style={[styles.mine, pay && styles.pay]}>
-      <PText style={styles.b}>{pay ? '내 신청 · 입금 기다리는 중' : '내 신청 · 참여 확정'}</PText>
-      {pay ? (
-        <PText style={[styles.s, keepAll]}>
-          신청하고 24시간 안에 <PText style={styles.em}>{won(e.fee ?? 0)}</PText>을 보내 주세요. 입금이 확인되면 확정됩니다.
-        </PText>
-      ) : (
-        <PText style={[styles.s, keepAll]}>
-          {MONTHS.indexOf(e.mon) + 1}월 {Number(e.day)}일 {e.wd}에 만나요. 못 가게 되면 아래 ‘참여 완료’를 눌러 취소해 주세요.
-        </PText>
-      )}
-      {pay ? <AccountCard acct={accountOf(e)} /> : null}
+      <PText style={styles.b}>신청되었습니다!</PText>
+      <PText style={[styles.s, keepAll]}>불가피하게 참여가 어려우면 꼭 미리 취소해 주세요. 노쇼가 두 번 이상이면 다음 이벤트 신청이 일주일 동안 제한될 수 있어요.</PText>
+      {/* 유료: 입금할 계좌만 (안내 문장 없이) */}
+      {pay ? <AccountCard acct={accountOf(e)} note="" /> : null}
       {answers.length ? (
         <View style={styles.my}>
           {answers.map(([q, a]) => (

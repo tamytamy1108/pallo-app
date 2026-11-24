@@ -61,7 +61,8 @@ export function Bolt({ size = 13 }: { size?: number }) {
 /** PALLO 스파크 (프로토타입 lgSparkIc — 지도 범례) */
 export function SparkIcon({ color, width = 14 }: { color: string; width?: number }) {
   return (
-    <Svg width={width} height={Math.round(width * 0.887)} viewBox="0 0 426.31 377.94">
+    // 테두리가 상자 밖으로 반쯤 나가서 깎이지 않게 둘레를 17 만큼 넓혀 그려요
+    <Svg width={width} height={Math.round((width * 411.94) / 460.31)} viewBox="-17 -17 460.31 411.94">
       <Path d={SPARK} fill={color} stroke={Colors.ink} strokeWidth={34} />
     </Svg>
   );

@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ScrollView, type ScrollViewInstance, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -23,6 +23,7 @@ import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
 import { useSavedCount } from '@/state/expressions';
 import { useMe } from '@/state/me';
+import { useTabReselect } from '@/lib/tab-reselect';
 
 // 마이 B 화면(설정 · 고객센터 · 이용권)은 아직 없을 수 있어서 주소 타입을 넓혀 둬요
 const go = (href: string) => () => {
@@ -35,6 +36,8 @@ const go = (href: string) => () => {
  * → 랭킹 요약 → 배지 → 내 활동 → 설정 · 고객센터 · 이용권. 맨 아래 개발용 입구.
  */
 export default function MyScreen() {
+  const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('my', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const { width } = useWindowDimensions();
   const me = useMe();
   const saved = useSavedCount();
@@ -52,7 +55,7 @@ export default function MyScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView ref={scroll} contentContainerStyle={styles.body}>
         <Appear kind="rise" style={styles.head}>
           <PText variant="headline" accessibilityRole="header">
             마이

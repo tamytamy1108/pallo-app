@@ -11,6 +11,8 @@ import { SheetFooterContext } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Colors, Radius } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
+import { useKeyboardShown } from '@/lib/keyboard';
+import { FormScrollContext, useFormScroll } from '@/components/ui/form-scroll';
 
 /**
  * 시트 모양 화면 (프로토타입 #lgSheet.tall — 이벤트 제안 · 번개 열기 · 동아리 만들기 같은 긴 폼).
@@ -18,6 +20,8 @@ import { EASE } from '@/lib/motion';
  */
 export function SheetPage({ title, label, children, footer }: { title: string; label: string; children: ReactNode; footer: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const kb = useKeyboardShown();
+  const [formScroll, formBox, onFormScroll, revealNext] = useFormScroll();
   const still = useReducedMotion();
   const y = useSharedValue(still ? 0 : 1);
   useEffect(() => {
@@ -39,16 +43,21 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
       <Stack.Screen options={SCREEN.overlayFade} />
       <Pressable style={styles.dim} onPress={close} accessibilityRole="button" accessibilityLabel="닫기" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
-        <Animated.View style={[styles.sheet, { marginTop: insets.top + 40 }, st]} accessibilityLabel={label} accessibilityViewIsModal>
+        <Animated.View style={[styles.sheet, { marginTop: insets.top + 72 }, st]} accessibilityLabel={label} accessibilityViewIsModal>
           <View style={styles.grab} />
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <PText variant="title" accessibilityRole="header">
-              {title}
-            </PText>
-            {children}
-          </ScrollView>
+          {/* 하나 고르면 다음 칸이 보이게 올려 줘요 (ui/form-scroll) */}
+          <View ref={formBox} collapsable={false} style={styles.scrollBox}>
+            <ScrollView ref={formScroll} onScroll={onFormScroll} scrollEventThrottle={32} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+              <FormScrollContext.Provider value={revealNext}>
+                <PText variant="title" accessibilityRole="header">
+                  {title}
+                </PText>
+                {children}
+              </FormScrollContext.Provider>
+            </ScrollView>
+          </View>
           <SheetFooterContext.Provider value>
-            <View style={[styles.foot, { paddingBottom: 22 + insets.bottom }]}>
+            <View style={[styles.foot, { paddingBottom: 22 + (kb ? 0 : insets.bottom) }]}>
               <View style={{ flex: 1 }}>{footer}</View>
             </View>
           </SheetFooterContext.Provider>
@@ -59,6 +68,7 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
 }
 
 const styles = StyleSheet.create({
+  scrollBox: { flex: 1 },
   root: { flex: 1, justifyContent: 'flex-end' },
   dim: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(30,26,43,0.45)' },
   kav: { flex: 1, justifyContent: 'flex-end' },

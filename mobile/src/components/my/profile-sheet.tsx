@@ -236,7 +236,7 @@ export function ProfileSheet({ name, open, onClose, onOpen }: { name: string; op
                 <PfIcon.book />
                 <View style={styles.stTx}>
                   <PText style={styles.stB}>{langs.map((l, i) => `${l} Lv.${i ? 1 + ((h + 1) % 2) : lv}`).join('\n')}</PText>
-                  <PText style={styles.stS}>{langs.length > 1 ? '두 언어 병행' : SUB_LV[lv - 1]}</PText>
+                  <PText style={styles.stS}>{langs.length > 1 ? '학습 레벨' : SUB_LV[lv - 1]}</PText>
                 </View>
               </View>
               <View style={styles.stC}>

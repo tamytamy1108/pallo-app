@@ -1,13 +1,16 @@
-import { Children, createContext, Fragment, isValidElement, useCallback, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
+import { Children, createContext, Fragment, isValidElement, useCallback, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { Colors, Radius } from '@/constants/theme';
+import { useKeyboardShown } from '@/lib/keyboard';
 import { EASE } from '@/lib/motion';
 
+import { FormScrollContext, useFormScroll } from './form-scroll';
+import { NestedSheets, useSheetLayer } from './sheet-stack';
 import { PText } from './text';
 import { ToastView, useToastLayer } from './toast';
 
@@ -49,12 +52,14 @@ export const SheetFooterContext = createContext(false);
  */
 export function Sheet({ open, onClose, title, children, footer, tall = false, scroll = true, gap = 12, onClosed, label, dismissible = true, contentStyle, scrollKey }: SheetProps) {
   const insets = useSafeAreaInsets();
+  const kb = useKeyboardShown();
   const { height: winH } = useWindowDimensions();
   const still = useReducedMotion();
   // 닫히는 움직임 동안에도 Modal 을 남겨 둬요 (열릴 땐 그리는 중에 바로 켜요)
   const [mounted, setMounted] = useState(open);
   if (open && !mounted) setMounted(true);
   const showToastHere = useToastLayer(mounted);
+  const layerId = useId();
 
   const shown = useSharedValue(0);
   const dim = useSharedValue(0);
@@ -90,10 +95,11 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
     }
   }, [open, still, shown, dim, drag, finishClose]);
 
-  const scrollRef = useRef<ScrollViewInstance>(null);
+  // 하나 고르면 다음 칸이 보이게 올려 줘요 (ui/form-scroll)
+  const [scrollRef, formBox, onFormScroll, revealNext] = useFormScroll();
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
-  }, [scrollKey]);
+  }, [scrollKey, scrollRef]);
 
   const requestClose = useCallback(() => {
     if (dismissible) onClose();
@@ -119,7 +125,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   // 아래 여백: 버튼 칸이 있으면 그 칸이, 키 큰 시트는 스크롤 안쪽이 안전 영역까지 챙겨요.
   // 안드로이드: 시트 창(Modal)은 내비게이션 바 뒤까지 그려서, 앱 화면의 안전 영역(0일 수 있어요)이 아니라
   // 시트 창 안에서 잰 값을 써요 (안 그러면 아래 버튼이 내비게이션 바에 가려져요)
-  const bottomOf = (modal: { bottom: number } | null) => Math.max(insets.bottom, modal?.bottom ?? 0);
+  const bottomOf = (modal: { bottom: number } | null) => (kb ? 0 : Math.max(insets.bottom, modal?.bottom ?? 0));
   const body = (
     <>
       {title ? (
@@ -131,7 +137,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
     </>
   );
 
-  return (
+  const node = (
     <Modal visible={mounted} transparent animationType="none" onRequestClose={requestClose} statusBarTranslucent navigationBarTranslucent>
       <SafeAreaProvider>
         <SafeAreaInsetsContext.Consumer>
@@ -139,32 +145,38 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
             const bottom = bottomOf(modalInsets);
             const padBottom = footer || tall ? 0 : 30 + bottom;
             const scrollPadBottom = footer ? 12 : tall ? 30 + bottom : 0;
+            // 시트 위로 늘 빈 곳을 남겨요 (상태 바 + 72) → 바깥을 눌러 닫을 수 있게 (키보드가 올라와도)
+            const topGap = Math.max(insets.top, modalInsets?.top ?? 0) + 72;
             return (
               <GestureHandlerRootView style={styles.fill}>
                 <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dimAnim]}>
                   <Pressable style={styles.fill} onPress={requestClose} accessibilityRole="button" accessibilityLabel="닫기" />
                 </Animated.View>
-                <KeyboardAvoidingView behavior={Platform.OS === 'web' ? undefined : 'padding'} style={styles.root} pointerEvents="box-none">
+                <KeyboardAvoidingView behavior={Platform.OS === 'web' ? undefined : 'padding'} style={[styles.root, { paddingTop: topGap }]} pointerEvents="box-none">
                   <Animated.View
                     accessibilityViewIsModal
                     accessibilityLabel={label ?? title}
                     onLayout={(e) => sheetH.set(e.nativeEvent.layout.height)}
-                    style={[styles.sheet, tall ? styles.tall : styles.auto, { maxHeight: tall ? '84%' : '92%', paddingBottom: padBottom }, sheetAnim]}>
+                    style={[styles.sheet, tall ? styles.tall : styles.auto, { maxHeight: tall ? '84%' : '100%', paddingBottom: padBottom }, sheetAnim]}>
                     <GestureDetector gesture={pan}>
                       <View style={[styles.grabZone, { paddingBottom: 4 + gap }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                         <View style={styles.grab} />
                       </View>
                     </GestureDetector>
                     {scroll ? (
-                      <ScrollView
-                        ref={scrollRef}
-                        bounces={false}
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator={false}
-                        style={tall ? styles.fill : styles.shrink}
-                        contentContainerStyle={[{ gap, paddingHorizontal: 18, paddingBottom: scrollPadBottom }, contentStyle]}>
-                        {body}
-                      </ScrollView>
+                      <View ref={formBox} collapsable={false} style={tall ? styles.fill : styles.shrink}>
+                        <ScrollView
+                          ref={scrollRef}
+                          onScroll={onFormScroll}
+                          scrollEventThrottle={32}
+                          bounces={false}
+                          keyboardShouldPersistTaps="handled"
+                          showsVerticalScrollIndicator={false}
+                          style={tall ? styles.fill : styles.shrink}
+                          contentContainerStyle={[{ gap, paddingHorizontal: 18, paddingBottom: scrollPadBottom }, contentStyle]}>
+                          <FormScrollContext.Provider value={revealNext}>{body}</FormScrollContext.Provider>
+                        </ScrollView>
+                      </View>
                     ) : (
                       <View style={[tall ? styles.fill : styles.shrink, { gap, paddingHorizontal: 18 }, contentStyle]}>{body}</View>
                     )}
@@ -182,6 +194,8 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
                   </Animated.View>
                 </KeyboardAvoidingView>
                 {showToastHere ? <ToastView /> : null}
+                {/* 이 시트가 떠 있는 동안 연 다른 시트 (아이폰은 여기 안에 그려야 떠요) */}
+                <NestedSheets id={layerId} />
               </GestureHandlerRootView>
             );
           }}
@@ -189,6 +203,18 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
       </SafeAreaProvider>
     </Modal>
   );
+  const inParent = useSheetLayer(layerId, mounted, open, node);
+  return inParent ? null : node;
+}
+
+/**
+ * 시트 안 맨 아래 칸(댓글 입력 줄 등)의 아래 여백: base + 홈 바 · 내비게이션 바 자리.
+ * 시트 창 안에서 재야 맞아서 (안드로이드는 앱 화면 값이 0일 수 있어요) 이 칸을 시트 안에 그려요. 키보드가 올라오면 base 만.
+ */
+export function SheetBottom({ base, style, children }: { base: number; style?: StyleProp<ViewStyle>; children: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const kb = useKeyboardShown();
+  return <View style={[style, { paddingBottom: base + (kb ? 0 : insets.bottom) }]}>{children}</View>;
 }
 
 /** 버튼 칸: <>…</> 로 묶어 넘겨도 버튼마다 한 칸씩 */
@@ -212,7 +238,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.sheet,
     overflow: 'hidden',
   },
-  auto: {},
+  auto: { flexShrink: 1 },
   tall: { height: '84%' },
   // 손잡이: 위 12px + 막대 5px + 아래 4px(+ 내용 간격) — 이 칸 전체를 끌 수 있어요
   grabZone: { paddingTop: 12, alignItems: 'center' },

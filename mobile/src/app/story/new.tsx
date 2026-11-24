@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   small: { fontFamily: Font.body600, fontSize: 12, lineHeight: 16.8 },
   fl: { gap: 6 },
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
-  input: { height: 46, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  input: { height: 46, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   photo: { height: 96, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.ink, borderRadius: 18, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', gap: 6, flexDirection: 'row' },
   photoOn: { borderStyle: 'solid', backgroundColor: Colors.lavender },
   thumb: { width: 56, height: 56, borderRadius: 10, borderWidth: 2, borderColor: Colors.ink },
