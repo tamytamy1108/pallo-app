@@ -367,9 +367,12 @@ const st = StyleSheet.create({
 export const HALF_HOURS = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
 const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 const ofMin = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-/** '20:00' → '오후 8:00' */
+/** 끝나는 시간에만 있는 자정 */
+const MIDNIGHT = '24:00';
+/** '20:00' → '오후 8:00' · '24:00' → '밤 12:00' */
 export const timeLabel = (t: string) => {
   const h = Number(t.slice(0, 2));
+  if (h === 24) return '밤 12:00';
   return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${t.slice(3)}`;
 };
 /** 걸리는 시간 글자 (예: '2시간 30분') */
@@ -378,8 +381,8 @@ export const spanLabel = (start: string, end: string) => {
   const h = Math.floor(d / 60);
   return [h ? `${h}시간` : '', d % 60 ? `${d % 60}분` : ''].filter(Boolean).join(' ');
 };
-/** 끝나는 시간 기본: 시작 + 2시간 (밤 11시 반까지) */
-export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, toMin(HALF_HOURS[HALF_HOURS.length - 1])));
+/** 끝나는 시간 기본: 시작 + 2시간 (자정까지) */
+export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, toMin(MIDNIGHT)));
 
 /**
  * 시작 시간 ~ 끝나는 시간: 시작 · 끝 칸을 누르면 그 칸 안에서 휠을 돌려 골라요 (이름 줄 · 완료를 누르면 닫혀요).
@@ -387,9 +390,10 @@ export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, 
  */
 export function TimeRange({ start, end, onChange }: { start: string; end: string; onChange: (start: string, end: string) => void }) {
   const [edit, setEdit] = useState<'s' | 'e' | null>(null);
-  const starts = HALF_HOURS.slice(0, -1);
+  // 시작은 오후 11:30 까지 · 끝은 자정(밤 12:00)까지
+  const starts = HALF_HOURS;
   // 끝은 시작 30분 뒤부터만
-  const ends = HALF_HOURS.filter((t) => toMin(t) >= toMin(start) + 30);
+  const ends = [...HALF_HOURS, MIDNIGHT].filter((t) => toMin(t) >= toMin(start) + 30);
   const pickStart = (t: string) => onChange(t, toMin(end) > toMin(t) ? end : defaultEnd(t));
   const box = (k: 's' | 'e', label: string, t: string) => {
     const on = edit === k;
