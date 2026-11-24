@@ -1,6 +1,7 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 type P = { size?: number; color?: string };
 const line = (color: string, w = 2.4) => ({ fill: 'none', stroke: color, strokeWidth: w, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const });
@@ -32,10 +33,13 @@ export const CardsIcon = ({ size = 18, color = Colors.ink }: P) => (
   </Svg>
 );
 
+/** 저장 책갈피 — 저장하면 톡 커지고 떨림 (HeartPop) */
 export const BookmarkIcon = ({ size = 16, color = Colors.ink, filled = false }: P & { filled?: boolean }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth={2.4} strokeLinejoin="round">
-    <Path d="M6 3h12v18l-6-4.5L6 21z" />
-  </Svg>
+  <HeartPop on={filled}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth={2.4} strokeLinejoin="round">
+      <Path d="M6 3h12v18l-6-4.5L6 21z" />
+    </Svg>
+  </HeartPop>
 );
 
 /* 아래는 레슨 화면 공용 아이콘 (프로토타입 FT_ICO · ICO · NS_IC 그대로) */

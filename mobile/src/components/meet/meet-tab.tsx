@@ -8,6 +8,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, isPast, REGIONS, type Meet, type Region } from '@/data/meet';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { ClubList } from './club-list';
 import { DateStrip } from './date-strip';
@@ -56,8 +57,8 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
   const pre = reg ? reg + ' ' : '';
   const cardW = Math.max(0, (w - 32) * 0.8);
 
-  const mkMeet = () => guardMember(() => router.push('/meet/new'));
-  const mkClub = () => guardMember(() => router.push('/club/new'));
+  const mkMeet = () => guardMember(() => router.push('/meet/new'), '번개를 만들려면');
+  const mkClub = () => guardMember(() => router.push('/club/new'), '동아리를 만들려면');
 
   const chips: [Mode, string, number][] = [
     ['all', '전체', nMeet + nClub],
@@ -67,7 +68,7 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
 
   return (
     <View onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
         {header}
         {header ? <View style={styles.sep} /> : null}
         {chips.map(([k, l, n]) => {
@@ -88,7 +89,7 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ChipScroll>
 
       <View style={styles.feed}>
         <KoreaMap counts={regionCounts(meets, clubs, '전체')} mode={mode} region={reg} onRegion={setReg} />

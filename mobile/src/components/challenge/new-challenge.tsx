@@ -40,6 +40,8 @@ import {
 } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
+import { ChipScroll } from '@/components/ui/chip-scroll';
+import { PosterPicker } from '@/components/event/form-parts';
 
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
@@ -79,6 +81,8 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
   const [n, setN] = useState(3);
   const [days, setDays] = useState<string[]>(['월', '수', '금']);
   const [photo, setPhoto] = useState(false);
+  // 대표 사진 (선택): 순위 · 카드 · 상세의 네모 칸에 보여요. 없으면 카드 문구로
+  const [covers, setCovers] = useState<string[]>([]);
   const [guide, setGuide] = useState('');
   const [pw1, setPw1] = useState('');
   const [pw2, setPw2] = useState('');
@@ -120,7 +124,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           showToast('챌린지 이름을 적어 주세요');
           return;
         }
-        createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), pw: [pw1.trim(), pw2.trim()].filter(Boolean), plan });
+        createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), pw: [pw1.trim(), pw2.trim()].filter(Boolean), plan, cover: covers[0] });
         sfx('save');
         haptic('success');
         onClose();
@@ -242,6 +246,11 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <Field value={guide} onChangeText={setGuide} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="어떻게 인증하나요?" />
           </View>
           <View style={styles.fl}>
+            <FieldLabel>대표 사진 · 선택</FieldLabel>
+            <PosterPicker uris={covers} onChange={setCovers} emptyLabel="사진 넣기" max={1} />
+            <PText style={styles.wayd}>순위 · 카드의 네모 칸에 보여요. 없으면 아래 카드 문구로 보여요.</PText>
+          </View>
+          <View style={styles.fl}>
             <FieldLabel>카드 문구</FieldLabel>
             <View style={styles.pwRow}>
               <View style={[styles.pv, { backgroundColor: pbg }]}>
@@ -323,7 +332,7 @@ function ExprPicker({
         placeholder="표현 · 뜻으로 찾기"
         label="내 표현함에서 찾기"
       />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {(['all', ...kinds] as const).map((x) => {
           const on = chip === x;
           const label = x === 'all' ? `전체 ${cards.length}` : `${CH_SRC[x].label} ${cards.filter((c) => c.src.k === x).length}`;
@@ -342,7 +351,7 @@ function ExprPicker({
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ChipScroll>
       {ord.length ? (
         <View>
           {/* .ch-list: 최대 300 높이 · 안쪽 스크롤 */}
@@ -428,7 +437,7 @@ const styles = StyleSheet.create({
   pv: { width: 100, height: 108, borderWidth: 2, borderColor: Colors.ink, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
   pvT: { position: 'absolute', top: 12, left: 10, right: 6, fontFamily: Font.display, lineHeight: 14, letterSpacing: -0.3 },
   ins: { flex: 1, gap: 8, justifyContent: 'center' },
-  pwIn: { height: 44, paddingHorizontal: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.display, fontSize: 15, color: Colors.ink },
+  pwIn: { height: 44, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', paddingHorizontal: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.display, fontSize: 15, color: Colors.ink },
   chips: { flexDirection: 'row', gap: 6 },
   chip: { height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, justifyContent: 'center' },
   chipOn: { backgroundColor: Colors.ink, borderColor: Colors.ink },

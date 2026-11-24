@@ -17,13 +17,14 @@ import { PText } from '@/components/ui/text';
 import { findStep34, unitName34, type Unit34 } from '@/data/lessons34';
 import { useLearnPrefs } from '@/state/learn-prefs';
 import { setLastStep, stepKey } from '@/state/progress';
+import { ChapterGate } from '@/components/common/member-lock';
 
 /**
  * Lv.3 · 4 레슨 (프로토타입 RUN34 진행기 · STEP_VIEW 단계 화면). 주소: /lesson34/[단계 id]?lv=3|4&unit=회차
  * 단계 id 는 프로토타입 STUDY_STEPS.topic · .debate 그대로 (kwl tread match pick6 · warm dtalk ttalk · quiz journal ba / free key side · free2 deb fq · better swap final).
  * 회차 콘텐츠는 18 `GET /lessons/:id` (id = '레벨-회차') 로 받아요.
  */
-export default function Lesson34Screen() {
+function Lesson34Screen() {
   const p = useLocalSearchParams<{ step: string; lv?: string; unit?: string; resume?: string }>();
   const lv = p.lv === '4' ? 4 : 3;
   const unit = Number(p.unit) || 101;
@@ -74,5 +75,15 @@ function Lesson34Body({ lv, unit, stepId, u, resume }: { lv: 3 | 4; unit: number
       {screen}
       {corner ? <TaskRunner ctx={ctx} kick={corner.kick} build={corner.build} /> : <StepPage ctx={ctx} u={u} />}
     </>
+  );
+}
+
+/** 비회원은 맵마다 첫 챕터만 (components/common/member-lock ChapterGate) */
+export default function Lesson34ScreenGate() {
+  const no = Number(useLocalSearchParams<{ unit?: string }>().unit ?? 1);
+  return (
+    <ChapterGate no={no} label={`${no}과`}>
+      <Lesson34Screen />
+    </ChapterGate>
   );
 }

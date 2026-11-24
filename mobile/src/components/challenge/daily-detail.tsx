@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -40,6 +40,7 @@ import {
   type RankRow,
 } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 import { invite } from './cards';
 import { CheckSheet } from './check-sheet';
@@ -47,6 +48,7 @@ import { CheerSheet } from './cheer-sheet';
 import { Face } from './face';
 import { ChIcon } from './icons';
 import { Empty, LgBtn, LgLink, LINE, SUB } from './parts';
+import { ChCover } from './cover';
 
 type Tab = 'home' | 'feed' | 'rank';
 const TABS: [Tab, string][] = [
@@ -63,6 +65,13 @@ const TOP_H = 60;
 export function DailyDetail({ p }: { p: Challenge }) {
   const s = useChallengeState();
   const [tab, setTab] = useState<Tab>('home');
+  // 탭을 바꿀 때 탭 줄이 위에 붙어 있으면, 새 탭 맨 위(탭 줄 바로 아래)부터 보여요 (첫 글 머리가 탭 줄에 가리지 않게)
+  const scroll = useRef<ScrollViewInstance>(null);
+  const scrollY = useRef(0);
+  const tabsY = useRef(0);
+  useEffect(() => {
+    if (scrollY.current > tabsY.current) scroll.current?.scrollTo({ y: tabsY.current, animated: false });
+  }, [tab]);
   const [titled, setTitled] = useState(false);
   const [dbdY, setDbdY] = useState(9999);
   const [h2Bottom, setH2Bottom] = useState(0);
@@ -103,24 +112,24 @@ export function DailyDetail({ p }: { p: Challenge }) {
       <View style={[styles.dtop, titled && styles.dtopSolid]}>
         <BackButton onPress={back} />
         <TopTitle text={p.name} on={titled} />
-        <Pressable onPress={() => showToast('링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="공유" style={({ pressed }) => [styles.ib, pressed && styles.ibOn]}>
-          <ChIcon name="send" size={19} />
-        </Pressable>
+        <View style={styles.ib} />
       </View>
 
       <ScrollView
         stickyHeaderIndices={[2]}
         scrollEventThrottle={16}
-        onScroll={(e) => setTitled(e.nativeEvent.contentOffset.y > dbdY + h2Bottom)}
+        ref={scroll}
+        onScroll={(e) => {
+          scrollY.current = e.nativeEvent.contentOffset.y;
+          setTitled(e.nativeEvent.contentOffset.y > dbdY + h2Bottom);
+        }}
         contentContainerStyle={styles.scroll}>
         {/* .lg-chhero: 진행 카드 */}
         <View style={styles.heroWrap}>
           <View pointerEvents="none" style={styles.heroShadow} />
           <View style={[styles.hero, { backgroundColor: CH_BG[C.tone] }]}>
             <View style={styles.heroRow}>
-              <View style={styles.heroIc}>
-                <ChIcon name={C.icon} size={28} />
-              </View>
+              <ChCover p={p} size={58} style={styles.heroIc} />
               <View style={styles.st}>
                 {pre ? (
                   <PText style={styles.stPre}>{p.start}</PText>
@@ -152,7 +161,8 @@ export function DailyDetail({ p }: { p: Challenge }) {
           </PText>
         </View>
 
-        {/* .lg-dtabs: 위에 붙는 탭 */}
+        {/* .lg-dtabs: 위에 붙는 탭. 위에 붙는 칸은 RN 이 스타일을 바꿔 끼워서(아이폰에서 세로로 쌓여요) 바깥 상자로 한 번 감싸요 */}
+        <View style={styles.tabsSticky} onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>
         <View style={styles.tabs} accessibilityRole="tablist">
           {TABS.map(([k, l]) => (
             <Pressable
@@ -167,6 +177,7 @@ export function DailyDetail({ p }: { p: Challenge }) {
               <PText style={[styles.tabT, tab === k && styles.tabTOn]}>{l}</PText>
             </Pressable>
           ))}
+        </View>
         </View>
 
         <View style={styles.body}>
@@ -185,10 +196,9 @@ export function DailyDetail({ p }: { p: Challenge }) {
             height={54}
             padX={0}
             width={54}
-            icon={<ChIcon name="heart" size={22} fill={saved ? Colors.rosePink : 'none'} />}
+            icon={<HeartPop on={saved}><ChIcon name="heart" size={22} fill={saved ? Colors.rosePink : 'none'} /></HeartPop>}
             onPress={() => {
               const on = toggleSaved(p.id);
-              haptic('tap');
               showToast(on ? '저장했어요' : '저장을 취소했어요');
             }}
           />
@@ -371,7 +381,6 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
         <View style={styles.acts}>
           <Pressable
             onPress={() => {
-              haptic('tap');
               toggleLiked(q.key);
             }}
             accessibilityRole="button"
@@ -379,7 +388,7 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
             accessibilityState={{ selected: on }}
             hitSlop={8}
             style={styles.ak}>
-            <ChIcon name="heart" size={20} fill={on ? Colors.rosePink : 'none'} />
+            <HeartPop on={on}><ChIcon name="heart" size={20} fill={on ? Colors.rosePink : 'none'} /></HeartPop>
             <PText style={styles.akN}>{nl || ''}</PText>
           </Pressable>
           <Pressable onPress={() => onThread(q)} accessibilityRole="button" accessibilityLabel={nr ? `답글 ${nr}개 보기` : '답글 달기'} hitSlop={8} style={styles.ak}>
@@ -508,6 +517,7 @@ const styles = StyleSheet.create({
   h2: { marginTop: 8, fontFamily: Font.body900, fontSize: 24, lineHeight: 31.2, letterSpacing: -0.5 },
   dmeta: { marginTop: 6, fontFamily: Font.body700, fontSize: 13, lineHeight: 19, color: SUB },
   dmetaEm: { fontFamily: Font.body900, fontSize: 13, color: Colors.rosePink },
+  tabsSticky: { backgroundColor: Colors.cream },
   tabs: { flexDirection: 'row', paddingHorizontal: 18, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: LINE },
   tab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
   tabOn: { borderColor: Colors.ink },
@@ -559,7 +569,7 @@ const styles = StyleSheet.create({
   rmeS: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: SUB },
   rmeNone: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.ink, backgroundColor: Colors.white },
   rmeNoneT: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: SUB },
-  pod: { marginTop: 28, height: 178, flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  pod: { marginTop: 28, minHeight: 178, flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   podCol: { flex: 1, alignItems: 'center' },
   podB: { marginTop: 6, maxWidth: '100%', fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },
   podS: { fontFamily: Font.display, fontSize: 12, lineHeight: 17, color: SUB },

@@ -6,6 +6,7 @@ import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reani
 import Svg, { Circle, Defs, Path, Pattern, Rect } from 'react-native-svg';
 
 import { bookShelfQuery } from '@/api/queries';
+import { lockedChapter } from '@/components/common/trial-guide';
 import { pickIsland, setLib } from '@/components/library/library-state';
 import { Pressable } from '@/components/ui/pressable';
 import { XmasBackLayer, XmasGarland } from '@/components/home/christmas';
@@ -26,6 +27,9 @@ import { awardPoints } from '@/state/ledger';
 import { chestKey, markChestOpened, useChestOpened } from '@/state/chest';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
 
+import { canUse } from '@/state/access';
+import { useMe } from '@/state/me';
+
 import { devSeason } from './dev';
 import { ChestCelebrate } from './chest-celebrate';
 import { ARROW_PATH, CHECK_PATH, LineIcon } from './icons';
@@ -40,6 +44,7 @@ const NODE_CUR = 78;
 /** 정류장 이름 칸 최대 폭 · 카드 가장자리에서 띄울 거리 */
 const LABEL_MAX = 180;
 const LABEL_EDGE = 8;
+const LOCK_PATH = 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3';
 const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
 /** 내 교재 레벨 (MY_BOOK.level 'Lv.1' → 1) — 아직 아무 단계도 안 열었을 때 홈 맵 레벨 */
 const MY_LV = Number(MY_BOOK.level.replace('Lv.', ''));
@@ -117,12 +122,16 @@ export function StudyMap() {
   const last = useLastStep();
   const M = levelMap(homeLevel(last));
   const LV = M.lv;
-  const [lesson, setLesson] = useState(() => (last?.lv === LV ? last.unit : (M.units[0] ?? 1)));
+  // 비회원은 레벨마다 첫 챕터만 열려요 (state/access) — 잠긴 과는 칩 · 다음 챕터 버튼에서 막아요
+  const allOpen = useMe((m) => canUse(m, 'allChapters'));
+  const firstUnit = M.units[0] ?? 1;
+  const isFree = (n: number) => allOpen || n === firstUnit;
+  const [lesson, setLesson] = useState(() => (last?.lv === LV && isFree(last.unit) ? last.unit : firstUnit));
   const [seenAt, setSeenAt] = useState(last?.at);
   if (last && last.at !== seenAt) {
     // 다른 곳(라이브러리)에서 새 단계를 열었으면 맵도 그 과로 옮겨요
     setSeenAt(last.at);
-    if (last.lv === LV) setLesson(last.unit);
+    if (last.lv === LV && isFree(last.unit)) setLesson(last.unit);
   }
   const [width, setWidth] = useState(0);
   const [popIdx, setPopIdx] = useState<number | null>(null);
@@ -192,6 +201,11 @@ export function StudyMap() {
   const pickLesson = (n: number) => {
     setLesson(n);
     reveal(n);
+  };
+  /** 챕터 칩 · 다음 챕터 · 상자의 '다음 코너로': 비회원은 둘째 챕터부터 잠김 (첫 챕터를 다 끝냈으면 '실제 대화' 권유) */
+  const tryLesson = (n: number) => {
+    if (isFree(n)) return pickLesson(n);
+    lockedChapter(M.chipLabel(n), M.steps.every((s) => isDone(stepKey(LV, firstUnit, s.id))));
   };
 
   const go = (i: number, mode: StartMode) => {
@@ -281,7 +295,7 @@ export function StudyMap() {
 
           <ScrollView ref={chipRow} horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow} onLayout={(e) => (rowW.current = e.nativeEvent.layout.width)}>
             {M.units.map((n) => (
-              <ChapChip key={n} M={M} n={n} on={n === lesson} week={M.week.includes(n)} bounce={bounce} onPress={() => pickLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
+              <ChapChip key={n} M={M} n={n} on={n === lesson} week={M.week.includes(n)} locked={!isFree(n)} bounce={bounce} onPress={() => tryLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
             ))}
           </ScrollView>
 
@@ -373,14 +387,14 @@ export function StudyMap() {
           </View>
 
           {next && (
-            <Pressable onPress={() => pickLesson(nextNo)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${next}`}>
+            <Pressable onPress={() => tryLesson(nextNo)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${next}${!isFree(nextNo) ? ', 잠김' : ''}`}>
               {({ pressed }) => (
                 <Raised radius={20} pressed={pressed}>
-                  <View style={styles.nextBtn}>
+                  <View style={StyleSheet.flatten([styles.nextBtn, !isFree(nextNo) && styles.nextLocked])}>
                     <PText style={styles.nextText} numberOfLines={1}>
                       다음 챕터 · {next}
                     </PText>
-                    <LineIcon d={ARROW_PATH} size={22} width={2.4} />
+                    <LineIcon d={!isFree(nextNo) ? LOCK_PATH : ARROW_PATH} size={!isFree(nextNo) ? 20 : 22} width={2.4} />
                   </View>
                 </Raised>
               )}
@@ -411,7 +425,7 @@ export function StudyMap() {
             next
               ? () => {
                   setChestOpen(false);
-                  pickLesson(nextNo);
+                  tryLesson(nextNo);
                 }
               : undefined
           }
@@ -454,7 +468,7 @@ const wkAnim = css.create({
   1: { animationName: wkBounce, animationDuration: '800ms', animationDelay: '370ms', animationTimingFunction: WK_EASE },
 });
 
-function ChapChip({ M, n, on, week, bounce, onPress, onLayout }: { M: LevelMap; n: number; on: boolean; week: boolean; bounce: number; onPress: () => void; onLayout: (x: number, w: number) => void }) {
+function ChapChip({ M, n, on, week, locked, bounce, onPress, onLayout }: { M: LevelMap; n: number; on: boolean; week: boolean; locked: boolean; bounce: number; onPress: () => void; onLayout: (x: number, w: number) => void }) {
   const still = useReducedMotion();
   const count = useDoneCount(`${M.lv}:${n}:`);
   const full = count >= M.steps.length;
@@ -468,9 +482,11 @@ function ChapChip({ M, n, on, week, bounce, onPress, onLayout }: { M: LevelMap; 
         onPress={onPress}
         accessibilityRole="tab"
         accessibilityState={{ selected: on }}
-        accessibilityLabel={`${M.unitName(n)}, ${count}/${M.steps.length}${week ? ', 이번 주 스터디 진도' : ''}`}
-        style={({ pressed }) => StyleSheet.flatten([styles.chap, week && styles.chapWeek, full && styles.chapDone, on && styles.chapOn, pressed && styles.chapPressed])}>
-        <PText style={styles.chapText} color={on ? Colors.white : Colors.ink}>
+        accessibilityLabel={`${M.unitName(n)}${locked ? ', 지점 회원 전용' : `, ${count}/${M.steps.length}`}${week ? ', 이번 주 스터디 진도' : ''}`}
+        style={({ pressed }) => StyleSheet.flatten([styles.chap, week && styles.chapWeek, full && styles.chapDone, on && styles.chapOn, locked && styles.chapLocked, pressed && styles.chapPressed])}>
+        {/* 비회원 잠금: 흐리게 + 자물쇠 */}
+        {locked && <LineIcon d={LOCK_PATH} size={12} width={2.6} color={Colors.inkSub} />}
+        <PText style={styles.chapText} color={on ? Colors.white : locked ? Colors.inkSub : Colors.ink}>
           {M.chipLabel(n)}
         </PText>
         {full && <LineIcon d={CHECK_PATH} size={12} width={3.6} color={on ? Colors.yellow : Colors.ink} />}
@@ -622,6 +638,7 @@ const styles = StyleSheet.create({
   chapWeek: { backgroundColor: '#F1EBDC' },
   chapDone: { backgroundColor: Colors.yellow },
   chapOn: { backgroundColor: Colors.ink },
+  chapLocked: { opacity: 0.55, borderStyle: 'dashed' },
   chapPressed: { transform: [{ scale: 0.94 }] },
   chapText: { fontFamily: Font.display, fontSize: 13, lineHeight: 16 },
   // .chap.part::after: 진행 중인 과는 노란 점
@@ -736,5 +753,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  // 비회원: 다음 챕터 잠김 (흐린 면 · 자물쇠)
+  nextLocked: { backgroundColor: '#EEE8DA' },
   nextText: { flex: 1, fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
 });

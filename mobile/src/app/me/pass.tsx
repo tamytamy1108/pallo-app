@@ -9,6 +9,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { changesLeftText, getMembership, PASS_LOG, ymd } from '@/data/account';
 import { sfx } from '@/lib/feedback';
+import { MemberOnly } from '@/components/common/member-lock';
 
 const DAY = 864e5;
 /** 오늘 0시 기준 남은 날 (D-day 는 기기 날짜로 세요) */
@@ -21,7 +22,7 @@ function daysUntil(d: Date) {
  * 이용권 · 남은 세션 (프로토타입 passHTML): 남은 회차 · 유료/무료 · 기간 · D-day · 내 이용권 표 · 사용 내역(더 보기) · 결제 내역 ›
  * 아래 고정 [연기 · 변경 신청]. 금액은 보여 주지 않아요. 맞는 API: 37 `/me/membership` · 42 `/me/pass-usage`
  */
-export default function PassScreen() {
+function PassScreen() {
   const ms = getMembership();
   const [more, setMore] = useState(false);
   const P = ms.plan;
@@ -138,3 +139,12 @@ const styles = StyleSheet.create({
   no: { color: Colors.rosePink },
   more: { alignSelf: 'center', marginTop: 12 },
 });
+
+/** 회원 전용 화면 (state/access 'pass'): 비회원이 알림 · 주소로 바로 들어와도 '지점 회원이 되면 열려요' 칸만 보여요 */
+export default function PassScreenGate() {
+  return (
+    <MemberOnly feature="pass" title="이용권">
+      <PassScreen />
+    </MemberOnly>
+  );
+}

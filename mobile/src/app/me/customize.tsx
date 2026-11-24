@@ -307,7 +307,7 @@ export default function CustomizeScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.grid} keyboardShouldPersistTaps="handled">
+      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.grid} keyboardShouldPersistTaps="handled">
         {grid}
       </ScrollView>
 
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   bgsw: { width: '100%', height: '100%', borderRadius: 10, overflow: 'hidden', borderWidth: 1.5, borderColor: Colors.line },
   sayf: { gap: 8 },
   sayL: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
-  sayIn: { height: 48, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, paddingHorizontal: 14, fontFamily: Font.body800, fontSize: 15, backgroundColor: Colors.white, color: Colors.ink },
+  sayIn: { height: 48, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, paddingHorizontal: 14, fontFamily: Font.body800, fontSize: 15, backgroundColor: Colors.white, color: Colors.ink },
   ideas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   idea: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, justifyContent: 'center' },
   ideaT: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18 },

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { lockedChapter } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
@@ -12,6 +13,8 @@ import { Colors } from '@/constants/theme';
 import { STAGES, STAGE_COLOR, STAGE_KO, STUDY_STEPS, noLabel, sceneId, sceneOpen, unitId, type Book, type Lesson, type Scene, type SituationMap, type StudyLevel } from '@/data/library';
 import { SCENE_STEPS, sceneStepKey } from '@/data/situation';
 import { sfx } from '@/lib/feedback';
+import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
+import { useMe } from '@/state/me';
 import { isDone, stepKey, useDoneCount, useSavedPos } from '@/state/progress';
 
 import { levelDoneCount, sceneDone } from './library-state';
@@ -42,13 +45,23 @@ function PanelHead({ title, about }: { title: string; about: string }) {
 /** 커리큘럼: 고른 레벨의 과 목록 (처음부터 전부 · 접기 없음) */
 export function CurrPanel({ book }: { book: Book }) {
   const L = book.study;
+  // 비회원은 교재마다 첫 과만 (state/access)
+  const allOpen = useMe((m) => canUse(m, 'allChapters'));
   return (
     <PanelCard>
       <PanelHead title={`${book.lab ?? book.l} · ${book.jp ? book.n : book.s}`} about={L ? L.about : '예습 · 복습 커밍순'} />
       {book.mine && L && <ContinueCard L={L} />}
       {L ? (
         <View style={styles.lessons}>
-          {L.lessons.map((ls) => (ls.data ? <LessonRow key={ls.no} L={L} ls={ls} /> : <LockRow key={ls.no} no={noLabel(L, ls.no)} title={ls.title} sub={ls.pats ? ls.pats.join(' · ') : ls.sub} />))}
+          {L.lessons.map((ls) =>
+            !ls.data ? (
+              <LockRow key={ls.no} no={noLabel(L, ls.no)} title={ls.title} sub={ls.pats ? ls.pats.join(' · ') : ls.sub} />
+            ) : !allOpen && !isFreeChapter(ls.no) ? (
+              <MemberRow key={ls.no} no={noLabel(L, ls.no)} title={ls.title} sub={ls.pats ? ls.pats.join(' · ') : ls.sub} onPress={() => lockedChapter(`${ls.no}과`, levelFirstDone(L))} />
+            ) : (
+              <LessonRow key={ls.no} L={L} ls={ls} />
+            ),
+          )}
         </View>
       ) : (
         <EmptyBlock title="이 섬은 아직 구름에 가려 있어요" sub="교재 소개와 목차는 먼저 볼 수 있어요." button="교재 소개 보기" onPress={() => router.push(`/book/${book.id}` as Href)} />
@@ -59,12 +72,22 @@ export function CurrPanel({ book }: { book: Book }) {
 
 /** 상황 맵: 장면 목록 */
 export function SitPanel({ map }: { map: SituationMap }) {
+  // 비회원은 맵마다 첫 장면만 (state/access)
+  const allOpen = useMe((m) => canUse(m, 'allChapters'));
   const dn = map.scenes.filter((s) => sceneOpen(s) && sceneDone(map, s.no)).length;
   return (
     <PanelCard>
       <PanelHead title={`${map.title} 맵 · 장면 ${dn}/${map.scenes.length}`} about={map.about} />
       <View style={styles.lessons}>
-        {map.scenes.map((s) => (sceneOpen(s) ? <SceneRow key={s.no} map={map} s={s} /> : <LockRow key={s.no} no={String(s.no).padStart(2, '0')} title={s.title} sub={s.sub} />))}
+        {map.scenes.map((s) =>
+          !sceneOpen(s) ? (
+            <LockRow key={s.no} no={String(s.no).padStart(2, '0')} title={s.title} sub={s.sub} />
+          ) : !allOpen && !isFreeChapter(s.no) ? (
+            <MemberRow key={s.no} no={String(s.no).padStart(2, '0')} title={s.title} sub={s.sub} onPress={() => lockedChapter(`장면 ${s.no}`, sceneDone(map, FREE_CHAPTER))} />
+          ) : (
+            <SceneRow key={s.no} map={map} s={s} />
+          ),
+        )}
       </View>
       <View style={styles.more}>
         <PText style={styles.moreText}>새 장면과 새 상황 맵은 계속 열려요</PText>
@@ -221,6 +244,37 @@ function LockRow({ no, title, sub }: { no: string; title: string; sub: string })
   );
 }
 
+/** 비회원 잠김 (둘째 챕터부터): 흐린 줄 · 자물쇠 '회원 전용'. 누르면 잠김 1번 · 첫 챕터를 끝냈으면 권유 시트 */
+function MemberRow({ no, title, sub, onPress }: { no: string; title: string; sub: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} sound={false} accessibilityRole="button" accessibilityLabel={`${title}, 지점 회원 전용`}>
+      <View style={[styles.row, styles.rowMember]}>
+        <View style={[styles.no, styles.noLock]}>
+          <PText style={[styles.noText, { color: LOCK_INK }]}>{no}</PText>
+        </View>
+        <View style={styles.rt}>
+          <PText style={[styles.rtB, { color: '#6F6880' }]}>{title}</PText>
+          <PText style={styles.rtS} numberOfLines={1}>
+            {sub}
+          </PText>
+        </View>
+        <View style={styles.soon}>
+          <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke={Colors.purple} strokeWidth={2.4} strokeLinecap="round">
+            <Path d="M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4" />
+          </Svg>
+          <PText style={[styles.soonText, { color: Colors.purple }]}>회원 전용</PText>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+/** 교재 첫 과를 다 끝냈는지 (비회원 '다음 챕터' 권유) */
+const levelFirstDone = (L: StudyLevel) => {
+  const first = L.lessons[0];
+  return !!first && STAGES.flatMap((k) => STUDY_STEPS[L.kind][k]).every((st) => isDone(stepKey(L.lv, first.no, st.id)));
+};
+
 export function Chevron({ color = Colors.inkSub, size = 18 }: { color?: string; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
@@ -244,6 +298,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 10, paddingRight: 10, paddingLeft: 12, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
   rowPressed: { transform: [{ scale: 0.98 }] },
   rowLock: { borderStyle: 'dashed', borderColor: LOCK_LINE, backgroundColor: 'transparent' },
+  rowMember: { borderColor: LOCK_LINE, backgroundColor: '#F4F0E6', opacity: 0.85 },
   no: { width: 44, height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   noLock: { backgroundColor: 'transparent', borderColor: LOCK_LINE },
   noText: { fontFamily: Font.display, fontSize: 12, lineHeight: 15 },

@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/lounge/icons';
 import { LgButton } from '@/components/lounge/lg-button';
@@ -223,7 +224,7 @@ export default function ComposeScreen() {
             ) : (
               <PText style={styles.ds}>{me.branch} 이름으로 커뮤니티 탭에 보여요.</PText>
             )}
-            <TextInput
+            <GrowInput
               value={text}
               onChangeText={setText}
               multiline
@@ -471,7 +472,6 @@ const styles = StyleSheet.create({
   },
   ta: {
     minHeight: 110,
-    maxHeight: 420,
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: Colors.ink,

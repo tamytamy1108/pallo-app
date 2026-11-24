@@ -129,7 +129,7 @@ export function KoreaMap({ counts, mode, region, onRegion }: Props) {
                     );
                   })
                 : null}
-              {w && sel ? <RegionTag text={`${sel[0]} ${cnt(sel[0])}`} pos={toScreen(sel[1], sel[2])} k={ps * s} /> : null}
+              {w && sel ? <RegionTag text={cnt(sel[0]) ? `${sel[0]} ${cnt(sel[0])}` : `${sel[0]} 준비 중`} pos={toScreen(sel[1], sel[2])} k={ps * s} /> : null}
             </View>
           </View>
           <View style={styles.rl}>
@@ -150,7 +150,7 @@ export function KoreaMap({ counts, mode, region, onRegion }: Props) {
         <View style={styles.lgd}>
           {showM ? <Legend col={C.pk} label={`번개 ${totM}`} /> : null}
           {showC ? <Legend col={C.pu} label={`동아리 ${totC}`} /> : null}
-          <Legend col="#fff" label="아직 없음" />
+          <Legend col="#fff" label="준비 중" />
         </View>
       </View>
     </Shadowed>
@@ -195,6 +195,9 @@ function useZoom(region: Region | null) {
   return z;
 }
 
+/** 스파크 핀 둘레 여유 (지도 단위) */
+const PAD = 1.4;
+
 type PinProps = { x: number; y: number; n: number; col: string; on: boolean; sm: boolean; scale: number; onPress: () => void; label: string };
 
 /** 지역 스파크 하나 (프로토타입 lgBub: 많을수록 조금 커지고 · 개수는 하얀 동그라미 · 고르면 천천히 돌아요) */
@@ -207,8 +210,9 @@ function Pin({ x, y, n, col, on, sm, scale, onPress, label }: PinProps) {
   const hit = Math.max(44, size + 8);
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }} style={{ position: 'absolute', left: x - hit / 2, top: y - hit / 2, width: hit, height: hit, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View style={[{ width: size + 2.2 * scale, height: hw * scale + 2.2 * scale }, spinStyle]}>
-        <Svg width={size + 2.2 * scale} height={hw * scale + 2.2 * scale} viewBox={`0 0 ${w + 2.2} ${hw + 2.2}`}>
+      {/* 테두리(1)와 그림자(1.6 · 2.2)가 깎이지 않게 둘레에 PAD 만큼 여유를 두고 그려요 */}
+      <Animated.View style={[{ width: (w + 1.6 + PAD * 2) * scale, height: (hw + 2.2 + PAD * 2) * scale }, spinStyle]}>
+        <Svg width={(w + 1.6 + PAD * 2) * scale} height={(hw + 2.2 + PAD * 2) * scale} viewBox={`${-PAD} ${-PAD} ${w + 1.6 + PAD * 2} ${hw + 2.2 + PAD * 2}`}>
           {n ? (
             <>
               <G transform={`translate(1.6 2.2) scale(${w / 426.31})`}>

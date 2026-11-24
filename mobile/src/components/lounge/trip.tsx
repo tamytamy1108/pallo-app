@@ -1,7 +1,8 @@
 import { type ReactNode, useState } from 'react';
-import { type LayoutChangeEvent, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { type LayoutChangeEvent, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
@@ -14,6 +15,7 @@ import { type AbroadPerson, CC_KEYS, ccOf, type CountryCode, daysFrom, LG_C, LG_
 import { WORLD_MAP } from '@/data/lounge-maps';
 import { addPerson, addTrip, closeTrip, removeMyPerson, setCountry, setTripState, useLounge } from '@/data/lounge-store';
 import { useMe } from '@/state/me';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { Face } from './face';
 import { LgIcon, SparkIcon } from './icons';
@@ -254,7 +256,7 @@ export function PersonSheet({ p, onClose }: { p: AbroadPerson | null; onClose: (
         {'\n'}
         {p.job} · {p.br} 출신
       </PText>
-      {p.me ? null : <TextInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="질문 입력" />}
+      {p.me ? null : <GrowInput value={v} onChangeText={setV} multiline placeholder="예) 집 구할 때 보증금은 보통 얼마였어요?" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="질문 입력" />}
     </Sheet>
   );
 }
@@ -262,7 +264,7 @@ export function PersonSheet({ p, onClose }: { p: AbroadPerson | null; onClose: (
 /** 알약 고르기 줄 (프로토타입 lgPills · 옆으로 넘겨요) */
 export function Pills({ opts, on, onPick, multi = false }: { opts: string[]; on: string[]; onPick: (v: string) => void; multi?: boolean }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsWrap} contentContainerStyle={styles.pills} accessibilityRole={multi ? undefined : 'radiogroup'}>
+    <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.pillsWrap} contentContainerStyle={styles.pills} accessibilityRole={multi ? undefined : 'radiogroup'}>
       {opts.map((o) => {
         const sel = on.includes(o);
         return (
@@ -271,7 +273,7 @@ export function Pills({ opts, on, onPick, multi = false }: { opts: string[]; on:
           </Pressable>
         );
       })}
-    </ScrollView>
+    </ChipScroll>
   );
 }
 
@@ -279,7 +281,8 @@ export function Field({ label, value, onChange, placeholder }: { label: string; 
   return (
     <View style={styles.fl}>
       <PText style={styles.lb}>{label}</PText>
-      <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel={label} />
+      {/* 길게 쓰면 줄이 바뀌고 칸이 늘어나요. Enter 는 줄 바꿈 대신 닫기 */}
+      <GrowInput value={value} onChangeText={onChange} submitBehavior="blurAndSubmit" placeholder={placeholder} placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel={label} />
     </View>
   );
 }
@@ -468,7 +471,7 @@ const styles = StyleSheet.create({
   fl: { gap: 6 },
   fl2: { flexDirection: 'row', gap: 10 },
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
-  input: { height: 46, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  input: { minHeight: 46, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, lineHeight: 20, includeFontPadding: false, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   pillsWrap: { marginHorizontal: -18, flexGrow: 0 },
   pills: { gap: 7, paddingTop: 2, paddingHorizontal: 18, paddingBottom: 4 },
   pill: { height: 36, paddingHorizontal: 13, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: '#fff', justifyContent: 'center' },

@@ -6,7 +6,7 @@ import { SPARK_PATH } from '@/data/lounge-maps';
 
 /**
  * 지도 표시 = PALLO 스파크 심볼 (프로토타입 lgBub). 많을수록 조금 커지고, 개수는 하얀 동그라미.
- * n = 0 이면 '아직 없음' 하얀 스파크. sm = 번개 · 동아리가 같이 있어 둘 다 조금 작게.
+ * n = 0 이면 '준비 중' 하얀 스파크. sm = 번개 · 동아리가 같이 있어 둘 다 조금 작게.
  * 누르기는 지도 전체에서 받아 가장 가까운 곳을 골라요 (웹에서 SVG 안 터치가 경고를 내서).
  */
 export function SparkPin({ x, y, n, color, sm = false, scale = 1 }: { x: number; y: number; n: number; color: string; sm?: boolean; scale?: number }) {

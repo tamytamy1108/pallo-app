@@ -1,8 +1,9 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/lounge/icons';
 import { LgButton } from '@/components/lounge/lg-button';
@@ -106,7 +107,7 @@ export default function StoryNewScreen() {
         </View>
         <View style={styles.fl}>
           <PText style={styles.lb}>한 줄 이야기</PText>
-          <TextInput value={text} onChangeText={setText} placeholder="예) 오늘 세션 끝! 영어로만 20분 버텼어요" placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel="한 줄 이야기" />
+          <GrowInput value={text} onChangeText={setText} placeholder="예) 오늘 세션 끝! 영어로만 20분 버텼어요" placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel="한 줄 이야기" />
         </View>
         <Pressable onPress={pick} accessibilityRole="button" style={[styles.photo, img ? styles.photoOn : null]}>
           {img ? <Image source={{ uri: img }} style={styles.thumb} contentFit="cover" /> : <LgIcon name="image" size={26} />}
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   small: { fontFamily: Font.body600, fontSize: 12, lineHeight: 16.8 },
   fl: { gap: 6 },
   lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
-  input: { height: 46, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  input: { minHeight: 46, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, lineHeight: 20, includeFontPadding: false, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   photo: { height: 96, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.ink, borderRadius: 18, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', gap: 6, flexDirection: 'row' },
   photoOn: { borderStyle: 'solid', backgroundColor: Colors.lavender },
   thumb: { width: 56, height: 56, borderRadius: 10, borderWidth: 2, borderColor: Colors.ink },

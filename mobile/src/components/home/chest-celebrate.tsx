@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
@@ -11,6 +11,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { ChestReward } from '@/data/home';
 import { haptic, sfx } from '@/lib/feedback';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { CHEST_RATIO, TreasureChest } from './treasure-chest';
 
@@ -113,7 +114,7 @@ export function ChestCelebrate({
   const heading = !open ? `${unitLabel} 끝!\n상자를 열어 봐요` : firstOpen ? `${unitLabel} 완료!` : `${unitLabel} 보상`;
 
   return (
-    <Modal visible animationType="fade" onRequestClose={onHome} statusBarTranslucent>
+    <LayerModal visible animationType="fade" onRequestClose={onHome} statusBarTranslucent>
       <View style={StyleSheet.flatten([styles.root, { paddingTop: 54 + insets.top }])}>
         <View style={styles.kick}>
           <PText style={styles.kickText} color={Colors.purple}>
@@ -201,7 +202,7 @@ export function ChestCelebrate({
           </Pressable>
         </View>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

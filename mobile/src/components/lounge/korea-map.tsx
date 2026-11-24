@@ -110,7 +110,7 @@ export function MiniMapCard() {
           </View>
           <View style={styles.ic}>
             <SparkIcon color="#fff" />
-            <PText style={styles.lgdText}>아직 없음</PText>
+            <PText style={styles.lgdText}>준비 중</PText>
           </View>
         </View>
       </View>

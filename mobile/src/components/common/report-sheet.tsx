@@ -83,7 +83,6 @@ export function ReportSheet({
     }
   }
   const who = target.name;
-  const showLink = link ?? (target.kind !== 'member' && target.kind !== 'comment');
 
   const go = (s: Stage) => {
     setReason(null);
@@ -135,18 +134,6 @@ export function ReportSheet({
     );
 
   const rows: (SheetOption & { run: () => void })[] = [
-    ...(showLink
-      ? [
-          {
-            key: 'link',
-            label: '링크 복사',
-            run: () => {
-              onClose();
-              showToast('링크를 복사했어요');
-            },
-          },
-        ]
-      : []),
     ...extra.map((x) => ({ key: x.key, label: x.label, sub: x.sub, run: x.onPress })),
     { key: 'report', label: '신고하기', sub: '매니저가 24시간 안에 확인해요', bad: true, run: () => go('report') },
     { key: 'block', label: `${who} 차단하기`, sub: '서로의 글이 더 이상 보이지 않아요', bad: true, run: () => go('block') },

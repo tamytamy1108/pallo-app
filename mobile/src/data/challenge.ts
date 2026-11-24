@@ -75,6 +75,8 @@ export type Challenge = {
   name: string;
   /** 카드 문구 (줄바꿈 \n) */
   pw?: string;
+  /** 대표 사진: 연 사람이 직접 올린 사진 (앱에 넣은 그림 require 또는 주소). 없으면 기본 배경 + 카드 문구 */
+  cover?: number | string;
   guide?: string;
   freqT?: string;
   dur?: number;
@@ -107,7 +109,7 @@ export const CHALLENGES: Challenge[] = [
   { id: 'c1', who: '민준', av: CH_C.sky, br: '잠실점', time: '1시간 전', name: '30일 하루 한 문장', ls: 6, host: '하나', members: 128, day: 17, of: 30, q: 'I’m on the fence about it.', hl: 'on the fence', ko: '그건 아직 결정을 못 하겠어요 · 세션에서 배운 표현', lang: 'en-US', likes: 41, rec: true },
   { id: 'c2', who: 'Leo', av: CH_C.pk, br: '연신내', time: '3시간 전', name: '주 3회 쉐도잉 · 4주', src: { k: 'free', t: '11.12 영등포 세션' }, unit: '회', bg: 'sk', host: 'Leo', members: 46, day: 9, of: 12, q: 'Could you say that again?', hl: 'say that again', ko: '다시 말해 줄래요? · 이번 주 쉐도잉 문장', lang: 'en-US', likes: 22 },
   { id: 'c4', cat: 'health', way: 'photo', who: '소라', av: CH_C.mint, br: '영등포', time: '5시간 전', name: '14일 아침 건강하게 먹기', guide: '아침 식단 사진 한 장 + 한 줄 소감 · 영어로 쓰면 더 좋아요', freqT: '매일', dur: 14, host: '소라', members: 37, day: 5, of: 14, bg: 'sk', lang: 'en-US', likes: 18 },
-  { id: 'c6', cat: 'move', way: 'photo', who: '하람', av: CH_C.sky, br: '부산 수영점', time: '2시간 전', name: '매일 30분 걷기', pw: 'WALK\n30 MIN', guide: '걸음 수 캡처 + 한 줄 · 걸으며 들은 영어 표현도 좋아요', freqT: '매일', dur: 21, host: '하람', members: 64, day: 11, of: 21, bg: 'sk', lang: 'en-US', likes: 33 },
+  { id: 'c6', cat: 'move', way: 'photo', who: '하람', av: CH_C.sky, br: '부산 수영점', time: '2시간 전', name: '매일 30분 걷기', pw: 'WALK\n30 MIN', cover: require('@/assets/images/challenge/sample-walk.webp'), guide: '걸음 수 캡처 + 한 줄 · 걸으며 들은 영어 표현도 좋아요', freqT: '매일', dur: 21, host: '하람', members: 64, day: 11, of: 21, bg: 'sk', lang: 'en-US', likes: 33 },
   { id: 'c7', cat: 'habit', way: 'cmt', who: '수아', av: CH_C.lpu, br: '잠실점', time: '3시간 전', name: '하루 단어 10개', pw: '10\nWORDS', guide: '오늘 외운 단어 10개 + 그중 하나로 한 문장', freqT: '매일', dur: 30, host: '수아', members: 91, day: 22, of: 30, bg: '', lang: 'en-US', likes: 47 },
   { id: 'c8', cat: 'health', way: 'photo', who: '지우', av: CH_C.sky, br: '대전 둔산점', time: '4시간 전', name: '하루 물 2L 마시기', pw: '2L\nWATER', guide: '물병 사진 한 장 + 몇 잔 마셨는지', freqT: '매일', dur: 14, host: '지우', members: 45, day: 9, of: 14, bg: 'sk', lang: 'en-US', likes: 15 },
   { id: 'c9', cat: 'free', way: 'photo', who: '예린', av: CH_C.sky, br: '잠실점', time: '어제', name: '하루 한 장 하늘 사진', pw: 'LOOK\nUP', guide: '오늘 하늘 사진 + 영어 한 단어로 날씨 표현', freqT: '월·수·금', dur: 21, host: '예린', members: 28, day: 4, of: 9, unit: '회', bg: '', lang: 'en-US', likes: 12 },
@@ -455,7 +457,7 @@ export function planOf(start: StartOpt, D: number, weekly: boolean, n: number, d
 }
 
 /** do-chal (일상) */
-export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; plan: ChPlan }) {
+export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; plan: ChPlan; cover?: string }) {
   const me = getMe();
   const live = !o.plan.off;
   const p: Challenge = {
@@ -464,6 +466,7 @@ export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'p
     way: o.way,
     rec: true,
     ...(o.pw.length ? { pw: o.pw.map((x) => x.toUpperCase()).join('\n') } : {}),
+    ...(o.cover ? { cover: o.cover } : {}),
     who: me.name,
     av: CH_C.y,
     br: me.branch.split(' · ')[0],

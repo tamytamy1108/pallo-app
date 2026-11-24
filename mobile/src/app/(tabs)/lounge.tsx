@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Pressable } from '@/components/ui/pressable';
 import { ChallengeTab } from '@/components/challenge/challenge-tab';
 import { useBlockedNames } from '@/components/common/report-sheet';
+import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { guardMember } from '@/components/common/trial-guide';
 import { BranchSelect, branchList, branchValue } from '@/components/lounge/branch-select';
 import { CreateSheet, type CreateKind } from '@/components/lounge/create-sheet';
@@ -27,12 +28,17 @@ import { Colors } from '@/constants/theme';
 import { ALL_SUBS, type AbroadPerson, branchOk, COM_SUBS, type FeedItem, LG_TABS, type LoungeTab, TRIP_SUBS } from '@/data/lounge';
 import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge } from '@/data/lounge-store';
 import { EASE } from '@/lib/motion';
+import { useTabReselect } from '@/lib/tab-reselect';
+import { useCenterChip } from '@/lib/center-chip';
 
 /**
  * 라운지 (docs/pages/04-lounge.md · 프로토타입 renderLounge · bindLounge, 탭 id azit).
  * 위에서부터: 제목 → 밑줄 탭 → 스토리 줄(추천 · 커뮤니티) → 지점 선택 + 서브 칩 → 탭별 피드. 오른쪽 아래 노랑 + 와 맨 위로.
  * 챌린지 · 번개 · 동아리 탭 본문은 각 담당 컴포넌트를 그대로 넣어요.
  */
+/** 비회원이 볼 수 있는 탭 아래 높이 (스토리 줄 + 카드 1~2개) */
+const LOUNGE_PEEK = 720;
+
 export default function LoungeScreen() {
   const tab = useLounge((s) => s.tab);
   // /lounge?tab=all|com|chal|meet|trip 로 탭을 바로 열 수 있어요 (랭킹의 챌린지 카드 → ?tab=chal)
@@ -51,6 +57,7 @@ export default function LoungeScreen() {
   const region = useLounge((s) => s.region);
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollViewInstance>(null);
+  useTabReselect('lounge', () => scroll.current?.scrollTo({ y: 0, animated: true }));
   const tabsY = useRef(0);
   const [scrolled, setScrolled] = useState(false);
   const [sheet, setSheetRaw] = useState<null | 'create' | 'trip' | 'abroad'>(null);
@@ -71,6 +78,7 @@ export default function LoungeScreen() {
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
     if (y > 360 !== scrolled) setScrolled(y > 360);
+    checkScrollLock('lounge');
   };
   // 고른 칸은 시트가 다 닫힌 뒤에 열어요. 닫히는 중에 다른 화면 · 시트를 열면 아이폰에서 아무 일도 안 일어나요
   const picked = useRef<CreateKind | null>(null);
@@ -99,17 +107,20 @@ export default function LoungeScreen() {
         <View onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>
           <Tabs tab={tab} onPick={pickTab} />
         </View>
-        {tab === 'all' || tab === 'com' ? <StoryRow /> : null}
-        {tab === 'chal' ? (
-          <ChallengeTab branch={branch} header={branchBtn} />
-        ) : tab === 'meet' ? (
-          <MeetTab branch={branch} header={branchBtn} region={region} />
-        ) : (
-          <>
-            <SubRow tab={tab} branchBtn={branchBtn} />
-            <Feed tab={tab} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
-          </>
-        )}
+        {/* 비회원은 모든 탭에서 위쪽(카드 1~2개)까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
+        <ScrollLock key={tab} screen="lounge" peek={LOUNGE_PEEK}>
+          {tab === 'all' || tab === 'com' ? <StoryRow /> : null}
+          {tab === 'chal' ? (
+            <ChallengeTab branch={branch} header={branchBtn} />
+          ) : tab === 'meet' ? (
+            <MeetTab branch={branch} header={branchBtn} region={region} />
+          ) : (
+            <>
+              <SubRow tab={tab} branchBtn={branchBtn} />
+              <Feed tab={tab} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
+            </>
+          )}
+        </ScrollLock>
       </ScrollView>
 
       <ToTop show={scrolled} bottom={fabBottom + 60 + 14} onPress={() => scroll.current?.scrollTo({ y: 0, animated: true })} />
@@ -130,13 +141,21 @@ export default function LoungeScreen() {
 
 /** 밑줄 탭 · 오른쪽 끝을 흐리게 해서 더 넘길 수 있다는 표시 (프로토타입 #lgTabs) */
 function Tabs({ tab, onPick }: { tab: LoungeTab; onPick: (k: LoungeTab) => void }) {
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
   return (
     <View style={styles.tabsWrap}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+      <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
         {LG_TABS.map(([k, l]) => {
           const on = tab === k;
           return (
-            <Pressable key={k} onPress={() => onPick(k)} accessibilityRole="tab" accessibilityState={{ selected: on }} hitSlop={{ top: 4, bottom: 4 }} style={[styles.tab, on && styles.tabOn]}>
+            <Pressable
+              key={k}
+              onLayout={(e) => onChip(k, e)}
+              onPress={() => {
+                centerChip(k);
+                onPick(k);
+              }}
+              accessibilityRole="tab" accessibilityState={{ selected: on }} hitSlop={{ top: 4, bottom: 4 }} style={[styles.tab, on && styles.tabOn]}>
               <PText style={[styles.tabText, on && { color: Colors.ink }]}>{l}</PText>
             </Pressable>
           );
@@ -156,8 +175,9 @@ function SubRow({ tab, branchBtn }: { tab: LoungeTab; branchBtn: ReactNode }) {
       : tab === 'trip'
         ? TRIP_SUBS.map(([v, l]) => ({ v, l, on: sub.trip === v, pick: () => setTripMode(v) }))
         : ALL_SUBS.map(([v, l]) => ({ v, l, on: sub.all === v, pick: () => setAllSub(v) }));
+  const [rowRef, onRow, onChip, centerChip] = useCenterChip();
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subs}>
+    <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subs}>
       {tab === 'trip' ? null : (
         <>
           {branchBtn}
@@ -165,7 +185,14 @@ function SubRow({ tab, branchBtn }: { tab: LoungeTab; branchBtn: ReactNode }) {
         </>
       )}
       {chips.map((c) => (
-        <Pressable key={c.v} onPress={c.pick} accessibilityRole="button" accessibilityState={{ selected: c.on }} hitSlop={7} style={({ pressed }) => [styles.chip, c.on && styles.chipOn, pressed && { transform: [{ scale: 0.96 }] }]}>
+        <Pressable
+          key={c.v}
+          onLayout={(e) => onChip(c.v, e)}
+          onPress={() => {
+            centerChip(c.v);
+            c.pick();
+          }}
+          accessibilityRole="button" accessibilityState={{ selected: c.on }} hitSlop={7} style={({ pressed }) => [styles.chip, c.on && styles.chipOn, pressed && { transform: [{ scale: 0.96 }] }]}>
           <PText style={[styles.chipText, c.on && { color: Colors.purple }]}>{c.l}</PText>
         </Pressable>
       ))}
