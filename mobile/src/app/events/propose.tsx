@@ -68,7 +68,7 @@ export default function ProposeEvent() {
           열고 싶은 이벤트가 있다면 알려 주세요. 지점 매니저가 확인하고 <PText style={styles.noteB}>2~3일 안에 문자로</PText> 연락드려요. 확정되면 이벤트 탭에 올라가요.
         </PText>
       </View>
-      <Field label="이벤트 사진" hint={pics.length ? (card ? '카드가 대표예요. 사진은 그 뒤에 보여요.' : '첫 장이 대표 사진이 돼요. 사진을 누르면 대표로 바꿔요.') : '사진이 없으면 아래 카드가 대표예요.'}>
+      <Field label="대표 이미지 · 사진 여러 장 또는 카드" hint={pics.length ? (card ? '카드가 대표예요. 사진은 그 뒤에 보여요.' : '첫 장이 대표 사진이 돼요. 사진을 누르면 대표로 바꿔요.') : '사진이 없으면 아래 카드가 대표예요.'}>
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
         <CardMaker value={card} onChange={setCard} hasPhoto={pics.length > 0} fallback={['NEW', 'EVENT']} />
       </Field>

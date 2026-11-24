@@ -1,20 +1,18 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
-import { MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
+import { CountStepper, MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
 import { usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyClub } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
-import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
 import { CLUB_CATS, REGIONS, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
@@ -94,13 +92,13 @@ export default function NewClub() {
         <TimeChips times={TIMES} value={time} onChange={setTime} />
       </Field>
       <Field label="최대 인원 · 나 포함">
-        <Stepper value={max} min={MAX_MIN} max={MAX_MAX} unit="명" onChange={setMax} />
+        <CountStepper value={max} min={MAX_MIN} max={MAX_MAX} format={(v) => `${v}명`} onChange={setMax} less="한 명 줄이기" more="한 명 늘리기" />
       </Field>
       <Field label="가입 조건">
         <SheetPills options={CONDS} value={cond} onChange={setCond} />
       </Field>
       <TextField label="채팅방 공지 (가입하면 보여요)" value={memo} onChangeText={setMemo} placeholder="예) 첫 모임은 자기소개만 해도 충분해요." />
-      <Field label={pics.length ? (card ? '포스터 사진 · 카드 뒤에 보여요' : '포스터 사진 · 여러 장 · 누르면 대표로') : '포스터 사진 · 없으면 아래 카드가 대표예요'}>
+      <Field label="대표 이미지 · 사진 여러 장 또는 카드">
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
         <CardMaker
           value={card}
@@ -113,37 +111,6 @@ export default function NewClub() {
     </SheetPage>
   );
 }
-
-/** − 12명 + (누르면 하나씩, 끝에 닿으면 흐리게) */
-function Stepper({ value, min, max, unit, onChange }: { value: number; min: number; max: number; unit: string; onChange: (v: number) => void }) {
-  const step = (d: number) => {
-    const v = Math.min(max, Math.max(min, value + d));
-    if (v === value) return;
-    sfx('tap');
-    onChange(v);
-  };
-  const btn = (d: number, label: string, off: boolean) => (
-    <Pressable onPress={() => step(d)} disabled={off} accessibilityRole="button" accessibilityLabel={label} hitSlop={6} style={({ pressed }) => [st.b, off && st.off, pressed && st.on]}>
-      <PText style={st.bt}>{d < 0 ? '−' : '+'}</PText>
-    </Pressable>
-  );
-  return (
-    <View style={st.row} accessibilityRole="adjustable" accessibilityValue={{ min, max, now: value, text: `${value}${unit}` }}>
-      {btn(-1, '한 명 줄이기', value <= min)}
-      <PText style={st.v}>{`${value}${unit}`}</PText>
-      {btn(1, '한 명 늘리기', value >= max)}
-    </View>
-  );
-}
-
-const st = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 14 },
-  b: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
-  bt: { fontFamily: Font.body900, fontSize: 20, lineHeight: 24 },
-  v: { minWidth: 56, textAlign: 'center', fontFamily: Font.display, fontSize: 18, lineHeight: 24 },
-  off: { opacity: 0.35 },
-  on: { transform: [{ scale: 0.94 }] },
-});
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

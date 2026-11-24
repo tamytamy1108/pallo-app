@@ -184,7 +184,7 @@ export function Pills<T extends string | number>({
   );
 }
 
-/** .lg-fl > .lb: 칸 이름 (14px · 900) */
+/** .lg-fl > .lb: 칸 이름 (12.5px · 900 — 번개 · 동아리 · 이벤트 만들기와 같아요) */
 export function FieldLabel({ children }: { children: string }) {
   return <PText style={styles.lb}>{children}</PText>;
 }
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   pillOn: { backgroundColor: Colors.purple },
   pillT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18, color: Colors.ink },
   pillTOn: { color: Colors.white },
-  lb: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
+  lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
   field: { minHeight: 48, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, paddingHorizontal: 14, justifyContent: 'center' },
   fieldMulti: { minHeight: 110, justifyContent: 'flex-start', paddingVertical: 12 },
   fieldIn: { fontFamily: Font.body600, fontSize: 15, color: Colors.ink, paddingVertical: 10 },

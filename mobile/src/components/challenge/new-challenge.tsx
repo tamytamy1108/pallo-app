@@ -39,7 +39,7 @@ import {
 import { haptic, sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
-import { PosterPicker } from '@/components/event/form-parts';
+import { CountStepper, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
 import { usedCard, type MadeCard } from '@/data/poster-colors';
 
@@ -202,16 +202,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <Pills options={['매일', '주 몇 회'] as const} value={weekly ? '주 몇 회' : '매일'} onChange={(v) => setWeekly(v === '주 몇 회')} />
             {weekly ? (
               <View style={styles.fx}>
-                {/* .ch-step: − 주 n회 + */}
-                <View style={styles.step}>
-                  <Pressable onPress={() => changeN(-1)} accessibilityRole="button" accessibilityLabel="한 번 줄이기" style={styles.stepBtn}>
-                    <PText style={styles.stepBtnT}>−</PText>
-                  </Pressable>
-                  <PText style={styles.stepN}>{`주 ${n}회`}</PText>
-                  <Pressable onPress={() => changeN(1)} accessibilityRole="button" accessibilityLabel="한 번 늘리기" style={styles.stepBtn}>
-                    <PText style={styles.stepBtnT}>+</PText>
-                  </Pressable>
-                </View>
+                <CountStepper value={n} min={1} max={6} format={(v) => `주 ${v}회`} onChange={(v) => changeN(v - n)} less="한 번 줄이기" more="한 번 늘리기" />
                 <PText style={styles.fxl}>
                   {'인증 요일 '}
                   <PText style={styles.fxlB}>{`${days.length} / ${n}`}</PText>
@@ -245,7 +236,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <Field value={guide} onChangeText={setGuide} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="어떻게 인증하나요?" />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>대표 이미지</FieldLabel>
+            <FieldLabel>대표 이미지 · 사진 또는 카드</FieldLabel>
             <PosterPicker uris={covers} onChange={setCovers} emptyLabel="사진 넣기" max={1} />
             <CardMaker value={card} onChange={setCard} hasPhoto={covers.length > 0} defaultColor={chPbgOf(cat)} fallback={pwDef} square clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요." />
             <PText style={styles.wayd}>{covers.length && !card ? '순위 · 카드 · 상세의 네모 칸에 이 사진이 보여요.' : '순위 · 카드 · 상세의 네모 칸에 이 카드가 보여요.'}</PText>
@@ -396,10 +387,6 @@ const styles = StyleSheet.create({
   xd: { fontFamily: Font.body700, fontSize: 13, lineHeight: 20.15, color: Colors.purple },
   xdB: { fontFamily: Font.body900, fontSize: 13, color: Colors.purple },
   fx: { gap: 8, marginTop: 4 },
-  step: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', padding: 3, borderRadius: 22, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
-  stepBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.purple, alignItems: 'center', justifyContent: 'center' },
-  stepBtnT: { fontFamily: Font.body900, fontSize: 20, lineHeight: 22, color: Colors.white },
-  stepN: { width: 72, textAlign: 'center', fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   fxl: { marginTop: 4, fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: SUB },
   fxlB: { fontFamily: Font.body900, fontSize: 12, color: SUB },
   sum: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19.5, color: SUB },

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
-import { PlacePicker, PosterPicker, TimeChips, type Place } from '@/components/event/form-parts';
+import { CountStepper, PlacePicker, PosterPicker, TimeChips, type Place } from '@/components/event/form-parts';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
 import { usedCard, type MadeCard } from '@/data/poster-colors';
@@ -21,7 +21,9 @@ import { useMe } from '@/state/me';
 
 const MEET_MAX = 7; // 오늘부터 1주 뒤까지 (프로토타입 MEET_MAX)
 const TIMES = ['10:00', '12:00', '14:00', '16:00', '18:00', '19:00', '19:30', '20:00', '20:30', '21:00'];
-const CAPS = ['4명', '6명', '8명', '10명'];
+/** 정원 (나 포함) — 직접 정해요 */
+const CAP_MIN = 2;
+const CAP_MAX = 20;
 const t0 = () => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -46,7 +48,7 @@ export default function NewMeet() {
   const [time, setTime] = useState('20:00');
   const [place, setPlace] = useState<Place | null>(null);
   const [addr2, setAddr2] = useState('');
-  const [cap, setCap] = useState('6명');
+  const [cap, setCap] = useState(6);
   const [pics, setPics] = useState<string[]>([]);
   // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
   const [card, setCard] = useState<MadeCard | null>(null);
@@ -70,7 +72,7 @@ export default function NewMeet() {
       addr2: addr2.trim() || undefined,
       host: me.name,
       cur: 1,
-      max: parseInt(cap, 10) || 6,
+      max: cap,
       mine: true,
       posters: pics.length ? pics : undefined,
       card: usedCard(card, pics.length > 0),
@@ -145,10 +147,10 @@ export default function NewMeet() {
         <PlacePicker region={reg} value={place} onChange={setPlace} />
       </Field>
       <TextField label="상세 주소 · 직접 적어요 (선택)" value={addr2} onChangeText={setAddr2} placeholder="예) 3층 창가 긴 테이블 · 입구에서 오른쪽" />
-      <Field label="정원">
-        <SheetPills options={CAPS} value={cap} onChange={setCap} />
+      <Field label="정원 · 나 포함">
+        <CountStepper value={cap} min={CAP_MIN} max={CAP_MAX} format={(v) => `${v}명`} onChange={setCap} less="한 명 줄이기" more="한 명 늘리기" />
       </Field>
-      <Field label={pics.length ? (card ? '포스터 사진 · 카드 뒤에 보여요' : '포스터 사진 · 여러 장 · 누르면 대표로') : '포스터 사진 · 없으면 아래 카드가 대표예요'}>
+      <Field label="대표 이미지 · 사진 여러 장 또는 카드">
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
         <CardMaker
           value={card}
