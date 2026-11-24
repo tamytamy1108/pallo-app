@@ -44,7 +44,8 @@ jest.mock('react-native-reanimated', () => {
     withDelay: (_: number, v: unknown) => v,
   };
 });
-jest.mock('@/components/library/world/world-support', () => ({ liteWorld: () => false }));
+let mockLite = false;
+jest.mock('@/components/library/world/world-support', () => ({ liteWorld: () => mockLite }));
 jest.mock('@/components/ui/raised', () => ({ Raised: ({ children }: { children: ReactNode }) => children }));
 
 const W = (slot: string, order: number): LibWorld => ({ slot, id: slot, sc: [['a', 'b', 'open']], order });
@@ -60,6 +61,7 @@ const draw = (id: string) => act(async () => of(id).at(-1)!.draw());
 
 beforeEach(() => {
   fakes.length = 0;
+  mockLite = false;
   jest.useFakeTimers();
 });
 afterEach(() => jest.useRealTimers());
@@ -79,6 +81,20 @@ describe('라이브러리 지도 바꾸기', () => {
     expect(fakes.map((f) => f.id)).toEqual(['study', 'travel', 'biz']);
   });
 
+  it('미리 만들 지도가 남아 있는 동안 보이는 지도는 멈춰 있다가 다 만들면 움직여요', async () => {
+    await render(<LibraryWorld world={study} warm={[travel, biz]} onOpen={() => {}} />);
+    expect(of('study')[0].active).toBe(true); // 만드는 중 (아직 그리기 전)
+    await draw('study');
+    expect(of('study')[0].active).toBe(false);
+    await tick(1000);
+    await draw('travel');
+    expect(of('study')[0].active).toBe(false); // biz 가 남았어요
+    await tick(1000);
+    await draw('biz');
+    expect(of('study')[0].active).toBe(true);
+    expect(of('travel')[0].active).toBe(false);
+  });
+
   it('미리 만든 지도로 바꾸면 새로 만들지 않고 바로 돌며 들어와요', async () => {
     const r = await render(<LibraryWorld world={study} warm={[travel]} onOpen={() => {}} />);
     await draw('study');
@@ -88,8 +104,21 @@ describe('라이브러리 지도 바꾸기', () => {
     expect(of('travel')).toHaveLength(1);
     expect(of('travel')[0].active).toBe(true);
     expect(of('travel')[0].replays).toEqual([1]); // 스터디 맵(-1) → 상황 맵(0): 시계 방향
+    expect(of('study')[0].active).toBe(false); // 새 지도가 돌며 들어오는 동안 앞 지도는 그리기를 멈춰요
     await tick(400);
-    expect(of('study')[0].active).toBe(false); // 다 뜨면 앞 지도는 숨어요
+    expect(of('study')).toHaveLength(1); // 앞 지도는 숨겨 두기만 (다시 돌아가면 바로)
+  });
+
+  it('메모리가 적은 폰은 다음에 갈 지도 두 장만 미리 만들어요', async () => {
+    mockLite = true;
+    await render(<LibraryWorld world={study} warm={[travel, biz, cafe]} onOpen={() => {}} />);
+    await draw('study');
+    await tick(1000);
+    await draw('travel');
+    await tick(1000);
+    await draw('biz');
+    await tick(3000);
+    expect(fakes.map((f) => f.id)).toEqual(['study', 'travel', 'biz']);
   });
 
   it('왼쪽 맵으로 가면 반대로 돌아요', async () => {
@@ -110,6 +139,7 @@ describe('라이브러리 지도 바꾸기', () => {
     await tick(500);
     await draw('biz');
     expect(of('biz')[0].replays).toEqual([1]);
+    expect(of('travel')[0].active).toBe(false);
 
     await r.rerender(<LibraryWorld world={cafe} onOpen={() => {}} />);
     await tick(1500);

@@ -90,12 +90,14 @@ export default function LibraryScreen() {
     return { slot: 'study', id: MAP_PRESETS['island-study'].build, sc, order: -1 };
   })();
   const world = sitMap ? sitWorld(sitMap) : !st.sitMode ? studyWorld : null;
-  // 한 번에 갈 수 있는 지도를 미리 만들어 둬요 (바로 바뀌게): 가까운 상황 맵부터 · 스터디 맵
-  const here = world?.order ?? -1;
-  const warm: LibWorld[] = [
-    ...sits.map(sitWorld).sort((a, b) => Math.abs(a.order - here) - Math.abs(b.order - here)),
-    ...(studyWorld ? [studyWorld] : []),
-  ];
+  // 한 번에 갈 수 있는 지도를 미리 만들어 둬요 (바로 바뀌게) — 다음에 누를 것 같은 지도부터:
+  // 스터디 맵에서는 상황 맵 탭을 누르면 뜰 맵 → 다른 상황 맵 · 상황 맵에서는 옆 상황 맵 → 스터디 맵 → 나머지
+  const tabSit = sits.find((m) => m.id === st.map) ?? sits[0];
+  const here = sitMap ? allSits.indexOf(sitMap) : tabSit ? allSits.indexOf(tabSit) : -1;
+  const near = sits.map(sitWorld).sort((a, b) => Math.abs(a.order - here) - Math.abs(b.order - here));
+  const warm: LibWorld[] = sitMap
+    ? [...near.slice(1, 2), ...(studyWorld ? [studyWorld] : []), ...near.slice(2)]
+    : near;
 
   const onOpen = (no: number) => {
     if (sitMap) {

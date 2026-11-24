@@ -1,6 +1,6 @@
 /**
  * 꾸미기 아이템 · 배경 목록 (자동 생성 — scripts/av-art/art.js 를 고친 뒤 make-assets.js 로 다시 만들어요).
- * 카테고리마다 10개. 겹침 layer — back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 · fx: 무대 효과.
+ * 카테고리마다 10개 (옷은 11개). 겹침 layer — back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 · fx: 무대 효과.
  */
 import type { AvBg, AvItem } from './my';
 
@@ -47,6 +47,7 @@ export const AV_ITEMS: AvItem[] = [
   { id: 'f-beard', cat: 'face', name: '산타 수염', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', layer: 'front' },
   { id: 'w-tee', cat: 'wear', name: '줄무늬 티셔츠', price: 0, rare: '기본', layer: 'paint' },
   { id: 'w-hoodie', cat: 'wear', name: '포근 후드티', price: 200, rare: '일반', layer: 'paint' },
+  { id: 'w-college', cat: 'wear', name: '대학생 후드티', price: 300, rare: '레어', layer: 'paint' },
   { id: 'w-overall', cat: 'wear', name: '청 멜빵바지', price: 200, rare: '일반', layer: 'paint' },
   { id: 'w-sweater', cat: 'wear', name: '꽈배기 니트', price: 250, rare: '일반', layer: 'paint' },
   { id: 'w-suit', cat: 'wear', name: '정장 재킷', price: 350, rare: '레어', layer: 'paint' },
@@ -98,6 +99,13 @@ export const AV_ITEMS: AvItem[] = [
   { id: 'fx-spark', cat: 'fx', name: '반짝반짝', price: 400, rare: '에픽', layer: 'fx' },
   { id: 'fx-hearts', cat: 'fx', name: '하트 뿅뿅', price: 400, rare: '에픽', layer: 'fx' },
   { id: 'fx-notes', cat: 'fx', name: '음표 둥둥', price: 300, rare: '레어', layer: 'fx' },
+  { id: 'fx-bubble', cat: 'fx', name: '비눗방울', price: 250, rare: '레어', layer: 'fx' },
+  { id: 'fx-petal', cat: 'fx', name: '벚꽃 흩날림', price: 300, rare: '레어', layer: 'fx' },
+  { id: 'fx-snow', cat: 'fx', name: '눈송이', price: 250, rare: '레어', layer: 'fx' },
+  { id: 'fx-confetti', cat: 'fx', name: '축하 꽃가루', price: 400, rare: '에픽', layer: 'fx' },
+  { id: 'fx-rainbow', cat: 'fx', name: '무지개 구름', price: 450, rare: '에픽', layer: 'fx' },
+  { id: 'fx-hello', cat: 'fx', name: '인사 말풍선', price: 350, rare: '레어', layer: 'fx' },
+  { id: 'fx-meteor', cat: 'fx', name: '별똥별', price: 450, rare: '에픽', layer: 'fx' },
 ];
 
 export const AV_BG: AvBg[] = [
