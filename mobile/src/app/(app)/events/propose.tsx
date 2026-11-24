@@ -11,6 +11,7 @@ import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { Icon } from '@/components/meet/icons';
 import { addProposal } from '@/components/meet/meet-store';
+import { ProposalCard } from '@/components/event/proposal-cards';
 import { TextField } from '@/components/ui/field';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -71,7 +72,21 @@ export default function ProposeEvent() {
       </View>
       <Field label="대표 이미지 · 사진 여러 장 또는 카드" hint={pics.length ? (card ? '카드가 대표예요. 사진은 그 뒤에 보여요.' : '첫 장이 대표 사진이 돼요. 사진을 누르면 대표로 바꿔요.') : '사진이 없으면 아래 카드가 대표예요.'}>
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
-        <CardMaker value={card} onChange={setCard} hasPhoto={pics.length > 0} example={['NEW', 'EVENT']} square />
+        <CardMaker
+          value={card}
+          onChange={setCard}
+          hasPhoto={pics.length > 0}
+          example={['NEW', 'EVENT']}
+          square
+          listPreview={{
+            label: "이벤트 탭 '내가 제안한 이벤트'에 이렇게 보여요 · 누르기 전 모습",
+            render: () => (
+              <View pointerEvents="none">
+                <ProposalCard q={{ id: 'preview', title: title.trim() || '이벤트 제목', br, date, cat: cat ?? '분류 고르기 전', cover: pics[0], card: usedCard(card, pics.length > 0) }} />
+              </View>
+            ),
+          }}
+        />
       </Field>
       <Field label="진행 지점" req>
         <Pressable onPress={() => setBrOpen(true)} accessibilityRole="button" accessibilityLabel={`진행 지점 ${br}`} style={styles.sel}>

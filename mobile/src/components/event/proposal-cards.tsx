@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 
 import { LgLink, SecHead } from '@/components/meet/parts';
-import { removeProposal, useMeetStore } from '@/components/meet/meet-store';
+import { removeProposal, useMeetStore, type Proposal } from '@/components/meet/meet-store';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -18,32 +18,38 @@ export function ProposalCards() {
   return (
     <View style={styles.wrap}>
       <SecHead title="내가 제안한 이벤트" sub={`${props.length}개`} style={{ marginBottom: 2 }} />
-      {props.map((q) => {
-        const d = new Date(q.date + 'T00:00');
-        return (
-          <View key={q.id} style={styles.card}>
-            {q.card ? <ColorCard color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
-            <View style={styles.tx}>
-              <PText numberOfLines={1} style={styles.t}>
-                {q.title}
-              </PText>
-              <PText numberOfLines={1} style={styles.s}>
-                {q.br} · {d.getMonth() + 1}월 {d.getDate()}일 ({WEEK[d.getDay()]}) 희망 · {q.cat}
-              </PText>
-              <PText style={styles.st}>매니저 검토 중 · 2~3일 안에 문자로 연락드려요</PText>
-            </View>
-            <LgLink
-              color={Colors.inkSub}
-              size={12.5}
-              label="취소"
-              onPress={() => {
-                removeProposal(q.id);
-                showToast('제안을 취소했어요');
-              }}
-            />
-          </View>
-        );
-      })}
+      {props.map((q) => (
+        <ProposalCard key={q.id} q={q} />
+      ))}
+    </View>
+  );
+}
+
+/** 제안 한 장 — 제안하기 화면의 '이렇게 보여요' 미리보기도 이걸 써요 (date 가 비면 '날짜 고르기 전') */
+export function ProposalCard({ q }: { q: Proposal }) {
+  const d = new Date(q.date + 'T00:00');
+  const when = q.date ? `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) 희망` : '날짜 고르기 전';
+  return (
+    <View style={styles.card}>
+      {q.card ? <ColorCard color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
+      <View style={styles.tx}>
+        <PText numberOfLines={1} style={styles.t}>
+          {q.title}
+        </PText>
+        <PText numberOfLines={1} style={styles.s}>
+          {q.br} · {when} · {q.cat}
+        </PText>
+        <PText style={styles.st}>매니저 검토 중 · 2~3일 안에 문자로 연락드려요</PText>
+      </View>
+      <LgLink
+        color={Colors.inkSub}
+        size={12.5}
+        label="취소"
+        onPress={() => {
+          removeProposal(q.id);
+          showToast('제안을 취소했어요');
+        }}
+      />
     </View>
   );
 }
