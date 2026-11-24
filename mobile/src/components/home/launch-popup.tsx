@@ -17,6 +17,11 @@ import { createStore } from '@/lib/store';
 import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { nowDate } from './attendance';
+import { LineIcon } from './icons';
+
+/** 포스터 양옆 넘김 화살표 — 글자(‹ ›)는 글꼴에 따라 끝이 뭉툭해서 선으로 그려요 (끝 · 꺾임 둥글게) */
+const CHEVRON_L = 'M15 5l-7 7 7 7';
+const CHEVRON_R = 'M9 5l7 7-7 7';
 
 /*
  * 앱을 열 때 팝업 공지 (프로토타입 POPS · popShow · .pop-wrap · .pop-c).
@@ -198,14 +203,10 @@ function Pager({ list, i, setI, still }: { list: Popup[]; i: number; setI: (i: n
           </View>
           <View style={styles.nav} pointerEvents="box-none">
             <Pressable onPress={() => go(i - 1)} accessibilityRole="button" accessibilityLabel="이전" hitSlop={8} style={styles.nx}>
-              <PText style={styles.nxText} color={Colors.white}>
-                ‹
-              </PText>
+              <LineIcon d={CHEVRON_L} size={26} color={Colors.white} width={2.6} />
             </Pressable>
             <Pressable onPress={() => go(i + 1)} accessibilityRole="button" accessibilityLabel="다음" hitSlop={8} style={styles.nx}>
-              <PText style={styles.nxText} color={Colors.white}>
-                ›
-              </PText>
+              <LineIcon d={CHEVRON_R} size={26} color={Colors.white} width={2.6} />
             </Pressable>
           </View>
         </>
@@ -247,9 +248,8 @@ const styles = StyleSheet.create({
   t: { marginTop: 10, fontFamily: Font.display, fontSize: 28, lineHeight: 31.4 },
   s: { marginTop: 10, fontFamily: Font.body800, fontSize: 13, lineHeight: 18, opacity: 0.9 },
   char: { position: 'absolute', right: -12, bottom: -10, width: 150, height: (150 * 306) / 480 },
-  // 화살표만 (동그란 바탕 없이) · 밝은 포스터에서도 보이게 옅은 그림자
+  // 화살표만 (동그란 바탕 없이)
   nx: { width: 34, height: 44, alignItems: 'center', justifyContent: 'center' },
-  nxText: { fontFamily: Font.body900, fontSize: 30, lineHeight: 34, textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
   goBox: { margin: 12 },
   goShadow: { position: 'absolute', left: 0, right: 0, top: 3, bottom: -3, borderRadius: 24, backgroundColor: Colors.ink },
   go: { height: 48, borderRadius: 24, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
