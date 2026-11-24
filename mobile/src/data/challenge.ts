@@ -476,7 +476,15 @@ export function planOf(start: StartOpt, D: number, weekly: boolean, n: number, d
 }
 
 /** do-chal (일상) */
-export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; pbg?: string; plan: ChPlan; cover?: string }) {
+type DailyDraft = { cat: DailyCatKey; name: string; way: 'cmt' | 'photo'; guide: string; pw: string[]; pbg?: string; plan: ChPlan; cover?: string };
+export function createDaily(o: DailyDraft) {
+  const p = draftDaily(o);
+  patch((x) => ({ created: [p, ...x.created], flash: p.id }));
+  return p;
+}
+
+/** 열기 전 챌린지 모양 (createDaily · 개설 시트의 '라운지에서는 이렇게 보여요' 미리보기가 같이 써요) */
+export function draftDaily(o: DailyDraft): Challenge {
   const me = getMe();
   const live = !o.plan.off;
   const p: Challenge = {
@@ -508,7 +516,6 @@ export function createDaily(o: { cat: DailyCatKey; name: string; way: 'cmt' | 'p
     likes: 0,
     mine: true,
   };
-  patch((x) => ({ created: [p, ...x.created], flash: p.id }));
   return p;
 }
 

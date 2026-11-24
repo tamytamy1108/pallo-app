@@ -4,7 +4,7 @@ import { View, type ViewInstance } from 'react-native';
 
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
 import { defaultEnd, MultiPills, PosterPicker, TimeRange } from '@/components/event/form-parts';
-import { ClubThumb } from '@/components/meet/club-list';
+import { ClubRow } from '@/components/meet/club-list';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
@@ -16,7 +16,7 @@ import { useRevealOnFocus } from '@/components/ui/reveal-on-focus';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { ALL_REGIONS, branchOnly, CLUB_CATS, CLUB_MEMBERS, NO_LIMIT, REGIONS, type Region } from '@/data/meet';
+import { ALL_REGIONS, branchOnly, CLUB_CATS, CLUB_MEMBERS, NO_LIMIT, REGIONS, type Club, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -66,34 +66,37 @@ export default function NewClub() {
   const memoBox = useRef<ViewInstance>(null);
 
 
+  // 올릴 모양 (목록 미리보기도 같이 써요)
+  const draft = (): Club => ({
+    id: 'u' + Date.now(),
+    cc: (CLUB_CATS.find((c) => c[1] === cat) || CLUB_CATS[0])[0],
+    reg,
+    name: name.trim(),
+    lang: langs.includes(ANY_LANG) ? ANY_LANG : [...langs].sort((a, b) => LANGS.indexOf(a) - LANGS.indexOf(b)).join(' · '),
+    langs,
+    br: me.branch,
+    // 예) 매주 수 · 금 20:00 (요일을 안 고르면 시간만)
+    when: days.length ? `매주 ${[...days].sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)).join(' · ')} ${time}~${end}` : `${time}~${end}`,
+    time: [time, end],
+    n: 1,
+    max: max ?? NO_LIMIT,
+    cond,
+    host: me.name,
+    days: days.map((d) => '일월화수목금토'.indexOf(d)),
+    wait: true,
+    mine: true,
+    intro: intro.trim() || undefined,
+    memo: memo.trim() || undefined,
+    posters: pics.length ? pics : undefined,
+    card: usedCard(card, pics.length > 0),
+  });
+
   const ask = () => {
     if (!name.trim()) return showToast('동아리 이름을 적어 주세요');
     if (!langs.length) return showToast('언어를 골라 주세요');
     if (!days.length) return showToast('모이는 요일을 골라 주세요');
     if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
-    addMyClub({
-      id: 'u' + Date.now(),
-      cc: (CLUB_CATS.find((c) => c[1] === cat) || CLUB_CATS[0])[0],
-      reg,
-      name: name.trim(),
-      lang: langs.includes(ANY_LANG) ? ANY_LANG : [...langs].sort((a, b) => LANGS.indexOf(a) - LANGS.indexOf(b)).join(' · '),
-      langs,
-      br: me.branch,
-      // 예) 매주 수 · 금 20:00 (요일을 안 고르면 시간만)
-      when: days.length ? `매주 ${[...days].sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)).join(' · ')} ${time}~${end}` : `${time}~${end}`,
-      time: [time, end],
-      n: 1,
-      max: max ?? NO_LIMIT,
-      cond,
-      host: me.name,
-      days: days.map((d) => '일월화수목금토'.indexOf(d)),
-      wait: true,
-      mine: true,
-      intro: intro.trim() || undefined,
-      memo: memo.trim() || undefined,
-      posters: pics.length ? pics : undefined,
-      card: usedCard(card, pics.length > 0),
-    });
+    addMyClub(draft());
     sfx('save');
     router.back();
     showToast('승인을 요청했어요 · 매니저가 확인하면 알려 드려요');
@@ -148,7 +151,14 @@ export default function NewClub() {
           hasPhoto={pics.length > 0}
           example={['NEW', 'CLUB']}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
-          listPreview={{ label: '동아리 목록에서는 첫 줄만 보여요', render: (c, words) => <ClubThumb words={words} bg={c.color} /> }}
+          listPreview={{
+            label: '라운지 동아리 목록에서는 이렇게 보여요 · 누르기 전 모습 (카드는 첫 줄만)',
+            render: () => (
+              <View pointerEvents="none">
+                <ClubRow c={{ ...draft(), id: 'preview', mine: false, wait: false, name: name.trim() || '동아리 이름' }} first />
+              </View>
+            ),
+          }}
         />
       </Field>
     </SheetPage>

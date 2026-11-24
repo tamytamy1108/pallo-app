@@ -75,7 +75,7 @@ function TypedNumber({ value, min, max, unit, onChange }: { value: number; min: 
         selectionColor={Colors.purple}
         cursorColor={Colors.purple}
         accessibilityLabel={`인원 직접 적기 · ${min}~${max}${unit}`}
-        style={st.input}
+        style={[st.input, { width: 14 * String(max).length + 8 }]}
       />
       <PText style={st.unit}>{unit}</PText>
     </View>

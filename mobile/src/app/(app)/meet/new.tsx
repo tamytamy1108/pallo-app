@@ -10,13 +10,14 @@ import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyMeet } from '@/components/meet/meet-store';
+import { MeetCard } from '@/components/meet/meet-card';
 import { TextField } from '@/components/ui/field';
 import { CountPicker } from '@/components/ui/count-picker';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { C, MONTHS, NO_LIMIT, REGIONS, WEEK, type Region } from '@/data/meet';
+import { C, MONTHS, NO_LIMIT, REGIONS, WEEK, type Meet, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -58,28 +59,31 @@ export default function NewMeet() {
   const d = addDays(day);
   const when = `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) ${timeLabel(time)} ~ ${timeLabel(endTime)}에 만나요 · ${day === 0 ? '오늘' : day === 1 ? '내일' : day + '일 뒤'}`;
 
+  // 올릴 모양 (목록 미리보기도 같이 써요)
+  const draft = (): Meet => ({
+    id: 'u' + Date.now(),
+    br: me.branch,
+    reg,
+    day: String(d.getDate()).padStart(2, '0'),
+    mon: MONTHS[d.getMonth()],
+    wd: `${WEEK[d.getDay()]} ${time}~${endTime}`,
+    title: title.trim(),
+    place: place?.name ?? '',
+    addr: place?.addr,
+    addr2: addr2.trim() || undefined,
+    host: me.name,
+    cur: 1,
+    max: cap ?? NO_LIMIT,
+    mine: true,
+    posters: pics.length ? pics : undefined,
+    card: usedCard(card, pics.length > 0),
+  });
+
   const open = () => {
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!place) return showToast('지도에서 장소를 골라 주세요');
     if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
-    addMyMeet({
-      id: 'u' + Date.now(),
-      br: me.branch,
-      reg,
-      day: String(d.getDate()).padStart(2, '0'),
-      mon: MONTHS[d.getMonth()],
-      wd: `${WEEK[d.getDay()]} ${time}~${endTime}`,
-      title: title.trim(),
-      place: place.name,
-      addr: place.addr,
-      addr2: addr2.trim() || undefined,
-      host: me.name,
-      cur: 1,
-      max: cap ?? NO_LIMIT,
-      mine: true,
-      posters: pics.length ? pics : undefined,
-      card: usedCard(card, pics.length > 0),
-    });
+    addMyMeet(draft());
     sfx('save');
     router.back();
     showToast(`번개를 열었어요 · ${reg} 지도에 표시돼요`);
@@ -162,11 +166,11 @@ export default function NewMeet() {
           example={['NEW', 'MEET']}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
           listPreview={{
-            label: '번개 목록 카드에서는 이렇게 보여요',
-            // 목록 카드: 폭 ≈ 274 · 포스터 높이 150 · 글자 28 (meet-tab cardW · meet-card)
-            render: (c, words, w) => (
-              <View style={{ borderRadius: 14, overflow: 'hidden', borderWidth: 2, borderColor: Colors.ink, alignSelf: 'flex-start' }}>
-                <PosterPreview card={c} words={words} width={Math.min(w - 4, 274)} realW={274} realH={150} wordSize={28} />
+            label: '라운지 번개 목록에서는 이렇게 보여요 · 누르기 전 모습',
+            // 실제 번개 카드 그대로 (meet-card) · 폭 ≈ 274 (meet-tab cardW)
+            render: (_c, _words, w) => (
+              <View pointerEvents="none" style={{ paddingRight: 4, paddingBottom: 4 }}>
+                <MeetCard m={{ ...draft(), id: 'preview', mine: false, title: title.trim() || '번개 제목', place: place?.name ?? '장소 고르기 전' }} width={Math.min(w - 4, 274)} />
               </View>
             ),
           }}

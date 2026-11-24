@@ -142,7 +142,7 @@ export function DailyCard({ p, s, onCheck }: { p: Challenge; s: ChView; onCheck:
     <Shell radius={18} flash={s.flash === p.id}>
       <View style={styles.row}>
         <Pressable onPress={() => openChallenge(p)} accessibilityRole="button" accessibilityLabel={`${p.name} 자세히 보기`} style={[styles.pst, { backgroundColor: bg }]}>
-          {p.cover != null ? (
+          {p.cover != null && !p.pbg ? (
             <ChCover p={p} size={96} style={StyleSheet.absoluteFill} />
           ) : (
             <PText style={[styles.pw, { fontSize: posterFontSize(w), color: isDarkBg(bg) ? CH_C.y : Colors.ink }]}>{w}</PText>
@@ -305,36 +305,60 @@ export function HotBox({ list, s }: { list: Challenge[]; s: ChView }) {
           <PText style={styles.hhB}>지금 핫한 챌린지</PText>
           <PText style={styles.hhS}>참여 · 인증이 많은 순</PText>
         </View>
-        {top.map((p, i) => {
-          return (
-            <Pressable
-              key={p.id}
-              onPress={() => openChallenge(p)}
-              accessibilityRole="button"
-              accessibilityLabel={`${i + 1}위 ${p.name}`}
-              style={({ pressed }) => [styles.hr, i > 0 && styles.hrLine, pressed && { opacity: 0.7 }]}>
-              <PText style={[styles.no, NO_STYLE[i], { lineHeight: NO_STYLE[i].fontSize * 1.25 }]}>{i + 1}</PText>
-              {/* 연 사람이 올린 대표 사진 · 없으면 기본 배경 + 카드 문구 */}
-              <ChCover p={p} size={42} style={styles.hic} />
-              <View style={styles.htx}>
-                <PText numberOfLines={1} style={styles.hb}>
-                  {p.name}
-                </PText>
-                <PText numberOfLines={1} style={styles.hs}>
-                  {`${memberCount(p, s)}명 참여 · ${isPre(p) ? p.start : `오늘 ${todayCount(p, s)}명 인증`}`}
-                </PText>
-              </View>
-              {isJoined(p, s) ? <PText style={styles.hem}>참여 중</PText> : null}
-              <PText style={styles.go}>›</PText>
-            </Pressable>
-          );
-        })}
+        {top.map((p, i) => (
+          <HotRow key={p.id} p={p} s={s} i={i} />
+        ))}
       </View>
     </View>
   );
 }
 
+function HotRow({ p, s, i }: { p: Challenge; s: ChView; i: number }) {
+  return (
+    <Pressable
+      onPress={() => openChallenge(p)}
+      accessibilityRole="button"
+      accessibilityLabel={`${i + 1}위 ${p.name}`}
+      style={({ pressed }) => [styles.hr, i > 0 && styles.hrLine, pressed && { opacity: 0.7 }]}>
+      <PText style={[styles.no, NO_STYLE[i], { lineHeight: NO_STYLE[i].fontSize * 1.25 }]}>{i + 1}</PText>
+      {/* 연 사람이 올린 대표 사진 · 없으면 기본 배경 + 카드 문구 */}
+      <ChCover p={p} size={42} style={styles.hic} />
+      <View style={styles.htx}>
+        <PText numberOfLines={1} style={styles.hb}>
+          {p.name}
+        </PText>
+        <PText numberOfLines={1} style={styles.hs}>
+          {`${memberCount(p, s)}명 참여 · ${isPre(p) ? p.start : `오늘 ${todayCount(p, s)}명 인증`}`}
+        </PText>
+      </View>
+      {isJoined(p, s) ? <PText style={styles.hem}>참여 중</PText> : null}
+      <PText style={styles.go}>›</PText>
+    </Pressable>
+  );
+}
+
+/** 개설 시트 미리보기: 라운지에서 누르기 전 모습 그대로 (지금 핫한 챌린지 한 줄 · 챌린지 카드) — 눌러도 아무 일 없어요 */
+export function ChLoungePreview({ p, s }: { p: Challenge; s: ChView }) {
+  return (
+    <View pointerEvents="none" style={styles.lpv}>
+      <PText style={styles.pvL}>지금 핫한 챌린지</PText>
+      <View>
+        <View style={[styles.shadow, { borderRadius: 20 }]} />
+        <View style={[styles.hot, styles.pvHot]}>
+          <HotRow p={p} s={s} i={0} />
+        </View>
+      </View>
+      <PText style={styles.pvL}>챌린지 카드</PText>
+      <DailyCard p={p} s={s} onCheck={noop} />
+    </View>
+  );
+}
+const noop = () => {};
+
 const styles = StyleSheet.create({
+  lpv: { gap: 8, paddingRight: 4, paddingBottom: 4 },
+  pvL: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: SUB },
+  pvHot: { paddingTop: 0, paddingBottom: 0 },
   shadow: { position: 'absolute', top: 4, left: 4, right: -4, bottom: -4, backgroundColor: Colors.ink },
   shell: { borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, overflow: 'hidden' },
   flashRing: { position: 'absolute', backgroundColor: 'rgb(255,214,0)' },
