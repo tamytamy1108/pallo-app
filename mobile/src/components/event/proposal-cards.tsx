@@ -57,7 +57,7 @@ export function ProposalCard({ q }: { q: Proposal }) {
 const styles = StyleSheet.create({
   wrap: { gap: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.purple, borderRadius: 18, backgroundColor: '#FBF9FF' },
-  th: { width: 58, height: 58, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.ink },
+  th: { width: 58, height: 58, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink },
   tx: { flex: 1, minWidth: 0, gap: 2 },
   t: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20 },
   s: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
