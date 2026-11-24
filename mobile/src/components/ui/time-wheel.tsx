@@ -17,7 +17,8 @@ const SETTLE_MS = 140;
  * 위아래로 끌어서 고르는 휠 (iOS 시간 고르기처럼): 가운데 줄이 고른 값 · 칸마다 딱 멈춰요 · 칸을 눌러도 거기로.
  * label: 칸 글자 (예: '20:00' → '오후 8:00')
  */
-export function Wheel({ items, value, onChange, label = (v) => v, style }: { items: readonly string[]; value: string; onChange: (v: string) => void; label?: (v: string) => string; style?: StyleProp<ViewStyle> }) {
+/** bare: 테두리 · 바탕 없이 (다른 칸 안에 넣을 때) */
+export function Wheel({ items, value, onChange, label = (v) => v, style, bare }: { items: readonly string[]; value: string; onChange: (v: string) => void; label?: (v: string) => string; style?: StyleProp<ViewStyle>; bare?: boolean }) {
   const ref = useRef<ScrollViewInstance>(null);
   const at = Math.max(0, items.indexOf(value));
   const [cur, setCur] = useState(at);
@@ -53,8 +54,8 @@ export function Wheel({ items, value, onChange, label = (v) => v, style }: { ite
   };
 
   return (
-    <View style={[styles.box, style]} accessibilityRole="adjustable" accessibilityValue={{ text: label(items[cur] ?? value) }}>
-      <View style={styles.band} pointerEvents="none" />
+    <View style={[styles.box, bare && styles.bare, style]} accessibilityRole="adjustable" accessibilityValue={{ text: label(items[cur] ?? value) }}>
+      <View style={[styles.band, bare && styles.bandBare]} pointerEvents="none" />
       <ScrollView
         ref={ref}
         showsVerticalScrollIndicator={false}
@@ -79,6 +80,8 @@ export function Wheel({ items, value, onChange, label = (v) => v, style }: { ite
 
 const styles = StyleSheet.create({
   box: { height: ITEM * ROWS + 4, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: '#fff', overflow: 'hidden' },
+  bandBare: { left: -4, right: -4, backgroundColor: '#fff' },
+  bare: { height: ITEM * ROWS, borderWidth: 0, borderRadius: 0, backgroundColor: 'transparent' },
   band: { position: 'absolute', left: 6, right: 6, top: ITEM * Math.floor(ROWS / 2), height: ITEM, borderRadius: 10, backgroundColor: '#F3EEFB', borderWidth: 2, borderColor: Colors.purple },
   row: { height: ITEM, alignItems: 'center', justifyContent: 'center' },
   t: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },

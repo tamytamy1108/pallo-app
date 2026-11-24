@@ -18,7 +18,8 @@ import { branchOnly, CLUB_MEMBERS, ALL_REGIONS, CLUB_CATS, NO_LIMIT, REGIONS, ty
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
-const LANGS = ['영어', '일본어', '중국어', '스페인어', '한국어'];
+/** 언어 '무관' = 어떤 언어든 (다국어 · 언어 상관없는 모임) */
+const LANGS = ['영어', '일본어', '중국어', '스페인어', '한국어', '무관'];
 const DAYS = ['월', '화', '수', '목', '금', '토', '일'];
 const MAX_MIN = 3;
 const MAX_MAX = 40;

@@ -382,7 +382,7 @@ export const spanLabel = (start: string, end: string) => {
 export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, toMin(HALF_HOURS[HALF_HOURS.length - 1])));
 
 /**
- * 시작 시간 ~ 끝나는 시간: 시작 · 끝 칸을 누르면 그 아래 휠이 열려요 — 위아래로 끌어서 골라요 (다시 누르면 닫혀요).
+ * 시작 시간 ~ 끝나는 시간: 시작 · 끝 칸을 누르면 그 칸 안에서 휠을 돌려 골라요 (이름 줄 · 완료를 누르면 닫혀요).
  * 끝은 시작보다 늦은 시간만 · 시작을 끝보다 늦게 바꾸면 끝이 시작 + 2시간으로 따라가요.
  */
 export function TimeRange({ start, end, onChange }: { start: string; end: string; onChange: (start: string, end: string) => void }) {
@@ -392,44 +392,45 @@ export function TimeRange({ start, end, onChange }: { start: string; end: string
   const pickStart = (t: string) => onChange(t, toMin(end) > toMin(t) ? end : defaultEnd(t));
   const box = (k: 's' | 'e', label: string, t: string) => {
     const on = edit === k;
+    const toggle = () => {
+      sfx('tap');
+      setEdit(on ? null : k);
+    };
+    // 고르는 중: 칸 안에서 바로 휠을 돌려요 (위 이름 줄을 누르면 닫혀요)
+    if (on)
+      return (
+        <View style={[tr.box, tr.boxOn]}>
+          <Pressable onPress={toggle} accessibilityRole="button" accessibilityLabel={`${label} 닫기`} hitSlop={6} style={tr.head}>
+            <PText style={[tr.k, tr.kOn]}>{label}</PText>
+            <PText style={tr.done}>완료</PText>
+          </Pressable>
+          <Wheel bare items={k === 's' ? starts : ends} value={t} label={timeLabel} onChange={(v) => (k === 's' ? pickStart(v) : onChange(start, v))} />
+        </View>
+      );
     return (
-      <Pressable
-        onPress={() => {
-          sfx('tap');
-          setEdit(on ? null : k);
-        }}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: on }}
-        accessibilityLabel={`${label} ${timeLabel(t)} · ${on ? '닫기' : '바꾸기'}`}
-        style={[tr.box, on && tr.boxOn]}>
-        <PText style={[tr.k, on && tr.kOn]}>{label}</PText>
+      <Pressable onPress={toggle} accessibilityRole="button" accessibilityLabel={`${label} ${timeLabel(t)} · 바꾸기`} style={tr.box}>
+        <PText style={tr.k}>{label}</PText>
         <PText style={tr.v}>{timeLabel(t)}</PText>
       </Pressable>
     );
   };
   return (
-    <View style={{ gap: 8 }}>
-      <View style={tr.row}>
-        {box('s', '시작', start)}
-        <PText style={tr.til}>~</PText>
-        {box('e', '끝', end)}
-      </View>
-      {edit ? (
-        // 누른 칸 바로 아래 · 그 칸 폭만큼
-        <Wheel key={edit} items={edit === 's' ? starts : ends} value={edit === 's' ? start : end} label={timeLabel} onChange={(t) => (edit === 's' ? pickStart(t) : onChange(start, t))} style={[tr.wheel, edit === 'e' && tr.wheelEnd]} />
-      ) : null}
+    <View style={tr.row}>
+      {box('s', '시작', start)}
+      <PText style={tr.til}>~</PText>
+      {box('e', '끝', end)}
     </View>
   );
 }
 
 const tr = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   box: { flex: 1, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: '#fff', paddingVertical: 8, paddingHorizontal: 12, gap: 1 },
   boxOn: { borderColor: C.pu, backgroundColor: '#F3EEFB', boxShadow: '2px 2px 0px #493087' },
   k: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   kOn: { color: C.pu },
   v: { fontFamily: Font.display, fontSize: 16, lineHeight: 21 },
-  til: { fontFamily: Font.display, fontSize: 16, color: Colors.inkSub },
-  wheel: { width: '46%' },
-  wheelEnd: { alignSelf: 'flex-end' },
+  til: { marginTop: 18, fontFamily: Font.display, fontSize: 16, color: Colors.inkSub },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  done: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: C.pu },
 });
