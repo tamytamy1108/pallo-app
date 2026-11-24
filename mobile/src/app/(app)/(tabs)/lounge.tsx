@@ -15,7 +15,7 @@ import { CreateSheet, type CreateKind } from '@/components/lounge/create-sheet';
 import { LgIcon } from '@/components/lounge/icons';
 import { MiniMapCard } from '@/components/lounge/korea-map';
 import { LgIn } from '@/components/lounge/lg-in';
-import { BADGE_TABS, dismissNewPill, enterLoungeTab, leaveLoungeTab, useNewCounts, useNewPill } from '@/components/lounge/new-posts';
+import { BADGE_TABS, enterLoungeTab, leaveLoungeTab, useNewCounts } from '@/components/lounge/new-posts';
 import { go } from '@/components/lounge/nav';
 import { AbroadCard, PostCard } from '@/components/lounge/post-card';
 import { RecChalCard, RecMeetCard } from '@/components/lounge/rec-cards';
@@ -62,7 +62,6 @@ export default function LoungeScreen() {
     }, [tab]),
   );
   const counts = useNewCounts();
-  const pill = useNewPill();
   const brs = useLounge((s) => s.brs);
   const region = useLounge((s) => s.region);
   const insets = useSafeAreaInsets();
@@ -123,15 +122,6 @@ export default function LoungeScreen() {
         <View onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>
           <Tabs tab={tab} counts={counts} onPick={pickTab} />
         </View>
-        {pill?.tab === tab ? (
-          <NewPill
-            n={pill.n}
-            onPress={() => {
-              dismissNewPill();
-              scroll.current?.scrollTo({ y: 0, animated: true });
-            }}
-          />
-        ) : null}
         {/* 비회원은 모든 탭에서 위쪽(카드 1~2개)까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
         <ScrollLock key={tab} screen="lounge" peek={LOUNGE_PEEK} inset={16}>
           <TabSwap dir={slideDir}>
@@ -230,20 +220,6 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
       </ScrollView>
       <LinearGradient colors={['rgba(251,246,234,0)', Colors.cream]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.fade} pointerEvents="none" />
     </View>
-  );
-}
-
-/** 피드 위 '새 글 N개' — 누르면 맨 위로 가고 사라져요 */
-function NewPill({ n, onPress }: { n: number; onPress: () => void }) {
-  return (
-    <LgIn>
-      <View style={styles.pillRow}>
-        <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`새 글 ${n}개, 맨 위로 가기`} hitSlop={6} style={({ pressed }) => [styles.pill, pressed && styles.pillDown]}>
-          <LgIcon name="up" size={14} sw={2.8} />
-          <PText style={styles.pillText}>새 글 {n}개</PText>
-        </Pressable>
-      </View>
-    </LgIn>
   );
 }
 
@@ -417,10 +393,6 @@ const styles = StyleSheet.create({
   badge: { position: 'absolute', top: -2, left: '100%', marginLeft: 3, minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 4, backgroundColor: '#E8577A', borderWidth: 1.5, borderColor: Colors.cream, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontFamily: Font.body900, fontSize: 9.5, lineHeight: 12, color: '#fff', fontVariant: ['tabular-nums'] },
   dot: { position: 'absolute', top: 2, left: '100%', marginLeft: 3, width: 7, height: 7, borderRadius: 4, backgroundColor: '#E8577A' },
-  pillRow: { alignItems: 'center', paddingTop: 12 },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 32, paddingHorizontal: 14, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, boxShadow: `0px 3px 0px ${Colors.ink}` },
-  pillDown: { transform: [{ translateY: 2 }], boxShadow: `0px 1px 0px ${Colors.ink}` },
-  pillText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18, color: Colors.ink },
   fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: '18%' },
   subs: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 4, gap: 6, alignItems: 'center' },
   subSep: { width: 1.5, height: 22, marginHorizontal: 2, backgroundColor: '#DCD4C4' },
