@@ -152,8 +152,8 @@ export const addPostComment = (p: { id: string; c0?: 0 }, author: string, text: 
   patch((s) => ({ cmts: { ...s.cmts, [p.id]: [...postComments(s, p), { id: `${p.id}-${Date.now()}`, author, text, time: '방금', mine: true, likes: 0 }] } }));
 
 // ---- 글 · 동행 · 해외 카드 올리기 ----
-export const addPost = (p: Post) => patch((s) => ({ feed: [p, ...s.feed], sub: { ...s.sub, com: 'all' } }));
-export const addTrip = (t: Trip) => patch((s) => ({ feed: [t, ...s.feed], sub: { ...s.sub, trip: 'trip' }, cc: t.cc, tab: 'trip' }));
+export const addPost = (p: Post) => patch((s) => ({ feed: [{ ...p, at: p.at ?? Date.now() }, ...s.feed], sub: { ...s.sub, com: 'all' } }));
+export const addTrip = (t: Trip) => patch((s) => ({ feed: [{ ...t, at: t.at ?? Date.now() }, ...s.feed], sub: { ...s.sub, trip: 'trip' }, cc: t.cc, tab: 'trip' }));
 export const closeTrip = (id: string, closed: boolean) => patch((s) => ({ feed: s.feed.map((p) => (p.id === id && p.k === 'trip' ? { ...p, closed } : p)) }));
 export const setTripState = (id: string, v: 'wait' | 'ok' | null) =>
   patch((s) => {

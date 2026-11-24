@@ -1,5 +1,5 @@
 {
-  "name": "mobile",
+  "name": "@academy/pallo-app",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
@@ -9,6 +9,7 @@
     "@expo-google-fonts/noto-sans-kr": "^0.4.4",
     "@expo-google-fonts/unbounded": "^0.4.1",
     "@expo/ui": "~58.0.29",
+    "@academy/api-client": "*",
     "@tanstack/react-query": "^5.108.3",
     "expo": "~58.0.26",
     "expo-audio": "~58.0.12",
@@ -64,6 +65,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build": "expo export --platform web --output-dir dist --clear",
     "lint": "expo lint",
     "test": "jest"
   },
@@ -71,6 +73,8 @@
   "jest": {
     "preset": "jest-expo",
     "moduleNameMapper": {
+      "^react$": "<rootDir>/node_modules/react",
+      "^react/(.*)$": "<rootDir>/node_modules/react/$1",
       "^@/assets/(.*)$": "<rootDir>/assets/$1",
       "^@/(.*)$": "<rootDir>/src/$1"
     }

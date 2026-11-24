@@ -1,8 +1,8 @@
-import * as Speech from 'expo-speech';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
+import { SaveHeart } from '@/components/challenge/cards';
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
@@ -10,6 +10,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { daysFrom, LG_C, LG_PW, meetIso, meetMonth, type RecChal, type RecMeet, won } from '@/data/lounge';
 import { addPostComment, postComments, useLounge } from '@/data/lounge-store';
+import { expressionSpeech, sayExpression } from '@/lib/say-expression';
 import { useMe } from '@/state/me';
 
 import { Face } from './face';
@@ -121,9 +122,12 @@ export function RecChalCard({ p }: { p: RecChal }) {
               </View>
             </View>
           </Pressable>
-          <Pressable onPress={() => Speech.speak(p.q, { language: p.lang, rate: 0.95 })} accessibilityRole="button" accessibilityLabel="표현 듣기" style={styles.say}>
-            <LgIcon name="spk" size={18} />
-          </Pressable>
+          <View style={styles.exBtns}>
+            <Pressable onPress={() => sayExpression(expressionSpeech(p), { language: p.lang })} accessibilityRole="button" accessibilityLabel="표현 듣기" style={styles.say}>
+              <LgIcon name="spk" size={18} />
+            </Pressable>
+            <SaveHeart id={p.id} size={36} />
+          </View>
         </View>
         <View style={styles.chxc}>
           <Pressable onPress={open} accessibilityRole="button" accessibilityLabel="문장 모두 보기" style={styles.pv}>
@@ -188,6 +192,7 @@ const styles = StyleSheet.create({
   chMean: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.purple, marginTop: 2 },
   chSrc: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5 },
   chSrcText: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
+  exBtns: { gap: 8, alignItems: 'center' },
   say: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', boxShadow: `2px 2px 0px ${Colors.ink}` },
   chxc: { paddingTop: 10, paddingRight: 12, paddingBottom: 12, paddingLeft: 14 },
   pv: { flexDirection: 'row', alignItems: 'center', gap: 8 },

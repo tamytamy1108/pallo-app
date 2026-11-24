@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance } from 'react-native';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Keyboard, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,11 +9,13 @@ import { BackButton } from '@/components/ui/back-button';
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
+import { useKeyboardShown } from '@/lib/keyboard';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { LayerModal } from '@/components/ui/sheet-stack';
+import { KeepVisibleContext, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
 
 import type { MadeCard } from '@/data/poster-colors';
 
@@ -51,9 +53,17 @@ type Props = {
 };
 
 const BAR = 44; // .dtop 안 높이 (위아래 8씩)
+/** 칸을 눌러 키보드가 올라오면 칸 아래로 이만큼 띄워 보여요 */
+const KB_ROOM = 28;
+
+type ScrollToTarget = (target: ViewInstance | null) => void;
+const DetailScrollContext = createContext<ScrollToTarget | null>(null);
+/** 상세 본문 안의 칸을 위 막대 바로 아래로 올려 보여 줘요 (신청 직후 '내 신청' 카드 등). 상세 틀 밖이면 아무것도 안 해요 */
+export const useDetailScrollTo = (): ScrollToTarget => useContext(DetailScrollContext) ?? (() => {});
 
 export function DetailFrame({ id, club, posters, card, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey }: Props) {
   const insets = useSafeAreaInsets();
+  const kbShown = useKeyboardShown();
   const slides = posterSlides(id, club, posters, card);
   const fg = posterFg(slides[0].bg);
   const [w, setW] = useState(0);
@@ -71,8 +81,39 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
   const titled = y > h2Bottom - topH;
   const pinned = tabY >= 0 && y >= tabY - topH;
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => setY(e.nativeEvent.contentOffset.y);
   const scroll = useRef<ScrollViewInstance>(null);
+  const root = useRef<ViewInstance>(null);
+  const yNow = useRef(0);
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    yNow.current = e.nativeEvent.contentOffset.y;
+    setY(e.nativeEvent.contentOffset.y);
+  };
+  // 인사 · 댓글 칸을 누르면: 키보드가 다 올라온 뒤 칸 전체가 키보드 위로 (여유 KB_ROOM) 보이게 — 아이폰 기본 맞춤은 칸 끝이 키보드에 딱 붙어요
+  // 본문 안 자리(measureLayout)로 셈해서, 스크롤 알림이 늦게 와도 칸 아래 끝 + KB_ROOM 이 키보드 바로 위에 정확히 와요 (이미 보이면 그대로)
+  const keepAboveKeyboard = (target: ViewInstance | null, animated: boolean) => {
+    const inner = scroll.current?.getInnerViewRef();
+    const kbTop = Platform.OS === 'web' ? undefined : Keyboard.metrics()?.screenY;
+    if (!target || !inner || !root.current || kbTop == null) return;
+    target.measureLayout(inner, (_x, ty, _w, th) => {
+      root.current?.measureInWindow((_rx, ry) => {
+        // 스크롤 칸은 화면(root) 맨 위에서 시작해요
+        const want = ty + th + KB_ROOM - (kbTop - ry);
+        if (want <= yNow.current + 1) return;
+        yNow.current = want;
+        scroll.current?.scrollTo({ y: want, animated });
+      });
+    });
+  };
+  useShowFocusedOnKeyboard(root, (target) => keepAboveKeyboard(target, true));
+  // 인사 칸이 길어져 한 줄 늘면 그 줄도 키보드 위로 (GrowInput 이 불러요)
+  const keepGrowing = (target: ViewInstance | null) => {
+    if (Keyboard.isVisible()) keepAboveKeyboard(target, false);
+  };
+  const scrollToTarget: ScrollToTarget = (target) => {
+    const inner = scroll.current?.getInnerViewRef();
+    if (!target || !inner) return;
+    target.measureLayout(inner, (_x, ty) => scroll.current?.scrollTo({ y: Math.max(0, ty - topH - 12), animated: true }));
+  };
   const pinRef = useRef({ pinned, at: tabY - topH });
   useEffect(() => {
     pinRef.current = { pinned, at: tabY - topH };
@@ -83,7 +124,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
   const ink = solid ? Colors.ink : fg;
 
   return (
-    <View style={styles.root} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+    <View ref={root} collapsable={false} style={styles.root} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Stack.Screen options={SCREEN.push} />
       <ScrollView
         ref={scroll}
@@ -107,7 +148,9 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
             </View>
           ) : null}
           {/* 탭 본문이 짧아도 탭이 위에 붙을 수 있게 화면 높이만큼은 둬요 */}
-          {tabs ? <View style={{ minHeight: winH - topH - 44 - 100 }}>{tabBody}</View> : children}
+          <DetailScrollContext.Provider value={scrollToTarget}>
+            <KeepVisibleContext.Provider value={Platform.OS === 'web' ? null : keepGrowing}>{tabs ? <View style={{ minHeight: winH - topH - 44 - 100 }}>{tabBody}</View> : children}</KeepVisibleContext.Provider>
+          </DetailScrollContext.Provider>
         </View>
       </ScrollView>
 
@@ -120,12 +163,15 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
       </View>
       {tabs && pinned ? <View style={[styles.pinTabs, { top: topH }]}>{tabs}</View> : null}
 
-      <BottomBar>
-        <View>
-          {ctaNote}
-          <View style={styles.cta}>{cta}</View>
-        </View>
-      </BottomBar>
+      {/* 인사 · 댓글을 쓰는 동안(키보드가 떠 있는 동안)은 아래 신청 바를 숨겨 입력칸 자리를 넓혀요 */}
+      {!kbShown && (
+        <BottomBar>
+          <View>
+            {ctaNote}
+            <View style={styles.cta}>{cta}</View>
+          </View>
+        </BottomBar>
+      )}
 
       <PosterViewer id={id} slides={slides} start={view} onClose={() => setView(null)} />
     </View>

@@ -243,8 +243,9 @@ const styles = StyleSheet.create({
   btn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink },
   capb: { height: 8, borderRadius: 4, backgroundColor: '#EEE8DA', overflow: 'hidden', marginTop: 4 },
   sec: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, marginBottom: -8 },
-  secT: { fontFamily: Font.body900, fontSize: 16, lineHeight: 23 },
-  secS: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: SUB },
+  secT: { flexShrink: 0, fontFamily: Font.body900, fontSize: 16, lineHeight: 23 },
+  // 좁은 화면: 부제가 줄어 줄바꿈돼요 (제목 · 오른쪽 버튼과 겹치지 않게)
+  secS: { flexShrink: 1, minWidth: 0, fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: SUB },
   sp: { flex: 1 },
   link: { paddingVertical: 6, paddingHorizontal: 2 },
   linkT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },
@@ -261,7 +262,8 @@ const styles = StyleSheet.create({
   field: { minHeight: 48, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, paddingHorizontal: 14, justifyContent: 'center' },
   fieldMulti: { minHeight: 110, justifyContent: 'flex-start', paddingVertical: 12 },
   fieldIn: { fontFamily: Font.body600, fontSize: 15, color: Colors.ink, paddingVertical: 10 },
-  fieldInMulti: { minHeight: 82, paddingVertical: 0, textAlignVertical: 'top' },
+  // 길게 쓰면 한 줄씩 늘다가 maxHeight 에서 멈추고 칸 안에서 스크롤해요 (시트 아래 버튼 · 키보드 자리를 남기게)
+  fieldInMulti: { minHeight: 82, maxHeight: 180, paddingVertical: 0, textAlignVertical: 'top' },
   find: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, paddingHorizontal: 14, borderRadius: 22, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
   findIn: { flex: 1, minWidth: 0, fontFamily: Font.body700, fontSize: 14, color: Colors.ink, paddingVertical: 0 },
   iconLine: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 0 },

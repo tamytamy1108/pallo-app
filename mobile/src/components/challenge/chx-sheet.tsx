@@ -34,6 +34,7 @@ import { haptic, sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 import { HeartPop } from '@/components/ui/heart-pop';
 
+import { SaveHeart } from './cards';
 import { Face } from './face';
 import { ChIcon } from './icons';
 import { SUB } from './parts';
@@ -126,6 +127,7 @@ export function ChxSheet({ p, open, onClose, onClosed, write = false }: { p: Cha
                 <ChIcon name="clock" size={15} color={soon ? '#C2416B' : Colors.ink} />
                 <PText style={[styles.lfT, soon && { color: '#C2416B' }]}>{leftText(p)}</PText>
               </View>
+              <SaveHeart id={p.id} size={32} />
             </View>
             <DashLine />
             <PText style={styles.hl}>{p.hl}</PText>
@@ -311,6 +313,10 @@ function DashLine() {
   );
 }
 
+/** 댓글 줄: 오른쪽 하트 칸 폭 · 칸 사이 */
+const HEART_COL = 34;
+const ROW_GAP = 10;
+
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 0 },
   fill: { flex: 1 },
@@ -323,7 +329,7 @@ const styles = StyleSheet.create({
   nm: { flex: 1, minWidth: 0 },
   nmT: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 17.4 },
   jn: { marginTop: 2, fontFamily: Font.body900, fontSize: 11.5, lineHeight: 15, color: Colors.rosePink },
-  lf: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  lf: { flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 4 },
   lfT: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 20 },
   hl: { marginTop: 2, fontFamily: Font.body900, fontSize: 21, lineHeight: 25.2 },
   ko: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.purple },
@@ -340,8 +346,9 @@ const styles = StyleSheet.create({
   cs0: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 4 },
   cs0B: { fontFamily: Font.body900, fontSize: 16, lineHeight: 23 },
   cs0S: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19, color: SUB },
-  cr: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10 },
-  crRp: { paddingTop: 8, paddingBottom: 0 },
+  cr: { flexDirection: 'row', alignItems: 'flex-start', gap: ROW_GAP, paddingVertical: 10 },
+  // 답글은 윗댓글 글 칸 안에 들어가요 → 하트 칸(+ 사이) 만큼 오른쪽으로 늘려 윗댓글 하트와 같은 줄에 맞춰요
+  crRp: { paddingTop: 8, paddingBottom: 0, marginRight: -(HEART_COL + ROW_GAP) },
   cb: { flex: 1, minWidth: 0 },
   ch: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   chB: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 20 },
@@ -351,7 +358,7 @@ const styles = StyleSheet.create({
   caT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: SUB },
   cmore: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
   cmoreLine: { width: 24, height: 1.5, backgroundColor: Colors.line },
-  cl: { width: 34, alignItems: 'center', paddingTop: 4, gap: 2 },
+  cl: { width: HEART_COL, alignItems: 'center', paddingTop: 4, gap: 2 },
   clN: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: SUB },
   csm: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 18, backgroundColor: Colors.lavender },
   csmT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.purple },

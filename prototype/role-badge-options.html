@@ -1,0 +1,67 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>역할 표시 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Noto+Sans+KR:wght@600;700;800;900&display=swap">
+<style>
+:root{--cream:#FBF6EA;--ink:#1E1A2B;--sub:#5A5366;--line:#E3DCCB;--purple:#493087;--lav:#E5DDF6;--yellow:#FFE200;--pink:#DE7593;--fd:'Unbounded','Noto Sans KR',sans-serif;--fb:'Noto Sans KR',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#E7E0CF;font-family:var(--fb);color:var(--ink);padding:28px 26px 60px;word-break:keep-all}
+h1{font-family:var(--fd);font-size:22px;margin:0 0 6px;letter-spacing:-.5px}
+.lead{font-size:13.5px;font-weight:700;color:var(--sub);margin:0 0 22px;line-height:1.6;max-width:920px}
+.row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.col{width:390px}
+.cap b{font-family:var(--fd);font-size:15px}.cap span{display:block;font-size:12.5px;font-weight:700;color:var(--sub);line-height:1.55;margin:4px 0 12px;min-height:58px}
+.card{background:var(--cream);border:2px solid var(--ink);border-radius:24px;box-shadow:3px 4px 0 var(--ink);padding:14px 16px}
+.sec{font-size:11.5px;font-weight:900;color:var(--sub);margin:4px 0 8px;letter-spacing:.2px}
+.p{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1.5px solid var(--line)}.p:last-child{border:0}
+.avw{position:relative;flex:none;width:42px;height:42px}
+.av{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);overflow:hidden;display:grid;place-items:center}
+.av img{width:34px;max-width:none;margin-top:2px}
+.em{position:absolute;right:-5px;bottom:-4px;width:20px;height:20px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center}
+.em svg{width:11px;height:11px}
+.nm{flex:1;min-width:0}
+.nm b{font-size:14.5px;font-weight:900}
+.nm small{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-top:1px}
+.tag{display:inline-flex;align-items:center;height:17px;padding:0 6px;border-radius:9px;font-family:var(--fd);font-size:9px;letter-spacing:.3px;margin-left:5px;vertical-align:2px}
+.t-pro{background:var(--purple);color:#fff}
+.t-br{background:var(--ink);color:var(--yellow)}
+.t-host{background:var(--yellow);color:var(--ink);border:1.5px solid var(--ink)}
+.t-sub{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}
+.t-br.ko{font-family:var(--fb);font-weight:900;font-size:10px}
+.post{margin-top:12px;font-size:13px;font-weight:700;color:var(--sub)}
+</style></head><body>
+<h1>역할 표시 · 확정안</h1>
+<p class="lead">얼굴 표시는 <b>C (프로 = 보라 PALLO 스파크, 직원 = 노랑 집)</b>, 이름 옆 글자는 프로 <b>PRO</b>, 직원(지점 관리자 · 본사 운영자) <b>STAFF</b>예요. 소속은 아래 작은 줄에 나와요. 서브 호스트는 <b>코호스트 (CO-HOST)</b>로 이름을 바꿨어요. 왕관은 모임 역할(호스트 노랑 · 코호스트 흰색) 전용이에요.</p>
+<div class="row" id="rows"></div>
+<script>
+const I = {
+  crown: (fill) => `<svg viewBox="0 0 24 24"><path d="M3 18h18l-1.5-10-4.5 4-3-7-3 7-4.5-4z" fill="${fill}" stroke="#1E1A2B" stroke-width="2.4" stroke-linejoin="round"/></svg>`,
+  spark: `<svg viewBox="0 0 426 378"><path d="M374 140h-63l40-59c16-24 10-56-14-72s-56-10-72 14l-55 81-43-64c-16-24-48-30-72-14s-30 48-14 72l28 42H51C23 140 0 163 0 192s23 52 51 52h65l-36 53c-16 24-10 56 14 72s56 10 72-14l44-65 36 54c16 24 48 30 72 14s30-48 14-72l-28-42h69c29 0 52-23 52-52s-23-52-52-52z" fill="#fff"/></svg>`,
+  house: `<svg viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h12V9.5" fill="none" stroke="#FFE200" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/></svg>`,
+};
+const OPTS = [
+  { name: '확정 · 2026-11-25', tag: 'CO-HOST', ko: '코호스트', note: '라운지 · 프로필에서는 계정 역할(프로 · 직원), 모임 화면에서는 모임 역할(호스트 · 코호스트)을 보여 줘요.' },
+];
+const AV = { pro: 'up-purple-lash', br: 'up-sky', br2: 'up-pink', host: 'up-yellow', sub: 'up-pink', both: 'up-green' };
+const av = (img, em) => `<span class="avw"><span class="av" style="background:#fff"><img src="assets/av/${img}.png" alt=""></span>${em || ''}</span>`;
+const em = (bg, ic) => `<i class="em" style="background:${bg}">${ic}</i>`;
+const rowsEl = document.getElementById('rows');
+const proEm = em('var(--purple)', I.spark), brEm = em('var(--ink)', I.house);
+const hostEm = em('var(--yellow)', I.crown('#1E1A2B')), subEm = em('#fff', I.crown('none'));
+OPTS.forEach((o) => {
+  const c = document.createElement('div'); c.className = 'col';
+  c.innerHTML = `<div class="cap"><b>${o.name}</b><span>${o.note}</span></div>
+  <div class="card">
+    <div class="sec">라운지 글 · 프로필 (계정 역할)</div>
+    <div class="p">${av(AV.pro, proEm)}<div class="nm"><b>Julie<span class="tag t-pro">PRO</span></b><small>하남점 · 10분 전</small></div></div>
+    <div class="p">${av(AV.br, brEm)}<div class="nm"><b>김하남<span class="tag t-br">STAFF</span></b><small>하남점 · 1시간 전</small></div></div>
+    <div class="p">${av(AV.br2, brEm)}<div class="nm"><b>박서연<span class="tag t-br">STAFF</span></b><small>PALLO · 어제</small></div></div>
+    <div class="p">${av(AV.both)}<div class="nm"><b>민준</b><small>잠실점 · 3시간 전 · 회원은 표시 없음</small></div></div>
+    <div class="sec" style="margin-top:14px">동아리 멤버 목록 (모임 역할 = 왕관)</div>
+    <div class="p">${av(AV.host, hostEm)}<div class="nm"><b>소라<span class="tag t-host">HOST</span></b><small>영어 말하기 클럽 · 호스트</small></div></div>
+    <div class="p">${av(AV.sub, subEm)}<div class="nm"><b>예린<span class="tag t-sub">${o.tag}</span></b><small>영어 말하기 클럽 · ${o.ko}</small></div></div>
+    <div class="p">${av(AV.pro, hostEm)}<div class="nm"><b>Julie<span class="tag t-pro">PRO</span><span class="tag t-host">HOST</span></b><small>프로이면서 이 동아리 호스트 → 얼굴엔 왕관</small></div></div>
+  </div>`;
+  rowsEl.appendChild(c);
+});
+</script>
+</body></html>

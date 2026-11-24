@@ -38,16 +38,16 @@ describe('학습 가짜 API (16 · 17 · 18)', () => {
     await expect(fetchSceneContent('travel-1')).resolves.toHaveProperty('flow');
   });
 
-  it('18 없는 과 · 장면은 NOT_FOUND', async () => {
-    await expect(fetchPatternLesson(1, 99)).rejects.toMatchObject({ code: 'NOT_FOUND' });
-    await expect(fetchUnit34(4, 999)).rejects.toMatchObject({ code: 'NOT_FOUND' });
-    await expect(fetchSceneContent('nope-1')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  it('18 없는 과 · 장면은 not_found', async () => {
+    await expect(fetchPatternLesson(1, 99)).rejects.toMatchObject({ code: 'not_found' });
+    await expect(fetchUnit34(4, 999)).rejects.toMatchObject({ code: 'not_found' });
+    await expect(fetchSceneContent('nope-1')).rejects.toMatchObject({ code: 'not_found' });
   });
 
   it('?mockFail=maps,books,lesson 으로 오류 화면을 볼 수 있어요', async () => {
     setMockOptions({ fail: ['maps', 'books', 'lesson'] });
-    await expect(fetchSituationMaps()).rejects.toMatchObject({ code: 'MOCK_FAIL' });
-    await expect(fetchBookShelf()).rejects.toMatchObject({ code: 'MOCK_FAIL' });
-    await expect(fetchSceneContent('travel-1')).rejects.toMatchObject({ code: 'MOCK_FAIL' });
+    await expect(fetchSituationMaps()).rejects.toMatchObject({ code: 'mock_fail' });
+    await expect(fetchBookShelf()).rejects.toMatchObject({ code: 'mock_fail' });
+    await expect(fetchSceneContent('travel-1')).rejects.toMatchObject({ code: 'mock_fail' });
   });
 });

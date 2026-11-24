@@ -26,6 +26,17 @@ const SWAP_WAIT_MS = 1200;
 const WARM_GAP_MS = 60;
 /** 메모리가 적은 폰(liteWorld)은 다음에 갈 것 같은 지도 이만큼만 미리 만들어요 (그림자 · 안티에일리어싱이 꺼져서 한 장이 가벼워요) */
 const LITE_WARM = 2;
+/**
+ * 미리 만들기는 만드는 동안 화면이 멈춰서, 사람이 화면을 만지는 중이면 기다려요:
+ * 다음에 누를 것 같은 첫 장(상황 맵 탭을 누르면 뜰 맵)만 바로 만들고, 나머지는 마지막 터치 · 스크롤 뒤 이만큼(ms) 조용할 때 하나씩.
+ */
+const IDLE_MS = 1800;
+let lastTouch = 0;
+/** 라이브러리 화면이 터치 · 스크롤 때마다 불러요 (미리 만들기가 끼어들지 않게) */
+export const noteLibTouch = () => {
+  lastTouch = Date.now();
+};
+
 /** 새 지도가 뜨는 시간 (프로토타입 m3Fade 0.4초 → 인트로를 빠르게 하면서 함께 줄였어요) */
 const FADE = { duration: 200, easing: Easing.out(Easing.ease) };
 
@@ -71,23 +82,38 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
     const prev = last.current;
     last.current = { key, order: world.order };
     setDir(world.order >= prev.order ? 1 : -1);
-    setLayers((ls) => {
-      if (__DEV__) console.log(`[lib] 맵 바꾸기 → ${world.slot} · ${ls.some((l) => l.key === key) ? '미리 만든 지도' : '새로 만들어요'} · 지도 ${ls.length}장`);
-      return ls.some((l) => l.key === key) ? ls : [...ls, { ...world, key }];
+    // 아직 안 만든 지도면 두 프레임 뒤에 올려요: 탭 · 칩 · 아래 목록이 먼저 바뀌어 보이고, 멈추는 지도 만들기는 그다음에
+    let raf = 0;
+    const add = () =>
+      setLayers((ls) => {
+        if (__DEV__) console.log(`[lib] 맵 바꾸기 → ${world.slot} · ${ls.some((l) => l.key === key) ? '미리 만든 지도' : '새로 만들어요'} · 지도 ${ls.length}장`);
+        return ls.some((l) => l.key === key) ? ls : [...ls, { ...world, key }];
+      });
+    raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(add);
     });
     setUnder(prev.key);
     setTop(key);
     setTopIn(false);
     setTurn((t) => t + 1);
+    return () => cancelAnimationFrame(raf);
   }, [key, world]);
 
   // 미리 만들기: 하나씩, 바꾸는 중이 아닐 때만. warm 에 없는 숨은 지도(진도가 바뀐 옛 지도 · 다른 언어)는 치워요
+  const [idleTick, setIdleTick] = useState(0);
   useEffect(() => {
     if (under || warming || !drawn.has(top)) return;
     const keys = new Set(warmSig.split('\n'));
     const next = warmNow.current.find((w) => !layers.some((l) => l.key === keyOf(w)));
     const stale = layers.some((l) => l.key !== top && !keys.has(l.key));
     if (!next && !stale) return;
+    // 첫 장(다음에 누를 것 같은 지도)은 바로, 나머지는 화면을 안 만질 때만 (만지는 중이면 조용해질 때 다시 봐요)
+    const first = !!next && keyOf(next) === keyOf(warmNow.current[0] ?? next);
+    const quietFor = Date.now() - lastTouch;
+    if (next && !first && quietFor < IDLE_MS) {
+      const r = setTimeout(() => setIdleTick((n) => n + 1), IDLE_MS - quietFor + 30);
+      return () => clearTimeout(r);
+    }
     const t = setTimeout(() => {
       setLayers((ls) => {
         const kept = ls.filter((l) => l.key === top || keys.has(l.key));
@@ -99,7 +125,7 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
       }
     }, WARM_GAP_MS);
     return () => clearTimeout(t);
-  }, [under, warming, drawn, top, layers, warmSig]);
+  }, [under, warming, drawn, top, layers, warmSig, idleTick]);
 
   // 아직 만들 지도가 있어요 (지금 만드는 중이거나 · 다음 차례) → 보이는 지도는 멈춰 둬요
   const pending = !!warming || (drawn.has(top) && want.some((w) => !layers.some((l) => l.key === keyOf(w))));

@@ -103,7 +103,7 @@
 { "id": "n-882", "type": "quest_completed", "kind": "learn",
   "actor": { "id": "m-sora", "name": "소라" }, "others": 0,   // 묶이면 '외 n명'
   "text": "소라님이 「1과 Cafe Complaint · 본학습」 퀘스트를 성공했어요!",
-  "deepLink": "/lesson/sit?lv=1&unit=1", "action": "나도 풀러 가기", "createdAt": "…", "read": false }
+  "deepLink": "/lesson/sit?lv=1&unit=1", "action": "나도 이어서 하기", "createdAt": "…", "read": false }
 ```
 
 > 딥링크는 앱 안 주소 그대로예요. 비회원 · 둘째 챕터 잠금은 앱 화면이 다시 확인해요 (09-onboarding '회원 · 비회원 권한').
@@ -120,7 +120,7 @@
 | **3. 지점 · 수강** | **지점 연동 요청**(자동 후보 찾기 · 연동하기 · 못 찾음 이유 · 연동 풀기), 지점 · 팀 · 프로 · 시간표 · 자리, 팀별 이번 주 진도, 이용권 상품, 입금 계좌, 체험 시간, 연기 · 변경 · 홀딩 승인 | `/admin/branches` · `/admin/teams` · `/admin/week-lessons` · `/admin/passes` · `/admin/trial-slots` · `/admin/change-requests/:id` · `/admin/link-requests` · `/admin/link-requests/:id/link` · `/admin/link-requests/:id/reject` | 8 · 11 · 37 · 38 · 39 · 48 |
 | **4. 보상 · 상점** | 꾸미기 아이템(가격 · 등급 · 판매 기간 · 그림), 배지 조건, 보상 상자 내용, 시즌 보상, 포인트 · 스파크 지급 규칙, 원장 조정(회수) | `/admin/avatar-items` · `/admin/badges` · `/admin/rewards` · `/admin/reward-rules` · `/admin/members/:id/ledger` | 33 · 35 · A3 · A4 |
 | **5. 커뮤니티 운영** | 신고함(있음), 동아리 승인, 이벤트 열기 · 제안 검토 · 설문 템플릿 · 결과 받기, 입금 확인, 분류 · 장소 목록 | `/admin/reports`(76) · `/admin/clubs/:id/approve` · `/admin/events` · `/admin/event-proposals` · `/admin/event-applications/:id` · `/admin/config/places` | 63 · 64 · 86 ~ 92 · A18 |
-| **6. 권한** | 리더 · 매니저 지정, 서브 호스트 바꾸기, 이용 제한 걸기 · 풀기 | `/admin/members/:id/role` · `/admin/clubs/:id/staff` · `/admin/members/:id/restrictions` | 3 · 66 |
+| **6. 권한** | 프로 · 지점 관리자 지정, 코호스트 바꾸기, 이용 제한 걸기 · 풀기 | `/admin/members/:id/role` · `/admin/clubs/:id/staff` · `/admin/members/:id/restrictions` | 3 · 66 |
 | **7. 지원** | FAQ, 1:1 문의 답변, 약관 버전, 앱 최소 버전, 프로 노트 쓰기 | `/admin/faq` · `/admin/inquiries/:id/reply` · `/admin/terms` · `/admin/app-version` · `/admin/pro-notes` | 93 ~ 96 · 44 |
 
 ### 회의에서 같이 정할 것

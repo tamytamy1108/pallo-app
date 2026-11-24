@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { GrowInput } from '@/components/ui/grow-input';
+import { FramedImage } from '@/components/ui/photo-frame';
 import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { type ReportMenuItem, ReportSheet } from '@/components/common/report-sheet';
@@ -114,27 +114,36 @@ function PopButton({ label, pressed, onPress, popKey, children }: { label: strin
   );
 }
 
-/** 사진 칸: 한 번 누르면 다음 장 · 두 번 누르면 좋아요(하트 터짐) · 옆으로 밀면 넘기기 (프로토타입 lgPic) */
+/** 사진 칸: 옆으로 밀면 (왼쪽 · 오른쪽) 한 장씩 넘어가요 · 두 번 누르면 좋아요(하트 터짐) (프로토타입 lgPic) */
 function Pic({ p }: { p: Post }) {
   const [i, setI] = useState(0);
+  const [w, setW] = useState(0);
+  const pager = useRef<ScrollViewInstance>(null);
   const lastTap = useRef(0);
-  const startX = useRef(0);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const still = useReducedMotion();
   const burst = useSharedValue(0);
-  useEffect(() => () => clearTimeout(timer.current), []);
-  const go = (d: number) => setI((x) => (x + d + p.n) % p.n);
+  const many = p.n > 1;
   const onTap = () => {
     const now = Date.now();
     if (now - lastTap.current < 320) {
       lastTap.current = 0;
-      clearTimeout(timer.current);
       likeOn(p.id);
       if (!still) burst.set(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: 800, easing: Easing.linear })));
       return;
     }
     lastTap.current = now;
-    if (p.n > 1) timer.current = setTimeout(() => go(1), 330);
+  };
+  // 넘기는 동안 가운데에 더 많이 보이는 장으로 숫자 · 점을 맞춰요
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!w) return;
+    const k = Math.round(e.nativeEvent.contentOffset.x / w);
+    setI(Math.max(0, Math.min(p.n - 1, k)));
+  };
+  // 화면 읽기(VoiceOver · TalkBack): 위 · 아래로 쓸어 넘겨요
+  const step = (d: number) => {
+    const k = Math.max(0, Math.min(p.n - 1, i + d));
+    pager.current?.scrollTo({ x: k * w, animated: !still });
+    setI(k);
   };
   const burstStyle = useAnimatedStyle(() => {
     const t = burst.get();
@@ -142,27 +151,43 @@ function Pic({ p }: { p: Post }) {
     const op = t === 0 ? 0 : kfc(t, [0, 30, 70, 100], [0, 1, 1, 0], BURST_EASE);
     return { opacity: op, transform: [{ scale: sc }] };
   });
-  const img = p.imgs?.[i] ?? p.imgs?.[0];
+  const imgAt = (k: number) => p.imgs?.[k] ?? p.imgs?.[0];
+  const img = imgAt(0);
   if (!p.pic && !img) return null;
   return (
     <View>
       <View style={styles.picShadow}>
-        <Pressable
-          onPressIn={(e) => (startX.current = e.nativeEvent.pageX)}
-          onPressOut={(e) => {
-            const dx = e.nativeEvent.pageX - startX.current;
-            if (p.n > 1 && Math.abs(dx) >= 40) {
-              lastTap.current = 0;
-              go(dx < 0 ? 1 : -1);
-            }
-          }}
-          onPress={onTap}
-          accessibilityRole="imagebutton"
-          accessibilityLabel={`${p.who}의 사진${p.n > 1 ? ` ${i + 1}/${p.n} · 누르면 다음 장` : ''} · 두 번 누르면 좋아요`}
+        <View
+          accessible
+          accessibilityRole={many ? 'adjustable' : 'image'}
+          accessibilityLabel={`${p.who}의 사진${many ? ` ${i + 1}/${p.n} · 옆으로 밀면 다음 장` : ''}`}
+          accessibilityValue={many ? { text: `${i + 1}/${p.n}` } : undefined}
+          accessibilityActions={many ? [{ name: 'increment' }, { name: 'decrement' }] : undefined}
+          onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
+          onLayout={(e) => setW(e.nativeEvent.layout.width - 4)}
           style={[styles.pic, img ? { aspectRatio: p.ratio ?? 1, height: undefined, backgroundColor: Colors.ink } : { backgroundColor: PIC_BG[p.pic ?? 'party'] }]}>
-          {img ? <Image source={{ uri: img }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <PostArt pic={p.pic ?? 'party'} uid={p.id} />}
-          {p.n > 1 ? (
-            <View style={styles.picCnt}>
+          <ScrollView
+            ref={pager}
+            horizontal
+            pagingEnabled
+            scrollEnabled={many}
+            bounces={many}
+            directionalLockEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={onScroll}
+            scrollEventThrottle={32}
+            style={StyleSheet.absoluteFill}>
+            {Array.from({ length: Math.max(1, p.n) }, (_, k) => {
+              const src = imgAt(k);
+              return (
+                <Pressable key={k} onPress={onTap} sound={false} style={[styles.page, { width: w }]}>
+                  {src ? <FramedImage uri={src} framing={p.imgs?.[k] ? p.frames?.[k] : p.frames?.[0]} /> : <PostArt pic={p.pic ?? 'party'} uid={`${p.id}-${k}`} />}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          {many ? (
+            <View style={styles.picCnt} pointerEvents="none">
               <PText style={styles.picCntText}>
                 {i + 1}/{p.n}
               </PText>
@@ -171,7 +196,7 @@ function Pic({ p }: { p: Post }) {
           <Animated.View style={[styles.burst, burstStyle]} pointerEvents="none">
             <LgIcon name="heart" size={86} fill={LG_C.pk} sw={1.6} />
           </Animated.View>
-        </Pressable>
+        </View>
       </View>
       {p.n > 1 ? (
         <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -329,6 +354,8 @@ const styles = StyleSheet.create({
   ib: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   picShadow: { borderRadius: 20, boxShadow: `4px 4px 0px ${Colors.ink}` },
   pic: { height: 330, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink, overflow: 'hidden' },
+  // 한 장 — 그림이 옆 장으로 넘치지 않게 잘라요
+  page: { height: '100%', overflow: 'hidden' },
   picCnt: { position: 'absolute', right: 12, top: 12, backgroundColor: Colors.ink, borderRadius: 10, paddingVertical: 4, paddingHorizontal: 8 },
   picCntText: { fontFamily: Font.display, fontSize: 11, lineHeight: 14, color: '#fff' },
   burst: { position: 'absolute', left: '50%', top: '50%', marginLeft: -43, marginTop: -43 },

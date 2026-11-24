@@ -33,6 +33,7 @@ export const LG_IC = {
   flame: 'M12 3c1 3 4.5 4.5 4.5 9.5a4.5 4.5 0 0 1-9 0c0-2.2 1.2-3.5 2.2-4.3 0 2 1 3.3 2.3 3.3 0-3.3-1.2-5.5 0-8.5z',
   up: 'M12 19V5M5 12l7-7 7 7',
   ratio: 'M14 4h6v6M10 20H4v-6M20 4l-6 6M4 20l6-6',
+  flip: 'M4.5 10a7.8 7.8 0 0 1 14-3.5M19 3v4h-4M19.5 14a7.8 7.8 0 0 1-14 3.5M5 21v-4h4',
 } as const;
 export type LgIconName = keyof typeof LG_IC;
 

@@ -6,6 +6,7 @@
 
 > 여기 없는 API(앱 시작 팝업 · 시즌 테마 · 스파크 내역 · 팔로우 · 첫 화면 · 사용 가이드 · 지점 연동 요청 등 21가지 + 로그아웃 · 토큰 갱신)와 **관리자 웹 API 개요(7묶음)** 는 [`docs/frontend/api-additions.md`](../frontend/api-additions.md) 에 이어서 적었어요 (A1 ~ A23).
 > 앱 쪽에서 어느 API까지 옮겼는지는 [`docs/frontend/api-layer.md`](../frontend/api-layer.md) 체크리스트를 봐요.
+> **최신 · 기준 문서는 [`docs/api/openapi.yaml`](../api/openapi.yaml) (Swagger)** 예요. 지금 백엔드 컨트롤러와 맞춰 본 화면별 API 269개 · [`docs/api/screens.md`](../api/screens.md). 이 목록은 처음 제안으로 남겨 둬요.
 
 ## 인증 · 회원
 
@@ -101,7 +102,7 @@
 | 63 | GET / POST | `/clubs` · `/clubs/:id` | 동아리 (만들면 승인 대기) |
 | 64 | POST | `/clubs/:id/approve` | 매니저 승인 |
 | 65 | POST / DELETE | `/clubs/:id/members` | 가입 · 나가기 (정기 모임 참석도 함께 취소) |
-| 66 | PUT | `/clubs/:id/staff` | 서브 호스트 (≤3) |
+| 66 | PUT | `/clubs/:id/staff` | 코호스트 (≤3) |
 | 67 | GET / POST | `/clubs/:id/board` · `/clubs/:id/photos` | 게시판 · 사진첩 |
 | 68 | WS / GET | `/clubs/:id/chat` | 채팅 (실시간) |
 | 69 | GET / POST / DELETE | `/clubs/:id/sessions` · `/club-sessions/:sid/attend` | 정기 모임 · 참석 |
@@ -113,7 +114,7 @@
 | 75 | POST | `/reports` | 신고 |
 | 76 | GET / PATCH | `/admin/reports` · `/admin/reports/:id` | 신고함 처리 (매니저) |
 | 77 | POST / DELETE | `/blocks` | 차단 |
-| 78 | POST | `/posts/:id/pin` · `/posts/:id/hide` | 공지 고정 · 숨기기 (리더 · 매니저) |
+| 78 | POST | `/posts/:id/pin` · `/posts/:id/hide` | 공지 고정 · 숨기기 (프로 · 지점 관리자) |
 
 ## 챌린지
 
@@ -132,7 +133,7 @@
 | # | 방법 | 경로 | 하는 일 |
 |---|---|---|---|
 | 86 | GET | `/events` · `/events/:id` | 목록 · 상세 |
-| 87 | POST | `/events` | 열기 (리더 · 매니저) |
+| 87 | POST | `/events` | 열기 (프로 · 지점 관리자) |
 | 88 | POST | `/events/:id/applications` | 신청 (설문 답) |
 | 89 | DELETE | `/event-applications/:id` | 취소 |
 | 90 | PATCH | `/event-applications/:id` | 입금 확인 (운영) [TBC] |

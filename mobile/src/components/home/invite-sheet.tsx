@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { errorMessage } from '@/api/errors';
+import { apiErrorMessage } from '@/api/errors';
 import { sendSessionInvite } from '@/api/home';
 import { MemberFace } from '@/components/character/avatar';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export function InviteSheet({ at, onClose }: { at: { slot: number; lang: number 
       showToast(`${sent}명에게 알렸어요`);
       onClose();
     },
-    onError: (e) => showToast(errorMessage(e)),
+    onError: (e) => showToast(apiErrorMessage(e)),
   });
 
   const toggle = (name: string) => setPicked((s) => ({ ...s, [name]: !s[name] }));

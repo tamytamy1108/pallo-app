@@ -1,104 +1,67 @@
 /**
- * 서버에 요청 보내는 공통 함수. 화면은 이걸 직접 부르지 않고 `api/*.ts` 의 함수(하나 = API 하나)를 불러요.
- * - 주소: apiConfig.baseUrl + path (환경별 · api/config.ts)
- * - 로그인 토큰이 있으면 `Authorization: Bearer …` 를 붙여요
- * - 오류는 늘 ApiError({ code, message, status }) 로 던져요
+ * 서버에 요청 보내는 공통 클라이언트 — 공용 `@academy/api-client` 의 `createHttpClient` 를 써요 (콘솔 앱 · 옛 모바일 앱과 같은 것).
+ * 화면은 이걸 직접 부르지 않고 `api/*.ts` 의 함수(하나 = API 하나)를 불러요.
+ * - 주소: apiConfig.baseUrl(오리진) + APP_API_PREFIX(`/app/api/v2`) + path. api/*.ts 의 path 에는 접두사를 쓰지 않아요
+ * - 토큰이 있으면 `Authorization: Bearer …` 를 붙여요 (`tokenStorage` · api/token.ts)
+ * - 401 이면 `POST /auth/refresh` 를 한 번만(동시에 여러 요청이 받아도 한 번) 보내 새 토큰으로 원 요청을 한 번 다시 보내요.
+ *   `/auth/*` 경로와 403 은 갱신하지 않아요. 갱신까지 실패하면 토큰을 지워요 (onAuthFailure).
+ * - 오류는 늘 공용 ApiError — code 는 서버 몸통 { error, message } 의 error, message 는 서버 message
+ * 공용 `createAuthHttpClient` 대신 `createHttpClient` 를 직접 쓰는 이유: 로그아웃 알림이 `window` 이벤트라 폰에서 안 돌아서
+ * onAuthFailure 를 이 앱이 정해요.
  * 응답 타입은 지금 손으로 적어요. 백엔드가 OpenAPI 문서를 주면 거기서 만든 타입으로 바꿔요 (B2).
  */
+import { createHttpClient, type HttpClient } from '@academy/api-client';
+
 import { apiConfig } from './config';
-import { ApiError, ClientErrorCode, isApiErrorBody } from './errors';
-import { clearTokens, getAccessToken } from './token';
+import { tokenStorage, type Tokens } from './token';
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-
-export type QueryValue = string | number | boolean | null | undefined;
-
-export type RequestOptions = {
-  /** 주소 뒤 ?a=1&b=2 (undefined · null 은 빼요) */
-  query?: Record<string, QueryValue | QueryValue[]>;
-  /** JSON 으로 보내요 */
-  body?: unknown;
-  /** TanStack Query 가 주는 signal (화면을 떠나면 요청을 끊어요) */
-  signal?: AbortSignal;
-  /** 로그인 토큰을 붙일지 (로그인 요청 자체는 false) */
-  auth?: boolean;
-};
+/**
+ * pallo-app API 네임스페이스 — v2. 옛 모바일 앱의 `/app/api/v1`(백엔드 `ApiPathPrefixConfig.APP_PREFIX`)과 따로 가요.
+ * 백엔드에 v2 접두사가 생기면 그 값과 같아야 해요.
+ * baseUrl 에는 오리진만 두고 접두사는 여기서 한 번만 붙여요 (콘솔 앱의 authHttpClient `basePrefix` 와 같은 방식).
+ */
+export const APP_API_PREFIX = '/app/api/v2';
 
 /** 목록 나눠 받기 (B6: cursor 방식). nextCursor 가 null 이면 끝 */
 export type Page<T> = { items: T[]; nextCursor: string | null };
 export type PageParams = { cursor?: string | null; limit?: number };
 
-export function buildUrl(baseUrl: string, path: string, query?: RequestOptions['query']) {
-  const qs: string[] = [];
-  for (const [k, v] of Object.entries(query ?? {})) {
-    for (const one of Array.isArray(v) ? v : [v]) {
-      if (one === undefined || one === null) continue;
-      qs.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(one))}`);
-    }
-  }
-  return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}${qs.length ? `?${qs.join('&')}` : ''}`;
-}
-
-async function parseBody(res: Response): Promise<unknown> {
-  if (res.status === 204) return undefined;
-  const text = await res.text();
-  if (!text) return undefined;
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new ApiError({ code: ClientErrorCode.badResponse, status: res.status });
-  }
-}
-
-export async function request<T>(method: HttpMethod, path: string, opts: RequestOptions = {}): Promise<T> {
-  if (!apiConfig.baseUrl) throw new ApiError({ code: ClientErrorCode.noBaseUrl });
-
-  const headers: Record<string, string> = { Accept: 'application/json' };
-  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
-  if (opts.auth !== false) {
-    const token = await getAccessToken();
-    if (token) headers.Authorization = `Bearer ${token}`;
-  }
-
-  // 시간 초과 · 화면 떠남 둘 다 같은 controller 로 끊어요
+/**
+ * 서버 주소 확인 + 시간 초과. RN 의 fetch 는 스스로 끊지 않아서 timeoutMs 가 지나면 끊어요.
+ * 화면이 떠나 끊는 signal(TanStack Query) 도 같이 따라요. 실패는 공용 클라이언트가 ApiError 로 바꿔요.
+ */
+const fetchWithTimeout: typeof fetch = (input, init) => {
+  if (!apiConfig.baseUrl) return Promise.reject(new Error('서버 주소가 아직 없어요 (app.json extra.api.baseUrls)'));
   const controller = new AbortController();
-  let timedOut = false;
-  const timer = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, apiConfig.timeoutMs);
+  const outer = init?.signal;
   const onAbort = () => controller.abort();
-  opts.signal?.addEventListener('abort', onAbort);
-
-  let res: Response;
-  try {
-    res = await fetch(buildUrl(apiConfig.baseUrl, path, opts.query), {
-      method,
-      headers,
-      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
-      signal: controller.signal,
-    });
-  } catch (e) {
-    if (opts.signal?.aborted) throw e; // 화면이 끊은 건 오류로 보지 않아요 (Query 가 알아서 무시)
-    throw new ApiError({ code: timedOut ? ClientErrorCode.timeout : ClientErrorCode.network });
-  } finally {
+  if (outer?.aborted) controller.abort();
+  else outer?.addEventListener('abort', onAbort);
+  const timer = setTimeout(() => controller.abort(), apiConfig.timeoutMs);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => {
     clearTimeout(timer);
-    opts.signal?.removeEventListener('abort', onAbort);
-  }
+    outer?.removeEventListener('abort', onAbort);
+  });
+};
 
-  const body = await parseBody(res);
-  if (res.ok) return body as T;
-
-  if (res.status === 401) await clearTokens();
-  if (isApiErrorBody(body)) throw new ApiError({ code: body.code, message: body.message, status: res.status });
-  const code = res.status === 401 ? ClientErrorCode.unauthorized : res.status === 404 ? ClientErrorCode.notFound : `HTTP_${res.status}`;
-  throw new ApiError({ code, status: res.status });
+/** 보관 중인 refresh 토큰으로 두 토큰을 새로 받아요 (우리 백엔드 MobileAuthController `POST /auth/refresh`) */
+async function refreshSession(client: HttpClient): Promise<string | null> {
+  const refreshToken = tokenStorage.get()?.refreshToken;
+  if (!refreshToken) return null;
+  const res = await client.post<Tokens>('/auth/refresh', { refreshToken }, { skipAuthRetry: true });
+  tokenStorage.set({ accessToken: res.accessToken, refreshToken: res.refreshToken });
+  return res.accessToken;
 }
 
-export const http = {
-  get: <T>(path: string, opts?: Omit<RequestOptions, 'body'>) => request<T>('GET', path, opts),
-  post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('POST', path, { ...opts, body }),
-  put: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('PUT', path, { ...opts, body }),
-  patch: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('PATCH', path, { ...opts, body }),
-  delete: <T>(path: string, opts?: RequestOptions) => request<T>('DELETE', path, opts),
-};
+export const http: HttpClient = createHttpClient({
+  baseUrl: `${apiConfig.baseUrl}${APP_API_PREFIX}`,
+  fetch: fetchWithTimeout,
+  defaultHeaders: (): Record<string, string> => {
+    const tokens = tokenStorage.get();
+    return tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : {};
+  },
+  hasAccessToken: () => tokenStorage.get() !== null,
+  refresh: refreshSession,
+  // 갱신까지 실패 = 로그인이 풀림. 로그인 화면으로 보내기 · 캐시 비우기는 다음 단계(로그인 상태 한 곳 관리)에서
+  onAuthFailure: () => tokenStorage.clear(),
+});

@@ -6,7 +6,8 @@
  *    (Expo SDK 58 은 `.env` · `.env.local` · `.env.development` · `.env.production` 만 읽어요. `.env.staging` 은 안 읽어요)
  * 2. `app.json` › `expo.extra.api` — `env` · `baseUrls` · `mock` · `mockDelayMs`
  *
- * 서버 주소는 백엔드 첫 회의(B3)에서 정해요. 주소가 비어 있으면 mock 을 꺼도 요청하지 않고 오류를 내요.
+ * 서버 주소(`baseUrls`)는 오리진만 적어요 (예: `https://api.example.com`). 경로 접두사 `/app/api/v2` 는 client.ts 가 붙여요.
+ * 주소가 비어 있으면 mock 을 꺼도 요청하지 않고 오류를 내요.
  */
 import Constants from 'expo-constants';
 

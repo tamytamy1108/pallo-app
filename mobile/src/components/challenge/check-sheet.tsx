@@ -1,8 +1,8 @@
-import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { FramedImage, PhotoFrame } from '@/components/ui/photo-frame';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -11,6 +11,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { addCheckin, chCat, unitOf, type Challenge, type ChPhoto } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
+import { plainFraming, type PhotoFraming } from '@/lib/photo-framing';
 
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, SUB } from './parts';
@@ -18,7 +19,8 @@ import { Field, FieldLabel, LgBtn, SUB } from './parts';
 /** 사진 인증 한 번에 넣을 수 있는 장 수 (LG_IMG_MAX_N) */
 const MAX_PHOTOS = 10;
 
-type Draft = { uri: string; ratio: number };
+/** 고른 사진 · 맞춘 모양 (확대 · 위치 — 원본 비율은 framing.aspect) */
+type Draft = { uri: string; framing: PhotoFraming };
 
 /**
  * 오늘 인증 시트 (프로토타입 lgChkSheet · lgPostStep1 · lgChkStep2).
@@ -26,8 +28,9 @@ type Draft = { uri: string; ratio: number };
  * - 사진 + 댓글 방식: ① 앨범 · 촬영으로 사진 고르기(여러 장 · 원본 비율 ↔ 1:1) → [다음] ② 한 줄 소감(선택) → [인증하기]
  *   사진 없이는 다음으로 못 가요.
  * challenge 가 있으면 열려요. 하루 한 번만 — 이미 인증했으면 부르는 쪽에서 막아요.
+ * onPosted: 올린 뒤 (상세 화면이 인증 탭의 내 글로 옮겨 줘요)
  */
-export function CheckSheet({ challenge, onClose }: { challenge: Challenge | null; onClose: () => void }) {
+export function CheckSheet({ challenge, onClose, onPosted }: { challenge: Challenge | null; onClose: () => void; onPosted?: () => void }) {
   // 닫히는 동안에도 내용이 남아 있게 마지막 챌린지를 들고 있어요
   const [held, setHeld] = useState<Challenge | null>(challenge);
   if (challenge && challenge !== held) setHeld(challenge);
@@ -48,10 +51,10 @@ export function CheckSheet({ challenge, onClose }: { challenge: Challenge | null
   if (!p) return null;
   const photo = p.way === 'photo';
   const study = chCat(p.cat).key === 'study';
-  const ratio = square || !drafts[0] ? 1 : drafts[0].ratio;
+  const ratio = square || !drafts[0] ? 1 : drafts[0].framing.aspect;
 
   const add = (assets: ImagePicker.ImagePickerAsset[]) => {
-    const next = [...drafts, ...assets.map((a) => ({ uri: a.uri, ratio: a.width && a.height ? a.width / a.height : 1 }))].slice(0, MAX_PHOTOS);
+    const next = [...drafts, ...assets.map((a) => ({ uri: a.uri, framing: plainFraming(a.width, a.height) }))].slice(0, MAX_PHOTOS);
     if (!next.length) return;
     sfx('pick');
     setDrafts(next);
@@ -70,6 +73,7 @@ export function CheckSheet({ challenge, onClose }: { challenge: Challenge | null
     const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.85 });
     if (!r.canceled) add(r.assets);
   };
+  const reframe = (i: number, framing: PhotoFraming) => setDrafts((L) => L.map((x, k) => (k === i ? { ...x, framing } : x)));
   const unPick = () => {
     const next = drafts.filter((_, i) => i !== cur);
     setDrafts(next);
@@ -87,8 +91,9 @@ export function CheckSheet({ challenge, onClose }: { challenge: Challenge | null
       showToast('댓글 한 줄을 남겨 주세요');
       return;
     }
-    const photos: ChPhoto[] = drafts.map((d) => ({ uri: d.uri, ratio }));
+    const photos: ChPhoto[] = drafts.map((d) => ({ uri: d.uri, ratio, framing: d.framing }));
     addCheckin(p, { x: v || '오늘 인증!', photos });
+    onPosted?.();
     sfx('save');
     haptic('success');
     onClose();
@@ -109,7 +114,9 @@ export function CheckSheet({ challenge, onClose }: { challenge: Challenge | null
         </View>
         <View style={styles.pthumb}>
           <View>
-            <Image source={{ uri: drafts[0]?.uri }} style={[styles.thumb, { aspectRatio: ratio }]} contentFit="cover" accessibilityLabel={`인증 사진 ${drafts.length}장 중 첫 장`} />
+            <View style={[styles.thumb, { aspectRatio: ratio }]}>
+              {drafts[0] ? <FramedImage uri={drafts[0].uri} framing={drafts[0].framing} accessibilityLabel={`인증 사진 ${drafts.length}장 중 첫 장`} /> : null}
+            </View>
             {drafts.length > 1 ? (
               <View style={styles.thumbN}>
                 <PText style={styles.thumbNT}>{drafts.length}</PText>
@@ -136,15 +143,14 @@ export function CheckSheet({ challenge, onClose }: { challenge: Challenge | null
         <PText style={styles.ds}>{`${p.name}\n${p.guide || ''}`}</PText>
         {d ? (
           <View>
-            <View style={[styles.prev, { aspectRatio: ratio }]}>
-              <Image source={{ uri: d.uri }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel="올릴 사진 미리 보기" />
+            <PhotoFrame key={`${cur}-${d.uri}`} uri={d.uri} framing={d.framing} onChange={(f) => reframe(cur, f)} style={[styles.prev, { aspectRatio: ratio }]} accessibilityLabel="올릴 사진 맞추기">
               <Pressable onPress={() => setSquare((v) => !v)} accessibilityRole="button" accessibilityLabel="비율 바꾸기 · 원본 비율 ↔ 1:1 정사각형" style={styles.ratioTg}>
                 <ChIcon name="ratio" size={16} color={Colors.white} width={2.6} />
               </Pressable>
               <View style={styles.unPick}>
                 <LgBtn label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={unPick} />
               </View>
-            </View>
+            </PhotoFrame>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
               {drafts.map((x, i) => (
                 <Pressable
@@ -154,7 +160,7 @@ export function CheckSheet({ challenge, onClose }: { challenge: Challenge | null
                   accessibilityLabel={`${i + 1}번째 사진 맞추기`}
                   accessibilityState={{ selected: i === cur }}
                   style={[styles.sth, { aspectRatio: ratio }, i === cur && styles.sthOn]}>
-                  <Image source={{ uri: x.uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  <FramedImage uri={x.uri} framing={x.framing} />
                   <PText style={styles.sthN}>{i + 1}</PText>
                 </Pressable>
               ))}
@@ -220,7 +226,7 @@ const styles = StyleSheet.create({
   shd: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: -6 },
   back: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   pthumb: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  thumb: { width: 64, borderRadius: 10, borderWidth: 2, borderColor: Colors.ink },
+  thumb: { width: 64, borderRadius: 10, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.ink, overflow: 'hidden' },
   thumbN: { position: 'absolute', right: -6, top: -6, minWidth: 22, height: 22, borderRadius: 11, backgroundColor: Colors.ink, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
   thumbNT: { fontFamily: Font.display, fontSize: 11, lineHeight: 22, color: Colors.white },
   pthumbT: { flex: 1, fontFamily: Font.body700, fontSize: 13, lineHeight: 19.5, color: SUB },

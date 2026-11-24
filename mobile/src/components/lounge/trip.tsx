@@ -16,6 +16,7 @@ import { WORLD_MAP } from '@/data/lounge-maps';
 import { addPerson, addTrip, closeTrip, removeMyPerson, setCountry, setTripState, useLounge } from '@/data/lounge-store';
 import { useMe } from '@/state/me';
 import { ChipScroll } from '@/components/ui/chip-scroll';
+import { CountPicker } from '@/components/ui/count-picker';
 
 import { Face } from './face';
 import { LgIcon, SparkIcon } from './icons';
@@ -303,7 +304,7 @@ export function TripMakeSheet({ open, onClose, onClosed }: { open: boolean; onCl
   const [from, setFrom] = useState(addDays(14));
   const [to, setTo] = useState(addDays(17));
   const [type, setType] = useState('식사 · 투어');
-  const [cap, setCap] = useState('3명');
+  const [cap, setCap] = useState(3);
   const [sty, setSty] = useState<string[]>(['맛집']);
   const [title, setTitle] = useState('');
   const submit = () => {
@@ -317,7 +318,7 @@ export function TripMakeSheet({ open, onClose, onClosed }: { open: boolean; onCl
       from,
       to,
       type,
-      cap: parseInt(cap, 10) || 3,
+      cap,
       cur: 1,
       who: me.name,
       av: LG_C.y,
@@ -353,7 +354,7 @@ export function TripMakeSheet({ open, onClose, onClosed }: { open: boolean; onCl
       </View>
       <View style={styles.fl}>
         <PText style={styles.lb}>구하는 인원 (나 포함)</PText>
-        <Pills opts={['2명', '3명', '4명', '5명']} on={[cap]} onPick={setCap} />
+        <CountPicker value={cap} presets={[2, 3, 4, 5]} min={2} max={20} onChange={setCap} />
       </View>
       <View style={styles.fl}>
         <PText style={styles.lb}>여행 스타일 · 여러 개 골라요</PText>

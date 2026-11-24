@@ -7,6 +7,7 @@ import { queryOptions } from '@tanstack/react-query';
 
 import { toSituationMaps, type MapRow } from '@/data/maps';
 
+import { fetchSignupOptions } from './auth';
 import type { PageParams } from './client';
 import { fetchBookShelf, fetchPatternLesson, fetchSceneContent, fetchSituationMaps, fetchUnit34, lessonContentId } from './learn';
 import { fetchLaunchPopups, fetchLoungeHighlights, fetchNotice, fetchNotices, fetchTodaySessions } from './home';
@@ -22,10 +23,15 @@ export const queryKeys = {
   situationMaps: ['library', 'maps'] as const,
   bookShelf: ['library', 'books'] as const,
   lesson: (id: string) => ['lessons', id] as const,
+  signupOptions: ['auth', 'signup-options'] as const,
 };
 
 /** 교재 · 맵 · 과 콘텐츠는 자주 안 바뀌어요: 10분 안에는 받아 둔 값을 그대로 */
 const CONTENT_STALE_MS = 10 * 60_000;
+
+/** /auth/signup/options — 가입 화면 연령대 (자주 안 바뀌어요) */
+export const signupOptionsQuery = () =>
+  queryOptions({ queryKey: queryKeys.signupOptions, queryFn: ({ signal }) => fetchSignupOptions({ signal }), staleTime: CONTENT_STALE_MS });
 
 /** 3 /me */
 export const meQuery = () => queryOptions({ queryKey: queryKeys.me, queryFn: ({ signal }) => fetchMe({ signal }) });

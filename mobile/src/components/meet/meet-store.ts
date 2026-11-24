@@ -107,6 +107,6 @@ export const removeProposal = (id: string) => store.set((s) => ({ ...s, props: s
 export const setBoard = (id: string, L: BoardPost[]) => store.set((s) => ({ ...s, board: { ...s.board, [id]: L } }));
 export const setChat = (id: string, L: ChatMsg[]) => store.set((s) => ({ ...s, chat: { ...s.chat, [id]: L } }));
 
-export const addMyMeet = (m: Meet) => store.set((s) => ({ ...s, myMeets: [m, ...s.myMeets] }));
+export const addMyMeet = (m: Meet) => store.set((s) => ({ ...s, myMeets: [{ ...m, at: m.at ?? Date.now() }, ...s.myMeets] }));
 export const updateMyMeet = (id: string, patch: Partial<Meet>) => store.set((s) => ({ ...s, myMeets: s.myMeets.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
-export const addMyClub = (c: Club) => store.set((s) => ({ ...s, myClubs: [c, ...s.myClubs] }));
+export const addMyClub = (c: Club) => store.set((s) => ({ ...s, myClubs: [{ ...c, at: c.at ?? Date.now() }, ...s.myClubs] }));

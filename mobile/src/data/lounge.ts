@@ -5,6 +5,9 @@
  * 백엔드가 생기면 이 값 대신 서버에서 받아 와요. 예시 지점 이름은 실제 지점, 내 지점은 하남점.
  */
 import { Colors } from '@/constants/theme';
+import type { PhotoFraming } from '@/lib/photo-framing';
+
+import { SEED_NEW_AT } from './seed-time';
 
 /** 프로토타입 LG_C */
 export const LG_C = {
@@ -75,9 +78,13 @@ export type Post = {
   br: string;
   role: string;
   time: string;
+  /** 올린 때 (ms). 이 탭을 마지막으로 본 뒤면 '새 글' — data/seed-time.ts */
+  at?: number;
   pic?: PicKey;
   /** 내가 올린 사진 (uri) · 비율(가로 / 세로) */
   imgs?: string[];
+  /** imgs 와 같은 순서로, 올릴 때 맞춘 확대 · 위치 */
+  frames?: PhotoFraming[];
   ratio?: number;
   n: number;
   likes: number;
@@ -89,7 +96,7 @@ export type Post = {
   mine?: boolean;
 };
 export type CountryCode = 'AU' | 'JP' | 'CA' | 'IE' | 'FR' | 'TH' | 'VN';
-export type Abroad = { id: string; k: 'abroad'; rec?: boolean; cc: CountryCode; who: string; av: string; avc?: string; br: string; time: string; kick: string; title: string; body: string; likes: number };
+export type Abroad = { id: string; k: 'abroad'; rec?: boolean; cc: CountryCode; who: string; av: string; avc?: string; br: string; time: string; at?: number; kick: string; title: string; body: string; likes: number };
 export type Trip = {
   id: string;
   k: 'trip';
@@ -110,6 +117,8 @@ export type Trip = {
   intro: string;
   mine?: boolean;
   closed?: boolean;
+  /** 올린 때 (ms). 이 탭을 마지막으로 본 뒤면 '새 글' — data/seed-time.ts */
+  at?: number;
 };
 /** 추천 탭에 섞이는 번개 · 파티 카드 (자세한 화면은 번개 · 이벤트 담당 /meet/[id] · /events/[id]) */
 export type RecMeet = { id: string; k: 'meet'; rec?: boolean; br: string; reg?: string; kind: string; party?: boolean; day: string; mon: string; wd: string; title: string; place: string; host: string; cur: number; max: number; fee?: number };
@@ -119,23 +128,23 @@ export type MapCard = { id: 'map'; k: 'map'; rec: true };
 export type FeedItem = Post | Abroad | Trip | RecMeet | RecChal | MapCard;
 
 export const FEED: FeedItem[] = [
-  { id: 'p1', k: 'post', rec: true, cat: 'study', who: '하나', av: LG_C.y, br: '영등포', role: '리더', time: '10분 전', pic: 'party', n: 4, likes: 128, text: '이번 주 세션 주제는 주말 이야기! 다들 20분 동안 주말 얘기만 했어요', expr: { t: 'I’m on the fence.', ko: '아직 마음을 못 정했어요', lang: 'en-US' } },
+  { id: 'p1', k: 'post', rec: true, cat: 'study', who: '하나', av: LG_C.y, br: '영등포', role: '리더', time: '10분 전', at: SEED_NEW_AT, pic: 'party', n: 4, likes: 128, text: '이번 주 세션 주제는 주말 이야기! 다들 20분 동안 주말 얘기만 했어요', expr: { t: 'I’m on the fence.', ko: '아직 마음을 못 정했어요', lang: 'en-US' } },
   { id: 'm1', k: 'meet', rec: true, br: '영등포', reg: '서울', kind: '번개', day: '14', mon: 'NOV', wd: '금 20:00', title: '퇴근 후 영어 맥주 번개', place: '영등포 근처 수제맥주집', host: '하나 리더', cur: 6, max: 8 },
   { id: 'c1', k: 'chal', rec: true, who: '민준', av: LG_C.sky, br: '잠실점', time: '1시간 전', name: '30일 하루 한 문장', hl: 'on the fence', q: 'I’m on the fence about it.', ko: '그건 아직 결정을 못 하겠어요', lang: 'en-US', src: 'Lv.1 · 6챕터 No Spoilers!', left: 13, last: ['민준', 'Me too! on the fence 외워 둘게요'], people: ['소라', '하나', 'Leo', '지우', '태오'], lines: 5 },
   { id: 'p2', k: 'post', rec: true, cat: 'travel', who: 'Leo', av: LG_C.pk, avc: '#fff', br: '연신내', role: '리더', time: '어제', pic: 'ramen', n: 3, likes: 342, text: '세션에서 연습한 표현, 후쿠오카에서 진짜 열 번은 썼어요.', expr: { t: 'おすすめは何ですか？', ko: '추천 메뉴가 뭐예요?', lang: 'ja-JP' } },
   { id: 'a1', k: 'abroad', rec: true, cc: 'AU', who: '예린', av: LG_C.lsky, br: '잠실점 출신 · 시드니 7개월째', time: '2일 전', kick: 'AUSTRALIA · 집', title: '시드니 쉐어하우스 구할 때 꼭 확인할 것 5가지', body: '① 본드 영수증 ② 입주 전 사진 ③ 계약 기간 ④ 공과금 포함 여부 ⑤ 하우스 규칙', likes: 63 },
-  { id: 'p3', k: 'post', who: '소라', av: LG_C.mint, br: '영등포 · 연신내', role: '', time: '어제', pic: 'book', n: 2, likes: 57, text: '북클럽 3주차. 이번 주는 여우 장면을 영어로 소리 내어 읽었어요.', club: '북클럽' },
+  { id: 'p3', k: 'post', who: '소라', av: LG_C.mint, br: '영등포 · 연신내', role: '', time: '어제', at: SEED_NEW_AT, pic: 'book', n: 2, likes: 57, text: '북클럽 3주차. 이번 주는 여우 장면을 영어로 소리 내어 읽었어요.', club: '북클럽' },
   { id: 'map', k: 'map', rec: true },
   { id: 'm2', k: 'meet', rec: true, br: '전 지점', kind: '파티', party: true, day: '29', mon: 'NOV', wd: '토 19:00', title: 'PALLO 연말 랭귀지 파티', place: '연신내 라운지 · 전 지점', host: '매니저 Jay', cur: 31, max: 40, fee: 15000 },
   { id: 'p4', k: 'post', rec: true, who: '태오', av: LG_C.lpu, br: '영등포', role: '', time: '3일 전', pic: 'run', n: 5, likes: 89, text: '러닝 동아리 첫 모임! 뛰면서 영어로 수다 떨기, 생각보다 숨차요', club: '러닝 동아리', expr: { t: 'I’m out of breath!', ko: '숨이 차요!', lang: 'en-US' } },
   { id: 'a2', k: 'abroad', cc: 'JP', who: 'Kenji', av: LG_C.pk, avc: '#fff', br: '연신내 출신 · 도쿄 1년째', time: '4일 전', kick: 'JAPAN · 일', title: '도쿄 알바 면접에서 꼭 나오는 질문', body: '「いつから働けますか？」(언제부터 일할 수 있어요?) 답을 미리 연습해 가세요.', likes: 48 },
   { id: 'p5', k: 'post', cat: 'daily', who: '지우', av: LG_C.sky, br: '대전 둔산점 · 영등포', role: '', time: '5일 전', pic: 'cafe', n: 1, likes: 24, text: '카페에서 메뉴 고르다가 저절로 나온 오늘의 표현', expr: { t: 'I’m on the fence.', ko: '아직 마음을 못 정했어요', lang: 'en-US' } },
   { id: 'p6', k: 'post', cat: 'travel', who: '도윤', av: LG_C.y, br: '영등포', role: '', time: '6일 전', pic: 'trip', n: 3, likes: 71, text: '오사카 둘째 날. 길 물어볼 때 세션에서 배운 문장 그대로 썼어요', expr: { t: 'Is this the right way to the station?', ko: '역 가는 길 이거 맞아요?', lang: 'en-US' } },
-  { id: 'p7', k: 'post', cat: 'meet', who: '유키', av: LG_C.lpu, br: '연신내', role: '', time: '어제', pic: 'ramen', n: 2, likes: 66, text: '홍대 일본어 이자카야 번개 후기! 다들 일본어로 주문 성공했어요', expr: { t: 'おすすめは何ですか？', ko: '추천 메뉴가 뭐예요?', lang: 'ja-JP' } },
+  { id: 'p7', k: 'post', cat: 'meet', who: '유키', av: LG_C.lpu, br: '연신내', role: '', time: '어제', at: SEED_NEW_AT, pic: 'ramen', n: 2, likes: 66, text: '홍대 일본어 이자카야 번개 후기! 다들 일본어로 주문 성공했어요', expr: { t: 'おすすめは何ですか？', ko: '추천 메뉴가 뭐예요?', lang: 'ja-JP' } },
   { id: 'p8', k: 'post', cat: 'event', who: 'Jay', av: LG_C.pk, avc: '#fff', br: '전 지점', role: '매니저', time: '2일 전', pic: 'party', n: 1, likes: 140, text: '연말 랭귀지 파티 테이블 미리 보기! 신청은 이벤트 탭에서 할 수 있어요' },
   { id: 't1', k: 'trip', cc: 'JP', city: '도쿄', from: '2026-11-22', to: '2026-11-25', type: '식사 · 투어', cap: 3, cur: 2, who: '하나', av: LG_C.y, br: '영등포', age: '20~30대', styles: ['맛집', '느긋하게'], title: '도쿄 라멘 투어 같이 가요', intro: '저녁만 같이 먹어요. 일본어로 주문해 보기!' },
-  { id: 't2', k: 'trip', cc: 'TH', city: '방콕', from: '2026-12-01', to: '2026-12-05', type: '숙소 쉐어', cap: 2, cur: 1, who: 'Leo', av: LG_C.pk, avc: '#fff', br: '연신내', age: '20대', styles: ['알차게', '야시장'], title: '방콕 숙소 쉐어할 분', intro: '시내 호텔 반반. 낮엔 각자, 밤엔 야시장.' },
-  { id: 't3', k: 'trip', cc: 'FR', city: '파리', from: '2026-12-20', to: '2026-12-24', type: '부분 동행', cap: 4, cur: 2, who: '소라', av: LG_C.mint, br: '영등포', age: '나이 무관', styles: ['미술관', '사진'], title: '파리 미술관 하루 같이 돌아요', intro: '루브르 · 오르세 하루 코스. 영어로 오디오 가이드 같이 들어요.' },
+  { id: 't2', k: 'trip', at: SEED_NEW_AT, cc: 'TH', city: '방콕', from: '2026-12-01', to: '2026-12-05', type: '숙소 쉐어', cap: 2, cur: 1, who: 'Leo', av: LG_C.pk, avc: '#fff', br: '연신내', age: '20대', styles: ['알차게', '야시장'], title: '방콕 숙소 쉐어할 분', intro: '시내 호텔 반반. 낮엔 각자, 밤엔 야시장.' },
+  { id: 't3', k: 'trip', at: SEED_NEW_AT, cc: 'FR', city: '파리', from: '2026-12-20', to: '2026-12-24', type: '부분 동행', cap: 4, cur: 2, who: '소라', av: LG_C.mint, br: '영등포', age: '나이 무관', styles: ['미술관', '사진'], title: '파리 미술관 하루 같이 돌아요', intro: '루브르 · 오르세 하루 코스. 영어로 오디오 가이드 같이 들어요.' },
   { id: 't4', k: 'trip', cc: 'VN', city: '다낭', from: '2026-11-15', to: '2026-11-18', type: '전체 동행', cap: 3, cur: 3, who: '태오', av: LG_C.lpu, br: '영등포', age: '20~30대', styles: ['바다', '액티비티'], title: '다낭 3박 4일 전체 동행', intro: '' },
 ];
 
@@ -245,6 +254,8 @@ export type Story = {
   mine?: boolean;
   /** 내가 올린 사진 */
   img?: string;
+  /** 올릴 때 맞춘 확대 · 위치 */
+  frame?: PhotoFraming;
 };
 const st = (id: string, who: string, av: string, role: string, br: string, cat: StoryCat, time: string, h: number, big: string, ds: string, art: [string, string], x: Partial<Story> = {}): Story => ({ id, who, av, role, br, cat, time, h, big, ds, art, ...x });
 export const STORIES: Story[] = [

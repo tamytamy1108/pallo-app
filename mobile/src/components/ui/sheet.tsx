@@ -6,10 +6,10 @@ import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'reac
 
 import { Pressable } from '@/components/ui/pressable';
 import { Colors, Radius } from '@/constants/theme';
-import { useKeyboardShown } from '@/lib/keyboard';
+import { useKeyboardHeight, useKeyboardShown } from '@/lib/keyboard';
 import { EASE } from '@/lib/motion';
 
-import { FormScrollContext, KeepVisibleContext, useFormScroll } from './form-scroll';
+import { FormScrollContext, KeepVisibleContext, useFormScroll, useShowFocusedOnKeyboard } from './form-scroll';
 import { NestedSheets, useSheetLayer } from './sheet-stack';
 import { PText } from './text';
 import { ToastView, useToastLayer } from './toast';
@@ -154,7 +154,9 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
 
   // 하나 고르면 다음 칸이 보이게 올려 줘요 (ui/form-scroll)
   // 길게 쓰는 칸이 늘어나면 쓰는 줄이 아래 버튼 · 키보드에 가리지 않게 따라 내려가요 (keepCaret)
-  const [scrollRef, formBox, onFormScroll, revealNext, keepCaret] = useFormScroll();
+  const [scrollRef, formBox, onFormScroll, revealNext, keepCaret, showFocused] = useFormScroll();
+  // 칸을 눌러 키보드가 올라오면 그 칸이 키보드 · 아래 버튼 위로 보이게
+  useShowFocusedOnKeyboard(formBox, showFocused);
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [scrollKey, scrollRef]);
@@ -210,6 +212,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
                 <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dimAnim]}>
                   <Pressable style={styles.fill} onPress={requestClose} accessibilityRole="button" accessibilityLabel="닫기" />
                 </Animated.View>
+                <KeyboardFill />
                 <KeyboardAvoidingView behavior={Platform.OS === 'web' ? undefined : 'padding'} style={[styles.root, { paddingTop: topGap }]} pointerEvents="box-none">
                   <Animated.View
                     accessibilityViewIsModal
@@ -242,7 +245,8 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
                     )}
                     {footer ? (
                       <SheetFooterContext.Provider value>
-                        <View style={[styles.footer, { paddingBottom: 22 + bottom }]}>
+                        {/* 키보드가 올라오면 버튼을 키보드 바로 위에 (아래 빈 틈 없이) */}
+                        <View style={[styles.footer, { paddingBottom: kb ? KB_FOOT_PAD : 22 + bottom }]}>
                           {footerItems(footer).map((child, i) => (
                             <View key={i} style={styles.slot}>
                               {child}
@@ -280,6 +284,21 @@ export function SheetBottom({ base, style, children }: { base: number; style?: S
   return <View style={[style, { paddingBottom: base + (kb ? 0 : insets.bottom) }]}>{children}</View>;
 }
 
+/** 키보드가 떠 있을 때 아래 버튼 밑 여백 */
+export const KB_FOOT_PAD = 10;
+
+/**
+ * 아이폰: 키보드 뒤(둥근 모서리 · 옆 틈)까지 시트 크림 바탕이 이어지게 — 시트 아래 끝과 키보드가 따로 떠 보이지 않게.
+ * 시트(KeyboardAvoidingView) 바로 앞에 그려요. 안드로이드는 키보드만큼 화면이 줄어서 필요 없어요.
+ */
+const KB_FILL_OVERLAP = 48;
+export function KeyboardFill() {
+  const h = useKeyboardHeight();
+  if (!h) return null;
+  // 키보드 위끝보다 조금 더 올려 시트 뒤로 겹쳐 둬요 — 키보드 둥근 모서리 · 시트 아래 끝 사이에 1px 틈도 안 생기게 (겹친 부분은 시트가 덮어요)
+  return <View pointerEvents="none" style={[styles.kbFill, { height: h + KB_FILL_OVERLAP }]} />;
+}
+
 /** 버튼 칸: <>…</> 로 묶어 넘겨도 버튼마다 한 칸씩 */
 function footerItems(footer: ReactNode): ReactNode[] {
   return Children.toArray(footer).flatMap((child) =>
@@ -308,4 +327,5 @@ const styles = StyleSheet.create({
   grab: { width: 44, height: 5, borderRadius: 3, backgroundColor: '#CFC6B4' },
   footer: { flexDirection: 'row', gap: 10, paddingTop: 12, paddingHorizontal: 18, backgroundColor: Colors.cream, borderTopWidth: 1.5, borderColor: Colors.line },
   slot: { flex: 1 },
+  kbFill: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: Colors.cream, borderLeftWidth: 2, borderRightWidth: 2, borderColor: Colors.ink },
 });
