@@ -20,7 +20,8 @@ import { useRevealNext } from '@/components/ui/form-scroll';
  */
 
 /** 포스터 여러 장 (최대 max장 · 첫 장이 대표 · 누르면 대표로 · × 빼기). max=1 이면 사진 한 장 */
-export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기', max = 10 }: { uris: string[]; onChange: (u: string[]) => void; emptyLabel?: string; max?: number }) {
+/** coverTaken: 만든 카드가 대표라서 사진은 2번째부터 (대표 표시 없이) */
+export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기', max = 10, coverTaken = false }: { uris: string[]; onChange: (u: string[]) => void; emptyLabel?: string; max?: number; coverTaken?: boolean }) {
   const add = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: max > 1, selectionLimit: max - uris.length, quality: 0.8 });
     if (r.canceled) return;
@@ -33,14 +34,14 @@ export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기', 
           <Pressable
             onPress={() => i && onChange([u, ...uris.filter((_, k) => k !== i)])}
             accessibilityRole="button"
-            accessibilityLabel={`${i + 1}번째 포스터${i ? ' · 대표로 정하기' : ' · 대표'}`}
-            style={[styles.ptImg, !i && styles.ptCov]}>
+            accessibilityLabel={coverTaken ? `${i + 2}번째 포스터` : `${i + 1}번째 포스터${i ? ' · 대표로 정하기' : ' · 대표'}`}
+            style={[styles.ptImg, !i && !coverTaken && styles.ptCov]}>
             <Image source={{ uri: u }} style={StyleSheet.absoluteFill} contentFit="cover" />
           </Pressable>
           <Pressable onPress={() => onChange(uris.filter((_, k) => k !== i))} accessibilityRole="button" accessibilityLabel={`${i + 1}번째 포스터 빼기`} style={styles.rm} hitSlop={8}>
             <Icon name="x" size={12} color="#fff" strokeWidth={3} />
           </Pressable>
-          {max > 1 ? <PText style={[styles.ptS, !i && styles.ptSCov]}>{i ? String(i + 1) : '대표'}</PText> : null}
+          {max > 1 ? <PText style={[styles.ptS, !i && !coverTaken && styles.ptSCov]}>{coverTaken ? String(i + 2) : i ? String(i + 1) : '대표'}</PText> : null}
         </View>
       ))}
       {uris.length < max ? (

@@ -4,6 +4,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
 import { MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
+import { CardMaker } from '@/components/ui/poster-wall';
+import type { MadeCard } from '@/data/poster-walls';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyClub } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
@@ -41,6 +43,8 @@ export default function NewClub() {
   const [cond, setCond] = useState('누구나');
   const [memo, setMemo] = useState('');
   const [pics, setPics] = useState<string[]>([]);
+  // 카드 (선택): 만들면 대표가 되고 사진은 그 뒤에
+  const [card, setCard] = useState<MadeCard | null>(null);
 
   const ask = () => {
     if (!name.trim()) return showToast('동아리 이름을 적어 주세요');
@@ -62,6 +66,7 @@ export default function NewClub() {
       mine: true,
       memo: memo.trim() || undefined,
       posters: pics.length ? pics : undefined,
+      card: card ?? undefined,
     });
     sfx('save');
     router.back();
@@ -94,8 +99,9 @@ export default function NewClub() {
         <SheetPills options={CONDS} value={cond} onChange={setCond} />
       </Field>
       <TextField label="채팅방 공지 (가입하면 보여요)" value={memo} onChangeText={setMemo} placeholder="예) 첫 모임은 자기소개만 해도 충분해요." />
-      <Field label="포스터 · 여러 장 · 누르면 대표로">
-        <PosterPicker uris={pics} onChange={setPics} />
+      <Field label={card ? '사진 · 선택 · 여러 장 (카드 뒤에 보여요)' : '대표 이미지 · 선택 · 사진 여러 장 · 누르면 대표로'}>
+        <PosterPicker uris={pics} onChange={setPics} coverTaken={!!card} />
+        <CardMaker value={card} onChange={setCard} fallback={['NEW', 'CLUB']} />
       </Field>
     </SheetPage>
   );

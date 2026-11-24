@@ -24,7 +24,7 @@ export function MeetCard({ m, width }: { m: Meet; width: number }) {
   const vac = useMeetStore((s) => !!s.vac[m.id]);
   const cur = m.cur + (joined ? 1 : 0);
   const past = isPast(m);
-  const slide = posterSlides(m.id, false, m.posters)[0];
+  const slide = posterSlides(m.id, false, m.posters, m.card)[0];
   const fg = posterFg(slide.bg);
   const open = () => router.push(`/meet/${m.id}`);
   const full = cur >= m.max && !joined;

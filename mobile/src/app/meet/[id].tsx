@@ -77,6 +77,7 @@ export default function MeetDetail() {
       <DetailFrame
         id={m.id}
         posters={m.posters}
+        card={m.card}
         title={m.title}
         heading={m.title}
         kicker={

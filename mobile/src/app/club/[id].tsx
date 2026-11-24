@@ -103,6 +103,7 @@ export default function ClubDetail() {
         id={c.id}
         club
         posters={c.posters}
+        card={c.card}
         title={c.name}
         heading={c.name}
         kicker={

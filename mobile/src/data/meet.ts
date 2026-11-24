@@ -7,6 +7,8 @@
  */
 
 /** 프로토타입 LG_C — 포스터 · 지도에 쓰는 브랜드 색 */
+import type { MadeCard } from './poster-walls';
+
 export const C = { y: '#FFE200', pk: '#D0798E', pu: '#493087', sky: '#8FA6DC', lpu: '#E5DDF6', lsky: '#E3EAF8', ink: '#1E1A2B', cream: '#FBF6EA' } as const;
 
 export type Region = '서울' | '경기' | '천안' | '대전' | '대구' | '울산' | '부산';
@@ -40,6 +42,8 @@ export type Meet = {
   closed?: boolean;
   /** 내가 올린 포스터 사진 (첫 장이 대표) */
   posters?: string[];
+  /** 내가 만든 카드 (있으면 대표 · 사진은 그 뒤에) */
+  card?: MadeCard;
   /** 상세 주소 · 직접 적은 것 */
   addr?: string;
   addr2?: string;
@@ -63,6 +67,8 @@ export type Club = {
   wait?: boolean;
   memo?: string;
   posters?: string[];
+  /** 내가 만든 카드 (있으면 대표 · 사진은 그 뒤에) */
+  card?: MadeCard;
 };
 
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];

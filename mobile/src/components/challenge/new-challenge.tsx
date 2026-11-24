@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { useBlockedNames } from '@/components/common/report-sheet';
@@ -16,18 +16,15 @@ import {
   CH_PH,
   CH_PW,
   CH_SRC,
-  chPbgOf,
   createDaily,
   createExpression,
   DUR_OPTS,
   entriesOf,
   findSameExpr,
-  isDarkBg,
   leftText,
   normExpr,
   PICK_DAYS,
   planOf,
-  posterFontSize,
   START_OPTS,
   useChallengeState,
   XDUR_OPTS,
@@ -42,6 +39,8 @@ import { haptic, sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { PosterPicker } from '@/components/event/form-parts';
+import { CardMaker } from '@/components/ui/poster-wall';
+import type { MadeCard } from '@/data/poster-walls';
 
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
@@ -84,8 +83,8 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
   // 대표 사진 (선택): 순위 · 카드 · 상세의 네모 칸에 보여요. 없으면 카드 문구로
   const [covers, setCovers] = useState<string[]>([]);
   const [guide, setGuide] = useState('');
-  const [pw1, setPw1] = useState('');
-  const [pw2, setPw2] = useState('');
+  // 카드 (선택): 배경 고르기 + 영어 문구 두 줄. 만들면 사진보다 앞(대표)
+  const [card, setCard] = useState<MadeCard | null>(null);
   // 표현 챌린지는 한 번에 표현 하나 (프로토타입 LG.chs = [i])
   const [sel, setSel] = useState<string | null>(() => preset.find((id) => cards.some((c) => c.id === id)) ?? null);
   const [q, setQ] = useState('');
@@ -124,7 +123,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           showToast('챌린지 이름을 적어 주세요');
           return;
         }
-        createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), pw: [pw1.trim(), pw2.trim()].filter(Boolean), plan, cover: covers[0] });
+        createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), pw: card ? card.words.map((w) => w.trim()).filter(Boolean) : [], wall: card?.wall, plan, cover: covers[0] });
         sfx('save');
         haptic('success');
         onClose();
@@ -147,9 +146,6 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
     }, '챌린지를 열려면');
 
   const pwDef = (CH_PW[cat as DailyCatKey] || CH_PW.free).split('\n');
-  const pwLines = [pw1.trim(), pw2.trim()].filter(Boolean);
-  const pwShown = (pwLines.length ? pwLines : pwDef).join('\n');
-  const pbg = chPbgOf(cat);
 
   return (
     <Sheet
@@ -246,37 +242,10 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <Field value={guide} onChangeText={setGuide} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="어떻게 인증하나요?" />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>대표 사진 · 선택</FieldLabel>
+            <FieldLabel>대표 이미지 · 선택</FieldLabel>
             <PosterPicker uris={covers} onChange={setCovers} emptyLabel="사진 넣기" max={1} />
-            <PText style={styles.wayd}>순위 · 카드의 네모 칸에 보여요. 없으면 아래 카드 문구로 보여요.</PText>
-          </View>
-          <View style={styles.fl}>
-            <FieldLabel>카드 문구</FieldLabel>
-            <View style={styles.pwRow}>
-              <View style={[styles.pv, { backgroundColor: pbg }]}>
-                <PText style={[styles.pvT, { fontSize: posterFontSize(pwShown), color: isDarkBg(pbg) ? Colors.yellow : Colors.ink }]}>{pwShown}</PText>
-              </View>
-              <View style={styles.ins}>
-                {[
-                  [pw1, setPw1, pwDef[0] ?? '', '카드 문구 첫 줄'] as const,
-                  [pw2, setPw2, pwDef.slice(1).join(' '), '카드 문구 둘째 줄'] as const,
-                ].map(([v, set, ph, a11y]) => (
-                  <TextInput
-                    key={a11y}
-                    value={v}
-                    onChangeText={(t) => set(cleanPw(t))}
-                    maxLength={9}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                    placeholder={ph}
-                    placeholderTextColor="#9B94A6"
-                    accessibilityLabel={a11y}
-                    style={styles.pwIn}
-                  />
-                ))}
-              </View>
-            </View>
-            <PText style={styles.wayd}>비워 두면 자동으로 들어가요.</PText>
+            <CardMaker value={card} onChange={setCard} fallback={pwDef} shape="square" clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요." />
+            <PText style={styles.wayd}>{card ? '순위 · 카드 · 상세의 네모 칸에 이 카드가 보여요.' : covers.length ? '순위 · 카드 · 상세의 네모 칸에 이 사진이 보여요.' : '둘 다 없으면 카테고리 색 카드로 보여요.'}</PText>
           </View>
         </>
       )}
@@ -433,11 +402,6 @@ const styles = StyleSheet.create({
   sum: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19.5, color: SUB },
   sumB: { fontFamily: Font.body900, fontSize: 13, color: Colors.purple },
   wayd: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: SUB },
-  pwRow: { flexDirection: 'row', gap: 12 },
-  pv: { width: 100, height: 108, borderWidth: 2, borderColor: Colors.ink, borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
-  pvT: { position: 'absolute', top: 12, left: 10, right: 6, fontFamily: Font.display, lineHeight: 14, letterSpacing: -0.3 },
-  ins: { flex: 1, gap: 8, justifyContent: 'center' },
-  pwIn: { height: 44, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', paddingHorizontal: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.display, fontSize: 15, color: Colors.ink },
   chips: { flexDirection: 'row', gap: 6 },
   chip: { height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, justifyContent: 'center' },
   chipOn: { backgroundColor: Colors.ink, borderColor: Colors.ink },

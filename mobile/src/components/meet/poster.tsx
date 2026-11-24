@@ -1,13 +1,15 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 
+import { fitWordSize, PosterWall } from '@/components/ui/poster-wall';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { EVENT_POSTER_MORE, EVENT_POSTER_WORDS } from '@/data/events';
 import { C, hashId, POSTER_MORE, POSTER_WORDS, type PosterWords } from '@/data/meet';
+import { cardWords, wallMeta, type MadeCard } from '@/data/poster-walls';
 
 /*
  * 브랜드 색 포스터 (프로토타입 lgPoster · LG_PW). 실제 앱에서는 올린 포스터 사진으로 바뀌어요.
@@ -21,11 +23,17 @@ export const isDarkBg = (bg: string) => bg === C.pu || bg === C.pk;
 /** 포스터 위 글자색: 어두운 바탕이면 흰색 (프로토타입 lgCardFg · lgPstFg) */
 export const posterFg = (bg: string) => (isDarkBg(bg) || bg === C.ink ? '#fff' : C.ink);
 
-export type Slide = { words: string[]; bg: string; v: number; /** 올린 포스터 사진 */ uri?: string };
+export type Slide = { words: string[]; bg: string; v: number; /** 올린 포스터 사진 */ uri?: string; /** 만든 카드 배경 (poster-walls id) */ wall?: string };
 
-/** 한 모임의 포스터 장들 (첫 장 = 대표, 프로토타입 lgSlides · LG_PW2) */
-export function posterSlides(id: string, club = false, posters?: string[]): Slide[] {
-  if (posters?.length) return posters.map((uri, v) => ({ words: [], bg: C.ink, v, uri }));
+/** 한 모임의 포스터 장들 (첫 장 = 대표, 프로토타입 lgSlides · LG_PW2). 만든 카드가 있으면 카드가 대표, 올린 사진은 그 뒤에 */
+export function posterSlides(id: string, club = false, posters?: string[], card?: MadeCard): Slide[] {
+  const photos = (posters ?? []).map((uri, i) => ({ words: [], bg: C.ink, v: i + (card ? 1 : 0), uri }));
+  if (card) {
+    // bg 는 글자색 고르기용 (posterFg): 흰 글자 카드면 잉크 · 아니면 크림
+    const w = wallMeta(card.wall);
+    return [{ words: cardWords(card.words, club ? ['NEW', 'CLUB'] : ['NEW', 'MEET']), bg: w.fg === 'light' ? C.ink : C.cream, v: 0, wall: w.id }, ...photos];
+  }
+  if (photos.length) return photos;
   const first: PosterWords = POSTER_WORDS[id] ?? EVENT_POSTER_WORDS[id] ?? [club ? ['NEW', 'CLUB'] : ['NEW', 'MEET'], club ? C.lpu : C.pk];
   const more = POSTER_MORE[id] ?? EVENT_POSTER_MORE[id] ?? [];
   return [{ words: first[0], bg: first[1], v: 0 }, ...more.map(([w, bg], i) => ({ words: w, bg, v: i + 1 }))];
@@ -51,6 +59,19 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
   const acc = ACC[bg] ?? C.y;
   const v = (hashId(id) + slide.v) % 4;
   const wc = isDarkBg(bg) ? C.y : C.ink;
+  // 만든 카드: 긴 글자를 포스터 폭에 맞게 줄여요 (웹은 글자 자동 줄이기가 없어요)
+  const [pw, setPw] = useState(0);
+  const ws = slide.wall && pw ? fitWordSize(words, pw, wordSize) : wordSize;
+  if (slide.wall)
+    return (
+      <View onLayout={(e) => setPw(e.nativeEvent.layout.width)} style={StyleSheet.flatten([styles.wrap, { backgroundColor: wallMeta(slide.wall).base, height, aspectRatio }, style])}>
+        <PosterWall id={slide.wall} />
+        <View style={StyleSheet.flatten([styles.words, wordStyle])} pointerEvents="none">
+          <PText style={{ fontFamily: Font.display, fontSize: ws, lineHeight: ws * 0.95, letterSpacing: -1.2, color: posterFg(bg) }}>{words.join('\n')}</PText>
+        </View>
+        {children}
+      </View>
+    );
   if (slide.uri)
     return (
       <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: C.ink, height, aspectRatio }, style])}>

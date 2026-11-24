@@ -15,6 +15,8 @@ import { Colors } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { LayerModal } from '@/components/ui/sheet-stack';
 
+import type { MadeCard } from '@/data/poster-walls';
+
 import { Poster, posterFg, posterSlides, type Slide } from '../poster';
 
 /*
@@ -28,6 +30,8 @@ type Props = {
   club?: boolean;
   /** 내가 올린 포스터 사진들 */
   posters?: string[];
+  /** 내가 만든 카드 (있으면 대표) */
+  card?: MadeCard;
   title: string;
   kicker: ReactNode;
   heading: string;
@@ -48,9 +52,9 @@ type Props = {
 
 const BAR = 44; // .dtop 안 높이 (위아래 8씩)
 
-export function DetailFrame({ id, club, posters, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey }: Props) {
+export function DetailFrame({ id, club, posters, card, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey }: Props) {
   const insets = useSafeAreaInsets();
-  const slides = posterSlides(id, club, posters);
+  const slides = posterSlides(id, club, posters, card);
   const fg = posterFg(slides[0].bg);
   const [w, setW] = useState(0);
   const [y, setY] = useState(0);
