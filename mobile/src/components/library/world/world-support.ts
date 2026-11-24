@@ -4,6 +4,7 @@
  * - 폰: 미리 알 길이 없어서 일단 그려 보고, 못 그리면(world-view 의 시간 초과 · 오류) 2D 지도로 바꿔요.
  * - 가벼운 그림: 메모리가 적거나 오래된 폰은 그림자 · 안티에일리어싱을 꺼서 버벅임 · 발열 · 꺼짐을 줄여요.
  * 개발용(웹): 주소 뒤 ?map=flat 이면 2D 지도로, ?map=lite 면 가벼운 그림으로 봐요.
+ *   ?map=capture 면 3D 를 '모두 열림'으로 그리고 window.__world[id].snapshot() 으로 2D 지도 사진을 찍어요.
  */
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
@@ -38,3 +39,6 @@ export function liteWorld(): boolean {
   const year = Device.deviceYearClass;
   return (mem != null && mem < 3.5 * GB) || (year != null && year < 2018);
 }
+
+/** 개발용(웹): 2D 지도 사진 찍기 모드 */
+export const devCapture = () => devMap() === 'capture';

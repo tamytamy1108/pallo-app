@@ -1,10 +1,13 @@
+import { useQuery } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Path, Pattern, Rect } from 'react-native-svg';
 
+import { bookShelfQuery } from '@/api/queries';
 import { lockedChapter } from '@/components/common/trial-guide';
+import { pickIsland, setLib } from '@/components/library/library-state';
 import { Pressable } from '@/components/ui/pressable';
 import { XmasBackLayer, XmasGarland } from '@/components/home/christmas';
 import { CurrentFx, NodeHop, Rider } from '@/components/home/map-current';
@@ -16,13 +19,15 @@ import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
 import { Colors } from '@/constants/theme';
 import { chestReward, SKIP_POINTS } from '@/data/home';
-import { LESSON_STEPS, MY_BOOK, STAGES } from '@/data/mock';
+import { lessonName, STUDY_STEPS } from '@/data/library';
+import { STUDY_LEVELS } from '@/data/library-lessons';
+import { MY_BOOK, STAGES } from '@/data/mock';
 import { sfx } from '@/lib/feedback';
 import { awardPoints } from '@/state/ledger';
 import { chestKey, markChestOpened, useChestOpened } from '@/state/chest';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
 
-import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
+import { canUse } from '@/state/access';
 import { useMe } from '@/state/me';
 
 import { devSeason } from './dev';
@@ -36,20 +41,63 @@ import { TreasureChest } from './treasure-chest';
 
 const NODE = 64;
 const NODE_CUR = 78;
-const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
-const LV = 1; // 홈 맵은 지금 내 교재 (Lv.1) — 프로토타입 mapLk '1-과'
+/** 정류장 이름 칸 최대 폭 · 카드 가장자리에서 띄울 거리 */
+const LABEL_MAX = 180;
+const LABEL_EDGE = 8;
 const LOCK_PATH = 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3';
+const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
+/** 내 교재 레벨 (MY_BOOK.level 'Lv.1' → 1) — 아직 아무 단계도 안 열었을 때 홈 맵 레벨 */
+const MY_LV = Number(MY_BOOK.level.replace('Lv.', ''));
+
+/**
+ * 레벨 하나의 맵 재료. 맵 모양은 레벨이 달라도 같고, 정류장 수 · 이름만 그 레벨의 예습 · 본학습 · 복습 단계 (STUDY_STEPS) 그대로
+ * (Lv.1 · 2 패턴형 8개 · Lv.3 토픽형 10개 · Lv.4 토론형 9개). 위 칩 = 그 레벨 교재의 과 (Lv.3 토픽 번호 · Lv.4 회차).
+ */
+function makeLevelMap(lvWanted: number) {
+  const L = STUDY_LEVELS.find((x) => x.lv === lvWanted) ?? STUDY_LEVELS[0];
+  const lv = L.lv;
+  const steps = STAGES.flatMap((g) => STUDY_STEPS[L.kind][g.key].map((s) => ({ id: s.id, stage: g.key, title: s.t, min: s.min, xp: s.xp })));
+  const units = L.lessons.map((ls) => ls.no);
+  /** 제목 줄 (1과 Cafe Complaint · #102 Activities · Behind the Mask) */
+  const unitName = (n: number) => {
+    const ls = L.lessons.find((x) => x.no === n);
+    return ls ? lessonName(L, ls) : '';
+  };
+  /** 칩 글자 (1과 · #102 · 2회) */
+  const chipLabel = (n: number) => (L.kind === 'topic' ? `#${n}` : L.kind === 'debate' ? `${units.indexOf(n) + 1}회` : `${n}과`);
+  /** 과의 단계마다 끝냈는지. count 는 다시 읽을 때를 알리는 값이에요 (끝낸 수가 바뀌면 새로 읽어요) */
+  const readDone = (unit: number, count: number) => steps.map((s) => count > 0 && isDone(stepKey(lv, unit, s.id)));
+  const stageOf = (i: number) => STAGES.findIndex((g) => g.key === steps[i].stage);
+  const stepHref = (unit: number, step: string) => (lv <= 2 ? `/lesson/${step}?lv=${lv}&unit=${unit}` : `/lesson34/${step}?lv=${lv}&unit=${unit}`);
+  /** 이번 주 반 진도 (과 번호들) · 칩 글자: 패턴형 '5 & 6챕터', 토픽 · 토론형 '#101 & #102' · '1회 & 2회' */
+  const week = (lv === MY_LV ? MY_BOOK.weekLessons : MY_BOOK.weekByLevel[lv]) ?? [];
+  const weekText = L.kind === 'pattern' ? `${week.join(' & ')}챕터` : week.map(chipLabel).join(' & ');
+  /** 과 제목만 (보상 화면) */
+  const unitTitle = (n: number) => L.lessons.find((x) => x.no === n)?.title ?? '';
+  return { lv, steps, units, unitName, unitTitle, chipLabel, readDone, stageOf, stepHref, week, weekText };
+}
+type LevelMap = ReturnType<typeof makeLevelMap>;
+const levelMaps = new Map<number, LevelMap>();
+const levelMap = (lv: number) => {
+  const hit = levelMaps.get(lv);
+  if (hit) return hit;
+  const m = makeLevelMap(lv);
+  levelMaps.set(lv, m);
+  return m;
+};
+/** 홈 맵 레벨 = 마지막으로 연 단계의 레벨 (라이브러리 스터디 맵 · 홈 맵 · 레슨이 같은 기록) · 없으면 내 교재 레벨 */
+const homeLevel = (last: { lv: number } | null) => (last && STUDY_LEVELS.some((x) => x.lv === last.lv) ? last.lv : MY_LV);
 
 type Point = { x: number; y: number };
 
 /** 프로토타입 renderMap 과 같은 계산: 구역 알약 · 정류장 · 보상 상자 위치 */
-function layout(width: number) {
+function layout(width: number, steps: LevelMap['steps']) {
   const amp = width / 2 - 52;
   let y = 26;
   const zones: { y: number; si: number }[] = [];
   const nodes: (Point & { i: number })[] = [];
-  LESSON_STEPS.forEach((s, i) => {
-    const first = i === 0 || LESSON_STEPS[i - 1].stage !== s.stage;
+  steps.forEach((s, i) => {
+    const first = i === 0 || steps[i - 1].stage !== s.stage;
     if (first) {
       zones.push({ y: y + (i ? 6 : 0), si: STAGES.findIndex((g) => g.key === s.stage) });
       y += 106;
@@ -58,7 +106,7 @@ function layout(width: number) {
     y += 66;
   });
   const chest = {
-    x: Math.round(width / 2 + ZIG[LESSON_STEPS.length % 4] * amp),
+    x: Math.round(width / 2 + ZIG[steps.length % 4] * amp),
     y: y - 6,
   };
   return { nodes, zones, chest, height: y + 70 };
@@ -67,24 +115,23 @@ function layout(width: number) {
 /** 정류장을 잇는 부드러운 곡선 */
 const curve = (p: Point[]) => p.map((q, i) => (i === 0 ? `M${q.x},${q.y}` : `C${p[i - 1].x},${(p[i - 1].y + q.y) / 2} ${q.x},${(p[i - 1].y + q.y) / 2} ${q.x},${q.y}`)).join(' ');
 
-/** 과의 단계마다 끝냈는지. count 는 다시 읽을 때를 알리는 값이에요 (끝낸 수가 바뀌면 새로 읽어요) */
-const readDone = (unit: number, count: number) => LESSON_STEPS.map((s) => count > 0 && isDone(stepKey(LV, unit, s.id)));
-const stageOf = (i: number) => STAGES.findIndex((g) => g.key === LESSON_STEPS[i].stage);
-const stepHref = (unit: number, step: string) => (LV <= 2 ? `/lesson/${step}?lv=${LV}&unit=${unit}` : `/lesson34/${step}?lv=${LV}&unit=${unit}`);
-
 /** 홈 스터디 맵 카드: 지금 과 · 챕터 줄 · 진도 · 꼬불꼬불 퀘스트 길 · 정류장 팝업 · 구간 건너뛰기 */
 export function StudyMap() {
   // 마지막으로 연 단계 — 라이브러리 · 홈 맵 · 레슨이 같은 기록을 써요 (프로토타입 ST.last).
   // 맵은 그 과로 열리고, 캐릭터는 그 단계 위에 서요
   const last = useLastStep();
-  // 비회원은 첫 챕터(1과)만 열려요 (state/access) — 잠긴 과는 칩 · 다음 챕터 버튼에서 막아요
+  const M = levelMap(homeLevel(last));
+  const LV = M.lv;
+  // 비회원은 레벨마다 첫 챕터만 열려요 (state/access) — 잠긴 과는 칩 · 다음 챕터 버튼에서 막아요
   const allOpen = useMe((m) => canUse(m, 'allChapters'));
-  const [lesson, setLesson] = useState(() => (last?.lv === LV && (allOpen || isFreeChapter(last.unit)) ? last.unit : 1));
+  const firstUnit = M.units[0] ?? 1;
+  const isFree = (n: number) => allOpen || n === firstUnit;
+  const [lesson, setLesson] = useState(() => (last?.lv === LV && isFree(last.unit) ? last.unit : firstUnit));
   const [seenAt, setSeenAt] = useState(last?.at);
   if (last && last.at !== seenAt) {
     // 다른 곳(라이브러리)에서 새 단계를 열었으면 맵도 그 과로 옮겨요
     setSeenAt(last.at);
-    if (last.lv === LV && (allOpen || isFreeChapter(last.unit))) setLesson(last.unit);
+    if (last.lv === LV && isFree(last.unit)) setLesson(last.unit);
   }
   const [width, setWidth] = useState(0);
   const [popIdx, setPopIdx] = useState<number | null>(null);
@@ -97,13 +144,13 @@ export function StudyMap() {
 
   // 진도: 라이브러리와 같은 기록 (state/progress). 끝낸 수가 바뀔 때마다 다시 읽어요
   const doneCount = useDoneCount(`${LV}:${lesson}:`);
-  const done = readDone(lesson, doneCount);
+  const done = M.readDone(lesson, doneCount);
   const all = done.every(Boolean);
-  const lastIdx = last?.lv === LV && last.unit === lesson ? LESSON_STEPS.findIndex((s) => s.id === last.step) : -1;
+  const lastIdx = last?.lv === LV && last.unit === lesson ? M.steps.findIndex((s) => s.id === last.step) : -1;
   const current = lastIdx >= 0 ? lastIdx : done.findIndex((d) => !d);
-  const title = MY_BOOK.titles[lesson] ?? '';
-  const next = MY_BOOK.titles[lesson + 1];
-  const map = width ? layout(width) : null;
+  const nextNo = M.units[M.units.indexOf(lesson) + 1];
+  const next = nextNo == null ? '' : M.unitName(nextNo);
+  const map = width ? layout(width, M.steps) : null;
 
   // 챕터 줄: 칩 자리 기억 → 고른 과 · 이번 주 과를 가운데로
   const chipRow = useRef<ScrollViewInstance>(null);
@@ -122,7 +169,7 @@ export function StudyMap() {
   };
   /** 이번 주 진도 칩: 5과 · 6과가 가운데로 오고 통통 (프로토타입 weekChip 클릭) */
   const showWeek = () => {
-    const bs = MY_BOOK.weekLessons.map((n) => chipXs.current[n]).filter(Boolean);
+    const bs = M.week.map((n) => chipXs.current[n]).filter(Boolean);
     if (!bs.length) return;
     const mid = (bs[0].x + bs[bs.length - 1].x + bs[bs.length - 1].w) / 2;
     chipRow.current?.scrollTo({ x: Math.max(0, mid - rowW.current / 2), animated: !still });
@@ -140,61 +187,71 @@ export function StudyMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ask]);
 
+  /** 전체 보기 → 라이브러리 스터디 맵, 이 레벨 교재 섬을 골라 둔 채로 */
+  const shelf = useQuery(bookShelfQuery()).data;
+  const openLibrary = () => {
+    sfx('tap');
+    const lang = shelf?.findIndex((books) => books.some((b) => b.study?.lv === LV)) ?? -1;
+    const bi = lang >= 0 && shelf ? shelf[lang].findIndex((b) => b.study?.lv === LV) : -1;
+    if (lang >= 0) pickIsland(bi, { sitMode: false, lang });
+    else setLib({ sitMode: false });
+    router.navigate('/library' as Href);
+  };
+
   const pickLesson = (n: number) => {
     setLesson(n);
     reveal(n);
   };
   /** 챕터 칩 · 다음 챕터 · 상자의 '다음 코너로': 비회원은 둘째 챕터부터 잠김 (첫 챕터를 다 끝냈으면 '실제 대화' 권유) */
   const tryLesson = (n: number) => {
-    if (allOpen || isFreeChapter(n)) return pickLesson(n);
-    lockedChapter(`${n}과`, LESSON_STEPS.every((s) => isDone(stepKey(LV, FREE_CHAPTER, s.id))));
+    if (isFree(n)) return pickLesson(n);
+    lockedChapter(M.chipLabel(n), M.steps.every((s) => isDone(stepKey(LV, firstUnit, s.id))));
   };
 
   const go = (i: number, mode: StartMode) => {
-    const step = LESSON_STEPS[i];
+    const step = M.steps[i];
     setPopIdx(null);
     if (!(OPEN_UNITS[LV] ?? []).includes(lesson)) {
-      showToast(`${lesson}과는 교재가 들어오면 열려요`);
+      showToast(`${M.chipLabel(lesson)}는 교재가 들어오면 열려요`);
       return;
     }
     if (mode === 'restart') clearPos(stepKey(LV, lesson, step.id));
     setLastStep(LV, lesson, step.id);
     // 팝업에서 이미 이어서 / 처음부터를 골랐으면 레슨이 다시 묻지 않게 넘겨요
     const resume = mode === 'start' ? '' : `&resume=${mode}`;
-    router.push(`${stepHref(lesson, step.id)}${resume}` as Href);
+    router.push(`${M.stepHref(lesson, step.id)}${resume}` as Href);
   };
 
   const pass = useCallback(
     (si: number) => {
       let gained = 0;
-      LESSON_STEPS.forEach((s, i) => {
+      M.steps.forEach((s, i) => {
         const key = stepKey(LV, lesson, s.id);
-        if (stageOf(i) <= si && markDone(key)) {
+        if (M.stageOf(i) <= si && markDone(key)) {
           gained += 1;
           awardPoints(`skip:${key}`, 'skip', SKIP_POINTS);
         }
       });
       setSkipStage(null);
-      const allNow = LESSON_STEPS.every((s) => isDone(stepKey(LV, lesson, s.id)));
+      const allNow = M.steps.every((s) => isDone(stepKey(LV, lesson, s.id)));
       sfx('fanfare');
       // 프로토타입: '테스트 통과!' · 'STAGE n까지 건너뛰었어요' · 단계마다 +10P
       setCele({ correct: 0, total: 0, points: gained * SKIP_POINTS, goalDone: Math.min(getTodayDone(), DAILY_GOAL), goalTotal: DAILY_GOAL, unitComplete: allNow });
     },
-    [lesson],
+    [lesson, LV, M],
   );
 
   const chestTap = () => {
     if (!all) {
       setChestShake((v) => v + 1);
-      showToast(`${LESSON_STEPS.length}단계를 모두 끝내면 열려요`);
+      showToast(`${M.steps.length}단계를 모두 끝내면 열려요`);
       return;
     }
     setChestOpen(true);
   };
 
-  const popStep = popIdx !== null ? LESSON_STEPS[popIdx] : null;
-  const nextLocked = !allOpen && !isFreeChapter(lesson + 1);
-  const skipLeft = skipStage !== null ? LESSON_STEPS.filter((_, i) => stageOf(i) <= skipStage && !done[i]).length : 0;
+  const popStep = popIdx !== null ? M.steps[popIdx] : null;
+  const skipLeft = skipStage !== null ? M.steps.filter((_, i) => M.stageOf(i) <= skipStage && !done[i]).length : 0;
 
   return (
     <Raised radius={26}>
@@ -210,16 +267,18 @@ export function StudyMap() {
             <View style={styles.headLeft}>
               <View style={styles.pillDark}>
                 <PText style={styles.pillDarkText} color={Colors.white}>
-                  스터디 맵 · {MY_BOOK.level}
+                  스터디 맵 · Lv.{LV}
                 </PText>
               </View>
-              <Pressable onPress={showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${MY_BOOK.weekLessons.join(', ')}과 보기`} hitSlop={6}>
-                <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }])}>
-                  <PText style={styles.weekText}>이번 주 진도 {MY_BOOK.weekLessons.join(' & ')}챕터</PText>
-                </View>
-              </Pressable>
+              {M.week.length > 0 && (
+                <Pressable onPress={showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${M.weekText} 보기`} hitSlop={6}>
+                  <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }])}>
+                    <PText style={styles.weekText}>이번 주 진도 {M.weekText}</PText>
+                  </View>
+                </Pressable>
+              )}
             </View>
-            <Pressable onPress={() => router.push(`/unit/${lesson}?lv=${LV}` as Href)} accessibilityRole="button" accessibilityLabel="전체 보기">
+            <Pressable onPress={openLibrary} accessibilityRole="button" accessibilityLabel="라이브러리 스터디 맵에서 전체 보기">
               {({ pressed }) => (
                 <Raised radius={16} pressed={pressed}>
                   <View style={styles.allBtn}>
@@ -231,21 +290,21 @@ export function StudyMap() {
           </View>
 
           <PText variant="title" numberOfLines={2} style={styles.title} color={onDark}>
-            {lesson}과 {title}
+            {M.unitName(lesson)}
           </PText>
 
           <ScrollView ref={chipRow} horizontal showsHorizontalScrollIndicator={false} style={styles.chapScroll} contentContainerStyle={styles.chapRow} onLayout={(e) => (rowW.current = e.nativeEvent.layout.width)}>
-            {Array.from({ length: MY_BOOK.lessonCount }, (_, k) => k + 1).map((n) => (
-              <ChapChip key={n} n={n} on={n === lesson} week={MY_BOOK.weekLessons.includes(n)} locked={!allOpen && !isFreeChapter(n)} bounce={bounce} onPress={() => tryLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
+            {M.units.map((n) => (
+              <ChapChip key={n} M={M} n={n} on={n === lesson} week={M.week.includes(n)} locked={!isFree(n)} bounce={bounce} onPress={() => tryLesson(n)} onLayout={(x, w) => (chipXs.current[n] = { x, w })} />
             ))}
           </ScrollView>
 
           <View style={styles.prog}>
             <View style={styles.track}>
-              <View style={StyleSheet.flatten([styles.fill, { width: `${(doneCount / LESSON_STEPS.length) * 100}%` }])} />
+              <View style={StyleSheet.flatten([styles.fill, { width: `${(doneCount / M.steps.length) * 100}%` }])} />
             </View>
             <PText style={styles.progText} color={onDark}>
-              {doneCount}/{LESSON_STEPS.length}
+              {doneCount}/{M.steps.length}
             </PText>
           </View>
 
@@ -256,7 +315,7 @@ export function StudyMap() {
 
                 {map.zones.map((z) => {
                   const stage = STAGES[z.si];
-                  const stageDone = LESSON_STEPS.every((s, i) => s.stage !== stage.key || done[i]);
+                  const stageDone = M.steps.every((s, i) => s.stage !== stage.key || done[i]);
                   return (
                     <View key={stage.key} style={StyleSheet.flatten([styles.zoneWrap, { top: z.y }])}>
                       <View style={StyleSheet.flatten([styles.zone, { backgroundColor: stage.color }])}>
@@ -275,8 +334,8 @@ export function StudyMap() {
                 })}
 
                 {map.nodes.map((n) => {
-                  const step = LESSON_STEPS[n.i];
-                  const stage = STAGES[stageOf(n.i)];
+                  const step = M.steps[n.i];
+                  const stage = STAGES[M.stageOf(n.i)];
                   const isCur = n.i === current;
                   const isDoneStep = done[n.i];
                   const size = isCur ? NODE_CUR : NODE;
@@ -307,7 +366,12 @@ export function StudyMap() {
                           </NodeHop>
                         )}
                       </Pressable>
-                      <PText style={StyleSheet.flatten([styles.nodeLabel, xmas && styles.labelXmas])}>{step.title}</PText>
+                      {/* 이름은 정류장 가운데 기준 · 카드 밖으로 안 나가게 폭을 줄이고 길면 두 줄 (Lv.4 'SAY IT BETTER 즉시 변환' 같은 긴 이름) */}
+                      <View style={{ width: Math.min(LABEL_MAX, 2 * (Math.min(n.x, width - n.x) - LABEL_EDGE)) }}>
+                        <PText numberOfLines={2} style={StyleSheet.flatten([styles.nodeLabel, xmas && styles.labelXmas])}>
+                          {step.title}
+                        </PText>
+                      </View>
                       {isCur && (
                         <View style={{ position: 'absolute', left: size / 2, top: size / 2, zIndex: 4 }}>
                           <Rider />
@@ -317,20 +381,20 @@ export function StudyMap() {
                   );
                 })}
 
-                <ChestNode x={map.chest.x} y={map.chest.y} ready={all} opened={all && opened} lesson={lesson} xmas={xmas} shake={chestShake} onPress={chestTap} />
+                <ChestNode M={M} x={map.chest.x} y={map.chest.y} ready={all} opened={all && opened} lesson={lesson} xmas={xmas} shake={chestShake} onPress={chestTap} />
               </>
             )}
           </View>
 
           {next && (
-            <Pressable onPress={() => tryLesson(lesson + 1)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${lesson + 1}과 ${next}${nextLocked ? ', 잠김' : ''}`}>
+            <Pressable onPress={() => tryLesson(nextNo)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${next}${!isFree(nextNo) ? ', 잠김' : ''}`}>
               {({ pressed }) => (
                 <Raised radius={20} pressed={pressed}>
-                  <View style={StyleSheet.flatten([styles.nextBtn, nextLocked && styles.nextLocked])}>
+                  <View style={StyleSheet.flatten([styles.nextBtn, !isFree(nextNo) && styles.nextLocked])}>
                     <PText style={styles.nextText} numberOfLines={1}>
-                      다음 챕터 · {lesson + 1}과 {next}
+                      다음 챕터 · {next}
                     </PText>
-                    <LineIcon d={nextLocked ? LOCK_PATH : ARROW_PATH} size={nextLocked ? 20 : 22} width={2.4} />
+                    <LineIcon d={!isFree(nextNo) ? LOCK_PATH : ARROW_PATH} size={!isFree(nextNo) ? 20 : 22} width={2.4} />
                   </View>
                 </Raised>
               )}
@@ -341,7 +405,7 @@ export function StudyMap() {
 
       <StopPopup
         step={popStep}
-        kicker={popIdx !== null ? `${STAGES[stageOf(popIdx)].label} · ${stageOf(popIdx) + 1}-${LESSON_STEPS.slice(0, popIdx).filter((s) => s.stage === LESSON_STEPS[popIdx].stage).length + 1}` : ''}
+        kicker={popIdx !== null ? `${STAGES[M.stageOf(popIdx)].label} · ${M.stageOf(popIdx) + 1}-${M.steps.slice(0, popIdx).filter((s) => s.stage === M.steps[popIdx].stage).length + 1}` : ''}
         stepKeyText={popStep ? stepKey(LV, lesson, popStep.id) : ''}
         onClose={() => setPopIdx(null)}
         onGo={(mode) => popIdx !== null && go(popIdx, mode)}
@@ -351,7 +415,8 @@ export function StudyMap() {
       {chestOpen && (
         <ChestCelebrate
           unit={lesson}
-          title={title}
+          unitLabel={M.chipLabel(lesson)}
+          title={M.unitTitle(lesson)}
           reward={chestReward(lesson)}
           opened={opened}
           onOpen={() => markChestOpened(chestKey(LV, lesson))}
@@ -360,7 +425,7 @@ export function StudyMap() {
             next
               ? () => {
                   setChestOpen(false);
-                  tryLesson(lesson + 1);
+                  tryLesson(nextNo);
                 }
               : undefined
           }
@@ -403,12 +468,12 @@ const wkAnim = css.create({
   1: { animationName: wkBounce, animationDuration: '800ms', animationDelay: '370ms', animationTimingFunction: WK_EASE },
 });
 
-function ChapChip({ n, on, week, locked, bounce, onPress, onLayout }: { n: number; on: boolean; week: boolean; locked: boolean; bounce: number; onPress: () => void; onLayout: (x: number, w: number) => void }) {
+function ChapChip({ M, n, on, week, locked, bounce, onPress, onLayout }: { M: LevelMap; n: number; on: boolean; week: boolean; locked: boolean; bounce: number; onPress: () => void; onLayout: (x: number, w: number) => void }) {
   const still = useReducedMotion();
-  const count = useDoneCount(`${LV}:${n}:`);
-  const full = count >= LESSON_STEPS.length;
+  const count = useDoneCount(`${M.lv}:${n}:`);
+  const full = count >= M.steps.length;
   const part = count > 0 && !full;
-  const k = MY_BOOK.weekLessons.indexOf(n);
+  const k = M.week.indexOf(n);
   const anim = week && bounce > 0 && !still ? wkAnim[k === 0 ? 0 : 1] : null;
   return (
     // 이번 주 칩은 누를 때마다 key 를 바꿔 처음부터 다시 통통
@@ -417,12 +482,12 @@ function ChapChip({ n, on, week, locked, bounce, onPress, onLayout }: { n: numbe
         onPress={onPress}
         accessibilityRole="tab"
         accessibilityState={{ selected: on }}
-        accessibilityLabel={`${n}과 ${MY_BOOK.titles[n] ?? ''}${locked ? ', 지점 회원 전용' : `, ${count}/${LESSON_STEPS.length}`}${week ? ', 이번 주 스터디 진도' : ''}`}
+        accessibilityLabel={`${M.unitName(n)}${locked ? ', 지점 회원 전용' : `, ${count}/${M.steps.length}`}${week ? ', 이번 주 스터디 진도' : ''}`}
         style={({ pressed }) => StyleSheet.flatten([styles.chap, week && styles.chapWeek, full && styles.chapDone, on && styles.chapOn, locked && styles.chapLocked, pressed && styles.chapPressed])}>
         {/* 비회원 잠금: 흐리게 + 자물쇠 */}
         {locked && <LineIcon d={LOCK_PATH} size={12} width={2.6} color={Colors.inkSub} />}
         <PText style={styles.chapText} color={on ? Colors.white : locked ? Colors.inkSub : Colors.ink}>
-          {n}과
+          {M.chipLabel(n)}
         </PText>
         {full && <LineIcon d={CHECK_PATH} size={12} width={3.6} color={on ? Colors.yellow : Colors.ink} />}
         {part && !on && <View style={styles.chapDot} />}
@@ -459,7 +524,7 @@ const lockedShake = css.keyframes({
  * 맵 끝의 보상 상자 (보석함 · treasure-chest). 잠김: 회색 · 열 수 있음: 보라 + 들썩 + 빛 · 이미 연 상자: 열린 모습 그대로.
  * 누르면 챕터 완료 보상 화면 (ChestCelebrate).
  */
-function ChestNode({ x, y, ready, opened, lesson, xmas, shake, onPress }: { x: number; y: number; ready: boolean; opened: boolean; lesson: number; xmas: boolean; shake: number; onPress: () => void }) {
+function ChestNode({ M, x, y, ready, opened, lesson, xmas, shake, onPress }: { M: LevelMap; x: number; y: number; ready: boolean; opened: boolean; lesson: number; xmas: boolean; shake: number; onPress: () => void }) {
   const still = useReducedMotion();
   const live = ready && !opened;
   const W = ready ? 80 : 72;
@@ -474,7 +539,7 @@ function ChestNode({ x, y, ready, opened, lesson, xmas, shake, onPress }: { x: n
           <CurrentFx chest />
         </View>
       )}
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${lesson}과 보상 상자${opened ? ', 받은 보상 보기' : ready ? ', 열 수 있어요' : ', 잠김'}`}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${M.chipLabel(lesson)} 보상 상자${opened ? ', 받은 보상 보기' : ready ? ', 열 수 있어요' : ', 잠김'}`}>
         {({ pressed }) => (
           <Animated.View key={shake} style={[{ width: W, height: H }, nudge, ready && pressed && styles.chestPressed]}>
             <Animated.View style={[StyleSheet.absoluteFill, { transformOrigin: '50% 90%' }, loop(chestShakeKf)]}>
@@ -483,7 +548,7 @@ function ChestNode({ x, y, ready, opened, lesson, xmas, shake, onPress }: { x: n
           </Animated.View>
         )}
       </Pressable>
-      <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, ready && styles.chestLabelOpen, xmas && styles.labelXmas])}>{lesson}과 보상</PText>
+      <PText style={StyleSheet.flatten([styles.nodeLabel, styles.chestLabel, ready && styles.chestLabelOpen, xmas && styles.labelXmas])}>{M.chipLabel(lesson)} 보상</PText>
     </View>
   );
 }
@@ -660,7 +725,6 @@ const styles = StyleSheet.create({
     fontFamily: Font.body800,
     fontSize: 12,
     lineHeight: 16,
-    width: 180,
     textAlign: 'center',
   },
   chestWrap: {

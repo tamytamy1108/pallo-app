@@ -23,18 +23,22 @@ const W: Record<CreateKind, [string, string, string, LgIconName]> = {
 };
 
 /** 지금 보는 탭에 맞는 걸 앞에 */
+/** 챌린지 열기는 어느 탭에서 + 를 눌러도 있어요 */
 const ORDER: Partial<Record<LoungeTab, CreateKind[]>> = {
-  meet: ['bolt', 'club', 'photo', 'story', 'plane', 'abroad'],
-  trip: ['plane', 'abroad', 'photo', 'story', 'bolt', 'club'],
+  meet: ['bolt', 'club', 'photo', 'story', 'chal', 'plane', 'abroad'],
+  trip: ['plane', 'abroad', 'photo', 'story', 'chal', 'bolt', 'club'],
   chal: ['chal', 'story', 'photo', 'bolt', 'club', 'plane', 'abroad'],
 };
-const DEFAULT: CreateKind[] = ['photo', 'story', 'bolt', 'club', 'plane', 'abroad'];
+const DEFAULT: CreateKind[] = ['photo', 'story', 'chal', 'bolt', 'club', 'plane', 'abroad'];
 
-/** 오른쪽 아래 + 를 누르면 '무엇을 만들까요?' (프로토타입 lgWrite) */
-export function CreateSheet({ open, tab, onClose, onPick }: { open: boolean; tab: LoungeTab; onClose: () => void; onPick: (k: CreateKind) => void }) {
+/**
+ * 오른쪽 아래 + 를 누르면 '무엇을 만들까요?' (프로토타입 lgWrite).
+ * onClosed: 시트가 다 닫힌 뒤 — 고른 화면으로 가는 건 여기서 해요 (아이폰은 닫히는 중인 시트가 다음 화면 · 시트를 막아요)
+ */
+export function CreateSheet({ open, tab, onClose, onPick, onClosed }: { open: boolean; tab: LoungeTab; onClose: () => void; onPick: (k: CreateKind) => void; onClosed?: () => void }) {
   const order = ORDER[tab] ?? DEFAULT;
   return (
-    <Sheet open={open} onClose={onClose} title="무엇을 만들까요?">
+    <Sheet open={open} onClose={onClose} onClosed={onClosed} title="무엇을 만들까요?">
       <View style={styles.grid}>
         {order.map((k) => {
           const [l, sub, bg, ic] = W[k];

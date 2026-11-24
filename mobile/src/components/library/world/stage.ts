@@ -32,8 +32,6 @@ export type Host = {
   width: number;
   height: number;
   reduced: boolean;
-  /** 맵을 바꿀 때 들어오는 방향 (1 · -1), 처음이면 1 */
-  swapDir: number;
   paused: boolean;
   /** 가벼운 그림 (메모리가 적거나 오래된 폰): 그림자 · 안티에일리어싱을 꺼요 */
   lite?: boolean;
@@ -58,24 +56,33 @@ function quietPixelStore(gl: ExpoWebGLRenderingContext) {
   };
 }
 
+/** 들어올 때 도는 인트로: 한 프레임에 이만큼 (약 0.5초 · 프로토타입은 0.022 로 0.75초였는데 앱에서는 느리게 느껴져서 빠르게) */
+const INTRO_STEP = 0.032;
+
 export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts) {
-  const { gl, width: w, height: h } = host;
-  quietPixelStore(gl);
-  // 웹은 GL 을 만들 때 아직 canvas 크기가 정해지기 전이라 화면 크기 × 화소 비율로 맞춰요 (폰은 GL 버퍼 크기 그대로)
+  const { width: w, height: h } = host;
+  let gl = host.gl;
   const web = Platform.OS === 'web';
-  const bw = web ? Math.round(w * PixelRatio.get()) : gl.drawingBufferWidth;
-  const bh = web ? Math.round(h * PixelRatio.get()) : gl.drawingBufferHeight;
-  // three 가 찾는 canvas 모양만 흉내 (폰) · 웹은 진짜 canvas
-  const canvas =
-    web && (gl as unknown as WebGL2RenderingContext).canvas
-      ? (gl as unknown as WebGL2RenderingContext).canvas
-      : ({ width: bw, height: bh, style: {}, clientWidth: w, clientHeight: h, addEventListener: () => {}, removeEventListener: () => {}, getContext: () => gl } as unknown as HTMLCanvasElement);
-  const r = new THREE.WebGLRenderer({ canvas, context: gl as unknown as WebGL2RenderingContext, antialias: !host.lite });
-  r.setPixelRatio(1);
-  r.setSize(bw, bh, false);
-  r.shadowMap.enabled = !host.lite;
-  r.shadowMap.type = THREE.PCFSoftShadowMap;
-  r.outputColorSpace = THREE.SRGBColorSpace;
+  /** GL 하나에 three 렌더러 하나. 폰에서 GL 판이 새로 만들어지면(탭을 떠났다 오면) rebind 로 렌더러만 바꿔요 */
+  const makeRenderer = (g: ExpoWebGLRenderingContext) => {
+    quietPixelStore(g);
+    // 웹은 GL 을 만들 때 아직 canvas 크기가 정해지기 전이라 화면 크기 × 화소 비율로 맞춰요 (폰은 GL 버퍼 크기 그대로)
+    const bw = web ? Math.round(w * PixelRatio.get()) : g.drawingBufferWidth;
+    const bh = web ? Math.round(h * PixelRatio.get()) : g.drawingBufferHeight;
+    // three 가 찾는 canvas 모양만 흉내 (폰) · 웹은 진짜 canvas
+    const canvas =
+      web && (g as unknown as WebGL2RenderingContext).canvas
+        ? (g as unknown as WebGL2RenderingContext).canvas
+        : ({ width: bw, height: bh, style: {}, clientWidth: w, clientHeight: h, addEventListener: () => {}, removeEventListener: () => {}, getContext: () => g } as unknown as HTMLCanvasElement);
+    const nr = new THREE.WebGLRenderer({ canvas, context: g as unknown as WebGL2RenderingContext, antialias: !host.lite });
+    nr.setPixelRatio(1);
+    nr.setSize(bw, bh, false);
+    nr.shadowMap.enabled = !host.lite;
+    nr.shadowMap.type = THREE.PCFSoftShadowMap;
+    nr.outputColorSpace = THREE.SRGBColorSpace;
+    return nr;
+  };
+  let r = makeRenderer(gl);
 
   const sc = new THREE.Scene();
   sc.background = bg;
@@ -109,6 +116,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     cam.lookAt(tgt);
   };
   applyOrbit();
+  const theta0 = sph.theta;
 
   const labels: { p: THREE.Vector3; spec: LabelSpec; dy: number }[] = [];
   const ticks: ((t: number) => void)[] = [];
@@ -121,7 +129,8 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const home = tgt.clone();
   const ray = new THREE.Raycaster();
   let tw: { a: THREE.Vector3; b: THREE.Vector3; za: number; zb: number; t: number } | null = null;
-  let intro: { t: number; a: number; base?: THREE.Vector3 } | null = host.reduced ? null : { t: 0, a: 0.42 * (host.swapDir || 1) };
+  // 도는 인트로(프로토타입: 옆으로 0.42 라디안 돌며 0.78 → 1 배)는 replay 로만 시작해요 — 처음 그림은 늘 끝 자세 (지도 사진판과 같은 구도)
+  let intro: { t: number; a: number; base?: THREE.Vector3 } | null = null;
   const fly = (to: THREE.Vector3, z: number) => {
     tw = { a: tgt.clone(), b: to.clone(), za: cam.zoom, zb: z, t: 0 };
   };
@@ -191,13 +200,28 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     if (zoomed !== lastZoomed) lastZoomed = zoomed;
     host.onFrame(xy, rider, zoomed);
   };
+  /**
+   * 한 장 그리기. GL 이 끊긴 판(지도를 빠르게 바꿀 때 폰에서 가끔)은 three 안에서 오류가 나요
+   * → 앱을 멈추지 않고 이 지도만 그리기를 그만둬요 (바탕색만 남아요 · 다시 들어오면 새로 그려요)
+   */
   const render = () => {
-    r.render(sc, cam);
-    gl.endFrameEXP();
+    try {
+      r.render(sc, cam);
+      gl.endFrameEXP();
+      return true;
+    } catch (e) {
+      if (alive) {
+        alive = false;
+        cancelAnimationFrame(raf);
+        if (__DEV__) console.log('[gl] 3D 지도 그리기를 멈췄어요', e);
+        host.onError?.(e); // 화면은 2D 지도로 바꿔요
+      }
+      return false;
+    }
   };
   const step = () => {
     if (intro) {
-      intro.t = Math.min(1, intro.t + 0.022);
+      intro.t = Math.min(1, intro.t + INTRO_STEP);
       const k = 1 - Math.pow(1 - intro.t, 4);
       const off = cam.position.clone().sub(tgt);
       const base = intro.base || (intro.base = off.clone());
@@ -232,36 +256,78 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
       step();
       const t = (Date.now() - t0) / 1000;
       ticks.forEach((f) => f(t));
-      render();
-      report();
     } catch (e) {
-      // 폰에서 프레임 오류가 그대로 올라가면 앱이 꺼져요 → 여기서 멈추고 화면에 알려요
+      // 폰에서 프레임 오류가 그대로 올라가면 앱이 꺼져요 → 여기서 멈추고 화면에 알려요 (2D 지도로)
       alive = false;
       cancelAnimationFrame(raf);
       host.onError?.(e);
+      return;
     }
+    if (render()) report();
   };
-  // 첫 장면 바로 그리기 (인트로 시작 자세 그대로) — 다음 프레임까지 빈 화면이 보이지 않게
+  // 첫 장면 바로 그리기 — 다음 프레임까지 빈 화면이 보이지 않게 (셰이더 · 텍스처도 이때 GPU 에 올라가요)
   const draw = () => {
-    if (intro && !intro.base) {
+    ticks.forEach((f) => f(0));
+    host.onLabels?.(labels.map(({ spec }) => ({ spec })));
+    if (!render()) return;
+    report();
+    raf = requestAnimationFrame(loop);
+  };
+  /**
+   * 새 GL 판에 다시 붙이기 (폰: 탭을 떠나면 그리기 판이 사라져요). 장면 · 텍스처 그림은 그대로 두고
+   * 렌더러만 새로 만들어요 → 지도를 다시 만들지 않아요 (텍스처는 새 GL 에 다시 올라가요)
+   */
+  const rebind = (next: ExpoWebGLRenderingContext) => {
+    cancelAnimationFrame(raf);
+    try {
+      r.dispose();
+    } catch {
+      // 옛 GL 은 이미 사라졌을 수 있어요
+    }
+    gl = next;
+    host.gl = next;
+    r = makeRenderer(next);
+    alive = true;
+    if (!render()) return;
+    report();
+    raf = requestAnimationFrame(loop);
+  };
+  /**
+   * 이 지도로 바꿔 들어올 때 (미리 만들어 둔 지도 · 방금 만든 지도): 처음 자리로 돌려놓고
+   * 프로토타입 인트로를 처음부터 — 옆으로 0.42 라디안(dir 방향) 돌아간 채 0.78 배에서 시작해요. 시작 자세를 바로 한 장 그려요.
+   */
+  const replay = (dir: number) => {
+    tw = null;
+    spin = 0;
+    host.onFocus?.(null);
+    tgt.copy(home);
+    sph.theta = theta0;
+    applyOrbit();
+    cam.zoom = 1;
+    intro = host.reduced ? null : { t: 0, a: 0.42 * (dir || 1) };
+    if (intro) {
       const off = cam.position.clone().sub(tgt);
       intro.base = off.clone();
       off.applyAxisAngle(new THREE.Vector3(0, 1, 0), intro.a);
       cam.position.copy(tgt).add(off);
       cam.lookAt(tgt);
       cam.zoom = 0.78;
-      cam.updateProjectionMatrix();
     }
-    ticks.forEach((f) => f(0));
-    host.onLabels?.(labels.map(({ spec }) => ({ spec })));
-    render();
-    report();
-    raf = requestAnimationFrame(loop);
+    cam.updateProjectionMatrix();
+    if (render()) report();
   };
   /** 닫을 때: 루프 멈추고 GPU 자원 정리 */
   const dispose = () => {
     alive = false;
     cancelAnimationFrame(raf);
+    // GL 이 이미 끊겼으면 정리 중에도 오류가 나요 — 닫는 길이라 그냥 넘어가요
+    try {
+      freeGpu();
+    } catch {
+      // 판이 사라지면 GPU 자원도 함께 사라져요
+    }
+  };
+  const freeGpu = () => {
     sc.traverse((o) => {
       const m = o as THREE.Mesh;
       m.geometry?.dispose?.();
@@ -277,7 +343,31 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     r.dispose();
   };
 
+  /**
+   * 개발용(웹): 지금 그림을 사진으로 + 이름표 · 정류장 화면 좌표 (2D 지도 사진 만들기 · scripts 참고).
+   * 실제 앱에서는 부르지 않아요.
+   */
+  const snapshot = (type = 'image/webp', quality = 0.9) => {
+    r.render(sc, cam);
+    const el = r.domElement;
+    const infos: FocusInfo[] = [];
+    sc.traverse((o) => {
+      const it = o.userData.info as FocusInfo | undefined;
+      if (it && !infos.some((x) => x.no === it.no)) infos.push(it);
+    });
+    return {
+      img: typeof el.toDataURL === 'function' ? el.toDataURL(type, quality) : '',
+      w,
+      h,
+      ppu: ppu(),
+      labels: labels.map((l) => ({ spec: l.spec, dy: l.dy, xy: proj(l.p) })),
+      stops: infos.sort((a, b) => a.no - b.no).map((it) => ({ no: it.no, at: [it.at.x, it.at.y, it.at.z] as [number, number, number], xy: proj(it.at) })),
+      proj: (x: number, y: number, z: number) => proj(new THREE.Vector3(x, y, z)),
+    };
+  };
+
   const api = {
+    snapshot,
     sc,
     label,
     ticks,
@@ -291,6 +381,8 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
     drag,
     release,
     reset,
+    replay,
+    rebind,
     dispose,
     onFocus: null as ((info: FocusInfo) => void) | null,
     /** 팔로 캐릭터 (palloRun 이 넣어요) */

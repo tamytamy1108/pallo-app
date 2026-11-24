@@ -1,9 +1,11 @@
 /**
  * 나(로그인한 회원) — 가짜 데이터. 맞는 API: 3 `/me` · 32 `/me/summary`.
  * 담당: 마이 A. 다른 화면은 읽기만 해요 (useMe). 필드는 늘릴 수 있지만 이름 · 뜻은 바꾸지 않아요.
+ * 기기에 남아요 (가짜 서버 · 스파크 · 포인트 · 팔로우 · 소개). 서버가 생기면 MeSync 가 받은 /me 로 덮어써요.
  */
 import { ME } from '@/data/mock';
 import { createStore } from '@/lib/store';
+import { weekKey } from '@/state/today-goal';
 
 /** 회원 · 비회원(체험 전) · 리더 · 매니저. 실제 앱은 로그인 계정 역할 (프로토타입의 역할 토글은 만들지 않아요) */
 export type Role = 'member' | 'guest' | 'leader' | 'manager';
@@ -47,7 +49,7 @@ export type Me = {
   lvs: number[];
 };
 
-const meStore = createStore<Me>({
+const ME0: Me = {
   id: 'me',
   name: ME.name,
   branch: '하남점',
@@ -66,6 +68,20 @@ const meStore = createStore<Me>({
   postCount: 0,
   following: {},
   lvs: [1, 2],
+};
+
+// 기기에 남아요. 이번 주 포인트는 주가 바뀌면 0부터 (가짜 서버가 하는 일)
+const meStore = createStore<Me>(ME0, {
+  persist: {
+    key: 'me',
+    save: (s) => ({ ...s, wk: weekKey() }),
+    load: (saved, initial) => {
+      if (!saved || typeof saved !== 'object') return initial;
+      const { wk, ...me } = saved as Partial<Me> & { wk?: string };
+      const next = { ...initial, ...me };
+      return wk === weekKey() ? next : { ...next, weekPoints: 0 };
+    },
+  },
 });
 
 export const useMe = meStore.useStore;

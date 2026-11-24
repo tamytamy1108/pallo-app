@@ -55,6 +55,13 @@ export function QuizView({ D, skey, source, onFinish, onLeave }: { D: LessonData
   const n = st.order.length;
   const finished = st.i >= n;
 
+  // 문제를 넘길 때마다 멈춘 곳을 남겨요 — 그만하기 없이 앱이 꺼져도 이어서 해요
+  useEffect(() => {
+    if (st.i <= 0 || st.i >= n) return;
+    savePos(skey, st.i, n);
+    saveSnapshot(skey, st);
+  }, [st, n, skey]);
+
   const close = () => {
     stopSay();
     if (st.i > 0 && st.i < n) {

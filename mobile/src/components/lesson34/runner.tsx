@@ -11,7 +11,7 @@ import { Colors } from '@/constants/theme';
 import { CHEER_STREAK, pickOne } from '@/data/lessons';
 import { sfx } from '@/lib/feedback';
 import { setNoSpeak, useLearnPrefs } from '@/state/learn-prefs';
-import { savePos, stepKey, useSavedPos } from '@/state/progress';
+import { clearPos, savePos, stepKey, useSavedPos } from '@/state/progress';
 
 import { MatchBlock } from './blocks/match';
 import { BlindBlock, ChooseBlock, DuoBlock, ExplainBlock, ReadBlock, ScoreBlock } from './blocks/misc';
@@ -32,7 +32,14 @@ import { IMG, Kicker } from './ui';
 export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; build: () => Task34[] }) {
   const key = stepKey(ctx.lv, ctx.unit, ctx.step.id);
   const savedPos = useSavedPos(key);
-  const [snap] = useState(() => (savedPos != null ? loadRun(key) : undefined));
+  const [snap] = useState(() => {
+    if (savedPos == null) return undefined;
+    const run = loadRun(key);
+    if (run) return run;
+    // 문제 목록(함수가 들어 있어요)은 기기에 못 남겨요 → 앱을 다시 켰으면 처음 목록에서 멈춘 번호부터
+    const tasks = build();
+    return savedPos > 0 && savedPos < tasks.length ? { tasks, i: savedPos, res: {} } : undefined;
+  });
   const [tasks, setTasksState] = useState<Task34[]>(() => snap?.tasks ?? build());
   // 끼워 넣은 문제를 바로 '다음'에서 볼 수 있게 지금 목록을 ref 에도 둬요 (고르고 바로 다음으로 넘어가요)
   const tasksRef = useRef(tasks);
@@ -42,7 +49,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
   };
   const [i, setI] = useState(snap?.i ?? 0);
   const [nonce, setNonce] = useState(0);
-  const [askResume, setAskResume] = useState(!!snap);
+  const [askResume, setAskResume] = useState(!!snap && ctx.resume !== 'resume');
   const [askQuit, setAskQuit] = useState(false);
   const [kickOver, setKickOver] = useState<string | null>(null);
   const [combo, setCombo] = useState(0);
@@ -60,6 +67,13 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
   const last = i >= tasks.length - 1;
 
   useEffect(() => () => void Tts.stop(), []);
+
+  // 문제를 넘길 때마다 멈춘 곳을 남겨요 — 그만하기 없이 앱이 꺼져도 다시 켜면 이 번호부터
+  useEffect(() => {
+    if (i <= 0 || i >= tasks.length) return;
+    saveRun(key, { tasks, i, res: res.current });
+    savePos(key, i);
+  }, [i, tasks, key]);
 
   const done = () => {
     const r = Object.values(res.current);
@@ -162,6 +176,7 @@ export function TaskRunner({ ctx, kick, build }: { ctx: StepCtx; kick: string; b
         onConfirm={() => setAskResume(false)}
         onCancel={() => {
           dropRun(key);
+          clearPos(key);
           res.current = {};
           logs.current = [];
           setTasks(build());

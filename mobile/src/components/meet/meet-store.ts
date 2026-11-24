@@ -1,5 +1,5 @@
 /**
- * 번개 · 동아리 · 이벤트에서 내가 한 일 (가짜 상태). 백엔드가 생기면 서버 데이터로 바꿔요.
+ * 번개 · 동아리 · 이벤트에서 내가 한 일 (가짜 상태 · 기기에 남아요). 백엔드가 생기면 서버 데이터로 바꿔요.
  * 프로토타입 LG.joined · LG.club · LG.saved · LG.vac · LG.mhi · LG.greet · LG.att · LG.shi · LG.ans · LG.props · LG.chat 과 같아요.
  * 맞는 API: 60 `/meetups/:id/join` · `/waitlist` · 65 `/clubs/:id/members` · 69 `/club-sessions/:sid/attend` · 70 한마디 · 인사
  *   · 88 `/events/:id/applications` · 92 `/event-proposals` · 찜 `/events/:id/save`
@@ -39,7 +39,7 @@ type State = {
   myClubs: Club[];
 };
 
-const store = createStore<State>({
+const MEET0: State = {
   joined: {},
   club: {},
   saved: {},
@@ -55,7 +55,8 @@ const store = createStore<State>({
   chat: {},
   myMeets: [],
   myClubs: [],
-});
+};
+const store = createStore<State>(MEET0, { persist: { key: 'meets' } });
 
 export const useMeetStore = store.useStore;
 export const getMeetStore = store.get;

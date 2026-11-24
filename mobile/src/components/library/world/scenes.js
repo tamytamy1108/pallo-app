@@ -49,7 +49,10 @@ function bgTex(top, bot, draw) {
   if (draw) draw(g, c.width, c.height);
   const t = canvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
-const rnd = (() => { let s = 7; return () => (s = (s * 9301 + 49297) % 233280) / 233280; })();
+// 지도를 만들 때마다 같은 씨앗에서 (mountWorld 가 되돌려요) → 같은 지도는 늘 같은 모습 · 텍스처 그림 기억(texture-cache)이 맞아요
+const RND_SEED = 7;
+let rndS = RND_SEED;
+const rnd = () => (rndS = (rndS * 9301 + 49297) % 233280) / 233280;
 const puff = (g, x, y, r, col = 'rgba(255,255,255,.85)') => { g.fillStyle = col; [[0, 0, 1], [r * .9, r * .2, .75], [-r * .9, r * .25, .7], [r * .3, -r * .45, .7]].forEach(([a, b, k]) => { g.beginPath(); g.arc(x + a, y + b, r * k, 0, 7); g.fill(); }); };
 
 function drawSun(g, x, y, r) {
@@ -993,7 +996,7 @@ BUILD.study2 = (EL, SC) => {
   [[-4.8, -2.6, 1.2, .5], [4.6, 1.0, 2.4, .45], [-4.4, 4.4, 3.4, .42], [4.2, 7.2, 4.4, .38], [-3.6, 8.8, 5.6, .35]].forEach(([a, b, y, k], i) => { const [x, z] = SX(a, b), c = puffCloud(x, y, z, k, i + 50); c.userData.bg = 1; sc.add(c); drift.push([c, x, i + 30]); });
   S.ticks.push((t) => drift.forEach(([c, x, i]) => { c.position.x = x + Math.sin(t * .15 + i) * .5; c.scale.y = 1 + Math.sin(t * .6 + i) * .03; }));
   const SP = [[-3.1, -9.6], [3.3, -4.9], [-3.3, -.3], [3.1, 4.3], [-2.2, 8.6]], H = [0, 1.4, 2.8, 4.2, 5.6], SH = [SHAPES.peanut, SHAPES.bean, SHAPES.squircle, SHAPES.scallop, SHAPES.bean], RAD = [1.4, 1.9, 1.8, 1.8, 1.8], tops = [];
-  const ISL = [], OFF = [1.25, .25];
+  const ISL = [], OFF = [.75, .15];   // 팔로 자리: 섬 가운데에서 이만큼 (가장자리에 걸치지 않게 안쪽으로)
   const landOn = (k) => { const e = ISL[k]; if (!e) return null; return () => new THREE.Vector3(e.g.position.x + OFF[0], e.g.position.y + e.top, e.g.position.z + OFF[1]); };
   SP.forEach(([a, b], i) => { const [x, z] = SX(a, b), y = H[i], st = (SC[i] || [])[2]; let g, ty;
     [g, ty] = isle2(sc, SH[i], RAD[i], x, z, y, LV_COL[i], i); const mg = new THREE.Group(); mg.position.y = ty - y; mg.scale.setScalar(1.3); g.add(mg); lvParkMark(S, mg, i, 0); parkDeco(S, g, i, ty - y, SH[i], RAD[i]);
@@ -1024,8 +1027,13 @@ export function mountWorld(host, id, SC, onOpen) {
     if (__DEV__) console.warn(`[maps] BUILD '${id}' 가 없어요 — presets.ts 의 build 이름을 확인하세요. 여행 모양으로 그려요`);
     f = BUILD.travel;
   }
+  rndS = RND_SEED;
+  const t0 = Date.now();
   const S = f(host, SC);
+  const t1 = Date.now();
   S.draw();
+  // 바꾼 지도가 늦게 뜨면 어디가 오래 걸리는지 보려고 (만들기 · 첫 그림 = 셰이더 준비 포함)
+  if (__DEV__) console.log(`[gl] ${id} 지도 만들기 ${t1 - t0}ms · 첫 그림 ${Date.now() - t1}ms`);
   return S;
 }
 export { BUILD, ICO };

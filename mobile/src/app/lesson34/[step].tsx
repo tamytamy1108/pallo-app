@@ -25,7 +25,7 @@ import { ChapterGate } from '@/components/common/member-lock';
  * 회차 콘텐츠는 18 `GET /lessons/:id` (id = '레벨-회차') 로 받아요.
  */
 function Lesson34Screen() {
-  const p = useLocalSearchParams<{ step: string; lv?: string; unit?: string }>();
+  const p = useLocalSearchParams<{ step: string; lv?: string; unit?: string; resume?: string }>();
   const lv = p.lv === '4' ? 4 : 3;
   const unit = Number(p.unit) || 101;
   const q = useQuery(unit34Query(lv, unit));
@@ -39,10 +39,10 @@ function Lesson34Screen() {
       </Screen>
     );
   // 회차 · 단계가 바뀌면 처음부터 (문제 목록을 새로 만들어요)
-  return <Lesson34Body key={`${lv}:${unit}:${p.step}`} lv={lv} unit={unit} stepId={p.step} u={q.data} />;
+  return <Lesson34Body key={`${lv}:${unit}:${p.step}`} lv={lv} unit={unit} stepId={p.step} u={q.data} resume={p.resume === 'resume' || p.resume === 'restart' ? p.resume : undefined} />;
 }
 
-function Lesson34Body({ lv, unit, stepId, u }: { lv: 3 | 4; unit: number; stepId: string; u: Unit34 | undefined }) {
+function Lesson34Body({ lv, unit, stepId, u, resume }: { lv: 3 | 4; unit: number; stepId: string; u: Unit34 | undefined; resume?: 'resume' | 'restart' }) {
   const found = findStep34(lv, stepId);
   const { noSpeak } = useLearnPrefs();
   // 문제 목록은 처음 열 때 한 번만 만들어요 (말하기가 어려워요를 켜고 끄면 문제 안에서 바뀌어요)
@@ -68,7 +68,7 @@ function Lesson34Body({ lv, unit, stepId, u }: { lv: 3 | 4; unit: number; stepId
       </Screen>
     );
   }
-  const ctx: StepCtx = { lv, unit, step: found.step, source: env.source };
+  const ctx: StepCtx = { lv, unit, step: found.step, source: env.source, resume };
   const corner = corner34(u, stepId, env);
   return (
     <>

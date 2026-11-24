@@ -35,6 +35,7 @@ const SPARK_COLORS = [Colors.yellow, Colors.rosePink, Colors.sky, Colors.lavende
  */
 export function ChestCelebrate({
   unit,
+  unitLabel = `${unit}과`,
   title,
   reward,
   opened,
@@ -43,6 +44,8 @@ export function ChestCelebrate({
   onNext,
 }: {
   unit: number;
+  /** 과 이름표 (Lv.1 · 2 '5과' · Lv.3 '#101' · Lv.4 '1회') */
+  unitLabel?: string;
   title: string;
   reward: ChestReward;
   /** 이미 연 상자 (다시 보기) */
@@ -107,7 +110,7 @@ export function ChestCelebrate({
   };
 
   const anim = !instant;
-  const heading = !open ? `${unit}과 끝!\n상자를 열어 봐요` : firstOpen ? `${unit}과 완료!` : `${unit}과 보상`;
+  const heading = !open ? `${unitLabel} 끝!\n상자를 열어 봐요` : firstOpen ? `${unitLabel} 완료!` : `${unitLabel} 보상`;
 
   return (
     <Modal visible animationType="fade" onRequestClose={onHome} statusBarTranslucent>
@@ -126,7 +129,7 @@ export function ChestCelebrate({
           <Animated.View
             onLayout={(e) => setSlot({ y: e.nativeEvent.layout.y, h: e.nativeEvent.layout.height })}
             style={[styles.slot, { transform: go ? [{ translateY: 0 }, { scale: 1 }] : [{ translateY: cy }, { scale: BIG }] }, anim && measured && slide]}>
-            <Pressable onPress={openChest} disabled={open} accessibilityRole="button" accessibilityLabel={open ? `${unit}과 보상 상자, 열림` : `${unit}과 보상 상자 열기`} sound={false}>
+            <Pressable onPress={openChest} disabled={open} accessibilityRole="button" accessibilityLabel={open ? `${unitLabel} 보상 상자, 열림` : `${unitLabel} 보상 상자 열기`} sound={false}>
               <View style={styles.chestBox}>
                 <Animated.View pointerEvents="none" style={[styles.glow, { opacity: open ? 1 : 0, transform: [{ scale: open ? 1 : 0.3 }] }, anim && glowEase]}>
                   <Glow />

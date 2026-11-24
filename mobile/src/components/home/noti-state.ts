@@ -1,13 +1,13 @@
 /**
  * 알림 읽음 상태 (프로토타입 NOTIR · notiDot). 맞는 API: 13 `/me/notifications` · 14 `/me/notifications/read`
- * 홈 종의 빨간 점은 안 읽은 알림이 있을 때만 보여요.
+ * 홈 종의 빨간 점은 안 읽은 알림이 있을 때만 보여요. 읽음은 기기에 남아요.
  */
 import { useMemo } from 'react';
 
 import { NOTIS, type Noti } from '@/data/home';
 import { createStore } from '@/lib/store';
 
-const store = createStore<Record<string, boolean>>(Object.fromEntries(NOTIS.map((n) => [n.id, n.read])));
+const store = createStore<Record<string, boolean>>(Object.fromEntries(NOTIS.map((n) => [n.id, n.read])), { persist: { key: 'noti-read' } });
 
 /** 앱을 쓰는 동안 새로 도착한 알림 (푸시 · 지점 연동 결과). 목록 맨 위에 쌓여요 */
 const arrived = createStore<Noti[]>([]);
@@ -34,6 +34,6 @@ export function addNoti(n: Noti) {
 }
 
 /* 공지 새 글 점 (프로토타입 NREAD): 상세를 열면 읽음 */
-const noticeStore = createStore<Record<string, boolean>>({});
+const noticeStore = createStore<Record<string, boolean>>({}, { persist: { key: 'notice-dot' } });
 export const useNoticeRead = (id: string) => noticeStore.useStore((s) => !!s[id]);
 export const markNoticeRead = (id: string) => noticeStore.set((s) => (s[id] ? s : { ...s, [id]: true }));

@@ -11,8 +11,8 @@ import { Pressable } from '@/components/ui/pressable';
 import { EmptyIsland } from '@/components/library/empty-island';
 import { LibHead, MapTabs, SitChips } from '@/components/library/lib-head';
 import { CurrPanel, EmptyBlock, PanelCard, SitPanel, levelProgress } from '@/components/library/lib-panel';
-import { LibraryWorld } from '@/components/library/library-world';
-import { libStore, markMapSeen, nextSceneNo, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
+import { LibraryWorld, type LibWorld } from '@/components/library/library-world';
+import { islandFor, libStore, markMapSeen, nextSceneNo, pickIsland, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
 import { ToTop } from '@/components/library/to-top';
 import { MAP_PRESETS } from '@/components/library/world/presets';
 import type { WorldSC } from '@/components/library/world/scenes';
@@ -23,6 +23,7 @@ import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
+import { useLastStep } from '@/state/progress';
 
 const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
 const NO_BOOKS: Book[] = [];
@@ -37,6 +38,7 @@ export default function LibraryScreen() {
   const st = libStore.useStore();
   const myLang = useMe((m) => m.lang);
   useProgressVersion();
+  const lastStep = useLastStep();
   const shelfQ = useQuery(bookShelfQuery());
   const mapsQ = useQuery(situationMapsQuery());
   // 비회원은 맵마다 첫 챕터만 (state/access)
@@ -68,25 +70,30 @@ export default function LibraryScreen() {
     if (sitMap?.isNew) markMapSeen(sitMap.id);
   }, [sitMap]);
 
-  const bi = st.bi < books.length ? st.bi : Math.max(0, books.findIndex((b) => b.mine));
+  const bi = islandFor(books, st, lastStep);
   const book = books[bi];
 
   // 3D 지도에 넘길 섬 · 장면 상태
   // React Compiler 가 알아서 기억해 둬요 (진도가 바뀌면 다시 계산)
-  const world = (() => {
-    if (sitMap) {
-      const nx = nextSceneNo(sitMap);
-      // 비회원이 못 여는 장면(둘째부터)은 흐린 섬으로 (state/access)
-      const sc: WorldSC = sitMap.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) || (!allOpen && !isFreeChapter(s.no)) ? 'soon' : sceneDone(sitMap, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
-      return { id: MAP_PRESETS[sitMap.preset].build, sc, order: allSits.indexOf(sitMap) };
-    }
-    if (!st.sitMode && books.length) {
-      const sc: WorldSC = books.map((b) => [bookTag(b), b.study ? levelProgress(b.study) : '커밍순', !b.study ? 'soon' : b.mine ? 'cur' : 'open']);
-      sc.sel = bi;
-      return { id: MAP_PRESETS['island-study'].build, sc, order: -1 };
-    }
-    return null;
+  const sitWorld = (m: SituationMap): LibWorld => {
+    const nx = nextSceneNo(m);
+    // 비회원이 못 여는 장면(둘째부터)은 흐린 섬으로 (state/access)
+    const sc: WorldSC = m.scenes.map((s) => [s.title, s.icon, !sceneOpen(s) || (!allOpen && !isFreeChapter(s.no)) ? 'soon' : sceneDone(m, s.no) ? 'done' : s.no === nx ? 'cur' : 'open']);
+    return { slot: `sit:${m.id}`, id: MAP_PRESETS[m.preset].build, sc, order: allSits.indexOf(m) };
+  };
+  const studyWorld = ((): LibWorld | null => {
+    if (!books.length) return null;
+    const sc: WorldSC = books.map((b) => [bookTag(b), b.study ? levelProgress(b.study) : '커밍순', !b.study ? 'soon' : b.mine ? 'cur' : 'open']);
+    sc.sel = bi;
+    return { slot: 'study', id: MAP_PRESETS['island-study'].build, sc, order: -1 };
   })();
+  const world = sitMap ? sitWorld(sitMap) : !st.sitMode ? studyWorld : null;
+  // 한 번에 갈 수 있는 지도를 미리 만들어 둬요 (바로 바뀌게): 가까운 상황 맵부터 · 스터디 맵
+  const here = world?.order ?? -1;
+  const warm: LibWorld[] = [
+    ...sits.map(sitWorld).sort((a, b) => Math.abs(a.order - here) - Math.abs(b.order - here)),
+    ...(studyWorld ? [studyWorld] : []),
+  ];
 
   const onOpen = (no: number) => {
     if (sitMap) {
@@ -102,7 +109,7 @@ export default function LibraryScreen() {
       router.push(`/scene/${sceneId(sitMap.id, no)}` as Href);
       return;
     }
-    setLib({ bi: no - 1 });
+    pickIsland(no - 1);
   };
 
   const langLabel = LANGS[st.lang].ko;
@@ -115,7 +122,7 @@ export default function LibraryScreen() {
         }} scrollEventThrottle={64}>
         {/* 언어 메뉴 밖을 누르면 닫혀요 (위 줄만 이 판보다 위에 있어요) */}
         {langOpen && <Pressable style={styles.menuBack} onPress={() => setLangOpen(false)} accessibilityLabel="닫기" />}
-        <LibHead open={langOpen} setOpen={setLangOpen} lang={st.lang} onLang={(i) => setLib({ lang: i, bi: Math.max(0, (shelfQ.data?.[i] ?? NO_BOOKS).findIndex((b) => b.mine)) })} />
+        <LibHead open={langOpen} setOpen={setLangOpen} lang={st.lang} onLang={(i) => pickIsland(null, { lang: i })} />
         <MapTabs sitMode={st.sitMode} sitNew={sits.some(isNew)} onMode={(sit) => setLib({ sitMode: sit })} />
         {st.sitMode && (sits.length > 0 || soons.length > 0) && (
           <SitChips maps={sits} soons={soons} current={sitMap?.id ?? ''} isNew={isNew} onPick={(id) => setLib({ map: id })} onSoon={() => showToast('다음 상황 맵을 준비하고 있어요 · 열리면 알려드릴게요')} />
@@ -127,7 +134,7 @@ export default function LibraryScreen() {
           <ErrorState message={errorMessage(q.error)} onRetry={() => q.refetch()} />
         ) : world ? (
           <View onLayout={(e) => setWorldBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-            <LibraryWorld id={world.id} sc={world.sc} order={world.order} onOpen={onOpen} visible={worldSeen} />
+            <LibraryWorld world={world} warm={warm} onOpen={onOpen} visible={worldSeen} />
           </View>
         ) : (
           <Raised radius={26}>

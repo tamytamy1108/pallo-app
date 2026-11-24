@@ -7,8 +7,10 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
-import { ICO, type WorldSC } from './scenes';
+import { FLAT_MAPS } from './flat-maps';
 import { FocusCard, type CardInfo } from './focus-card';
+import { ICO, type WorldSC } from './scenes';
+import { WorldPhoto } from './world-photo';
 
 const ISLE = 54;
 const SOON_LINE = '#9A93A6';
@@ -19,10 +21,19 @@ const ZIG_MANY = [-1, 1];
 
 /**
  * 2D 섬 지도 — 3D(WebGL)를 못 그리는 기기에서 대신 보여 줘요 (world-view 가 골라요).
- * 3D 지도와 같은 데이터(sc) · 같은 동작: 섬을 누르면 아래 카드 → [교재 보기 · 장면 열기]. 지금 섬은 노랑, 곧 열릴 섬은 점선.
- * 아래에서 위로 꼬불꼬불 올라가요 (첫 섬이 맨 아래).
+ * 이 맵의 3D 사진(flat-maps)이 있으면 사진판(3D 와 거의 같은 모습), 없거나 정류장이 사진보다 많으면 그린 지도(아래)로.
  */
 export function WorldFlat({ id, sc, onOpen }: { id: string; sc: WorldSC; onOpen: (no: number) => void }) {
+  const map = FLAT_MAPS[id];
+  if (map && sc.length <= map.stops.length) return <WorldPhoto map={map} sc={sc} onOpen={onOpen} />;
+  return <WorldSimple id={id} sc={sc} onOpen={onOpen} />;
+}
+
+/**
+ * 그린 2D 지도 (사진이 없는 맵용 예비) — 같은 데이터(sc) · 같은 동작: 섬을 누르면 아래 카드.
+ * 지금 섬은 노랑, 곧 열릴 섬은 점선. 아래에서 위로 꼬불꼬불 올라가요 (첫 섬이 맨 아래).
+ */
+function WorldSimple({ id, sc, onOpen }: { id: string; sc: WorldSC; onOpen: (no: number) => void }) {
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [focus, setFocus] = useState<CardInfo | null>(null);
   const study = id === 'study2';

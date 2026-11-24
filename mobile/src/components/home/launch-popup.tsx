@@ -13,6 +13,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { LaunchPopup as Popup } from '@/data/home';
+import { createStore } from '@/lib/store';
 
 import { nowDate } from './attendance';
 
@@ -26,8 +27,17 @@ const today = () => {
   const d = nowDate();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
-// TODO: 기기 저장소(AsyncStorage) 붙이면 앱을 다시 켜도 '오늘은 그만 보기'가 남게
-const hiddenOn: Record<string, string> = {};
+// '오늘은 그만 보기': 팝업 id → 누른 날짜. 기기에 남아서 앱을 다시 켜도 오늘은 안 떠요 (프로토타입 `pallo-pop`)
+const hiddenStore = createStore<Record<string, string>>({}, { persist: { key: 'popup-hidden' } });
+function hideToday(ids: string[]) {
+  const day = today();
+  hiddenStore.set((h) => {
+    // 지난 날짜는 지워요 (계속 쌓이지 않게)
+    const keep = Object.fromEntries(Object.entries(h).filter(([, d]) => d === day));
+    ids.forEach((id) => (keep[id] = day));
+    return keep;
+  });
+}
 // 앱을 켠 뒤 한 번만 떠요
 let shownOnce = false;
 
@@ -40,7 +50,7 @@ export function LaunchPopup() {
 function PopupHost({ popups }: { popups: Popup[] }) {
   const still = useReducedMotion();
   // 처음 받은 목록으로 한 번 정해요 (보는 중에 '오늘은 그만 보기'를 눌러도 목록이 줄지 않게)
-  const [list] = useState(() => popups.filter((p) => p.until >= today() && hiddenOn[p.id] !== today()));
+  const [list] = useState(() => popups.filter((p) => p.until >= today() && hiddenStore.get()[p.id] !== today()));
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   const fade = useSharedValue(0);
@@ -125,7 +135,7 @@ function PopupHost({ popups }: { popups: Popup[] }) {
             <View style={styles.ft}>
               <Pressable
                 onPress={() => {
-                  list.forEach((x) => (hiddenOn[x.id] = today()));
+                  hideToday(list.map((x) => x.id));
                   close();
                   showToast('오늘은 다시 안 보여요');
                 }}

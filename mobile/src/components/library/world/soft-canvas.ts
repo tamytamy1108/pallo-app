@@ -3,10 +3,15 @@
  * 3D 지도의 그림 텍스처(하늘 · 벽돌 · 간판 · 아이콘)는 프로토타입에서 <canvas> 로 그려요. 폰에는 <canvas> 가 없어서,
  * 같은 그리기 명령을 여기서 픽셀로 칠한 뒤 three 의 DataTexture 로 넘겨요. 웹은 진짜 <canvas> 를 써요 (canvas2d.ts).
  * - 되는 것: 사각형 · 경로(선 · 원호 · 타원 · 곡선 · 둥근 사각형) 채우기와 선 긋기, 선형 · 원형 그라데이션, 투명도, 지우기, 이동 · 회전 · 크기, 다른 그림판 붙이기, SVG 경로(Path2D)
- * - 안 되는 것: 글자 (fillText 는 그냥 지나가요 — 간판 글자는 폰에서 비어 보여요)
+ * - 글자: glyph-data(Lexend · DM Serif Display 모양)로 경로를 만들어 칠해요 (커닝은 없어요)
  * - 메모리 · 속도 때문에 긴 변이 512px 를 넘으면 줄여서 칠해요 (그리는 좌표는 그대로).
+ * - 칠하기는 미뤄요: 그리기 명령을 모아 두고(서명도 함께) 픽셀이 필요할 때(텍스처 올리기 · 다른 그림판에 붙이기) 한 번에 칠해요.
+ *   같은 서명의 그림을 전에 칠했으면 texture-cache 에서 꺼내 써요 (지도를 다시 열 때 · 앱을 다시 켤 때 빨라요).
  */
 import * as THREE from 'three';
+
+import GLYPHS from './glyph-data.json';
+import { cachedPixels, rememberPixels, VER } from './texture-cache';
 
 type RGBA = [number, number, number, number];
 type Pt = [number, number];
@@ -15,6 +20,41 @@ type Paint = string | SoftGradient;
 
 const MAX_SIDE = 512;
 const SAMPLES = 4; // 한 줄을 세로로 4번 나눠 재서 가장자리를 부드럽게
+
+/** 그라데이션 색을 픽셀마다 담아 두는 칸 (다시 써요) */
+const GRAD_COL = new Float64Array(4);
+/* ───────── 그리기 명령 서명 ───────── */
+
+const HF = new Float64Array(1);
+const HU = new Uint32Array(HF.buffer);
+/** 명령을 차례로 섞은 64비트(32비트 둘) 서명 — 같은 명령 순서면 같은 값 */
+export class Sig {
+  a: number;
+  b: number;
+  constructor(seed: number) {
+    this.a = (0x811c9dc5 ^ seed) >>> 0;
+    this.b = (0x2545f491 ^ Math.imul(seed, 0x9e3779b1)) >>> 0;
+  }
+  u(v: number) {
+    this.a = Math.imul(this.a ^ v, 0x01000193) >>> 0;
+    const b = Math.imul((this.b ^ v) + 0x7f4a7c15, 0x85ebca6b) >>> 0;
+    this.b = (b ^ (b >>> 13)) >>> 0;
+  }
+  n(x: number) {
+    HF[0] = x;
+    this.u(HU[0]);
+    this.u(HU[1]);
+  }
+  key() {
+    return `${this.a.toString(36)}-${this.b.toString(36)}`;
+  }
+}
+
+/** 미뤄 둔 칠하기 하나 (칠할 때 필요한 상태는 그때 값으로 담아 둬요) */
+type Op =
+  | { k: 0; subs: Sub[]; b: Brush }
+  | { k: 1; ax: number; ay: number; bx: number; by: number; b: Brush | null }
+  | { k: 2; src: Uint8ClampedArray; spw: number; sph: number; ax: number; ay: number; bx: number; by: number; alpha: number };
 
 const NAMED: Record<string, RGBA> = { white: [255, 255, 255, 1], black: [0, 0, 0, 1], transparent: [0, 0, 0, 0], red: [255, 0, 0, 1] };
 const colorCache = new Map<string, RGBA>();
@@ -61,6 +101,38 @@ class SoftGradient {
       }
     }
     return s[s.length - 1].c;
+  }
+  /** 지금 모양 그대로 떼어 두기 (칠하기를 미루는 동안 색 멈춤이 바뀌어도 그대로) */
+  copy() {
+    const g = new SoftGradient(this.kind, this.a.slice());
+    g.stops = this.stops.slice();
+    return g;
+  }
+  /** at() 과 같은 색을 out 에 써요 (픽셀마다 배열을 만들지 않게) */
+  atInto(t: number, out: Float64Array) {
+    const s = this.stops;
+    let c: RGBA | null = null;
+    if (!s.length) c = [0, 0, 0, 0];
+    else if (t <= s[0].o) c = s[0].c;
+    else {
+      for (let i = 1; i < s.length; i++) {
+        if (t <= s[i].o) {
+          const p = s[i - 1];
+          const q = s[i];
+          const f = q.o === p.o ? 1 : (t - p.o) / (q.o - p.o);
+          out[0] = p.c[0] + (q.c[0] - p.c[0]) * f;
+          out[1] = p.c[1] + (q.c[1] - p.c[1]) * f;
+          out[2] = p.c[2] + (q.c[2] - p.c[2]) * f;
+          out[3] = p.c[3] + (q.c[3] - p.c[3]) * f;
+          return;
+        }
+      }
+      c = s[s.length - 1].c;
+    }
+    out[0] = c[0];
+    out[1] = c[1];
+    out[2] = c[2];
+    out[3] = c[3];
   }
   /** 사용자 좌표 (x, y) 의 t */
   tAt(x: number, y: number) {
@@ -111,7 +183,14 @@ export class SoftCanvas {
   pw = 300;
   ph = 150;
   k = 1;
-  px: Uint8ClampedArray = new Uint8ClampedArray(0);
+  /** 지금 픽셀 (미뤄 둔 칠하기는 아직 안 들어 있어요 — 밖에서는 px 로 읽어요) */
+  buf: Uint8ClampedArray = new Uint8ClampedArray(0);
+  /** 처음부터 지금까지의 그리기 명령 서명 */
+  sig: Sig = new Sig(VER);
+  private ops: Op[] = [];
+  /** buf 를 기억칸과 같이 쓰는 중 → 칠하기 전에 복사 */
+  private shared = false;
+  private flushing = false;
   private ctx: SoftContext | null = null;
 
   constructor(w = 300, h = 150) {
@@ -133,22 +212,69 @@ export class SoftCanvas {
     this.h = v;
     this.alloc();
   }
+  /** 다 칠한 픽셀 (미뤄 둔 칠하기를 먼저 해요) */
+  get px() {
+    this.flush();
+    return this.buf;
+  }
   private alloc() {
     this.k = Math.min(1, MAX_SIDE / Math.max(this.w, this.h, 1));
     this.pw = Math.max(1, Math.round(this.w * this.k));
     this.ph = Math.max(1, Math.round(this.h * this.k));
-    this.px = new Uint8ClampedArray(this.pw * this.ph * 4);
+    this.buf = new Uint8ClampedArray(this.pw * this.ph * 4);
+    this.ops = [];
+    this.shared = false;
+    this.sig = new Sig(VER);
+    this.sig.n(this.pw);
+    this.sig.n(this.ph);
     this.ctx?.reset();
   }
   getContext(_kind?: string) {
     if (!this.ctx) this.ctx = new SoftContext(this);
     return this.ctx;
   }
+  /** 칠하기 하나 미뤄 두기 */
+  record(op: Op) {
+    this.ops.push(op);
+  }
+  /** 다른 그림판이 이 픽셀을 붙여 쓰기로 했어요 → 이 뒤에 칠하면 복사해서 칠해요 */
+  lend() {
+    this.flush();
+    this.shared = true;
+    return this.buf;
+  }
+  /** 미뤄 둔 칠하기를 지금: 같은 서명을 기억하면 꺼내 쓰고, 아니면 칠해서 기억해요 */
+  flush() {
+    if (!this.ops.length || this.flushing) return;
+    const key = `${this.pw}x${this.ph}-${this.sig.key()}`;
+    const hit = cachedPixels(key, this.buf.length);
+    if (hit) {
+      this.buf = hit;
+      this.shared = true;
+      this.ops = [];
+      return;
+    }
+    if (this.shared) {
+      this.buf = this.buf.slice();
+      this.shared = false;
+    }
+    this.flushing = true;
+    const t0 = Date.now();
+    const ctx = this.getContext();
+    try {
+      for (const op of this.ops) ctx.run(op);
+    } finally {
+      this.flushing = false;
+      this.ops = [];
+    }
+    if (rememberPixels(key, this.buf, Date.now() - t0)) this.shared = true;
+  }
   /** GL 로 올릴 픽셀 (위아래 뒤집기: 텍스처는 아래 줄부터) */
   glPixels() {
-    const out = new Uint8Array(this.px.length);
+    const px = this.px;
+    const out = new Uint8Array(px.length);
     const row = this.pw * 4;
-    for (let y = 0; y < this.ph; y++) out.set(this.px.subarray(y * row, (y + 1) * row), (this.ph - 1 - y) * row);
+    for (let y = 0; y < this.ph; y++) out.set(px.subarray(y * row, (y + 1) * row), (this.ph - 1 - y) * row);
     return out;
   }
   /** three 텍스처로 (다시 그린 뒤 needsUpdate = true 하면 새 픽셀이 올라가요) */
@@ -440,12 +566,56 @@ export class SoftContext {
   createRadialGradient(x0: number, y0: number, r0: number, x1: number, y1: number, r1: number) {
     return new SoftGradient('rad', [x0, y0, r0, x1, y1, r1]);
   }
-  /** 글자는 폰에서 그리지 않아요 (글꼴을 칠할 방법이 없어서) */
-  fillText() {}
-  strokeText() {}
+  /** 글자: 글꼴 모양(glyph-data · Lexend · DM Serif Display)을 경로로 바꿔 칠해요 */
+  fillText(t: string, x: number, y: number, maxWidth?: number) {
+    this.textPath(t, x, y, maxWidth, false);
+  }
+  strokeText(t: string, x: number, y: number, maxWidth?: number) {
+    this.textPath(t, x, y, maxWidth, true);
+  }
   measureText(s: string) {
-    const fs = Number(/(\d+(?:\.\d+)?)px/.exec(this.st.font)?.[1] ?? 10);
-    return { width: String(s).length * fs * 0.56 };
+    const { face, k } = textFace(this.st.font);
+    return { width: textWidth(face, String(s)) * k };
+  }
+  private textPath(t: string, x: number, y: number, maxWidth: number | undefined, stroke: boolean) {
+    const text = String(t);
+    if (!text) return;
+    const { face, k } = textFace(this.st.font);
+    const width = textWidth(face, text) * k;
+    // 최대 너비를 넘으면 가로로 줄여요 (캔버스와 같아요)
+    const sx = maxWidth != null && maxWidth > 0 && width > maxWidth ? maxWidth / width : 1;
+    const w = width * sx;
+    const al = this.st.textAlign;
+    let px = al === 'center' ? x - w / 2 : al === 'right' || al === 'end' ? x - w : x;
+    const bl = this.st.textBaseline;
+    const by =
+      bl === 'middle' ? y + ((face.asc + face.desc) / 2) * k : bl === 'top' || bl === 'hanging' ? y + face.asc * k : bl === 'bottom' || bl === 'ideographic' ? y + face.desc * k : y;
+    const keep = this.path;
+    const keepCur = this.cur;
+    this.path = [];
+    this.cur = null;
+    const kx = k * sx;
+    for (const ch of text) {
+      const g = glyph(face, ch);
+      if (g) {
+        const c = g.cmds;
+        const X = (v: number) => px + v * kx;
+        const Y = (v: number) => by - v * k;
+        for (let i = 0; i < c.length; ) {
+          const op = c[i++];
+          if (op === 0) this.moveTo(X(c[i++]), Y(c[i++]));
+          else if (op === 1) this.lineTo(X(c[i++]), Y(c[i++]));
+          else if (op === 2) this.quadraticCurveTo(X(c[i++]), Y(c[i++]), X(c[i++]), Y(c[i++]));
+          else if (op === 3) this.bezierCurveTo(X(c[i++]), Y(c[i++]), X(c[i++]), Y(c[i++]), X(c[i++]), Y(c[i++]));
+          else this.closePath();
+        }
+      }
+      px += (g ? g.adv : face.upm * 0.3) * kx;
+    }
+    if (stroke) this.raster(this.outline(this.path), this.st.strokeStyle);
+    else this.raster(this.path, this.st.fillStyle);
+    this.path = keep;
+    this.cur = keepCur;
   }
   setLineDash() {}
   drawImage(src: SoftCanvas, dx: number, dy: number, dw?: number, dh?: number) {
@@ -454,21 +624,45 @@ export class SoftContext {
     const h = dh ?? src.height;
     const [ax, ay] = this.tp(dx, dy);
     const [bx, by] = this.tp(dx + w, dy + h);
+    const op: Op = { k: 2, src: src.lend(), spw: src.pw, sph: src.ph, ax, ay, bx, by, alpha: this.st.globalAlpha };
+    const g = this.canvas.sig;
+    g.n(2);
+    g.u(src.sig.a);
+    g.u(src.sig.b);
+    g.n(op.spw);
+    g.n(op.sph);
+    g.n(ax);
+    g.n(ay);
+    g.n(bx);
+    g.n(by);
+    g.n(op.alpha);
+    this.canvas.record(op);
+  }
+
+  /** 미뤄 둔 칠하기 하나를 지금 (SoftCanvas.flush 가 불러요) */
+  run(op: Op) {
+    if (op.k === 0) this.rasterNow(op.subs, op.b);
+    else if (op.k === 1) this.rectNow(op.ax, op.ay, op.bx, op.by, op.b);
+    else this.imageNow(op);
+  }
+
+  private imageNow(op: Extract<Op, { k: 2 }>) {
+    const { src, spw, sph, ax, ay, bx, by, alpha } = op;
     const x0 = Math.max(0, Math.floor(Math.min(ax, bx)));
     const x1 = Math.min(this.canvas.pw, Math.ceil(Math.max(ax, bx)));
     const y0 = Math.max(0, Math.floor(Math.min(ay, by)));
     const y1 = Math.min(this.canvas.ph, Math.ceil(Math.max(ay, by)));
-    const sx = (src.pw / (bx - ax || 1)) * 1;
-    const sy = src.ph / (by - ay || 1);
+    const sx = (spw / (bx - ax || 1)) * 1;
+    const sy = sph / (by - ay || 1);
     for (let y = y0; y < y1; y++) {
       const v = Math.floor((y + 0.5 - ay) * sy);
-      if (v < 0 || v >= src.ph) continue;
+      if (v < 0 || v >= sph) continue;
       for (let x = x0; x < x1; x++) {
         const u = Math.floor((x + 0.5 - ax) * sx);
-        if (u < 0 || u >= src.pw) continue;
-        const i = (v * src.pw + u) * 4;
-        const a = (src.px[i + 3] / 255) * this.st.globalAlpha;
-        if (a > 0) this.blend((y * this.canvas.pw + x) * 4, src.px[i], src.px[i + 1], src.px[i + 2], a);
+        if (u < 0 || u >= spw) continue;
+        const i = (v * spw + u) * 4;
+        const a = (src[i + 3] / 255) * alpha;
+        if (a > 0) this.blend((y * this.canvas.pw + x) * 4, src[i], src[i + 1], src[i + 2], a);
       }
     }
   }
@@ -533,51 +727,121 @@ export class SoftContext {
     return out;
   }
 
-  /** 모양 칠하기 (nonzero 규칙 · 세로 4번 재서 가장자리 부드럽게) */
+  /**
+   * 모양 칠하기 (nonzero 규칙 · 세로 4번 재서 가장자리 부드럽게).
+   * 빠르게: 줄마다 그 줄에 걸친 변만 보고(위에서부터 차례로 넣고 지난 변은 빼요), 교차점은 다시 쓰는 배열에 모아요.
+   */
+  /** 모양 칠하기 미뤄 두기 (조각은 지금 모양 그대로 떼어 둬요 — 뒤에 closePath 등이 바꿔도 그대로) */
   private raster(subs: Sub[], paint: Paint) {
+    const b = this.brush(paint);
+    const copy: Sub[] = new Array(subs.length);
+    const g = this.canvas.sig;
+    g.n(0);
+    g.n(subs.length);
+    for (let i = 0; i < subs.length; i++) {
+      const s = subs[i];
+      const pts = s.pts.slice();
+      copy[i] = { pts, closed: s.closed };
+      g.n(s.closed ? 1 : 0);
+      g.n(pts.length);
+      for (let j = 0; j < pts.length; j++) {
+        g.n(pts[j][0]);
+        g.n(pts[j][1]);
+      }
+    }
+    signBrush(g, b);
+    this.canvas.record({ k: 0, subs: copy, b });
+  }
+
+  private rasterNow(subs: Sub[], b: Brush) {
     const W = this.canvas.pw;
     const H = this.canvas.ph;
-    const edges: [number, number, number, number, number][] = [];
+    let total = 0;
+    for (const s of subs) if (s.pts.length >= 2) total += s.pts.length;
+    if (!total) return;
+    // 변 하나 = x1 y1 x2 y2 dir top bot (원래 방향 그대로 · 교차점 계산식도 같아요)
+    const E = new Float64Array(total * 7);
+    let n = 0;
     let minY = Infinity;
     let maxY = -Infinity;
     for (const s of subs) {
-      const n = s.pts.length;
-      if (n < 2) continue;
-      for (let i = 0; i < n; i++) {
-        const [x1, y1] = s.pts[i];
-        const [x2, y2] = s.pts[(i + 1) % n];
+      const len = s.pts.length;
+      if (len < 2) continue;
+      for (let i = 0; i < len; i++) {
+        const p1 = s.pts[i];
+        const p2 = s.pts[(i + 1) % len];
+        const y1 = p1[1];
+        const y2 = p2[1];
         if (y1 === y2) continue;
-        const dir = y2 > y1 ? 1 : -1;
-        const top = Math.min(y1, y2);
-        const bot = Math.max(y1, y2);
-        edges.push([x1, y1, x2, y2, dir]);
+        const top = y1 < y2 ? y1 : y2;
+        const bot = y1 < y2 ? y2 : y1;
+        const o = n * 7;
+        E[o] = p1[0];
+        E[o + 1] = y1;
+        E[o + 2] = p2[0];
+        E[o + 3] = y2;
+        E[o + 4] = y2 > y1 ? 1 : -1;
+        E[o + 5] = top;
+        E[o + 6] = bot;
+        n++;
         if (top < minY) minY = top;
         if (bot > maxY) maxY = bot;
       }
     }
-    if (!edges.length) return;
+    if (!n) return;
     const y0 = Math.max(0, Math.floor(minY));
     const y1 = Math.min(H, Math.ceil(maxY));
+    if (y1 <= y0) return;
+    // 위쪽 끝 순서
+    const order = new Int32Array(n);
+    for (let i = 0; i < n; i++) order[i] = i;
+    order.sort((a, b) => E[a * 7 + 5] - E[b * 7 + 5]);
+    const active = new Int32Array(n);
+    let na = 0;
+    let next = 0;
+    const cx = new Float64Array(n);
+    const cd = new Int8Array(n);
     const cov = new Float32Array(W + 1);
-    const xs: [number, number][] = [];
     for (let y = y0; y < y1; y++) {
+      // 이 줄(y ~ y+1)에 걸친 변만
+      while (next < n && E[order[next] * 7 + 5] < y + 1) active[na++] = order[next++];
+      let k2 = 0;
+      for (let i = 0; i < na; i++) if (E[active[i] * 7 + 6] > y) active[k2++] = active[i];
+      na = k2;
+      if (!na) continue;
       cov.fill(0);
       let lo = W;
       let hi = 0;
       for (let k = 0; k < SAMPLES; k++) {
         const sy = y + (k + 0.5) / SAMPLES;
-        xs.length = 0;
-        for (const [ax, ay, bx, by, dir] of edges) {
-          if ((sy >= ay && sy < by) || (sy >= by && sy < ay)) xs.push([ax + ((sy - ay) / (by - ay)) * (bx - ax), dir]);
+        let m = 0;
+        for (let i = 0; i < na; i++) {
+          const o = active[i] * 7;
+          const ay = E[o + 1];
+          const by = E[o + 3];
+          if ((sy >= ay && sy < by) || (sy >= by && sy < ay)) {
+            const ax = E[o];
+            const x = ax + ((sy - ay) / (by - ay)) * (E[o + 2] - ax);
+            const d = E[o + 4];
+            // x 순서로 끼워 넣기 (교차점은 몇 개뿐이라 이게 빨라요)
+            let j = m - 1;
+            while (j >= 0 && cx[j] > x) {
+              cx[j + 1] = cx[j];
+              cd[j + 1] = cd[j];
+              j--;
+            }
+            cx[j + 1] = x;
+            cd[j + 1] = d;
+            m++;
+          }
         }
-        if (xs.length < 2) continue;
-        xs.sort((p, q) => p[0] - q[0]);
+        if (m < 2) continue;
         let wind = 0;
-        for (let i = 0; i < xs.length - 1; i++) {
-          wind += xs[i][1];
+        for (let i = 0; i < m - 1; i++) {
+          wind += cd[i];
           if (wind === 0) continue;
-          const xa = Math.max(0, xs[i][0]);
-          const xb = Math.min(W, xs[i + 1][0]);
+          const xa = Math.max(0, cx[i]);
+          const xb = Math.min(W, cx[i + 1]);
           if (xb <= xa) continue;
           const ia = Math.floor(xa);
           const ib = Math.floor(xb);
@@ -591,21 +855,94 @@ export class SoftContext {
           }
         }
       }
-      for (let x = lo; x <= Math.min(hi, W - 1); x++) {
+      const end = Math.min(hi, W - 1);
+      for (let x = lo; x <= end; x++) {
         const c = Math.min(1, cov[x]);
-        if (c > 0.002) this.put(x, y, c, paint);
+        if (c > 0.002) this.put(x, y, c, b);
       }
     }
   }
 
   /** 축에 나란한 사각형: 가장자리 픽셀은 덮인 넓이만큼 */
   private rectFast(ax: number, ay: number, bx: number, by: number, paint: Paint, clear: boolean) {
+    const b = clear ? null : this.brush(paint);
+    const g = this.canvas.sig;
+    g.n(1);
+    g.n(ax);
+    g.n(ay);
+    g.n(bx);
+    g.n(by);
+    if (b) signBrush(g, b);
+    else g.n(-1);
+    this.canvas.record({ k: 1, ax, ay, bx, by, b });
+  }
+
+  private rectNow(ax: number, ay: number, bx: number, by: number, b: Brush | null) {
     const W = this.canvas.pw;
     const H = this.canvas.ph;
     const x0 = Math.max(0, Math.floor(ax));
     const x1 = Math.min(W, Math.ceil(bx));
     const y0 = Math.max(0, Math.floor(ay));
     const y1 = Math.min(H, Math.ceil(by));
+    const px = this.canvas.buf;
+    if (b && b.solid && !b.erase) {
+      // 단색 사각형: put() 과 같은 계산을 함수 부르지 않고 바로 (작은 사각형 수천 개를 칠하는 지도가 있어요)
+      const col = b.solid;
+      const alpha = b.alpha;
+      for (let y = y0; y < y1; y++) {
+        const cy = Math.min(y + 1, by) - Math.max(y, ay);
+        if (cy <= 0) continue;
+        let i = (y * W + x0) * 4;
+        for (let x = x0; x < x1; x++, i += 4) {
+          const cx = Math.min(x + 1, bx) - Math.max(x, ax);
+          if (cx <= 0) continue;
+          const a = col[3] * Math.min(1, cx * cy) * alpha;
+          if (a <= 0) continue;
+          if (a === 1) {
+            px[i] = col[0];
+            px[i + 1] = col[1];
+            px[i + 2] = col[2];
+            px[i + 3] = 255;
+          } else this.blend(i, col[0], col[1], col[2], a);
+        }
+      }
+      return;
+    }
+    if (b && b.grad && !b.erase) {
+      // 그라데이션 사각형 (하늘 · 바닥 · 빛): put() 과 같은 계산을 바로. 세로 선형 + 회전 없음이면 한 줄은 같은 색이라 줄마다 한 번만 재요
+      const g = b.grad;
+      const A = g.a;
+      const rowConst = g.kind === 'lin' && A[2] - A[0] === 0 && b.m1 === 0 && b.m2 === 0;
+      const col = GRAD_COL;
+      const alpha = b.alpha;
+      for (let y = y0; y < y1; y++) {
+        const cy = Math.min(y + 1, by) - Math.max(y, ay);
+        if (cy <= 0) continue;
+        let ready = false;
+        let i = (y * W + x0) * 4;
+        for (let x = x0; x < x1; x++, i += 4) {
+          const cx = Math.min(x + 1, bx) - Math.max(x, ax);
+          if (cx <= 0) continue;
+          if (!rowConst || !ready) {
+            const dx = x + 0.5 - b.m4;
+            const dy = y + 0.5 - b.m5;
+            const ux = (b.m3 * dx - b.m2 * dy) / b.det;
+            const uy = (-b.m1 * dx + b.m0 * dy) / b.det;
+            g.atInto(Math.max(0, Math.min(1, g.tAt(ux, uy))), col);
+            ready = true;
+          }
+          const a = col[3] * Math.min(1, cx * cy) * alpha;
+          if (a <= 0) continue;
+          if (a === 1) {
+            px[i] = col[0];
+            px[i + 1] = col[1];
+            px[i + 2] = col[2];
+            px[i + 3] = 255;
+          } else this.blend(i, col[0], col[1], col[2], a);
+        }
+      }
+      return;
+    }
     for (let y = y0; y < y1; y++) {
       const cy = Math.min(y + 1, by) - Math.max(y, ay);
       if (cy <= 0) continue;
@@ -613,27 +950,61 @@ export class SoftContext {
         const cx = Math.min(x + 1, bx) - Math.max(x, ax);
         if (cx <= 0) continue;
         const c = Math.min(1, cx * cy);
-        if (clear) {
+        if (b) this.put(x, y, c, b);
+        else {
           const i = (y * W + x) * 4;
-          this.canvas.px[i + 3] = this.canvas.px[i + 3] * (1 - c);
-        } else this.put(x, y, c, paint);
+          px[i + 3] = px[i + 3] * (1 - c);
+        }
       }
     }
   }
 
+  /** 한 번 칠하는 동안 바뀌지 않는 것: 색(또는 그라데이션 + 거꾸로 변환) · 투명도 · 섞는 방식 */
+  private brush(paint: Paint): Brush {
+    const m = this.st.m;
+    return {
+      solid: typeof paint === 'string' ? parseColor(paint) : null,
+      grad: typeof paint === 'string' ? null : paint.copy(),
+      m0: m[0],
+      m1: m[1],
+      m2: m[2],
+      m3: m[3],
+      m4: m[4],
+      m5: m[5],
+      det: m[0] * m[3] - m[1] * m[2] || 1,
+      alpha: this.st.globalAlpha,
+      erase: this.st.globalCompositeOperation === 'destination-out',
+    };
+  }
+
   /** 픽셀 하나에 칠 (덮임 c) */
-  private put(x: number, y: number, c: number, paint: Paint) {
-    let col: RGBA;
-    if (typeof paint === 'string') col = parseColor(paint);
+  private put(x: number, y: number, c: number, b: Brush) {
+    let col: RGBA | Float64Array;
+    if (b.solid) col = b.solid;
     else {
-      const [ux, uy] = this.inv(x + 0.5, y + 0.5);
-      col = paint.at(Math.max(0, Math.min(1, paint.tAt(ux, uy))));
+      // inv() 와 같은 계산 (배열을 만들지 않게 풀어 썼어요)
+      const dx = x + 0.5 - b.m4;
+      const dy = y + 0.5 - b.m5;
+      const ux = (b.m3 * dx - b.m2 * dy) / b.det;
+      const uy = (-b.m1 * dx + b.m0 * dy) / b.det;
+      const g = b.grad as SoftGradient;
+      g.atInto(Math.max(0, Math.min(1, g.tAt(ux, uy))), GRAD_COL);
+      col = GRAD_COL;
     }
-    const a = col[3] * c * this.st.globalAlpha;
+    const a = col[3] * c * b.alpha;
     if (a <= 0) return;
     const i = (y * this.canvas.pw + x) * 4;
-    if (this.st.globalCompositeOperation === 'destination-out') {
-      this.canvas.px[i + 3] = this.canvas.px[i + 3] * (1 - a);
+    const p = this.canvas.buf;
+    if (b.erase) {
+      p[i + 3] = p[i + 3] * (1 - a);
+      return;
+    }
+    if (a === 1) {
+      // 다 덮는 불투명 칠: 섞기 결과가 새 색 그대로예요
+      p[i] = col[0];
+      p[i + 1] = col[1];
+      p[i + 2] = col[2];
+      p[i + 3] = 255;
       return;
     }
     this.blend(i, col[0], col[1], col[2], a);
@@ -641,7 +1012,7 @@ export class SoftContext {
 
   /** source-over 섞기 (곱하지 않은 색으로 보관) */
   private blend(i: number, r: number, g: number, b: number, a: number) {
-    const p = this.canvas.px;
+    const p = this.canvas.buf;
     const da = p[i + 3] / 255;
     const oa = a + da * (1 - a);
     if (oa <= 0) return;
@@ -651,6 +1022,52 @@ export class SoftContext {
     p[i + 3] = oa * 255;
   }
 }
+
+/** 칠하는 붓을 서명에 섞기 */
+function signBrush(g: Sig, b: Brush) {
+  if (b.solid) {
+    g.n(1);
+    g.n(b.solid[0]);
+    g.n(b.solid[1]);
+    g.n(b.solid[2]);
+    g.n(b.solid[3]);
+  } else {
+    const gr = b.grad as SoftGradient;
+    g.n(gr.kind === 'lin' ? 2 : 3);
+    g.n(gr.a.length);
+    for (const v of gr.a) g.n(v);
+    g.n(gr.stops.length);
+    for (const st of gr.stops) {
+      g.n(st.o);
+      g.n(st.c[0]);
+      g.n(st.c[1]);
+      g.n(st.c[2]);
+      g.n(st.c[3]);
+    }
+  }
+  g.n(b.m0);
+  g.n(b.m1);
+  g.n(b.m2);
+  g.n(b.m3);
+  g.n(b.m4);
+  g.n(b.m5);
+  g.n(b.alpha);
+  g.n(b.erase ? 1 : 0);
+}
+
+type Brush = {
+  solid: RGBA | null;
+  grad: SoftGradient | null;
+  m0: number;
+  m1: number;
+  m2: number;
+  m3: number;
+  m4: number;
+  m5: number;
+  det: number;
+  alpha: number;
+  erase: boolean;
+};
 
 // ---- SVG 경로 읽기 (M L H V C S Q T A Z, 소문자 = 상대 좌표) ----
 function parseSvgPath(d: string): Sub[] {
@@ -819,4 +1236,53 @@ function arcTo(x1: number, y1: number, rx: number, ry: number, phi: number, larg
     out.push([cp * ex - sp * ey + cx, sp * ex + cp * ey + cy]);
   }
   return out;
+}
+
+/* ───────── 글자 모양 ───────── */
+
+type FaceData = { upm: number; asc: number; desc: number; g: Record<string, [number, string]> };
+const FACES = GLYPHS as unknown as Record<string, FaceData>;
+type Glyph = { adv: number; cmds: number[] };
+const glyphMemo = new WeakMap<FaceData, Map<string, Glyph | null>>();
+
+/** 글꼴 글자 → 고른 모양 · 글자 크기 배율. Lexend 계열(sans) 은 굵기로, DM Serif 계열(serif) 은 기울임으로 골라요 */
+function textFace(font: string): { face: FaceData; k: number; name: string } {
+  const size = Number(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? 10);
+  const fam = font.slice(font.indexOf('px') + 2).trim().split(',')[0]?.replace(/["']/g, '').trim().toLowerCase() ?? '';
+  const serif = fam.includes('serif') && !fam.includes('sans') ? true : fam.includes('georgia') || fam.includes('times');
+  let name: string;
+  if (serif) name = /\bitalic\b/.test(font) ? 'serifItalic' : 'serif';
+  else {
+    const wt = Number(/\b([1-9]00)\b/.exec(font)?.[1] ?? (/\bbold\b/.test(font) ? 700 : 400));
+    name = wt >= 900 ? 'sans900' : wt >= 800 ? 'sans800' : wt >= 700 ? 'sans700' : 'sans600';
+  }
+  const face = FACES[name] ?? FACES.sans600;
+  return { face, k: size / face.upm, name };
+}
+
+function glyph(face: FaceData, ch: string): Glyph | null {
+  let memo = glyphMemo.get(face);
+  if (!memo) glyphMemo.set(face, (memo = new Map()));
+  const hit = memo.get(ch);
+  if (hit !== undefined) return hit;
+  const src = face.g[ch] ?? face.g[ch.normalize('NFD')[0] ?? ''] ?? null;
+  let out: Glyph | null = null;
+  if (src) {
+    const cmds: number[] = [];
+    const re = /([MLQCZ])([^MLQCZ]*)/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src[1]))) {
+      cmds.push('MLQCZ'.indexOf(m[1]));
+      if (m[2].trim()) for (const v of m[2].trim().split(' ')) cmds.push(Number(v));
+    }
+    out = { adv: src[0], cmds };
+  }
+  memo.set(ch, out);
+  return out;
+}
+
+function textWidth(face: FaceData, text: string) {
+  let w = 0;
+  for (const ch of text) w += glyph(face, ch)?.adv ?? face.upm * 0.3;
+  return w;
 }

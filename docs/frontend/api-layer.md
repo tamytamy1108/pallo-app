@@ -10,7 +10,7 @@
 | `api/config.ts` | 어느 서버(dev · staging · prod)인지, mock 을 쓸지. `app.json › expo.extra.api` 와 `.env` 의 `EXPO_PUBLIC_API_ENV` · `EXPO_PUBLIC_API_MOCK` |
 | `api/client.ts` | 공통 요청 함수 `http.get/post/put/patch/delete`. 토큰 붙이기 · 15초 시간 초과 · 오류를 `ApiError` 로. 목록 모양 `Page<T>` |
 | `api/errors.ts` | `ApiError { code, message, status }` · `errorMessage(e)` (화면에 띄울 한 줄) |
-| `api/token.ts` | 로그인 토큰 저장 (폰: expo-secure-store · 웹 미리보기: 메모리) |
+| `api/token.ts` | 로그인 토큰 저장 (폰: expo-secure-store · 웹 미리보기: localStorage `pallo-tokens` — 새로고침해도 로그인 유지) |
 | `api/mock.ts` | 가짜 응답 · 늦추기 · 실패시키기 |
 | `api/auth.ts` · `me.ts` · `home.ts` · `learn.ts` | API 하나 = 함수 하나 (번호는 `api-inventory.md` · `api-additions.md`) |
 | `api/queries.ts` | 화면이 쓰는 Query 키 · 옵션 (`meQuery()`, `noticesQuery()` …) |
@@ -88,6 +88,29 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 ### 4. 라운지 · 이벤트 · 챌린지 · 마이 (31 ~ 96)
 
 - ☐ 전부. 순서 제안: 31 랭킹 · 32 마이 숫자 · 33 배지 → 86 이벤트 목록 · 상세 → 49 라운지 피드 → 79 챌린지 → 나머지
+
+## 기기 저장 (서버가 생기기 전까지)
+
+내 기록은 모두 기기에 남아서 앱을 껐다 켜도 이어져요 — `createStore(초기값, { persist: { key } })` (`lib/store.ts` · `lib/device-storage.ts`).
+폰은 문서 폴더 `pallo/<key>.json`, 웹 미리보기는 localStorage `pallo-<key>` — 폰과 웹이 같은 키 · 같은 모양으로 저장해요. 회원 탈퇴 · 마이 맨 아래 개발용 버튼이 `clearSavedData()` 로 모두 지워요.
+
+| key | 무엇 | 서버가 생기면 |
+|---|---|---|
+| `me` · `ledger` | 내 정보 · 포인트 · 스파크 장부 (이번 주 포인트는 주가 바뀌면 0) | 3 `/me` · 장부 API |
+| `progress` · `progress-snaps` · `step-data` · `today-goal` · `scene` · `lesson34-answers` | 진도 · 이어서 하기 · 오늘 목표 · 상황 퀴즈 · Lv.3·4 내 답 | 19 · 20 · 21 · 23 |
+| `expressions` · `avatar` | 표현함 · 꾸미기 | 29 · 34 · 36 |
+| `attendance` | 오늘 사전 출석 · 출석 (날이 바뀌면 처음부터) · 이번 주 횟수 | 8 · 9 · 10 |
+| `settings` · `logins` · `asks` · `level-request` · `change-request` · `pro-notes` · `notice-read` · `noti-read` · `notice-dot` | 마이 B · 알림 · 공지 읽음 | 30 · 13 · 14 · 39 · 44 · 45 · 46 · 94 |
+| `lounge` · `meets` · `challenges` · `blocks` · `my-reports` | 라운지 · 번개 · 동아리 · 이벤트 · 챌린지 · 차단 · 신고 (라운지 예시 글은 저장하지 않고 내가 바꾼 것만) | 49 ~ 92 |
+| `sound` · `listen-prefs` · `learn-prefs` · `library` · `stage-line` · `popup-hidden` | 기기 설정 · 화면 기억 | 기기에 그대로 둬도 돼요 (A17) |
+
+- 저장 모양을 바꾸면 `persist.version` 을 올려요 → 예전 저장은 버리고 처음 값으로 시작해요
+- 레슨 · 스피킹 퀴즈 · 상황 퀴즈는 문제를 넘길 때마다 멈춘 곳을 남겨요 → '그만하기' 없이 앱이 꺼져도(쓸어 닫기 · 시스템 종료) 이어서 해요
+- Lv.3·4 '그만둔 곳'의 문제 목록은 함수가 들어 있어 못 남겨요 → 다시 켜면 처음 목록에서 멈춘 번호부터
+- 내 기록은 아니지만 3D 지도 텍스처 그림도 기억해요 (`components/library/world/texture-cache.ts`): 메모리 72MB · 폰 캐시 폴더 `pallo-tex-v<판>/` 96MB 까지 (가벼운 폰은 24 · 32MB), 운영체제가 비워도 다시 칠하면 돼요. soft-canvas 칠하는 결과가 바뀌면 `VER` 를 올려요
+- 처음 들어올 때는 3D 지도를 만드는 동안 2D 사진판(`world/world-photo.tsx` · `flat-maps.ts`, 이름표 · 팔로까지)을 바로 보여 주고, 3D 가 그려지면 같은 구도로 바꿔요 (3D 는 인트로 없이 시작)
+- 맵을 바꿀 때(`library-world.tsx`)는 프로토타입처럼 새 3D 가 인트로(옆으로 0.42 라디안 돌며 0.78 → 1 배, 약 0.5초)와 함께 0.3초 동안 떠요. 바로 바뀌게 지금 지도가 다 뜬 뒤 한 번에 갈 수 있는 지도(다른 상황 맵 · 스터디 맵)를 하나씩 미리 만들어 숨겨 둬요(그리기 멈춤 · 메모리가 적은 폰은 안 함). 아직 안 만든 지도면 그려질 때까지 앞 지도가 그대로 있고, 1.2초 안에 안 그려지면 사진판이 먼저 떠요 (그때는 인트로 없이)
+- 간판 글자는 soft-canvas 가 글꼴 모양(`world/glyph-data.json` · Lexend · DM Serif Display, OFL)을 경로로 칠해요. 새 글자(한글 등)가 필요하면 글꼴에서 모양을 다시 뽑아요
 
 ## 지켜야 할 것
 

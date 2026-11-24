@@ -2,7 +2,7 @@ import { Children, createContext, Fragment, isValidElement, useCallback, useEffe
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { Colors, Radius } from '@/constants/theme';
@@ -47,13 +47,34 @@ export const SheetFooterContext = createContext(false);
  * 시트가 떠 있는 동안 토스트는 시트 안에 그려요 (네이티브 Modal 위로 보이게).
  * 담당: 공통 부품. props 는 바꾸지 않아요(늘리기만).
  */
+/** 시트가 다 닫힌 뒤에 할 일 (다른 화면으로 가기 등). 시트를 닫는 onClose() 바로 다음에 불러요 */
+const afterClose: (() => void)[] = [];
+const IOS = Platform.OS === 'ios';
+/** 아이폰 Modal 신호(onShow · onDismiss)가 안 올 때 기다리는 시간 */
+const SHOW_FALLBACK_MS = 400;
+const DISMISS_FALLBACK_MS = 500;
+export function runAfterSheetClose(fn: () => void) {
+  afterClose.push(fn);
+}
+function flushAfterClose() {
+  afterClose.splice(0).forEach((fn) => fn());
+}
+
 export function Sheet({ open, onClose, title, children, footer, tall = false, scroll = true, gap = 12, onClosed, label, dismissible = true, contentStyle, scrollKey }: SheetProps) {
   const insets = useSafeAreaInsets();
   const { height: winH } = useWindowDimensions();
   const still = useReducedMotion();
-  // 닫히는 움직임 동안에도 Modal 을 남겨 둬요 (열릴 땐 그리는 중에 바로 켜요)
-  const [mounted, setMounted] = useState(open);
-  if (open && !mounted) setMounted(true);
+  // 닫히는 움직임 동안에도 Modal 을 남겨 둬요 (열릴 땐 그리는 중에 바로 켜요).
+  // 아이폰: 처음부터 열린 채로 그려지는 시트(챌린지 열기 등 겹쳐 뜨는 화면)는 화면이 자리 잡은 다음 프레임에 Modal 을 띄워요.
+  // 같은 커밋에 띄우면 아이폰이 Modal 을 못 띄우고, 투명한 겹친 화면만 남아 화면이 멈춘 것처럼 돼요
+  const [ready, setReady] = useState(!IOS);
+  useEffect(() => {
+    if (ready) return;
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, [ready]);
+  const [mounted, setMounted] = useState(open && ready);
+  if (open && ready && !mounted) setMounted(true);
   const showToastHere = useToastLayer(mounted);
 
   const shown = useSharedValue(0);
@@ -66,19 +87,55 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   useEffect(() => {
     closedRef.current = onClosed;
   }, [onClosed]);
-  const finishClose = useCallback(() => {
-    setMounted(false);
+  // 아이폰은 Modal 이 실제로 내려간 뒤(onDismiss)에 알려요 — 그 전에 다른 화면 · 시트를 열면 막혀서 아무 일도 안 일어나요.
+  // onDismiss 가 안 오는 경우를 대비해 잠깐 뒤에는 그냥 알려요 (두 번은 안 불러요)
+  const closing = useRef(false);
+  // Modal 이 지금 떠 있는지 (아이폰 onShow) · 최신 open
+  const presented = useRef(false);
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+  const closed = useCallback(() => {
+    if (!closing.current) return;
+    closing.current = false;
     closedRef.current?.();
+    flushAfterClose();
   }, []);
+  const finishClose = useCallback(() => {
+    closing.current = true;
+    presented.current = false;
+    setMounted(false);
+    if (!IOS) closed();
+    else setTimeout(closed, DISMISS_FALLBACK_MS);
+  }, [closed]);
+  const onDismiss = closed;
+
+  // 올라오는 움직임: 아이폰은 Modal 이 실제로 뜬 뒤(onShow)에 시작해요 (뜨기 전에 움직이면 시트가 화면 밖에 남을 수 있어요)
+  const enter = useCallback(() => {
+    drag.set(0);
+    // .sheet { transition: transform .55s var(--ease) } · .lg-dim { transition: opacity .3s }
+    shown.set(withTiming(1, { duration: still ? 0 : 550, easing: EASE }));
+    dim.set(withTiming(1, { duration: still ? 0 : 300 }));
+  }, [drag, shown, dim, still]);
+  const onShow = useCallback(() => {
+    presented.current = true;
+    if (openRef.current) enter();
+  }, [enter]);
 
   const wasOpen = useRef(false);
   useEffect(() => {
     if (open) {
       wasOpen.current = true;
-      drag.set(0);
-      // .sheet { transition: transform .55s var(--ease) } · .lg-dim { transition: opacity .3s }
-      shown.set(withTiming(1, { duration: still ? 0 : 550, easing: EASE }));
-      dim.set(withTiming(1, { duration: still ? 0 : 300 }));
+      if (!IOS || presented.current) {
+        enter();
+        return;
+      }
+      // onShow 가 안 오는 경우를 대비해 잠깐 뒤에는 그냥 올려요
+      const t = setTimeout(() => {
+        if (openRef.current && !presented.current) enter();
+      }, SHOW_FALLBACK_MS);
+      return () => clearTimeout(t);
     } else if (wasOpen.current) {
       wasOpen.current = false;
       dim.set(withTiming(0, { duration: still ? 0 : 300 }));
@@ -88,7 +145,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
         }),
       );
     }
-  }, [open, still, shown, dim, drag, finishClose]);
+  }, [open, still, shown, dim, enter, finishClose]);
 
   const scrollRef = useRef<ScrollViewInstance>(null);
   useEffect(() => {
@@ -116,9 +173,10 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   }));
   const dimAnim = useAnimatedStyle(() => ({ opacity: dim.get() }));
 
-  // 아래 여백: 버튼 칸이 있으면 그 칸이, 키 큰 시트는 스크롤 안쪽이 안전 영역까지 챙겨요
-  const padBottom = footer || tall ? 0 : 30 + insets.bottom;
-  const scrollPadBottom = footer ? 12 : tall ? 30 + insets.bottom : 0;
+  // 아래 여백: 버튼 칸이 있으면 그 칸이, 키 큰 시트는 스크롤 안쪽이 안전 영역까지 챙겨요.
+  // 안드로이드: 시트 창(Modal)은 내비게이션 바 뒤까지 그려서, 앱 화면의 안전 영역(0일 수 있어요)이 아니라
+  // 시트 창 안에서 잰 값을 써요 (안 그러면 아래 버튼이 내비게이션 바에 가려져요)
+  const bottomOf = (modal: { bottom: number } | null) => Math.max(insets.bottom, modal?.bottom ?? 0);
   const body = (
     <>
       {title ? (
@@ -130,55 +188,66 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
     </>
   );
 
-  // 열려 있을 때만 Modal 을 그려요: 웹(react-native-web)은 Modal 을 처음 그릴 때 body 맨 끝에 자리를 만들어서,
+  // 웹에서는 열려 있을 때만 Modal 을 그려요 (아이폰은 닫힘 onDismiss 를 받아야 해서 그대로 둬요): 웹(react-native-web)은 Modal 을 처음 그릴 때 body 맨 끝에 자리를 만들어서,
   // 앱 시작 때부터 그려 두면 나중에 연 시트(댓글 등) 밑에 깔려요. 열 때 새로 그려야 늘 맨 위에 떠요
-  if (!mounted) return null;
+  if (!mounted && Platform.OS === 'web') return null;
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={requestClose} statusBarTranslucent navigationBarTranslucent>
-      <GestureHandlerRootView style={styles.fill}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dimAnim]}>
-          <Pressable style={styles.fill} onPress={requestClose} accessibilityRole="button" accessibilityLabel="닫기" />
-        </Animated.View>
-        <KeyboardAvoidingView behavior={Platform.OS === 'web' ? undefined : 'padding'} style={styles.root} pointerEvents="box-none">
-          <Animated.View
-            accessibilityViewIsModal
-            accessibilityLabel={label ?? title}
-            onLayout={(e) => sheetH.set(e.nativeEvent.layout.height)}
-            style={[styles.sheet, tall ? styles.tall : styles.auto, { maxHeight: tall ? '84%' : '92%', paddingBottom: padBottom }, sheetAnim]}>
-            <GestureDetector gesture={pan}>
-              <View style={[styles.grabZone, { paddingBottom: 4 + gap }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                <View style={styles.grab} />
-              </View>
-            </GestureDetector>
-            {scroll ? (
-              <ScrollView
-                ref={scrollRef}
-                bounces={false}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                style={tall ? styles.fill : styles.shrink}
-                contentContainerStyle={[{ gap, paddingHorizontal: 18, paddingBottom: scrollPadBottom }, contentStyle]}>
-                {body}
-              </ScrollView>
-            ) : (
-              <View style={[tall ? styles.fill : styles.shrink, { gap, paddingHorizontal: 18 }, contentStyle]}>{body}</View>
-            )}
-            {footer ? (
-              <SheetFooterContext.Provider value>
-                <View style={[styles.footer, { paddingBottom: 22 + insets.bottom }]}>
-                  {footerItems(footer).map((child, i) => (
-                    <View key={i} style={styles.slot}>
-                      {child}
-                    </View>
-                  ))}
-                </View>
-              </SheetFooterContext.Provider>
-            ) : null}
-          </Animated.View>
-        </KeyboardAvoidingView>
-        {showToastHere ? <ToastView /> : null}
-      </GestureHandlerRootView>
+    <Modal visible={mounted} transparent animationType="none" onRequestClose={requestClose} onShow={IOS ? onShow : undefined} onDismiss={IOS ? onDismiss : undefined} statusBarTranslucent navigationBarTranslucent>
+      <SafeAreaProvider>
+        <SafeAreaInsetsContext.Consumer>
+          {(modalInsets) => {
+            const bottom = bottomOf(modalInsets);
+            const padBottom = footer || tall ? 0 : 30 + bottom;
+            const scrollPadBottom = footer ? 12 : tall ? 30 + bottom : 0;
+            return (
+              <GestureHandlerRootView style={styles.fill}>
+                <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dimAnim]}>
+                  <Pressable style={styles.fill} onPress={requestClose} accessibilityRole="button" accessibilityLabel="닫기" />
+                </Animated.View>
+                <KeyboardAvoidingView behavior={Platform.OS === 'web' ? undefined : 'padding'} style={styles.root} pointerEvents="box-none">
+                  <Animated.View
+                    accessibilityViewIsModal
+                    accessibilityLabel={label ?? title}
+                    onLayout={(e) => sheetH.set(e.nativeEvent.layout.height)}
+                    style={[styles.sheet, tall ? styles.tall : styles.auto, { maxHeight: tall ? '84%' : '92%', paddingBottom: padBottom }, sheetAnim]}>
+                    <GestureDetector gesture={pan}>
+                      <View style={[styles.grabZone, { paddingBottom: 4 + gap }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                        <View style={styles.grab} />
+                      </View>
+                    </GestureDetector>
+                    {scroll ? (
+                      <ScrollView
+                        ref={scrollRef}
+                        bounces={false}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                        style={tall ? styles.fill : styles.shrink}
+                        contentContainerStyle={[{ gap, paddingHorizontal: 18, paddingBottom: scrollPadBottom }, contentStyle]}>
+                        {body}
+                      </ScrollView>
+                    ) : (
+                      <View style={[tall ? styles.fill : styles.shrink, { gap, paddingHorizontal: 18 }, contentStyle]}>{body}</View>
+                    )}
+                    {footer ? (
+                      <SheetFooterContext.Provider value>
+                        <View style={[styles.footer, { paddingBottom: 22 + bottom }]}>
+                          {footerItems(footer).map((child, i) => (
+                            <View key={i} style={styles.slot}>
+                              {child}
+                            </View>
+                          ))}
+                        </View>
+                      </SheetFooterContext.Provider>
+                    ) : null}
+                  </Animated.View>
+                </KeyboardAvoidingView>
+                {showToastHere ? <ToastView /> : null}
+              </GestureHandlerRootView>
+            );
+          }}
+        </SafeAreaInsetsContext.Consumer>
+      </SafeAreaProvider>
     </Modal>
   );
 }

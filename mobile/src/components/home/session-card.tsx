@@ -13,6 +13,7 @@ import { Colors } from '@/constants/theme';
 import { QR_BEFORE, SLOTS } from '@/data/home';
 import { sfx } from '@/lib/feedback';
 import { kf, SPRING, useLoop } from '@/lib/motion';
+import { createStore } from '@/lib/store';
 import { finishHomeMoment, useLinkEvents } from '@/state/link-events';
 import { useMe } from '@/state/me';
 
@@ -47,10 +48,10 @@ export function ClapperArm() {
  */
 /**
  * 카드 제목 · 보라 팔로 포즈: 홈에 들어올 때마다 차례로 바뀌어요 (프로토타입 STAGE_LINES · 기본 → 기울이기 → 점프).
- * TODO: 앱을 다시 켜도 다음 차례부터 — 기기 저장소(AsyncStorage) 붙일 때
+ * 앱을 다시 켜도 다음 차례부터 — 마지막 차례를 기기에 남겨요 (프로토타입 `pallo-stage-line`)
  */
 const STAGE_LINES = ['Take the stage.', 'Your stage is ready.', 'The stage is yours.'];
-let stageTurn = -1;
+const stageTurn = createStore(-1, { persist: { key: 'stage-line' } });
 
 /** 회원 · 연동 대기 · 연동 안 됨일 때 홈 출석 카드. 체험 · 둘러보기는 home-card 가 골라요 */
 export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
@@ -212,8 +213,8 @@ function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
   const [stage, setStage] = useState(0);
   useFocusEffect(
     useCallback(() => {
-      stageTurn = (stageTurn + 1) % STAGE_LINES.length;
-      setStage(stageTurn);
+      stageTurn.set((n) => (n + 1) % STAGE_LINES.length);
+      setStage(stageTurn.get());
     }, []),
   );
   const now = useClock();

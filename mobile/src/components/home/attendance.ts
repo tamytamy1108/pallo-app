@@ -9,7 +9,7 @@ import { ATTEND_POINTS, LANGS, MY_LANG, MY_SLOT, QR_AFTER, QR_BEFORE, SLOTS } fr
 import { SPARK_ATTEND } from '@/data/my';
 import { createStore } from '@/lib/store';
 import { awardPoints, awardSparks } from '@/state/ledger';
-import { dayKey } from '@/state/today-goal';
+import { dayKey, weekKey } from '@/state/today-goal';
 
 /* ───────── 지금 시각 ───────── */
 
@@ -67,7 +67,26 @@ export type Attend = {
   week: number;
 };
 
-const store = createStore<Attend>({ rsvp: null, slot: MY_SLOT, lang: MY_LANG, checked: false, week: 0 });
+// 기기에 남아요 — 같은 날 앱을 다시 켜도 사전 출석 · 출석 그대로. 날이 바뀌면 오늘 것은 처음부터, 주가 바뀌면 횟수도 0
+const store = createStore<Attend>(
+  { rsvp: null, slot: MY_SLOT, lang: MY_LANG, checked: false, week: 0 },
+  {
+    persist: {
+      key: 'attendance',
+      save: (s) => ({ ...s, day: dayKey(nowDate().getTime()), wk: weekKey(nowDate().getTime()) }),
+      load: (saved, initial) => {
+        if (!saved || typeof saved !== 'object') return initial;
+        const { day, wk, ...a } = saved as Partial<Attend> & { day?: string; wk?: string };
+        const t = nowDate().getTime();
+        const week = wk === weekKey(t) && typeof a.week === 'number' ? a.week : 0;
+        if (day !== dayKey(t)) return { ...initial, week };
+        const slot = typeof a.slot === 'number' && SLOTS[a.slot] ? a.slot : initial.slot;
+        const lang = typeof a.lang === 'number' && LANGS[a.lang] ? a.lang : initial.lang;
+        return { rsvp: a.rsvp === 'yes' || a.rsvp === 'no' ? a.rsvp : null, slot, lang, checked: !!a.checked, week };
+      },
+    },
+  },
+);
 export const useAttend = store.useStore;
 export const getAttend = store.get;
 

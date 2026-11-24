@@ -47,32 +47,12 @@ const FILES = {
 } satisfies Record<string, number>;
 type SfxFile = keyof typeof FILES;
 
-const SOUND_KEY = 'pallo-sound';
-
-/** 효과음 켜고 끄기 (설정 › 효과음). 웹은 프로토타입처럼 기기에 저장해요 */
-const soundStore = createStore({ on: readSaved() });
+/** 효과음 켜고 끄기 (설정 › 효과음). 프로토타입 `pallo-sound` 처럼 기기에 남아요 (폰 · 웹 모두) */
+const soundStore = createStore({ on: true }, { persist: { key: 'sound' } });
 // React Compiler 가 x.use() 를 React use() 로 보지 않게 useXxx 이름으로 꺼내 써요
 const useSoundStore = soundStore.use;
 export const useSfxOn = () => useSoundStore((s) => s.on);
-export const setSfxOn = (on: boolean) => {
-  soundStore.set({ on });
-  if (Platform.OS === 'web') {
-    try {
-      globalThis.localStorage?.setItem(SOUND_KEY, on ? 'on' : 'off');
-    } catch {
-      // 저장 못 해도 지금 켜고 끄기는 돼요
-    }
-  }
-};
-
-function readSaved() {
-  if (Platform.OS !== 'web') return true;
-  try {
-    return globalThis.localStorage?.getItem(SOUND_KEY) !== 'off';
-  } catch {
-    return true;
-  }
-}
+export const setSfxOn = (on: boolean) => soundStore.set({ on });
 
 // 소리마다 플레이어 하나 (처음 울릴 때 만들어 두고 계속 다시 써요)
 const players = new Map<SfxFile, AudioPlayer>();
@@ -137,9 +117,16 @@ function play(name: Sfx, noteKey?: string) {
 /** 진동 — 아껴 써요 (정답 · 오답 · 완료 같은 순간에만). 웹은 없어요 */
 export function haptic(kind: HapticKind = 'tap') {
   if (Platform.OS === 'web') return;
-  if (kind === 'success') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  else if (kind === 'warning') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  else if (kind === 'error') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  else if (kind === 'select') void Haptics.selectionAsync();
-  else void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  let p: Promise<void>;
+  try {
+    if (kind === 'success') p = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    else if (kind === 'warning') p = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    else if (kind === 'error') p = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    else if (kind === 'select') p = Haptics.selectionAsync();
+    else p = Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch {
+    return;
+  }
+  // 진동이 없는 기기 · 앱(일부 Expo Go 판)이면 조용히 넘어가요 — 빨간 오류 창을 띄우지 않게
+  p.catch(() => {});
 }

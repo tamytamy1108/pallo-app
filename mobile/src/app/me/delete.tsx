@@ -13,11 +13,12 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LEAVE_REASONS } from '@/data/account';
 import { haptic } from '@/lib/feedback';
+import { clearSavedData } from '@/lib/store';
 
 /**
  * 회원 탈퇴 (애플 '앱 안에서 계정 삭제' 요구). 프로토타입은 설정 맨 아래 확인 시트 하나('정말 탈퇴할까요?')뿐이라,
  * 그 문구를 그대로 쓰고 이유 고르기 → 확인 창(되돌릴 수 없음) → 끝 화면을 공통 부품으로 더했어요.
- * 지금은 가짜로 끝나요. 맞는 API: `DELETE /me`
+ * 지금은 가짜로 끝나요 (이 기기에 저장한 기록만 지워요). 맞는 API: `DELETE /me`
  */
 export default function DeleteAccountScreen() {
   const [why, setWhy] = useState<string[]>([]);
@@ -63,6 +64,8 @@ export default function DeleteAccountScreen() {
         onConfirm={() => {
           setAsk(false);
           haptic('warning');
+          // 이 기기에 남긴 내 기록(진도 · 포인트 · 꾸미기 · 설정 …)도 지워요. 실서비스: DELETE /me 성공 뒤에
+          clearSavedData();
           setDone(true);
         }}
       />

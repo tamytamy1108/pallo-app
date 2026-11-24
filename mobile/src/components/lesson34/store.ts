@@ -4,7 +4,7 @@
  * - after[회차:단계]: Before / After 에서 다시 쓴 답 · FINAL POSITION
  * - side[회차]      : 내 입장 (편 · 리허설 발언) → DEBATE · 편 바꾸기 · FINAL POSITION
  * - talk[회차:단계] : AI 대화에서 내가 한 말 (FREE TALK 1:1)
- * 프로토타입 ST.ans · ST.after · ST.side · ST.talk 와 같아요.
+ * 프로토타입 ST.ans · ST.after · ST.side · ST.talk 와 같아요. 내 답은 기기에 남아요 (그만둔 곳의 문제 목록은 이번 실행 동안만).
  */
 import { createStore } from '@/lib/store';
 
@@ -18,7 +18,7 @@ type Answers = {
   /** 매치 최고 기록 (초) */
   best: Record<string, number>;
 };
-const store = createStore<Answers>({ ans: {}, after: {}, side: {}, talk: {}, best: {} });
+const store = createStore<Answers>({ ans: {}, after: {}, side: {}, talk: {}, best: {} }, { persist: { key: 'lesson34-answers' } });
 
 export const answers = store.get;
 export const useAnswers = store.useStore;
