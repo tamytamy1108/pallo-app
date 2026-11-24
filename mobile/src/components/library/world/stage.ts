@@ -56,8 +56,11 @@ function quietPixelStore(gl: ExpoWebGLRenderingContext) {
   };
 }
 
-/** 들어올 때 도는 인트로: 한 프레임에 이만큼 (약 0.5초 · 프로토타입은 0.022 로 0.75초였는데 앱에서는 느리게 느껴져서 빠르게) */
-const INTRO_STEP = 0.032;
+/**
+ * 들어올 때 도는 인트로 시간 (프로토타입은 프레임마다 0.022 → 약 0.75초였는데 앱에서는 느리게 느껴져서 빠르게).
+ * 프레임 수가 아니라 시계로 세요 — 프레임이 밀려도(다른 지도를 만드는 중 등) 제때 끝나요
+ */
+const INTRO_MS = 380;
 
 export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts) {
   const { width: w, height: h } = host;
@@ -130,7 +133,7 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   const ray = new THREE.Raycaster();
   let tw: { a: THREE.Vector3; b: THREE.Vector3; za: number; zb: number; t: number } | null = null;
   // 도는 인트로(프로토타입: 옆으로 0.42 라디안 돌며 0.78 → 1 배)는 replay 로만 시작해요 — 처음 그림은 늘 끝 자세 (지도 사진판과 같은 구도)
-  let intro: { t: number; a: number; base?: THREE.Vector3 } | null = null;
+  let intro: { t: number; a: number; at?: number; base?: THREE.Vector3 } | null = null;
   const fly = (to: THREE.Vector3, z: number) => {
     tw = { a: tgt.clone(), b: to.clone(), za: cam.zoom, zb: z, t: 0 };
   };
@@ -221,7 +224,10 @@ export function stage(host: Host, { half, pos, target, bg, az, fog }: StageOpts)
   };
   const step = () => {
     if (intro) {
-      intro.t = Math.min(1, intro.t + INTRO_STEP);
+      // 시계는 바꾼 뒤 첫 프레임부터 (바꾸는 순간 화면을 다시 그리느라 밀린 시간은 빼요)
+      const now = Date.now();
+      if (intro.at == null) intro.at = now;
+      intro.t = Math.min(1, (now - intro.at) / INTRO_MS);
       const k = 1 - Math.pow(1 - intro.t, 4);
       const off = cam.position.clone().sub(tgt);
       const base = intro.base || (intro.base = off.clone());

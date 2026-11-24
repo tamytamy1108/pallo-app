@@ -18,17 +18,20 @@ const keyOf = (w: LibWorld) => `${w.slot}|${w.id}|${JSON.stringify(w.sc)}|${w.sc
 
 /** 아직 안 만든 지도로 바꾸면: 이만큼(ms) 안에 그려지면 돌며 들어오고, 넘으면 그 지도의 사진판부터 띄워요 */
 const SWAP_WAIT_MS = 1200;
-/** 미리 만들기: 지금 지도가 다 뜨고(인트로 · 서서히 뜨기 끝) 이만큼 쉰 뒤 하나씩 — 만드는 동안 JS 가 0.4~0.8초 멈춰요 */
-const WARM_GAP_MS = 900;
+/** 미리 만들기: 지금 지도가 다 뜨고(인트로 · 서서히 뜨기 끝) 이만큼 쉰 뒤 하나씩 — 만드는 동안 JS 가 0.5~1.5초 멈춰요 */
+const WARM_GAP_MS = 250;
+/** 메모리가 적은 폰(liteWorld)은 다음에 갈 것 같은 지도 이만큼만 미리 만들어요 (그림자 · 안티에일리어싱이 꺼져서 한 장이 가벼워요) */
+const LITE_WARM = 2;
 /** 새 지도가 뜨는 시간 (프로토타입 m3Fade 0.4초 → 인트로를 빠르게 하면서 함께 줄였어요) */
-const FADE = { duration: 300, easing: Easing.out(Easing.ease) };
+const FADE = { duration: 200, easing: Easing.out(Easing.ease) };
 
 /**
  * 라이브러리 섬 지도 칸 (프로토타입 .st-world.w3d): 340:430 · 잉크 테두리 · 하드 섀도.
  * 맵을 바꾸면 새 지도가 위에 0.3초 동안 서서히 뜨면서 3D 인트로(옆으로 돌며 커지기)로 들어오고, 다 뜨면 아래 지도는 숨어요.
- * 바로 바뀌게: 지금 지도가 다 뜬 뒤 warm 의 지도(스터디 맵 · 다른 상황 맵)를 하나씩 미리 만들어 숨겨 둬요 (그리기는 멈춤).
+ * 바로 바뀌게: 지금 지도가 다 뜬 뒤 warm 의 지도(앞에 둔 것부터 · 스터디 맵 · 다른 상황 맵)를 하나씩 미리 만들어 숨겨 둬요 (그리기는 멈춤).
  * 미리 만든 지도로 바꾸면 만들 것 없이 바로 돌며 들어와요. 아직 안 만든 지도면 그려질 때까지 앞 지도가 그대로 있다가
- * 그려지면 돌며 들어오고, SWAP_WAIT_MS 를 넘으면 사진판부터 떠요. 메모리가 적은 폰(liteWorld)은 미리 만들지 않아요.
+ * 그려지면 돌며 들어오고, SWAP_WAIT_MS 를 넘으면 사진판부터 떠요. 메모리가 적은 폰(liteWorld)은 LITE_WARM 장만 미리 만들어요.
+ * 새 지도가 돌며 들어오는 동안 아래 지도는 그리기를 멈춰요 (한 프레임에 한 장만 그려서 더 매끄럽게).
  * 오른쪽 맵으로 가면 시계 방향, 왼쪽이면 반대로 돌며 들어와요.
  */
 export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { world: LibWorld; warm?: LibWorld[]; onOpen: (no: number) => void; visible?: boolean }) {
@@ -42,13 +45,19 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
   const [drawn, setDrawn] = useState<ReadonlySet<string>>(() => new Set());
   /** 지금 미리 만드는 지도 */
   const [warming, setWarming] = useState<string | null>(null);
+  /** 맨 위 지도가 돌며 들어오기 시작했어요 → 아래 지도는 그리기를 멈춰요 */
+  const [topIn, setTopIn] = useState(true);
   const [lite] = useState(liteWorld);
   const last = useRef({ key, order: world.order });
-  const warmNow = useRef(warm);
+  const want = lite ? warm.slice(0, LITE_WARM) : warm;
+  const warmNow = useRef(want);
   useEffect(() => {
-    warmNow.current = warm;
+    warmNow.current = want;
   });
-  const warmSig = warm.map(keyOf).join('\n');
+  const warmSig = want.map(keyOf).join('\n');
+  useEffect(() => {
+    if (__DEV__) console.log(`[lib] 지도 칸 · 가벼운 폰 ${lite} · 미리 만들 지도 ${warmNow.current.length}장`);
+  }, [lite]);
 
   // 맵이 바뀌면: 미리 만든 지도가 있으면 그걸 맨 위로, 없으면 새로 올려요. 앞 지도는 새 지도가 다 뜰 때까지 아래에
   useEffect(() => {
@@ -56,15 +65,19 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
     const prev = last.current;
     last.current = { key, order: world.order };
     setDir(world.order >= prev.order ? 1 : -1);
-    setLayers((ls) => (ls.some((l) => l.key === key) ? ls : [...ls, { ...world, key }]));
+    setLayers((ls) => {
+      if (__DEV__) console.log(`[lib] 맵 바꾸기 → ${world.slot} · ${ls.some((l) => l.key === key) ? '미리 만든 지도' : '새로 만들어요'} · 지도 ${ls.length}장`);
+      return ls.some((l) => l.key === key) ? ls : [...ls, { ...world, key }];
+    });
     setUnder(prev.key);
     setTop(key);
+    setTopIn(false);
     setTurn((t) => t + 1);
   }, [key, world]);
 
   // 미리 만들기: 하나씩, 바꾸는 중이 아닐 때만. warm 에 없는 숨은 지도(진도가 바뀐 옛 지도 · 다른 언어)는 치워요
   useEffect(() => {
-    if (lite || under || warming || !drawn.has(top)) return;
+    if (under || warming || !drawn.has(top)) return;
     const keys = new Set(warmSig.split('\n'));
     const next = warmNow.current.find((w) => !layers.some((l) => l.key === keyOf(w)));
     const stale = layers.some((l) => l.key !== top && !keys.has(l.key));
@@ -74,14 +87,20 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
         const kept = ls.filter((l) => l.key === top || keys.has(l.key));
         return next ? [...kept, { ...next, key: keyOf(next) }] : kept;
       });
-      if (next) setWarming(keyOf(next));
+      if (next) {
+        if (__DEV__) console.log(`[lib] 미리 만들기 ${next.slot}`);
+        setWarming(keyOf(next));
+      }
     }, WARM_GAP_MS);
     return () => clearTimeout(t);
-  }, [lite, under, warming, drawn, top, layers, warmSig]);
+  }, [under, warming, drawn, top, layers, warmSig]);
 
   const onDrawn = (k: string) => {
     setDrawn((d) => (d.has(k) ? d : new Set(d).add(k)));
     setWarming((w) => (w === k ? null : w));
+  };
+  const onEnter = (k: string) => {
+    if (k === top) setTopIn(true);
   };
   // 새 지도가 다 떴어요: 아래 지도는 숨기고, 같은 자리의 옛 지도(진도가 바뀌어 새로 만든 경우)는 치워요
   const onShown = (k: string) => {
@@ -102,10 +121,12 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
               layer={l}
               role={role}
               turn={role === 'top' ? turn : -1}
+              live={role === 'top' || (role === 'under' && !topIn)}
               dir={dir}
               visible={visible}
               onOpen={onOpen}
               onDrawn={onDrawn}
+              onEnter={onEnter}
               onShown={onShown}
             />
           );
@@ -120,10 +141,14 @@ type LayerProps = {
   role: Role;
   /** 맨 위일 때 맵을 바꾼 횟수 (0 = 처음 연 지도 · 돌기 없이) · 아니면 -1 */
   turn: number;
+  /** 그리기를 계속해요 (맨 위 · 새 지도가 아직 안 들어온 동안의 아래 지도) */
+  live: boolean;
   dir: number;
   visible: boolean;
   onOpen: (no: number) => void;
   onDrawn: (key: string) => void;
+  /** 돌며 들어오기 시작했어요 */
+  onEnter: (key: string) => void;
   onShown: (key: string) => void;
 };
 
@@ -132,7 +157,7 @@ type LayerProps = {
  * 그려져 있으면 바로 인트로를 다시 하며 서서히 떠요. 아직이면 그려지는 순간(SWAP_WAIT_MS 안) 돌며 뜨고, 늦으면 사진판부터 떠요.
  * 숨은 지도(idle)는 안 보이고 그리기도 멈춰요. 움직임 줄이기면 돌기 · 서서히 없이 바로 바꿔요.
  */
-function MapLayer({ layer, role, turn, dir, visible, onOpen, onDrawn, onShown }: LayerProps) {
+function MapLayer({ layer, role, turn, live, dir, visible, onOpen, onDrawn, onEnter, onShown }: LayerProps) {
   const still = useReducedMotion();
   const ctl = useRef<WorldCtl | null>(null);
   const o = useSharedValue(role === 'top' && turn === 0 ? 1 : 0);
@@ -140,9 +165,9 @@ function MapLayer({ layer, role, turn, dir, visible, onOpen, onDrawn, onShown }:
   const waitFrom = useRef<number | null>(null);
   const shownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [coverNow, setCoverNow] = useState(false);
-  const cb = useRef({ onDrawn, onShown, dir, key: layer.key });
+  const cb = useRef({ onDrawn, onEnter, onShown, dir, key: layer.key });
   useEffect(() => {
-    cb.current = { onDrawn, onShown, dir, key: layer.key };
+    cb.current = { onDrawn, onEnter, onShown, dir, key: layer.key };
   });
   // 아래 두 함수는 ref · 공유 값만 써요
   const [act] = useState(() => {
@@ -154,6 +179,7 @@ function MapLayer({ layer, role, turn, dir, visible, onOpen, onDrawn, onShown }:
       ctl.current?.replay(cb.current.dir);
       o.set(0);
       o.set(withTiming(1, FADE));
+      cb.current.onEnter(cb.current.key);
       shownAfter(FADE.duration + 30);
     };
     return { shownAfter, spinIn };
@@ -206,7 +232,7 @@ function MapLayer({ layer, role, turn, dir, visible, onOpen, onDrawn, onShown }:
   const style = useAnimatedStyle(() => ({ opacity: o.value }));
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { zIndex: role === 'top' ? 3 : role === 'under' ? 2 : 1 }, style]} pointerEvents={role === 'top' ? 'auto' : 'none'}>
-      <WorldView id={layer.id} sc={layer.sc} onOpen={onOpen} visible={visible} active={role !== 'idle'} coverNow={coverNow} ctlRef={ctl} onDrawn={drawnHere} />
+      <WorldView id={layer.id} sc={layer.sc} onOpen={onOpen} visible={visible} active={live} coverNow={coverNow} ctlRef={ctl} onDrawn={drawnHere} />
     </Animated.View>
   );
 }
