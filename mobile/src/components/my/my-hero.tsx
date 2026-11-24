@@ -2,7 +2,6 @@ import { router, useIsFocused } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
 import { AvatarStage } from '@/components/character/avatar';
@@ -60,11 +59,17 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
         <View style={styles.id}>
           <PText style={styles.name}>{me.name}</PText>
           <View style={styles.subRow}>
+            {/* 지점: 연동했거나 요청한 지점 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어서 언어 · 레벨만 */}
             <PText style={styles.sub}>
-              {me.branch} · {LANG_NAME[me.lang]} {me.level}
+              {me.link !== 'none' ? `${me.branch} · ` : me.trial ? `${me.trial.branch} · ` : ''}
+              {LANG_NAME[me.lang]}
+              {/* 레벨은 지점 회원(연동 요청 · 연동됨)만 — 비회원은 아직 레벨 테스트 전이에요 */}
+              {me.link !== 'none' ? ` ${me.level}` : ''}
               {me.link === 'linked' ? ' · 회원' : ''}
             </PText>
-            {me.link !== 'none' && <LinkTag link={me.link} />}
+            {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
+                비회원은 '체험 예약' · '비회원' 표시만 */}
+            {me.link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={me.link !== 'none' ? me.link : me.trial ? 'trial' : 'guest'} />}
           </View>
           <PText style={styles.bio}>{me.bio || '한 줄 소개를 남겨 보세요'}</PText>
           <View style={styles.fol}>
@@ -83,25 +88,20 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
   );
 }
 
-const TAG_LABEL = { pending: '연동 확인 중', linked: '연동됨', rejected: '연동 안 됨' } as const;
+const TAG_LABEL = { pending: '연동 승인 대기중', linked: '연동됨', trial: '체험 예약', guest: '비회원' } as const;
 
 /**
  * 지점 연동 표시: 연동됨(초록 · 체크) · 연동 확인 중(라벤더 · 점) · 연동 안 됨(분홍 · 점). '회원' 바로 옆에 작게.
  * 방금 연동됐으면(state/link-events myMoment) 마이가 처음 보일 때 '연동됨'이 톡 튀어나와요 (한 번만 · 움직임 줄이기면 그냥 보여요).
  */
-function LinkTag({ link }: { link: 'pending' | 'linked' | 'rejected' }) {
+function LinkTag({ link }: { link: keyof typeof TAG_LABEL }) {
   const label = TAG_LABEL[link];
   const pop = usePopOnce(link === 'linked');
   return (
-    <Animated.View style={[styles.tag, link === 'pending' && styles.tagWait, link === 'rejected' && styles.tagFail, pop]} accessible accessibilityLabel={`지점 ${label}`}>
-      {link === 'linked' ? (
-        <Svg width={8} height={8} viewBox="0 0 24 24">
-          <Path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={Colors.white} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
-      ) : (
-        <View style={[styles.tagDot, link === 'rejected' && styles.tagDotFail]} />
-      )}
-      <PText style={[styles.tagText, link === 'pending' && styles.tagTextWait, link === 'rejected' && styles.tagTextFail]}>{label}</PText>
+    <Animated.View style={[styles.tag, TAG_BG[link], pop]} accessible accessibilityLabel={link === 'guest' || link === 'trial' ? label : `지점 ${label}`}>
+      {/* 기다리는 상태(승인 대기중)만 점, 나머지는 글자만 */}
+      {link === 'pending' ? <View style={styles.tagDot} /> : null}
+      <PText style={[styles.tagText, TAG_INK[link]]}>{label}</PText>
     </Animated.View>
   );
 }
@@ -124,6 +124,40 @@ function usePopOnce(linked: boolean) {
   return useAnimatedStyle(() => ({ opacity: Math.min(s.get() * 2, 1), transform: [{ scale: s.get() }] }));
 }
 
+/** 연동 신청하기 (흰 바탕 · 잉크 테두리 · ›): 연동이 안 된 지점 회원 — 누르면 지점이 남긴 말을 보고 다시 요청 (/link-rejected) */
+function LinkRequestChip() {
+  return (
+    <Pressable
+      onPress={() => {
+        sfx('tap');
+        router.push('/link-rejected');
+      }}
+      accessibilityRole="button"
+      accessibilityLabel="지점 연동 신청하기"
+      hitSlop={8}>
+      {({ pressed }) => (
+        <View style={[styles.reqChip, pressed && styles.reqChipPressed]}>
+          <PText style={styles.reqText}>연동 신청하기 ›</PText>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+/** 표시 색: 연동됨 초록 · 승인 대기중 라벤더 · 체험 예약 하늘 · 비회원 회색 (연동 안 됨은 '연동 신청하기' 칩) */
+const TAG_BG = {
+  linked: { backgroundColor: '#24834B' },
+  pending: { backgroundColor: Colors.lavender },
+  trial: { backgroundColor: Colors.skyMist },
+  guest: { backgroundColor: '#EFE8D8' },
+} as const;
+const TAG_INK = {
+  linked: { color: Colors.white },
+  pending: { color: Colors.purple },
+  trial: { color: Colors.langEn },
+  guest: { color: Colors.inkSub },
+} as const;
+
 const styles = StyleSheet.create({
   card: { padding: 10, gap: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: Radius.card, backgroundColor: Colors.white },
   deco: { position: 'absolute', top: 22, right: 22, zIndex: 4 },
@@ -145,13 +179,11 @@ const styles = StyleSheet.create({
   sub: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   // 연동됨: 초록 (흰 글자 10px 가 잘 읽히게 진한 초록)
   tag: { height: 17, paddingLeft: 5, paddingRight: 6, borderRadius: 9, backgroundColor: '#24834B', flexDirection: 'row', alignItems: 'center', gap: 3 },
-  tagWait: { backgroundColor: Colors.lavender },
-  tagFail: { backgroundColor: '#FCE3EA' },
-  tagDotFail: { backgroundColor: Colors.rosePink },
-  tagTextFail: { color: '#A8485F' },
+  reqChip: { height: 19, paddingHorizontal: 8, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.white, justifyContent: 'center' },
+  reqChipPressed: { backgroundColor: '#F1EAD9' },
+  reqText: { fontFamily: Font.body900, fontSize: 10.5, lineHeight: 14, letterSpacing: -0.2 },
   tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.purple },
   tagText: { fontFamily: Font.body900, fontSize: 10, lineHeight: 13, letterSpacing: -0.2, color: Colors.white },
-  tagTextWait: { color: Colors.purple },
   bio: { marginTop: 4, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
   fol: { flexDirection: 'row', gap: 16, marginTop: 8 },
   folBtn: { flexDirection: 'row', alignItems: 'baseline' },

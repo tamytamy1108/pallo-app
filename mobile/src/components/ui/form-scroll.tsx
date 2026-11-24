@@ -1,25 +1,65 @@
 /**
- * 폼 시트에서 하나를 고르면 다음 칸이 보이게 살짝 올려 줘요.
- * 고른 칸 아래로 NEXT_ROOM 만큼이 화면 안에 들어오도록 스크롤 (이미 보이면 그대로).
- * - 시트(SheetPage · Sheet)가 useFormScroll 로 스크롤을 맡고 FormScrollContext 로 넘겨요: const [scrollRef, boxRef, onScroll, reveal] = useFormScroll()
- * - 알약 줄 등은 useRevealNext() 로 받은 함수에 자기 View 를 넘겨 불러요.
+ * 폼 시트 · 가입 화면 스크롤 돕기.
+ * 1) 하나를 고르면 다음 칸이 보이게 살짝 올려 줘요 (reveal · useRevealNext):
+ *    고른 칸 아래로 NEXT_ROOM 만큼이 화면 안에 들어오도록 스크롤 (이미 보이면 그대로).
+ * 2) 길게 쓰는 칸이 늘어나도 쓰는 줄(칸 아래 끝)이 아래 버튼 · 흐림 · 키보드에 가리지 않게 따라 내려가요 (keep · useKeepVisible).
+ *    GrowInput 이 포커스 중에 늘어날 때 불러요. 위로는 절대 안 올리고, 이미 보이면 그대로.
+ * - 스크롤을 가진 쪽(Sheet · SheetPage · OnbScreen)이 useFormScroll 로 만들고 두 Context 로 넘겨요:
+ *   const [scrollRef, boxRef, onScroll, reveal, keep] = useFormScroll(room)
+ * - 알약 줄 등은 useRevealNext(), 글 칸은 useKeepVisible() 로 받아요.
  */
-import { createContext, useContext, useRef } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ScrollViewInstance, ViewInstance } from 'react-native';
+import { createContext, useContext, useRef, type RefObject } from 'react';
+import { Keyboard, Platform, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 
 /** 고른 칸 아래로 이만큼은 보여야 '다음 칸이 보인다' (다음 질문 제목 + 알약 한 줄쯤) */
 const NEXT_ROOM = 150;
+/** 쓰는 줄 아래 숨 쉴 틈 */
+export const CARET_ROOM = 20;
 
 type Reveal = (target: ViewInstance | null) => void;
 export const FormScrollContext = createContext<Reveal | null>(null);
+
+/** 글 칸 아래 끝(쓰는 줄)이 보이게 내려요 (비워 둘 높이는 스크롤을 가진 쪽이 정해요) */
+export type KeepVisible = (target: ViewInstance | null) => void;
+export const KeepVisibleContext = createContext<KeepVisible | null>(null);
 
 /** 알약 줄 · 칩 등에서: 고른 뒤 불러요 (폼 시트 밖이면 아무것도 안 해요) */
 export function useRevealNext(): Reveal {
   return useContext(FormScrollContext) ?? (() => {});
 }
 
-/** 시트 쪽: 스크롤 · 보이는 칸을 기억하고 reveal 을 만들어요 */
-export function useFormScroll() {
+/** 글 칸에서: 늘어날 때 불러요. 스크롤을 가진 쪽이 없으면 null (웹은 GrowInput 이 가까운 스크롤 칸을 직접 찾아요) */
+export const useKeepVisible = () => useContext(KeepVisibleContext);
+
+/** 키보드 위쪽 끝 (화면 기준). 네이티브에서 키보드가 떠 있을 때만 */
+const keyboardTop = () => (Platform.OS === 'web' ? Infinity : (Keyboard.metrics()?.screenY ?? Infinity));
+
+/**
+ * target 아래 끝 + room 이 box(보이는 스크롤 칸) · 키보드 위로 들어오게 scroll 을 내려요. 위로는 안 올려요.
+ * 글을 쓰는 중이라 움직임 없이 바로 (쓰는 줄이 출렁이지 않게).
+ * scrollY: 지금 스크롤 위치. 스크롤 알림은 늦게 와서, 내린 자리를 바로 적어 둬요 (빨리 쓰면 한 줄씩 밀리지 않게).
+ */
+export function keepInView(target: ViewInstance | null, box: ViewInstance | null, scroll: ScrollViewInstance | null, scrollY: RefObject<number>, room: number) {
+  if (!target || !box || !scroll) return;
+  target.measureInWindow((_tx, ty, _tw, th) => {
+    box.measureInWindow((_bx, by, _bw, bh) => {
+      const visibleBottom = Math.min(by + bh, keyboardTop());
+      const over = ty + th + room - visibleBottom;
+      if (over <= 1) return;
+      // 웹은 지금 스크롤 위치를 바로 읽어요 (화면이 다시 그려져 스크롤이 처음으로 돌아간 경우에도 맞게)
+      const node: unknown = scroll.getScrollableNode?.();
+      const now = typeof HTMLElement !== 'undefined' && node instanceof HTMLElement ? node.scrollTop : scrollY.current;
+      scrollY.current = now + over;
+      scroll.scrollTo({ y: scrollY.current, animated: false });
+    });
+  });
+}
+
+/**
+ * 시트 쪽: 스크롤 · 보이는 칸을 기억하고 reveal · keep 을 만들어요.
+ * room: 쓰는 줄 아래로 비워 둘 높이 (스크롤 칸 아래를 덮는 흐림이 있으면 그 높이까지 더해요)
+ */
+export function useFormScroll(room = CARET_ROOM) {
   const scroll = useRef<ScrollViewInstance>(null);
   const box = useRef<ViewInstance>(null);
   const y = useRef(0);
@@ -38,5 +78,6 @@ export function useFormScroll() {
       });
     }, 60);
   };
-  return [scroll, box, onScroll, reveal] as const;
+  const keep: KeepVisible = (target) => keepInView(target, box.current, scroll.current, y, room);
+  return [scroll, box, onScroll, reveal, keep] as const;
 }

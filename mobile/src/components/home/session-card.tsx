@@ -114,7 +114,7 @@ function PendingCard({ rejected = false }: { rejected?: boolean }) {
               <View style={styles.waitRow}>
                 <PulseDot size={9} />
                 <PText style={styles.fieldValue} color={Colors.purple}>
-                  확인 중
+                  승인 대기
                 </PText>
               </View>
             </View>

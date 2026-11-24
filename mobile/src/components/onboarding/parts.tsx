@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { BackButton } from '@/components/ui/back-button';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
+import { CARET_ROOM, KeepVisibleContext, keepInView, useFormScroll, type KeepVisible } from '@/components/ui/form-scroll';
 import { GrowInput, useFocusRing } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
@@ -115,11 +116,16 @@ export function useRequired(checks: RequiredCheck[]) {
     scrollY.current = e.nativeEvent.contentOffset.y;
   };
 
-  return { ready, submit, errorOf, shakeOf, register, reveal, scrollRef, frameRef, onScroll };
+  // 길게 쓰는 칸이 늘어나도 쓰는 줄이 버튼 위 흐림 · 키보드에 가리지 않게 (GrowInput 이 불러요)
+  const keep: KeepVisible = (target) => keepInView(target, frameRef.current, scrollRef.current, scrollY, CARET_HIDDEN);
+
+  return { ready, submit, errorOf, shakeOf, register, reveal, keep, scrollRef, frameRef, onScroll };
 }
 
 /** 스크롤 창 아래쪽에서 가려지는 높이: 버튼 위 흐림 20 + 숨 쉴 틈 8 */
 const REVEAL_HIDDEN = 28;
+/** 쓰는 줄 아래로 비워 둘 높이: 버튼 위 흐림 20 + 숨 쉴 틈 */
+const CARET_HIDDEN = 20 + CARET_ROOM;
 /** 고른 뒤 칸이 펼쳐지고 자리 잡을 때까지 (지점 시트가 닫히는 것도 포함) */
 const REVEAL_WAIT = 120;
 
@@ -156,6 +162,8 @@ export function OnbScreen({
   /** 꼭 채울 칸 확인 (useRequired). 빠진 칸으로 스크롤해요 */
   form?: RequiredForm;
 }) {
+  // 양식 확인(form)이 없는 화면도 길게 쓰는 칸이 늘면 쓰는 줄을 따라 내려가요
+  const own = useFormScroll(CARET_HIDDEN);
   // 제목 줄 → 설명 → 내용 칸 차례로 올라와요 (처음 나타날 때 한 번)
   const lines = typeof title === 'string' ? title.split('\n') : title ? [title] : [];
   const descAt = TITLE_START + lines.length * LINE_STEP;
@@ -198,17 +206,19 @@ export function OnbScreen({
           ) : null}
         </View>
         {scroll ? (
-          <View ref={form?.frameRef} style={styles.flex}>
+          <View ref={form?.frameRef ?? own[1]} style={styles.flex}>
             <ScrollView
-              ref={form?.scrollRef}
+              ref={form?.scrollRef ?? own[0]}
               style={styles.flex}
               contentContainerStyle={styles.body}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               scrollEventThrottle={32}
-              onScroll={form?.onScroll}>
-              {head}
-              {items}
+              onScroll={form?.onScroll ?? own[2]}>
+              <KeepVisibleContext.Provider value={form?.keep ?? own[4]}>
+                {head}
+                {items}
+              </KeepVisibleContext.Provider>
             </ScrollView>
           </View>
         ) : (
