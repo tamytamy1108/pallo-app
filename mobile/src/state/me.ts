@@ -1,7 +1,7 @@
 /**
  * 나(로그인한 회원) — 가짜 데이터. 맞는 API: 3 `/me` · 32 `/me/summary`.
  * 담당: 마이 A. 다른 화면은 읽기만 해요 (useMe). 필드는 늘릴 수 있지만 이름 · 뜻은 바꾸지 않아요.
- * 기기에 남아요 (가짜 서버 · 스파크 · 포인트 · 팔로우 · 소개). 서버가 생기면 MeSync 가 받은 /me 로 덮어써요.
+ * 기기에 남아요 (가짜 서버 · 스파크 · 포인트 · 팔로우 · 소개). 서버가 생기면 로그인 상태(api/session.tsx)가 받은 /me 로 덮어써요.
  */
 import { ME } from '@/data/mock';
 import { devProfile } from '@/lib/dev-profile';

@@ -195,7 +195,7 @@ export function OnbScreen({
     <FormContext.Provider value={form ?? null}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.top}>
-          <BackButton onPress={onBack} fallback="/welcome" style={styles.back} />
+          <BackButton onPress={onBack} fallback="/onboarding/terms" style={styles.back} />
           {step && total ? (
             <>
               <ProgressRail step={step} total={total} />

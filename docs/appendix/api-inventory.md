@@ -6,6 +6,7 @@
 
 > 여기 없는 API(앱 시작 팝업 · 시즌 테마 · 스파크 내역 · 팔로우 · 첫 화면 · 사용 가이드 · 지점 연동 요청 등 21가지 + 로그아웃 · 토큰 갱신)와 **관리자 웹 API 개요(7묶음)** 는 [`docs/frontend/api-additions.md`](../frontend/api-additions.md) 에 이어서 적었어요 (A1 ~ A23).
 > 앱 쪽에서 어느 API까지 옮겼는지는 [`docs/frontend/api-layer.md`](../frontend/api-layer.md) 체크리스트를 봐요.
+> **최신 · 기준 문서는 [`docs/api/openapi.yaml`](../api/openapi.yaml) (Swagger)** 예요. 지금 백엔드 컨트롤러와 맞춰 본 화면별 API 269개 · [`docs/api/screens.md`](../api/screens.md). 이 목록은 처음 제안으로 남겨 둬요.
 
 ## 인증 · 회원
 

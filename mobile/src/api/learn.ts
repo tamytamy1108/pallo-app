@@ -38,7 +38,7 @@ export const lessonContentId = (lv: number, unit: number) => `${lv}-${unit}`;
 
 const lessonPath = (id: string) => `/lessons/${encodeURIComponent(id)}`;
 
-/** 18 GET /lessons/:id — Lv.1 · 2 패턴 교재 한 과. 없으면 ApiError(NOT_FOUND) */
+/** 18 GET /lessons/:id — Lv.1 · 2 패턴 교재 한 과. 없으면 ApiError(404 · isNotFound) */
 export function fetchPatternLesson(lv: number, unit: number, { signal }: Opts = {}): Promise<LessonData> {
   if (apiConfig.useMock)
     return mock('lesson', () => {
@@ -49,7 +49,7 @@ export function fetchPatternLesson(lv: number, unit: number, { signal }: Opts = 
   return http.get(lessonPath(lessonContentId(lv, unit)), { signal });
 }
 
-/** 18 GET /lessons/:id — Lv.3 TOPIC · Lv.4 DEBATE 한 회차. 없으면 ApiError(NOT_FOUND) */
+/** 18 GET /lessons/:id — Lv.3 TOPIC · Lv.4 DEBATE 한 회차. 없으면 ApiError(404 · isNotFound) */
 export function fetchUnit34(lv: 3 | 4, no: number, { signal }: Opts = {}): Promise<Unit34> {
   if (apiConfig.useMock)
     return mock('lesson', () => {

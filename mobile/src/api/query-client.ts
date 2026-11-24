@@ -1,11 +1,10 @@
 /**
- * 앱 하나에 하나뿐인 QueryClient (서버 데이터 캐시) + 앱 시작 때 미리 받아 둘 데이터.
+ * 앱 하나에 하나뿐인 QueryClient (서버 데이터 캐시). 로그아웃하면 api/session.tsx 가 비워요.
  */
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
 import { isApiError } from './errors';
-import { bookShelfQuery, loungeHighlightsQuery, meQuery, noticeBoardQuery, popupsQuery, sessionsTodayQuery, situationMapsQuery } from './queries';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,23 +24,4 @@ if (Platform.OS !== 'web') {
     const sub = AppState.addEventListener('change', (s) => setFocused(s === 'active'));
     return () => sub.remove();
   });
-}
-
-const START_TIMEOUT_MS = 3_000;
-
-/**
- * 스플래시가 떠 있는 동안 홈 첫 화면 데이터와 라이브러리 책장 · 맵 목록을 미리 받아요 (화면이 빈 채로 깜빡이지 않게).
- * 오래 걸려도 3초 넘게 기다리지 않아요. 실패한 것은 화면에서 다시 받아요.
- */
-export async function prefetchStartData() {
-  const all = Promise.allSettled([
-    queryClient.prefetchQuery(meQuery()),
-    queryClient.prefetchQuery(sessionsTodayQuery()),
-    queryClient.prefetchQuery(noticeBoardQuery()),
-    queryClient.prefetchQuery(loungeHighlightsQuery()),
-    queryClient.prefetchQuery(popupsQuery()),
-    queryClient.prefetchQuery(bookShelfQuery()),
-    queryClient.prefetchQuery(situationMapsQuery()),
-  ]);
-  await Promise.race([all, new Promise((r) => setTimeout(r, START_TIMEOUT_MS))]);
 }

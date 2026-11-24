@@ -9,6 +9,8 @@
 import { Animated, Easing } from 'react-native';
 import type { StackCardStyleInterpolator, StackNavigationOptions } from 'expo-router/js-stack';
 
+import { Colors } from '@/constants/theme';
+
 type TransitionSpec = NonNullable<StackNavigationOptions['transitionSpec']>['open'];
 
 /** 프로토타입 --ease */
@@ -58,3 +60,10 @@ export const SCREEN = {
   /** 뒤 화면 위에 겹치면서 서서히 (이벤트 시트 화면) */
   overlayFade: { presentation: 'transparentModal', animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(350), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { ...CARD, backgroundColor: 'transparent' } },
 } satisfies Record<string, StackNavigationOptions>;
+
+/** 모든 Stack(가장 바깥 · 그룹 폴더 안)의 기본값: 머리 없음 · 크림 바탕 · 오른쪽에서 밀려 들어오기 */
+export const STACK_OPTIONS = {
+  headerShown: false,
+  cardStyle: { ...CARD, backgroundColor: Colors.cream },
+  ...SCREEN.push,
+} satisfies StackNavigationOptions;

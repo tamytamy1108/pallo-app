@@ -155,6 +155,7 @@ export function Pills<T extends string | number>({
   label = (v: T) => String(v),
   multi,
   bleed = 18,
+  locked,
 }: {
   options: readonly T[];
   value: T | T[];
@@ -162,6 +163,8 @@ export function Pills<T extends string | number>({
   label?: (v: T) => string;
   multi?: boolean;
   bleed?: number;
+  /** 지금은 더 못 고르는 칸 (점선 · 흐리게). 눌러도 onChange 가 불려서 왜 안 되는지 알려 줄 수 있어요 */
+  locked?: (v: T) => boolean;
 }) {
   const on = (v: T) => (Array.isArray(value) ? value.includes(v) : value === v);
   return (
@@ -170,21 +173,24 @@ export function Pills<T extends string | number>({
         <Pressable
           key={String(v)}
           onPress={() => {
-            sfx('tap');
-            haptic('select');
+            // 잠긴 칸은 부르는 쪽이 경고 진동 · 안내를 해요
+            if (!locked?.(v)) {
+              sfx('tap');
+              haptic('select');
+            }
             onChange(v);
           }}
           accessibilityRole={multi ? 'checkbox' : 'radio'}
-          accessibilityState={multi ? { checked: on(v) } : { selected: on(v) }}
-          style={({ pressed }) => [styles.pill, on(v) && styles.pillOn, pressed && styles.pressed]}>
-          <PText style={[styles.pillT, on(v) && styles.pillTOn]}>{label(v)}</PText>
+          accessibilityState={multi ? { checked: on(v), disabled: !!locked?.(v) } : { selected: on(v), disabled: !!locked?.(v) }}
+          style={({ pressed }) => [styles.pill, on(v) && styles.pillOn, locked?.(v) && styles.pillLock, pressed && styles.pressed]}>
+          <PText style={[styles.pillT, on(v) && styles.pillTOn, locked?.(v) && styles.pillTLock]}>{label(v)}</PText>
         </Pressable>
       ))}
     </ChipScroll>
   );
 }
 
-/** .lg-fl > .lb: 칸 이름 (14px · 900) */
+/** .lg-fl > .lb: 칸 이름 (12.5px · 900 — 번개 · 동아리 · 이벤트 만들기와 같아요) */
 export function FieldLabel({ children }: { children: string }) {
   return <PText style={styles.lb}>{children}</PText>;
 }
@@ -249,7 +255,9 @@ const styles = StyleSheet.create({
   pillOn: { backgroundColor: Colors.purple },
   pillT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18, color: Colors.ink },
   pillTOn: { color: Colors.white },
-  lb: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
+  pillLock: { borderStyle: 'dashed', borderColor: '#B9B2C4', backgroundColor: '#F1ECE2' },
+  pillTLock: { color: '#A39BAE' },
+  lb: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
   field: { minHeight: 48, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, paddingHorizontal: 14, justifyContent: 'center' },
   fieldMulti: { minHeight: 110, justifyContent: 'flex-start', paddingVertical: 12 },
   fieldIn: { fontFamily: Font.body600, fontSize: 15, color: Colors.ink, paddingVertical: 10 },
