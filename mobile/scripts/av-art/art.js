@@ -51,15 +51,23 @@
   const LIMB = { hl: [[164, 112], [8, 112]], hr: [[346, 112], [494, 112]], ll: [[206, 168], [163, 312]], lr: [[298, 168], [353, 324]] };
   const geo = (k) => { const [[ax, ay], [bx, by]] = LIMB[k]; const dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy); return { ax, ay, ux: dx / L, uy: dy / L, L }; };
   const at = (k, s, w = 0) => { const g = geo(k); return [r1(g.ax + g.ux * g.L * s - g.uy * w), r1(g.ay + g.uy * g.L * s + g.ux * w)]; };
+  /** 다리 사이 가르는 선 (몸 모양에서 잰 가랑이 x). 다리 띠는 이 선을 넘어 반대쪽 다리까지 칠하지 않아요 */
+  const CROTCH_X = 252.5;
+  /** 다리 띠의 안쪽(다른 다리 쪽) 끝 w: 왼다리는 음수 · 오른다리는 양수. 두 다리 띠가 1px 겹쳐 이음매가 안 보여요 */
+  const innerW = (k, s, W) => {
+    const g = geo(k), x0 = g.ax + g.ux * g.L * s, w = (x0 - CROTCH_X + (k === 'll' ? -0.5 : 0.5)) / g.uy;
+    return k === 'll' ? Math.max(-W, w) : Math.min(W, w);
+  };
+  const ends = (k, s, W) => (k === 'll' ? [innerW(k, s, W), W] : k === 'lr' ? [-W, innerW(k, s, W)] : [-W, W]);
   /** 팔 · 다리를 s0~s1 (0 = 몸 쪽, 1 = 끝) 만큼 덮는 띠. b = 끝선이 끝 쪽으로 볼록한 정도 */
   const band = (k, s0, s1, b0 = 0.05, b1 = 0.05, W = 120) => {
-    const g = geo(k), A = at(k, s0, -W), B = at(k, s0, W), C = at(k, s1, W), D = at(k, s1, -W);
-    const q0 = at(k, s0 + b0 * 2, 0), q1 = at(k, s1 + b1 * 2, 0);
-    void g;
+    const [a0, c0] = ends(k, s0, W), [a1, c1] = ends(k, s1, W);
+    const A = at(k, s0, a0), B = at(k, s0, c0), C = at(k, s1, c1), D = at(k, s1, a1);
+    const q0 = at(k, s0 + b0 * 2, (a0 + c0) / 2), q1 = at(k, s1 + b1 * 2, (a1 + c1) / 2);
     return `M${A} Q${q0} ${B} L${C} Q${q1} ${D}Z`;
   };
   /** 띠 끝선 하나 (줄 · 시보리 선) */
-  const cut = (k, s, b = 0.05, W = 120) => `M${at(k, s, -W)} Q${at(k, s + b * 2, 0)} ${at(k, s, W)}`;
+  const cut = (k, s, b = 0.05, W = 120) => { const [a, c] = ends(k, s, W); return `M${at(k, s, a)} Q${at(k, s + b * 2, (a + c) / 2)} ${at(k, s, c)}`; };
 
   // 윗옷 자리: 소매 끝 xl · xr, 밑단 hy. 얼굴(목둘레)은 비워요
   const NECK = 'M204 20 C198 142 250 168 300 168 C350 168 402 142 396 20 Z';
@@ -222,7 +230,9 @@
   ];
 
   // ---------------------------------------------------------------- 옷 (몸에 칠해요)
-  const pants = (s1 = 0.86) => `${band('ll', 0.26, s1, 0.04, 0.03)} ${band('lr', 0.26, s1, 0.04, 0.03)} M96 190 H420 V236 H96 Z`;
+  /** 아래옷: 두 다리 띠 + 허리 네모. 겹치는 조각을 한 path 로 합치면 감은 방향이 반대인 곳이 지워져 구멍이 나요 → 조각마다 따로 칠해요 */
+  const lower = (s0, s1, waist, c, b = [0.04, 0.03]) => [band('ll', s0, s1, ...b), band('lr', s0, s1, ...b), waist].map((d) => fl(d, c)).join('');
+  const pants = (s1, c) => lower(0.26, s1, 'M96 190 H420 V236 H96 Z', c);
   const WEARS = [
     { id: 'w-tee', name: '줄무늬 티셔츠', price: 0, rare: '기본', art: () => paint(
       fl(top(112, 400), '#FFFFFF') + `<clipPath id="te${U}"><path d="${top(112, 400)}" fill-rule="evenodd"/></clipPath>` +
@@ -237,7 +247,7 @@
       ln('M282 168 Q278 186 282 200', '#FFFFFF', 5) + ln('M318 168 Q322 186 318 200', '#FFFFFF', 5) + fl(rr(277, 198, 10, 12, 4), '#E5E0F5') + fl(rr(313, 198, 10, 12, 4), '#E5E0F5') +
       fl('M96 210 H420 V226 Q300 244 96 226 Z', '#A390E6')) },
     { id: 'w-overall', name: '청 멜빵바지', price: 200, rare: '일반', art: () => paint(
-      fl(pants(0.8), '#4A78C2') + fl('M240 166 H360 V214 H240 Z', '#4A78C2') +
+      pants(0.8, '#4A78C2') + fl('M240 166 H360 V214 H240 Z', '#4A78C2') +
       ln('M246 170 L232 50', '#4A78C2', 22, { cap: 'butt' }) + ln('M354 170 L368 50', '#4A78C2', 22, { cap: 'butt' }) +
       ln('M246 170 L232 50', '#F2A93B', 2, { da: '5 5' }) + ln('M354 170 L368 50', '#F2A93B', 2, { da: '5 5' }) +
       ln('M248 172 H352 V210', '#F2A93B', 2, { da: '5 5', cap: 'butt' }) + fl(rr(274, 180, 52, 28, 6), '#3E67AC') + ln(rr(274, 180, 52, 28, 6), '#F2A93B', 2, { da: '4 4' }) +
@@ -258,7 +268,7 @@
       `<circle cx="300" cy="206" r="5" fill="#C9CCD6"/>` + fl('M352 176 l22 -4 l2 8 l-22 4 Z', '#FFE200') +
       ln('M60 44 Q70 112 60 180', '#FFFFFF', 12, { cap: 'butt' })) },
     { id: 'w-hanbok', name: '색동 한복', price: 350, rare: '레어', art: () => paint(
-      fl(band('ll', 0.2, 0.95, 0.04, 0.04) + ' ' + band('lr', 0.2, 0.95, 0.04, 0.04) + ' M90 196 H426 V240 H90 Z', '#3B5BA9') +
+      lower(0.2, 0.95, 'M90 196 H426 V240 H90 Z', '#3B5BA9', [0.04, 0.04]) +
       ln('M96 212 Q300 228 424 212', '#2D4889', 10) +
       `<path d="${top(66, 436, 206, 10)}" fill="#F7B3C9" fill-rule="evenodd"/>` +
       rng(5, (i) => ln(`M${132 - i * 15} 40 Q${142 - i * 15} 112 ${132 - i * 15} 184`, ['#E5484D', '#FFE200', '#5CBF8A', '#7FA7E8', '#B07CE0'][i], 15, { cap: 'butt' })) +
@@ -276,14 +286,14 @@
       ln(NECK.replace(' Z', ''), '#E5484D', 12) + ln('M300 168 L300 232', '#3D5AA8', 3) + rng(3, (i) => `<circle cx="312" cy="${180 + i * 16}" r="4.5" fill="#3D5AA8"/>`) +
       `<path d="${star(254, 196, 16, 0.45)}" fill="#E5484D"/>` + fl('M96 212 H420 V226 Q300 244 96 226 Z', '#E5484D')) },
     { id: 'w-sailor', name: '세일러 교복', price: 300, rare: '레어', art: () => paint(
-      fl(band('ll', 0.22, 0.62, 0.04, 0.05) + ' ' + band('lr', 0.22, 0.62, 0.04, 0.05) + ' M90 196 H426 V240 H90 Z', '#2B3A6B') +
+      lower(0.22, 0.62, 'M90 196 H426 V240 H90 Z', '#2B3A6B', [0.04, 0.05]) +
       rng(10, (i) => ln(`M${130 + i * 26} 226 L${118 + i * 30} 290`, '#1F2B52', 3, { op: 0.7 })) +
       `<path d="${top(104, 404, 206, 10)}" fill="#FFFFFF" fill-rule="evenodd"/>` +
       fl('M150 40 L204 40 Q214 150 300 176 Q386 150 396 40 L452 40 L440 120 L300 206 L162 120 Z', '#2B3A6B') +
       ln('M168 60 L180 116 L300 188 L420 116 L432 60', '#FFFFFF', 4) + ln('M300 176 L300 206', '#2B3A6B', 2),
       P('M300 178 L270 196 L274 214 L300 198 L326 214 L330 196 Z', '#E5484D', { rim: 0.25 }) + P('M292 196 L284 236 L300 228 L316 236 L308 196 Z', '#E5484D', { rim: 0.25 }) + P(ell(300, 192, 10, 9), '#C93A44', { rim: 0.25 })) },
     { id: 'w-santa', name: '산타 옷', price: 0, rare: '시즌', lock: '12월 출석 7일 보상', art: () => paint(
-      fl(pants(0.78), '#D93A44') + `<path d="${top(60, 440, 214)}" fill="#E5484D" fill-rule="evenodd"/>` +
+      pants(0.78, '#D93A44') + `<path d="${top(60, 440, 214)}" fill="#E5484D" fill-rule="evenodd"/>` +
       fl('M96 194 H420 V214 H96 Z', '#2A2533') + fl(rr(282, 190, 36, 28, 5), '#FFCB2E') + fl(rr(290, 197, 20, 14, 3), '#2A2533') +
       ln(NECK.replace(' Z', ''), '#FFFFFF', 20) + ln('M300 168 L300 192', '#FFFFFF', 18) +
       rng(7, (i) => `<circle cx="60" cy="${54 + i * 19}" r="15" fill="#FFFFFF"/><circle cx="440" cy="${54 + i * 19}" r="15" fill="#FFFFFF"/>`) +
