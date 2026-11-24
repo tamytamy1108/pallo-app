@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 export type StepPopupInfo = {
   /** '예습 · 1' */
@@ -28,7 +29,7 @@ function Coin({ size = 30 }: { size?: number }) {
     <Svg width={size} height={size} viewBox="0 0 48 48">
       <Circle cx={24} cy={24} r={19} fill={Colors.yellow} stroke={Colors.ink} strokeWidth={2.8} />
       <Circle cx={24} cy={24} r={13.5} fill="none" stroke={Colors.ink} strokeWidth={1.6} />
-      <Svg x={14} y={15.5} width={20} height={20 * 0.887} viewBox="0 0 426.31 377.94">
+      <Svg x={13.48} y={14.98} width={21.03} height={18.77} viewBox="-11 -11 448.31 399.94">
         <Path fill={Colors.purple} stroke={Colors.ink} strokeWidth={22} d={SYMBOL} />
       </Svg>
     </Svg>
@@ -56,7 +57,7 @@ export function StepPopup({ info, onClose, onGo }: { info: StepPopupInfo | null;
   const resume = info.pos !== undefined;
   const tilted = info.done && !resume;
   return (
-    <Modal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <Animated.View style={[styles.m, dim]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="닫기" />
         <Animated.View style={[styles.c, card]} accessibilityViewIsModal accessibilityLabel={info.title}>
@@ -92,7 +93,7 @@ export function StepPopup({ info, onClose, onGo }: { info: StepPopupInfo | null;
           </View>
         </Animated.View>
       </Animated.View>
-    </Modal>
+    </LayerModal>
   );
 }
 

@@ -1,6 +1,7 @@
+import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { useRef, useState, type ReactNode } from 'react';
-import { Linking, Modal, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
@@ -14,6 +15,8 @@ import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
 import { BR_BOARDS, MY_BRANCHES, type BranchItem, type Partner, type PartnerLink, type PartnerLinkKind, type PartnerPoster } from '@/data/my';
 import { sfx } from '@/lib/feedback';
+import { openMap, openTel } from '@/lib/open-out';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { CourseProgressSheet } from './course-progress';
 import { Lift } from './lift';
@@ -41,12 +44,7 @@ function BrIc({ k, size = 20, color = Colors.ink }: { k: keyof typeof BR_IC; siz
   );
 }
 
-type NavLike = { clipboard?: { writeText: (t: string) => Promise<void> } };
-const copyText = (v: string) => {
-  if (Platform.OS !== 'web') return;
-  const nav = (globalThis as { navigator?: NavLike }).navigator;
-  nav?.clipboard?.writeText(v).catch(() => {});
-};
+const copyText = (v: string) => Clipboard.setStringAsync(v).catch(() => {});
 
 /** 지점 둘 이상이면 위 칸 고르기 (프로토타입 .br-seg) */
 function BranchSeg({ value, onChange }: { value: string; onChange: (b: string) => void }) {
@@ -167,7 +165,8 @@ function BranchInfoSheet({ open, onClose, sel, onSel }: { open: boolean; onClose
   const act = (x: BranchItem) => {
     if (!x.act) return;
     const [k, v] = x.act;
-    showToast(k === 'map' ? '지도 앱으로 길찾기를 열어요' : `${v}로 전화를 걸어요`);
+    if (k === 'map') openMap(v);
+    else openTel(v);
   };
   return (
     <Sheet open={open} onClose={onClose} title="지점 안내" tall label="지점 안내">
@@ -405,8 +404,8 @@ function PartnerSheet({ partner: p, open, branch, onClose }: { partner: Partner 
   const pct = p.b.match(/\d+%/)?.[0] ?? '';
   const rest = p.b.replace(pct, '').trim();
   const rows: InfoRow[] = [];
-  if (p.addr) rows.push({ icon: <BrIc k="loc" size={18} />, t: p.addr, go: { label: '지도', run: () => showToast('지도 앱으로 길찾기를 열어요') } });
-  if (p.tel) rows.push({ icon: <BrIc k="tel" size={18} />, t: p.tel, go: { label: '전화', run: () => showToast(`${p.tel}로 전화를 걸어요`) } });
+  if (p.addr) rows.push({ icon: <BrIc k="loc" size={18} />, t: p.addr, go: { label: '지도', run: () => openMap(p.addr ?? p.n) } });
+  if (p.tel) rows.push({ icon: <BrIc k="tel" size={18} />, t: p.tel, go: { label: '전화', run: () => openTel(p.tel ?? '') } });
   if (p.hrs) rows.push({ icon: <BrIc k="clk" size={18} />, t: p.hrs, s: '영업 시간' });
   // 추가 정보: 네이버 플레이스 · 인스타그램 · 카카오톡 채널 · 홈페이지
   for (const l of p.links ?? []) rows.push(linkRow(l));
@@ -525,7 +524,7 @@ function PosterViewer({ list, start, name, onClose }: { list: PartnerPoster[]; s
     setI(n);
   };
   return (
-    <Modal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.pv} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
         <View style={[styles.pvTop, { paddingTop: insets.top + 10 }]}>
           <PText style={styles.pvN}>{name}</PText>
@@ -548,9 +547,10 @@ function PosterViewer({ list, start, name, onClose }: { list: PartnerPoster[]; s
             onScroll={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / w))}
             scrollEventThrottle={64}>
             {list.map((src, j) => (
-              <View key={j} style={[styles.pvPage, { width: w, paddingTop: insets.top + 64, paddingBottom: insets.bottom + 40 }]}>
+              // 사진이나 빈 곳을 한 번 누르면 닫혀요
+              <Pressable key={j} onPress={onClose} accessibilityLabel="닫기" style={[styles.pvPage, { width: w, paddingTop: insets.top + 64, paddingBottom: insets.bottom + 40 }]}>
                 <Image source={posterSrc(src)} style={styles.pvImg} contentFit="contain" accessibilityLabel={`${name} 포스터 ${j + 1}`} />
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
         ) : null}
@@ -566,7 +566,7 @@ function PosterViewer({ list, start, name, onClose }: { list: PartnerPoster[]; s
           </Pressable>
         )}
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
   liGoT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
   pdHd: { height: 150, overflow: 'hidden', justifyContent: 'flex-end', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink },
   pdW: { position: 'absolute', right: 14, top: 10, fontFamily: Font.display, fontSize: 30, lineHeight: 36, color: Colors.white, opacity: 0.25 },
-  pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.94)', justifyContent: 'center' },
+  pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.97)', justifyContent: 'center' },
   pvTop: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingBottom: 10, zIndex: 2 },
   pvN: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20, color: Colors.white },
   pvC: { fontFamily: Font.display, fontSize: 12, lineHeight: 16, color: Colors.yellow },

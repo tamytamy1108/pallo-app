@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   field: { gap: 6 },
   label: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
   // .lg-fl input { height: 46px; border-radius: 14px; padding: 0 14px; font-size: 14px; font-weight: 700 }
-  input: { height: 46, paddingHorizontal: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
+  input: { height: 46, paddingHorizontal: 14, paddingVertical: 0, includeFontPadding: false, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   round: { borderRadius: 23, paddingHorizontal: 16, fontFamily: Font.body600 },
   // #lgSheet textarea { height: 110px; border-radius: 18px; padding: 12px 14px; line-height: 1.6 }
   multi: { height: undefined, minHeight: 110, maxHeight: 260, borderRadius: 18, paddingTop: 12, paddingBottom: 12, fontFamily: Font.body600, lineHeight: 14 * 1.6 },

@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   ex: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1.5, borderColor: '#F0E3A6', backgroundColor: '#FFF9D6' },
   exText: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
   inp: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  f: { flex: 1, minWidth: 0, height: 50, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
+  f: { flex: 1, minWidth: 0, height: 50, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', paddingHorizontal: 14, borderRadius: 16, borderWidth: 1.5, borderColor: '#D6CDBA', backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
   send: { width: 50, height: 53, borderRadius: 25, borderWidth: 2.5, borderColor: Colors.ink, borderBottomWidth: 5.5, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   sendDown: { borderBottomWidth: 2.5, marginTop: 3 },
   problem: { textAlign: 'center', fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17 },

@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
-import { Linking, Modal, Platform, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -11,6 +11,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { EASE } from '@/lib/motion';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { CHECK_PATH, CLOSE_PATH, LineIcon } from './icons';
 
@@ -84,7 +85,7 @@ export function QrScanner({ open, summaryText, onClose, onChange, onScanned }: {
   const blocked = native && !!perm && !perm.granted && !perm.canAskAgain;
 
   return (
-    <Modal visible={open} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal visible={open} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <Animated.View style={[styles.root, fade]} accessibilityViewIsModal accessibilityLabel="QR 출석">
         {camOn ? (
           <>
@@ -135,7 +136,7 @@ export function QrScanner({ open, summaryText, onClose, onChange, onScanned }: {
           </Pressable>
         </View>
       </Animated.View>
-    </Modal>
+    </LayerModal>
   );
 }
 

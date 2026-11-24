@@ -26,6 +26,7 @@ import { findScene, localSceneListenItems } from '@/data/situation';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /**
  * 리스닝 룸 (프로토타입 openListen · lrRender): 붙어 있는 보라 재생 카드 · 설정 칩 · 재생 목록 칩 · 문장 줄.
@@ -249,7 +250,7 @@ export default function ListeningScreen() {
         </View>
 
         {/* 설정 칩 (기기에 남음) */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chips} accessibilityLabel="듣기 설정">
+        <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chips} accessibilityLabel="듣기 설정">
           {chip('auto', '자동 재생', P.auto ? '켬' : '끔', !P.auto)}
           {chip('order', '순서', LR_ORD[P.order], P.order !== 'en-ko')}
           {chip('gap', '따라 말하기', P.gap ? `${P.gap}초` : '끔', !!P.gap)}
@@ -257,9 +258,9 @@ export default function ListeningScreen() {
           {chip('rate', '속도', LR_SPD[String(P.rate)], P.rate !== 0.92)}
           {chip('blind', '영어 가리기', '', P.blind)}
           {chip('shuf', '섞기', '', P.shuf)}
-        </ScrollView>
+        </ChipScroll>
         {/* 재생 목록 칩 */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chips} accessibilityLabel="재생 목록">
+        <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={styles.chips} accessibilityLabel="재생 목록">
           {['all', ...tags].map((k) => (
             <Pressable key={k} onPress={() => pickFilter(k)} accessibilityRole="button" accessibilityState={{ selected: filter === k }} style={({ pressed }) => [styles.chip, filter === k && styles.chipSel, pressed && styles.pressed]}>
               <PText style={[styles.chipText, filter === k && { color: Colors.white }]}>{k === 'all' ? `전체 ${all.length}` : k}</PText>
@@ -268,7 +269,7 @@ export default function ListeningScreen() {
           <Pressable onPress={() => pickFilter('mark')} accessibilityRole="button" accessibilityState={{ selected: filter === 'mark' }} style={({ pressed }) => [styles.chip, filter === 'mark' && styles.chipSel, pressed && styles.pressed]}>
             <PText style={[styles.chipText, filter === 'mark' && { color: Colors.white }]}>저장한 문장 {saved.length}</PText>
           </Pressable>
-        </ScrollView>
+        </ChipScroll>
 
         {/* 문장 줄 */}
         <View style={styles.list}>

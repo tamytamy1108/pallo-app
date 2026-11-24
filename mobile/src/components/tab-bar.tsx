@@ -10,6 +10,7 @@ import Svg, { Path } from 'react-native-svg';
 import { Pressable } from '@/components/ui/pressable';
 import { Colors } from '@/constants/theme';
 import { SPRING } from '@/lib/motion';
+import { emitTabReselect, type TabName } from '@/lib/tab-reselect';
 
 /** 프로토타입(prototype/index.html 의 TABS)과 같은 다섯 탭 · 같은 아이콘이에요. */
 const TABS = [
@@ -41,7 +42,7 @@ export default function TabBar() {
           {slotW ? <Animated.View pointerEvents="none" style={[styles.ind, { width: slotW, transform: [{ translateX: at * slotW }] }, indSlide]} /> : null}
           {TABS.map((t) => (
             <TabTrigger key={t.name} name={t.name} href={t.href} asChild>
-              <TabButton icon={t.d} label={t.label} />
+              <TabButton tab={t.name} icon={t.d} label={t.label} />
             </TabTrigger>
           ))}
         </View>
@@ -84,10 +85,10 @@ function TabPage({ focused, children }: { focused: boolean; children: ReactNode 
   return <Animated.View style={[styles.page, style]}>{children}</Animated.View>;
 }
 
-type TabButtonProps = TabTriggerSlotProps & { icon: string; label: string };
+type TabButtonProps = TabTriggerSlotProps & { tab: TabName; icon: string; label: string };
 
 // ref 는 Pressable 과 타입이 달라서 넘기지 않아요 (탭 전환에는 필요 없어요).
-function TabButton({ icon, label, isFocused, ref: _ref, ...props }: TabButtonProps) {
+function TabButton({ tab, icon, label, isFocused, ref: _ref, onPress, ...props }: TabButtonProps) {
   // 탭을 고르면 아이콘이 톡 커졌다 돌아와요 (프로토타입 tabBounce .5초)
   const still = useReducedMotion();
   const b = useSharedValue(0);
@@ -99,6 +100,11 @@ function TabButton({ icon, label, isFocused, ref: _ref, ...props }: TabButtonPro
   return (
     <Pressable
       {...props}
+      // 이미 보고 있는 탭을 또 누르면 화면을 맨 위로
+      onPress={(e) => {
+        if (isFocused) emitTabReselect(tab);
+        onPress?.(e);
+      }}
       sound="nav"
       accessibilityRole="tab"
       accessibilityLabel={label}

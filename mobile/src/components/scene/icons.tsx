@@ -1,6 +1,7 @@
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 /* 상황 장면 아이콘 — 프로토타입 ICO · FT_ICO · ICO_CLOCK 등 SVG 그대로 */
 type P = { size?: number; color?: string };
@@ -15,9 +16,11 @@ export const Spk = ({ size = 17, color = Colors.ink }: P) => (
 
 /** ICO.mark — 책갈피 (저장) */
 export const Mark = ({ size = 16, color = Colors.ink, on = false }: P & { on?: boolean }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill={on ? color : 'none'} stroke={color} strokeWidth={2.4} strokeLinejoin="round">
-    <Path d="M6 3h12v18l-6-4-6 4z" />
-  </Svg>
+  <HeartPop on={on}>
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={on ? color : 'none'} stroke={color} strokeWidth={2.4} strokeLinejoin="round">
+      <Path d="M6 3h12v18l-6-4-6 4z" />
+    </Svg>
+  </HeartPop>
 );
 
 export const Check = ({ size = 16, color = Colors.ink, w = 3.4 }: P & { w?: number }) => (
@@ -104,7 +107,7 @@ export const Coin = ({ size = 30 }: P) => (
   <Svg width={size} height={size} viewBox="0 0 48 48">
     <Circle cx={24} cy={24} r={19} fill={Colors.yellow} stroke={Colors.ink} strokeWidth={2.8} />
     <Circle cx={24} cy={24} r={13.5} fill="none" stroke={Colors.ink} strokeWidth={1.6} />
-    <Svg x={14} y={15.5} width={20} height={20 * 0.887} viewBox="0 0 426.31 377.94">
+    <Svg x={13.48} y={14.98} width={21.03} height={18.77} viewBox="-11 -11 448.31 399.94">
       <Path fill={Colors.purple} stroke={Colors.ink} strokeWidth={22} d={SYMBOL} />
     </Svg>
   </Svg>

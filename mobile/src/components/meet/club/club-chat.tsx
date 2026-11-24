@@ -126,6 +126,6 @@ const styles = StyleSheet.create({
   pMe: { backgroundColor: Colors.yellow, borderColor: Colors.ink, borderTopLeftRadius: 16, borderTopRightRadius: 4 },
   time: { flexShrink: 0, fontFamily: Font.body700, fontSize: 10.5, lineHeight: 15, color: Colors.inkSub },
   in: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  input: { flex: 1, minWidth: 0, height: 46, borderWidth: 1.5, borderColor: Colors.line, borderRadius: 23, paddingHorizontal: 16, fontFamily: Font.body700, fontSize: 14, backgroundColor: Colors.white, color: Colors.ink },
+  input: { flex: 1, minWidth: 0, height: 46, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', borderWidth: 1.5, borderColor: Colors.line, borderRadius: 23, paddingHorizontal: 16, fontFamily: Font.body700, fontSize: 14, backgroundColor: Colors.white, color: Colors.ink },
   send: { width: 46, height: 46, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
 });

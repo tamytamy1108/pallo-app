@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
@@ -7,6 +7,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { WEEK, type Meet } from '@/data/meet';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { Icon } from './icons';
 import { LgLink } from './parts';
@@ -22,7 +23,7 @@ export function DateStrip({ meets, day, onDay, region }: { meets: Meet[]; day: n
   const count = (k: number) => meets.filter((m) => meetN(m) === k).length;
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.strip} contentContainerStyle={styles.stripIn} accessibilityRole="tablist" accessibilityLabel="날짜로 보기">
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.strip} contentContainerStyle={styles.stripIn} accessibilityRole="tablist" accessibilityLabel="날짜로 보기">
         <DayBtn on={day == null} onPress={() => onDay(null)} first label="전체" small={`${meets.length}개`} a11y={`전체 번개 ${meets.length}개`} />
         {Array.from({ length: DAYS }, (_, k) => {
           const d = new Date(t0);
@@ -34,7 +35,7 @@ export function DateStrip({ meets, day, onDay, region }: { meets: Meet[]; day: n
           <Icon name="cal" size={18} />
           <PText style={styles.small}>더보기</PText>
         </Pressable>
-      </ScrollView>
+      </ChipScroll>
       <MeetCalendar
         open={cal}
         onClose={() => setCal(false)}

@@ -16,6 +16,7 @@ import { type Abroad, LANG_COLOR, LG_C, LG_LIKERS, memberLangs, nameHash, type P
 import { addPostComment, hideMember, likeOn, postComments, toggleLike, toggleSave, unhideMember, useLounge } from '@/data/lounge-store';
 import { kfc, SPRING } from '@/lib/motion';
 import { useMe } from '@/state/me';
+import { HeartPop } from '@/components/ui/heart-pop';
 
 import { Face } from './face';
 import { LgIcon } from './icons';
@@ -73,7 +74,7 @@ function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number;
   return (
     <View style={styles.acts}>
       <PopButton label="좋아요" pressed={liked} onPress={() => toggleLike(id)} popKey={liked ? 1 : 0}>
-        <LgIcon name="heart" size={25} fill={liked ? LG_C.pk : 'none'} />
+        <HeartPop on={liked}><LgIcon name="heart" size={25} fill={liked ? LG_C.pk : 'none'} /></HeartPop>
       </PopButton>
       <Pressable onPress={onLikers} accessibilityRole="button" accessibilityLabel="좋아요 누른 사람 보기" style={styles.cnt}>
         <PText style={styles.cntText}>{n || ''}</PText>
@@ -84,12 +85,9 @@ function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number;
       <Pressable onPress={onCmt} accessibilityRole="button" accessibilityLabel="댓글 보기" style={styles.cnt}>
         <PText style={styles.cntText}>{cmts || ''}</PText>
       </Pressable>
-      <Pressable onPress={() => showToast('링크를 복사했어요')} accessibilityRole="button" accessibilityLabel="보내기" style={styles.ib}>
-        <LgIcon name="send" size={23} />
-      </Pressable>
       <View style={styles.sp} />
       <Pressable onPress={() => showToast(toggleSave(id) ? '라운지 저장함에 담았어요' : '저장을 취소했어요')} accessibilityRole="button" accessibilityLabel="저장" accessibilityState={{ selected: saved }} style={styles.ib}>
-        <LgIcon name="save" size={23} fill={saved ? LG_C.y : 'none'} />
+        <HeartPop on={saved}><LgIcon name="save" size={23} fill={saved ? LG_C.y : 'none'} /></HeartPop>
       </Pressable>
     </View>
   );

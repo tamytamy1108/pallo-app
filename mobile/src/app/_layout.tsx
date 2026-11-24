@@ -1,3 +1,4 @@
+import { setAudioModeAsync } from 'expo-audio';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router/js-stack';
 import * as SplashScreen from 'expo-splash-screen';
@@ -14,6 +15,8 @@ import { Colors } from '@/constants/theme';
 import { CARD, SCREEN } from '@/lib/transitions';
 
 SplashScreen.preventAutoHideAsync();
+// 아이폰 무음 모드(옆 스위치)에서도 표현 듣기 · 효과음이 나와요 (게임 · 학습 앱처럼). 다른 앱 음악은 끊지 않아요
+setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
 
 /**
  * 가장 바깥 틀: 글꼴을 다 불러온 뒤 화면을 보여 줘요. 탭 화면 위로 다른 화면이 쌓여요(Stack).

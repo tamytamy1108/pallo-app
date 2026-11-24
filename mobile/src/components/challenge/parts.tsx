@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
+import { StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -8,6 +8,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { EASE } from '@/lib/motion';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { ChIcon, type ChIconKey } from './icons';
 
@@ -163,7 +164,7 @@ export function Pills<T extends string | number>({
 }) {
   const on = (v: T) => (Array.isArray(value) ? value.includes(v) : value === v);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -bleed }} contentContainerStyle={[styles.pills, { paddingHorizontal: bleed }]}>
+    <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -bleed }} contentContainerStyle={[styles.pills, { paddingHorizontal: bleed }]}>
       {options.map((v) => (
         <Pressable
           key={String(v)}
@@ -178,7 +179,7 @@ export function Pills<T extends string | number>({
           <PText style={[styles.pillT, on(v) && styles.pillTOn]}>{label(v)}</PText>
         </Pressable>
       ))}
-    </ScrollView>
+    </ChipScroll>
   );
 }
 

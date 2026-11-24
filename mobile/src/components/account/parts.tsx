@@ -15,6 +15,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
+import { useKeyboardShown } from '@/lib/keyboard';
 
 /** 프로토타입 LG_IC 중 마이 B 가 쓰는 것 (24 칸 선 아이콘) */
 const IC = {
@@ -82,7 +83,8 @@ export function AccountPage({ title, onBack, right, children, footer, bottom, bo
 /** 아래 고정 바 (BottomBar 와 같은 모양) — 칸을 똑같이 나누지 않고 안을 직접 배치할 때 (프로토타입 .lg-dcta) */
 export function Bar({ children, style }: { children: ReactNode; style?: ViewStyle }) {
   const insets = useSafeAreaInsets();
-  return <View style={[styles.bar, { paddingBottom: 18 + insets.bottom }, style]}>{children}</View>;
+  const kb = useKeyboardShown();
+  return <View style={[styles.bar, { paddingBottom: 18 + (kb ? 0 : insets.bottom) }, style]}>{children}</View>;
 }
 
 /** 하드 섀도 (프로토타입 box-shadow: dx dy 0 ink) — Raised 는 4·4 만 있어서 0·4 같은 아래 그림자용 */

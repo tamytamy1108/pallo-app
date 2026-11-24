@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect } from 'react';
-import { Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,6 +11,7 @@ import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { SCENE_STEPS, sceneIdOf, sceneListenItems, sceneStepKey, stepTitle, type Scene, type SceneStep, type SceneWithContent, type SceneStepId, type SituationMap } from '@/data/situation';
 import { useIsDone, useSavedPos } from '@/state/progress';
+import { LayerModal } from '@/components/ui/sheet-stack';
 
 import { Back, Check, Chev, ChevDown, Coin, Headphones, XMark } from './icons';
 import { Drop, PressDrop, SUB } from './parts';
@@ -170,7 +171,7 @@ export function SceneListSheet({ open, map, current, doneOf, onPick, onClose }: 
   const insets = useSafeAreaInsets();
   const doneN = map.scenes.filter((x) => x.contentId && doneOf(x.no)).length;
   return (
-    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal visible={open} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.shRoot}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="닫기" />
         <View style={styles.pn} accessibilityRole="none" accessibilityLabel="장면 고르기">
@@ -213,7 +214,7 @@ export function SceneListSheet({ open, map, current, doneOf, onPick, onClose }: 
           </ScrollView>
         </View>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 
@@ -246,7 +247,7 @@ export function StepPopup({
   if (!step) return null;
   const resume = pos != null;
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <LayerModal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.npDim}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="닫기" />
         <Drop dy={6} radius={28} style={styles.npWrap}>
@@ -301,7 +302,7 @@ export function StepPopup({
           </View>
         </Drop>
       </View>
-    </Modal>
+    </LayerModal>
   );
 }
 

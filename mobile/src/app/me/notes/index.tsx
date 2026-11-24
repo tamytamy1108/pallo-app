@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Icon, Lift } from '@/components/account/parts';
@@ -15,6 +15,7 @@ import { Colors } from '@/constants/theme';
 import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, teamLabel, teamNameByNo } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
+import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /**
  * PRO'S NOTE 모아 보기 (프로토타입 pnListHTML): 오늘 준비 중 · 나의 스터디 일기 · 저장한 표현 · 전체 / 팀별 / 저장한 표현 탭.
@@ -76,7 +77,7 @@ function NotesList() {
           }}
         />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
         {tabs.map(([k, l]) => {
           const on = tab === k;
           return (
@@ -95,7 +96,7 @@ function NotesList() {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </ChipScroll>
       {tab === 'saved' ? (
         saved.length ? (
           saved.map(({ n, i }) => {

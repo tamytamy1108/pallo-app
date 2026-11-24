@@ -34,6 +34,7 @@ import {
   type Team,
 } from '@/data/account';
 import { haptic, sfx } from '@/lib/feedback';
+import { useKeyboardShown } from '@/lib/keyboard';
 
 /**
  * 연기 · 팀 · 지점 변경 신청서 (프로토타입 chgHTML · cgSum · CF).
@@ -417,8 +418,9 @@ function Tag({ icon, label }: { icon: IconName; label: string }) {
 /** 아래 고정 바 + 막힘 · 안내 한 줄 (프로토타입 .lg-dcta.cg-foot) */
 function Foot({ note, label, ok, onPress }: { note: string; label: string; ok: boolean; onPress: () => void }) {
   const insets = useSafeAreaInsets();
+  const kb = useKeyboardShown();
   return (
-    <View style={[styles.foot, { paddingBottom: 18 + insets.bottom }]}>
+    <View style={[styles.foot, { paddingBottom: 18 + (kb ? 0 : insets.bottom) }]}>
       {note ? <PText style={styles.footNote}>{note}</PText> : null}
       <Button label={label} wide disabled={!ok} onPress={onPress} />
     </View>
