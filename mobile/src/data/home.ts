@@ -208,6 +208,8 @@ export type Noti = {
   read: boolean;
   /** 지점 연동 결과 알림의 동그라미: 연동됨(보라 · 체크) · 못 찾음(분홍 · ?) — 프로토타입 .nt-ic.ok */
   badge?: 'ok' | 'fail';
+  /** 줄 오른쪽 작은 노랑 버튼 (누르면 줄을 누른 것과 같아요) — 예) '나도 풀러 가기' · '같이 가기' */
+  action?: string;
 };
 
 export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [
@@ -219,6 +221,10 @@ export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [
 ];
 
 export const NOTIS: Noti[] = [
+  // 받는 쪽 예시 (추가 제안 · api-additions): 팔로우한 멤버의 '같이 갈래요?' → 그 시간 · 언어로 사전 출석 시트
+  { id: 'inv1', kind: 'learn', who: { name: '민준', bg: '#E3EAF8', body: 'sky' }, text: '민준님이 오늘 20:00 영어 세션에 가요. 같이 갈래요?', time: '5분 전', href: '/?attend=rsvp&slot=1&lang=0', read: false, action: '같이 가기' },
+  // 팔로우한 멤버의 퀘스트 성공 → 같은 단계로 (첫 챕터 · 회원 잠금은 레슨 화면이 지켜요)
+  { id: 'qs1', kind: 'learn', who: { name: '소라', bg: '#CDEBD0', body: 'pink' }, text: '소라님이 「1과 Cafe Complaint · 본학습」 퀘스트를 성공했어요!', time: '20분 전', href: '/lesson/sit?lv=1&unit=1', read: false, action: '나도 풀러 가기' },
   { id: 'nc0', kind: 'notice', icon: 'tack', text: '[공지] 이번 달 스터디 일정 안내', time: '30분 전', href: '/notice/n1', read: false },
   { id: 'n1', kind: 'learn', icon: 'book', text: '내일 20:00 세션이에요. 1과 예습이 남았어요', time: '1시간 전', href: '/unit/1?lv=1', read: false },
   { id: 'n2', kind: 'lounge', who: { name: '하나', bg: '#FFE200', body: 'pink' }, text: '하나님이 내 글에 댓글을 남겼어요 “최고예요!”', time: '2시간 전', href: '/post/p1?comments=1', read: false },

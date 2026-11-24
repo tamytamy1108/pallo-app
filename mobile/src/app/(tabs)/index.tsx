@@ -16,6 +16,7 @@ import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/compo
 import { GoalCard } from '@/components/home/goal-card';
 import { Greeting } from '@/components/home/greeting';
 import { LineIcon } from '@/components/home/icons';
+import { InviteSheet } from '@/components/home/invite-sheet';
 import { LaunchPopup } from '@/components/home/launch-popup';
 import { LinkAdminDev } from '@/components/home/link-admin-dev';
 import { LoungePreview } from '@/components/home/lounge-preview';
@@ -32,6 +33,8 @@ import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
+import { LANGS, SLOTS } from '@/data/home';
+import { shouldAskInvite } from '@/state/invite-prompt';
 import { useMe } from '@/state/me';
 import { useTabReselect } from '@/lib/tab-reselect';
 
@@ -40,10 +43,10 @@ const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
 /** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드(앱 구독자는 오늘의 목표) → 스터디 맵 → 라운지 미리보기. */
 export default function HomeScreen() {
   // 개발용 주소 값 (?now= · ?season= · ?plan= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
-  const dev = useLocalSearchParams<{ now?: string; season?: string; plan?: string; link?: string; name?: string; admin?: string; trial?: string }>();
+  const dev = useLocalSearchParams<{ now?: string; season?: string; plan?: string; link?: string; name?: string; admin?: string; trial?: string; follow?: string; attend?: string; slot?: string; lang?: string }>();
   useState(() => applyDevParams(dev));
   useEffect(() => applyDevPlan(dev.plan), [dev.plan]);
-  useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial }), [dev.link, dev.name, dev.trial]);
+  useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial, follow: dev.follow }), [dev.link, dev.name, dev.trial, dev.follow]);
   useEffect(() => applyDevAdmin(dev.admin), [dev.admin]);
 
   // 3 /me — 받아 온 값은 MeSync 가 state/me 에 넣어요 (src/api/provider.tsx). 여기서는 불러오는 중 · 오류만 봐요
@@ -58,6 +61,10 @@ export default function HomeScreen() {
   // 출석: 시트(사전 출석 · 출석 · 완료) → QR 스캐너 (프로토타입 openSheet · openScanner)
   const [sheet, setSheet] = useState<AttendSheetMode | null>(null);
   const [scan, setScan] = useState<{ slot: number; lang: number } | null>(null);
+  // 알림 '○○님이 오늘 20:00 영어 세션에 가요. 같이 갈래요?' → /?attend=rsvp&slot=&lang= 로 오면 그 시간 · 언어로 사전 출석 시트
+  const [preset, setPreset] = useState<{ slot: number; lang: number } | null>(null);
+  // 사전 출석이 끝나면 '함께 가자고 할까요?' (회원 · 팔로우한 멤버 있음 · 2주간 보지 않기 아님)
+  const [invite, setInvite] = useState<{ slot: number; lang: number } | null>(null);
 
   // 9 사전 출석 · 10 QR 출석 (src/api/home.ts)
   const refreshToday = () => queryClient.invalidateQueries({ queryKey: queryKeys.sessionsToday });
@@ -66,6 +73,7 @@ export default function HomeScreen() {
     onSuccess: (_, v) => {
       showToast(`${summary(v.slot, v.lang)} 참석을 알렸어요`);
       refreshToday();
+      if (shouldAskInvite()) setTimeout(() => setInvite({ slot: v.slot, lang: v.lang }), 450);
     },
     onError: (e) => showToast(errorMessage(e)),
   });
@@ -80,6 +88,19 @@ export default function HomeScreen() {
 
   // 출석 · 사전 출석은 회원만 (state/access — 카드가 이미 나눠 보여 주지만 한 번 더 막아요)
   const openAttend = (mode: AttendSheetMode) => guardMember(() => setSheet(mode), '출석하려면');
+
+  useEffect(() => {
+    if (dev.attend !== 'rsvp') return;
+    const slot = Number(dev.slot);
+    const lang = Number(dev.lang);
+    // 비회원이면 체험 안내 · 연동 대기면 토스트 (guardMember)
+    guardMember(() => {
+      setPreset(SLOTS[slot] && LANGS[lang] ? { slot, lang } : null);
+      setSheet('rsvp');
+    }, '출석하려면');
+    // 한 번 연 뒤엔 주소에서 지워요 (다시 홈에 와도 또 열리지 않게)
+    router.setParams({ attend: undefined, slot: undefined, lang: undefined });
+  }, [dev.attend, dev.slot, dev.lang]);
 
   const confirm = (mode: SheetMode, slot: number, lang: number) => {
     setSheet(null);
@@ -148,7 +169,16 @@ export default function HomeScreen() {
         </Appear>
       </ScrollView>
 
-      <AttendSheet mode={sheet} onClose={() => setSheet(null)} onConfirm={confirm} />
+      <AttendSheet
+        mode={sheet}
+        preset={preset}
+        onClose={() => {
+          setSheet(null);
+          setPreset(null);
+        }}
+        onConfirm={confirm}
+      />
+      <InviteSheet at={invite} onClose={() => setInvite(null)} />
       <QrScanner
         open={!!scan}
         summaryText={scan ? summary(scan.slot, scan.lang) : ''}

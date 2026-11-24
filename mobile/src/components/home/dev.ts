@@ -3,6 +3,7 @@
  * ?link=pending 으로 지점 연동 확인 중 화면을, ?name=말많은망고 로 긴 닉네임을 봐요 (홈 · 마이).
  * ?link= 은 역할도 같이 바꿔요: pending · rejected · none(비회원) → guest, linked → member.
  * ?trial=1 로 체험 예약한 사람(영등포점 · 사흘 뒤 19:30)을, ?trial=today 로 체험 당일을, ?trial=past 로 체험이 지난 뒤를 봐요.
+ * ?follow=민준,소라 로 팔로우한 멤버를 정해요.
  * ?admin=link · ?admin=reject 로 지점 매니저가 연동 요청을 처리한 것처럼 흉내 내요 (확인 중에서 2.5초 뒤 결과 도착 · state/link-events).
  * 화면에는 아무것도 그리지 않아요. 실제 앱에서는 쓰이지 않아요.
  */
@@ -26,7 +27,7 @@ export function applyDevPlan(plan?: string) {
 }
 
 /** ?link=pending|linked|rejected|none · ?trial=1|today|past · ?name=닉네임: 연동 상태 · 체험 예약 · 닉네임을 바꿔 봐요 */
-export function applyDevMe({ link, name, trial }: { link?: string; name?: string; trial?: string }) {
+export function applyDevMe({ link, name, trial, follow }: { link?: string; name?: string; trial?: string; follow?: string }) {
   if (Platform.OS !== 'web' || !__DEV__) return;
   // 연동되기 전은 모두 비회원 권한 (state/access)
   if (link === 'linked') updateMe({ link, role: 'member', trial: null });
@@ -36,6 +37,8 @@ export function applyDevMe({ link, name, trial }: { link?: string; name?: string
     updateMe({ role: 'guest', link: 'none', plan: 'study', trial: { branch: '영등포점', day: dayKey(ahead), time: '19:30', lang: 'en' } });
   }
   if (name) updateMe({ name: name.slice(0, 20) });
+  // ?follow=민준,소라 : 팔로우한 멤버를 정해요 ('함께 가자고 할까요?' 시트 확인용)
+  if (follow) updateMe({ following: Object.fromEntries(follow.split(',').filter(Boolean).map((n) => [n.trim(), true])) });
 }
 
 /** 오늘부터 n일 뒤 'YYYY-MM-DD' (개발용 시각 ?now= 기준) */

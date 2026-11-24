@@ -132,6 +132,11 @@ function Row({ n, unread, onPress }: { n: Noti; unread: boolean; onPress: () => 
         <PText style={styles.txS} color={Colors.inkSub}>
           {n.time}
         </PText>
+        {n.action ? (
+          <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={n.action} hitSlop={4} style={({ pressed }) => StyleSheet.flatten([styles.act, pressed && styles.actPressed])}>
+            <PText style={styles.actText}>{n.action} ›</PText>
+          </Pressable>
+        ) : null}
       </View>
       {unread && <View style={styles.dot} />}
     </Pressable>
@@ -173,6 +178,10 @@ const styles = StyleSheet.create({
   tx: { flex: 1, minWidth: 0 },
   txB: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20.3 },
   txS: { marginTop: 2, fontFamily: Font.body700, fontSize: 12, lineHeight: 17 },
+  // 줄 안 작은 노랑 버튼 ('나도 풀러 가기' · '같이 가기')
+  act: { alignSelf: 'flex-start', marginTop: 8, height: 30, paddingHorizontal: 12, borderRadius: 15, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, justifyContent: 'center', boxShadow: '2px 2px 0 #1E1A2B' },
+  actPressed: { transform: [{ translateX: 2 }, { translateY: 2 }], boxShadow: '0 0 0 #1E1A2B' },
+  actText: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
   dot: { width: 8, height: 8, marginTop: 8, borderRadius: 4, backgroundColor: Colors.rosePink },
   empty: { textAlign: 'center', paddingVertical: 30, paddingHorizontal: 10, fontFamily: Font.body700, fontSize: 14 },
 });

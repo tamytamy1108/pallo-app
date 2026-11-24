@@ -40,6 +40,7 @@ export const saveDiary = (id: string, d: Diary) => noteStore.set((s) => ({ ...s,
 
 const settingsStore = createStore<Settings>({ ...SETTINGS_DEFAULT }, { persist: { key: 'settings' } });
 export const useSettings = () => settingsStore.useStore();
+export const getSettings = settingsStore.get;
 export const updateSettings = (patch: Partial<Settings>) => settingsStore.set((s) => ({ ...s, ...patch }));
 /** 이벤트 · 혜택 정보(광고) 수신: 켜면 동의 날짜를 기록해요 */
 export const setMarketing = (on: boolean) => {

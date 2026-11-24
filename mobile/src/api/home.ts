@@ -118,3 +118,24 @@ export function fetchLaunchPopups({ signal }: Opts = {}): Promise<LaunchPopup[]>
   if (apiConfig.useMock) return mock('popups', () => LAUNCH_POPUPS);
   return http.get('/popups', { signal });
 }
+
+/* ───────── 함께 가자 · 퀘스트 성공 알리기 (추가 제안 · docs/frontend/api-additions.md) ───────── */
+
+/** 사전 출석한 세션에 팔로우한 멤버를 불러요 → 받는 사람마다 푸시 + 알림함 '○○님이 오늘 19:30 영어 세션에 가요' */
+export function sendSessionInvite({ slot, lang, names }: { slot: number; lang: number; names: string[] }): Promise<{ sent: number }> {
+  if (apiConfig.useMock)
+    return mock('sessionInvite', () => {
+      if (__DEV__) console.info('[mock] POST /sessions/:id/invites', { session: SLOTS[slot].id, lang: LANGS[lang].key, names });
+      return { sent: names.length };
+    });
+  return http.post(`/sessions/${SLOTS[slot].id}/invites`, { lang: LANGS[lang].key, memberNames: names });
+}
+
+/** 퀘스트(레슨 단계 · 상황 장면) 성공 → 서버가 내 팔로워에게 알려요 (설정 shareProgress · 서버가 묶어 보내기). 보내고 잊어요 */
+export function sendQuestDone({ key, title, href }: { key: string; title: string; href: string }): Promise<void> {
+  if (apiConfig.useMock)
+    return mock('questDone', () => {
+      if (__DEV__) console.info('[mock] POST /me/progress/events', { key, title, href });
+    });
+  return http.post('/me/progress/events', { type: 'quest_completed', key, title, deepLink: href });
+}

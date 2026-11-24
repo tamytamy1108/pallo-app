@@ -251,6 +251,8 @@ export const SETTINGS_DEFAULT = {
   profile: '전체 공개',
   rankName: true,
   showBr: true,
+  /** 내 퀘스트 성공(레슨 단계 · 상황 장면)을 팔로워에게 알리기 (A 추가 · shareProgress). 예전 저장에 없으면 켜진 걸로 봐요 */
+  shareProgress: true,
   goal: 2,
   lang: '영어',
   bio: '',
