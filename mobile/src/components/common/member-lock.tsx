@@ -73,7 +73,7 @@ export function MemberLock({ title = '지점 회원이 되면 열려요', sub = 
         <View style={styles.wait}>
           <View style={styles.waitDot} />
           <PText style={styles.waitText} color={Colors.purple}>
-            연동 확인 중이에요 · 끝나면 알림으로 알려 드려요
+            연동 승인 대기중이에요 · 승인되면 알림으로 알려 드려요
           </PText>
         </View>
       ) : kind === 'rejected' ? (

@@ -9,7 +9,7 @@ import { Colors, Radius } from '@/constants/theme';
 import { useKeyboardShown } from '@/lib/keyboard';
 import { EASE } from '@/lib/motion';
 
-import { FormScrollContext, useFormScroll } from './form-scroll';
+import { FormScrollContext, KeepVisibleContext, useFormScroll } from './form-scroll';
 import { NestedSheets, useSheetLayer } from './sheet-stack';
 import { PText } from './text';
 import { ToastView, useToastLayer } from './toast';
@@ -153,7 +153,8 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   }, [open, still, shown, dim, enter, finishClose]);
 
   // 하나 고르면 다음 칸이 보이게 올려 줘요 (ui/form-scroll)
-  const [scrollRef, formBox, onFormScroll, revealNext] = useFormScroll();
+  // 길게 쓰는 칸이 늘어나면 쓰는 줄이 아래 버튼 · 키보드에 가리지 않게 따라 내려가요 (keepCaret)
+  const [scrollRef, formBox, onFormScroll, revealNext, keepCaret] = useFormScroll();
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [scrollKey, scrollRef]);
@@ -231,7 +232,9 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
                           showsVerticalScrollIndicator={false}
                           style={tall ? styles.fill : styles.shrink}
                           contentContainerStyle={[{ gap, paddingHorizontal: 18, paddingBottom: scrollPadBottom }, contentStyle]}>
-                          <FormScrollContext.Provider value={revealNext}>{body}</FormScrollContext.Provider>
+                          <FormScrollContext.Provider value={revealNext}>
+                            <KeepVisibleContext.Provider value={keepCaret}>{body}</KeepVisibleContext.Provider>
+                          </FormScrollContext.Provider>
                         </ScrollView>
                       </View>
                     ) : (

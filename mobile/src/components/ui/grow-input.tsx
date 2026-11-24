@@ -3,6 +3,8 @@ import { Platform, StyleSheet, TextInput, useWindowDimensions } from 'react-nati
 
 import { Colors } from '@/constants/theme';
 
+import { CARET_ROOM, useKeepVisible } from './form-scroll';
+
 type Props = ComponentProps<typeof TextInput> & {
   /**
    * 아래에 붙은 입력 띠(댓글 · 답글 · 채팅)처럼 화면을 다 덮으면 안 되는 곳: 이 줄 수까지만(화면 높이 40% 넘지 않게) 늘고,
@@ -33,6 +35,7 @@ export function useFocusRing({ onFocus, onBlur }: FocusEvents, ring = true) {
       onBlur?.(e);
     }) satisfies FocusEvents['onBlur'],
     ringStyle: ring && focused ? styles.ring : styles.noRing,
+    focused,
   };
 }
 
@@ -42,6 +45,17 @@ if (isWeb && typeof document !== 'undefined' && !document.getElementById('grow-i
   css.id = 'grow-input-css';
   css.textContent = 'textarea{scrollbar-width:none}textarea::-webkit-scrollbar{display:none}';
   document.head.appendChild(css);
+}
+
+/**
+ * 웹 · 스크롤을 가진 쪽(Context)이 없을 때: 가장 가까운 스크롤 칸을 찾아 칸 아래 끝이 보이게 내려요 (위로는 안 올려요).
+ */
+function keepInViewWeb(el: HTMLElement | null, room: number) {
+  let box = el?.parentElement ?? null;
+  while (box && !(box.scrollHeight > box.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+  if (!el || !box) return;
+  const over = el.getBoundingClientRect().bottom + room - box.getBoundingClientRect().bottom;
+  if (over > 1) box.scrollTop += over;
 }
 
 /** 웹: RN-web TextInput 의 바탕은 <textarea> 예요 */
@@ -66,6 +80,7 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
   };
   const { height: screenH } = useWindowDimensions();
   const focus = useFocusRing({ onFocus, onBlur }, ring);
+  const keep = useKeepVisible();
   const [contentH, setContentH] = useState(0);
 
   const flat = StyleSheet.flatten(style) ?? {};
@@ -90,6 +105,24 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
     setContentH((p) => (p === h ? p : h));
   }, []);
 
+  /**
+   * 쓰는 줄 따라가기: 포커스 중인 칸이 아래 버튼 · 흐림 · 키보드 뒤로 내려가면 스크롤을 그만큼 내려요.
+   * 아래에 붙은 입력 띠(maxLines)는 스크롤 칸 밖이라 빼요.
+   */
+  const keepCaret = useCallback(() => {
+    if (maxLines) return;
+    if (keep) return keep(inner.current);
+    if (isWeb) keepInViewWeb(textareaOf(inner.current), CARET_ROOM);
+  }, [keep, maxLines]);
+
+  // 칸이 늘어난 순간 (줄이 하나 더 생겼을 때)
+  const prevHeight = useRef(height);
+  useLayoutEffect(() => {
+    const grew = height > prevHeight.current;
+    prevHeight.current = height;
+    if (grew && focus.focused) keepCaret();
+  }, [height, focus.focused, keepCaret]);
+
   // 값이 밖에서 바뀌어도(보내고 비우기 · 미리 채우기) 다시 재요
   useLayoutEffect(() => {
     if (isWeb) measureWeb();
@@ -105,7 +138,12 @@ export const GrowInput = forwardRef<ComponentRef<typeof TextInput>, Props>(funct
       scrollEnabled={capped}
       onChangeText={(t) => {
         onChangeText?.(t);
-        if (isWeb) measureWeb();
+        if (isWeb) {
+          measureWeb();
+          // 끝에서 쓰는 중이면 (위로 올려 봤다가 이어 쓸 때도) 쓰는 줄이 보이게
+          const el = textareaOf(inner.current);
+          if (el && el.selectionEnd === el.value.length) keepCaret();
+        }
       }}
       onContentSizeChange={(e) => {
         if (!isWeb) setContentH(Math.ceil(e.nativeEvent.contentSize.height));

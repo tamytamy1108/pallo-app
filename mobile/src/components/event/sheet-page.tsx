@@ -12,7 +12,7 @@ import { PText } from '@/components/ui/text';
 import { Colors, Radius } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { useKeyboardShown } from '@/lib/keyboard';
-import { FormScrollContext, useFormScroll } from '@/components/ui/form-scroll';
+import { FormScrollContext, KeepVisibleContext, useFormScroll } from '@/components/ui/form-scroll';
 
 /**
  * 시트 모양 화면 (프로토타입 #lgSheet.tall — 이벤트 제안 · 번개 열기 · 동아리 만들기 같은 긴 폼).
@@ -21,7 +21,8 @@ import { FormScrollContext, useFormScroll } from '@/components/ui/form-scroll';
 export function SheetPage({ title, label, children, footer }: { title: string; label: string; children: ReactNode; footer: ReactNode }) {
   const insets = useSafeAreaInsets();
   const kb = useKeyboardShown();
-  const [formScroll, formBox, onFormScroll, revealNext] = useFormScroll();
+  // keepCaret: 길게 쓰는 칸이 늘어나도 쓰는 줄이 아래 버튼 · 키보드에 가리지 않게
+  const [formScroll, formBox, onFormScroll, revealNext, keepCaret] = useFormScroll();
   const still = useReducedMotion();
   const y = useSharedValue(still ? 0 : 1);
   useEffect(() => {
@@ -49,10 +50,12 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
           <View ref={formBox} collapsable={false} style={styles.scrollBox}>
             <ScrollView ref={formScroll} onScroll={onFormScroll} scrollEventThrottle={32} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               <FormScrollContext.Provider value={revealNext}>
-                <PText variant="title" accessibilityRole="header">
-                  {title}
-                </PText>
-                {children}
+                <KeepVisibleContext.Provider value={keepCaret}>
+                  <PText variant="title" accessibilityRole="header">
+                    {title}
+                  </PText>
+                  {children}
+                </KeepVisibleContext.Provider>
               </FormScrollContext.Provider>
             </ScrollView>
           </View>

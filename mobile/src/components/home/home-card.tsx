@@ -97,7 +97,7 @@ function TrialCard({ trial }: { trial: TrialBooking }) {
 
 /**
  * 가입 뒤 둘러보는 비회원 ('앱 구경할래요' · '일단 구경만'): 출석 대신 바로 해 볼 수 있는 것.
- * [첫 레슨 해 보기](Lv.1 1과) · [체험 신청하기] · '지점 회원이라면 연동 요청'.
+ * [1과 무료로 시작하기](Lv.1 1과) · [체험 신청하기] · '지점 회원이라면 연동 요청'.
  */
 function GuestCard() {
   const linkRequest = () => {
@@ -123,7 +123,7 @@ function GuestCard() {
             <PText style={styles.line}>먼저 둘러보는 중이에요.</PText>
             <View style={StyleSheet.flatten([cs.actions, styles.actions])}>
               <CardButton
-                label="첫 레슨 해 보기"
+                label="1과 무료로 시작하기"
                 icon={PLAY_PATH}
                 tint={Colors.purple}
                 onPress={() => {

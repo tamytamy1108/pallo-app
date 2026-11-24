@@ -117,7 +117,7 @@ function TrialIntroSheet({ open, why, onClose, onBook, onClosed }: { open: boole
       <View style={styles.trial}>
         <PText style={styles.trialHead}>{'체험 상담 한 번이면\n바로 시작할 수 있어요'}</PText>
         <View style={styles.ul}>
-          {['가까운 지점에서 회화 체험 1회', '프로님과 상담하고 내 레벨 확인', '회원이 되면 댓글 · 글쓰기 · 번개까지'].map((t) => (
+          {['가까운 지점에서 회화 체험 1회', '프로님과 상담하고 내 레벨 확인', '회원이 되면 오프라인 스터디 · 글쓰기 · 동아리까지'].map((t) => (
             <View key={t} style={styles.li}>
               <PText style={styles.liDot}>•</PText>
               <PText style={styles.liText}>{t}</PText>
