@@ -250,6 +250,17 @@
       fl('M226 186 Q300 176 374 186 L384 222 Q300 236 216 222 Z', '#A390E6') + ln('M226 186 Q300 176 374 186 L384 222 Q300 236 216 222 Z', INK, 2.4, { op: 0.2 }) +
       ln('M282 168 Q278 186 282 200', '#FFFFFF', 5) + ln('M318 168 Q322 186 318 200', '#FFFFFF', 5) + fl(rr(277, 198, 10, 12, 4), '#E5E0F5') + fl(rr(313, 198, 10, 12, 4), '#E5E0F5') +
       fl('M96 210 H420 V226 Q300 244 96 226 Z', '#A390E6')) },
+    { id: 'w-college', name: '대학생 후드티', price: 300, rare: '레어', art: () => paint(
+      `<path d="${top(56, 446, 216)}" fill="#2B3A73" fill-rule="evenodd"/>` +
+      ln('M84 46 Q94 112 84 178', '#FFCB2E', 9, { cap: 'butt' }) + ln('M100 46 Q110 112 100 178', '#FFFFFF', 6, { cap: 'butt' }) +
+      ln('M418 46 Q408 112 418 178', '#FFCB2E', 9, { cap: 'butt' }) + ln('M402 46 Q392 112 402 178', '#FFFFFF', 6, { cap: 'butt' }) +
+      ln('M56 44 Q66 112 56 180', '#22305F', 22, { cap: 'butt' }) + ln('M446 44 Q436 112 446 180', '#22305F', 22, { cap: 'butt' }) +
+      ln(NECK.replace(' Z', ''), '#3A4C8C', 30) + ln(NECK.replace(' Z', ''), INK, 3, { op: 0.15 }) +
+      ln('M284 168 Q281 176 284 183', '#FFFFFF', 3.5) + ln('M316 168 Q319 176 316 183', '#FFFFFF', 3.5) + `<circle cx="284" cy="184" r="2.6" fill="#E5E0F5"/><circle cx="316" cy="184" r="2.6" fill="#E5E0F5"/>` +
+      `<path id="cgArc${U}" d="M222 208 Q300 186 378 208" fill="none"/>` +
+      `<text font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="27" letter-spacing="1" text-anchor="middle" fill="#FFFFFF" stroke="#FFCB2E" stroke-width="2.4" paint-order="stroke"><textPath href="#cgArc${U}" startOffset="50%">PALLO</textPath></text>` +
+      `<text x="300" y="214" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="9" letter-spacing="2" text-anchor="middle" fill="#FFCB2E">UNIV · 2026</text>` +
+      fl('M96 214 H420 V228 Q300 246 96 228 Z', '#22305F') + rng(32, (i) => ln(`M${102 + i * 10} 214 l0 14`, '#FFFFFF', 1.6, { op: 0.18 }))) },
     { id: 'w-overall', name: '청 멜빵바지', price: 200, rare: '일반', art: () => paint(
       pants(0.8, '#4A78C2') + fl('M240 166 H360 V214 H240 Z', '#4A78C2') +
       ln('M246 170 L232 50', '#4A78C2', 22, { cap: 'butt' }) + ln('M354 170 L368 50', '#4A78C2', 22, { cap: 'butt' }) +
@@ -426,6 +437,40 @@
     { id: 'fx-spark', name: '반짝반짝', price: 400, rare: '에픽', art: () => FX([[38, 40, 13, '#FFE200'], [262, 54, 11, '#FFE200'], [30, 160, 9, '#FFFFFF'], [272, 166, 12, '#FFE200'], [150, 22, 8, '#FFFFFF'], [228, 22, 6, '#FFFFFF'], [70, 96, 6, '#FFE200']].map(([x, y, r, c]) => P(star(x, y, r * 2, 0.26, 4, -90), c, { rim: 0.35, sw: 1.6 })).join('')) },
     { id: 'fx-hearts', name: '하트 뿅뿅', price: 400, rare: '에픽', art: () => FX([[44, 60, 34], [256, 44, 28], [266, 160, 38], [34, 168, 24], [210, 22, 18], [96, 26, 16]].map(([x, y, s], i) => glossHeart(x, y, s, i % 2 ? '#FF7AA3' : '#FF5C8A')).join('')) },
     { id: 'fx-notes', name: '음표 둥둥', price: 300, rare: '레어', art: () => FX([[48, 46, '#8B5CF6'], [250, 36, '#2F6FD0'], [262, 146, '#E5484D'], [36, 150, '#2DD4BF']].map(([x, y, c], i) => (i % 2 ? `<path d="M${x} ${y} L${x} ${y + 34} M${x + 26} ${y - 6} L${x + 26} ${y + 28}" stroke="${c}" stroke-width="5"/><path d="M${x - 2} ${y - 2} L${x + 28} ${y - 8} L${x + 28} ${y + 2} L${x - 2} ${y + 8}Z" fill="${c}"/>${P(ell(x - 7, y + 36, 10, 8), c, { t: `rotate(-20 ${x - 7} ${y + 36})` })}${P(ell(x + 19, y + 30, 10, 8), c, { t: `rotate(-20 ${x + 19} ${y + 30})` })}` : `<path d="M${x} ${y} L${x} ${y + 34}" stroke="${c}" stroke-width="5"/><path d="M${x} ${y} q16 4 18 22 q-6 -10 -18 -12z" fill="${c}"/>${P(ell(x - 7, y + 36, 10, 8), c, { t: `rotate(-20 ${x - 7} ${y + 36})` })}`)).join('')) },
+    { id: 'fx-bubble', name: '비눗방울', price: 250, rare: '레어', art: () => FX([[40, 58, 20], [262, 48, 16], [28, 150, 12], [270, 150, 22], [222, 20, 10], [86, 24, 8], [250, 104, 8], [52, 108, 7]].map(([x, y, r]) =>
+      `<circle cx="${x}" cy="${y}" r="${r}" fill="#DFF3FF" fill-opacity=".28" stroke="#9FD4F5" stroke-width="2"/>` +
+      `<path d="M${x - r * 0.72} ${y + r * 0.5} A${r * 0.88} ${r * 0.88} 0 0 0 ${x + r * 0.5} ${y + r * 0.72}" fill="none" stroke="#F7A8C4" stroke-width="${r > 10 ? 3 : 2}" opacity=".8"/>` +
+      `<path d="M${x + r * 0.62} ${y + r * 0.44} A${r * 0.78} ${r * 0.78} 0 0 0 ${x + r * 0.72} ${y - r * 0.2}" fill="none" stroke="#8FE3D0" stroke-width="${r > 10 ? 3 : 2}" opacity=".8"/>` +
+      gl(x - r * 0.38, y - r * 0.4, r * 0.28, r * 0.15, -40, 0.95) + `<circle cx="${x + r * 0.42}" cy="${y - r * 0.5}" r="${r * 0.08 + 0.6}" fill="#fff"/>`).join('')) },
+    { id: 'fx-petal', name: '벚꽃 흩날림', price: 300, rare: '레어', art: () => FX(
+      [[34, 40, 20], [268, 30, -30], [20, 116, 60], [282, 96, 10], [62, 168, -40], [252, 176, 70], [120, 18, 30], [196, 34, -60], [96, 62, 80], [232, 132, -10], [14, 196, 40], [292, 196, -50]].map(([x, y, r], i) => {
+        const c = i % 3 ? '#F7A8C4' : '#FFC7D9';
+        return `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 -11 C9 -8 9 6 0 11 C-9 6 -9 -8 0 -11 Z" fill="${c}"/><path d="M0 -11 L-2 -6 L0 -8 L2 -6 Z" fill="#FFFFFF" opacity=".9"/><path d="M0 -5 L0 6" stroke="#E07AA0" stroke-width="1.2" opacity=".6"/></g>`;
+      }).join('') + blossom(46, 78, 9) + blossom(258, 66, 8, '#FFC7D9')) },
+    { id: 'fx-snow', name: '눈송이', price: 250, rare: '레어', art: () => FX([[38, 44, 14], [264, 38, 12], [24, 140, 10], [276, 130, 15], [150, 14, 8], [220, 18, 7], [88, 20, 7], [50, 196, 8], [252, 192, 9]].map(([x, y, r]) =>
+      `<g transform="translate(${x} ${y})" stroke="#FFFFFF" stroke-linecap="round">${rng(6, (i) => `<g transform="rotate(${i * 60})"><path d="M0 0 V${-r}" stroke-width="${r > 9 ? 3 : 2.2}"/><path d="M0 ${-r * 0.58} l${r * 0.3} ${-r * 0.26} M0 ${-r * 0.58} l${-r * 0.3} ${-r * 0.26}" stroke-width="${r > 9 ? 2.2 : 1.6}"/></g>`)}</g>` +
+      `<g transform="translate(${x} ${y})" stroke="#7FA7E8" stroke-opacity=".55" stroke-width="1" fill="none">${rng(6, (i) => `<path transform="rotate(${i * 60})" d="M0 0 V${-r}"/>`)}</g><circle cx="${x}" cy="${y}" r="${r * 0.16 + 1}" fill="#FFFFFF"/>`).join('') +
+      rng(16, (i) => `<circle cx="${(i * 67 + 13) % 300}" cy="${(i * 41 + 7) % 210}" r="${1.6 + (i % 3) * 0.7}" fill="#FFFFFF" stroke="#9FC0EE" stroke-width=".8"/>`)) },
+    { id: 'fx-confetti', name: '축하 꽃가루', price: 400, rare: '에픽', art: () => FX(
+      [[30, 30, 20], [64, 16, -30], [104, 34, 50], [150, 12, 10], [196, 30, -60], [238, 14, 35], [276, 34, -15], [18, 86, 70], [282, 80, -40], [36, 132, 15], [268, 124, 60], [16, 182, -25], [286, 176, 45], [120, 58, -70], [182, 56, 25]].map(([x, y, r], i) =>
+        `<rect x="${x - 6}" y="${y - 3}" width="12" height="6" rx="1.5" transform="rotate(${r} ${x} ${y})" fill="${['#FFE200', '#FF5C8A', '#2DD4BF', '#8B5CF6', '#FF9F43', '#5B8DEF'][i % 6]}" stroke="${INK}" stroke-opacity=".2" stroke-width="1"/>`).join('') +
+      [[48, 60, '#FF5C8A'], [246, 56, '#2DD4BF'], [26, 106, '#8B5CF6'], [270, 104, '#FFE200']].map(([x, y, c]) => ln(`M${x} ${y} q8 -10 14 0 t14 0 t14 0`, c, 4, { op: 0.95 }) + ln(`M${x} ${y} q8 -10 14 0 t14 0 t14 0`, INK, 1, { op: 0.15 })).join('') +
+      [[86, 96, '#FFE200'], [214, 92, '#FF9F43'], [140, 40, '#FF5C8A']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="4" fill="${c}"/>`).join('')) },
+    { id: 'fx-rainbow', name: '무지개 구름', price: 450, rare: '에픽', art: () => FX(
+      ['#FF6B6B', '#FF9F43', '#FFE200', '#5CBF8A', '#5B8DEF', '#8B5CF6'].map((c, i) => { const r = 58 - i * 6.5; return `<path d="M${74 - r} 84 A${r} ${r} 0 0 1 ${74 + r} 84" fill="none" stroke="${c}" stroke-width="6.8" opacity=".92"/>`; }).join('') +
+      cloud(26, 86, 0.9) + cloud(124, 86, 0.9) +
+      `<g opacity=".95">${cloud(244, 46, 0.75)}</g>` + sp(240, 98, 7, '#FFE200') + sp(178, 22, 6, '#FFFFFF')) },
+    { id: 'fx-hello', name: '인사 말풍선', price: 350, rare: '레어', art: () => FX(
+      [[206, 18, 64, 'Hi!', '#FFFFFF', 'latin'], [232, 92, 62, '안녕!', '#FFE200', 'ko'], [20, 154, 70, 'Hola!', '#FFC7D9', 'latin'], [222, 156, 58, '你好', '#D8CCFF', 'ko']].map(([x, y, w, t, c, f], i) =>
+        `<path d="M${i % 2 ? x + 14 : x + w - 22} ${y + 22} L${i % 2 ? x + 8 : x + w - 12} ${y + 40} L${i % 2 ? x + 28 : x + w - 34} ${y + 22} Z" fill="${c}" stroke="${INK}" stroke-opacity=".55" stroke-width="2.2" stroke-linejoin="round"/>` +
+        P(rr(x, y, w, 30, 13), c, { rim: 0.55, sw: 2.2, hi: 0.5 }) +
+        `<text x="${x + w / 2}" y="${y + 21}" text-anchor="middle" font-family="${f === 'latin' ? 'Arial Black, Arial, sans-serif' : 'Apple SD Gothic Neo, Noto Sans KR, sans-serif'}" font-weight="900" font-size="15" fill="${INK}">${t}</text>`).join('')) },
+    { id: 'fx-meteor', name: '별똥별', price: 450, rare: '에픽', art: () => FX(
+      `<defs><linearGradient id="avTrail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFB627" stop-opacity="0"/><stop offset=".7" stop-color="#FFC83D" stop-opacity=".6"/><stop offset="1" stop-color="#FFE27A" stop-opacity="1"/></linearGradient></defs>` +
+      [[96, 34, 13, 70], [248, 70, 11, 58], [40, 120, 9, 46]].map(([x, y, r, L]) =>
+        `<g transform="rotate(-28 ${x} ${y})"><path d="M${x - L} ${y - 1.5} L${x} ${y - r * 0.8} L${x} ${y + r * 0.8} L${x - L} ${y + 1.5} Z" fill="url(#avTrail)"/></g>` +
+        P(star(x, y, r * 1.5, 0.45, 5, -90), '#FFE200', { rim: 0.4, sw: 1.8 }) + gl(x - r * 0.3, y - r * 0.4, r * 0.22, r * 0.12, -30, 0.9)).join('') +
+      [[176, 20], [280, 22], [20, 60], [284, 150], [150, 56]].map(([x, y], i) => sp(x, y, 4 + (i % 2) * 3, i % 2 ? '#FFFFFF' : '#FFE27A')).join('')) },
   ];
 
   // ---------------------------------------------------------------- 배경 (무대 300 × 220 · 캐릭터 발밑 그림자 포함)

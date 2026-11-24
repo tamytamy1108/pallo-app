@@ -49,6 +49,7 @@ export const AV_ART: Record<string, number> = {
   'f-beard': require('@/assets/characters/av/f-beard.png'),
   'w-tee': require('@/assets/characters/av/w-tee.png'),
   'w-hoodie': require('@/assets/characters/av/w-hoodie.png'),
+  'w-college': require('@/assets/characters/av/w-college.png'),
   'w-overall': require('@/assets/characters/av/w-overall.png'),
   'w-sweater': require('@/assets/characters/av/w-sweater.png'),
   'w-suit': require('@/assets/characters/av/w-suit.png'),
@@ -100,6 +101,13 @@ export const AV_ART: Record<string, number> = {
   'fx-spark': require('@/assets/characters/av/fx-spark.png'),
   'fx-hearts': require('@/assets/characters/av/fx-hearts.png'),
   'fx-notes': require('@/assets/characters/av/fx-notes.png'),
+  'fx-bubble': require('@/assets/characters/av/fx-bubble.png'),
+  'fx-petal': require('@/assets/characters/av/fx-petal.png'),
+  'fx-snow': require('@/assets/characters/av/fx-snow.png'),
+  'fx-confetti': require('@/assets/characters/av/fx-confetti.png'),
+  'fx-rainbow': require('@/assets/characters/av/fx-rainbow.png'),
+  'fx-hello': require('@/assets/characters/av/fx-hello.png'),
+  'fx-meteor': require('@/assets/characters/av/fx-meteor.png'),
 };
 
 export const AV_HAIR_FILL: Record<string, number> = {
@@ -169,6 +177,7 @@ export const AV_GEO: Record<string, AvGeo> = {
   'f-beard': { k: 'box', r: [0.4256, 0.3896, 0.3026, 0.3353] },
   'w-tee': { k: 'box', r: [0.1974, 0.0261, 0.5897, 0.6707] },
   'w-hoodie': { k: 'box', r: [0.0872, 0.0261, 0.791, 0.6867] },
+  'w-college': { k: 'box', r: [0.0872, 0.0261, 0.791, 0.6928] },
   'w-overall': { k: 'box', r: [0.1974, 0.1506, 0.5923, 0.7912] },
   'w-sweater': { k: 'box', r: [0.0923, 0.0261, 0.7808, 0.6747] },
   'w-suit': { k: 'box', r: [0.1038, 0.0261, 0.7449, 0.7008] },
@@ -220,6 +229,13 @@ export const AV_GEO: Record<string, AvGeo> = {
   'fx-spark': { k: 'stage', r: [0.0344, 0.0197, 0.9578, 0.8515] },
   'fx-hearts': { k: 'stage', r: [0.0589, 0.0439, 0.9111, 0.7788] },
   'fx-notes': { k: 'stage', r: [0.0578, 0.1242, 0.8778, 0.7682] },
+  'fx-bubble': { k: 'stage', r: [0.0478, 0.0379, 0.9311, 0.7515] },
+  'fx-petal': { k: 'stage', r: [0.0178, 0.0333, 0.9822, 0.9] },
+  'fx-snow': { k: 'stage', r: [0.0344, 0, 0.9367, 0.9576] },
+  'fx-confetti': { k: 'stage', r: [0.0278, 0.0318, 0.9722, 0.8227] },
+  'fx-rainbow': { k: 'stage', r: [0.0056, 0.0697, 0.8756, 0.4106] },
+  'fx-hello': { k: 'stage', r: [0.06, 0.0727, 0.9267, 0.8273] },
+  'fx-meteor': { k: 'stage', r: [0, 0.0591, 0.9722, 0.6576] },
 };
 
 export const AV_BG_ART: Record<string, number> = {

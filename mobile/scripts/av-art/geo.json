@@ -412,6 +412,15 @@
     0.6867
    ]
   },
+  "w-college": {
+   "k": "box",
+   "r": [
+    0.0872,
+    0.0261,
+    0.791,
+    0.6928
+   ]
+  },
   "w-overall": {
    "k": "box",
    "r": [
@@ -870,6 +879,69 @@
     0.8778,
     0.7682
    ]
+  },
+  "fx-bubble": {
+   "k": "stage",
+   "r": [
+    0.0478,
+    0.0379,
+    0.9311,
+    0.7515
+   ]
+  },
+  "fx-petal": {
+   "k": "stage",
+   "r": [
+    0.0178,
+    0.0333,
+    0.9822,
+    0.9
+   ]
+  },
+  "fx-snow": {
+   "k": "stage",
+   "r": [
+    0.0344,
+    0,
+    0.9367,
+    0.9576
+   ]
+  },
+  "fx-confetti": {
+   "k": "stage",
+   "r": [
+    0.0278,
+    0.0318,
+    0.9722,
+    0.8227
+   ]
+  },
+  "fx-rainbow": {
+   "k": "stage",
+   "r": [
+    0.0056,
+    0.0697,
+    0.8756,
+    0.4106
+   ]
+  },
+  "fx-hello": {
+   "k": "stage",
+   "r": [
+    0.06,
+    0.0727,
+    0.9267,
+    0.8273
+   ]
+  },
+  "fx-meteor": {
+   "k": "stage",
+   "r": [
+    0,
+    0.0591,
+    0.9722,
+    0.6576
+   ]
   }
  },
  "bgs": {},
@@ -1301,6 +1373,15 @@
    "name": "포근 후드티",
    "price": 200,
    "rare": "일반",
+   "layer": "paint",
+   "front": false
+  },
+  {
+   "id": "w-college",
+   "cat": "wear",
+   "name": "대학생 후드티",
+   "price": 300,
+   "rare": "레어",
    "layer": "paint",
    "front": false
   },
@@ -1763,6 +1844,69 @@
    "name": "음표 둥둥",
    "price": 300,
    "rare": "레어",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-bubble",
+   "cat": "fx",
+   "name": "비눗방울",
+   "price": 250,
+   "rare": "레어",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-petal",
+   "cat": "fx",
+   "name": "벚꽃 흩날림",
+   "price": 300,
+   "rare": "레어",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-snow",
+   "cat": "fx",
+   "name": "눈송이",
+   "price": 250,
+   "rare": "레어",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-confetti",
+   "cat": "fx",
+   "name": "축하 꽃가루",
+   "price": 400,
+   "rare": "에픽",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-rainbow",
+   "cat": "fx",
+   "name": "무지개 구름",
+   "price": 450,
+   "rare": "에픽",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-hello",
+   "cat": "fx",
+   "name": "인사 말풍선",
+   "price": 350,
+   "rare": "레어",
+   "layer": "fx",
+   "front": false
+  },
+  {
+   "id": "fx-meteor",
+   "cat": "fx",
+   "name": "별똥별",
+   "price": 450,
+   "rare": "에픽",
    "layer": "fx",
    "front": false
   }

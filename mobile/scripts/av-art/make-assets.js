@@ -58,7 +58,7 @@ const it = (m) => {
 };
 const d = `/**
  * 꾸미기 아이템 · 배경 목록 (자동 생성 — scripts/av-art/art.js 를 고친 뒤 make-assets.js 로 다시 만들어요).
- * 카테고리마다 10개. 겹침 layer — back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 · fx: 무대 효과.
+ * 카테고리마다 10개 (옷은 11개). 겹침 layer — back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 · fx: 무대 효과.
  */
 import type { AvBg, AvItem } from './my';
 
