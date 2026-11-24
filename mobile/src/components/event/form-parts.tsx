@@ -385,7 +385,7 @@ export const spanLabel = (start: string, end: string) => {
 export const defaultEnd = (start: string) => ofMin(Math.min(toMin(start) + 120, toMin(MIDNIGHT)));
 
 /**
- * 시작 시간 ~ 끝나는 시간: 시작 · 끝 칸을 누르면 그 칸 안에서 휠을 돌려 골라요 (이름 줄 · 완료를 누르면 닫혀요).
+ * 시작 시간 ~ 끝나는 시간: 시작 · 끝 칸을 누르면 그 칸 안에서 휠을 돌려 골라요. 시간을 누르면 바로 정해지고 닫혀요 (이름 줄 · 완료로도 닫혀요).
  * 끝은 시작 30분 뒤부터만 · 시작을 끝보다 늦게 바꾸면 끝이 시작 + 2시간으로 따라가요.
  */
 export function TimeRange({ start, end, onChange }: { start: string; end: string; onChange: (start: string, end: string) => void }) {
@@ -409,7 +409,7 @@ export function TimeRange({ start, end, onChange }: { start: string; end: string
             <PText style={[tr.k, tr.kOn]}>{label}</PText>
             <PText style={tr.done}>완료</PText>
           </Pressable>
-          <Wheel bare items={k === 's' ? starts : ends} value={t} label={timeLabel} onChange={(v) => (k === 's' ? pickStart(v) : onChange(start, v))} />
+          <Wheel bare items={k === 's' ? starts : ends} value={t} label={timeLabel} onChange={(v) => (k === 's' ? pickStart(v) : onChange(start, v))} onTap={() => setEdit(null)} />
         </View>
       );
     return (
