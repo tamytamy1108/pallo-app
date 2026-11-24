@@ -436,7 +436,14 @@ export const clearFlash = () => patch(() => ({ flash: null }));
 
 // ---- 챌린지 열기 ----
 export const CH_PH: Record<ChCatKey, string> = { study: '예) 일주일 동안 I’d like to 쓰기', habit: '예) 하루 단어 10개 외우기', health: '예) 아침 건강하게 먹기', move: '예) 하루 30분 걷기', morning: '예) 아침 7시 기상', free: '예) 하루 한 번 하늘 사진' };
-export const CH_GD: Record<DailyCatKey, string> = { habit: '예) 오늘 외운 단어 하나로 문장 만들기', health: '예) 아침 식단 사진 + 한 줄 소감', move: '예) 걸음 수 캡처 + 한 줄', morning: '예) 일어나면 댓글로 Good morning!', free: '예) 오늘 찍은 사진 + 한 줄' };
+/** 챌린지 소개 예시 (한 줄에 하나씩 · 점 목록) */
+export const CH_GD: Record<DailyCatKey, string> = {
+  habit: '• 하루 단어 10개 외우기\n• 외운 단어 하나로 문장 만들기',
+  health: '• 아침 식단 사진 올리기\n• 한 줄 소감 남기기',
+  move: '• 하루 30분 걷기\n• 걸음 수 캡처 + 한 줄',
+  morning: '• 7시 전에 일어나기\n• 댓글로 Good morning!',
+  free: '• 오늘 찍은 사진 한 장\n• 한 줄 소감',
+};
 export const START_OPTS = ['오늘', '내일', '다음 주 월요일'] as const;
 export type StartOpt = (typeof START_OPTS)[number];
 export const DUR_OPTS = [3, 7, 14, 21, 30];

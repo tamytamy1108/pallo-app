@@ -7,7 +7,7 @@ import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-pa
 import { CountStepper, PlacePicker, PosterPicker, TimeChips, type Place } from '@/components/event/form-parts';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
-import { usedCard, type MadeCard } from '@/data/poster-colors';
+import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyMeet } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
@@ -59,6 +59,7 @@ export default function NewMeet() {
   const open = () => {
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!place) return showToast('지도에서 장소를 골라 주세요');
+    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     addMyMeet({
       id: 'u' + Date.now(),
       br: me.branch,
@@ -156,7 +157,7 @@ export default function NewMeet() {
           value={card}
           onChange={setCard}
           hasPhoto={pics.length > 0}
-          fallback={['NEW', 'MEET']}
+          example={['NEW', 'MEET']}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
         />
       </Field>

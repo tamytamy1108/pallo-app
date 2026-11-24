@@ -6,7 +6,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
-import { CARD_COLORS, cardDark, cardWords, fitWordSize, newCard, type MadeCard } from '@/data/poster-colors';
+import { CARD_COLORS, cardDark, fitWordSize, newCard, type MadeCard } from '@/data/poster-colors';
 
 /*
  * '카드 만들기' 칸: 카드 색 고르기 · 큰 글자 두 줄 · 미리보기.
@@ -31,8 +31,8 @@ type Props = {
   onChange: (v: MadeCard | null) => void;
   /** 포스터 사진을 넣었나요 — 없으면 카드가 꼭 필요해요 */
   hasPhoto: boolean;
-  /** 글자 칸 비워 두면 들어가는 글자 (두 줄) */
-  fallback: string[];
+  /** 문구 예시 (두 줄 · 칸 안 흐린 글자) — 문구는 필수라 예시가 그대로 올라가지는 않아요 */
+  example: string[];
   /** 네모 카드 (챌린지) */
   square?: boolean;
   /** 미리보기 그리기 (번개 · 동아리: 기본 포스터 모양) — 없으면 단색 카드 */
@@ -46,7 +46,7 @@ type Props = {
   onNote?: string;
 };
 
-export function CardMaker({ value, onChange, hasPhoto, defaultColor, fallback, square = false, renderPreview, clean = (t) => t, maxLength = 12, onNote = '카드가 대표가 되고, 올린 사진은 그 뒤에 보여요.' }: Props) {
+export function CardMaker({ value, onChange, hasPhoto, defaultColor, example, square = false, renderPreview, clean = (t) => t, maxLength = 12, onNote = '카드가 대표가 되고, 올린 사진은 그 뒤에 보여요.' }: Props) {
   const required = !hasPhoto;
   // 사진이 없으면 손대지 않아도 카드가 있어요 (기본 색 · 기본 글자)
   const card = value ?? (required ? newCard(defaultColor) : null);
@@ -64,13 +64,15 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, fallback, s
   };
   const pw = square ? 96 : 108;
   const ph = square ? 96 : 135;
-  const words = card ? cardWords(card.words, fallback) : fallback;
+  // 아직 안 적었으면 미리보기에 예시를 흐리게
+  const typed = card ? card.words.map((w) => w.trim()).filter(Boolean) : [];
+  const words = typed.length ? typed : example;
   return (
     <View style={styles.maker}>
       {required ? (
         <View style={styles.tHead}>
           <PText style={styles.tB}>대표 카드 만들기</PText>
-          <PText style={styles.tS}>포스터 사진이 없으면 이 카드가 대표로 보여요. 색을 고르고 문구를 넣어 주세요.</PText>
+          <PText style={styles.tS}>포스터 사진이 없으면 이 카드가 대표로 보여요. 색을 고르고 문구를 적어 주세요.</PText>
         </View>
       ) : (
         <Pressable onPress={toggle} accessibilityRole="switch" accessibilityState={{ checked: !!value }} accessibilityLabel="카드도 만들기" style={styles.tRow}>
@@ -86,7 +88,7 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, fallback, s
       {card ? (
         <>
           <View style={styles.row}>
-            <View style={[styles.pv, { width: pw, height: ph, borderRadius: square ? 16 : 14 }]}>
+            <View style={[styles.pv, { width: pw, height: ph, borderRadius: square ? 16 : 14 }, !typed.length && styles.ghost]}>
               {renderPreview ? renderPreview(card, words, pw, ph) : <ColorCard color={card.color} words={words} size={square ? 18 : 26} width={pw} center={square} style={StyleSheet.absoluteFill} />}
             </View>
             <View style={[styles.ins, { height: ph }]}>
@@ -97,7 +99,7 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, fallback, s
                   onChangeText={(t) => setWord(i, t)}
                   maxLength={maxLength}
                   autoCorrect={false}
-                  placeholder={fallback[i] ?? ''}
+                  placeholder={i ? `${example[i] ?? ''} (선택)` : `${example[i] ?? ''} (필수)`}
                   placeholderTextColor="#9B94A6"
                   accessibilityLabel={`카드 문구 ${i ? '둘째' : '첫'} 줄`}
                   style={styles.in}
@@ -105,7 +107,7 @@ export function CardMaker({ value, onChange, hasPhoto, defaultColor, fallback, s
               ))}
             </View>
           </View>
-          <PText style={styles.hint}>문구를 비워 두면 &apos;{fallback.join(' ')}&apos;로 들어가요.</PText>
+          <PText style={styles.hint}>문구는 꼭 적어요 · 첫 줄만 적어도 돼요.</PText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colors}>
             {CARD_COLORS.map((c) => {
               const sel = c.hex === card.color;
@@ -142,6 +144,7 @@ const styles = StyleSheet.create({
   // 문구 칸 두 개를 미리보기 카드 높이 안에서 가운데로 (카드와 위아래가 맞게)
   ins: { flex: 1, gap: 8, justifyContent: 'center' },
   in: { height: 40, borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
+  ghost: { opacity: 0.45 },
   hint: { marginTop: -2, fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   colors: { gap: 8, paddingVertical: 2, paddingRight: 4 },
   dot: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(30,26,43,0.25)', alignItems: 'center', justifyContent: 'center' },

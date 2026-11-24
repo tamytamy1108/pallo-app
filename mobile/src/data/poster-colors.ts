@@ -1,7 +1,7 @@
 /**
  * 만든 카드 색 (번개 · 동아리 · 챌린지 · 이벤트 제안을 열 때 고르는 카드 바탕색).
  * 카드는 기본 포스터 모양(번개 · 동아리는 동그라미 무늬, 챌린지 · 이벤트는 단색) 위에 고른 색과 직접 적은 문구를 넣어요.
- * 포스터 사진이 없으면 카드는 꼭 있어야 해요 (안 만지면 기본 색 · 기본 글자). 사진이 있으면 카드는 선택이고,
+ * 포스터 사진이 없으면 카드는 꼭 있어야 해요 (색은 기본 색부터 · 문구 첫 줄은 꼭 적어요). 사진이 있으면 카드는 선택이고,
  * 카드를 만들면 그게 대표(첫 장)가 되고 사진은 그 뒤에 붙어요.
  * 맞는 API(예정): 각 개설 요청의 `card: { color, words }`.
  */
@@ -40,10 +40,12 @@ export const fitWordSize = (words: string[], width: number, max: number) => {
   const longest = Math.max(1, ...words.map((w) => [...w].length));
   return Math.max(7, Math.min(max, (width * 0.82) / longest));
 };
-/** 새 카드 (기본 색 · 글자는 비워 둬서 기본 글자) */
+/** 새 카드 (기본 색 · 문구는 빈 칸 — 올리기 전에 첫 줄을 꼭 적어요) */
 export const newCard = (color: string = CARD_COLORS[0].hex): MadeCard => ({ color, words: ['', ''] });
 /**
- * 올릴 때 쓰는 카드: 포스터 사진이 없으면 카드는 꼭 있어야 해요 (안 만졌으면 새 카드 그대로).
+ * 올릴 때 쓰는 카드: 포스터 사진이 없으면 카드는 꼭 있어야 해요 (색을 안 골랐으면 기본 색).
  * 사진이 있으면 카드는 선택 — 켠 경우에만.
  */
 export const usedCard = (card: MadeCard | null, hasPhoto: boolean, color?: string) => card ?? (hasPhoto ? undefined : newCard(color));
+/** 카드를 쓰는데 문구를 안 적었나요 (문구는 필수 · 첫 줄만 적어도 돼요) */
+export const missingWords = (c?: MadeCard) => !!c && !c.words.some((w) => w.trim());

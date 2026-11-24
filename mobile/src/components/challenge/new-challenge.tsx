@@ -41,7 +41,7 @@ import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { CountStepper, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
-import { usedCard, type MadeCard } from '@/data/poster-colors';
+import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
@@ -49,6 +49,12 @@ import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
 /** 표현 목록: 이보다 많으면 찾기 · 나온 곳 칩 · 'N개 더 보기' (CH_PAGE) */
 const PAGE = 6;
 const SRC_KEYS = Object.keys(CH_SRC) as ChSrcKind[];
+/** 챌린지 소개: 줄마다 앞에 점(•)을 붙여요 (빈 줄은 그대로 — 적기 시작하면 붙어요) */
+const bulletize = (t: string) =>
+  t
+    .split('\n')
+    .map((l) => (!l.trim() || l.startsWith('• ') ? l : `• ${l.replace(/^\s*[•·\-*]\s*/, '')}`))
+    .join('\n');
 /** 만든 카드 → createDaily 값 (문구 · 카드 색) */
 const cardOf = (c?: MadeCard) => ({ pw: c ? c.words.map((w) => w.trim()).filter(Boolean) : [], pbg: c?.color });
 /** 카드 문구 칸: 영어 대문자 · 숫자 · 몇 가지 기호만 */
@@ -134,6 +140,10 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
         }
         if (!name.trim()) {
           showToast('챌린지 이름을 적어 주세요');
+          return;
+        }
+        if (missingWords(usedCard(card, covers.length > 0, chPbgOf(cat)))) {
+          showToast('카드 문구를 적어 주세요');
           return;
         }
         createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), ...cardOf(usedCard(card, covers.length > 0, chPbgOf(cat))), plan, cover: covers[0] });
@@ -248,13 +258,13 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <PText style={styles.wayd}>{photo ? '사진을 1장 이상 올려야 체크돼요. 댓글은 함께 남겨요.' : '그날 댓글 한 줄만 남기면 체크돼요.'}</PText>
           </View>
           <View style={styles.fl}>
-            <FieldLabel>어떻게 인증하나요?</FieldLabel>
-            <Field value={guide} onChangeText={setGuide} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="어떻게 인증하나요?" />
+            <FieldLabel>챌린지 소개 · 한 줄에 하나씩</FieldLabel>
+            <Field multiline value={guide} onChangeText={(t) => setGuide(bulletize(t))} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="챌린지 소개" />
           </View>
           <View style={styles.fl}>
             <FieldLabel>대표 이미지 · 사진 또는 카드</FieldLabel>
             <PosterPicker uris={covers} onChange={setCovers} emptyLabel="사진 넣기" max={1} />
-            <CardMaker value={card} onChange={setCard} hasPhoto={covers.length > 0} defaultColor={chPbgOf(cat)} fallback={pwDef} square clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요." />
+            <CardMaker value={card} onChange={setCard} hasPhoto={covers.length > 0} defaultColor={chPbgOf(cat)} example={pwDef} square clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요." />
             <PText style={styles.wayd}>{covers.length && !card ? '순위 · 카드 · 상세의 네모 칸에 이 사진이 보여요.' : '순위 · 카드 · 상세의 네모 칸에 이 카드가 보여요.'}</PText>
           </View>
         </>

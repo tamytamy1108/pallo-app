@@ -6,7 +6,7 @@ import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-pa
 import { CountStepper, MultiPills, PosterPicker, TimeChips } from '@/components/event/form-parts';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
-import { usedCard, type MadeCard } from '@/data/poster-colors';
+import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyClub } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
@@ -47,6 +47,7 @@ export default function NewClub() {
 
   const ask = () => {
     if (!name.trim()) return showToast('동아리 이름을 적어 주세요');
+    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     addMyClub({
       id: 'u' + Date.now(),
       cc: (CLUB_CATS.find((c) => c[1] === cat) || CLUB_CATS[0])[0],
@@ -104,7 +105,7 @@ export default function NewClub() {
           value={card}
           onChange={setCard}
           hasPhoto={pics.length > 0}
-          fallback={['NEW', 'CLUB']}
+          example={['NEW', 'CLUB']}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
         />
       </Field>

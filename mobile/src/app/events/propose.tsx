@@ -7,7 +7,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
 import { MonthCalendar, PlacePicker, PosterPicker, type Place } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
-import { usedCard, type MadeCard } from '@/data/poster-colors';
+import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { Icon } from '@/components/meet/icons';
 import { addProposal } from '@/components/meet/meet-store';
@@ -52,6 +52,7 @@ export default function ProposeEvent() {
     if (!date) return showToast('희망 날짜를 골라 주세요');
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
+    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0) });
     sfx('save');
     router.back();
@@ -70,7 +71,7 @@ export default function ProposeEvent() {
       </View>
       <Field label="대표 이미지 · 사진 여러 장 또는 카드" hint={pics.length ? (card ? '카드가 대표예요. 사진은 그 뒤에 보여요.' : '첫 장이 대표 사진이 돼요. 사진을 누르면 대표로 바꿔요.') : '사진이 없으면 아래 카드가 대표예요.'}>
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
-        <CardMaker value={card} onChange={setCard} hasPhoto={pics.length > 0} fallback={['NEW', 'EVENT']} />
+        <CardMaker value={card} onChange={setCard} hasPhoto={pics.length > 0} example={['NEW', 'EVENT']} />
       </Field>
       <Field label="진행 지점" req>
         <Pressable onPress={() => setBrOpen(true)} accessibilityRole="button" accessibilityLabel={`진행 지점 ${br}`} style={styles.sel}>
