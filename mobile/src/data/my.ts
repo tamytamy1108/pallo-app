@@ -6,7 +6,7 @@
  */
 import type { SavedExpression } from '@/state/expressions';
 
-import { AV_BG, AV_ITEMS } from './av-items';
+import { AV_BG, AV_BODIES, AV_ITEMS } from './av-items';
 
 // ---------------------------------------------------------------- 꾸미기 (스파크 상점)
 
@@ -32,6 +32,8 @@ export type AvItem = {
   /** 몸 색 눈꺼풀: t = 위에서 덮는 정도 · b = 아래에서 (웃는 눈) · only = 한쪽 눈만 (0 왼 · 1 오른) */
   lid?: { t?: number; b?: number; only?: number };
 };
+/** 유료 그라데이션 몸 색 (scripts/av-art/bodies.json) · lid = 눈꺼풀 색 */
+export type AvBody = { id: string; name: string; price: number; rare: AvRare; lid: string };
 export type AvBg = { id: string; name: string; price: number; rare: AvRare; lock?: string; /** 동그란 프로필 바탕색 (프로토타입 lgFace) */ face: string };
 
 /** 꾸민 모습. color · bg · hc 는 이름이거나 직접 고른 '#RRGGBB' */
@@ -50,17 +52,30 @@ export { AV_BG, AV_ITEMS };
 export const AV_ITEM: Record<string, AvItem> = Object.fromEntries(AV_ITEMS.map((i) => [i.id, i]));
 export const HAIR = AV_ITEMS.filter((i) => i.hair);
 
-/** 추천 몸 색 [이름, 표시 이름, 가격] — 원본 PNG 가 색마다 따로 있어요 */
-export const AVC_LIST: readonly (readonly [string, string, number])[] = [
-  ['yellow', '팔로 옐로', 0],
-  ['purple', '팔로 퍼플', 0],
-  ['pink', '버블 핑크', 0],
-  ['sky', '스카이', 0],
-  ['green', '민트 그린', 0],
-  ['coral', '코랄', 0],
-  ['purple-lash', '속눈썹 퍼플', 0],
+/**
+ * 추천 몸 색 [이름, 표시 이름, 가격, 등급] — 원본 PNG 가 색마다 따로 있어요.
+ * 원본 7색은 모두 무료(기본) · 그라데이션 색은 스파크로 사요. 직접 고른 색('#…')도 무료예요.
+ */
+export const AVC_LIST: readonly (readonly [string, string, number, AvRare])[] = [
+  ['yellow', '팔로 옐로', 0, '기본'],
+  ['purple', '팔로 퍼플', 0, '기본'],
+  ['pink', '버블 핑크', 0, '기본'],
+  ['sky', '스카이', 0, '기본'],
+  ['green', '민트 그린', 0, '기본'],
+  ['coral', '코랄', 0, '기본'],
+  ['purple-lash', '속눈썹 퍼플', 0, '기본'],
+  ...AV_BODIES.map((b) => [b.id, b.name, b.price, b.rare] as const),
 ];
-export const AV_COLOR_HEX: Record<string, string> = { yellow: '#FFE200', purple: '#493087', pink: '#F28CB1', sky: '#7FA7E8', green: '#5CBF8A', coral: '#FF7A59', 'purple-lash': '#493087' };
+export const AV_COLOR_HEX: Record<string, string> = {
+  yellow: '#FFE200',
+  purple: '#493087',
+  pink: '#F28CB1',
+  sky: '#7FA7E8',
+  green: '#5CBF8A',
+  coral: '#FF7A59',
+  'purple-lash': '#493087',
+  ...Object.fromEntries(AV_BODIES.map((b) => [b.id, b.lid])),
+};
 export const AV_SW = ['#FFE200', '#FFB800', '#FF7A59', '#E5484D', '#F28CB1', '#D16BD6', '#8B5CF6', '#493087', '#2F6FD0', '#7FA7E8', '#38BDF8', '#2DD4BF', '#5CBF8A', '#9BCB3C', '#B5651D', '#3A3A48', '#A7ABB8', '#FFF4D6'];
 export const HAIR_SW = ['#1E1A2B', '#3B2A20', '#7A4A2A', '#C68B4E', '#F2D16B', '#FFFFFF', '#F28CB1', '#E5484D', '#8B5CF6', '#7FA7E8', '#5CBF8A', '#A7ABB8'];
 export const BG_SW = ['#FBF6EA', '#FFF1A8', '#FFE0EA', '#E5DDF6', '#DCEBFF', '#D7F2E3', '#FFE3D6', '#F2F2F2', '#1E1A2B', '#493087', '#2F6FD0', '#5CBF8A'];
@@ -105,8 +120,8 @@ export const avFresh = (): Avatar => ({
   say: '',
   eq: { hair: null, eye: null, mitt: null, shoe: 's-purple', hat: 'h-beanie', face: null, wear: 'w-tee', hand: 'd-flag', acc: 'a-bow', fx: null },
 });
-/** 처음부터 가진 것: 기본 등급 아이템 · 배경 */
-export const AV_OWN0 = ['yellow', 'purple', 'cream', 'yellow-bg', ...AV_ITEMS.filter((i) => i.rare === '기본').map((i) => i.id), ...AV_BG.filter((b) => b.rare === '기본').map((b) => 'bg:' + b.id)];
+/** 처음부터 가진 것: 무료 몸 색 · 기본 등급 아이템 · 배경 */
+export const AV_OWN0 = [...AVC_LIST.filter((c) => !c[2]).map((c) => c[0]), 'cream', 'yellow-bg', ...AV_ITEMS.filter((i) => i.rare === '기본').map((i) => i.id), ...AV_BG.filter((b) => b.rare === '기본').map((b) => 'bg:' + b.id)];
 
 // ---------------------------------------------------------------- 멤버 (다른 사람 캐릭터는 이름으로 늘 같은 조합)
 

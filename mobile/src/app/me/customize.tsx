@@ -172,7 +172,7 @@ export default function CustomizeScreen() {
       <>
         <ColorPick key={`c${gen}`} title="내 맘대로 몸 색 · 무료" cur={d.color} swatches={AV_SW} onPick={(hex) => edit((x) => void (x.color = hex))} />
         {sub('추천 색')}
-        <View style={styles.tiles}>{AVC_LIST.map(([k, n, pr]) => tile(k, n, pr, pr ? '에픽' : '기본', d.color === k, <BodyArt color={k} width={Math.min(artW * 0.92, 58 / (332 / 520))} />))}</View>
+        <View style={styles.tiles}>{AVC_LIST.map(([k, n, pr, rare]) => tile(k, n, pr, rare, d.color === k, <BodyArt color={k} width={Math.min(artW * 0.92, 58 / (332 / 520))} />))}</View>
       </>
     );
   } else if (cat === 'hair') {

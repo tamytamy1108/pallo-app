@@ -1,0 +1,90 @@
+{
+  "note": "유료 그라데이션 몸 색. make-bodies.js 가 노랑 원본(tint-*) 위에 이 색을 칠해 body-<id>.png 를 만들어요. lid = 눈꺼풀 색(눈 높이의 그라데이션 색).",
+  "bodies": [
+    {
+      "id": "g-sunset",
+      "name": "노을 선셋",
+      "price": 300,
+      "rare": "레어",
+      "lid": "#FFA84B",
+      "stops": [
+        "#FF7A59",
+        "#FFB547",
+        "#FFE200"
+      ]
+    },
+    {
+      "id": "g-ocean",
+      "name": "오션 블루",
+      "price": 300,
+      "rare": "레어",
+      "lid": "#34C6E2",
+      "stops": [
+        "#38BDF8",
+        "#2DD4BF"
+      ]
+    },
+    {
+      "id": "g-cotton",
+      "name": "솜사탕",
+      "price": 300,
+      "rare": "레어",
+      "lid": "#C6A7E6",
+      "stops": [
+        "#F7A8C4",
+        "#B9A7F0",
+        "#9FD4F5"
+      ]
+    },
+    {
+      "id": "g-peach",
+      "name": "피치 레모네이드",
+      "price": 300,
+      "rare": "레어",
+      "lid": "#FFC595",
+      "stops": [
+        "#FFB3A7",
+        "#FFE27A"
+      ]
+    },
+    {
+      "id": "g-aurora",
+      "name": "오로라",
+      "price": 500,
+      "rare": "에픽",
+      "lid": "#40BDE0",
+      "stops": [
+        "#5CBF8A",
+        "#38BDF8",
+        "#8B5CF6"
+      ]
+    },
+    {
+      "id": "g-galaxy",
+      "name": "갤럭시",
+      "price": 500,
+      "rare": "에픽",
+      "lid": "#422D79",
+      "stops": [
+        "#2A2148",
+        "#493087",
+        "#D16BD6"
+      ]
+    },
+    {
+      "id": "g-rainbow",
+      "name": "무지개",
+      "price": 600,
+      "rare": "에픽",
+      "lid": "#FFDF03",
+      "stops": [
+        "#FF6B6B",
+        "#FF9F43",
+        "#FFE200",
+        "#5CBF8A",
+        "#5B8DEF",
+        "#8B5CF6"
+      ]
+    }
+  ]
+}

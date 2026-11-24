@@ -8,6 +8,7 @@
 - `lab.html` — 노랑 캐릭터에 입혀 보는 작업대 (`?cat=hat` · `?cat=combo` · `&w=380` 크게).
 - `export.html` — PNG 를 떠서 `assets/characters/av/` 에 저장하고 `geo.json`(자리)을 만들어요.
 - `make-assets.js` — `geo.json` → `src/components/character/av-assets.ts` · `src/data/av-items.ts`.
+- `bodies.json` · `make-bodies.js` — 유료 그라데이션 몸 색. 색을 고치고 `node mobile/scripts/av-art/make-bodies.js` → `make-assets.js`.
 
 ## 고치는 순서
 

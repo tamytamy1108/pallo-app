@@ -4,6 +4,8 @@
 // 실행: node mobile/scripts/av-art/make-assets.js
 const fs = require('fs'), path = require('path');
 const geo = JSON.parse(fs.readFileSync(path.join(__dirname, 'geo.json'), 'utf8'));
+/** 유료 그라데이션 몸 색 (make-bodies.js 가 PNG 를 만들어요) */
+const { bodies } = JSON.parse(fs.readFileSync(path.join(__dirname, 'bodies.json'), 'utf8'));
 const src = path.join(__dirname, '../../src');
 const req = (f) => `require('@/assets/characters/av/${f}.png')`;
 const q = (s) => `'${String(s).replace(/'/g, "\\'")}'`;
@@ -34,9 +36,9 @@ a += `\n/** 앞머리 그림 (바탕 + 색칠 자리) */\nexport const AV_HAIR_F
 a += `\nexport const AV_GEO: Record<string, AvGeo> = {\n${Object.entries(geo.items).map(([id, g]) => `  ${q(id)}: ${g.hair ? `{ k: 'hair', back: ${arr(g.back)}${g.front ? `, front: ${arr(g.front)}` : ''} }` : g.k === 'none' ? `{ k: 'none' }` : `{ k: '${g.k}', r: ${arr(g.r)} }`},`).join('\n')}\n};\n`;
 a += `\nexport const AV_BG_ART: Record<string, number> = {\n${geo.bgMeta.map((b) => `  ${q(b.id)}: ${req('bg-' + b.id)},`).join('\n')}\n};\n`;
 a += `
-/** 원본 3D 몸 PNG (색마다 따로 그린 원본) */
+/** 몸 PNG: 원본 3D (색마다 따로 그린 원본) + 그라데이션 (bodies.json) */
 export const AV_BODY: Record<string, number> = {
-${['yellow', 'purple', 'pink', 'sky', 'green', 'coral', 'purple-lash'].map((c) => `  ${q(c)}: ${req('body-' + c)},`).join('\n')}
+${['yellow', 'purple', 'pink', 'sky', 'green', 'coral', 'purple-lash', ...bodies.map((b) => b.id)].map((c) => `  ${q(c)}: ${req('body-' + c)},`).join('\n')}
 };
 
 /** 직접 고른 몸 색: 노랑 원본에서 노랑 몸 픽셀만 떼어 낸 4장 (프로토타입 avTintMake 와 같은 기준) */
@@ -60,10 +62,15 @@ const d = `/**
  * 꾸미기 아이템 · 배경 목록 (자동 생성 — scripts/av-art/art.js 를 고친 뒤 make-assets.js 로 다시 만들어요).
  * 카테고리마다 10개 (옷은 11개). 겹침 layer — back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 · fx: 무대 효과.
  */
-import type { AvBg, AvItem } from './my';
+import type { AvBg, AvBody, AvItem } from './my';
 
 export const AV_ITEMS: AvItem[] = [
 ${geo.meta.map(it).join('\n')}
+];
+
+/** 유료 그라데이션 몸 색 (lid = 눈꺼풀 색) */
+export const AV_BODIES: AvBody[] = [
+${bodies.map((b) => `  { id: ${q(b.id)}, name: ${q(b.name)}, price: ${b.price}, rare: ${q(b.rare)}, lid: ${q(b.lid)} },`).join('\n')}
 ];
 
 export const AV_BG: AvBg[] = [
