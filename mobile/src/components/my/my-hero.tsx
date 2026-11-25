@@ -1,6 +1,7 @@
 import { router, useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Svg, { Circle, Defs, Mask, Rect } from 'react-native-svg';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
 import { RoleTag, type RoleKind } from '@/components/common/role-tag';
@@ -21,7 +22,6 @@ import { useMe, type Me } from '@/state/me';
 
 import { BioSheet } from './bio-sheet';
 import { DecoIcon, SparkIcon } from './icons';
-import { Lift } from './lift';
 
 const LANG_NAME = { en: '영어', ja: '일본어', zh: '중국어', es: '스페인어' } as const;
 
@@ -64,12 +64,14 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
             hitSlop={4}
             style={styles.deco}>
             {({ pressed }) => (
-              // 비치는 흰 동그라미 (캐릭터 방이 뒤로 보여요) · 뒤 그림자는 그대로
-              <Lift radius={19} pressed={pressed}>
-                <View style={styles.decoBtn}>
+              // 투명한 동그라미 (캐릭터 방이 그대로 비쳐요) · 그림자는 버튼 밖으로 삐져나온 초승달만 그려요
+              // (꽉 찬 그림자 원을 깔면 투명한 칸 안으로 비쳐 회색이 돼요)
+              <View style={styles.decoWrap}>
+                {!pressed ? <DecoShadow /> : null}
+                <View style={[styles.decoBtn, pressed && styles.decoDown]}>
                   <DecoIcon />
                 </View>
-              </Lift>
+              </View>
             )}
           </Pressable>
           <View style={styles.spark} accessibilityLabel={`스파크 ${me.sparks}개`}>
@@ -200,17 +202,35 @@ const DOT = {
   guest: { backgroundColor: '#B9B0A0' },
 } as const;
 
+/** 붓 버튼 그림자: 오른쪽 아래로 2px 밀린 원에서 버튼 원을 뺀 초승달 (안은 비워 둬요) */
+function DecoShadow() {
+  return (
+    <Svg width={40} height={40} style={styles.decoShadow} pointerEvents="none">
+      <Defs>
+        <Mask id="deco-cut">
+          <Rect width={40} height={40} fill="#fff" />
+          <Circle cx={19} cy={19} r={19} fill="#000" />
+        </Mask>
+      </Defs>
+      <Circle cx={21} cy={21} r={19} fill={Colors.ink} mask="url(#deco-cut)" />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   card: { padding: 10, gap: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: Radius.card, backgroundColor: Colors.white },
   deco: { position: 'absolute', top: 22, right: 22, zIndex: 4 },
+  decoWrap: { width: 40, height: 40 },
+  decoShadow: { position: 'absolute', left: 0, top: 0 },
+  decoDown: { transform: [{ translateX: 2 }, { translateY: 2 }] },
   decoBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
     borderColor: Colors.ink,
-    // 투명: 비치는 흰색 (스파크 알약과 같은 0.85 보다 더 비치게)
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    // 투명 (캐릭터 방이 그대로 비쳐요)
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
