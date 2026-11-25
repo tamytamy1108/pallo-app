@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
+import { RoleTag, type RoleKind } from '@/components/common/role-tag';
 import { Pressable } from '@/components/ui/pressable';
 import { AvatarStage } from '@/components/character/avatar';
 import { Raised } from '@/components/ui/raised';
@@ -15,12 +16,22 @@ import { EASE, SPRING } from '@/lib/motion';
 import { finishMyMoment, useLinkEvents } from '@/state/link-events';
 import { useMyAvatar } from '@/state/avatar';
 import { canUse } from '@/state/access';
-import { useMe } from '@/state/me';
+import { useMe, type Me } from '@/state/me';
 
 import { DecoIcon, SparkIcon } from './icons';
 import { Lift } from './lift';
 
 const LANG_NAME = { en: '영어', ja: '일본어', zh: '중국어', es: '스페인어' } as const;
+
+/** 계정 역할 → 이름 옆 글자 (회원 · 비회원은 없음) */
+const staffKind = (role: Me['role']): RoleKind | null => (role === 'leader' ? 'pro' : role === 'manager' ? 'staff' : null);
+
+/** 프로 · 직원 이름 아래 줄 (시안 prototype/assets/roles/my-pro-1 · my-staff-1) */
+function staffLine(me: Me) {
+  if (me.role === 'manager') return `${me.branch} · 지점 관리자`;
+  const langs = me.teachLangs.length ? me.teachLangs : [me.lang];
+  return [me.branch, ...langs.map((l) => LANG_NAME[l])].join(' · ');
+}
 
 /**
  * 마이 맨 위 캐릭터 룸 카드 (프로토타입 .my-hero): 무대 + [꾸미기] 붓 · 스파크 잔액 + 이름 · 지점 줄 · 한 줄 소개 · 팔로잉/팔로워.
@@ -30,6 +41,7 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
   const me = useMe();
   const av = useMyAvatar();
   const lists = followLists(me.name, me, me.following);
+  const staff = staffKind(me.role);
   // 카드 테두리 2 · 안쪽 여백 10
   const stageW = width - 4 - 20;
   return (
@@ -58,20 +70,29 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
           <PText style={styles.sparkN}>{me.sparks.toLocaleString()}</PText>
         </View>
         <View style={styles.id}>
-          <PText style={styles.name}>{me.name}</PText>
-          <View style={styles.subRow}>
-            {/* 지점: 연동했거나 요청한 지점 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어서 언어 · 레벨만 */}
-            <PText style={styles.sub}>
-              {me.link !== 'none' ? `${me.branch} · ` : me.trial ? `${me.trial.branch} · ` : ''}
-              {LANG_NAME[me.lang]}
-              {/* 레벨은 지점 회원(연동 요청 · 연동됨)만 — 비회원은 아직 레벨 테스트 전이에요 */}
-              {me.link !== 'none' ? ` ${me.level}` : ''}
-              {me.link === 'linked' ? ' · 회원' : ''}
-            </PText>
-            {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
-                비회원은 '체험 예약' · '비회원' 표시만 */}
-            {me.link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={me.link !== 'none' ? me.link : me.trial ? 'trial' : 'guest'} />}
+          <View style={styles.nameRow}>
+            <PText style={styles.name}>{me.name}</PText>
+            {/* 프로 · 직원은 이름 옆에 PRO · STAFF (10-roles 8장) */}
+            {staff ? <RoleTag kind={staff} big /> : null}
           </View>
+          {staff ? (
+            // 프로: 지점 · 가르치는 언어 / 지점 관리자: 지점 · 지점 관리자 — 연동 표시는 붙이지 않아요
+            <PText style={styles.sub}>{staffLine(me)}</PText>
+          ) : (
+            <View style={styles.subRow}>
+              {/* 지점: 연동했거나 요청한 지점 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어서 언어 · 레벨만 */}
+              <PText style={styles.sub}>
+                {me.link !== 'none' ? `${me.branch} · ` : me.trial ? `${me.trial.branch} · ` : ''}
+                {LANG_NAME[me.lang]}
+                {/* 레벨은 지점 회원(연동 요청 · 연동됨)만 — 비회원은 아직 레벨 테스트 전이에요 */}
+                {me.link !== 'none' ? ` ${me.level}` : ''}
+                {me.link === 'linked' ? ' · 회원' : ''}
+              </PText>
+              {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
+                  비회원은 '체험 예약' · '비회원' 표시만 */}
+              {me.link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={me.link !== 'none' ? me.link : me.trial ? 'trial' : 'guest'} />}
+            </View>
+          )}
           {me.bio || !canUse(me, 'settings') ? (
             <PText style={styles.bio}>{me.bio || '한 줄 소개를 남겨 보세요'}</PText>
           ) : (
@@ -177,6 +198,7 @@ const styles = StyleSheet.create({
   spark: { position: 'absolute', top: 28, left: 22, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 14, paddingVertical: 4, paddingHorizontal: 10 },
   sparkN: { fontFamily: Font.display, fontSize: 13, lineHeight: 17 },
   id: { paddingHorizontal: 6, paddingBottom: 6, gap: 2 },
+  nameRow: { flexDirection: 'row', alignItems: 'center' },
   name: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
   subRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5 },
   sub: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },

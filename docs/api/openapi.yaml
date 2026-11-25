@@ -10654,6 +10654,19 @@ components:
             - study
             - app
           example: study
+        teachLangs:
+          type: array
+          description: (추가) 프로가 가르치는 언어. 마이 이름 아래 줄 '하남점 · 영어 · 일본어' (10-roles 8장). 프로가 아니면 빈 배열
+          items:
+            type: string
+            enum:
+              - en
+              - ja
+              - zh
+              - es
+          example:
+            - en
+            - ja
         primaryBranch:
           description: (추가) 대표 지점 · 앱 Me.branch
           oneOf:
