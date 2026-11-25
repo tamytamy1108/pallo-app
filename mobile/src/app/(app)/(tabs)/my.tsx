@@ -15,6 +15,7 @@ import { BranchBoard } from '@/components/my/branch-board';
 import { GearIcon, LgIcon } from '@/components/my/icons';
 import { BadgeGrid, MyList, MyStats, RankSummary, SecHead } from '@/components/my/my-blocks';
 import { MyHero } from '@/components/my/my-hero';
+import { MyMeetsSheet, useMyMeetCounts } from '@/components/my/my-meets-sheet';
 import { BadgeSheet, FollowSheet, MeetsSheet } from '@/components/my/my-sheets';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,8 @@ export default function MyScreen() {
   const savedChal = useSavedChallengeCount();
   const [chals, setChals] = useState(false);
   const [askReset, setAskReset] = useState(false);
+  const [myMeetsOpen, setMyMeetsOpen] = useState(false);
+  const myMeets = useMyMeetCounts();
 
   const people = rankPeople('w', me);
   const myRank = people.findIndex((p) => p.me) + 1;
@@ -100,7 +103,7 @@ export default function MyScreen() {
             items={[
               { ic: 'flame', v: `${me.streak}일`, l: '연속 학습', onPress: go('/me/ranking') },
               { ic: 'crown', v: `${myRank}위`, l: '이번 주 랭킹', onPress: go('/me/ranking') },
-              { ic: 'users', v: `${me.joinedMeets}개`, l: '참여 중인 모임', onPress: () => setMeets('joined') },
+              { ic: 'users', v: `${myMeets.active}개`, l: '참여 중인 모임', onPress: () => setMyMeetsOpen(true) },
               { ic: 'heart', v: `${MY_BADGES.filter((b) => b.on).length}개`, l: '받은 배지', onPress: () => setBadges(true) },
             ]}
           />
@@ -138,7 +141,7 @@ export default function MyScreen() {
             <Appear kind="rise">
               <MyList
                 rows={[
-                  { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: `${me.joinedMeets}개`, onPress: () => setMeets('joined') },
+                  { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: `${myMeets.total}개`, onPress: () => setMyMeetsOpen(true) },
                   { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: `${me.savedMeets}개`, onPress: () => setMeets('saved') },
                   { label: '찜한 챌린지', icon: <LgIcon name="heart" size={18} />, value: `${savedChal}개`, onPress: () => setChals(true) },
                   {
@@ -169,16 +172,19 @@ export default function MyScreen() {
           </View>
         </ScrollLock>
 
-        {/* 개발용 입구: 출시 전에 빼요 */}
-        <View style={styles.dev}>
-          <Button label="디자인 부품 보기" variant="secondary" onPress={() => router.push('/design')} />
-          <Button label="기기에 저장한 기록 지우기" variant="secondary" onPress={() => setAskReset(true)} />
-        </View>
+        {/* 개발용 입구: 개발 서버(__DEV__)에서만 보여요 — 실제 앱에는 안 나와요 */}
+        {__DEV__ ? (
+          <View style={styles.dev}>
+            <Button label="디자인 부품 보기" variant="secondary" onPress={() => router.push('/design')} />
+            <Button label="기기에 저장한 기록 지우기" variant="secondary" onPress={() => setAskReset(true)} />
+          </View>
+        ) : null}
       </ScrollView>
 
       <FollowSheet name={follow ? me.name : null} tab={follow ?? 'fer'} onTab={setFollow} onClose={() => setFollow(null)} />
       <BadgeSheet open={badges} onClose={() => setBadges(false)} />
       <MeetsSheet kind={meets} onClose={() => setMeets(null)} />
+      <MyMeetsSheet open={myMeetsOpen} onClose={() => setMyMeetsOpen(false)} />
       <SavedChallengesSheet open={chals} onClose={() => setChals(false)} />
       <ConfirmDialog
         open={askReset}

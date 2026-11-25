@@ -28,13 +28,14 @@ export function ClubThumb({ words, bg, uri }: { words: string[]; bg: string; uri
 }
 
 /** 동아리 한 줄 (프로토타입 lgClubRow · .lg-cr): 포스터 썸네일 · 이름 · 한 줄 소개 · 카테고리 · 지점 · 멤버 수 · 최근 대화 */
-export function ClubRow({ c, first }: { c: Club; first?: boolean }) {
+/** onOpen: 시트 안 등에서 열 때 (안 주면 바로 상세로) */
+export function ClubRow({ c, first, onOpen }: { c: Club; first?: boolean; onOpen?: () => void }) {
   const inC = useMeetStore((s) => s.club[c.id] === 'in');
   const { words, bg, uri } = posterSlides(c.id, true, c.posters, c.card)[0];
   const x = clubX(c);
   const cat = clubCat(c);
   return (
-    <Pressable onPress={() => router.push(`/club/${c.id}`)} accessibilityRole="button" accessibilityLabel={`${c.name} 자세히 보기`} style={({ pressed }) => [styles.row, !first && styles.rowLine, pressed && { opacity: 0.7 }]}>
+    <Pressable onPress={onOpen ?? (() => router.push(`/club/${c.id}`))} accessibilityRole="button" accessibilityLabel={`${c.name} 자세히 보기`} style={({ pressed }) => [styles.row, !first && styles.rowLine, pressed && { opacity: 0.7 }]}>
       <ClubThumb words={words} bg={bg} uri={uri} />
       <View style={styles.tx}>
         <View style={styles.tRow}>

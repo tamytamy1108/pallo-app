@@ -166,5 +166,5 @@ const styles = StyleSheet.create({
   doneS: { position: 'absolute', top: 3, left: 3, width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.ink },
   done: { width: 64, height: 64, borderRadius: 32, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
-  foot2: { flex: 1, alignItems: 'center', gap: 4 },
+  foot2: { alignItems: 'center', gap: 4 },
 });

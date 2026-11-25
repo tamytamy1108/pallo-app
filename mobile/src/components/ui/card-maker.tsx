@@ -152,7 +152,8 @@ const styles = StyleSheet.create({
   pv: { overflow: 'hidden', borderWidth: 2, borderColor: Colors.ink },
   // 문구 칸 두 개를 미리보기 카드 높이 안에서 가운데로 (카드와 위아래가 맞게)
   ins: { flex: 1, gap: 8, justifyContent: 'center' },
-  in: { height: 40, borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
+  // Android: 기본 위아래 여백 · 글꼴 여백 때문에 40 칸 안에서 글자가 위로 잘려 보여서 0 으로 · 가운데 정렬 (TextField 와 같게)
+  in: { height: 40, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
   ghost: { opacity: 0.45 },
   list: { gap: 6, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
   listL: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },

@@ -52,7 +52,7 @@ export default function EventScreen() {
           </PText>
         </View>
         <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
-          <BranchSelect value={branch} onChange={setBranch} />
+          <BranchSelect value={branch} onChange={setBranch} title="어느 지점 이벤트를 볼까요?" />
           <View style={styles.sep} />
           {EVENT_FILTERS.map(([k, l]) => {
             const on = kind === k;

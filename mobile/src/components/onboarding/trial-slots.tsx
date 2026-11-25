@@ -1,6 +1,10 @@
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import Svg, { Path, Rect } from 'react-native-svg';
 
+import { MonthCalendar } from '@/components/event/form-parts';
 import { Pressable } from '@/components/ui/pressable';
+import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -27,11 +31,33 @@ export type TrialSlot = { time: string; full: boolean };
 const WEEK = '일월화수목금토';
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** 내일부터 5일 */
+/** 옆으로 넘겨 고르는 날짜: 내일부터 2주 (그 뒤는 달력으로) */
+export const TRIAL_QUICK_DAYS = 14;
+/** 달력으로 고를 수 있는 끝 (오늘부터 며칠 뒤까지) */
+export const TRIAL_LAST_DAY = 60;
+
+const tileOf = (d: Date): TrialDayTile => ({ key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, month: d.getMonth() + 1, date: d.getDate(), week: WEEK[d.getDay()] });
+
+/** 'YYYY-MM-DD' → 날짜 칸 (형식이 틀리면 null) */
+export function trialDayTile(key: string): TrialDayTile | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+  return m ? tileOf(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))) : null;
+}
+
+/** 고를 수 있는 날인지 (내일 ~ TRIAL_LAST_DAY 일 뒤) */
+export function isTrialDay(key: string, now = new Date()) {
+  const t = trialDayTile(key);
+  if (!t) return false;
+  const d = new Date(Number(key.slice(0, 4)), t.month - 1, t.date);
+  const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((d.getTime() - t0.getTime()) / 86400000);
+  return diff >= 1 && diff <= TRIAL_LAST_DAY;
+}
+
+/** 내일부터 2주 */
 export function trialDayTiles(now = new Date()): TrialDayTile[] {
-  return Array.from({ length: 5 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i + 1);
-    return { key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, month: d.getMonth() + 1, date: d.getDate(), week: WEEK[d.getDay()] };
+  return Array.from({ length: TRIAL_QUICK_DAYS }, (_, i) => {
+    return tileOf(new Date(now.getFullYear(), now.getMonth(), now.getDate() + i + 1));
   });
 }
 
@@ -90,24 +116,7 @@ export function TrialSlots({
 }) {
   return (
     <View>
-      <View style={styles.days} accessibilityRole="radiogroup" accessibilityLabel="상담 날짜">
-        {days.map((d) => {
-          const on = d.key === day;
-          return (
-            <Pressable
-              key={d.key}
-              sound="pick"
-              onPress={() => onDay(d.key)}
-              accessibilityRole="radio"
-              accessibilityLabel={`${d.month}월 ${d.date}일 ${d.week}요일`}
-              accessibilityState={{ selected: on, checked: on }}
-              style={({ pressed }) => [styles.day, on && styles.dayOn, pressed && styles.pressed]}>
-              <PText style={[styles.dayWeek, on && styles.dayWeekOn]}>{d.week}</PText>
-              <PText style={[styles.dayNum, on && styles.textOnDark]}>{d.date}</PText>
-            </Pressable>
-          );
-        })}
-      </View>
+      <DayStrip days={days} day={day} onDay={onDay} />
       <View style={styles.slots} accessibilityRole="radiogroup" accessibilityLabel="상담 시간">
         {slots.map((s) => {
           const on = !s.full && s.time === time;
@@ -132,17 +141,73 @@ export function TrialSlots({
   );
 }
 
+/**
+ * 날짜 줄: 내일부터 2주를 옆으로 넘겨 골라요. 맨 끝 [달력] 칸으로 그 뒤 날짜(2주 뒤 ~ 두 달)를 직접 골라요.
+ * 달력에서 고른 날은 줄 끝(달력 칸 앞)에 따로 보여요.
+ */
+function DayStrip({ days, day, onDay }: { days: TrialDayTile[]; day: string; onDay: (key: string) => void }) {
+  const [cal, setCal] = useState(false);
+  const ref = useRef<ScrollViewInstance>(null);
+  const later = days.some((d) => d.key === day) ? null : trialDayTile(day);
+  const tile = (d: TrialDayTile, on: boolean, extra?: boolean) => (
+    <Pressable
+      key={d.key}
+      sound="pick"
+      onPress={() => (extra ? setCal(true) : onDay(d.key))}
+      accessibilityRole="radio"
+      accessibilityLabel={`${d.month}월 ${d.date}일 ${d.week}요일${extra ? ' · 달력에서 고른 날 · 바꾸기' : ''}`}
+      accessibilityState={{ selected: on, checked: on }}
+      style={({ pressed }) => [styles.day, on && styles.dayOn, pressed && styles.pressed]}>
+      <PText style={[styles.dayWeek, on && styles.dayWeekOn]}>{extra ? `${d.month}월 ${d.week}` : d.date === 1 || d === days[0] ? `${d.month}월 ${d.week}` : d.week}</PText>
+      <PText style={[styles.dayNum, on && styles.textOnDark]}>{d.date}</PText>
+    </Pressable>
+  );
+  return (
+    <>
+      <ScrollView ref={ref} horizontal showsHorizontalScrollIndicator={false} style={styles.strip} contentContainerStyle={styles.days} accessibilityRole="radiogroup" accessibilityLabel="상담 날짜 · 옆으로 넘겨 2주">
+        {days.map((d) => tile(d, d.key === day))}
+        {later ? tile(later, true, true) : null}
+        <Pressable sound="open" onPress={() => setCal(true)} accessibilityRole="button" accessibilityLabel="2주 뒤 날짜를 달력에서 고르기" style={({ pressed }) => [styles.day, styles.calTile, pressed && styles.pressed]}>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <Rect x={3.5} y={5} width={17} height={15.5} rx={3} />
+            <Path d="M3.5 10h17M8 3v4M16 3v4" />
+          </Svg>
+          <PText style={styles.calTileT}>달력</PText>
+        </Pressable>
+      </ScrollView>
+      <Sheet open={cal} onClose={() => setCal(false)} title="상담 날짜를 골라요">
+        <MonthCalendar
+          value={later ? later.key : ''}
+          onChange={(key) => {
+            onDay(key);
+            setCal(false);
+            // 고른 날 칸이 보이게 줄 끝으로
+            setTimeout(() => ref.current?.scrollToEnd({ animated: true }), 350);
+          }}
+          minDays={TRIAL_QUICK_DAYS + 1}
+          maxDays={TRIAL_LAST_DAY}
+          hint="2주 뒤부터 두 달 안에서 골라요 · 2주 안은 날짜 줄에서 골라요"
+          pick={(d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`}
+        />
+      </Sheet>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   wait: { minHeight: 76, paddingVertical: 12, borderRadius: 14, borderWidth: 2, borderStyle: 'dashed', borderColor: '#CFC6B2', alignItems: 'center', justifyContent: 'center' },
   waitInvalid: { borderColor: ERROR_RED },
   waitText: { textAlign: 'center', fontFamily: Font.body800, fontSize: 13.5, lineHeight: 20, color: Colors.inkSub },
-  days: { flexDirection: 'row', gap: 7 },
-  day: { flex: 1, height: 62, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  strip: { flexGrow: 0, marginHorizontal: -2 },
+  days: { flexDirection: 'row', gap: 7, paddingHorizontal: 2, paddingVertical: 2 },
+  day: { width: 56, height: 62, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   dayOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
   dayWeek: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16, color: Colors.inkSub },
   dayWeekOn: { color: '#D9CFF2' },
   dayNum: { fontFamily: Font.display, fontSize: 17, lineHeight: 22 },
   textOnDark: { color: Colors.white },
+  calTile: { borderStyle: 'dashed', gap: 2 },
+  calTileT: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 15 },
   slots: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, marginHorizontal: -3.5 },
   slotCell: { width: '33.333%', padding: 3.5 },
   slot: { height: 46, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },

@@ -49,7 +49,7 @@ export default function PaymentsScreen() {
         onClose={() => setOpen(null)}
         title="영수증"
         footer={[
-          <View key="m" style={styles.flex}>
+          <View key="m">
             <Button
               label="이메일로 받기"
               variant="secondary"
@@ -60,7 +60,7 @@ export default function PaymentsScreen() {
               }}
             />
           </View>,
-          <View key="r" style={styles.flex}>
+          <View key="r">
             <Button
               label="환불 문의"
               wide

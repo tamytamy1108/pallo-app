@@ -13,7 +13,8 @@ import { createStore } from '@/lib/store';
 import { PText } from './text';
 
 export type ToastAction = { label: string; onPress: () => void };
-type ToastMsg = { message: string; action?: ToastAction; key: number };
+type ToastTone = 'ok' | 'warn';
+type ToastMsg = { message: string; action?: ToastAction; key: number; tone: ToastTone };
 
 /** 지금 토스트 (shown=false 여도 사라지는 움직임 동안 글은 남겨 둬요) */
 const toastStore = createStore<{ msg: ToastMsg | null; shown: boolean }>({ msg: null, shown: false });
@@ -30,8 +31,17 @@ const hideToast = () => toastStore.set((s) => ({ ...s, shown: false }));
  * 담당: 공통 부품. 함수 이름 · 인자는 바꾸지 않아요.
  */
 export function showToast(message: string, action?: ToastAction) {
+  pushToast(message, action, 'ok');
+}
+
+/** 안 된 일 알림 (스파크 모자람 처럼): 체크 대신 느낌표 · 분홍 동그라미 */
+export function showWarnToast(message: string, action?: ToastAction) {
+  pushToast(message, action, 'warn');
+}
+
+function pushToast(message: string, action: ToastAction | undefined, tone: ToastTone) {
   clearTimeout(timer);
-  toastStore.set({ msg: { message, action, key: ++seq }, shown: true });
+  toastStore.set({ msg: { message, action, key: ++seq, tone }, shown: true });
   timer = setTimeout(hideToast, action ? 3800 : 2400);
   // 화면 읽기: 토스트 글을 바로 읽어 줘요
   if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(message);
@@ -84,14 +94,15 @@ export function ToastView() {
 
   if (!msg) return null;
   const action = msg.action;
+  const warn = msg.tone === 'warn';
   return (
     <Animated.View pointerEvents="box-none" style={[styles.wrap, { top: insets.top + 10 }, anim]}>
       {/* box-shadow: 4px 4px 0 yellow */}
       <View pointerEvents="none" style={styles.shadow} />
       <View pointerEvents="box-none" style={styles.toast} accessibilityLiveRegion="polite" accessibilityRole="alert">
-        <View style={styles.ico}>
+        <View style={[styles.ico, warn && styles.icoWarn]}>
           <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round">
-            <Path d="m5 12 5 5 9-10" />
+            <Path d={warn ? 'M12 5v8M12 19h.01' : 'm5 12 5 5 9-10'} />
           </Svg>
         </View>
         <PText color={Colors.white} style={styles.text}>
@@ -123,6 +134,7 @@ const styles = StyleSheet.create({
   shadow: { position: 'absolute', top: 4, left: 4, right: -4, bottom: -4, borderRadius: 18, backgroundColor: Colors.yellow },
   toast: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.ink },
   ico: { width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
+  icoWarn: { backgroundColor: Colors.rosePink },
   text: { flex: 1, fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
   go: { height: 32, paddingHorizontal: 12, borderRadius: 16, backgroundColor: Colors.yellow, justifyContent: 'center' },
   goPressed: { transform: [{ scale: 0.96 }] },

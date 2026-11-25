@@ -16,13 +16,14 @@ import { feeText } from './event-model';
  * 이벤트 한 줄 = 초대장 (프로토타입 lgEvRow · .lg-evr): 왼쪽 포스터 썸네일 96px + 종류 · 지점 · D-day,
  * 제목(2줄), 날짜 · 장소, 금액(할인 전 금액 취소선), 남은 자리. 지난 이벤트는 흐리게.
  */
-export function EventRow({ e }: { e: EventItem }) {
+/** onOpen: 시트 안 등에서 열 때 (안 주면 바로 상세로) · feeLabel: 금액 대신 보일 글 (번개 '각자 계산') */
+export function EventRow({ e, onOpen, feeLabel }: { e: EventItem; onOpen?: () => void; feeLabel?: string }) {
   const joined = useMeetStore((s) => !!s.joined[e.id]);
   const cur = e.cur + (joined ? 1 : 0);
   const left = e.max - cur;
   const past = isPast(e);
   return (
-    <Pressable onPress={() => router.push(`/events/${e.id}`)} accessibilityRole="button" accessibilityLabel={`${e.title} 자세히 보기`} style={({ pressed }) => [styles.row, past && styles.past, pressed && { transform: [{ scale: 0.98 }] }]}>
+    <Pressable onPress={onOpen ?? (() => router.push(`/events/${e.id}`))} accessibilityRole="button" accessibilityLabel={`${e.title} 자세히 보기`} style={({ pressed }) => [styles.row, past && styles.past, pressed && { transform: [{ scale: 0.98 }] }]}>
       <View style={styles.th}>
         {/* 270px 포스터를 0.3556배로 줄여요 (프로토타입 .lg-evr .th .lg-pst) */}
         <View style={styles.thIn}>
@@ -45,10 +46,10 @@ export function EventRow({ e }: { e: EventItem }) {
         </PText>
         <View style={styles.sp} />
         <View style={styles.f}>
-          <PText style={styles.fee}>{feeText(e)}</PText>
-          {e.fee0 ? <PText style={styles.fee0}>{won(e.fee0)}</PText> : null}
+          <PText style={feeLabel ? styles.feeLabel : styles.fee}>{feeLabel ?? feeText(e)}</PText>
+          {!feeLabel && e.fee0 ? <PText numberOfLines={1} style={styles.fee0}>{won(e.fee0)}</PText> : null}
           <View style={styles.sp} />
-          <PText style={styles.left}>{past ? `${cur}명 참여` : joined ? '참여 완료' : left <= 0 ? '마감' : `${left}자리 남음`}</PText>
+          <PText numberOfLines={1} style={styles.left}>{past ? `${cur}명 참여` : joined ? '참여 완료' : left <= 0 ? '마감' : `${left}자리 남음`}</PText>
         </View>
       </View>
     </Pressable>
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
   m: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   f: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   fee: { fontFamily: Font.display, fontSize: 15, lineHeight: 21 },
-  fee0: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: '#A39C8E', textDecorationLine: 'line-through' },
-  left: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
+  feeLabel: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 21, color: Colors.inkSub },
+  fee0: { flexShrink: 1, fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: '#A39C8E', textDecorationLine: 'line-through' },
+  left: { flexShrink: 0, fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
 });
