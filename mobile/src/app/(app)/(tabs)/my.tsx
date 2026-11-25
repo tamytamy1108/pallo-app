@@ -116,7 +116,9 @@ export default function MyScreen() {
               <ProNoteCard />
             </Appear>
             <Appear kind="rise" delay={100}>
-              <MyStudyCard />
+              {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
+              <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
+              <MyStudyCard title={false} />
             </Appear>
             <Appear kind="rise" delay={120}>
               <BranchBoard />

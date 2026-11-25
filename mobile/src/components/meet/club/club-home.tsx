@@ -11,7 +11,7 @@ import { HOST_INTRO, hashId, joinFree, type Club } from '@/data/meet';
 import { useMe } from '@/state/me';
 
 import { ClubRow } from '../club-list';
-import { DSec, InfoRow, InfoRows, MemberSection } from '../detail/detail-parts';
+import { DSec, HostRow, InfoRow, InfoRows, MemberSection } from '../detail/detail-parts';
 import { setText, useMeetStore } from '../meet-store';
 import { CrownFace } from '../member-face';
 import { clubCapLine, clubContent, clubDesc, clubHost, clubLangLine, clubSessions, type Member, type Session } from '../model';
@@ -43,7 +43,7 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
         <InfoRow first icon="cal" main={c.when} sub="매주 모여요" />
         <InfoRow icon="pin" main={`${c.br}${c.reg ? ' · ' + c.reg : ''}`} sub={clubLangLine(c)} />
         <InfoRow icon="users" main={`멤버 ${c.n + (inC ? 1 : 0)}명`} sub={clubCapLine(c)} />
-        <InfoRow icon="crown" main={`호스트 ${host}`} sub={staff.length ? `코호스트 ${staff.join(' · ')}` : '코호스트는 아직 없어요'} />
+        <HostRow name={c.mine ? me.name : host} branch={c.br} me={!!c.mine} sub={`${c.br} · ${staff.length ? `코호스트 ${staff.join(' · ')}` : '코호스트는 아직 없어요'}`} />
         <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub={joinFree(c.cond, c.br, me.branch) ? '가입 인사만 쓰면 바로 가입돼요' : `${c.br} 멤버가 아니면 호스트가 확인하면 가입돼요`} />
       </InfoRows>
 

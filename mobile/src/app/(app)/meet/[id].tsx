@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
-import { CopyBtn, Desc, DSec, InfoRow, InfoRows, infoStyles, MainBtn, MemberSection, SafetyNote, SaveBtn } from '@/components/meet/detail/detail-parts';
+import { CopyBtn, Desc, DSec, HostRow, InfoRow, InfoRows, infoStyles, MainBtn, MemberSection, SafetyNote, SaveBtn } from '@/components/meet/detail/detail-parts';
 import { AskSheet, JoinSheet } from '@/components/meet/detail/sheets';
 import { Bolt } from '@/components/meet/icons';
 import { setText, toggleIn, updateMyMeet, useMeetStore } from '@/components/meet/meet-store';
-import { findMeet, membersOf } from '@/components/meet/model';
+import { findMeet, hostName, membersOf } from '@/components/meet/model';
 import { CapBar } from '@/components/meet/parts';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
@@ -114,7 +114,7 @@ export default function MeetDetail() {
           />
           <InfoRow icon="heart" main="참가비 없음 · 각자 계산" />
           <InfoRow icon="users" main={m.max > 0 ? `${capText(cur, m.max)} ${cur >= m.max ? '· 마감' : `· 남은 자리 ${m.max - cur}`}` : capText(cur, m.max)} sub={m.max > 0 ? <CapBar cur={cur} max={m.max} width={140} /> : '누구나 함께해요'} />
-          <InfoRow icon="crown" main={`호스트 ${m.host}`} />
+          <HostRow name={m.mine ? me.name : hostName(m.host)} branch={m.mine ? me.branch : m.br === '전 지점' ? '본사' : m.br} me={!!m.mine} />
         </InfoRows>
         <DSec>소개</DSec>
         <Desc text={DESC[m.id] || `${m.place}에서 만나요. 영어로 먼저 인사하고, 그다음은 편하게 이야기해요. 처음 오는 분도 환영이에요.`} />

@@ -41,7 +41,7 @@ type LoungeState = {
   feed: FeedItem[];
   liked: Record<string, boolean>;
   saved: Record<string, boolean>;
-  /** 리더 · 매니저가 '이 글 숨기기' 한 사람 (차단 목록은 공통 report-sheet) */
+  /** 프로 · 매니저가 '이 글 숨기기' 한 사람 (차단 목록은 공통 report-sheet) */
   hidden: Record<string, true>;
   cmts: Record<string, Comment[]>;
   stories: Story[];

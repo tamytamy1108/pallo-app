@@ -11,7 +11,7 @@ export type UserKind = 'member' | 'pending' | 'rejected' | 'trial' | 'app' | 'gu
 type AccessFields = Pick<Me, 'role' | 'link' | 'trial' | 'plan'>;
 
 export function userKind(me: AccessFields): UserKind {
-  // 회원 · 리더 · 매니저 (연동됨 — 처음 넣어 둔 가짜 회원도 linked)
+  // 회원 · 프로 · 매니저 (연동됨 — 처음 넣어 둔 가짜 회원도 linked)
   if (me.role !== 'guest' && (me.link === 'linked' || me.link === 'none')) return 'member';
   if (me.link === 'pending') return 'pending';
   if (me.link === 'rejected') return 'rejected';

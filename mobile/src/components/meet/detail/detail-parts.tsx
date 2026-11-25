@@ -50,6 +50,31 @@ export function InfoRow({ icon, main, sub, end, first }: { icon: IconName; main:
     </View>
   );
 }
+/**
+ * 호스트 줄 (정보 줄 안): 아이콘 자리에 호스트 얼굴(왕관) · 이름 · 지점(또는 sub) · [프로필 ›]. 누르면 그 사람 프로필.
+ * 내가 호스트면 누르지 않아요.
+ */
+export function HostRow({ name, branch, sub, me = false }: { name: string; branch: string; sub?: string; me?: boolean }) {
+  return (
+    <Pressable
+      disabled={me}
+      onPress={() => router.push(`/me/profile/${encodeURIComponent(name)}`)}
+      accessibilityRole={me ? undefined : 'button'}
+      accessibilityLabel={me ? `호스트 ${name} · 나` : `호스트 ${name} 프로필 보기`}
+      style={({ pressed }) => [styles.row, styles.rowLine, styles.hostRow, pressed && styles.hostPressed]}>
+      <CrownFace name={name} size={32} me={me} role={me ? '호스트 · 나' : '호스트'} />
+      <View style={styles.rowTx}>
+        <PText style={styles.main}>
+          {name}
+          <PText style={styles.hostTag}>  호스트{me ? ' · 나' : ''}</PText>
+        </PText>
+        <PText style={[styles.sub, keepAll]}>{sub ?? branch}</PText>
+      </View>
+      {me ? null : <PText style={styles.hostGo}>프로필 ›</PText>}
+    </Pressable>
+  );
+}
+
 export const infoStyles = StyleSheet.create({
   main: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20.3 },
   sub: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17.4, color: Colors.inkSub },
@@ -244,6 +269,10 @@ const styles = StyleSheet.create({
   rows: { marginTop: 14, paddingVertical: 2, paddingHorizontal: 14, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 11 },
   rowLine: { borderTopWidth: 1, borderColor: Colors.line },
+  hostRow: { alignItems: 'center' },
+  hostPressed: { opacity: 0.7 },
+  hostTag: { fontFamily: Font.body900, fontSize: 11.5, color: Colors.purple },
+  hostGo: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   ic: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.lavender, alignItems: 'center', justifyContent: 'center' },
   rowTx: { flex: 1, minWidth: 0, paddingTop: 0 },
   main: infoStyles.main,
