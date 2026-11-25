@@ -181,6 +181,8 @@
 
 ## 7. 데이터 · API 바뀔 곳 (백엔드)
 
+> API 문서에 옮겼어요 (2026-11-25): `docs/api/openapi.yaml` 맨 위 '누가 부를 수 있나' · API 마다 `x-roles` · `x-demo-blocked` · '프로 · 직원' 태그 15개, 화면별은 `docs/api/screens.md#staff`. 아래는 요약이에요.
+
 - **역할 값**: `role` = `guest · member · pro · manager · hq` (예전 `leader` → `pro`). 본사 운영자는 `hq`, 앱에서는 프로와 같은 화면 + 맡은 세션. `branchId` 는 지점 관리자에게 하나.
 - **보여 주기 모드**: `role` 이 `pro · manager · hq` 이면 서버도 회원 신청 API(연기 · 홀딩 · 연장 · 체험 · 연동 · 이벤트 신청)를 **막아요** (앱만 막으면 안 돼요). 응답 `403 demo_account`.
 - **프로 · 스텝 출석은 제약 없음**: 프로 · 스텝 계정은 등록된 팀 · 이용권 확인 없이 어느 세션이든 check-in 돼요. 앱이 고른 대로 `role: 리더`(→ `prosNoteId`) 또는 `role: 멤버`를 보내요.
@@ -188,7 +190,8 @@
 - **출석 명단**: `GET /staff/sessions/:id/roster` · `PATCH /staff/sessions/:id/roster/:memberId` (손 출석 · 지각 · 결석).
 - **프로스 노트 쓰기**: `GET · PUT /pros-notes/{noteId}` (항목 · 마무리 인사 임시 저장) · `POST /pros-notes/{noteId}/send` (반에 보내기 → 알림). 백엔드 노트는 지금 '리더 질문 → AI 답' 모양이라, 앱의 태그 항목(표현 · 바로잡기 · 뜻 · 질문)을 담을지 정해야 해요.
 - **반 공지**: `POST /staff/teams/:id/notices`.
-- **지점 관리자 처리함**: `GET /manager/inbox` (연동 · 체험 · 신고 · 동아리 승인 · 이벤트 제안 · 회원 요청, 개수 포함) + 항목별 처리 API.
+- ~~**지점 관리자 처리함**: `GET /manager/inbox`~~ → 앱에 두지 않아요. 연동 · 체험 · 신고 · 동아리 승인 · 이벤트 제안 · 회원 요청 처리는 전산(관리자) 웹 (4장, 2026-11-25).
+- **오늘 지점 현황**: `GET /manager/branch/today` (세션별 출석 인원 · 프로 출석 체크).
 - **QR 출석 코드**: `GET /manager/branch/qr` (짧게 바뀌는 코드).
 
 ## 8. 역할 표시 (얼굴 · 이름 옆)
