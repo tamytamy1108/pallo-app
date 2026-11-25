@@ -46,12 +46,7 @@ export const DEV_PERSONAS: {
     desc: '지점이 못 찾았어요',
     group: '멤버',
   },
-  {
-    k: 'app',
-    label: '앱 구독',
-    desc: '지점 없이 앱만 결제했어요',
-    group: '멤버',
-  },
+  // '앱 구독'(지점 없이 앱만 결제)은 고르기 목록에서 뺐어요 (2026-11-25)
   {
     k: 'linked',
     label: '회원',
