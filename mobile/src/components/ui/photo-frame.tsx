@@ -33,10 +33,13 @@ function placePhoto(f: PhotoFraming, box: Box) {
   };
 }
 
+/** 한 번 본 사진은 메모리 · 디스크에 두고, 처음 뜰 땐 살짝 나타나요 (검은 칸이 번쩍이지 않게 — 바탕은 부모 칸 색) */
+const SHOW = { cachePolicy: 'memory-disk', transition: 120 } as const;
+
 /** 맞춘 모양대로 사진 보여 주기 — 부모 칸을 꽉 채워요 (부모에 overflow: hidden) */
 export function FramedImage({ uri, framing, accessibilityLabel }: { uri: string; framing?: PhotoFraming; accessibilityLabel?: string }) {
   const [box, setBox] = useState<Box | null>(null);
-  if (!framing || isPlain(framing)) return <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={accessibilityLabel} />;
+  if (!framing || isPlain(framing)) return <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={accessibilityLabel} {...SHOW} />;
   const at = box ? placePhoto(framing, box) : null;
   return (
     <View
@@ -45,7 +48,7 @@ export function FramedImage({ uri, framing, accessibilityLabel }: { uri: string;
       accessible={!!accessibilityLabel}
       accessibilityRole={accessibilityLabel ? 'image' : undefined}
       accessibilityLabel={accessibilityLabel}>
-      {at ? <Image source={{ uri }} style={{ position: 'absolute', left: at.left, top: at.top, width: at.w, height: at.h }} contentFit="fill" /> : null}
+      {at ? <Image source={{ uri }} style={{ position: 'absolute', left: at.left, top: at.top, width: at.w, height: at.h }} contentFit="fill" {...SHOW} /> : null}
     </View>
   );
 }

@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
-import * as Tts from 'expo-speech';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
@@ -27,6 +26,7 @@ import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 import { ChipScroll } from '@/components/ui/chip-scroll';
+import { stopSpeaking } from '@/lib/tts';
 
 /**
  * 리스닝 룸 (프로토타입 openListen · lrRender): 붙어 있는 보라 재생 카드 · 설정 칩 · 재생 목록 칩 · 문장 줄.
@@ -183,7 +183,7 @@ export default function ListeningScreen() {
         <SoundButton
           off={noListen}
           onPress={() => {
-            Tts.stop();
+            stopSpeaking();
             sfx('toggle');
             setNoListen(!noListen);
             showToast(noListen ? '소리를 다시 켰어요' : '15분 동안 소리를 꺼요');

@@ -100,7 +100,8 @@ export default function EventDetail() {
                 showToast(saved ? '저장을 취소했어요' : '저장했어요');
               }}
             />
-            <FeeBlock fee={e.fee} fee0={e.fee0 ? won(e.fee0) : undefined} />
+            {/* 끝난 이벤트는 참가비 대신 후기 보기가 줄을 꽉 채워요 */}
+            {past ? null : <FeeBlock fee={e.fee} fee0={e.fee0 ? won(e.fee0) : undefined} />}
             {main}
           </>
         }>

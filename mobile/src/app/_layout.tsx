@@ -11,12 +11,14 @@ import { apiErrorMessage } from '@/api/errors';
 import { ApiProvider } from '@/api/provider';
 import { useSession } from '@/api/session';
 import { preloadAllAvatarArt, preloadMyAvatar } from '@/components/character/preload-art';
+import { FLAT_MAPS } from '@/components/library/world/flat-maps';
 import { TrialGuideHost } from '@/components/common/trial-guide';
 import { DevNotch } from '@/components/dev-notch';
 import { LinkPushHost } from '@/components/home/link-push';
 import { ErrorState } from '@/components/ui/state-view';
 import { TightTopInsets } from '@/components/ui/safe-area';
 import { ToastHost } from '@/components/ui/toast';
+import { RewardHost } from '@/components/my/reward-sheet';
 import { FontAssets } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { SCREEN, STACK_OPTIONS } from '@/lib/transitions';
@@ -55,7 +57,8 @@ function RootNavigator() {
   const [artReady, setArtReady] = useState(false);
   useEffect(() => {
     let alive = true;
-    void preloadMyAvatar(getMyAvatar()).then(() => {
+    // 라이브러리 지도 사진판도 같이 — 3D 가 그려지기 전에 같은 구도의 사진이 바로 보여야 해요 (빈 하늘색 칸이 안 보이게)
+    void preloadMyAvatar(getMyAvatar(), 1500, Object.values(FLAT_MAPS).map((m) => m.img)).then(() => {
       if (alive) setArtReady(true);
       preloadAllAvatarArt();
     });
@@ -108,6 +111,8 @@ function RootNavigator() {
         <ToastHost />
         {/* 지점 연동 결과 푸시 띠: 어느 화면에 있어도 위에서 내려와요 */}
         <LinkPushHost />
+        {/* 시즌 보상을 자동으로 받았으면 한 번 뜨는 창 (로그인 · 온보딩 뒤에만) */}
+        {signedIn && !onboarding ? <RewardHost /> : null}
         </TightTopInsets>
       </DevNotch>
     </GestureHandlerRootView>

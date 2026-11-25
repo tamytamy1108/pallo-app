@@ -24,13 +24,14 @@ import { ConfirmDialog } from '@/components/ui/dialog';
 import { Raised, SHADOW_OFFSET } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
+import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { MY_BADGES, rankPeople } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
 import { useSavedCount } from '@/state/expressions';
 import { canUse, isMember } from '@/state/access';
 import { useMe } from '@/state/me';
+import { grantReward, resetRewards } from '@/state/rewards';
 import { useTabReselect } from '@/lib/tab-reselect';
 
 // 마이 B 화면(설정 · 고객센터 · 이용권)은 아직 없을 수 있어서 주소 타입을 넓혀 둬요
@@ -51,8 +52,14 @@ export default function MyScreen() {
   useTabReselect('my', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const { width } = useWindowDimensions();
   // 개발용 ?link= · ?name= (웹에서만)
-  const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string }>();
+  const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string; reward?: string }>();
   useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial }), [dev.link, dev.name, dev.trial]);
+  // 개발용 ?reward=santa: 서버가 시즌 보상을 자동으로 넣어 준 것처럼 (받은 창 · 알림 · 꾸미기 잠김 풀림). ?reward=reset 은 처음으로
+  useEffect(() => {
+    if (!__DEV__ || !dev.reward) return;
+    if (dev.reward === 'reset') resetRewards();
+    else grantReward(dev.reward);
+  }, [dev.reward]);
   const me = useMe();
   const member = isMember(me);
   const canSettings = canUse(me, 'settings');
@@ -212,8 +219,8 @@ export default function MyScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: 0, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, transform: [{ translateY: Spacing.headDrop }] },
   headR: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   dev: { marginTop: 10, gap: 10 },

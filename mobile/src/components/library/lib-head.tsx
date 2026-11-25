@@ -5,7 +5,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { LANGS, type SituationMap, type SoonMap } from '@/data/library';
 import { sfx } from '@/lib/feedback';
 import { ChipScroll } from '@/components/ui/chip-scroll';
@@ -143,7 +143,7 @@ export function SitChips({ maps, soons, current, isNew, onPick, onSoon }: { maps
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, zIndex: 6 },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, zIndex: 6, transform: [{ translateY: Spacing.headDrop }] },
   title: { letterSpacing: -0.6 },
   lwrap: { position: 'relative' },
   lang: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingLeft: 6, paddingRight: 10, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },

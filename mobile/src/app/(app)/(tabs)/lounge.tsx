@@ -26,7 +26,7 @@ import { AbroadRegSheet, PeopleRow, PersonSheet, TripCard, TripMakeSheet, WorldM
 import { MeetTab } from '@/components/meet/meet-tab';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Spacing, TabHeadTop } from '@/constants/theme';
 import { ALL_SUBS, type AbroadPerson, branchOk, COM_SUBS, type FeedItem, LG_TABS, type LoungeTab, TRIP_SUBS } from '@/data/lounge';
 import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge } from '@/data/lounge-store';
 import { EASE } from '@/lib/motion';
@@ -160,7 +160,10 @@ export default function LoungeScreen() {
   );
 }
 
-/** 밑줄 탭 · 오른쪽 끝을 흐리게 해서 더 넘길 수 있다는 표시 (프로토타입 #lgTabs). 밑줄은 고른 탭으로 미끄러져 가요 */
+/**
+ * 밑줄 탭 · 오른쪽 끝을 흐리게 해서 더 넘길 수 있다는 표시 (프로토타입 #lgTabs). 밑줄은 고른 탭으로 미끄러져 가요.
+ * 흐림은 좁게 두고, 끝까지 넘겼거나 다 보이면 걷어요 — 마지막 탭(해외 동행)의 새 글 배지가 흐려지지 않게.
+ */
 function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTab, number>; onPick: (k: LoungeTab) => void }) {
   const [rowRef, onRow, onChip, centerChip] = useCenterChip();
   const still = useReducedMotion();
@@ -180,15 +183,46 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
     uw.set(withTiming(cur.w, { duration: 280, easing: EASE }));
   }, [cur, still, ux, uw]);
   const bar = useAnimatedStyle(() => ({ opacity: ux.get() < 0 ? 0 : 1, width: uw.get(), transform: [{ translateX: Math.max(0, ux.get()) }] }));
+  // 줄 너비 · 내용 너비 · 넘긴 자리로 '끝에 닿았는지' 봐요
+  const geo = useRef({ view: 0, content: 0, x: 0 });
+  const [atEnd, setAtEnd] = useState(false);
+  const checkEnd = () => {
+    const { view, content, x } = geo.current;
+    const end = view > 0 && content > 0 && x + view >= content - 4;
+    setAtEnd((was) => (was === end ? was : end));
+  };
+  const fadeOn = useSharedValue(1);
+  useEffect(() => {
+    fadeOn.set(still ? (atEnd ? 0 : 1) : withTiming(atEnd ? 0 : 1, { duration: 160 }));
+  }, [atEnd, still, fadeOn]);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: fadeOn.get() }));
   return (
     <View style={styles.tabsWrap}>
-      <ScrollView ref={rowRef} onLayout={onRow} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+      <ScrollView
+        ref={rowRef}
+        onLayout={(e) => {
+          onRow(e);
+          geo.current.view = e.nativeEvent.layout.width;
+          checkEnd();
+        }}
+        onContentSizeChange={(w) => {
+          geo.current.content = w;
+          checkEnd();
+        }}
+        onScroll={(e) => {
+          geo.current.x = e.nativeEvent.contentOffset.x;
+          checkEnd();
+        }}
+        scrollEventThrottle={32}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabs}
+        accessibilityRole="tablist">
         {LG_TABS.map(([k, l]) => {
           const on = tab === k;
           const n = BADGE_TABS.includes(k) ? counts[k] : 0;
-          // 번개 · 동아리는 수 대신 작은 점 (새로 열린 게 있다는 표시만)
-          const dot = !!n && k === 'meet';
-          const badge = n && !dot ? (n > 9 ? '9+' : String(n)) : null;
+          // 새로 올라온 수 (번개 · 동아리도 다른 탭처럼 숫자)
+          const badge = n ? (n > 9 ? '9+' : String(n)) : null;
           return (
             <Pressable
               key={k}
@@ -202,7 +236,7 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
                 onPick(k);
               }}
               accessibilityRole="tab"
-              accessibilityLabel={dot ? `${l}, 새 모임 있음` : badge ? `${l}, 새 글 ${n}개` : l}
+              accessibilityLabel={badge ? `${l}, 새 글 ${n}개` : l}
               accessibilityState={{ selected: on }}
               hitSlop={{ top: 4, bottom: 4 }}
               style={styles.tab}>
@@ -213,8 +247,6 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
                   <View pointerEvents="none" style={styles.badge}>
                     <PText style={styles.badgeText}>{badge}</PText>
                   </View>
-                ) : dot ? (
-                  <View pointerEvents="none" style={styles.dot} />
                 ) : null}
               </View>
             </Pressable>
@@ -222,7 +254,9 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
         })}
         <Animated.View pointerEvents="none" style={[styles.tabBar, bar]} />
       </ScrollView>
-      <LinearGradient colors={['rgba(251,246,234,0)', Colors.cream]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.fade} pointerEvents="none" />
+      <Animated.View style={[styles.fade, fadeStyle]} pointerEvents="none">
+        <LinearGradient colors={['rgba(251,246,234,0)', Colors.cream]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+      </Animated.View>
     </View>
   );
 }
@@ -384,13 +418,14 @@ function ToTop({ show, bottom, onPress }: { show: boolean; bottom: number; onPre
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  page: { paddingTop: 0, paddingBottom: 190 },
+  page: { paddingTop: TabHeadTop, paddingBottom: 190 },
   // 첫 줄(제목) · 둘째 줄(탭) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (홈 · 라이브러리 · 마이와 같게)
-  hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center' },
+  hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center', transform: [{ translateY: Spacing.headDrop }] },
   // 탭 밑줄이 라이브러리(스터디 맵 | 상황 맵) 밑줄과 같은 높이에 와요
   tabsAt: { marginTop: Spacing.stack + 1 },
   tabsWrap: { borderBottomWidth: 2, borderColor: Colors.line },
-  tabs: { gap: 26, paddingTop: 2, paddingLeft: 16, paddingRight: 40 },
+  // 오른쪽 여백은 마지막 탭의 배지(글자 오른쪽으로 ~22) + 흐림 폭보다 넓게
+  tabs: { gap: 26, paddingTop: 2, paddingLeft: 16, paddingRight: 52 },
   tab: { paddingTop: 6, paddingBottom: 12 },
   // 고른 탭 밑줄 (탭 사이를 미끄러져 다녀요)
   tabBar: { position: 'absolute', left: 0, bottom: 0, height: 3, borderRadius: 2, backgroundColor: Colors.purple },
@@ -399,8 +434,7 @@ const styles = StyleSheet.create({
   // 새 글 수: 작은 분홍 알약 · 크림 테두리로 배경에서 떼어 보여요
   badge: { position: 'absolute', top: -2, left: '100%', marginLeft: 3, minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 4, backgroundColor: '#E8577A', borderWidth: 1.5, borderColor: Colors.cream, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontFamily: Font.body900, fontSize: 9.5, lineHeight: 12, color: '#fff', fontVariant: ['tabular-nums'] },
-  dot: { position: 'absolute', top: 2, left: '100%', marginLeft: 3, width: 7, height: 7, borderRadius: 4, backgroundColor: '#E8577A' },
-  fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: '18%' },
+  fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 28 },
   subs: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 4, gap: 6, alignItems: 'center' },
   subSep: { width: 1.5, height: 22, marginHorizontal: 2, backgroundColor: '#DCD4C4' },
   chip: { height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: '#CFC6B4', paddingHorizontal: 12, justifyContent: 'center' },

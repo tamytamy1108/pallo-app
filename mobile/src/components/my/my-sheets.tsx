@@ -8,6 +8,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { followLists, MY_BADGES, SPARK_EARN, type Member } from '@/data/my';
+import { REWARDS } from '@/data/rewards';
 import { sfx } from '@/lib/feedback';
 import { toggleFollow, useMe } from '@/state/me';
 
@@ -43,7 +44,15 @@ export function SparkSheet({ open, onClose }: { open: boolean; onClose: () => vo
           </View>
         ))}
       </View>
-      <Ds>시즌 아이템(산타 모자 · 눈 오는 밤 등)은 기간 보상으로만 받아요.</Ds>
+      <Ds>시즌 아이템은 스파크로 못 사요. 조건을 채우면 자동으로 들어와요.</Ds>
+      <View style={styles.stCard}>
+        {REWARDS.map((r, i) => (
+          <View key={r.id} style={[styles.stRow, i > 0 && styles.line]}>
+            <PText style={styles.stB}>{r.window ? `${r.rule} (${r.window})` : r.rule}</PText>
+            <PText style={styles.stV}>{r.name}</PText>
+          </View>
+        ))}
+      </View>
     </Sheet>
   );
 }

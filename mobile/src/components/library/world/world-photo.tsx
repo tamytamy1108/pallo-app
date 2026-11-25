@@ -42,7 +42,7 @@ export function WorldPhoto({ map, sc, onOpen }: { map: FlatMap; sc: WorldSC; onO
 
   return (
     <View style={styles.fill} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      <Image source={map.img} style={styles.fill} contentFit="fill" accessible={false} />
+      <Image source={map.img} style={styles.fill} contentFit="fill" cachePolicy="memory-disk" transition={0} accessible={false} />
       {size && (
         <Photo map={map} sc={sc} cur={cur} w={size.w} h={size.h} onTap={(i) => setFocus(info(i))} />
       )}

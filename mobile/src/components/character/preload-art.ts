@@ -6,23 +6,10 @@
  * 2) 나머지 아이템 · 몸 · 헤어 (다른 사람 프사 · 꾸미기 랜덤) → 바로 이어서
  * 3) 무대 배경 (크고 꾸미기 · 마이 카드에서만) → 마지막에
  */
-import { Image } from 'expo-image';
-import { Image as RNImage } from 'react-native';
-
 import type { Avatar } from '@/data/my';
+import { prefetchImages } from '@/lib/prefetch-images';
 
 import { AV_ART, AV_BG_ART, AV_BODY, AV_HAIR_FILL, AV_HAIR_FRONT, AV_TINT } from './av-assets';
-
-// expo-image 가 require 그림을 찾는 것과 같은 주소 (폰: RN resolveAssetSource) — 그래야 미리 읽은 게 그대로 쓰여요
-const uriOf = (m: number) => {
-  try {
-    return typeof RNImage.resolveAssetSource === 'function' ? (RNImage.resolveAssetSource(m)?.uri ?? null) : null;
-  } catch {
-    return null;
-  }
-};
-const uris = (mods: (number | undefined)[]) => [...new Set(mods.filter((m): m is number => typeof m === 'number').map(uriOf).filter((u): u is string => !!u))];
-const prefetch = (list: string[]) => (list.length ? Image.prefetch(list, { cachePolicy: 'memory-disk' }).catch(() => false) : Promise.resolve(true));
 
 /** 이 캐릭터를 그리는 데 쓰는 그림 (몸 · 입은 것 · 헤어 색칠 · 앞머리 · 배경) */
 function avatarModules(a: Avatar): (number | undefined)[] {
@@ -33,9 +20,9 @@ function avatarModules(a: Avatar): (number | undefined)[] {
   return [...body, ...worn.map((id) => AV_ART[id]), ...hair, bg];
 }
 
-/** 내 캐릭터 그림을 읽어요. ms 안에 안 끝나도 기다리지 않아요 (스플래시를 오래 잡지 않게) */
-export function preloadMyAvatar(a: Avatar, ms = 1500): Promise<void> {
-  const done = prefetch(uris(avatarModules(a))).then(() => undefined);
+/** 내 캐릭터 그림(+ also: 첫 화면에 바로 보여야 하는 다른 그림)을 읽어요. ms 안에 안 끝나도 기다리지 않아요 (스플래시를 오래 잡지 않게) */
+export function preloadMyAvatar(a: Avatar, ms = 1500, also: number[] = []): Promise<void> {
+  const done = prefetchImages([...avatarModules(a), ...also]).then(() => undefined);
   return Promise.race([done, new Promise<void>((r) => setTimeout(r, ms))]);
 }
 
@@ -44,12 +31,12 @@ let started = false;
 export function preloadAllAvatarArt() {
   if (started) return;
   started = true;
-  const parts = uris([
+  const parts = [
     ...Object.values(AV_BODY),
     ...Object.values(AV_TINT),
     ...Object.values(AV_HAIR_FILL),
     ...Object.values(AV_HAIR_FRONT).flatMap((p) => [p.base, p.fill]),
     ...Object.values(AV_ART),
-  ]);
-  void prefetch(parts).then(() => prefetch(uris(Object.values(AV_BG_ART))));
+  ];
+  void prefetchImages(parts).then(() => prefetchImages(Object.values(AV_BG_ART)));
 }

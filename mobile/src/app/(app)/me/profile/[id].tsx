@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { SCREEN } from '@/lib/transitions';
@@ -22,23 +22,24 @@ export default function ProfileScreen() {
     if (mine) router.replace('/my');
   }, [mine]);
 
-  // 시트 안 모임 줄을 누르면: 시트를 닫고, 다 내려가면 이 화면 자리에 그 상세를 열어요 (뒤로 가면 원래 화면)
-  const goTo = useRef<Href | null>(null);
+  // 시트 안 모임 줄을 누르면: 시트가 내려가길 기다리지 않고 이 화면 자리에 바로 그 상세를 열어요
+  // (시트 두 장이 차례로 닫히고 뒤 화면이 비친 뒤 넘어가면 여러 화면을 거치는 것처럼 보여요). 뒤로 가면 원래 화면.
   const close = () => setOpen(false);
+  // 시트를 바로 치우고(닫는 움직임 없이) 그 상세로 — 새 화면이 시트 위로 겹쳐 지나가지 않게
+  const [gone, setGone] = useState(false);
   const go = (href: Href) => {
-    goTo.current = href;
-    setOpen(false);
+    setGone(true);
+    router.replace(href);
   };
   const leave = () => {
-    if (goTo.current) router.replace(goTo.current);
-    else if (router.canGoBack()) router.back();
+    if (router.canGoBack()) router.back();
     else router.replace('/my');
   };
 
   return (
     <View style={{ flex: 1 }}>
       <Stack.Screen options={SCREEN.overlay} />
-      {!mine && <ProfileSheetHost name={name} open={open} onClose={close} onGo={go} onClosed={leave} onOpen={(n) => (n === getMe().name ? leave() : setName(n))} />}
+      {!mine && !gone && <ProfileSheetHost name={name} open={open} onClose={close} onGo={go} onClosed={leave} onOpen={(n) => (n === getMe().name ? leave() : setName(n))} />}
     </View>
   );
 }

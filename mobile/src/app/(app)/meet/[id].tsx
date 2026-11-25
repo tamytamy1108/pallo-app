@@ -55,7 +55,7 @@ export default function MeetDetail() {
   const dd = dday(m);
 
   const main = past ? (
-    <MainBtn label="후기 보기" variant="wh" grow={false} onPress={() => setReviews(true)} />
+    <MainBtn label="후기 보기" variant="wh" onPress={() => setReviews(true)} />
   ) : mine ? (
     <MainBtn
       label={closed ? '모집 닫음' : '모집 닫기'}
