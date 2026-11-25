@@ -26,32 +26,33 @@ const lookOf = (hex: string): Look => {
   return { bg: hex, acc: c?.acc ?? (dark ? YELLOW : PINK), text: dark ? YELLOW : INK, dark };
 };
 
-export function CardArt({ design = 'circle', color, words, style }: { design?: CardDesign; color: string; words: string[]; style?: StyleProp<ViewStyle> }) {
+/** safeTop: 칸 위에 다른 것(번개 카드의 '번개 · D-3' 줄)이 겹치면 그만큼(px) 위쪽 글자를 내려요 */
+export function CardArt({ design = 'circle', color, words, style, safeTop = 0 }: { design?: CardDesign; color: string; words: string[]; style?: StyleProp<ViewStyle>; safeTop?: number }) {
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   return (
     <View
       pointerEvents="none"
       onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       style={[StyleSheet.absoluteFill, { backgroundColor: color, overflow: 'hidden' }, style]}>
-      {box && box.w > 0 && box.h > 0 ? <Art design={design} look={lookOf(color)} words={words} w={box.w} h={box.h} /> : null}
+      {box && box.w > 0 && box.h > 0 ? <Art design={design} look={lookOf(color)} words={words} w={box.w} h={box.h} safeTop={safeTop} /> : null}
     </View>
   );
 }
 
-function Art({ design, look, words, w, h }: { design: CardDesign; look: Look; words: string[]; w: number; h: number }) {
+function Art({ design, look, words, w, h, safeTop }: { design: CardDesign; look: Look; words: string[]; w: number; h: number; safeTop: number }) {
   const k = Math.min(w / BW, h / BH);
   const W = w / k;
   const H = h / k;
   return (
     <View style={{ position: 'absolute', width: W, height: H, left: (w - W) / 2, top: (h - H) / 2, transform: [{ scale: k }] }}>
       <Deco design={design} look={look} W={W} H={H} />
-      <Words design={design} look={look} words={words} W={W} />
+      <Words design={design} look={look} words={words} W={W} down={Math.max(0, safeTop / k - 8)} />
     </View>
   );
 }
 
 /** 글자 자리 · 크기 · 글꼴 (시안 그대로) */
-function Words({ design, look, words, W }: { design: CardDesign; look: Look; words: string[]; W: number }) {
+function Words({ design, look, words, W, down }: { design: CardDesign; look: Look; words: string[]; W: number; down: number }) {
   const t = words.join('\n');
   const anton = !['circle', 'stripe', 'char'].includes(design);
   const font = anton ? Font.poster : Font.display;
@@ -62,6 +63,7 @@ function Words({ design, look, words, W }: { design: CardDesign; look: Look; wor
   };
   const txt = (size: number, room: number, pos: ViewStyle, color = look.text) => {
     const fs = fit(size, room);
+    if (down && typeof pos.top === 'number') pos = { ...pos, top: pos.top + down };
     return <PText style={[styles.w, pos, { fontFamily: font, fontSize: fs, lineHeight: fs * (anton ? 1.02 : 0.98), color }]}>{t}</PText>;
   };
   switch (design) {

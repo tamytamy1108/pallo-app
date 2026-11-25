@@ -47,11 +47,13 @@ type Props = {
   aspectRatio?: number;
   /** 캐릭터 이미지 폭 기준 (포스터 폭, 없으면 % 로) */
   style?: ViewStyle;
+  /** 만든 카드: 위에 겹치는 줄이 있으면 그만큼 위쪽 글자를 내려요 (번개 카드 '번개 · D-3') */
+  safeTop?: number;
   children?: ReactNode;
 };
 
 /** 포스터 한 장 */
-export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRatio, style, children }: Props) {
+export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRatio, style, safeTop, children }: Props) {
   const { bg, words } = slide;
   const acc = ACC[bg] ?? cardColor(bg)?.acc ?? C.y;
   const v = (hashId(id) + slide.v) % 4;
@@ -60,7 +62,7 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
   if (slide.made)
     return (
       <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: bg, height, aspectRatio }, style])}>
-        <CardArt design={slide.design} color={bg} words={words} />
+        <CardArt design={slide.design} color={bg} words={words} safeTop={safeTop} />
         {children}
       </View>
     );
