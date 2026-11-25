@@ -1954,7 +1954,7 @@ paths:
         추가: lang · region · branchName · scheduleText · weekdays · joinPolicy ·
         joinCondition(표시 문구) · chatNotice(멤버만) · posterUrls
 
-        · subHosts[](코호스트, 최대 3) · lastActivityAt · joinedLast30Days · hostIntro(호스트 소개 글) · hostStats{운영 개월 · 정기 모임 수 · 또 만나고 싶어요 수}
+        · subHosts[](코호스트, 인원 제한 없음) · lastActivityAt · joinedLast30Days · hostIntro(호스트 소개 글) · hostStats{운영 개월 · 정기 모임 수 · 또 만나고 싶어요 수}
 
         · viewerBookmarked · viewerGreeting · placeName/placeAddress(기본 모이는 곳)
       x-inventory: "#63"

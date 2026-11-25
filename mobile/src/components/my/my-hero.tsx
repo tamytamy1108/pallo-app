@@ -99,17 +99,18 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
 const TAG_LABEL = { pending: '연동 승인 대기중', linked: '연동됨', trial: '체험 예약', guest: '비회원' } as const;
 
 /**
- * 지점 연동 표시: 연동됨(초록 · 체크) · 연동 확인 중(라벤더 · 점) · 연동 안 됨(분홍 · 점). '회원' 바로 옆에 작게.
+ * 지점 연동 표시 (본인 마이에만): 흰 알약 + 잉크 테두리 + 색 점. 점 색으로 상태를 구분해요
+ * — 연동됨 초록 · 승인 대기중 보라 · 체험 예약 파랑 · 비회원 회색(테두리 · 글자도 흐리게).
  * 방금 연동됐으면(state/link-events myMoment) 마이가 처음 보일 때 '연동됨'이 톡 튀어나와요 (한 번만 · 움직임 줄이기면 그냥 보여요).
  */
 function LinkTag({ link }: { link: keyof typeof TAG_LABEL }) {
   const label = TAG_LABEL[link];
   const pop = usePopOnce(link === 'linked');
+  const guest = link === 'guest';
   return (
-    <Animated.View style={[styles.tag, TAG_BG[link], pop]} accessible accessibilityLabel={link === 'guest' || link === 'trial' ? label : `지점 ${label}`}>
-      {/* 기다리는 상태(승인 대기중)만 점, 나머지는 글자만 */}
-      {link === 'pending' ? <View style={styles.tagDot} /> : null}
-      <PText style={[styles.tagText, TAG_INK[link]]}>{label}</PText>
+    <Animated.View style={[styles.tag, guest && styles.tagGuest, pop]} accessible accessibilityLabel={guest || link === 'trial' ? label : `지점 ${label}`}>
+      <View style={[styles.tagDot, DOT[link]]} />
+      <PText style={[styles.tagText, guest && styles.tagTextGuest]}>{label}</PText>
     </Animated.View>
   );
 }
@@ -152,18 +153,12 @@ function LinkRequestChip() {
   );
 }
 
-/** 표시 색: 연동됨 초록 · 승인 대기중 라벤더 · 체험 예약 하늘 · 비회원 회색 (연동 안 됨은 '연동 신청하기' 칩) */
-const TAG_BG = {
+/** 점 색: 연동됨 초록 · 승인 대기중 보라 · 체험 예약 파랑 · 비회원 회색 (연동 안 됨은 점 없이 '연동 신청하기 ›' 칩) */
+const DOT = {
   linked: { backgroundColor: '#24834B' },
-  pending: { backgroundColor: Colors.lavender },
-  trial: { backgroundColor: Colors.skyMist },
-  guest: { backgroundColor: '#EFE8D8' },
-} as const;
-const TAG_INK = {
-  linked: { color: Colors.white },
-  pending: { color: Colors.purple },
-  trial: { color: Colors.langEn },
-  guest: { color: Colors.inkSub },
+  pending: { backgroundColor: Colors.purple },
+  trial: { backgroundColor: Colors.langEn },
+  guest: { backgroundColor: '#B9B0A0' },
 } as const;
 
 const styles = StyleSheet.create({
@@ -185,13 +180,15 @@ const styles = StyleSheet.create({
   name: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
   subRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5 },
   sub: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
-  // 연동됨: 초록 (흰 글자 10px 가 잘 읽히게 진한 초록)
-  tag: { height: 17, paddingLeft: 5, paddingRight: 6, borderRadius: 9, backgroundColor: '#24834B', flexDirection: 'row', alignItems: 'center', gap: 3 },
+  // 연동 표시 · 연동 신청하기 칩: 같은 흰 알약 (높이 · 테두리 · 글자 같게)
+  tag: { height: 19, paddingLeft: 6, paddingRight: 8, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.white, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  tagGuest: { borderColor: '#CFC6B4' },
   reqChip: { height: 19, paddingHorizontal: 8, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.white, justifyContent: 'center' },
   reqChipPressed: { backgroundColor: '#F1EAD9' },
   reqText: { fontFamily: Font.body900, fontSize: 10.5, lineHeight: 14, letterSpacing: -0.2 },
-  tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.purple },
-  tagText: { fontFamily: Font.body900, fontSize: 10, lineHeight: 13, letterSpacing: -0.2, color: Colors.white },
+  tagDot: { width: 6, height: 6, borderRadius: 3 },
+  tagText: { fontFamily: Font.body900, fontSize: 10.5, lineHeight: 14, letterSpacing: -0.2, color: Colors.ink },
+  tagTextGuest: { color: Colors.inkSub },
   bio: { marginTop: 4, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
   bioBtn: { alignSelf: 'flex-start' },
   bioEmpty: { color: Colors.purple, fontFamily: Font.body800 },

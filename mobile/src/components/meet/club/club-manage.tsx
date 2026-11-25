@@ -31,7 +31,6 @@ const APPLICANTS: Applicant[] = [
 /** 아래 고정 바 위 한 줄 '가입 신청 n명 · 대기자 n명' (예시 데이터 기준) */
 export const manageCounts = () => ({ ask: APPLICANTS.filter((a) => !a.wait).length, wait: APPLICANTS.filter((a) => a.wait).length });
 const REJECT_REASONS = ['정원이 찼어요', '가입 조건이 안 맞아요', '모임 분위기와 맞지 않아요'];
-const CO_MAX = 3;
 
 type Stage =
   | { k: 'menu' }
@@ -146,7 +145,7 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
 
   if (stage.k === 'cohost') {
     return (
-      <Sheet open={open} onClose={onClose} title={`코호스트 ${co.length} / ${CO_MAX}명`} label="코호스트 정하기" scrollKey="cohost">
+      <Sheet open={open} onClose={onClose} title={`코호스트 ${co.length}명`} label="코호스트 정하기" scrollKey="cohost">
         <SheetDesc>코호스트는 가입 승인 · 공지 · 정기 모임 · 참석 확인을 함께 맡아요. 누르면 정하거나 빼요.</SheetDesc>
         <SheetNote>정하거나 빼면 그 멤버와 지점 관리자에게 알림이 가요.</SheetNote>
         <SheetOptions
@@ -155,8 +154,7 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
             if (co.includes(k)) {
               setCo((L) => L.filter((x) => x !== k));
               showToast(`${k}님을 코호스트에서 뺐어요 · 본인과 지점 관리자에게 알렸어요`);
-            } else if (co.length >= CO_MAX) showToast(`코호스트는 ${CO_MAX}명까지예요`);
-            else {
+            } else {
               setCo((L) => [...L, k]);
               showToast(`${k}님이 코호스트가 됐어요 · 본인과 지점 관리자에게 알림을 보냈어요`);
             }
@@ -244,7 +242,7 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
     ? [
         { ...opt('apply', '가입 신청 · 대기자', `신청 ${asks.length}명 · 대기자 ${waits.length}명`), to: { k: 'apply' } },
         { ...opt('members', '멤버 목록', `멤버 ${members.length}명 · 누르면 프로필`), to: { k: 'members' } },
-        { ...opt('cohost', '코호스트 정하기', `${co.length} / ${CO_MAX}명${co.length ? ' · ' + co.join(' · ') : ''} · 지점 관리자에게도 알림`), to: { k: 'cohost' } },
+        { ...opt('cohost', '코호스트 정하기', `${co.length}명${co.length ? ' · ' + co.join(' · ') : ''} · 지점 관리자에게도 알림`), to: { k: 'cohost' } },
         { ...opt('edit', '소개 · 사진 · 장소 · 시간 고치기', '시간 · 장소가 바뀌면 멤버에게 알림이 가요'), to: { k: 'menu' } },
         { ...opt('meet', '공지 · 정기 모임 · 참석 확인', '참석 확인은 호스트 점수 ★에 쓰여요'), to: { k: 'meet' } },
         { ...opt('handover', '호스트 넘기기', '멤버 중 한 명에게 넘겨요', true), to: { k: 'handover' } },
