@@ -12,6 +12,7 @@ import { memberGate } from '@/components/common/trial-guide';
 import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { ProNoteCard } from '@/components/account/pro-note-card';
 import { BranchBoard } from '@/components/my/branch-board';
+import { DevPersonaPill } from '@/components/my/dev-persona';
 import { GearIcon, LgIcon } from '@/components/my/icons';
 import { BadgeGrid, MyList, MyStats, RankSummary, SecHead } from '@/components/my/my-blocks';
 import { MyHero } from '@/components/my/my-hero';
@@ -80,16 +81,20 @@ export default function MyScreen() {
           <PText variant="headline" accessibilityRole="header">
             마이
           </PText>
-          {/* 설정은 회원만: 비회원은 흐리게 · 누르면 잠김 1번 */}
-          <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="설정" accessibilityHint={canSettings ? undefined : '지점 회원이 되면 쓸 수 있어요'} style={!canSettings && styles.off}>
-            {({ pressed }) => (
-              <Raised radius={14} pressed={pressed && canSettings} flat={!canSettings}>
-                <View style={styles.iconBtn}>
-                  <GearIcon />
-                </View>
-              </Raised>
-            )}
-          </Pressable>
+          <View style={styles.headR}>
+            {/* 개발용 사람 바꾸기 (개발 서버에서만) */}
+            <DevPersonaPill />
+            {/* 설정은 회원만: 비회원은 흐리게 · 누르면 잠김 1번 */}
+            <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="설정" accessibilityHint={canSettings ? undefined : '지점 회원이 되면 쓸 수 있어요'} style={!canSettings && styles.off}>
+              {({ pressed }) => (
+                <Raised radius={14} pressed={pressed && canSettings} flat={!canSettings}>
+                  <View style={styles.iconBtn}>
+                    <GearIcon />
+                  </View>
+                </Raised>
+              )}
+            </Pressable>
+          </View>
         </Appear>
 
         <Appear kind="rise" delay={40}>
@@ -209,6 +214,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   body: { paddingHorizontal: Spacing.gutter, paddingTop: 0, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  headR: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   dev: { marginTop: 10, gap: 10 },
   stack: { gap: Spacing.stack },

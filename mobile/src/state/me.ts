@@ -4,7 +4,7 @@
  * 기기에 남아요 (가짜 서버 · 스파크 · 포인트 · 팔로우 · 소개). 서버가 생기면 로그인 상태(api/session.tsx)가 받은 /me 로 덮어써요.
  */
 import { ME } from '@/data/mock';
-import { devProfile } from '@/lib/dev-profile';
+import { devProfile, type DevPersona } from '@/lib/dev-profile';
 import { createStore } from '@/lib/store';
 import { weekKey } from '@/state/today-goal';
 
@@ -85,8 +85,35 @@ const meStore = createStore<Me>(ME0, {
   },
 });
 
-// 개발용 '연동된 회원' 프로필(lib/dev-profile): 앱을 열 때마다 연동된 회원으로 (프로 · 매니저는 그대로)
-if (devProfile === 'linked') meStore.set((s) => ({ ...s, link: 'linked', role: s.role === 'guest' ? 'member' : s.role, trial: null }));
+// 개발용 '사람 바꾸기'(lib/dev-profile): 앱을 열 때마다 고른 사람으로 돌려놔요 (가입 · 연동 · 체험 단계를 건너뛰고 바로 그 화면을 보게)
+const devWho = devProfile;
+if (devWho) meStore.set((s) => ({ ...s, ...devMe(devWho) }));
+
+/** 개발용 사람마다 나(Me)의 role · link · trial · plan */
+function devMe(who: DevPersona): Pick<Me, 'role' | 'link' | 'trial' | 'plan'> {
+  const base = { role: 'guest' as Role, link: 'none' as Me['link'], trial: null, plan: 'study' as Me['plan'] };
+  switch (who) {
+    case 'guest':
+      return base;
+    case 'trial': {
+      // 체험 예약: 내일 저녁 (홈 출석 카드 자리에 체험 카드)
+      const d = new Date(Date.now() + 86400000);
+      const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return { ...base, trial: { branch: '하남점', day, time: '19:30', lang: 'en' } };
+    }
+    case 'pending':
+    case 'rejected':
+      return { ...base, link: who };
+    case 'app':
+      return { ...base, plan: 'app' };
+    case 'linked':
+      return { ...base, role: 'member', link: 'linked' };
+    case 'pro':
+      return { ...base, role: 'leader', link: 'linked' };
+    case 'manager':
+      return { ...base, role: 'manager', link: 'linked' };
+  }
+}
 
 export const useMe = meStore.useStore;
 export const getMe = meStore.get;

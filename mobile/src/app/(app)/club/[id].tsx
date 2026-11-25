@@ -23,6 +23,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, joinFree } from '@/data/meet';
+import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -41,7 +42,7 @@ const TABS: [Tab, string][] = [
  * 맞는 API: 63 `/clubs/:id` · 65 `/clubs/:id/members` · 67 `/board` · `/photos` · 68 `/chat`(실시간 — Q-T6) · 69 `/sessions`
  */
 export default function ClubDetail() {
-  // 개발용 ?as=host · ?as=co: 호스트 · 코호스트로 보기 (관리 버튼 · 시트 확인용)
+  // 개발용 ?as=host · ?as=co, 또는 마이 '개발 · 사람'의 동아리 역할(lib/dev-profile devClubRole): 호스트 · 코호스트 · 멤버로 보기
   const { id, as } = useLocalSearchParams<{ id: string; as?: string }>();
   const key = String(id);
   const myClubs = useMeetStore((s) => s.myClubs);
@@ -59,7 +60,8 @@ export default function ClubDetail() {
   const [manage, setManage] = useState(false);
 
   if (!c) return <EmptyState title="동아리를 찾을 수 없어요" />;
-  const inC = st === 'in';
+  // 개발용 동아리 역할을 골랐으면 가입한 사람으로 봐요
+  const inC = st === 'in' || (__DEV__ && devClubRole !== 'auto');
   const cur = c.n + (inC ? 1 : 0);
   const meArg = { name: me.name, branch: me.branch };
   const staff = clubStaff(c, cur, meArg);
@@ -68,8 +70,9 @@ export default function ClubDetail() {
   const cat = clubCat(c);
   const recs = clubs.filter((q) => q.id !== c.id && q.cc === c.cc).slice(0, 3);
   const q = sid ? clubSessions(c, att, 12, 85).find((s) => s.id === sid) ?? null : null;
-  const devRole: ManageRole | null = __DEV__ && (as === 'host' || as === 'co') ? as : null;
-  const role: ManageRole | null = devRole ?? (c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
+  const devAs = __DEV__ ? (as === 'host' || as === 'co' ? as : devClubRole) : 'auto';
+  const devRole: ManageRole | null = devAs === 'host' || devAs === 'co' ? devAs : null;
+  const role: ManageRole | null = devRole ?? (devAs === 'member' ? null : c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
   const counts = manageCounts();
 
   const btn = role ? (
