@@ -31,7 +31,7 @@ const PATHS: { path: Exclude<OnbPath, 'browse'>; title: string; sub: string; to:
     bg: '#DE7593',
   },
   { path: 'trial', title: '체험해 보고 싶어요', sub: '가까운 지점 체험 세션 1회', to: '/onboarding/trial', hero: require('@/assets/characters/av/body-pink.png') },
-  { path: 'app', title: '앱 구경할래요', sub: '지점 없이 앱부터 둘러볼게요', to: '/onboarding/langs', hero: require('@/assets/characters/av/body-yellow.png') },
+  { path: 'app', title: '앱 구경할래요', sub: '가까운 지점만 고르고 둘러볼게요', to: '/onboarding/langs', hero: require('@/assets/characters/av/body-yellow.png') },
 ];
 
 const RADIUS = 18;

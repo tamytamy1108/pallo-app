@@ -6,7 +6,7 @@ import { NextButton, OnbScreen, useRequired } from '@/components/onboarding/part
 import { stepsFor, updateOnboarding, useOnboarding } from '@/state/onboarding';
 
 /**
- * 가입 › 앱 구경 › 희망 언어 (4/5) — 프로토타입 #dest-lang, docs/pages/09-onboarding.md 가입 단계 표 '희망 언어 (앱으로만)'.
+ * 가입 › 앱 구경 › 희망 언어 (4/6) — 프로토타입 #dest-lang, docs/pages/09-onboarding.md 가입 단계 표 '희망 언어 (앱으로만)'.
  * 여러 개 고를 수 있어요. 고른 언어마다 오늘의 목표 · 레슨이 나와요. 실력은 묻지 않고 첫 AI 대화에서 맞춰요.
  */
 export default function OnboardingLangs() {
