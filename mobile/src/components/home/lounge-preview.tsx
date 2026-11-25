@@ -9,7 +9,6 @@ import Svg, { Path } from 'react-native-svg';
 import { loungeHighlightsQuery } from '@/api/queries';
 import { PIC_BG, PostArt } from '@/components/lounge/pics';
 import { Pressable } from '@/components/ui/pressable';
-import { ProfileTap } from '@/components/common/profile-tap';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -181,9 +180,7 @@ function SlideCard({ item, d, w, cardW, still, onLayout, onPress }: { item: Loun
           )}
           <View style={styles.body}>
             <View style={styles.who}>
-              <ProfileTap name={item.who}>
-                <MemberFace size={28} bg={item.face.bg} body={item.face.body} />
-              </ProfileTap>
+              <MemberFace size={28} bg={item.face.bg} body={item.face.body} />
               <PText style={styles.whoName}>{item.who}</PText>
               <PText style={styles.whoTime} color={Colors.inkSub}>
                 · {item.time}
