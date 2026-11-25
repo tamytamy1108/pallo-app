@@ -12,7 +12,7 @@ import { AppState, Platform } from 'react-native';
 
 import { devProfile } from './dev-profile';
 
-// 개발용 프로필(lib/dev-profile)은 따로 저장해요 (pallo@linked/ · pallo@linked-<키>)
+// 개발용 사람(lib/dev-profile)마다 따로 저장해요 (pallo@pro/ · pallo@pro-<키>)
 const PREFIX = devProfile ? `pallo@${devProfile}-` : 'pallo-';
 const FOLDER = devProfile ? `pallo@${devProfile}` : 'pallo';
 const WRITE_DELAY_MS = 300;

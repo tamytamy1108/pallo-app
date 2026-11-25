@@ -12,7 +12,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
-import { useSpeech } from '@/lib/speech';
+import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
 import { matchSpeech, shuffled, wordKey } from '@/lib/words';
 import { readLines, stopSpeaking } from '@/lib/tts';
 
@@ -385,6 +385,7 @@ export function ReadBlock({ task: t }: { task: ReadTask }) {
   };
   const cardFor = (k: number, taken: number[]) => mix.find((i) => !taken.includes(i) && wordKey(ws[i]) === wordKey(ws[k]));
   const speech = useSpeech({
+    onProblem: (p) => showToast(SPEECH_PROBLEM_TEXT[p]),
     onText: (text) => {
       const r = matchSpeech(text, ws);
       const now = usedRef.current;
