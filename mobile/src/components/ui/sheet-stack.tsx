@@ -9,6 +9,8 @@ import { Fragment, useEffect, useId, useLayoutEffect, useState, useSyncExternalS
 import { Modal, Platform, type ModalProps } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { dismissKeyboardBehind } from '@/lib/keyboard';
+
 const NEST = Platform.OS === 'ios';
 
 /** 열린 시트 순서 (마지막이 맨 위) */
@@ -92,9 +94,14 @@ export function NestedSheets({ id }: { id: string }) {
  * 앱의 모든 떠 있는 창(팝업 · 사진 크게 보기 · 확인 창 등)은 RN Modal 대신 이걸 써요.
  * - 아이폰: 다른 창이 떠 있을 때 열리면 그 창 안에 그려서 안 뜨는 일이 없어요 (위 설명).
  * - 창 안의 안전 영역(홈 바 · 내비게이션 바)을 창 기준으로 다시 재요 → 안의 useSafeAreaInsets 가 맞는 값을 줘요.
+ * - 열릴 때 뒤 화면 키보드를 내려요 (창 아래 버튼이 키보드에 가리지 않게).
  */
 export function LayerModal({ visible = true, children, ...rest }: ModalProps) {
   const id = useId();
+  // 뒤 화면 키보드가 남아 창 아래 버튼을 덮지 않게 (ui/sheet 와 같은 이유)
+  useEffect(() => {
+    if (visible) dismissKeyboardBehind();
+  }, [visible]);
   const node = (
     <Modal visible={visible} {...rest}>
       <SafeAreaProvider>

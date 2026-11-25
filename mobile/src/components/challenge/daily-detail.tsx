@@ -57,7 +57,7 @@ const TABS: [Tab, string][] = [
   ['feed', '인증'],
   ['rank', '순위'],
 ];
-const TOP_H = 60;
+const TOP_H = 44;
 
 /**
  * 일상 챌린지 상세 (프로토타입 lgChalDetail): 진행 카드 → 카테고리 · 이름 · 지점 · 멤버 → 홈 | 인증 | 순위 탭 → 아래 고정 [찜] [참여하기 / 오늘 인증하기].

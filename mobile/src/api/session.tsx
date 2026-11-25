@@ -19,7 +19,7 @@ import { createContext, useContext, useEffect, useRef, useSyncExternalStore, typ
 
 import { updateMe } from '@/state/me';
 
-import { completeOnboarding } from './me';
+import { completeOnboarding, patchMe, type MePatch } from './me';
 import { meQuery, queryKeys } from './queries';
 import { hydrateTokens, isTokensHydrated, subscribeTokens, tokenStorage } from './token';
 
@@ -85,5 +85,22 @@ export function useCompleteOnboarding() {
   return useMutation({
     mutationFn: completeOnboarding,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+  });
+}
+
+/**
+ * 4 PATCH /me — 닉네임 · 한 줄 소개 · 지점 고치기.
+ * 받은 값을 바로 state/me 에 넣어 마이 · 프로필이 곧바로 바뀌고, /me 도 다시 받아요.
+ */
+export function usePatchMe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: MePatch) => patchMe(patch),
+    onSuccess: (saved, patch) => {
+      // 고친 칸만 서버가 돌려준 값으로 (서버가 앞뒤 빈칸을 다듬었을 수 있어요)
+      const keys = Object.keys(patch) as (keyof MePatch)[];
+      updateMe(Object.fromEntries(keys.map((k) => [k, saved[k]])) as MePatch);
+      return queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
   });
 }

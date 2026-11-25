@@ -10,10 +10,29 @@ import { createStore } from '@/lib/store';
 
 // ---------- 연기 · 팀 · 지점 변경 신청 ----------
 
-export type ChangeRequest = { label: string; txt: string; msg: string; at: number };
-const changeStore = createStore<ChangeRequest | null>(null, { persist: { key: 'change-request', load: (v, initial) => (isObj(v) && typeof v.label === 'string' ? (v as ChangeRequest) : initial) } });
+/**
+ * 신청은 바로 바뀌지 않아요: 운영진 전산으로 넘어가 확인(승인 · 반려)을 기다려요.
+ * status: 대기(pending) → 승인(approved) · 반려(rejected) — 앱은 대기로만 넣고, 바꾸는 건 운영진 전산이에요.
+ * reason: 1달 넘게 쉬기처럼 사유가 꼭 필요한 신청의 사유
+ */
+export type ChangeRequestStatus = 'pending' | 'approved' | 'rejected';
+export type ChangeRequest = { label: string; txt: string; msg: string; at: number; status: ChangeRequestStatus; reason?: string };
+const changeStore = createStore<ChangeRequest | null>(null, {
+  persist: {
+    key: 'change-request',
+    // 예전에 남긴 신청(상태 없음)은 대기로 읽어요
+    load: (v, initial) => (isObj(v) && typeof v.label === 'string' ? ({ status: 'pending', ...v } as ChangeRequest) : initial),
+  },
+});
 export const useChangeRequest = () => changeStore.useStore();
-export const submitChangeRequest = (r: Omit<ChangeRequest, 'at'>) => changeStore.set({ ...r, at: Date.now() });
+/** 가짜 서버가 신청을 받아 대기로 넣어요 (화면은 api/change-requests 의 requestChange 로 불러요) */
+export const submitChangeRequest = (r: Omit<ChangeRequest, 'at' | 'status'>): ChangeRequest => {
+  const saved: ChangeRequest = { ...r, at: Date.now(), status: 'pending' };
+  changeStore.set(saved);
+  return saved;
+};
+/** 서버가 돌려준 신청을 그대로 남겨요 (내 스터디 카드가 '운영진 확인 중'으로 보여요) */
+export const putChangeRequest = (r: ChangeRequest) => changeStore.set(r);
 export const cancelChangeRequest = () => changeStore.set(null);
 
 // ---------- PRO'S NOTE ----------

@@ -45,11 +45,6 @@ type Handlers = {
   onPause?: (text: string) => void;
   /** 사용자가 멈추거나 문제가 끝나 듣기가 완전히 끝났을 때 */
   onEnd?: (text: string) => void;
-  /**
-   * 말하기가 안 될 때 (모듈 없음 · 마이크 거절 · 마이크를 못 켬 등). 누를 때마다 알려 줘요.
-   * 안내 줄이 없는 화면은 여기서 토스트를 띄워요 — 안 그러면 마이크를 눌러도 아무 일도 없는 것처럼 보여요.
-   */
-  onProblem?: (problem: SpeechProblem) => void;
 };
 
 /**
@@ -57,10 +52,10 @@ type Handlers = {
  * - start() 하면 사용자가 stop() 할 때까지 계속 들어요. 폰 · 브라우저가 스스로 듣기를 끝내도 조용히 다시 켜요.
  * - 새로 켜기 전에 이전 듣기를 완전히 끝내요 (끝나지 않은 채 또 켜면 브라우저가 더 이상 안 들어요).
  */
-export function useSpeech({ onText, onPause, onEnd, onProblem }: Handlers) {
+export function useSpeech({ onText, onPause, onEnd }: Handlers) {
   const [listening, setListening] = useState(false);
   const [problem, setProblem] = useState<SpeechProblem | null>(speechAvailable ? null : 'unavailable');
-  const handlers = useRef<Handlers>({ onText, onPause, onEnd, onProblem });
+  const handlers = useRef<Handlers>({ onText, onPause, onEnd });
   const want = useRef(false); // 사용자가 듣기를 켜 둔 상태
   const active = useRef(false); // 음성 인식이 실제로 도는 중
   const ended = useRef<(() => void) | null>(null);
@@ -80,17 +75,13 @@ export function useSpeech({ onText, onPause, onEnd, onProblem }: Handlers) {
       if (want.current && active.current) Speech?.abort(); // end → 다시 켜기
     }, STUCK_MS);
   };
-  const report = (p: SpeechProblem) => {
-    setProblem(p);
-    handlers.current.onProblem?.(p);
-  };
   const clearTimers = () => {
     if (pause.current) clearTimeout(pause.current);
     if (stuck.current) clearTimeout(stuck.current);
   };
 
   useEffect(() => {
-    handlers.current = { onText, onPause, onEnd, onProblem };
+    handlers.current = { onText, onPause, onEnd };
   });
 
   const run = () => {
@@ -136,7 +127,7 @@ export function useSpeech({ onText, onPause, onEnd, onProblem }: Handlers) {
         if (e.error === 'aborted' || e.error === 'no-speech' || e.error === 'speech-timeout') return; // 조용했을 뿐 → 다시 켜요
         const fatal = ['not-allowed', 'service-not-allowed', 'language-not-supported', 'interrupted', 'audio-capture'].includes(e.error);
         if (fatal) want.current = false;
-        report(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'denied' : e.error === 'network' ? 'network' : e.error === 'interrupted' ? 'interrupted' : 'other');
+        setProblem(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'denied' : e.error === 'network' ? 'network' : e.error === 'interrupted' ? 'interrupted' : 'other');
       }),
       Speech.addListener('end', () => {
         active.current = false;
@@ -152,7 +143,7 @@ export function useSpeech({ onText, onPause, onEnd, onProblem }: Handlers) {
             return;
           }
           want.current = false; // 너무 자주 끊겨요 → 그만두고 다시 눌러 달라고 해요
-          report('other');
+          setProblem('other');
         }
         clearTimers();
         setListening(false);
@@ -188,13 +179,13 @@ export function useSpeech({ onText, onPause, onEnd, onProblem }: Handlers) {
 
   /** hints: 이 문제의 낱말들 — 폰(애플 · 구글) 음성 인식이 이 낱말 쪽으로 더 잘 알아들어요 (웹은 무시) */
   const start = async (wordHints: string[] = []) => {
-    if (!Speech) return report('unavailable');
+    if (!Speech) return;
     setProblem(null);
     want.current = false;
     await settle();
     const perm = await Speech.requestPermissionsAsync();
     if (!perm.granted) {
-      report('denied');
+      setProblem('denied');
       return;
     }
     hints.current = wordHints;

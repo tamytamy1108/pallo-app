@@ -66,6 +66,8 @@ export const LG_PCAT: [PostCat, string, PicKey][] = [
 ];
 
 // ---- 글 · 카드 ----
+/** 사진 위 글 스티커 자리 · 색: x · y 는 사진 칸 안 가운데 위치(0~1 비율), c 는 STICKER_COLORS 번호 */
+export type StickerSpot = { x: number; y: number; c: number };
 export type Expr = { t: string; ko: string; lang: string };
 export type Post = {
   id: string;
@@ -85,6 +87,8 @@ export type Post = {
   imgs?: string[];
   /** imgs 와 같은 순서로, 올릴 때 맞춘 확대 · 위치 */
   frames?: PhotoFraming[];
+  /** 스토리에서 함께 올린 글이면 첫 장 위 글 스티커 자리 · 색 (글은 text) */
+  lbl?: StickerSpot;
   ratio?: number;
   n: number;
   likes: number;
@@ -256,6 +260,8 @@ export type Story = {
   img?: string;
   /** 올릴 때 맞춘 확대 · 위치 */
   frame?: PhotoFraming;
+  /** 사진 위 글 스티커 자리 · 색 (글은 big) — 없으면 예전처럼 아래 큰 글씨로 */
+  lbl?: StickerSpot;
 };
 const st = (id: string, who: string, av: string, role: string, br: string, cat: StoryCat, time: string, h: number, big: string, ds: string, art: [string, string], x: Partial<Story> = {}): Story => ({ id, who, av, role, br, cat, time, h, big, ds, art, ...x });
 export const STORIES: Story[] = [

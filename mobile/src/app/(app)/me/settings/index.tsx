@@ -120,7 +120,7 @@ export default function SettingsScreen() {
         </Pressable>
       </View>
 
-      <NickSheet open={sheet === 'nick'} onClose={() => setSheet(null)} name={me.name} bio={set.bio} />
+      <NickSheet open={sheet === 'nick'} onClose={() => setSheet(null)} name={me.name} bio={me.bio || set.bio} />
       <BranchSheet open={sheet === 'branch'} onClose={() => setSheet(null)} current={set.branches.length ? set.branches : me.branch.split(' · ')} />
       <Sheet open={sheet === 'block'} onClose={() => setSheet(null)} title="차단한 멤버 0명">
         <PText style={styles.empty}>차단한 멤버가 없어요.</PText>
@@ -225,8 +225,8 @@ function NickSheet({ open, onClose, name, bio }: { open: boolean; onClose: () =>
                 showToast('닉네임은 2자 이상이에요');
                 return;
               }
-              updateMe({ name: v.slice(0, 10) });
-              updateSettings({ bio: line.trim() });
+              // 소개는 마이 카드 · 프로필이 읽는 내 정보(me.bio)에 남겨요
+              updateMe({ name: v.slice(0, 10), bio: line.replace(/\s+/g, ' ').trim() });
               onClose();
               showToast('저장했어요');
             }}

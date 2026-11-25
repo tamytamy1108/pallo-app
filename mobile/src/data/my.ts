@@ -184,7 +184,9 @@ const LANGS = ['영어', '일본어', '중국어', '스페인어'] as const;
 export type LangName = (typeof LANGS)[number];
 /** 멤버 학습 언어: 두 언어 병행이면 두 개 (프로토타입 memberLangs) */
 export function memberLangs(name: string): LangName[] {
-  if (!name || name === 'PALLO') return [];
+  if (!name) return [];
+  // PALLO 공식 계정은 모든 언어를 다뤄요
+  if (name === 'PALLO') return [...LANGS];
   const h = nameHash(name);
   const a = LANGS[h % 4];
   return h % 3 === 0 ? [a, LANGS[(h + 1) % 4]] : [a];
