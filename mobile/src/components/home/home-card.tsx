@@ -16,7 +16,7 @@ import { updateOnboarding } from '@/state/onboarding';
 
 import { useClock } from './attendance';
 import { ARROW_PATH, ICON_PATH, LineIcon } from './icons';
-import { ClapperArm, clapperStyles as cs, HeroChar, SessionCard } from './session-card';
+import { ClapperArm, clapperStyles as cs, HeroChar, SessionCard, useHeroRoom } from './session-card';
 
 const PLAY_PATH = 'M8 5.5v13l10.5-6.5z';
 /** 첫 레슨: Lv.1 1과 (라이브러리 › 교재와 같은 화면) */
@@ -40,6 +40,7 @@ export function HomeCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => voi
  * 전날까지 'Your first take.' → 당일 'D-DAY · 오늘 19:30 상담이에요' → 지난 뒤 '체험은 어땠어요?' + [회원 등록 안내].
  */
 function TrialCard({ trial }: { trial: TrialBooking }) {
+  const heroRoom = useHeroRoom();
   const now = useClock();
   const [sheet, setSheet] = useState(false);
   const stage = trialStage(trial, now);
@@ -62,8 +63,8 @@ function TrialCard({ trial }: { trial: TrialBooking }) {
             <Cell label="DATE" value={trialShortDate(trial)} divider flex={1.05} />
             <Cell label="TIME" value={trial.time} big divider flex={0.95} />
           </View>
-          <View style={StyleSheet.flatten([cs.main, styles.main])}>
-            <HeroChar pose={stage === 'after' ? 'standard' : 'jump'} />
+          <View style={StyleSheet.flatten([cs.main, styles.main])} onLayout={heroRoom.onMain}>
+            <HeroChar pose={stage === 'after' ? 'standard' : 'jump'} room={heroRoom.room} />
             <View style={cs.live}>
               <View style={StyleSheet.flatten([cs.liveDot, stage === 'today' ? styles.dotToday : styles.dotWhite])} />
               <PText style={cs.liveText}>{copy.badge}</PText>
@@ -75,7 +76,7 @@ function TrialCard({ trial }: { trial: TrialBooking }) {
             <PText style={styles.note} color={Colors.inkSub}>
               {copy.note}
             </PText>
-            <View style={StyleSheet.flatten([cs.actions, styles.actions])}>
+            <View style={StyleSheet.flatten([cs.actions, styles.actions])} onLayout={heroRoom.onActions}>
               {stage === 'after' ? (
                 <CardButton
                   label="회원 등록 안내"
@@ -100,6 +101,7 @@ function TrialCard({ trial }: { trial: TrialBooking }) {
  * [1과 무료로 시작하기](Lv.1 1과) · [체험 신청하기] · '지점 회원이라면 연동 요청'.
  */
 function GuestCard() {
+  const heroRoom = useHeroRoom();
   const linkRequest = () => {
     sfx('soft');
     updateOnboarding({ path: 'member' });
@@ -111,8 +113,8 @@ function GuestCard() {
       <View style={cs.shadowBox}>
         <View style={cs.shadow} />
         <View style={StyleSheet.flatten([cs.body, styles.bodyGuest])}>
-          <View style={StyleSheet.flatten([cs.main, styles.main])}>
-            <HeroChar pose="tilt" />
+          <View style={StyleSheet.flatten([cs.main, styles.main])} onLayout={heroRoom.onMain}>
+            <HeroChar pose="tilt" room={heroRoom.room} />
             <View style={cs.live}>
               <View style={StyleSheet.flatten([cs.liveDot, styles.dotWhite])} />
               <PText style={cs.liveText}>BACKSTAGE</PText>
@@ -121,7 +123,7 @@ function GuestCard() {
               Welcome backstage.
             </PText>
             <PText style={styles.line}>먼저 둘러보는 중이에요.</PText>
-            <View style={StyleSheet.flatten([cs.actions, styles.actions])}>
+            <View style={StyleSheet.flatten([cs.actions, styles.actions])} onLayout={heroRoom.onActions}>
               <CardButton
                 label="1과 무료로 시작하기"
                 icon={PLAY_PATH}

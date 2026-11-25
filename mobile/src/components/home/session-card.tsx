@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Rect, Stop } from 'react-native-svg';
 
@@ -84,6 +84,7 @@ export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => 
 function PendingCard({ rejected = false }: { rejected?: boolean }) {
   const branch = useMe((m) => m.branch);
   const now = useClock();
+  const heroRoom = useHeroRoom();
   if (rejected) return <RejectedCard branch={branch} now={now} />;
   const off = '연동되면 출석이 열려요';
   return (
@@ -107,8 +108,8 @@ function PendingCard({ rejected = false }: { rejected?: boolean }) {
             </View>
             <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider narrow />
           </View>
-          <View style={StyleSheet.flatten([styles.main, styles.mainWait])}>
-            <HeroChar pose="tilt" />
+          <View style={StyleSheet.flatten([styles.main, styles.mainWait])} onLayout={heroRoom.onMain}>
+            <HeroChar pose="tilt" room={heroRoom.room} />
             <View style={styles.live}>
               <PulseDot size={10} square />
               <PText style={styles.liveText}>STANDBY</PText>
@@ -117,7 +118,7 @@ function PendingCard({ rejected = false }: { rejected?: boolean }) {
               Almost on stage.
             </PText>
             <PText style={styles.waitSub}>{branch}이 회원 정보를 확인하고 있어요.</PText>
-            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])}>
+            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])} onLayout={heroRoom.onActions}>
               {/* 꺼 둔 버튼: 누르면 '출석하려면 지점 연동이 끝나야 해요' 토스트 (trial-guide memberGate) */}
               <Pressable onPress={() => memberGate('출석하려면')} sound={false} accessibilityRole="button" accessibilityLabel={off} accessibilityState={{ disabled: true }}>
                 <View style={StyleSheet.flatten([styles.btn, styles.btnOff])}>
@@ -139,6 +140,7 @@ function PendingCard({ rejected = false }: { rejected?: boolean }) {
 
 /** 연동 안 됨 (rejected): 권한은 비회원과 같아요. 출석은 잠긴 채, 다시 요청하는 길만 홈에 남겨요 */
 function RejectedCard({ branch, now }: { branch: string; now: Date }) {
+  const heroRoom = useHeroRoom();
   const again = () => {
     sfx('tap');
     router.push('/link-rejected');
@@ -164,8 +166,8 @@ function RejectedCard({ branch, now }: { branch: string; now: Date }) {
             </View>
             <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider narrow />
           </View>
-          <View style={StyleSheet.flatten([styles.main, styles.mainWait])}>
-            <HeroChar pose="standard" />
+          <View style={StyleSheet.flatten([styles.main, styles.mainWait])} onLayout={heroRoom.onMain}>
+            <HeroChar pose="standard" room={heroRoom.room} />
             <View style={styles.live}>
               <View style={StyleSheet.flatten([styles.liveDot, styles.failLive])} />
               <PText style={styles.liveText}>RETAKE</PText>
@@ -174,7 +176,7 @@ function RejectedCard({ branch, now }: { branch: string; now: Date }) {
               One more take.
             </PText>
             <PText style={styles.waitSub}>{branch}에서 회원 정보를 찾지 못했어요.</PText>
-            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])}>
+            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])} onLayout={heroRoom.onActions}>
               <Pressable onPress={again} accessibilityRole="button" accessibilityLabel="연동 안 됨 · 다시 요청하기">
                 {({ pressed }) => (
                   <View style={StyleSheet.flatten([styles.btn, styles.btnAgain, pressed && styles.btnAgainPressed])}>
@@ -220,6 +222,7 @@ function PulseDot({ size, square }: { size: number; square?: boolean }) {
 
 function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
   const [stage, setStage] = useState(0);
+  const heroRoom = useHeroRoom();
   useFocusEffect(
     useCallback(() => {
       stageTurn.set((n) => (n + 1) % STAGE_LINES.length);
@@ -244,14 +247,14 @@ function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
             <Field label={count.label} value={count.value} big divider />
             <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider narrow />
           </View>
-          <View style={styles.main}>
-            <HeroChar pose={POSES[stage]} />
+          <View style={styles.main} onLayout={heroRoom.onMain}>
+            <HeroChar pose={POSES[stage]} room={heroRoom.room} />
             <View style={styles.live}>
               <LiveDot live={hero.live} />
               <PText style={styles.liveText}>{hero.badge}</PText>
             </View>
             <SwapTitle text={title} />
-            <HeroActions hero={hero} slot={attend.slot} onOpen={onOpen} />
+            <HeroActions hero={hero} slot={attend.slot} onOpen={onOpen} onLayout={heroRoom.onActions} />
           </View>
         </View>
       </View>
@@ -260,11 +263,11 @@ function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
 }
 
 /** 상태마다 버튼 (프로토타입 #heroActions: .hero-btn · .go · [disabled] · .done · .hero-link) */
-function HeroActions({ hero, slot, onOpen }: { hero: Hero; slot: number; onOpen: (mode: 'rsvp' | 'checkin') => void }) {
+function HeroActions({ hero, slot, onOpen, onLayout }: { hero: Hero; slot: number; onOpen: (mode: 'rsvp' | 'checkin') => void; onLayout?: (e: LayoutChangeEvent) => void }) {
   if (hero.kind === 'onair' || hero.kind === 'entered') {
     const label = hero.kind === 'onair' ? '입장 완료 · 무대 위' : '입장 완료!';
     return (
-      <View style={styles.actions} accessible accessibilityLabel={label}>
+      <View style={styles.actions} onLayout={onLayout} accessible accessibilityLabel={label}>
         <View style={StyleSheet.flatten([styles.btn, styles.btnWhite])}>
           <QrBadge d={CHECK_PATH} />
           <PText style={styles.btnText}>{label}</PText>
@@ -275,7 +278,7 @@ function HeroActions({ hero, slot, onOpen }: { hero: Hero; slot: number; onOpen:
   if (hero.kind === 'rsvp') {
     const from = `${fmtMin(SLOTS[slot].start - QR_BEFORE)}부터 출석`;
     return (
-      <View style={styles.actions}>
+      <View style={styles.actions} onLayout={onLayout}>
         <View style={StyleSheet.flatten([styles.btn, styles.btnWhite, styles.btnFlat])} accessible accessibilityLabel={from} accessibilityState={{ disabled: true }}>
           <QrBadge d={QR_PATH} />
           <PText style={styles.btnText}>{from}</PText>
@@ -293,7 +296,7 @@ function HeroActions({ hero, slot, onOpen }: { hero: Hero; slot: number; onOpen:
   const go = hero.kind === 'action';
   const label = go ? '출석체크 하기' : hero.kind === 'off' ? '그래도 갈래요' : '사전 출석체크';
   return (
-    <View style={styles.actions}>
+    <View style={styles.actions} onLayout={onLayout}>
       <Pressable onPress={() => onOpen(go ? 'checkin' : 'rsvp')} accessibilityRole="button" accessibilityLabel={label}>
         {({ pressed }) => (
           <View style={StyleSheet.flatten([styles.btn, pressed && styles.btnPressed])}>
@@ -417,9 +420,30 @@ const POSE = {
 } as const;
 
 /** 보라 팔로: 숨 쉬듯 살짝 눌렸다 펴지고(cornerBreathe 3초), 3초마다 눈을 깜빡여요 (avBlink) */
-export function HeroChar({ pose }: { pose: Pose }) {
+/**
+ * 카드 안 버튼 줄의 오른쪽 끝을 재요: 캐릭터가 버튼 검은 테에 겹치지 않게, 좁은 폰에서는 캐릭터를 그만큼 줄여요.
+ * 본문 칸에 onMain, 버튼 줄(왼쪽 정렬 · 내용 폭)에 onActions 를 달고 room 을 HeroChar 에 넘겨요.
+ */
+export function useHeroRoom() {
+  const [mainW, setMainW] = useState(0);
+  const [btnR, setBtnR] = useState(0);
+  const onMain = useCallback((e: LayoutChangeEvent) => setMainW(e.nativeEvent.layout.width), []);
+  const onActions = useCallback((e: LayoutChangeEvent) => {
+    const l = e.nativeEvent.layout;
+    setBtnR(l.x + l.width);
+  }, []);
+  return { room: mainW && btnR ? mainW - btnR : undefined, onMain, onActions };
+}
+
+/** 그림 왼쪽 투명 여백(7px)을 뺀 몫 · 버튼과 띄울 거리 · 가장 작은 폭 */
+const VIS_L = 473 / 480;
+const ROOM_GAP = 6;
+const MIN_CHAR_W = 72;
+
+export function HeroChar({ pose, room }: { pose: Pose; room?: number }) {
   const p = POSE[pose];
-  const h = (p.width * p.H) / p.W;
+  const width = room == null ? p.width : Math.max(MIN_CHAR_W, Math.min(p.width, (room - p.right - ROOM_GAP) / VIS_L));
+  const h = (width * p.H) / p.W;
   const still = useStill();
   const body = still ? {} : { animationName: breathe, animationDuration: '3s', animationIterationCount: 'infinite' as const, animationTimingFunction: 'ease-in-out' as const };
   const [delay] = useState(() => Math.round(Math.random() * 3000));
@@ -430,9 +454,9 @@ export function HeroChar({ pose }: { pose: Pose }) {
   const lid1 = useAnimatedProps(() => ({ height: (ry1 * 2 + 4) * kf(blink.get(), [0, 90, 93, 95, 100], [0, 0, 1, 1, 0]) }));
   const lids = [lid0, lid1];
   return (
-    <Animated.View style={[styles.char, { width: p.width, height: h, right: p.right, bottom: p.bottom, transformOrigin: 'center bottom' }, body]} pointerEvents="none">
+    <Animated.View style={[styles.char, { width, height: h, right: p.right, bottom: p.bottom, transformOrigin: 'center bottom' }, body]} pointerEvents="none">
       <Image source={p.src} style={StyleSheet.absoluteFill} contentFit="contain" accessibilityIgnoresInvertColors />
-      <Svg width={p.width} height={h} viewBox={`0 0 ${p.W} ${p.H}`} style={StyleSheet.absoluteFill}>
+      <Svg width={width} height={h} viewBox={`0 0 ${p.W} ${p.H}`} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id={`lid-${pose}`} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#8B73E3" />
@@ -490,7 +514,8 @@ const styles = StyleSheet.create({
   liveDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: Colors.ink, backgroundColor: '#FF4D4D' },
   liveText: { fontFamily: Font.display, fontSize: 13, lineHeight: 16, letterSpacing: 1.5 },
   heroTitle: { marginTop: 6, fontSize: 22, lineHeight: 25, letterSpacing: -0.8 },
-  actions: { marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
+  /** 내용 폭만큼 (오른쪽 끝을 재서 캐릭터 자리를 정해요) */
+  actions: { alignSelf: 'flex-start', marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
   btn: { height: 52, paddingLeft: 6, paddingRight: 18, borderRadius: 28, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.cream, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 6 },
   btnPressed: { transform: [{ translateY: 4 }], borderBottomWidth: 2.5 },
   // 입장 완료 · 출석 전(잠김): 흰 바탕 (.hero-btn.done · [disabled] 는 그림자도 없이)
