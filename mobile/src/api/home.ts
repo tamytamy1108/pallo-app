@@ -2,7 +2,7 @@
  * 홈 · 출석 API (api-inventory 8 · 9 · 10 · 12 · 13 · 14 · 15 + 추가 A1 시작 팝업).
  * 가짜 서버 값은 data/home.ts · data/mock.ts · components/home/attendance.ts 에 있어요.
  */
-import { getAttend, sendAttendance as markAttendance, sendRsvp as markRsvp, type Attend } from '@/components/home/attendance';
+import { getAttend, myTeams, sendAttendance as markAttendance, sendRsvp as markRsvp, type Attend } from '@/components/home/attendance';
 import { markAllNotiRead, markNotiRead } from '@/components/home/noti-state';
 import { LANGS, LAUNCH_POPUPS, LOUNGE_HIGHLIGHTS, MY_LANG, MY_SLOT, NOTIS, QR_AFTER, QR_BEFORE, SLOTS, ATTEND_POINTS, type LaunchPopup, type LoungeHighlight, type Noti } from '@/data/home';
 import { NOTICES, type Notice } from '@/data/mock';
@@ -29,6 +29,8 @@ export type TodaySessions = {
   mySlot: number;
   myLang: number;
   langs: string[];
+  /** 내가 등록된 팀 · 전산에서 오늘 연 수업(slot, 안 열었으면 null). 출석체크 시트엔 내 팀이 다 보이고 열린 수업만 누를 수 있어요 */
+  teams: { no: string; branch: string; lang: number; when: string; slot: number | null }[];
   /** QR 출석: 시작 qrBefore 분 전 ~ 시작 qrAfter 분 후 */
   qrBefore: number;
   qrAfter: number;
@@ -43,6 +45,7 @@ export function fetchTodaySessions({ signal }: Opts = {}): Promise<TodaySessions
       mySlot: MY_SLOT,
       myLang: MY_LANG,
       langs: LANGS.map((l) => l.key),
+      teams: myTeams(),
       qrBefore: QR_BEFORE,
       qrAfter: QR_AFTER,
       attend: { ...getAttend() },

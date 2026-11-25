@@ -11,7 +11,7 @@ import { queryClient } from '@/api/query-client';
 import { guardMember } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-sheet';
-import { getAttend, summary, type SheetMode } from '@/components/home/attendance';
+import { getAttend, minuteOf, nowDate, openTeams, slotSelectable, summary, type SheetMode } from '@/components/home/attendance';
 import { setDecoOnScreen } from '@/components/home/deco-on-screen';
 import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/components/home/dev';
 import { GoalCard } from '@/components/home/goal-card';
@@ -90,7 +90,19 @@ export default function HomeScreen() {
   });
 
   // 출석 · 사전 출석은 회원만 (state/access — 카드가 이미 나눠 보여 주지만 한 번 더 막아요)
-  const openAttend = (mode: AttendSheetMode) => guardMember(() => setSheet(mode), '출석하려면');
+  // 출석체크: 지금 QR 출석이 되는 내 팀이 하나면 바로 그 팀 QR, 둘 이상이면 QR 전에 팀을 고르는 시트
+  const openAttend = (mode: AttendSheetMode) =>
+    guardMember(() => {
+      if (mode === 'checkin') {
+        const now = minuteOf(nowDate());
+        const ready = openTeams().filter((t) => slotSelectable(t.slot, 'checkin', now));
+        if (ready.length === 1) {
+          setScan({ slot: ready[0].slot, lang: ready[0].lang });
+          return;
+        }
+      }
+      setSheet(mode);
+    }, '출석하려면');
 
   useEffect(() => {
     if (dev.attend !== 'rsvp') return;
@@ -201,10 +213,6 @@ export default function HomeScreen() {
         open={!!scan}
         summaryText={scan ? summary(scan.slot, scan.lang) : ''}
         onClose={() => setScan(null)}
-        onChange={() => {
-          setScan(null);
-          setSheet('checkin');
-        }}
         onScanned={scanned}
       />
       <LaunchPopup />
@@ -218,7 +226,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   center: { justifyContent: 'center' },
   body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 40, gap: Spacing.stack },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, transform: [{ translateY: Spacing.headDrop }] },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   // .icon-btn.has-dot::after: 안 읽은 알림이 있으면 분홍 점
   bellDot: { position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 4.5, backgroundColor: Colors.rosePink, borderWidth: 2, borderColor: Colors.white },

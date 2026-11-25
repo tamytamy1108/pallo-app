@@ -19,7 +19,7 @@ import { GearIcon, LgIcon } from '@/components/my/icons';
 import { BadgeGrid, MyList, MyStats, RankSummary, SecHead } from '@/components/my/my-blocks';
 import { MyHero } from '@/components/my/my-hero';
 import { MyMeetsSheet, useMyMeetCounts } from '@/components/my/my-meets-sheet';
-import { BadgeSheet, FollowSheet, MeetsSheet } from '@/components/my/my-sheets';
+import { BadgeSheet, FollowSheet, MeetsSheet, useMeetItems } from '@/components/my/my-sheets';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/dialog';
@@ -54,7 +54,7 @@ export default function MyScreen() {
   useTabReselect('my', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const { width } = useWindowDimensions();
   // 개발용 ?link= · ?name= (웹에서만)
-  const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string; reward?: string }>();
+  const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string; reward?: string; open?: string }>();
   useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial }), [dev.link, dev.name, dev.trial]);
   // 개발용 ?reward=santa: 서버가 시즌 보상을 자동으로 넣어 준 것처럼 (받은 창 · 알림 · 꾸미기 잠김 풀림). ?reward=reset 은 처음으로
   useEffect(() => {
@@ -73,10 +73,23 @@ export default function MyScreen() {
   const [badges, setBadges] = useState(false);
   const [meets, setMeets] = useState<'joined' | 'saved' | null>(null);
   const savedChal = useSavedChallengeCount();
+  const savedMeets = useMeetItems('saved').length;
   const [chals, setChals] = useState(false);
   const [askReset, setAskReset] = useState(false);
   const [myMeetsOpen, setMyMeetsOpen] = useState(false);
   const myMeets = useMyMeetCounts();
+  // 토스트 [보러가기] → /my?open=saved-meets · joined-meets · saved-challenges 로 오면 그 목록 시트를 바로 열어요
+  // (렌더 중에 이전 값과 비교해 한 번만 열고, 주소의 open 은 지워요)
+  const [seenOpen, setSeenOpen] = useState<string | undefined>(undefined);
+  if (dev.open !== seenOpen) {
+    setSeenOpen(dev.open);
+    if (dev.open === 'saved-meets') setMeets('saved');
+    else if (dev.open === 'joined-meets') setMyMeetsOpen(true);
+    else if (dev.open === 'saved-challenges') setChals(true);
+  }
+  useEffect(() => {
+    if (dev.open) router.setParams({ open: undefined });
+  }, [dev.open]);
 
   const people = rankPeople('w', me);
   const myRank = people.findIndex((p) => p.me) + 1;
@@ -182,7 +195,7 @@ export default function MyScreen() {
               <MyList
                 rows={[
                   { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: `${myMeets.total}개`, onPress: () => setMyMeetsOpen(true) },
-                  { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: `${me.savedMeets}개`, onPress: () => setMeets('saved') },
+                  { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: `${savedMeets}개`, onPress: () => setMeets('saved') },
                   { label: '찜한 챌린지', icon: <LgIcon name="heart" size={18} />, value: `${savedChal}개`, onPress: () => setChals(true) },
                   {
                     label: '내가 쓴 글',
@@ -237,7 +250,7 @@ export default function MyScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, transform: [{ translateY: Spacing.headDrop }] },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, marginTop: Spacing.headDrop, marginBottom: 4 - Spacing.headDrop },
   headR: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   dev: { marginTop: 10, gap: 10 },

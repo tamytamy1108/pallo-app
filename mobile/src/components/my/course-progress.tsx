@@ -9,7 +9,7 @@ import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { DOW, MY_TEAMS, teamWeekdays, type Team } from '@/data/account';
+import { MY_TEAMS, teamWeekdays, type Team } from '@/data/account';
 import { lessonName, STAGES, STUDY_STEPS, unitId, type Lesson, type StudyLevel } from '@/data/library';
 import { MY_BOOK } from '@/data/mock';
 import { useMe } from '@/state/me';
@@ -166,8 +166,6 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
   const cal = useMemo(() => classCalendar(L, lessons), [L, lessons]);
   const today = new Date();
   const [month, setMonth] = useState({ y: today.getFullYear(), m: today.getMonth() });
-  const [sel, setSel] = useState(today);
-  const picked = cal.byDay.get(dayKey(sel));
   const canPrev = new Date(month.y, month.m, 1) > cal.first;
   const canNext = new Date(month.y, month.m + 1, 0) < cal.last;
   const move = (n: number) => {
@@ -218,10 +216,10 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
                 L={L}
                 steps={steps}
                 isToday={dayKey(d) === dayKey(today)}
-                on={dayKey(d) === dayKey(sel)}
                 onPress={() => {
-                  sfx('tap');
-                  setSel(d);
+                  // 날짜 아래 카드 대신: 그날 과가 있으면 바로 그 과로
+                  const ls = cal.byDay.get(dayKey(d))?.ls;
+                  if (ls) openUnit(ls.no);
                 }}
               />
             ) : (
@@ -237,25 +235,6 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
         </View>
       </View>
 
-      <View style={styles.day}>
-        <PText style={styles.dayT}>
-          {sel.getMonth() + 1}월 {sel.getDate()}일 ({DOW[sel.getDay()]})
-        </PText>
-        {picked?.off ? (
-          <PText style={styles.dayS}>{picked.off} 휴무예요</PText>
-        ) : picked?.ls ? (
-          <>
-            {picked.teams.map((t) => (
-              <PText key={t.no} style={styles.dayS}>
-                {t.no} · {t.when.split(' ')[1]} · {t.pro} 프로
-              </PText>
-            ))}
-            <LessonRow L={L} ls={picked.ls} steps={steps} onPress={() => picked.ls && openUnit(picked.ls.no)} />
-          </>
-        ) : (
-          <PText style={styles.dayS}>수업이 없는 날이에요</PText>
-        )}
-      </View>
     </>
   );
 }
@@ -264,14 +243,14 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
 const chipOf = (L: StudyLevel, ls: Lesson) => (L.kind === 'pattern' ? `${ls.no}과` : L.kind === 'topic' ? `#${ls.no}` : String(ls.no));
 
 /** 달력 한 칸: 날짜 + 그날 과 번호 (월화토 노랑 · 수목일 핑크 · 끝냈으면 ✓ · 하는 중이면 •) · 휴무 날은 회색 '휴무' */
-function DayCell({ d, cd, L, steps, isToday, on, onPress }: { d: Date; cd?: ClassDay; L: StudyLevel; steps: number; isToday: boolean; on: boolean; onPress: () => void }) {
+function DayCell({ d, cd, L, steps, isToday, onPress }: { d: Date; cd?: ClassDay; L: StudyLevel; steps: number; isToday: boolean; onPress: () => void }) {
   const ls = cd?.ls;
   const done = useDoneCount(ls ? `${L.lv}:${ls.no}:` : 'none:');
   const state = !ls ? null : done >= steps ? 'done' : done > 0 ? 'half' : 'todo';
   const date = `${d.getMonth() + 1}월 ${d.getDate()}일`;
   const label = ls ? `${date} · ${lessonName(L, ls)} · ${steps}단계 중 ${done}단계` : cd?.off ? `${date} · ${cd.off} 휴무` : date;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={label} style={[styles.cell7, styles.dayCell, on && styles.dayOn]}>
+    <Pressable onPress={onPress} disabled={!ls} accessibilityRole="button" accessibilityLabel={label} style={[styles.cell7, styles.dayCell]}>
       <View style={[styles.dateN, isToday && styles.today]}>
         <PText style={[styles.dateT, isToday && styles.todayT]}>{d.getDate()}</PText>
       </View>
@@ -288,26 +267,6 @@ function DayCell({ d, cd, L, steps, isToday, on, onPress }: { d: Date; cd?: Clas
           <PText style={[styles.lsChipT, styles.offT]}>휴무</PText>
         </View>
       )}
-    </Pressable>
-  );
-}
-
-function LessonRow({ L, ls, steps, onPress }: { L: StudyLevel; ls: Lesson; steps: number; onPress: () => void }) {
-  const done = useDoneCount(`${L.lv}:${ls.no}:`);
-  const all = done >= steps;
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${lessonName(L, ls)} · ${steps}단계 중 ${done}단계`} style={styles.row}>
-      <View style={styles.rowTx}>
-        <PText style={styles.rowT} numberOfLines={1}>
-          {lessonName(L, ls)}
-        </PText>
-        <PText style={styles.rowS} numberOfLines={1}>
-          {ls.sub}
-        </PText>
-      </View>
-      <View style={[styles.cnt, all && styles.cntAll]}>
-        <PText style={[styles.cntT, all && styles.cntTAll]}>{all ? '완료' : `${done}/${steps}`}</PText>
-      </View>
     </Pressable>
   );
 }
@@ -337,7 +296,6 @@ const styles = StyleSheet.create({
   dowEnd: { color: Colors.rosePink },
   cell7: { width: `${100 / 7}%`, height: 54 },
   dayCell: { alignItems: 'center', paddingTop: 4, gap: 3, borderRadius: 10 },
-  dayOn: { backgroundColor: Colors.lavender },
   dateN: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   today: { backgroundColor: Colors.ink },
   dateT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16, fontVariant: ['tabular-nums'] },
@@ -348,11 +306,6 @@ const styles = StyleSheet.create({
   slotB: { backgroundColor: '#F7C9D5', borderWidth: 1.5, borderColor: Colors.ink },
   swOff: { backgroundColor: Colors.line },
   offT: { color: Colors.inkSub },
-  day: { padding: 14, borderRadius: 18, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, gap: 2 },
-  dayT: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20, marginBottom: 2 },
-  dayS: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
-  rowTx: { flex: 1, minWidth: 0 },
   rowT: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19 },
   rowS: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   cnt: { minWidth: 46, height: 26, paddingHorizontal: 8, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3EEE2' },

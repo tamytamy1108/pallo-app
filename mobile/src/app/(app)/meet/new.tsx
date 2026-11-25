@@ -20,6 +20,7 @@ import { Colors } from '@/constants/theme';
 import { C, MONTHS, NO_LIMIT, REGIONS, WEEK, type Meet, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
+import { seeAt } from '@/lib/see';
 
 const MEET_MAX = 7; // 오늘부터 1주 뒤까지 (프로토타입 MEET_MAX)
 /** 정원 (나 포함) — 직접 정해요 */
@@ -83,10 +84,11 @@ export default function NewMeet() {
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!place) return showToast('지도에서 장소를 골라 주세요');
     if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
-    addMyMeet(draft());
+    const made = draft();
+    addMyMeet(made);
     sfx('save');
     router.back();
-    showToast(`번개를 열었어요 · ${reg} 지도에 표시돼요`);
+    showToast(`번개를 열었어요 · ${reg} 지도에 표시돼요`, seeAt({ pathname: '/meet/[id]', params: { id: made.id } }));
   };
 
   // 이번 주 일요일부터 마지막 날이 있는 주 토요일까지

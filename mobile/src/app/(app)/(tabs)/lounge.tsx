@@ -237,7 +237,7 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
                 onPick(k);
               }}
               accessibilityRole="tab"
-              accessibilityLabel={badge ? `${l}, 새 글 ${n}개` : l}
+              accessibilityLabel={badge ? `${l}, ${k === 'meet' ? '새 모임' : '새 글'} ${n}개` : l}
               accessibilityState={{ selected: on }}
               hitSlop={{ top: 4, bottom: 4 }}
               style={styles.tab}>
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   page: { paddingTop: TabHeadTop, paddingBottom: 190 },
   // 첫 줄(제목) · 둘째 줄(탭) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (홈 · 라이브러리 · 마이와 같게)
-  hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center', transform: [{ translateY: Spacing.headDrop }] },
+  hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center', marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },
   // 탭 밑줄이 라이브러리(스터디 맵 | 상황 맵) 밑줄과 같은 높이에 와요
   tabsAt: { marginTop: Spacing.stack + 1 },
   tabsWrap: { borderBottomWidth: 2, borderColor: Colors.line },

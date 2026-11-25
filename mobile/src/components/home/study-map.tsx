@@ -13,6 +13,7 @@ import { XmasBackLayer, XmasGarland } from '@/components/home/christmas';
 import { CurrentFx, NodeHop, Rider } from '@/components/home/map-current';
 import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
 import { Raised } from '@/components/ui/raised';
+import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -49,6 +50,8 @@ const LOCK_PATH = 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3';
 const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
 /** 내 교재 레벨 (MY_BOOK.level 'Lv.1' → 1) — 아직 아무 단계도 안 열었을 때 홈 맵 레벨 */
 const MY_LV = Number(MY_BOOK.level.replace('Lv.', ''));
+/** Lv.0 HELLO ENGLISH 표지 색 (data/library 책장과 같아요) */
+const LV0_COLOR = '#4A82C8';
 
 /**
  * 레벨 하나의 맵 재료. 맵 모양은 레벨이 달라도 같고, 정류장 수 · 이름만 그 레벨의 예습 · 본학습 · 복습 단계 (STUDY_STEPS) 그대로
@@ -121,7 +124,10 @@ export function StudyMap() {
   // 마지막으로 연 단계 — 라이브러리 · 홈 맵 · 레슨이 같은 기록을 써요 (프로토타입 ST.last).
   // 맵은 그 과로 열리고, 캐릭터는 그 단계 위에 서요
   const last = useLastStep();
-  const M = levelMap(homeLevel(last));
+  // 스터디 맵 · Lv 칩으로 고른 레벨 (없으면 마지막으로 연 단계의 레벨)
+  const [pickLv, setPickLv] = useState<number | null>(null);
+  const [lvOpen, setLvOpen] = useState(false);
+  const M = levelMap(pickLv ?? homeLevel(last));
   const LV = M.lv;
   // 비회원은 레벨마다 첫 챕터만 열려요 (state/access) — 잠긴 과는 칩 · 다음 챕터 버튼에서 막아요
   const allOpen = useMe((m) => canUse(m, 'allChapters'));
@@ -132,7 +138,8 @@ export function StudyMap() {
   if (last && last.at !== seenAt) {
     // 다른 곳(라이브러리)에서 새 단계를 열었으면 맵도 그 과로 옮겨요
     setSeenAt(last.at);
-    if (last.lv === LV && isFree(last.unit)) setLesson(last.unit);
+    setPickLv(null);
+    if (last.lv === homeLevel(last) && isFree(last.unit)) setLesson(last.unit);
   }
   const [width, setWidth] = useState(0);
   const [popIdx, setPopIdx] = useState<number | null>(null);
@@ -168,14 +175,23 @@ export function StudyMap() {
     const c = chipXs.current[n];
     if (c) chipRow.current?.scrollTo({ x: Math.max(0, c.x + c.w / 2 - rowW.current / 2), animated: !still });
   };
-  /** 이번 주 진도 칩: 5과 · 6과가 가운데로 오고 통통 (프로토타입 weekChip 클릭) */
-  const showWeek = () => {
-    const bs = M.week.map((n) => chipXs.current[n]).filter(Boolean);
-    if (!bs.length) return;
-    const mid = (bs[0].x + bs[bs.length - 1].x + bs[bs.length - 1].w) / 2;
-    chipRow.current?.scrollTo({ x: Math.max(0, mid - rowW.current / 2), animated: !still });
+  /** 이번 주 진도 칩: 이번 주 과 중 아직 다 안 끝낸 과(다 했으면 첫 과)로 넘어가고, 칩이 통통 */
+  const goWeek = () => {
+    const n = M.week.find((u) => !M.steps.every((st) => isDone(stepKey(LV, u, st.id)))) ?? M.week[0];
+    if (n == null) return;
     sfx('tap');
+    tryLesson(n);
     setBounce((b) => b + 1);
+  };
+  /** 스터디 맵 레벨 바꾸기: 그 레벨에서 마지막으로 연 과(없으면 첫 과)로 */
+  const pickLevel = (lv: number) => {
+    sfx('tap');
+    setLvOpen(false);
+    if (lv === LV) return;
+    const L2 = levelMap(lv);
+    setPickLv(lv);
+    setLesson(last?.lv === lv && (allOpen || last.unit === L2.units[0]) ? last.unit : (L2.units[0] ?? 1));
+    setPopIdx(null);
   };
 
   // 오늘의 목표 카드 [이어서 하기] → 맵으로 내려간 뒤 지금 정류장 팝업
@@ -266,16 +282,29 @@ export function StudyMap() {
         <View style={styles.content}>
           <View style={styles.head}>
             <View style={styles.headLeft}>
-              <View style={styles.pillDark}>
-                <PText style={styles.pillDarkText} color={Colors.white}>
-                  스터디 맵 · Lv.{LV}
-                </PText>
-              </View>
-              {M.week.length > 0 && (
-                <Pressable onPress={showWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${M.weekText} 보기`} hitSlop={6}>
-                  <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }])}>
-                    <PText style={styles.weekText}>이번 주 진도 {M.weekText}</PText>
+              <Pressable
+                onPress={() => {
+                  sfx('tap');
+                  setLvOpen(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`스터디 맵 Lv.${LV} · 레벨 바꾸기`}
+                hitSlop={6}>
+                {({ pressed }) => (
+                  <View style={StyleSheet.flatten([styles.pillDark, pressed && styles.pillPressed])}>
+                    <PText style={styles.pillDarkText} color={Colors.white}>
+                      스터디 맵 · Lv.{LV} ▾
+                    </PText>
                   </View>
+                )}
+              </Pressable>
+              {M.week.length > 0 && (
+                <Pressable onPress={goWeek} accessibilityRole="button" accessibilityLabel={`이번 주 진도 ${M.weekText}로 가기`} hitSlop={6}>
+                  {({ pressed }) => (
+                    <View style={StyleSheet.flatten([styles.weekChip, xmas && { backgroundColor: XMAS.cream }, pressed && styles.pillPressed])}>
+                      <PText style={styles.weekText}>이번 주 진도</PText>
+                    </View>
+                  )}
                 </Pressable>
               )}
             </View>
@@ -416,6 +445,64 @@ export function StudyMap() {
         onClose={() => setPopIdx(null)}
         onGo={(mode) => popIdx !== null && go(popIdx, mode)}
       />
+      {/* 스터디 맵 · Lv 칩: 레벨 바꾸기 */}
+      <Sheet open={lvOpen} onClose={() => setLvOpen(false)} title="스터디 맵 레벨" label="스터디 맵 레벨 바꾸기">
+        <View style={styles.lvList}>
+          {/* Lv.0 HELLO ENGLISH: 교재가 아직 없어 맵을 그릴 수 없어요 (라이브러리 · 전체 진도에서도 '준비 중') */}
+          <Pressable
+            onPress={() => {
+              sfx('tap');
+              showToast('Lv.0 교재는 준비 중이에요 · 들어오면 맵이 열려요');
+            }}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: false, disabled: true }}
+            accessibilityLabel="Lv.0 HELLO ENGLISH · 준비 중">
+            {({ pressed }) => (
+              <View style={StyleSheet.flatten([styles.lvRow, styles.lvRowOff, pressed && styles.pillPressed])}>
+                <View style={StyleSheet.flatten([styles.lvDot, { backgroundColor: LV0_COLOR }])}>
+                  <PText style={styles.lvDotT} color={Colors.white}>
+                    0
+                  </PText>
+                </View>
+                <View style={styles.lvTx}>
+                  <PText style={styles.lvName} numberOfLines={1}>
+                    HELLO ENGLISH
+                  </PText>
+                  <PText style={styles.lvAbout} numberOfLines={1}>
+                    왕기초 · 교재 준비 중
+                  </PText>
+                </View>
+              </View>
+            )}
+          </Pressable>
+          {STUDY_LEVELS.map((L) => {
+            const on = L.lv === LV;
+            return (
+              <Pressable key={L.lv} onPress={() => pickLevel(L.lv)} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`Lv.${L.lv} ${L.series}${L.lv === MY_LV ? ' · 내 교재' : ''}`}>
+                {({ pressed }) => (
+                  <View style={StyleSheet.flatten([styles.lvRow, on && styles.lvRowOn, pressed && styles.pillPressed])}>
+                    <View style={StyleSheet.flatten([styles.lvDot, { backgroundColor: L.c }])}>
+                      <PText style={styles.lvDotT} color={Colors.white}>
+                        {L.lv}
+                      </PText>
+                    </View>
+                    <View style={styles.lvTx}>
+                      <PText style={styles.lvName} numberOfLines={1}>
+                        {L.series}
+                        {L.lv === MY_LV ? <PText style={styles.lvMine}> · 내 교재</PText> : null}
+                      </PText>
+                      <PText style={styles.lvAbout} numberOfLines={1}>
+                        {L.about}
+                      </PText>
+                    </View>
+                    {on && <PText style={styles.lvCheck}>✓</PText>}
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      </Sheet>
       <SkipSheet stage={skipStage} left={skipLeft} onClose={() => setSkipStage(null)} onPass={pass} />
       {cele && <Celebrate visible result={cele} onHome={() => setCele(null)} />}
       {chestOpen && (
@@ -604,6 +691,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.ink,
     justifyContent: 'center',
   },
+  pillPressed: { opacity: 0.7 },
+  lvList: { gap: 8 },
+  lvRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 16, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.white },
+  lvRowOff: { opacity: 0.55 },
+  lvRowOn: { borderColor: Colors.ink, backgroundColor: Colors.yellow },
+  lvDot: { width: 34, height: 34, borderRadius: 11, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
+  lvDotT: { fontFamily: Font.display, fontSize: 15, lineHeight: 19 },
+  lvTx: { flex: 1, minWidth: 0 },
+  lvName: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20 },
+  lvMine: { fontFamily: Font.body800, fontSize: 12, color: Colors.purple },
+  lvAbout: { marginTop: 1, fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
+  lvCheck: { fontFamily: Font.body900, fontSize: 16, lineHeight: 20 },
   pillDarkText: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16 },
   weekChip: {
     height: 26,

@@ -39,6 +39,7 @@ import {
   type ChView,
 } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
+import { seeAt, SEE } from '@/lib/see';
 
 import { Face } from './face';
 import { ChIcon } from './icons';
@@ -108,7 +109,7 @@ export function SaveHeart({ id, size = 32 }: { id: string; size?: number }) {
   const on = useChallengeSaved(id);
   return (
     <Pressable
-      onPress={() => showToast(toggleSaved(id) ? '찜했어요 · 마이 > 찜한 챌린지에서 볼 수 있어요' : '찜을 취소했어요')}
+      onPress={() => (toggleSaved(id) ? showToast('찜했어요 · 마이 › 찜한 챌린지', seeAt(SEE.savedChallenges)) : showToast('찜을 취소했어요'))}
       accessibilityRole="button"
       accessibilityLabel={on ? '찜 취소' : '찜하기'}
       accessibilityState={{ selected: on }}

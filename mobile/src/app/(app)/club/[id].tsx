@@ -25,6 +25,7 @@ import { Colors } from '@/constants/theme';
 import { C, joinFree } from '@/data/meet';
 import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
+import { seeAt, SEE } from '@/lib/see';
 import { useMe } from '@/state/me';
 
 type Tab = 'home' | 'board' | 'photo' | 'chat';
@@ -150,7 +151,8 @@ export default function ClubDetail() {
               onPress={() => {
                 sfx('toggle');
                 toggleIn('saved', c.id);
-                showToast(saved ? '저장을 취소했어요' : '저장했어요');
+                if (saved) showToast('저장을 취소했어요');
+                else showToast('저장했어요', seeAt(SEE.savedMeets));
               }}
             />
             {btn}

@@ -44,7 +44,7 @@ function countNew(tab: LoungeTab, src: Sources, seen: SeenAt) {
   }
 }
 
-/** 탭별 새 글 수 (배지 · 아래 탭 바 점) */
+/** 탭별 새 글 수 (라운지 위 탭 배지) */
 export function useNewCounts(): Record<LoungeTab, number> {
   const feed = useLounge((s) => s.feed);
   const hidden = useLounge((s) => s.hidden);
@@ -56,12 +56,6 @@ export function useNewCounts(): Record<LoungeTab, number> {
   const src: Sources = { feed, hidden, blocked, created, myMeets, myClubs };
   return { all: 0, com: countNew('com', src, seen), chal: countNew('chal', src, seen), meet: countNew('meet', src, seen), trip: countNew('trip', src, seen) };
 }
-
-/** 라운지 어느 탭에든 새 글이 있나 (아래 탭 바 '라운지' 점) */
-export const useLoungeHasNew = () => {
-  const n = useNewCounts();
-  return BADGE_TABS.some((t) => n[t] > 0);
-};
 
 /** 탭을 열었어요: 그 탭 배지를 지워요 */
 export const enterLoungeTab = (tab: LoungeTab) => store.set((s) => ({ ...s, [tab]: Date.now() }));

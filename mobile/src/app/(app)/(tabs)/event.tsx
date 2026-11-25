@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   page: { paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 80 },
   // 첫 줄(제목) · 둘째 줄(칩) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (칩 줄 안쪽 위 12 를 빼요)
-  hd: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: Spacing.gutter, transform: [{ translateY: Spacing.headDrop }] },
+  hd: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: Spacing.gutter, marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },
   subs: { flexGrow: 0, marginTop: Spacing.stack - 12 },
   subsIn: { gap: 6, paddingTop: 12, paddingBottom: 4, paddingHorizontal: 16, alignItems: 'center' },
   sep: { width: 1.5, height: 22, marginVertical: 4, marginHorizontal: 2, backgroundColor: '#DCD4C4' },

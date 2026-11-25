@@ -104,7 +104,9 @@ function SentList({ head }: { head: ReactNode }) {
 function NotesList({ head }: { head?: ReactNode }) {
   const { read, diary } = useNoteState();
   const saved = savedNoteItems(useSavedExpressions());
-  const [tab, setTab] = useState<string>('all');
+  // 토스트 [보러가기] → /me/notes?tab=saved 로 오면 저장한 표현 탭부터
+  const { tab: firstTab } = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useState<string>(firstTab === 'saved' ? 'saved' : 'all');
   const L = PRO_NOTES.filter((n) => tab === 'all' || n.team === tab);
   const diaries = PRO_NOTES.filter((n) => (diary[n.id] ?? DIARY_EXAMPLES[n.id])?.at);
   const last = diaries[0];

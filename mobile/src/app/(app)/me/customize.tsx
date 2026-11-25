@@ -43,6 +43,7 @@ import { getMe, useMe } from '@/state/me';
 import { useRewards } from '@/state/rewards';
 import { REWARD, rewardOfItem } from '@/data/rewards';
 import { wearReward } from '@/components/my/reward-sheet';
+import { seeAt, SEE } from '@/lib/see';
 
 /** 말풍선 글자 수 (10자 넘으면 두 줄이 되어 캐릭터 얼굴을 가려요) */
 const SAY_MAX = 10;
@@ -158,7 +159,7 @@ export default function CustomizeScreen() {
     onSuccess: (r) => {
       reqId.current = newReqId();
       sfx('save');
-      showToast(`${r.bought.join(' · ')} 샀어요 · 남은 스파크 ${getMe().sparks.toLocaleString()}개`);
+      showToast(`${r.bought.join(' · ')} 샀어요 · 남은 스파크 ${getMe().sparks.toLocaleString()}개`, seeAt(SEE.myRoom));
     },
     onError: (e) => {
       if (isApiError(e) && e.code === INSUFFICIENT_SPARKS) warnShort(e.message);
@@ -170,7 +171,7 @@ export default function CustomizeScreen() {
     mutationFn: () => saveAvatar(d),
     onSuccess: () => {
       sfx('save');
-      showToast('저장했어요');
+      showToast('저장했어요', seeAt(SEE.myRoom));
     },
     onError: (e) => showWarnToast(apiErrorMessage(e)),
   });
