@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { usePreventRemove, useNavigation } from 'expo-router';
+import { useLocalSearchParams, usePreventRemove, useNavigation } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
@@ -40,6 +40,9 @@ import {
 import { sfx } from '@/lib/feedback';
 import { avatarChanged, avatarCost, cloneAvatar, getMyAvatar, isOwned, useMyAvatar, useOwned } from '@/state/avatar';
 import { getMe, useMe } from '@/state/me';
+import { useRewards } from '@/state/rewards';
+import { REWARD, rewardOfItem } from '@/data/rewards';
+import { wearReward } from '@/components/my/reward-sheet';
 
 /** 말풍선 글자 수 (10자 넘으면 두 줄이 되어 캐릭터 얼굴을 가려요) */
 const SAY_MAX = 10;
@@ -57,7 +60,10 @@ export default function CustomizeScreen() {
   const me = useMe();
   const saved = useMyAvatar();
   const own = useOwned();
-  const [d, setD] = useState<Avatar>(() => cloneAvatar(getMyAvatar()));
+  // ?try=santa: 받은 시즌 보상을 입힌 채로 열어요 (받은 창 · 알림의 '입어 보기'). 저장은 직접
+  const { try: tryReward } = useLocalSearchParams<{ try?: string }>();
+  const rewards = useRewards();
+  const [d, setD] = useState<Avatar>(() => (tryReward && REWARD[tryReward] ? wearReward(getMyAvatar(), REWARD[tryReward].items) : cloneAvatar(getMyAvatar())));
   const [cat, setCat] = useState<AvTab>('char');
   const [gen, setGen] = useState(0); // 색 막대를 다시 맞출 때 (원래대로 · 초기화 · 랜덤)
   const [earn, setEarn] = useState(false);
@@ -99,7 +105,9 @@ export default function CustomizeScreen() {
 
   const pickTile = (key: string, lock?: string) => {
     if (lock && !isOwned(own, key)) {
-      showToast(`잠긴 아이템 · ${lock}`);
+      // 시즌 보상이면 지금 진행도 같이 (예: 12월 출석 7일 보상 · 지금 2/7일)
+      const r = rewardOfItem(key) ?? rewardOfItem('bg:' + key);
+      showToast(r ? `잠긴 아이템 · ${lock} · 지금 ${rewards.progress[r.id] ?? 0}/${r.need}${r.unit}` : `잠긴 아이템 · ${lock}`);
       return;
     }
     sfx('tap');

@@ -62,7 +62,8 @@ const ME0: Me = {
   plan: 'study',
   link: 'linked',
   trial: null,
-  sparks: 1250,
+  // 처음 스파크: 아이템 하나(중간 300)엔 조금 모자라게 — 첫 출석 · 퀘스트로 채워 사게
+  sparks: 200,
   weekPoints: 0,
   bio: '',
   streak: 0,
