@@ -6,6 +6,7 @@ import Svg, { Path } from "react-native-svg";
 
 import { GrowInput } from "@/components/ui/grow-input";
 import { MicIcon, SpeakerIcon } from "@/components/lesson/icons";
+import { BulbButton } from "@/components/lesson/lesson-ui";
 import { Pressable } from "@/components/ui/pressable";
 import { PText } from "@/components/ui/text";
 import { showToast } from "@/components/ui/toast";
@@ -318,26 +319,7 @@ export function FreeTalk1({
               </View>
             ) : null}
             <View style={st.hrow}>
-              <Pressable
-                onPress={() => setHint((h) => !h)}
-                accessibilityRole="button"
-                accessibilityLabel="표현 힌트"
-                accessibilityState={{ selected: hint }}
-                style={StyleSheet.flatten([st.bulb, hint && st.bulbOn])}
-              >
-                <Svg
-                  width={22}
-                  height={22}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={Colors.ink}
-                  strokeWidth={2.4}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <Path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z" />
-                </Svg>
-              </Pressable>
+              <BulbButton on={hint} label="표현 힌트" onPress={() => setHint((h) => !h)} />
             </View>
             <ModeTabs<"voice" | "write">
               list={[
@@ -500,17 +482,6 @@ const st = StyleSheet.create({
   },
   exT: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18 },
   hrow: { flexDirection: "row", justifyContent: "flex-end" },
-  bulb: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: Colors.ink,
-    backgroundColor: Colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  bulbOn: { backgroundColor: Colors.yellow },
   ftMic: {
     height: 54,
     borderRadius: 27,

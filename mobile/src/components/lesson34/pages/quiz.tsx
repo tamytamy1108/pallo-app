@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { MicIcon } from '@/components/lesson/icons';
+import { BulbButton } from '@/components/lesson/lesson-ui';
 import { Appear } from '@/components/ui/appear';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
@@ -100,22 +101,20 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
 
   if (i >= order.length) return <QuizResult items={items} log={log} right={right} api={api} source={ctx.source} />;
 
+  // 힌트 단추: Lv.1 · 2 와 같은 노란 전구 (아래 모드 탭 위 오른쪽) · 누를 때마다 한 단계씩
   const hintBtn = (
-    <Pressable
-      onPress={() => {
-        setHintUsed(true);
-        setHint(Math.min(hMax, hint + 1));
-        sfx('tap');
-      }}
-      disabled={hint >= hMax}
-      accessibilityRole="button"
-      accessibilityLabel={`힌트 ${hint}/${hMax}`}
-      accessibilityState={{ selected: hint > 0, disabled: hint >= hMax }}
-      hitSlop={6}
-      style={({ pressed }) => [st.hp, hint > 0 && st.hpOn, hint >= hMax && st.hpOff, pressed && st.hpDown]}>
-      <BulbIc />
-      <PText style={st.hpT}>{hint ? `힌트 ${hint}/${hMax}` : '힌트'}</PText>
-    </Pressable>
+    <View style={st.hrow}>
+      <BulbButton
+        on={hint > 0}
+        n={hint || undefined}
+        disabled={hint >= hMax}
+        label={`힌트 ${hint}/${hMax}`}
+        onPress={() => {
+          setHintUsed(true);
+          setHint(Math.min(hMax, hint + 1));
+        }}
+      />
+    </View>
   );
 
   return (
@@ -128,7 +127,7 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
           <PText style={st.count}>{`${i + 1}/${order.length}`}</PText>
         </View>
         <PCard style={st.qc}>
-          <CardHead label="한국어를 보고 영어로 말해요">{shown ? null : hintBtn}</CardHead>
+          <CardHead label="한국어를 보고 영어로 말해요" />
           <PText style={st.prompt}>{it.ko}</PText>
           <View style={st.slots}>
             {ws.map((w, k) => {
@@ -249,6 +248,7 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
                 <EndMsg rest="Not quite! 분홍 칸만 다시 해 봐요 · 마지막 기회예요" />
               </EndNote>
             ) : null}
+            {hintBtn}
             <ModeTabs<Mode>
               list={[
                 ['card', '단어 카드'],
@@ -433,10 +433,7 @@ const st = StyleSheet.create({
   big: { alignSelf: 'center', width: 88, height: 88, borderRadius: 44, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.purple, alignItems: 'center', justifyContent: 'center', boxShadow: `0px 4px 0px ${Colors.ink}` },
   bigOn: { backgroundColor: Colors.rosePink },
   ta: { minHeight: 70, borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.cream, padding: 12, fontFamily: Font.body500, fontSize: 15, lineHeight: 22.5, color: Colors.ink, textAlignVertical: 'top' },
-  hp: { height: 32, paddingLeft: 8, paddingRight: 12, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, flexDirection: 'row', alignItems: 'center', gap: 4, boxShadow: `0px 3px 0px ${Colors.ink}` },
-  hpOn: { backgroundColor: Colors.yellow },
-  hpOff: { opacity: 0.55 },
-  hpDown: { transform: [{ translateY: 2 }], boxShadow: `0px 1px 0px ${Colors.ink}` },
+  hrow: { flexDirection: 'row', justifyContent: 'flex-end' },
   hpT: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
   // 결과 화면
   res: { alignItems: 'center', gap: 8, paddingTop: 18 },
