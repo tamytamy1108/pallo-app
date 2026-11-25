@@ -56,11 +56,12 @@ export default function ProposeEvent() {
   const region = (BRANCHES.find((b) => b[0] === br) || BRANCHES[0])[2];
 
   const send = () => {
+    // 화면 위에서부터 (대표 카드 → 날짜 → 카테고리 → 제목 → 소개) 첫 빈칸을 알려요
+    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     if (!date) return showToast('희망 날짜를 골라 주세요');
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
-    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim() });
     sfx('save');
     router.back();

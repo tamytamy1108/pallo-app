@@ -259,7 +259,7 @@ function ChangeScreen() {
           }}
           title={`${sent?.label ?? ''} 신청했어요`}
           footer={
-            <View style={styles.flex}>
+            <View>
               <Button
                 label="확인"
                 wide

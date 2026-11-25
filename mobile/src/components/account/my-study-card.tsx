@@ -132,7 +132,7 @@ export function MyStudyCard({ title = true }: { title?: boolean }) {
         onClose={() => setAskCancel(false)}
         title="신청을 취소할까요?"
         footer={
-          <View style={styles.flex}>
+          <View>
             <Button
               label="신청 취소"
               variant="secondary"

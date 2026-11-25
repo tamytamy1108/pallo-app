@@ -169,11 +169,13 @@ export default function MyScreen() {
           </View>
         </ScrollLock>
 
-        {/* 개발용 입구: 출시 전에 빼요 */}
-        <View style={styles.dev}>
-          <Button label="디자인 부품 보기" variant="secondary" onPress={() => router.push('/design')} />
-          <Button label="기기에 저장한 기록 지우기" variant="secondary" onPress={() => setAskReset(true)} />
-        </View>
+        {/* 개발용 입구: 개발 서버(__DEV__)에서만 보여요 — 실제 앱에는 안 나와요 */}
+        {__DEV__ ? (
+          <View style={styles.dev}>
+            <Button label="디자인 부품 보기" variant="secondary" onPress={() => router.push('/design')} />
+            <Button label="기기에 저장한 기록 지우기" variant="secondary" onPress={() => setAskReset(true)} />
+          </View>
+        ) : null}
       </ScrollView>
 
       <FollowSheet name={follow ? me.name : null} tab={follow ?? 'fer'} onTab={setFollow} onClose={() => setFollow(null)} />

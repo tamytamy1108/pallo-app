@@ -33,11 +33,11 @@ export default function SettingsScreen() {
   const { noSpeak, noListen } = useLearnPrefs();
   const sound = useSfxOn();
   const ms = getMembership();
-  const [sheet, setSheet] = useState<null | 'nick' | 'branch' | 'block' | 'logout'>(null);
+  // 알림함의 '알림 설정'처럼 ?section=noti 로 오면 그 칸까지 내려가요 · 마이 '한 줄 소개를 남겨 보세요'는 ?sheet=nick 으로 소개 창부터
+  const { section, sheet: openSheet } = useLocalSearchParams<{ section?: string; sheet?: string }>();
+  const [sheet, setSheet] = useState<null | 'nick' | 'branch' | 'block' | 'logout'>(openSheet === 'nick' ? 'nick' : null);
   const loginName = Object.keys(logins).find((k) => logins[k]);
   const latest = APP_VERSION.now === APP_VERSION.latest;
-  // 알림함의 '알림 설정'처럼 ?section=noti 로 오면 그 칸까지 내려가요
-  const { section } = useLocalSearchParams<{ section?: string }>();
   const scrollRef = useRef<ScrollViewInstance>(null);
   const onNotiLayout = (e: LayoutChangeEvent) => {
     if (section === 'noti') scrollRef.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 12), animated: true });
@@ -129,7 +129,7 @@ export default function SettingsScreen() {
         onClose={() => setSheet(null)}
         title="로그아웃할까요?"
         footer={
-          <View style={styles.flex}>
+          <View>
             <Button
               label="로그아웃"
               wide
@@ -214,7 +214,7 @@ function NickSheet({ open, onClose, name, bio }: { open: boolean; onClose: () =>
       onClose={onClose}
       title="닉네임 · 한 줄 소개"
       footer={
-        <View style={styles.flex}>
+        <View>
           <Button
             label="저장하기"
             wide
@@ -260,7 +260,7 @@ function BranchSheet({ open, onClose, current }: { open: boolean; onClose: () =>
       onClose={onClose}
       title="내 지점"
       footer={
-        <View style={styles.flex}>
+        <View>
           <Button
             label="저장하기"
             wide

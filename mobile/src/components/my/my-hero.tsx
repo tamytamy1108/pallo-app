@@ -14,6 +14,7 @@ import { sfx } from '@/lib/feedback';
 import { EASE, SPRING } from '@/lib/motion';
 import { finishMyMoment, useLinkEvents } from '@/state/link-events';
 import { useMyAvatar } from '@/state/avatar';
+import { canUse } from '@/state/access';
 import { useMe } from '@/state/me';
 
 import { DecoIcon, SparkIcon } from './icons';
@@ -71,7 +72,14 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
                 비회원은 '체험 예약' · '비회원' 표시만 */}
             {me.link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={me.link !== 'none' ? me.link : me.trial ? 'trial' : 'guest'} />}
           </View>
-          <PText style={styles.bio}>{me.bio || '한 줄 소개를 남겨 보세요'}</PText>
+          {me.bio || !canUse(me, 'settings') ? (
+            <PText style={styles.bio}>{me.bio || '한 줄 소개를 남겨 보세요'}</PText>
+          ) : (
+            // 비어 있으면 누르면 바로 설정 › 닉네임 · 한 줄 소개 창이 열려요
+            <Pressable onPress={() => router.push('/me/settings?sheet=nick')} accessibilityRole="button" accessibilityLabel="한 줄 소개 남기기" hitSlop={6} style={styles.bioBtn}>
+              <PText style={[styles.bio, styles.bioEmpty]}>한 줄 소개를 남겨 보세요 ›</PText>
+            </Pressable>
+          )}
           <View style={styles.fol}>
             <Pressable onPress={() => onFollow('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${lists.fing.length}명`} hitSlop={10} style={styles.folBtn}>
               <PText style={styles.folN}>{lists.fing.length}</PText>
@@ -185,6 +193,8 @@ const styles = StyleSheet.create({
   tagDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.purple },
   tagText: { fontFamily: Font.body900, fontSize: 10, lineHeight: 13, letterSpacing: -0.2, color: Colors.white },
   bio: { marginTop: 4, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
+  bioBtn: { alignSelf: 'flex-start' },
+  bioEmpty: { color: Colors.purple, fontFamily: Font.body800 },
   fol: { flexDirection: 'row', gap: 16, marginTop: 8 },
   folBtn: { flexDirection: 'row', alignItems: 'baseline' },
   folN: { fontFamily: Font.display, fontSize: 15, lineHeight: 20, marginRight: 4 },
