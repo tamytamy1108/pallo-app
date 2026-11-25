@@ -11,9 +11,8 @@ import {
 } from "react-native";
 
 import { GrowInput } from "@/components/ui/grow-input";
-import { CheckIcon, MicIcon } from "@/components/lesson/icons";
+import { CheckIcon } from "@/components/lesson/icons";
 import { Pressable } from "@/components/ui/pressable";
-import { STUDY_BTN } from "@/components/ui/study-button";
 import { PText } from "@/components/ui/text";
 import { showToast } from "@/components/ui/toast";
 import { Font } from "@/constants/fonts";
@@ -29,9 +28,12 @@ import { leave34, type StepCtx } from "../finish";
 import { answers, setAns } from "../store";
 import { aiFix, bitOf, notEnglish, nrm, NUDGE, sentN, wordRe, words } from "../text";
 import {
+  FootRow,
   GoBtn,
   IMG,
+  MicKey,
   ModeTabs,
+  SkipBtn,
   Spk,
   SUB,
   sayEn,
@@ -641,66 +643,57 @@ export function DailyTalk({
             setCm(k);
           }}
         />
-        {/* 입력칸은 한 줄을 다 써요 (말하기: 받아 적은 글만 보여 주고 눌러도 키보드가 안 떠요) */}
-        <GrowInput
-          value={draft}
-          onChangeText={setDraft}
-          editable={cm === "write"}
-          showSoftInputOnFocus={cm === "write"}
-          multiline
-          placeholder={
-            cm === "voice"
-              ? "마이크를 누르고 말하면 여기에 적혀요"
-              : "3문장 이상 영어로 적어요"
-          }
-          placeholderTextColor="#B9B2A3"
-          style={st.ta}
-          accessibilityLabel="내 답"
-        />
-        {/* 아래 줄: 말하기는 마이크가 주인공 + 보내기, 쓰기는 보내기만 (높이 · 가운데를 맞춰요) */}
-        <View style={st.compose}>
-          {cm === "voice" ? (
-            <Pressable
-              onPress={() =>
-                speech.listening
-                  ? speech.stop()
-                  : void speech.start(D.keywords.map((k) => k[0]))
-              }
-              accessibilityRole="button"
-              accessibilityLabel={speech.listening ? "말하기 멈추기" : "눌러서 말하기"}
-              accessibilityState={{ selected: speech.listening }}
-              style={StyleSheet.flatten([st.mic, speech.listening && st.micOn])}
-            >
-              <MicIcon size={20} color={Colors.white} />
-              <PText style={st.micT} color={Colors.white} numberOfLines={1}>
-                {speech.listening ? "듣고 있어요 · 눌러서 멈추기" : "눌러서 말하기"}
+        {/* 다른 학습 화면(말하기 · 쓰기 단계)과 같은 아래 칸:
+            말하기 = 받아 적은 말 + 넓은 마이크 키 → 다 말하면 [다시 말하기 | 보내기]
+            쓰기 = 입력칸 + 넓은 노랑 보내기 */}
+        {cm === "voice" ? (
+          <>
+            {speech.listening || draft ? (
+              <PText style={st.said} color={draft ? Colors.ink : SUB}>
+                {draft || "듣고 있어요…"}
               </PText>
-            </Pressable>
-          ) : null}
-          {cm === "voice" ? (
-            <View style={st.send}>
-              <GoBtn label="보내기" compact disabled={!draft.trim()} onPress={send} />
-            </View>
-          ) : (
-            // 쓰기: 보내기가 줄을 다 써요 (감싸는 View 없이 — 안에서 flex: 1 이 높이를 0 으로 만들었어요)
-            <GoBtn label="보내기" compact disabled={!draft.trim()} onPress={send} />
-          )}
-        </View>
+            ) : null}
+            {draft && !speech.listening ? (
+              <FootRow>
+                <SkipBtn label="다시 말하기" onPress={() => { setDraft(""); void speech.start(D.keywords.map((k) => k[0])); }} />
+                <GoBtn label="보내기" onPress={send} />
+              </FootRow>
+            ) : (
+              <MicKey
+                label="눌러서 말하기"
+                live="다 말했어요"
+                on={speech.listening}
+                onPress={() =>
+                  speech.listening
+                    ? speech.stop()
+                    : void speech.start(D.keywords.map((k) => k[0]))
+                }
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <GrowInput
+              value={draft}
+              onChangeText={setDraft}
+              multiline
+              placeholder="3문장 이상 영어로 적어요"
+              placeholderTextColor="#B9B2A3"
+              style={st.ta}
+              accessibilityLabel="내 답"
+            />
+            <FootRow>
+              <GoBtn label="보내기" disabled={!draft.trim()} onPress={send} />
+            </FootRow>
+          </>
+        )}
         {/* 키보드가 떠 있을 땐 입력 줄만 남겨요 (자리가 좁아요) */}
-        {kbH > 0 ? null : (
-          <Pressable
-            onPress={finishTalk}
-            disabled={answered < 3}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: answered < 3 }}
-            style={StyleSheet.flatten([st.end, answered >= 3 && st.endOn])}
-          >
-            <PText style={st.endT} color={answered >= 3 ? Colors.ink : SUB}>
-              {answered >= 3
-                ? "대화 마치기"
-                : `질문 3개 답하면 마칠 수 있어요 · ${answered}/3`}
-            </PText>
-          </Pressable>
+        {kbH > 0 ? null : answered >= 3 ? (
+          <SkipBtn label="대화 마치기" onPress={finishTalk} />
+        ) : (
+          <PText style={st.endT} color={SUB}>
+            질문 3개 답하면 마칠 수 있어요 · {answered}/3
+          </PText>
         )}
       </PFoot>
     </>
@@ -900,7 +893,6 @@ const st = StyleSheet.create({
     justifyContent: "center",
   },
   moreT: { fontFamily: Font.display, fontSize: 11, lineHeight: 15 },
-  compose: { flexDirection: "row", alignItems: "center", gap: 8 },
   ta: {
     minHeight: 64,
     maxHeight: 120,
@@ -916,37 +908,9 @@ const st = StyleSheet.create({
     color: Colors.ink,
     textAlignVertical: "top",
   },
-  // 보내기(StudyButton)와 같은 높이 · 테두리 · 아래 그림자라 한 줄에 나란히 맞아요
-  mic: {
-    flex: 1,
-    minWidth: 0,
-    height: STUDY_BTN.height,
-    borderRadius: STUDY_BTN.radius,
-    borderWidth: STUDY_BTN.border,
-    borderColor: Colors.ink,
-    backgroundColor: Colors.purple,
-    marginBottom: STUDY_BTN.drop,
-    boxShadow: `0px ${STUDY_BTN.drop}px 0px ${Colors.ink}`,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-  },
-  micOn: { backgroundColor: Colors.rosePink },
-  micT: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22, flexShrink: 1 },
-  send: { width: 104 },
-  end: {
-    height: 46,
-    borderRadius: 27,
-    borderWidth: 2,
-    borderColor: Colors.line,
-    backgroundColor: Colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  endOn: { borderColor: Colors.ink },
-  endT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
+  // 받아 적은 말 (말하기 단계의 .said 와 같아요)
+  said: { fontFamily: Font.body700, fontSize: 15, lineHeight: 22, textAlign: "center", paddingHorizontal: 8 },
+  endT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, textAlign: "center" },
   sumK: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16 },
   sumB: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
   strike: { textDecorationLine: "line-through" },

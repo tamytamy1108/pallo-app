@@ -21,7 +21,7 @@ import type { WorldSC } from '@/components/library/world/scenes';
 import { Raised } from '@/components/ui/raised';
 import { ErrorState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
+import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
@@ -176,7 +176,7 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: 0, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
   menuBack: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 5 },
   flat: { aspectRatio: 340 / 430, borderWidth: 2, borderColor: Colors.ink, borderRadius: 26, overflow: 'hidden', backgroundColor: '#BFE4EC' },
 });

@@ -23,7 +23,7 @@ import { ConfirmDialog } from '@/components/ui/dialog';
 import { Raised, SHADOW_OFFSET } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
+import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { MY_BADGES, rankPeople } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
@@ -207,8 +207,8 @@ export default function MyScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: 0, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44 },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   dev: { marginTop: 10, gap: 10 },
   stack: { gap: Spacing.stack },

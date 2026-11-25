@@ -26,7 +26,7 @@ import { AbroadRegSheet, PeopleRow, PersonSheet, TripCard, TripMakeSheet, WorldM
 import { MeetTab } from '@/components/meet/meet-tab';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Spacing, TabHeadTop } from '@/constants/theme';
 import { ALL_SUBS, type AbroadPerson, branchOk, COM_SUBS, type FeedItem, LG_TABS, type LoungeTab, TRIP_SUBS } from '@/data/lounge';
 import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge } from '@/data/lounge-store';
 import { EASE } from '@/lib/motion';
@@ -421,7 +421,7 @@ function ToTop({ show, bottom, onPress }: { show: boolean; bottom: number; onPre
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  page: { paddingTop: 0, paddingBottom: 190 },
+  page: { paddingTop: TabHeadTop, paddingBottom: 190 },
   // 첫 줄(제목) · 둘째 줄(탭) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (홈 · 라이브러리 · 마이와 같게)
   hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center' },
   // 탭 밑줄이 라이브러리(스터디 맵 | 상황 맵) 밑줄과 같은 높이에 와요
