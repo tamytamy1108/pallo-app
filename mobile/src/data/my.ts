@@ -274,11 +274,13 @@ export type PartnerLink = { kind: PartnerLinkKind; url: string; label?: string }
 /** 포스터 · 사진: 앱에 넣은 그림(require) 또는 서버 주소. 관리자가 아무 크기로 올려요 (0번이 대표) */
 export type PartnerPoster = number | string;
 export type Partner = { n: string; b: string; c: string; w: string; addr?: string; tel?: string; hrs?: string; info?: string; how?: string; links?: PartnerLink[]; posters?: PartnerPoster[] };
-export type BranchBoard = { addr: string; hrs: string; pin: { t: string; by: string; at: string } | null; items: BranchItem[]; partners: Partner[] };
+/** intro · photos: 지점 소개 글 · 사진 (전산에서 지점이 직접 써요 · 올려요). 비회원 가입의 '가까운 지점' 안내(onboarding/branch)가 보여 줘요. 사진이 없으면 빈 사진 칸 */
+export type BranchBoard = { addr: string; hrs: string; intro?: string; photos?: PartnerPoster[]; pin: { t: string; by: string; at: string } | null; items: BranchItem[]; partners: Partner[] };
 export const BR_BOARDS: Record<string, BranchBoard> = {
   하남점: {
     addr: '하남시 [주소] 3층',
     hrs: '평일 10~23시 · 주말 10~18시',
+    intro: '미사역 바로 앞, 통창 라운지가 있는 지점이에요. 평일 저녁 스터디가 가장 많고, 스터디 끝나고 라운지에서 프리토킹을 이어 가는 분이 많아요.',
     pin: { t: '11/22(토) 건물 점검으로 주차장 이용이 어려워요', by: '매니저 Jay', at: '11.18' },
     items: [
       { ic: 'park', bg: '#FFE200', t: '주차 · 입금 계좌', s: '주차 · 계좌', d: '건물 지하 2층 · 스터디 시간 2시간 무료 · 데스크에 차량 번호를 말해 주세요', cp: [['입금 계좌 · 예금주 [이름] · 주차 추가 · 이벤트 참가비', '[은행] [계좌번호]']], star: true },
@@ -296,6 +298,7 @@ export const BR_BOARDS: Record<string, BranchBoard> = {
   잠실점: {
     addr: '서울 송파구 [주소] 5층 · 잠실역 8번 출구 도보 3분',
     hrs: '평일 10~22시 · 주말 10~18시',
+    intro: '잠실역 8번 출구에서 3분, 스터디룸 6개가 있는 지점이에요. 직장인 저녁 스터디와 주말 오전 스터디가 많아요.',
     pin: null,
     items: [
       { ic: 'park', bg: '#FFE200', t: '주차 · 입금 계좌', s: '주차 · 계좌', d: '롯데월드몰 주차장 · 데스크에서 3시간 할인 도장', cp: [['입금 계좌 · 예금주 [이름] · 이벤트 참가비', '[은행] [계좌번호]']], star: true },

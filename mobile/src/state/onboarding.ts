@@ -68,9 +68,9 @@ export const updateOnboarding = (patch: Partial<Onboarding>) => store.set((s) =>
 /** 처음부터 다시 (개발용 · 로그아웃) */
 export const resetOnboarding = () => store.set(INITIAL);
 
-/** 가입 단계 진행 바: 약관은 칸에 넣지 않고 닉네임 1 · 캐릭터 2 · 회원 확인 3 · 길마다 4~ */
+/** 가입 단계 진행 바: 약관은 칸에 넣지 않고 닉네임 1 · 캐릭터 2 · 회원 확인 3 · 길마다 4~ (앱 구경: 언어 · 이유 · 가까운 지점) */
 export function stepsFor(path: OnbPath | null) {
-  return path === 'app' ? 5 : 4;
+  return path === 'app' ? 6 : 4;
 }
 
 /**
