@@ -119,6 +119,9 @@ function devMe(who: DevPersona): Pick<Me, 'role' | 'link' | 'trial' | 'plan' | '
   }
 }
 
+/** 프로처럼 보이는 계정: 프로 · 지점 관리자 (마이 숫자 · 보낸/받은 노트 · 내 수업 — 둘 다 현장에서 프로로 참여할 수 있어요) */
+export const isProLike = (role: Role) => role === 'leader' || role === 'manager';
+
 export const useMe = meStore.useStore;
 export const getMe = meStore.get;
 export const updateMe = (patch: Partial<Me>) => meStore.set((s) => ({ ...s, ...patch }));

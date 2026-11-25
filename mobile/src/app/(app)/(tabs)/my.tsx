@@ -32,7 +32,7 @@ import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
 import { useSavedCount } from '@/state/expressions';
 import { canUse, isMember } from '@/state/access';
-import { useMe } from '@/state/me';
+import { isProLike, useMe } from '@/state/me';
 import { grantReward, resetRewards } from '@/state/rewards';
 import { useTabReselect } from '@/lib/tab-reselect';
 
@@ -64,7 +64,7 @@ export default function MyScreen() {
   }, [dev.reward]);
   const me = useMe();
   const member = isMember(me);
-  const pro = me.role === 'leader';
+  const pro = isProLike(me.role);
   const [classOpen, setClassOpen] = useState(false);
   const canSettings = canUse(me, 'settings');
   const openSettings = canSettings ? go('/me/settings') : () => memberGate('설정을 쓰려면');
@@ -91,7 +91,7 @@ export default function MyScreen() {
         <Appear kind="rise" style={styles.head}>
           {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
           <PText variant="headline" accessibilityRole="header" accessibilityLabel="마이">
-            My
+            My page
           </PText>
           <View style={styles.headR}>
             {/* 개발용 사람 바꾸기 (개발 서버에서만) */}
@@ -145,10 +145,11 @@ export default function MyScreen() {
             <Appear kind="rise" delay={100}>
               {pro ? (
                 // 프로: 이용권 · 팀 대신 이번 주 맡은 세션 (내 일정 전체 보기)
-                <>
+                // 제목과 카드 사이는 다른 칸(랭킹 · 배지)과 같은 간격
+                <View style={styles.stack}>
                   <SecHead title="내 수업" />
                   <MyClassCard open={classOpen} onOpen={setClassOpen} />
-                </>
+                </View>
               ) : (
                 <>
                   {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}

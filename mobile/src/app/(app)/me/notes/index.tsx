@@ -15,7 +15,7 @@ import { Colors } from '@/constants/theme';
 import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, PRO_SENT_NOTES, teamLabel, teamNameByNo } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
-import { useMe } from '@/state/me';
+import { isProLike, useMe } from '@/state/me';
 import { MemberOnly } from '@/components/common/member-lock';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 
@@ -30,7 +30,7 @@ function ProNotesScreen() {
   // 프로: 보낸 노트 · 받은 노트로 나눠요 (프로도 멤버로 참여하면 노트를 받아요)
   const [box, setBox] = useState<'sent' | 'got'>(box0 === 'got' ? 'got' : 'sent');
   if (view === 'diary') return <DiaryList />;
-  if (me.role !== 'leader') return <NotesList />;
+  if (!isProLike(me.role)) return <NotesList />;
   const sw = <BoxSwitch box={box} onBox={setBox} />;
   return box === 'sent' ? <SentList head={sw} /> : <NotesList head={sw} />;
 }

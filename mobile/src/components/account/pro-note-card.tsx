@@ -8,7 +8,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { PRO_NOTES, PRO_SENT_NOTES, teamNameByNo, type ProNote } from '@/data/account';
 import { sfx } from '@/lib/feedback';
-import { useMe } from '@/state/me';
+import { isProLike, useMe } from '@/state/me';
 
 import { Box, Icon, Lift } from './parts';
 import { markNoteRead, useNoteState } from './store';
@@ -21,7 +21,7 @@ import { markNoteRead, useNoteState } from './store';
  */
 export function ProNoteCard() {
   const me = useMe();
-  const pro = me.role === 'leader';
+  const pro = isProLike(me.role);
   // 프로는 보낸 노트 · 받은 노트로 나눠요 (프로도 멤버로 참여하면 노트를 받아요)
   const [box, setBox] = useState<'sent' | 'got'>('sent');
   const { read } = useNoteState();
