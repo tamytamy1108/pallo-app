@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { BackButton } from '@/components/ui/back-button';
 import { FramedImage } from '@/components/ui/photo-frame';

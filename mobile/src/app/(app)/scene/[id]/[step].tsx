@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { SCREEN } from '@/lib/transitions';
 import { BankStep } from '@/components/scene/bank';

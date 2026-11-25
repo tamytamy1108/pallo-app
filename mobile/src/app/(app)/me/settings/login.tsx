@@ -74,7 +74,7 @@ export default function LoginAccountScreen() {
         onClose={() => setSheet(null)}
         title="휴대폰 번호 변경"
         footer={
-          <View style={styles.flex}>
+          <View>
             <Button
               label="인증번호 받기"
               wide
@@ -97,7 +97,7 @@ export default function LoginAccountScreen() {
         onClose={() => setSheet(null)}
         title="이메일 등록"
         footer={
-          <View style={styles.flex}>
+          <View>
             <Button
               label="인증 메일 보내기"
               wide

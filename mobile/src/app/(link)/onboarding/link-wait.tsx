@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { BackHandler, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { apiErrorMessage } from '@/api/errors';
 import { useCompleteOnboarding } from '@/api/session';

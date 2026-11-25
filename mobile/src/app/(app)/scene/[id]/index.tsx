@@ -2,7 +2,7 @@ import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { SCREEN } from '@/lib/transitions';
 import { HubBody, HubTop, SceneListSheet, StepPopup } from '@/components/scene/hub';

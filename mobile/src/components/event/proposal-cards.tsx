@@ -2,12 +2,13 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 
 import { LgLink, SecHead } from '@/components/meet/parts';
-import { removeProposal, useMeetStore, type Proposal } from '@/components/meet/meet-store';
+import { addProposal, removeProposal, useMeetStore, type Proposal } from '@/components/meet/meet-store';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { ColorCard } from '@/components/ui/card-maker';
+import { withJeom } from '@/components/onboarding/branch-sheet';
 import { cardWords } from '@/data/poster-colors';
 import { WEEK } from '@/data/meet';
 
@@ -32,13 +33,13 @@ export function ProposalCard({ q }: { q: Proposal }) {
   const when = q.date ? `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})${hm} 희망` : '날짜 고르기 전';
   return (
     <View style={styles.card}>
-      {q.card ? <ColorCard color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
+      {q.card ? <ColorCard design={q.card.design ?? 'circle'} color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
       <View style={styles.tx}>
         <PText numberOfLines={1} style={styles.t}>
           {q.title}
         </PText>
         <PText numberOfLines={1} style={styles.s}>
-          {q.br} · {when} · {q.cat}
+          {withJeom(q.br)} · {when} · {q.cat}
         </PText>
         <PText style={styles.st}>매니저 검토 중 · 2~3일 안에 문자로 연락드려요</PText>
       </View>
@@ -47,8 +48,9 @@ export function ProposalCard({ q }: { q: Proposal }) {
         size={12.5}
         label="취소"
         onPress={() => {
+          // 한 번 누르면 바로 지워져서, 잘못 눌렀을 때 되돌릴 수 있게 해요
           removeProposal(q.id);
-          showToast('제안을 취소했어요');
+          showToast('제안을 취소했어요', { label: '되돌리기', onPress: () => addProposal(q) });
         }}
       />
     </View>

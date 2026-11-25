@@ -3,11 +3,26 @@
  * 카드는 기본 포스터 모양(번개 · 동아리는 동그라미 무늬, 챌린지 · 이벤트는 단색) 위에 고른 색과 직접 적은 문구를 넣어요.
  * 포스터 사진이 없으면 카드는 꼭 있어야 해요 (색은 기본 색부터 · 문구 첫 줄은 꼭 적어요). 사진이 있으면 카드는 선택이고,
  * 카드를 만들면 그게 대표(첫 장)가 되고 사진은 그 뒤에 붙어요.
- * 맞는 API(예정): 각 개설 요청의 `card: { color, words }`.
+ * 맞는 API(예정): 각 개설 요청의 `card: { design, color, words }`.
  */
 
-/** 만든 카드: 바탕색 · 큰 글자 줄들 (최대 2줄) */
-export type MadeCard = { color: string; words: string[] };
+/** 카드 디자인 (카드 고르기 보드에서 고른 10가지 — 그림은 components/ui/card-art) */
+export type CardDesign = 'circle' | 'stripe' | 'char' | 'wave' | 'diag' | 'bubble' | 'big' | 'stage' | 'check' | 'half';
+export const CARD_DESIGNS: readonly { key: CardDesign; name: string }[] = [
+  { key: 'circle', name: '큰 원' },
+  { key: 'stripe', name: '줄무늬 띠' },
+  { key: 'char', name: '무대 캐릭터' },
+  { key: 'wave', name: '물결' },
+  { key: 'diag', name: '사선 띠' },
+  { key: 'bubble', name: '말풍선' },
+  { key: 'big', name: '큰 글자' },
+  { key: 'stage', name: '무대 조명' },
+  { key: 'check', name: '체크 띠' },
+  { key: 'half', name: '반반' },
+];
+
+/** 만든 카드: 디자인 · 바탕색 · 큰 글자 줄들 (최대 2줄). design 이 없으면 '큰 원' (처음 모양) */
+export type MadeCard = { color: string; words: string[]; design?: CardDesign };
 
 /** dark: 어두운 바탕 (글자 노랑) · acc: 포스터 무늬 색 */
 export type CardColor = { name: string; hex: string; dark: boolean; acc: string };
@@ -41,7 +56,7 @@ export const fitWordSize = (words: string[], width: number, max: number) => {
   return Math.max(7, Math.min(max, (width * 0.82) / longest));
 };
 /** 새 카드 (기본 색 · 문구는 빈 칸 — 올리기 전에 첫 줄을 꼭 적어요) */
-export const newCard = (color: string = CARD_COLORS[0].hex): MadeCard => ({ color, words: ['', ''] });
+export const newCard = (color: string = CARD_COLORS[0].hex, design: CardDesign = 'circle'): MadeCard => ({ color, words: ['', ''], design });
 /**
  * 올릴 때 쓰는 카드: 포스터 사진이 없으면 카드는 꼭 있어야 해요 (색을 안 골랐으면 기본 색).
  * 사진이 있으면 카드는 선택 — 켠 경우에만.

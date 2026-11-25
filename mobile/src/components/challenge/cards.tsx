@@ -142,7 +142,7 @@ export function DailyCard({ p, s, onCheck }: { p: Challenge; s: ChView; onCheck:
     <Shell radius={18} flash={s.flash === p.id}>
       <View style={styles.row}>
         <Pressable onPress={() => openChallenge(p)} accessibilityRole="button" accessibilityLabel={`${p.name} 자세히 보기`} style={[styles.pst, { backgroundColor: bg }]}>
-          {p.cover != null && !p.pbg ? (
+          {p.cover != null || p.pbg ? (
             <ChCover p={p} size={96} style={StyleSheet.absoluteFill} />
           ) : (
             <PText style={[styles.pw, { fontSize: posterFontSize(w), color: isDarkBg(bg) ? CH_C.y : Colors.ink }]}>{w}</PText>

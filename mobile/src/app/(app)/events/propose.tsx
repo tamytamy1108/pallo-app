@@ -4,22 +4,22 @@ import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
-import { SheetButton, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
+import { SheetButton, SheetPills } from '@/components/common/sheet-parts';
 import { defaultEnd, MonthCalendar, PlacePicker, PosterPicker, TimeRange, type Place } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
+import { BranchSheet, withJeom } from '@/components/onboarding/branch-sheet';
 import { Icon } from '@/components/meet/icons';
 import { addProposal } from '@/components/meet/meet-store';
 import { ProposalCard } from '@/components/event/proposal-cards';
 import { TextField } from '@/components/ui/field';
 import { CountPicker } from '@/components/ui/count-picker';
-import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BRANCH_REGIONS, BRANCHES, PROPOSAL_CATS } from '@/data/events';
+import { BRANCHES, PROPOSAL_CATS } from '@/data/events';
 import { NO_LIMIT, WEEK } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
@@ -56,11 +56,12 @@ export default function ProposeEvent() {
   const region = (BRANCHES.find((b) => b[0] === br) || BRANCHES[0])[2];
 
   const send = () => {
+    // 화면 위에서부터 (대표 카드 → 날짜 → 카테고리 → 제목 → 소개) 첫 빈칸을 알려요
+    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     if (!date) return showToast('희망 날짜를 골라 주세요');
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
-    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim() });
     sfx('save');
     router.back();
@@ -97,7 +98,7 @@ export default function ProposeEvent() {
       </Field>
       <Field label="진행 지점" req>
         <Pressable onPress={() => setBrOpen(true)} accessibilityRole="button" accessibilityLabel={`진행 지점 ${br}`} style={styles.sel}>
-          <PText style={styles.selT}>{br}</PText>
+          <PText style={styles.selT}>{withJeom(br)}</PText>
           <View style={{ transform: [{ rotate: '-90deg' }] }}>
             <Icon name="back" size={16} />
           </View>
@@ -134,23 +135,17 @@ export default function ProposeEvent() {
         <SheetPills options={FEES} value={fee} onChange={setFee} label="참가비" />
       </Field>
 
-      <Sheet open={brOpen} onClose={() => setBrOpen(false)} title="진행 지점" tall>
-        {BRANCH_REGIONS.map((r) => (
-          <View key={r} style={{ gap: 6 }}>
-            <PText style={styles.lb}>{r}</PText>
-            <SheetOptions
-              radio
-              selected={br}
-              items={BRANCHES.filter((b) => b[2] === r).map((b) => ({ key: b[0], label: b[0] }))}
-              onPick={(k) => {
-                setBr(k);
-                setPlace(null);
-                setBrOpen(false);
-              }}
-            />
-          </View>
-        ))}
-      </Sheet>
+      <BranchSheet
+        open={brOpen}
+        onClose={() => setBrOpen(false)}
+        title="진행 지점을 골라요"
+        value={br}
+        raw
+        onPick={(k) => {
+          if (k !== br) setPlace(null);
+          setBr(k);
+        }}
+      />
     </SheetPage>
   );
 }

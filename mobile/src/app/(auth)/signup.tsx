@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { signUpWithEmail, type Gender } from '@/api/auth';
@@ -88,7 +88,7 @@ export default function SignupScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar title="회원가입" fallback="/welcome" />
       <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <Field label="이메일" error={errorOf('email')}>
+        <Field label="이메일" required error={errorOf('email')}>
           <TextField
             placeholder="example@email.com"
             value={form.email}
@@ -103,7 +103,7 @@ export default function SignupScreen() {
             accessibilityLabel="이메일"
           />
         </Field>
-        <Field label="비밀번호" error={errorOf('password')}>
+        <Field label="비밀번호" required error={errorOf('password')}>
           <PasswordField
             placeholder="영문 · 숫자를 섞어 8자 이상"
             value={form.password}
@@ -116,7 +116,7 @@ export default function SignupScreen() {
             accessibilityLabel="비밀번호"
           />
         </Field>
-        <Field label="비밀번호 확인" error={errorOf('passwordConfirm')}>
+        <Field label="비밀번호 확인" required error={errorOf('passwordConfirm')}>
           <PasswordField
             placeholder="비밀번호를 한 번 더 입력해 주세요"
             value={form.passwordConfirm}
@@ -129,7 +129,7 @@ export default function SignupScreen() {
             accessibilityLabel="비밀번호 확인"
           />
         </Field>
-        <Field label="이름" error={errorOf('name')} count={`${form.name.length}/${NAME_MAX}`}>
+        <Field label="이름" required error={errorOf('name')} count={`${form.name.length}/${NAME_MAX}`}>
           <TextField
             placeholder="이름을 입력해 주세요"
             value={form.name}
@@ -142,7 +142,7 @@ export default function SignupScreen() {
             accessibilityLabel="이름"
           />
         </Field>
-        <Field label="전화번호" error={errorOf('phone')}>
+        <Field label="전화번호" required error={errorOf('phone')}>
           <TextField
             placeholder="010-0000-0000"
             value={form.phone}
@@ -203,11 +203,14 @@ export default function SignupScreen() {
 }
 
 /** 라벨 (+ 오른쪽 글자 수) · 칸 · 틀린 점 한 줄 */
-function Field({ label, error, count, children }: { label: string; error: string | null; count?: string; children: ReactNode }) {
+function Field({ label, required, error, count, children }: { label: string; required?: boolean; error: string | null; count?: string; children: ReactNode }) {
   return (
     <View style={styles.field}>
       <View style={styles.labelRow}>
-        <PText style={styles.label}>{label}</PText>
+        <PText style={styles.label}>
+          {label}
+          {required ? <PText style={styles.req}> *</PText> : null}
+        </PText>
         {count ? <PText style={styles.count}>{count}</PText> : null}
       </View>
       {children}
@@ -227,6 +230,7 @@ const styles = StyleSheet.create({
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   // TextField 라벨과 같아요 (.lg-fl label)
   label: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 12.5 * 1.4 },
+  req: { color: '#E5484D' },
   count: { fontFamily: Font.body700, fontSize: 12, lineHeight: 12 * 1.4, color: Colors.inkSub },
   error: { fontFamily: Font.body700, fontSize: 12, lineHeight: 12 * 1.45 },
   group: { gap: 10, marginTop: 4 },

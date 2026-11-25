@@ -14,6 +14,7 @@ import { TrialGuideHost } from '@/components/common/trial-guide';
 import { DevNotch } from '@/components/dev-notch';
 import { LinkPushHost } from '@/components/home/link-push';
 import { ErrorState } from '@/components/ui/state-view';
+import { TightTopInsets } from '@/components/ui/safe-area';
 import { ToastHost } from '@/components/ui/toast';
 import { FontAssets } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -65,6 +66,7 @@ function RootNavigator() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <DevNotch>
+        <TightTopInsets>
         <StatusBar style="dark" />
         {session.status === 'error' ? (
           // 토큰은 있는데 /me 를 못 받음 (인터넷 · 서버). 로그아웃시키지 않고 다시 시도하게 해요
@@ -92,6 +94,7 @@ function RootNavigator() {
         <ToastHost />
         {/* 지점 연동 결과 푸시 띠: 어느 화면에 있어도 위에서 내려와요 */}
         <LinkPushHost />
+        </TightTopInsets>
       </DevNotch>
     </GestureHandlerRootView>
   );

@@ -60,7 +60,8 @@ export function EventBanner({ list }: { list: EventItem[] }) {
             {list.map((e, k) => (
               <Pressable key={e.id} onPress={() => router.push(`/events/${e.id}`)} accessibilityRole="button" accessibilityLabel={`${k + 1} / ${n} ${e.title}`} style={{ width: w, height: 188 }}>
                 <Poster id={e.id} slide={posterSlides(e.id)[0]} height={188} wordSize={26} wordStyle={styles.pw} />
-                <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(20,17,30,0.8)']} style={styles.ov} pointerEvents="none">
+                {/* 노란 · 밝은 포스터 위에서도 노란 첫 줄(종류 · 지점 · D-day)이 읽히게, 첫 줄 높이부터 충분히 어둡게 */}
+                <LinearGradient colors={['rgba(20,17,30,0)', 'rgba(20,17,30,0.62)', 'rgba(20,17,30,0.86)']} locations={[0, 0.38, 1]} style={styles.ov} pointerEvents="none">
                   <PText numberOfLines={1} style={styles.k}>
                     {e.kind} · {e.br || '전 지점'} · {dday(e)}
                   </PText>
@@ -98,8 +99,9 @@ const styles = StyleSheet.create({
   b: { fontFamily: Font.body900, fontSize: 18, lineHeight: 26, color: '#fff' },
   m: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: '#fff' },
   em: { fontFamily: Font.body900, fontSize: 13, color: Colors.yellow },
-  cnt: { position: 'absolute', top: 12, right: 14, zIndex: 4, fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: '#fff' },
-  dots: { position: 'absolute', top: 16, left: 14, zIndex: 4, flexDirection: 'row', gap: 4 },
+  // 1 / n · 점: 밝은 포스터 위에서도 보이게 어두운 바탕을 깔아요
+  cnt: { position: 'absolute', top: 10, right: 12, zIndex: 4, paddingHorizontal: 8, borderRadius: 10, overflow: 'hidden', backgroundColor: 'rgba(20,17,30,0.5)', fontFamily: Font.body900, fontSize: 12, lineHeight: 19, color: '#fff' },
+  dots: { position: 'absolute', top: 14, left: 12, zIndex: 4, flexDirection: 'row', gap: 4, paddingHorizontal: 6, paddingVertical: 5, borderRadius: 8, backgroundColor: 'rgba(20,17,30,0.5)' },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.55)' },
   dotOn: { width: 16, backgroundColor: '#fff' },
 });

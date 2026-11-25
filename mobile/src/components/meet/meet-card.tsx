@@ -54,7 +54,7 @@ export function MeetCard({ m, width }: { m: Meet; width: number }) {
     <Shadowed radius={16} style={{ width, opacity: m.closed ? 0.75 : past ? 0.8 : 1 }}>
       <View style={styles.card}>
         <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${m.title} 자세히 보기`}>
-          <Poster id={m.id} slide={slide} height={150} wordSize={28} />
+          <Poster id={m.id} slide={slide} height={150} wordSize={28} safeTop={34} />
           <View style={styles.tbar} pointerEvents="none">
             <Icon name="bolt" size={15} color={fg} fill={fg} strokeWidth={1.6} />
             <PText style={[styles.tb, { color: fg }]}>번개</PText>

@@ -4,7 +4,8 @@
  */
 import type { ReactNode, RefObject } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance, type ViewStyle } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';

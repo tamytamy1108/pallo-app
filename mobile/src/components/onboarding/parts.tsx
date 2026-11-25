@@ -1,7 +1,7 @@
 import { Children, createContext, isValidElement, useContext, useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 import Svg, { Path } from 'react-native-svg';
 
 import { BackButton } from '@/components/ui/back-button';
@@ -299,12 +299,14 @@ export function NextButton({
   );
 }
 
-/** 입력 칸 이름 + 보라 글자 `필수` (바탕 없이 이름 바로 뒤에) */
+/** 입력 칸 이름 + 필수면 빨간 * (앱 전체 입력칸 이름과 같아요 · ui/field TextField '이름 *') */
 export function FieldLabel({ children, required, hint }: { children: string; required?: boolean; hint?: string }) {
   return (
     <View style={styles.labelRow}>
-      <PText style={styles.label}>{children}</PText>
-      {required ? <PText style={styles.req}>필수</PText> : null}
+      <PText style={styles.label} accessibilityLabel={required ? `${children}, 필수` : children}>
+        {children}
+        {required ? <PText style={styles.req}> *</PText> : null}
+      </PText>
       {hint ? <PText style={styles.hint}>{hint}</PText> : null}
     </View>
   );
@@ -319,7 +321,7 @@ export function OnbInput({ ring = true, ...props }: Omit<TextInputProps, 'style'
   // 포커스 때 보라 링 (브라우저 기본 테두리 대신). 닉네임처럼 바깥에 링을 따로 그리면 ring={false}
   const focus = useFocusRing(props, ring);
   if (props.multiline) return <GrowInput placeholderTextColor="#A79F8F" {...props} ring={ring} style={[styles.input, styles.inputMulti, invalid && styles.invalid]} />;
-  return <TextInput placeholderTextColor="#A79F8F" {...props} {...focus} style={[styles.input, invalid && styles.invalid, focus.ringStyle]} />;
+  return <TextInput placeholderTextColor="#A79F8F" {...props} {...focus} style={[styles.input, styles.inputOne, invalid && styles.invalid, focus.ringStyle]} />;
 }
 
 /** 눌러서 고르는 칸 (지점 선택하기 ▾). 고르면 라벤더 · 보라 테두리 (.pickf.got) */
@@ -420,9 +422,11 @@ const styles = StyleSheet.create({
   field: { marginTop: 18 },
   labelRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4, marginBottom: 7 },
   label: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 18 },
-  req: { fontFamily: Font.body800, fontSize: 12, lineHeight: 18, color: Colors.purple },
+  req: { fontFamily: Font.body900, color: '#E5484D' },
   hint: { marginLeft: 2, fontFamily: Font.body700, fontSize: 12, lineHeight: 18, color: Colors.inkSub },
   input: { height: 52, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white, paddingHorizontal: 14, fontFamily: Font.body800, fontSize: 16, color: Colors.ink },
+  // 한 줄 칸: Android 기본 위아래 여백 · 글꼴 여백 때문에 글자가 위로 붙어 보여서 0 · 가운데로 (ui/field TextField 와 같게)
+  inputOne: { paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center' },
   inputMulti: { height: undefined, minHeight: 96, paddingTop: 12, paddingBottom: 12, fontSize: 15, lineHeight: 22, textAlignVertical: 'top' },
   invalid: { borderColor: ERROR_RED },
   error: { marginTop: 6, marginLeft: 4, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 17, color: ERROR_RED },

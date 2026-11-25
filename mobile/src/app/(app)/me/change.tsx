@@ -8,6 +8,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { ChangeCalendar } from '@/components/account/change-calendar';
 import { AccountPage, Box, ChoiceChip, Icon, Lift, type IconName } from '@/components/account/parts';
 import { submitChangeRequest } from '@/components/account/store';
+import { BranchSheet, withJeom } from '@/components/onboarding/branch-sheet';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -15,8 +16,6 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import {
   addDays,
-  BRANCH_REGIONS,
-  BRANCHES,
   CHANGE_KIND,
   CHANGE_MIN,
   changesLeftText,
@@ -73,6 +72,7 @@ function ChangeScreen() {
   const T = MY_TEAMS;
   const [f, setF] = useState<Form>(fresh);
   const [sent, setSent] = useState<{ label: string; txt: string } | null>(null);
+  const [brOpen, setBrOpen] = useState(false);
   const scroll = useRef<ScrollViewInstance>(null);
   const set = (patch: Partial<Form>) => setF((p) => ({ ...p, ...patch }));
   const toTop = () => requestAnimationFrame(() => scroll.current?.scrollTo({ y: 0, animated: false }));
@@ -259,7 +259,7 @@ function ChangeScreen() {
           }}
           title={`${sent?.label ?? ''} 신청했어요`}
           footer={
-            <View style={styles.flex}>
+            <View>
               <Button
                 label="확인"
                 wide
@@ -337,35 +337,30 @@ function ChangeScreen() {
           {k === 'branch' ? (
             <>
               <PText style={styles.q}>어느 지점으로요?</PText>
-              <Box style={styles.brall}>
-                {BRANCH_REGIONS.map((r) => (
-                  <View key={r}>
-                    <PText style={styles.rgl}>{r}</PText>
-                    <View style={styles.brs}>
-                      {BRANCHES.filter((b) => b[1] === r).map(([b]) => {
-                        const on = f.br === b;
-                        return (
-                          <Pressable
-                            key={b}
-                            onPress={() => {
-                              sfx('tap');
-                              set({ br: b, to: null });
-                            }}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected: on }}
-                            style={[styles.br, on && styles.brOn]}>
-                            <PText style={[styles.brText, on && styles.brTextOn]}>{b}</PText>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </View>
-                ))}
-              </Box>
+              {/* 지점 고르기는 가입 단계와 같은 시트로 (검색 · 권역 탭 · 권역별 카드) */}
+              <Pressable
+                onPress={() => {
+                  sfx('tap');
+                  setBrOpen(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`옮길 지점 ${withJeom(f.br)} · 바꾸기`}
+                style={({ pressed }) => [styles.sel, pressed && styles.selPressed]}>
+                <PText style={styles.selT}>{withJeom(f.br)}</PText>
+                <PText style={styles.selGo}>바꾸기 ›</PText>
+              </Pressable>
+              <BranchSheet
+                open={brOpen}
+                onClose={() => setBrOpen(false)}
+                title="어느 지점으로 옮길까요?"
+                value={f.br}
+                raw
+                onPick={(b) => set({ br: b, to: null })}
+              />
             </>
           ) : null}
           <PText style={styles.q}>{k === 'add' ? '어느 팀을 더할까요?' : '어느 팀으로 갈까요?'}</PText>
-          <PText style={styles.q2}>{`${pickBranch} · 들어갈 수 있는 팀`}</PText>
+          <PText style={styles.q2}>{`${withJeom(pickBranch)} · 들어갈 수 있는 팀`}</PText>
           <View style={styles.teams} accessibilityRole="radiogroup">
             {match.length ? (
               match.map((x) => {
@@ -450,13 +445,10 @@ const styles = StyleSheet.create({
   res: { paddingVertical: 12, paddingHorizontal: 14, gap: 3 },
   resB: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 21 },
   resS: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
-  brall: { paddingTop: 4, paddingHorizontal: 12, paddingBottom: 12 },
-  rgl: { paddingTop: 10, paddingBottom: 6, paddingHorizontal: 2, fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  brs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  br: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, justifyContent: 'center' },
-  brOn: { borderWidth: 2, borderColor: Colors.purple },
-  brText: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18 },
-  brTextOn: { fontFamily: Font.body900, color: Colors.purple },
+  sel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 52, paddingHorizontal: 16, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white },
+  selPressed: { backgroundColor: '#F6F1E4' },
+  selT: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 21, color: Colors.purple },
+  selGo: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18, color: Colors.inkSub },
   teams: { gap: 8 },
   team: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
   teamOn: { backgroundColor: '#F3EEFB', borderColor: Colors.purple },

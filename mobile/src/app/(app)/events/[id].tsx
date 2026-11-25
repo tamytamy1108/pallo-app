@@ -63,7 +63,7 @@ export default function EventDetail() {
   const members = membersOf(e, cur, joined, myHi, { name: me.name, branch: me.branch });
 
   const main = past ? (
-    <MainBtn label="후기 보기" variant="wh" grow={false} onPress={() => setReviews(true)} />
+    <MainBtn label="후기 보기" variant="wh" onPress={() => setReviews(true)} />
   ) : full ? (
     <MainBtn
       label={vac ? '알림 받는 중' : '빈자리 알림 받기'}
@@ -118,13 +118,18 @@ export default function EventDetail() {
                   {e.fee0 ? <PText style={infoStyles.fee0}>{won(e.fee0)}</PText> : null}
                 </PText>
               }
-              sub={joined ? '입금 계좌는 위 ‘내 신청’에 있어요' : '신청하면 입금 계좌를 알려 드려요. 입금이 확인되면 확정됩니다.'}
+              sub={past ? undefined : joined ? '입금 계좌는 위 ‘내 신청’에 있어요' : '신청하면 입금 계좌를 알려 드려요. 입금이 확인되면 확정됩니다.'}
             />
           ) : (
-            <InfoRow icon="heart" main="참가비 무료" sub="신청만 하면 바로 확정돼요" />
+            <InfoRow icon="heart" main="참가비 무료" sub={past ? undefined : '신청만 하면 바로 확정돼요'} />
           )}
-          <InfoRow icon="users" main={`${cur} / ${e.max}명 ${cur >= e.max ? '· 마감' : `· 남은 자리 ${e.max - cur}`}`} sub={<CapBar cur={cur} max={e.max} width={140} />} />
-          {Q.length && !joined ? <InfoRow icon="check" main={`신청 설문 ${Q.length}개`} sub="신청할 때 주최가 준비한 질문에 답해요" /> : null}
+          {/* 끝난 이벤트는 남은 자리 · 신청 설문 대신 몇 명이 함께했는지만 (목록 'n명 참여'와 같게) */}
+          {past ? (
+            <InfoRow icon="users" main={`${cur}명 참여`} />
+          ) : (
+            <InfoRow icon="users" main={`${cur} / ${e.max}명 ${cur >= e.max ? '· 마감' : `· 남은 자리 ${e.max - cur}`}`} sub={<CapBar cur={cur} max={e.max} width={140} />} />
+          )}
+          {Q.length && !joined && !past ? <InfoRow icon="check" main={`신청 설문 ${Q.length}개`} sub="신청할 때 주최가 준비한 질문에 답해요" /> : null}
           <InfoRow
             icon="crown"
             main={`주최 ${tel[0]}`}
@@ -142,7 +147,8 @@ export default function EventDetail() {
         <DSec>소개</DSec>
         <Desc text={eventDesc(e)} />
         <MemberSection
-          title="함께하는 멤버"
+          title={past ? '함께한 멤버' : '함께하는 멤버'}
+          ended={past}
           members={members}
           onHi={(t) => {
             setText('mhi', e.id, t);
@@ -194,8 +200,10 @@ export default function EventDetail() {
         open={reviews}
         onClose={() => setReviews(false)}
         title="후기"
+        placeholder="함께한 이벤트 후기를 남겨 주세요"
+        empty={['아직 후기가 없어요', '첫 후기를 남겨 보세요.']}
         comments={cmts}
-        onSend={(t) => guardMember(() => setCmts((L) => [...L, { id: 'me' + Date.now(), author: me.name, text: t, time: '방금', mine: true }]), '댓글을 달려면')}
+        onSend={(t) => guardMember(() => setCmts((L) => [...L, { id: 'me' + Date.now(), author: me.name, text: t, time: '방금', mine: true }]), '후기를 남기려면')}
       />
     </>
   );

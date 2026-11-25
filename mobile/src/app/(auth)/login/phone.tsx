@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { TopBar } from '@/components/ui/top-bar';
 import { BottomBar } from '@/components/bottom-bar';
