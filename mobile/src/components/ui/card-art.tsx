@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
 import { useId, useState } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, Ellipse, Line, Path, Pattern, Polygon, Rect } from 'react-native-svg';
 
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { cardColor, cardDark, type CardDesign } from '@/data/poster-colors';
+import { glyphWidth, runFont, SCRIPT_RUNS } from '@/lib/script-fonts';
 
 /*
  * 대표 카드 그림 (디자인 10가지 · 고른 색 · 적은 문구). 시안: 카드 고르기 보드에서 고른 A B D E F G H ① ② ⑤.
@@ -56,15 +57,17 @@ function Words({ design, look, words, W, down }: { design: CardDesign; look: Loo
   const t = words.join('\n');
   const anton = !['circle', 'stripe', 'char'].includes(design);
   const font = anton ? Font.poster : Font.display;
-  // 가장 긴 줄이 자리 폭에 들어가게 (Anton 대문자 ≈ 0.5em · Unbounded ≈ 0.95em)
+  // 가장 긴 줄이 자리 폭에 들어가게 (Anton 대문자 ≈ 0.5em · Unbounded ≈ 0.95em · 한글 · 일본어 · 중국어 ≈ 1em)
   const fit = (size: number, room: number) => {
-    const longest = Math.max(1, ...words.map((x) => [...x].length));
-    return Math.max(7, Math.min(size, room / (longest * (anton ? 0.52 : 0.95))));
+    const longest = Math.max(1, ...words.map((x) => [...x].reduce((n, ch) => n + glyphWidth(ch, anton ? 0.52 : 0.95), 0)));
+    return Math.max(7, Math.min(size, room / longest));
   };
+  // 영문 · 숫자는 디자인 글꼴, 한글 · 일본어 · 중국어는 홈 닉네임 글꼴 (lib/script-fonts)
+  const runs = t.split(SCRIPT_RUNS).map((part, i) => (part ? <Text key={i} style={{ fontFamily: runFont(part, font) }}>{part}</Text> : null));
   const txt = (size: number, room: number, pos: ViewStyle, color = look.text) => {
     const fs = fit(size, room);
     if (down && typeof pos.top === 'number') pos = { ...pos, top: pos.top + down };
-    return <PText style={[styles.w, pos, { fontFamily: font, fontSize: fs, lineHeight: fs * (anton ? 1.02 : 0.98), color }]}>{t}</PText>;
+    return <PText style={[styles.w, pos, { fontFamily: font, fontSize: fs, lineHeight: fs * (anton ? 1.02 : 0.98), color }]}>{runs}</PText>;
   };
   switch (design) {
     case 'circle':
