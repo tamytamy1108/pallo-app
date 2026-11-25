@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 
 import { Raised } from '@/components/ui/raised';
 import { Colors } from '@/constants/theme';
+import { noteTouch, quietFor, useTabsFront } from '@/lib/quiet';
 
 import type { WorldSC } from './world/scenes';
 import { INTRO_MS } from './world/stage';
@@ -32,11 +33,8 @@ const LITE_WARM = 2;
  * 다음에 누를 것 같은 첫 장(상황 맵 탭을 누르면 뜰 맵)만 바로 만들고, 나머지는 마지막 터치 · 스크롤 뒤 이만큼(ms) 조용할 때 하나씩.
  */
 const IDLE_MS = 1800;
-let lastTouch = 0;
 /** 라이브러리 화면이 터치 · 스크롤 때마다 불러요 (미리 만들기가 끼어들지 않게) */
-export const noteLibTouch = () => {
-  lastTouch = Date.now();
-};
+export const noteLibTouch = noteTouch;
 
 /** 새 지도가 뜨는 시간 (프로토타입 m3Fade 0.4초 → 인트로를 빠르게 하면서 함께 줄였어요) */
 const FADE = { duration: 200, easing: Easing.out(Easing.ease) };
@@ -102,19 +100,22 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
 
   // 미리 만들기: 하나씩, 바꾸는 중이 아닐 때만. warm 에 없는 숨은 지도(진도가 바뀐 옛 지도 · 다른 언어)는 치워요
   const [idleTick, setIdleTick] = useState(0);
-  // 다른 화면(레슨 · 다른 탭)으로 가면 멈췄다가 돌아오면 이어서 — 만드는 동안 JS 가 멈춰서 그 화면 누르기가 씹혀요
+  // 다른 탭에 있을 때도(탭 바가 라이브러리를 미리 열어 둬요) 화면을 안 만질 때만 이어서 만들어요 — 들어오면 이미 다 만들어져 있게.
+  // 레슨 · 장면 같은 화면이 위에 있으면 멈췄다가 돌아오면 이어서 — 만드는 동안 JS 가 멈춰서 그 화면 누르기가 씹혀요
   const focused = useIsFocused();
+  const tabsFront = useTabsFront();
   useEffect(() => {
-    if (!focused || under || warming || !drawn.has(top)) return;
+    if (!(focused || tabsFront) || under || warming || !drawn.has(top)) return;
     const keys = new Set(warmSig.split('\n'));
     const next = warmNow.current.find((w) => !layers.some((l) => l.key === keyOf(w)));
     const stale = layers.some((l) => l.key !== top && !keys.has(l.key));
     if (!next && !stale) return;
     // 첫 장(다음에 누를 것 같은 지도)은 바로, 나머지는 화면을 안 만질 때만 (만지는 중이면 조용해질 때 다시 봐요)
     const first = !!next && keyOf(next) === keyOf(warmNow.current[0] ?? next);
-    const quietFor = Date.now() - lastTouch;
-    if (next && !first && quietFor < IDLE_MS) {
-      const r = setTimeout(() => setIdleTick((n) => n + 1), IDLE_MS - quietFor + 30);
+    // 다른 탭에 있을 때는 첫 장도 조용할 때만 (그 탭 누르기가 씹히지 않게)
+    const quiet = quietFor();
+    if (next && (!first || !focused) && quiet < IDLE_MS) {
+      const r = setTimeout(() => setIdleTick((n) => n + 1), IDLE_MS - quiet + 30);
       return () => clearTimeout(r);
     }
     const t = setTimeout(() => {
@@ -128,7 +129,7 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
       }
     }, WARM_GAP_MS);
     return () => clearTimeout(t);
-  }, [focused, under, warming, drawn, top, layers, warmSig, idleTick]);
+  }, [focused, tabsFront, under, warming, drawn, top, layers, warmSig, idleTick]);
 
   // 아직 만들 지도가 있어요 (지금 만드는 중이거나 · 다음 차례) → 보이는 지도는 멈춰 둬요
   const pending = !!warming || (drawn.has(top) && want.some((w) => !layers.some((l) => l.key === keyOf(w))));
