@@ -13,7 +13,7 @@ export type ReportTarget = {
   title?: string;
 };
 
-/** 메뉴에 더 넣는 줄 — 리더 · 매니저 도구 (공지로 고정 · 이 글 숨기기 · 신고함 보기) */
+/** 메뉴에 더 넣는 줄 — 프로 · 매니저 도구 (공지로 고정 · 이 글 숨기기 · 신고함 보기) */
 export type ReportMenuItem = { key: string; label: string; sub?: string; onPress: () => void };
 
 type Stage = 'menu' | 'report' | 'block';
@@ -66,7 +66,7 @@ export function ReportSheet({
   start?: Stage;
   /** 메뉴 맨 위 '링크 복사' (기본: 글 · 스토리 · 모임처럼 링크가 있는 것) */
   link?: boolean;
-  /** 메뉴에 더 넣는 줄 (리더 · 매니저 도구) — 신고 · 차단 위에 들어가요 */
+  /** 메뉴에 더 넣는 줄 (프로 · 매니저 도구) — 신고 · 차단 위에 들어가요 */
   extra?: ReportMenuItem[];
   /** 신고를 접수했을 때 (사유) */
   onReported?: (reason: string) => void;

@@ -11,6 +11,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { CARD, SCREEN } from '@/lib/transitions';
 import { CommentsSheet } from '@/components/common/comments-sheet';
 import { isBlocked } from '@/components/common/report-sheet';
@@ -271,7 +272,9 @@ export default function StoryScreen() {
           ))}
         </View>
         <View style={styles.sh}>
-          <Face name={st.mine ? me.name : st.who} bg={st.av} />
+          <ProfileTap name={st.mine ? me.name : st.who}>
+            <Face name={st.mine ? me.name : st.who} bg={st.av} />
+          </ProfileTap>
           <View style={styles.nm}>
             <View style={styles.nmRow}>
               <PText style={styles.name}>{st.mine ? '내 스토리' : st.who}</PText>

@@ -7,6 +7,7 @@ import { SafeAreaView } from '@/components/ui/safe-area';
 import { BackButton } from '@/components/ui/back-button';
 import { FramedImage } from '@/components/ui/photo-frame';
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { BottomBar } from '@/components/bottom-bar';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { ReportSheet, useBlockedNames } from '@/components/common/report-sheet';
@@ -405,7 +406,9 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
     <Pressable onLongPress={q.me ? undefined : () => onReport(q.n)} delayLongPress={450} style={[styles.chf, i > 0 && styles.chfLine]}>
       {/* 위 줄: 얼굴 · 이름 · 시간 — 사진 · 버튼 · 글은 그 아래 폭 전체 (라운지 글처럼 왼쪽을 비우지 않아요) */}
       <View style={styles.chfHd}>
-        <Face name={q.n} color={q.c} size={34} />
+        <ProfileTap name={q.n}>
+          <Face name={q.n} color={q.c} size={34} />
+        </ProfileTap>
         <PText style={styles.chfN} numberOfLines={1}>{`${q.n}${q.me ? ' (나)' : ''}`}</PText>
         <PText style={styles.chfT}>{q.t}</PText>
       </View>
@@ -488,7 +491,9 @@ function RankTab({ p, s }: { p: Challenge; s: ChView }) {
             const r = top[k];
             return (
               <View key={k} style={styles.podCol}>
-                <Face name={r.n} color={r.c} size={k === 0 ? 54 : 44} />
+                <ProfileTap name={r.n}>
+                  <Face name={r.n} color={r.c} size={k === 0 ? 54 : 44} />
+                </ProfileTap>
                 <PText numberOfLines={1} style={[styles.podB, r.me && { color: Colors.purple }]}>{`${r.n}${r.me ? ' (나)' : ''}`}</PText>
                 <PText style={styles.podS}>{`${r.d}${u}`}</PText>
                 <View style={[styles.podSt, { height: [72, 54, 42][k], backgroundColor: [Colors.yellow, Colors.lavender, Colors.skyMist][k] }]}>
@@ -520,7 +525,9 @@ function RankLine({ r, no, first = false, of, u, host }: { r: RankRow; no: numbe
   return (
     <View style={[styles.rl, !first && styles.rlLine, r.me && styles.rlMe]}>
       <PText style={styles.rlNo}>{no}</PText>
-      <Face name={r.n} color={r.c} size={30} />
+      <ProfileTap name={r.n}>
+        <Face name={r.n} color={r.c} size={30} />
+      </ProfileTap>
       <View style={styles.rlNm}>
         <PText numberOfLines={1} style={styles.rlN}>
           {r.n}

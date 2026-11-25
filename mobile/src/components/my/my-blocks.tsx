@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { MemberFace } from '@/components/character/avatar';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
@@ -75,7 +76,9 @@ export function RankSummary({ people, myRank, branch, onPress }: { people: RankR
               const p = people[i];
               return (
                 <View key={i} style={styles.pd}>
-                  <MemberFace name={p.n} size={40} bg={p.c} />
+                  <ProfileTap name={p.n}>
+                    <MemberFace name={p.n} size={40} bg={p.c} />
+                  </ProfileTap>
                   <PText style={styles.pdName} numberOfLines={1}>
                     {p.n}
                   </PText>

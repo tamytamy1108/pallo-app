@@ -85,9 +85,12 @@ type MeArg = { name: string; branch: string };
 /**
  * 함께하는 멤버 (프로토타입 lgMembers): 나(참여했으면) → 호스트 → 예시 멤버. staff 는 코호스트 이름들.
  */
+/** 호스트 이름만 ('하나 프로' · '매니저 Jay' → '하나' · 'Jay') — 프로필 주소 · 멤버 줄에 써요 */
+export const hostName = (host: string) => host.replace(/^매니저 /, '').replace(/ 프로$/, '').trim() || host;
+
 export function membersOf(it: { id: string; host: string; br: string; mine?: boolean }, cur: number, inMe: boolean, myHi: string, me: MeArg, staff: string[] = [], club = false) {
   const h = hashId(it.id);
-  const hn = it.host.replace(/^매니저 /, '').replace(/ 리더$/, '').trim() || it.host;
+  const hn = hostName(it.host);
   const L: Member[] = it.mine ? [] : [{ n: hn, c: C.pk, b: it.br === '전 지점' ? '본사' : it.br, t: '호스트', hi: club ? '편하게 와서 편하게 말해요. 반가워요!' : '처음 오는 분도 환영이에요. 입구에서 손 흔들게요!' }];
   if (inMe) L.unshift({ n: me.name, c: C.y, b: me.branch, t: it.mine ? '호스트 · 나' : '나', hi: myHi, me: true });
   const pool = [...MEMBERS, ...MEMBER_POOL].filter(([n]) => n !== hn);

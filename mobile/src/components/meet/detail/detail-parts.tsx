@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { meetRoleKind, RoleTag } from '@/components/common/role-tag';
 import * as Clipboard from 'expo-clipboard';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -50,6 +51,32 @@ export function InfoRow({ icon, main, sub, end, first }: { icon: IconName; main:
     </View>
   );
 }
+/**
+ * 호스트 줄 (정보 줄 안): 아이콘 자리에 호스트 얼굴(왕관) · 이름 · 지점(또는 sub) · [프로필 ›]. 누르면 그 사람 프로필.
+ * 내가 호스트면 누르지 않아요.
+ */
+export function HostRow({ name, branch, sub, me = false }: { name: string; branch: string; sub?: string; me?: boolean }) {
+  return (
+    <Pressable
+      disabled={me}
+      onPress={() => router.push(`/me/profile/${encodeURIComponent(name)}`)}
+      accessibilityRole={me ? undefined : 'button'}
+      accessibilityLabel={me ? `호스트 ${name} · 나` : `호스트 ${name} 프로필 보기`}
+      style={({ pressed }) => [styles.row, styles.rowLine, styles.hostRow, pressed && styles.hostPressed]}>
+      <CrownFace name={name} size={32} me={me} role={me ? '호스트 · 나' : '호스트'} />
+      <View style={styles.rowTx}>
+        <View style={styles.hostName}>
+          <PText style={styles.main}>{name}</PText>
+          <RoleTag kind="host" />
+          {me ? <PText style={styles.hostTag}> · 나</PText> : null}
+        </View>
+        <PText style={[styles.sub, keepAll]}>{sub ?? branch}</PText>
+      </View>
+      {me ? null : <PText style={styles.hostGo}>프로필 ›</PText>}
+    </Pressable>
+  );
+}
+
 export const infoStyles = StyleSheet.create({
   main: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20.3 },
   sub: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17.4, color: Colors.inkSub },
@@ -101,6 +128,9 @@ export function Desc({ text }: { text: string }) {
 
 /** 멤버 한 줄 (얼굴 · 이름 · 역할 · 지점 · 인사말) */
 export function MemberRow({ m, first, tail }: { m: Member; first?: boolean; tail?: ReactNode }) {
+  const kind = meetRoleKind(m.t);
+  // '호스트 · 나' → HOST 태그 + '나'
+  const rest = kind ? (m.t?.includes('나') ? '나' : '') : m.t;
   return (
     <Pressable
       disabled={m.me}
@@ -112,7 +142,8 @@ export function MemberRow({ m, first, tail }: { m: Member; first?: boolean; tail
       <View style={styles.mi}>
         <View style={styles.mh}>
           <PText style={styles.mb}>{m.n}</PText>
-          {m.t ? <PText style={styles.mem}>{m.t}</PText> : null}
+          {kind ? <RoleTag kind={kind} /> : null}
+          {rest ? <PText style={styles.mem}>{rest}</PText> : null}
           <PText style={styles.ms}>{m.b}</PText>
         </View>
         {tail ?? (m.hi ? <PText style={[styles.mp, keepAll]}>{m.hi}</PText> : m.me ? <PText style={[styles.mp, styles.nohi]}>아직 인사를 안 남겼어요</PText> : null)}
@@ -244,6 +275,11 @@ const styles = StyleSheet.create({
   rows: { marginTop: 14, paddingVertical: 2, paddingHorizontal: 14, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 11 },
   rowLine: { borderTopWidth: 1, borderColor: Colors.line },
+  hostRow: { alignItems: 'center' },
+  hostPressed: { opacity: 0.7 },
+  hostName: { flexDirection: 'row', alignItems: 'center' },
+  hostTag: { fontFamily: Font.body900, fontSize: 11.5, color: Colors.purple },
+  hostGo: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   ic: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.lavender, alignItems: 'center', justifyContent: 'center' },
   rowTx: { flex: 1, minWidth: 0, paddingTop: 0 },
   main: infoStyles.main,
@@ -256,7 +292,7 @@ const styles = StyleSheet.create({
   dmoreT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.purple },
   mrow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10 },
   mi: { flex: 1, minWidth: 0 },
-  mh: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  mh: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   mb: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
   mem: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.purple },
   ms: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
