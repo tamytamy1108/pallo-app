@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { css, useReducedMotion } from 'react-native-reanimated';
+import Animated, { css } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Pattern, Rect, Stop } from 'react-native-svg';
 
 import { XMAS } from '@/constants/season';
+import { useStill } from '@/lib/motion';
+
+import { useDecoOnScreen } from './deco-on-screen';
 
 /*
  * 크리스마스 스터디 맵 장식 (프로토타입 renderSeason 의 xmas · E 종이 컷아웃).
@@ -227,7 +230,9 @@ function SnowForest() {
 
 /** 맵 내용 뒤: 바탕 · 별 · 떨어지는 장식 · 숲 */
 export function XmasBackLayer() {
-  const still = useReducedMotion();
+  // 움직임 줄이기 · 다른 화면 · 카드가 스크롤로 화면 밖이면 멈춰요
+  const onScreen = useDecoOnScreen();
+  const still = useStill() || !onScreen;
   const [{ width, height }, setSize] = useState({ width: 0, height: 0 });
   const [pieces] = useState<Falling[]>(() =>
     Array.from({ length: 30 }, () => {
@@ -270,7 +275,9 @@ const GARLAND_H = 40;
 
 /** 카드 맨 위 전구 가랜드 (깜빡여요) */
 export function XmasGarland() {
-  const still = useReducedMotion();
+  // 움직임 줄이기 · 다른 화면 · 카드가 스크롤로 화면 밖이면 멈춰요
+  const onScreen = useDecoOnScreen();
+  const still = useStill() || !onScreen;
   const [width, setWidth] = useState(0);
   const sx = width / 100;
   const sy = GARLAND_H / 30;

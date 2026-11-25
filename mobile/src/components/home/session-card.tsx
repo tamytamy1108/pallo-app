@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { memberGate } from '@/components/common/trial-guide';
@@ -12,7 +12,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { QR_BEFORE, SLOTS } from '@/data/home';
 import { sfx } from '@/lib/feedback';
-import { kf, SPRING, useLoop } from '@/lib/motion';
+import { kf, SPRING, useLoop, useStill } from '@/lib/motion';
 import { createStore } from '@/lib/store';
 import { finishHomeMoment, useLinkEvents } from '@/state/link-events';
 import { useMe } from '@/state/me';
@@ -204,7 +204,7 @@ const pulseRing = css.keyframes({
   '100%': { opacity: 0, transform: [{ scale: 2.6 }] },
 });
 function PulseDot({ size, square }: { size: number; square?: boolean }) {
-  const still = useReducedMotion();
+  const still = useStill();
   const shape = { width: size, height: size, borderRadius: square ? 5 : size / 2 };
   return (
     <View>
@@ -321,7 +321,7 @@ function QrBadge({ d }: { d: string }) {
 
 /** 제목 문구가 바뀔 때마다 아래에서 톡 올라와요 (lineIn .55초) */
 function SwapTitle({ text }: { text: string }) {
-  const still = useReducedMotion();
+  const still = useStill();
   const p = useSharedValue(1);
   useEffect(() => {
     if (still) return;
@@ -346,7 +346,7 @@ const liveRing = css.keyframes({
   '70%, 100%': { opacity: 0, transform: [{ scale: 2.6 }] },
 });
 function LiveDot({ live }: { live: Hero['live'] }) {
-  const still = useReducedMotion();
+  const still = useStill();
   // 대기: 흰 점 · 출석 가능 / 스터디 중: 빨간 점 + 퍼지는 빛 · 입장 완료: 잉크 점 (.hero-live · .on · .done)
   const fill = live === 'on' ? '#FF4D4D' : live === 'done' ? Colors.ink : Colors.white;
   return (
@@ -363,7 +363,7 @@ function LiveDot({ live }: { live: Hero['live'] }) {
 
 /** 출석 버튼 위로 흰 빛이 5초마다 스쳐 지나가요 (btnShine 5초 · 1초 뒤 시작 · CSS 애니메이션) */
 function Shine() {
-  const still = useReducedMotion();
+  const still = useStill();
   const [w, setW] = useState(0);
   const kf = useMemo(
     () =>
@@ -419,7 +419,7 @@ const POSE = {
 export function HeroChar({ pose }: { pose: Pose }) {
   const p = POSE[pose];
   const h = (p.width * p.H) / p.W;
-  const still = useReducedMotion();
+  const still = useStill();
   const body = still ? {} : { animationName: breathe, animationDuration: '3s', animationIterationCount: 'infinite' as const, animationTimingFunction: 'ease-in-out' as const };
   const [delay] = useState(() => Math.round(Math.random() * 3000));
   const blink = useLoop(3000, { delay });

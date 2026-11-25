@@ -1,3 +1,4 @@
+import { useIsFocused } from 'expo-router';
 import { useEffect } from 'react';
 import { cancelAnimation, Easing, interpolate, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 
@@ -5,6 +6,17 @@ import { cancelAnimation, Easing, interpolate, useReducedMotion, useSharedValue,
  * 움직임 공통 (프로토타입 :root 의 --ease · --spring 과 @keyframes 를 옮긴 것).
  * 움직임 줄이기를 켠 사람에게는 반복 움직임을 멈춰요.
  */
+
+/**
+ * 반복 움직임을 멈출 때: 움직임 줄이기를 켰거나 · 이 화면이 지금 안 보여요 (다른 탭 · 위에 다른 화면).
+ * 숨은 홈의 눈송이 · 반짝이가 계속 돌면 화면 스레드를 써서 라이브러리 3D 가 버벅였어요.
+ * 화면(navigator 안)에서만 써요.
+ */
+export function useStill() {
+  const reduced = useReducedMotion();
+  const focused = useIsFocused();
+  return reduced || !focused;
+}
 
 /** --ease: cubic-bezier(.16,1,.3,1) — 빠르게 시작해 부드럽게 멈춤 */
 export const EASE = Easing.bezier(0.16, 1, 0.3, 1);
@@ -16,7 +28,7 @@ export const SPRING = Easing.bezier(0.2, 0.9, 0.3, 1.3);
  * 화면에서 interpolate 로 @keyframes 의 % 를 그대로 옮겨 써요.
  */
 export function useLoop(ms: number, { delay = 0, enabled = true }: { delay?: number; enabled?: boolean } = {}) {
-  const still = useReducedMotion();
+  const still = useStill();
   const t = useSharedValue(0);
   useEffect(() => {
     if (!enabled || still) {

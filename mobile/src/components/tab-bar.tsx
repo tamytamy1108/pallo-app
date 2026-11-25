@@ -6,12 +6,13 @@ import Animated, { css, cubicBezier, Easing, useAnimatedStyle, useReducedMotion,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { canPreloadWorld } from '@/components/library/world/world-support';
 import { useLoungeHasNew } from '@/components/lounge/new-posts';
 import { Pressable } from '@/components/ui/pressable';
 import { Colors } from '@/constants/theme';
 import { SPRING } from '@/lib/motion';
 import { noteTouch, quietFor, setTabsFront } from '@/lib/quiet';
-import { emitTabReselect, type TabName } from '@/lib/tab-reselect';
+import { emitTabReselect, flushTabEnter, markTabEnter, type TabName } from '@/lib/tab-reselect';
 
 /** 프로토타입(prototype/index.html 의 TABS)과 같은 다섯 탭 · 같은 아이콘이에요. */
 const TABS = [
@@ -72,7 +73,7 @@ const LIB_QUIET_MS = 1200;
 function useLibraryPreload() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (ready) return;
+    if (ready || !canPreloadWorld()) return;
     let t: ReturnType<typeof setTimeout>;
     const check = () => {
       const quiet = quietFor();
@@ -108,7 +109,9 @@ function renderTab(descriptor: TabsDescriptor, { isFocused, loaded }: TabsSlotRe
       accessibilityElementsHidden={hidden}
       importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
       aria-hidden={hidden}>
-      <TabPage focused={isFocused}>{descriptor.render()}</TabPage>
+      <TabPage focused={isFocused} tab={tabNameOf(descriptor.route.name)}>
+        {descriptor.render()}
+      </TabPage>
     </View>
   );
 }
@@ -118,10 +121,17 @@ const PAGE_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 /** 프로토타입 --spring: cubic-bezier(.2,.9,.3,1.3) — 끝에서 살짝 지나쳤다 돌아와요 */
 const indSlide = css.create({ t: { transitionProperty: 'transform', transitionDuration: '450ms', transitionTimingFunction: cubicBezier(0.2, 0.9, 0.3, 1.3) } }).t;
 
-function TabPage({ focused, children }: { focused: boolean; children: ReactNode }) {
+/** 길 이름(index · library …) → 탭 이름 */
+const tabNameOf = (route: string): TabName | null => TABS.find((t) => t.name === route || (t.name === 'home' && route === 'index'))?.name ?? null;
+
+function TabPage({ focused, tab, children }: { focused: boolean; tab: TabName | null; children: ReactNode }) {
   const still = useReducedMotion();
   const fade = useSharedValue(1);
   const rise = useSharedValue(0);
+  // 탭 바로 넘어왔으면 처음 화면(맨 위)부터
+  useEffect(() => {
+    if (focused && tab) flushTabEnter(tab);
+  }, [focused, tab]);
   useEffect(() => {
     if (!focused || still) return;
     fade.set(0);
@@ -151,6 +161,7 @@ function TabButton({ tab, icon, label, isFocused, ref: _ref, onPress, ...props }
       // 이미 보고 있는 탭을 또 누르면 화면을 맨 위로
       onPress={(e) => {
         if (isFocused) emitTabReselect(tab);
+        else markTabEnter(tab);
         onPress?.(e);
       }}
       sound="nav"

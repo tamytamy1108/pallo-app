@@ -47,7 +47,7 @@ const MY_PEEK = 300;
 
 export default function MyScreen() {
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('my', () => scroll.current?.scrollTo({ y: 0, animated: true }));
+  useTabReselect('my', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const { width } = useWindowDimensions();
   // 개발용 ?link= · ?name= (웹에서만)
   const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string }>();
