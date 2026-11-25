@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View, type ScrollViewInstance, type TextInputIn
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
+import { openProfileFromSheet, ProfileTap } from '@/components/common/profile-tap';
 import { LgIcon } from '@/components/common/icons';
 import { MemberFace } from '@/components/common/member-face';
 import { keepAll, SheetButton, SheetDesc } from '@/components/common/sheet-parts';
@@ -189,6 +190,7 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
         {list.length ? (
           list.map((c) => (
             <CommentRow
+              onWho={(n) => openProfileFromSheet(n, onClose)}
               key={c.id}
               c={c}
               mine={isMine(c)}
@@ -258,6 +260,8 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
 }
 
 type RowProps = {
+  /** 얼굴을 누르면 시트를 닫고 그 사람 프로필 */
+  onWho: (name: string) => void;
   c: Comment;
   mine: boolean;
   isAuthor: boolean;
@@ -272,11 +276,13 @@ type RowProps = {
 };
 
 /** 댓글 한 줄 (.cr) — 답글은 같은 모양을 작게 (.cr.rp) */
-function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onLike, onReply, onEdit, onDelete }: RowProps) {
+function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onLike, onReply, onEdit, onDelete, onWho }: RowProps) {
   const reps = c.replies ?? [];
   return (
     <View style={styles.cr}>
-      <MemberFace name={c.author} me={mine} size={38} />
+      <ProfileTap name={c.author} onPress={() => onWho(c.author)}>
+        <MemberFace name={c.author} me={mine} size={38} />
+      </ProfileTap>
       <View style={styles.cb}>
         <Head c={c} isAuthor={isAuthor} />
         <PText style={styles.ct}>{c.text}</PText>
@@ -287,7 +293,7 @@ function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onL
         </View>
         {reps.length ? (
           open ? (
-            reps.map((r) => <ReplyRow key={r.id} r={r} mine={r.mine || r.author === meName} isAuthor={r.author === authorName} onLike={onLike} />)
+            reps.map((r) => <ReplyRow key={r.id} r={r} mine={r.mine || r.author === meName} isAuthor={r.author === authorName} onLike={onLike} onWho={onWho} />)
           ) : (
             <Pressable
               onPress={() => {
@@ -308,10 +314,12 @@ function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onL
   );
 }
 
-function ReplyRow({ r, mine, isAuthor, onLike }: { r: Comment; mine: boolean; isAuthor: boolean; onLike: (id: string) => void }) {
+function ReplyRow({ r, mine, isAuthor, onLike, onWho }: { r: Comment; mine: boolean; isAuthor: boolean; onLike: (id: string) => void; onWho: (name: string) => void }) {
   return (
     <View style={[styles.cr, styles.rp]}>
-      <MemberFace name={r.author} me={mine} size={28} />
+      <ProfileTap name={r.author} onPress={() => onWho(r.author)}>
+        <MemberFace name={r.author} me={mine} size={28} />
+      </ProfileTap>
       <View style={styles.cb}>
         <Head c={r} isAuthor={isAuthor} />
         <PText style={styles.ct}>{r.text}</PText>

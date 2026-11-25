@@ -14,7 +14,7 @@ import { useMe } from '@/state/me';
 
 /**
  * 스토리 올리기 — 카메라 먼저 (인스타그램처럼).
- * 1) 카메라: 카테고리(이벤트는 리더 · 매니저만) 고르고 찍기 · 앨범에서 고르기
+ * 1) 카메라: 카테고리(이벤트는 프로 · 매니저만) 고르고 찍기 · 앨범에서 고르기
  * 2) 다듬기: 사진 맞추기(PhotoFrame) · 'Aa' 한 줄 이야기 · 라운지 피드에도 올리기 · (매니저) 고정 → [스토리 올리기]
  * 24시간 동안 내 얼굴 동그라미로 보이고, 그다음엔 고른 카테고리 하이라이트로 옮겨져요.
  * 사진은 기기 안에서만 보여요 — 올리기(업로드)는 백엔드 Q-T7.
@@ -45,7 +45,7 @@ export default function StoryNewScreen() {
       return showToast('한 줄 이야기를 적어 주세요');
     }
     const c = LG_SCAT[cat];
-    const role = me.role === 'leader' ? '리더' : me.role === 'manager' ? '매니저' : '';
+    const role = me.role === 'leader' ? '프로' : me.role === 'manager' ? '매니저' : '';
     addStory({
       id: `my${Date.now()}`,
       who: me.name,

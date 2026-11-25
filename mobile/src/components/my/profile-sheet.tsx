@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
 import Svg, { Rect } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { ReportSheet } from '@/components/common/report-sheet';
 import { AvatarChar, AvatarStage, MemberFace } from '@/components/character/avatar';
 import { Sheet } from '@/components/ui/sheet';
@@ -146,7 +147,9 @@ export function ProfileSheet({ name, open, onClose, onOpen }: { name: string; op
         <View style={styles.mut}>
           <View style={styles.avs}>
             {mut.map((m, i) => (
-              <MemberFace key={m.name} name={m.name} size={26} bg={m.color} style={i > 0 ? styles.avOver : undefined} />
+              <ProfileTap key={m.name} name={m.name} onPress={() => openOther(m.name)} style={i > 0 ? styles.avOver : undefined}>
+                <MemberFace name={m.name} size={26} bg={m.color} />
+              </ProfileTap>
             ))}
           </View>
           <PText style={styles.mutT}>{mut.map((m) => m.name).join(' · ')}님도 팔로우해요</PText>

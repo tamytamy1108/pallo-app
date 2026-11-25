@@ -89,7 +89,7 @@ export default function EventScreen() {
           </ScrollLock>
         </View>
       </ScrollView>
-      {/* 오픈하기: 라운지 + 버튼과 같은 자리 · 멤버는 제안서, 리더 · 매니저는 바로 열기(관리자 화면이라 나중에) */}
+      {/* 오픈하기: 라운지 + 버튼과 같은 자리 · 멤버는 제안서, 프로 · 매니저는 바로 열기(관리자 화면이라 나중에) */}
       <SafeAreaInsetsContext.Consumer>
         {(insets) => (
           <Pressable

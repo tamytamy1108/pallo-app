@@ -129,12 +129,12 @@ export const hashId = (id: string) => [...id].reduce((a, c) => a + c.charCodeAt(
 export const won = (n: number) => `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
 export const MEETS: Meet[] = [
-  { id: 'm1', br: '영등포', reg: '서울', day: '14', mon: 'NOV', wd: '금 20:00', title: '퇴근 후 영어 맥주 번개', place: '영등포 근처 수제맥주집', host: '하나 리더', cur: 6, max: 8 },
+  { id: 'm1', br: '영등포', reg: '서울', day: '14', mon: 'NOV', wd: '금 20:00', title: '퇴근 후 영어 맥주 번개', place: '영등포 근처 수제맥주집', host: '하나 프로', cur: 6, max: 8 },
   { id: 'm3', br: '영등포', reg: '경기', day: '18', mon: 'NOV', wd: '화 12:30', title: '판교 점심 영어 산책', place: '판교역 4번 출구', host: '태오', cur: 3, max: 6 },
-  { id: 'm4', br: '연신내', reg: '부산', day: '16', mon: 'NOV', wd: '일 08:00', title: '광안리 러닝 & 스몰토크', place: '광안리 해변 · 연신내', host: 'Leo 리더', cur: 5, max: 8 },
+  { id: 'm4', br: '연신내', reg: '부산', day: '16', mon: 'NOV', wd: '일 08:00', title: '광안리 러닝 & 스몰토크', place: '광안리 해변 · 연신내', host: 'Leo 프로', cur: 5, max: 8 },
   { id: 'm5', br: '대전 둔산점', reg: '대구', day: '15', mon: 'NOV', wd: '토 19:00', title: '동성로 영어 보드게임', place: '동성로 보드게임 카페', host: '지우', cur: 4, max: 4 },
-  { id: 'm6', br: '영등포', reg: '서울', day: '08', mon: 'NOV', wd: '토 19:00', title: '할로윈 영어 펍 번개', place: '이태원 펍 · 영등포', host: '하나 리더', cur: 8, max: 8 },
-  { id: 'm7', br: '연신내', reg: '부산', day: '02', mon: 'NOV', wd: '일 07:00', title: '해운대 일출 러닝', place: '해운대 해변 · 연신내', host: 'Leo 리더', cur: 6, max: 8 },
+  { id: 'm6', br: '영등포', reg: '서울', day: '08', mon: 'NOV', wd: '토 19:00', title: '할로윈 영어 펍 번개', place: '이태원 펍 · 영등포', host: '하나 프로', cur: 8, max: 8 },
+  { id: 'm7', br: '연신내', reg: '부산', day: '02', mon: 'NOV', wd: '일 07:00', title: '해운대 일출 러닝', place: '해운대 해변 · 연신내', host: 'Leo 프로', cur: 6, max: 8 },
   { id: 'm8', br: '영등포', reg: '경기', day: '30', mon: 'OCT', wd: '목 12:30', title: '판교 점심 영어 산책', place: '판교역 4번 출구', host: '태오', cur: 5, max: 6 },
   { id: 'm9', br: '연신내', reg: '서울', day: '13', mon: 'NOV', wd: '목 19:30', title: '홍대 일본어 이자카야 번개', place: '홍대 이자카야 · 연신내', host: '유키', cur: 5, max: 8 },
   { id: 'm10', br: '영등포', reg: '서울', day: '20', mon: 'NOV', wd: '목 20:00', title: '영등포 영어 보드게임', place: '영등포 앞 보드게임 카페', host: '소라', cur: 3, max: 6 },

@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { MemberFace } from '@/components/account/member-face';
 import { AccountPage, Bar, Box, Icon, Lift, TextLink } from '@/components/account/parts';
 import { DiaryCard, noteExpression } from '@/components/account/pro-note-parts';
@@ -112,7 +113,9 @@ function Note({ n, fromList }: { n: ProNote; fromList: boolean }) {
           <View style={styles.avs}>
             {hearts.slice(0, 5).map(([w, c, isMe], i) => (
               <View key={w} style={i ? styles.avOver : undefined}>
-                <MemberFace name={w} color={c} size={26} me={isMe} />
+                <ProfileTap name={w}>
+                  <MemberFace name={w} color={c} size={26} me={isMe} />
+                </ProfileTap>
               </View>
             ))}
           </View>
@@ -178,7 +181,9 @@ function NoteItem({ n, i }: { n: ProNote; i: number }) {
 function Msg({ who, color, text, time, me = false }: { who: string; color: string; text: string; time: string; me?: boolean }) {
   return (
     <View style={[styles.m, me && styles.mMe]}>
-      <MemberFace name={who} color={color} size={34} me={me} />
+      <ProfileTap name={who}>
+        <MemberFace name={who} color={color} size={34} me={me} />
+      </ProfileTap>
       <View style={styles.mTx}>
         <View style={styles.mHd}>
           <PText style={styles.mWho}>{who}</PText>

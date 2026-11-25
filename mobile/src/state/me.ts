@@ -8,7 +8,7 @@ import { devProfile } from '@/lib/dev-profile';
 import { createStore } from '@/lib/store';
 import { weekKey } from '@/state/today-goal';
 
-/** 회원 · 비회원(체험 전) · 리더 · 매니저. 실제 앱은 로그인 계정 역할 (프로토타입의 역할 토글은 만들지 않아요) */
+/** 회원 · 비회원(체험 전) · 프로 · 매니저. 실제 앱은 로그인 계정 역할 (프로토타입의 역할 토글은 만들지 않아요) */
 export type Role = 'member' | 'guest' | 'leader' | 'manager';
 export type StudyLang = 'en' | 'ja' | 'zh' | 'es';
 
@@ -85,7 +85,7 @@ const meStore = createStore<Me>(ME0, {
   },
 });
 
-// 개발용 '연동된 회원' 프로필(lib/dev-profile): 앱을 열 때마다 연동된 회원으로 (리더 · 매니저는 그대로)
+// 개발용 '연동된 회원' 프로필(lib/dev-profile): 앱을 열 때마다 연동된 회원으로 (프로 · 매니저는 그대로)
 if (devProfile === 'linked') meStore.set((s) => ({ ...s, link: 'linked', role: s.role === 'guest' ? 'member' : s.role, trial: null }));
 
 export const useMe = meStore.useStore;
