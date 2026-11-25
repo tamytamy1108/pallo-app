@@ -7,18 +7,52 @@
  *   팝업 공지는 아직 목록에 없어요 (제안: GET `/popups` — 본사 관리자가 올리는 앱 시작 팝업)
  */
 import { Colors } from '@/constants/theme';
+import { MY_TEAMS, teamWeekdays } from '@/data/account';
 
 /* ───────── 오늘 세션 · 출석 (프로토타입 SLOTS · MY_SLOT · LANGS · QR_BEFORE · QR_AFTER) ───────── */
 
-/** 오늘 우리 지점 세션 시간대. start = 하루 중 분 (18:00 → 1080) */
+/** 내 팀 수업 시작 시각 (마이 · 내 스터디의 팀과 같아요). start = 하루 중 분 (19:30 → 1170) */
 export const SLOTS = [
-  { id: 's1800', t: '18:00', start: 18 * 60 },
-  { id: 's2000', t: '20:00', start: 20 * 60 },
+  { id: 's1100', t: '11:00', start: 11 * 60 },
+  { id: 's1930', t: '19:30', start: 19 * 60 + 30 },
+  { id: 's2100', t: '21:00', start: 21 * 60 },
 ] as const;
 
-/** 내 수업: 20:00 · 영어 */
-export const MY_SLOT = 1;
+/** 내 수업 기본값: 21:00 · 영어 (5팀 영어 월수 9시) */
+export const MY_SLOT = 2;
 export const MY_LANG = 0;
+
+/** 사전 출석은 스터디 시작 24시간 전까지만 (그 뒤엔 QR 출석만) */
+export const RSVP_BEFORE = 24 * 60;
+
+/** 내가 등록된 팀 · 그날 열린 수업. 출석체크 시트엔 내 팀이 다 보이고, 전산에서 그날 수업을 연 팀만 누를 수 있어요.
+ *  실제 앱은 8 `/me/sessions/today` 가 내려줘요 */
+export type MyTeamToday = {
+  /** 지점 안 팀 번호 (예: 5팀) */
+  no: string;
+  branch: string;
+  /** LANGS 순서 */
+  lang: number;
+  /** '월수 21:00' — 요일 글자 + 시작 시각 */
+  when: string;
+  /** 전산에서 그날 연 수업 (SLOTS 순서) · 안 열었으면 null */
+  slot: number | null;
+};
+
+/** 가짜 전산: 마이의 내 팀(MY_TEAMS) 중 그 요일 수업이 있는 팀을 열어요 (dow: 0 일 ~ 6 토) */
+export function myTeamsOn(dow: number): MyTeamToday[] {
+  return MY_TEAMS.map((t) => {
+    const time = t.when.split(' ')[1];
+    const slot = SLOTS.findIndex((s) => s.t === time);
+    return {
+      no: t.no,
+      branch: t.branch,
+      lang: Math.max(0, LANGS.findIndex((l) => l.ko === t.lang)),
+      when: t.when,
+      slot: teamWeekdays(t).includes(dow) && slot >= 0 ? slot : null,
+    };
+  });
+}
 
 /** QR 출석 가능: 시작 30분 전 ~ 시작 20분 후 */
 export const QR_BEFORE = 30;
@@ -230,13 +264,13 @@ export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [
 
 export const NOTIS: Noti[] = [
   // 받는 쪽 예시 (추가 제안 · api-additions): 팔로우한 멤버의 '같이 갈래요?' → 그 시간 · 언어로 사전 출석 시트
-  { id: 'inv1', kind: 'learn', who: { name: '민준', bg: '#E3EAF8', body: 'sky' }, text: '민준님이 오늘 20:00 영어 세션에 가요. 같이 갈래요?', time: '5분 전', href: '/?attend=rsvp&slot=1&lang=0', read: false, action: '같이 가기' },
+  { id: 'inv1', kind: 'learn', who: { name: '민준', bg: '#E3EAF8', body: 'sky' }, text: '민준님이 오늘 21:00 영어 세션에 가요. 같이 갈래요?', time: '5분 전', href: '/?attend=rsvp&slot=2&lang=0', read: false, action: '같이 가기' },
   // 팔로우한 멤버의 퀘스트 성공 → 같은 단계로 (첫 챕터 · 회원 잠금은 레슨 화면이 지켜요)
   { id: 'qs1', kind: 'learn', who: { name: '소라', bg: '#CDEBD0', body: 'pink' }, text: '소라님이 「1과 Cafe Complaint · 본학습」 퀘스트를 성공했어요!', time: '20분 전', href: '/lesson/sit?lv=1&unit=1', read: false, action: '나도 이어서 하기', toMyLast: true },
   // 시즌 보상 미리 알림 (서버 자동 · api-additions '시즌 보상 자동 지급'): 시즌 시작 · 거의 다 채웠을 때 · 받았을 때
   { id: 'rw-santa-0', kind: 'event', icon: 'flag', text: '12월 시즌 보상 · 12월에 출석 7일을 채우면 산타 세트(모자 · 수염 · 옷 · 부츠 · 눈 오는 밤 배경)를 받아요', time: '40분 전', href: '/me/customize', read: false },
   { id: 'nc0', kind: 'notice', icon: 'tack', text: '[공지] 이번 달 스터디 일정 안내', time: '30분 전', href: '/notice/n1', read: false },
-  { id: 'n1', kind: 'learn', icon: 'book', text: '내일 20:00 세션이에요. 1과 예습이 남았어요', time: '1시간 전', href: '/unit/1?lv=1', read: false },
+  { id: 'n1', kind: 'learn', icon: 'book', text: '내일 19:30 세션이에요. 1과 예습이 남았어요', time: '1시간 전', href: '/unit/1?lv=1', read: false },
   { id: 'n2', kind: 'lounge', who: { name: '하나', bg: '#FFE200', body: 'pink' }, text: '하나님이 내 글에 댓글을 남겼어요 “최고예요!”', time: '2시간 전', href: '/post/p1?comments=1', read: false },
   { id: 'n3', kind: 'lounge', icon: 'flame', text: '‘아침 7시 기상’ 오늘 인증이 남았어요', time: '3시간 전', href: '/challenge/c5', read: false },
   { id: 'n4', kind: 'learn', icon: 'pen', text: '프로님이 PRO\'S NOTE를 보냈어요', time: '어제 21:10', href: '/me/notes', read: false },

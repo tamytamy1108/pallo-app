@@ -10,6 +10,7 @@ import { Colors } from '@/constants/theme';
 import { allChallenges, challengeSrc, CH_CATS, isExpr, isJoined, isPre, toggleChecked, unitOf, useChallengeState, type ChCatKey, type Challenge, type ChView } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
 import { useCenterChip } from '@/lib/center-chip';
+import { seeAt } from '@/lib/see';
 
 import { DailyCard, ExprCard, HotBox } from './cards';
 import { CheckSheet } from './check-sheet';
@@ -57,7 +58,8 @@ export function ChallengeTab({ branch, header }: { branch: string; header?: Reac
         return;
       }
       const on = toggleChecked(p);
-      showToast(on ? (p.day ? `오늘 체크했어요 · ${p.day + 1}${unitOf(p)}째` : `${p.name} 신청했어요 · ${p.start}`) : '취소했어요');
+      if (on && !p.day) showToast(`${p.name} 신청했어요 · ${p.start}`, seeAt({ pathname: '/challenge/[id]', params: { id: p.id } }));
+      else showToast(on ? `오늘 체크했어요 · ${p.day + 1}${unitOf(p)}째` : '취소했어요');
     }, '챌린지에 인증하려면');
 
   const [rowRef, onRow, onChip, centerChip] = useCenterChip();

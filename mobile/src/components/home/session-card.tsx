@@ -10,14 +10,14 @@ import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { QR_BEFORE, SLOTS } from '@/data/home';
+import { QR_AFTER, QR_BEFORE, SLOTS } from '@/data/home';
 import { sfx } from '@/lib/feedback';
 import { kf, SPRING, useLoop, useStill } from '@/lib/motion';
 import { createStore } from '@/lib/store';
 import { finishHomeMoment, useLinkEvents } from '@/state/link-events';
 import { useMe } from '@/state/me';
 
-import { countOf, fmtMin, heroOf, useAttend, useClock, type Hero } from './attendance';
+import { countOf, fmtMin, heroOf, minuteOf, rsvpOpen, todayTeam, useAttend, useClock, type Hero } from './attendance';
 import { ARROW_PATH, CHECK_PATH, LineIcon, QR_PATH } from './icons';
 import { UnlockStage } from './link-unlock';
 
@@ -243,9 +243,9 @@ function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
         <View style={styles.shadow} />
         <View style={styles.body}>
           <View style={styles.fields}>
-            <Field label="스터디" value={count.time} big />
+            <StudyField name={count.name} />
             <Field label={count.label} value={count.value} big divider />
-            <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider narrow />
+            <Field label="DATE" value={`${now.getMonth() + 1}.${pad(now.getDate())}`} divider flex={0.62} />
           </View>
           <View style={styles.main} onLayout={heroRoom.onMain}>
             <HeroChar pose={POSES[stage]} room={heroRoom.room} />
@@ -254,7 +254,7 @@ function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
               <PText style={styles.liveText}>{hero.badge}</PText>
             </View>
             <SwapTitle text={title} />
-            <HeroActions hero={hero} slot={attend.slot} onOpen={onOpen} onLayout={heroRoom.onActions} />
+            <HeroActions hero={hero} slot={todayTeam(attend, minuteOf(now))?.slot ?? null} m={minuteOf(now)} onOpen={onOpen} onLayout={heroRoom.onActions} />
           </View>
         </View>
       </View>
@@ -263,7 +263,7 @@ function StudyCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
 }
 
 /** 상태마다 버튼 (프로토타입 #heroActions: .hero-btn · .go · [disabled] · .done · .hero-link) */
-function HeroActions({ hero, slot, onOpen, onLayout }: { hero: Hero; slot: number; onOpen: (mode: 'rsvp' | 'checkin') => void; onLayout?: (e: LayoutChangeEvent) => void }) {
+function HeroActions({ hero, slot, m, onOpen, onLayout }: { hero: Hero; slot: number | null; m: number; onOpen: (mode: 'rsvp' | 'checkin') => void; onLayout?: (e: LayoutChangeEvent) => void }) {
   if (hero.kind === 'onair' || hero.kind === 'entered') {
     const label = hero.kind === 'onair' ? '입장 완료 · 무대 위' : '입장 완료!';
     return (
@@ -275,7 +275,12 @@ function HeroActions({ hero, slot, onOpen, onLayout }: { hero: Hero; slot: numbe
       </View>
     );
   }
-  if (hero.kind === 'rsvp') {
+  // 오늘 수업이 없어요 (전산에서 연 내 팀 수업 없음)
+  if (slot === null && hero.kind !== 'action') return <WaitPill label="오늘 수업 없어요" />;
+  // 사전 출석은 24시간 전까지라 오늘 수업은 기다렸다가 QR 출석만 (사전 출석 마감 · 아직 QR 전)
+  if (slot !== null && (hero.kind === 'ready' || hero.kind === 'off') && !rsvpOpen(slot, m))
+    return <WaitPill label={m > SLOTS[slot].start + QR_AFTER ? '오늘 출석 마감' : `${fmtMin(SLOTS[slot].start - QR_BEFORE)}부터 출석`} />;
+  if (hero.kind === 'rsvp' && slot !== null) {
     const from = `${fmtMin(SLOTS[slot].start - QR_BEFORE)}부터 출석`;
     return (
       <View style={styles.actions} onLayout={onLayout}>
@@ -307,6 +312,18 @@ function HeroActions({ hero, slot, onOpen, onLayout }: { hero: Hero; slot: numbe
           </View>
         )}
       </Pressable>
+    </View>
+  );
+}
+
+/** 눌리지 않는 안내 버튼 (QR 출석 시간 전 · 오늘 수업 없음) */
+function WaitPill({ label }: { label: string }) {
+  return (
+    <View style={styles.actions}>
+      <View style={StyleSheet.flatten([styles.btn, styles.btnWhite, styles.btnFlat])} accessible accessibilityLabel={label} accessibilityState={{ disabled: true }}>
+        <QrBadge d={QR_PATH} />
+        <PText style={styles.btnText}>{label}</PText>
+      </View>
     </View>
   );
 }
@@ -479,9 +496,39 @@ export function HeroChar({ pose, room }: { pose: Pose; room?: number }) {
   );
 }
 
-export function Field({ label, value, big, divider, narrow, color }: { label: string; value: string; big?: boolean; divider?: boolean; narrow?: boolean; color?: string }) {
+/** 위 첫 칸: 오늘 스터디 이름 (영어 월수 8시) · 더보기 → 내 스터디(내 팀 전체) */
+function StudyField({ name }: { name: string }) {
   return (
-    <View style={StyleSheet.flatten([styles.field, divider && styles.fieldDivider, { flex: narrow ? 0.8 : 1 }])}>
+    <View style={StyleSheet.flatten([styles.field, styles.studyField])}>
+      <View style={styles.studyHead}>
+        <PText style={styles.fieldLabel} color={Colors.inkSub}>
+          스터디
+        </PText>
+        <Pressable
+          onPress={() => {
+            sfx('tap');
+            router.push('/me/study');
+          }}
+          accessibilityRole="link"
+          accessibilityLabel="내 팀 더보기"
+          hitSlop={10}>
+          {({ pressed }) => (
+            <PText style={StyleSheet.flatten([styles.fieldLabel, pressed && styles.morePressed])} color={Colors.inkSub}>
+              더보기 ›
+            </PText>
+          )}
+        </Pressable>
+      </View>
+      <PText style={styles.studyName} numberOfLines={1}>
+        {name}
+      </PText>
+    </View>
+  );
+}
+
+export function Field({ label, value, big, divider, narrow, flex, color }: { label: string; value: string; big?: boolean; divider?: boolean; narrow?: boolean; flex?: number; color?: string }) {
+  return (
+    <View style={StyleSheet.flatten([styles.field, divider && styles.fieldDivider, { flex: flex ?? (narrow ? 0.8 : 1) }])}>
       <PText style={styles.fieldLabel} color={Colors.inkSub}>
         {label}
       </PText>
@@ -502,6 +549,10 @@ const styles = StyleSheet.create({
   fields: { flexDirection: 'row', backgroundColor: Colors.cream, borderBottomWidth: 2, borderColor: Colors.ink },
   field: { paddingTop: 9, paddingBottom: 10, paddingHorizontal: 12 },
   fieldDivider: { borderLeftWidth: 2, borderColor: Colors.ink },
+  studyField: { flex: 1.2 },
+  studyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+  morePressed: { opacity: 0.5 },
+  studyName: { marginTop: 4, fontFamily: Font.body900, fontSize: 15.5, lineHeight: 26, letterSpacing: -0.4 },
   fieldLabel: { fontFamily: Font.display, fontSize: 9.5, lineHeight: 12, letterSpacing: 1.5 },
   fieldBig: { marginTop: 2, fontFamily: Font.display, fontSize: 25, lineHeight: 30, letterSpacing: -0.3, fontVariant: ['tabular-nums'] },
   fieldValue: { marginTop: 2, fontFamily: Font.body900, fontSize: 15, lineHeight: 30 },

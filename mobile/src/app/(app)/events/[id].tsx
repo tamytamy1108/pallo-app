@@ -26,6 +26,7 @@ import { Colors } from '@/constants/theme';
 import { eventContact } from '@/data/events';
 import { dday, isPast, MONTHS, won } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
+import { seeAt, SEE } from '@/lib/see';
 import { useMe } from '@/state/me';
 
 /**
@@ -97,7 +98,8 @@ export default function EventDetail() {
               onPress={() => {
                 sfx('toggle');
                 toggleIn('saved', e.id);
-                showToast(saved ? '저장을 취소했어요' : '저장했어요');
+                if (saved) showToast('저장을 취소했어요');
+                else showToast('저장했어요', seeAt(SEE.savedMeets));
               }}
             />
             {/* 끝난 이벤트는 참가비 대신 후기 보기가 줄을 꽉 채워요 */}
@@ -175,7 +177,7 @@ export default function EventDetail() {
           toggleIn('joined', e.id);
           setJustJoined(true);
           sfx('save');
-          showToast(`${e.title} 참여했어요 · ${e.wd}`);
+          showToast(`${e.title} 참여했어요 · ${e.wd}`, seeAt(SEE.joinedMeets));
         }}
       />
       <AskSheet

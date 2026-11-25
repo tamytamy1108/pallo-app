@@ -18,6 +18,7 @@ import { Colors } from '@/constants/theme';
 import { DESC, dday, isPast, MONTHS, capFull, capText } from '@/data/meet';
 import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
+import { seeAt, SEE } from '@/lib/see';
 import { useMe } from '@/state/me';
 
 /**
@@ -102,7 +103,8 @@ export default function MeetDetail() {
               onPress={() => {
                 sfx('toggle');
                 toggleIn('saved', m.id);
-                showToast(saved ? '저장을 취소했어요' : '저장했어요');
+                if (saved) showToast('저장을 취소했어요');
+                else showToast('저장했어요', seeAt(SEE.savedMeets));
               }}
             />
             {main}
@@ -151,7 +153,7 @@ export default function MeetDetail() {
           setJoin(false);
           toggleIn('joined', m.id);
           sfx('save');
-          showToast(`${m.title} 참여했어요 · ${m.wd}`);
+          showToast(`${m.title} 참여했어요 · ${m.wd}`, seeAt(SEE.joinedMeets));
         }}
       />
       <AskSheet

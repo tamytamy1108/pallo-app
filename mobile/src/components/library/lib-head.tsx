@@ -144,7 +144,7 @@ export function SitChips({ maps, soons, current, isNew, onPick, onSoon }: { maps
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, zIndex: 6, transform: [{ translateY: Spacing.headDrop }] },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, zIndex: 6, marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },
   title: { letterSpacing: -0.6 },
   lwrap: { position: 'relative' },
   lang: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingLeft: 6, paddingRight: 10, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },

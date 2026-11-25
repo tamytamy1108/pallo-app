@@ -9,6 +9,7 @@ import { router, type Href } from 'expo-router';
 import { showToast } from '@/components/ui/toast';
 import { findSameExpr, getChallengeState } from '@/data/challenge';
 import { getSavedExpressions } from '@/state/expressions';
+import { seeAt, SEE } from '@/lib/see';
 
 let off = false;
 /** 이 화면에서는 챌린지 알림 없이 저장만 (TOPIC 이야기하기) — 화면을 닫을 때 false 로 */
@@ -18,7 +19,7 @@ export const setChallengeOfferOff = (v: boolean) => {
 
 export function offerChallenge(en: string, head = '내 표현함에 저장했어요') {
   if (off) {
-    showToast(head);
+    showToast(head, seeAt(SEE.expressions));
     return;
   }
   const dup = findSameExpr(getChallengeState(), en);

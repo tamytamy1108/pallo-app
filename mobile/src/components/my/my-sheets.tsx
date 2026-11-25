@@ -9,6 +9,10 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { followLists, MY_BADGES, SPARK_EARN, type Member } from '@/data/my';
 import { REWARDS } from '@/data/rewards';
+import { findEvent } from '@/components/event/event-model';
+import { useMeetStore } from '@/components/meet/meet-store';
+import { findClub, findMeet } from '@/components/meet/model';
+import { MONTHS } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { toggleFollow, useMe } from '@/state/me';
 
@@ -58,13 +62,63 @@ export function SparkSheet({ open, onClose }: { open: boolean; onClose: () => vo
 }
 
 /** 내 모임 · 찜한 모임 (모임 목록은 라운지에서 — 지금은 빈 상태 문구) */
+/** 찜하거나 참여한 것 하나 (번개 · 이벤트 · 동아리) */
+type MeetItem = { id: string; tag: string; title: string; sub: string; href: Href };
+
+/** 찜한 모임 · 내 모임: 기기에 남은 찜 · 참여 기록을 번개 · 이벤트 · 동아리로 찾아 보여 줘요 */
+export function useMeetItems(kind: 'joined' | 'saved') {
+  const st = useMeetStore();
+  const ids = Object.keys(kind === 'saved' ? st.saved : st.joined);
+  const clubIds = kind === 'joined' ? Object.keys(st.club).filter((k) => st.club[k] === 'in') : [];
+  const items: MeetItem[] = [];
+  for (const id of [...ids, ...clubIds]) {
+    const e = findEvent(id);
+    if (e) {
+      items.push({ id, tag: `이벤트 · ${e.kind}`, title: e.title, sub: `${MONTHS.indexOf(e.mon) + 1}월 ${Number(e.day)}일 ${e.wd} · ${e.br}`, href: { pathname: '/events/[id]', params: { id } } });
+      continue;
+    }
+    const m = findMeet(id, st.myMeets);
+    if (m) {
+      items.push({ id, tag: '번개', title: m.title, sub: `${MONTHS.indexOf(m.mon) + 1}월 ${Number(m.day)}일 ${m.wd} · ${m.br}`, href: { pathname: '/meet/[id]', params: { id } } });
+      continue;
+    }
+    const c = findClub(id, st.myClubs);
+    if (c) items.push({ id, tag: '동아리', title: c.name, sub: `${c.when} · ${c.br}`, href: { pathname: '/club/[id]', params: { id } } });
+  }
+  return items;
+}
+
 export function MeetsSheet({ kind, onClose }: { kind: 'joined' | 'saved' | null; onClose: () => void }) {
-  const me = useMe();
-  const n = kind === 'saved' ? me.savedMeets : me.joinedMeets;
+  const items = useMeetItems(kind ?? 'saved');
+  const n = items.length;
+  const open = (href: Href) => {
+    sfx('tap');
+    onClose();
+    runAfterSheetClose(() => router.push(href));
+  };
   return (
     <Sheet open={!!kind} onClose={onClose} title={kind === 'saved' ? `찜한 모임 ${n}개` : `내 모임 ${n}개`} label={kind === 'saved' ? '찜한 모임' : '내 모임'}>
-      {kind === 'joined' && <Ds>참여한 번개 · 가입한 동아리</Ds>}
-      <PText style={styles.empty}>{kind === 'saved' ? '상세 화면의 하트를 누르면 여기 모여요.' : '아직 참여한 모임이 없어요.\n라운지에서 번개나 동아리를 찾아보세요!'}</PText>
+      {kind === 'joined' && <Ds>참여한 번개 · 이벤트 · 가입한 동아리</Ds>}
+      {n === 0 ? (
+        <PText style={styles.empty}>{kind === 'saved' ? '상세 화면의 하트를 누르면 여기 모여요.' : '아직 참여한 모임이 없어요.\n라운지에서 번개나 동아리를 찾아보세요!'}</PText>
+      ) : (
+        <View style={styles.mlist}>
+          {items.map((it, i) => (
+            <Pressable key={it.id} onPress={() => open(it.href)} accessibilityRole="button" accessibilityLabel={`${it.tag} ${it.title} · ${it.sub}`} style={({ pressed }) => [styles.mitem, i > 0 && styles.line, pressed && styles.mitemOn]}>
+              <View style={styles.mtx}>
+                <PText style={styles.mtag}>{it.tag}</PText>
+                <PText style={styles.mtitle} numberOfLines={1}>
+                  {it.title}
+                </PText>
+                <PText style={styles.msub} numberOfLines={1}>
+                  {it.sub}
+                </PText>
+              </View>
+              <PText style={styles.mgo}>›</PText>
+            </Pressable>
+          ))}
+        </View>
+      )}
     </Sheet>
   );
 }
@@ -154,6 +208,14 @@ export function FollowSheet({ name, tab, onTab, onClose, onOpen }: { name: strin
 
 const styles = StyleSheet.create({
   ds: { fontFamily: Font.body700, fontSize: 14, lineHeight: 21, color: Colors.inkSub },
+  mlist: { marginTop: 6 },
+  mitem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
+  mitemOn: { opacity: 0.6 },
+  mtx: { flex: 1, minWidth: 0 },
+  mtag: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.purple },
+  mtitle: { marginTop: 1, fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
+  msub: { marginTop: 1, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
+  mgo: { fontFamily: Font.body900, fontSize: 20, lineHeight: 22, color: Colors.inkSub },
   empty: { textAlign: 'center', paddingVertical: 30, paddingHorizontal: 10, fontFamily: Font.body700, fontSize: 14, lineHeight: 22, color: Colors.inkSub },
   stCard: { paddingHorizontal: 14, paddingVertical: 2, borderWidth: 2, borderColor: Colors.ink, borderRadius: 22, backgroundColor: Colors.white },
   stRow: { flexDirection: 'row', alignItems: 'center', minHeight: 52, paddingVertical: 8, gap: 10 },

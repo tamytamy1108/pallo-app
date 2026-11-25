@@ -42,6 +42,7 @@ import {
 } from '@/data/challenge';
 import { haptic, sfx } from '@/lib/feedback';
 import { HeartPop } from '@/components/ui/heart-pop';
+import { seeAt, SEE } from '@/lib/see';
 
 import { invite } from './cards';
 import { CheckSheet } from './check-sheet';
@@ -218,7 +219,8 @@ export function DailyDetail({ p }: { p: Challenge }) {
             icon={<HeartPop on={saved}><ChIcon name="heart" size={22} fill={saved ? Colors.rosePink : 'none'} /></HeartPop>}
             onPress={() => {
               const on = toggleSaved(p.id);
-              showToast(on ? '저장했어요' : '저장을 취소했어요');
+              if (on) showToast('저장했어요', seeAt(SEE.savedChallenges));
+              else showToast('저장을 취소했어요');
             }}
           />
           <View style={styles.ctaMain}>

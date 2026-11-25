@@ -23,7 +23,7 @@ import { CHECK_PATH, CLOSE_PATH, LineIcon } from './icons';
 const FRAME = 250;
 const SPRING_CSS = cubicBezier(0.2, 0.9, 0.3, 1.3);
 
-export function QrScanner({ open, summaryText, onClose, onChange, onScanned }: { open: boolean; summaryText: string; onClose: () => void; onChange: () => void; onScanned: (qr: string) => void }) {
+export function QrScanner({ open, summaryText, onClose, onScanned }: { open: boolean; summaryText: string; onClose: () => void; onScanned: (qr: string) => void }) {
   const insets = useSafeAreaInsets();
   const still = useReducedMotion();
   const native = Platform.OS !== 'web';
@@ -125,16 +125,6 @@ export function QrScanner({ open, summaryText, onClose, onChange, onScanned }: {
           </Pressable>
         )}
 
-        <View style={StyleSheet.flatten([styles.bottom, { bottom: 44 + insets.bottom }])}>
-          <PText style={styles.bottomHint} color="#B9B3C9">
-            다른 시간·언어로 왔나요?
-          </PText>
-          <Pressable onPress={onChange} accessibilityRole="button" style={({ pressed }) => StyleSheet.flatten([styles.change, pressed && styles.changePressed])}>
-            <PText style={styles.changeText} color={Colors.white}>
-              참석 정보 변경
-            </PText>
-          </Pressable>
-        </View>
       </Animated.View>
     </LayerModal>
   );
@@ -223,9 +213,4 @@ const styles = StyleSheet.create({
   mark: { position: 'absolute', left: 60, top: 60, right: 60, bottom: 60, borderRadius: 65, backgroundColor: Colors.yellow, borderWidth: 3, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   settings: { marginTop: 20, height: 40, paddingHorizontal: 18, borderRadius: 20, backgroundColor: Colors.yellow, justifyContent: 'center' },
   settingsText: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
-  bottom: { position: 'absolute', left: 20, right: 20, alignItems: 'center', gap: 10 },
-  bottomHint: { fontFamily: Font.body500, fontSize: 13, lineHeight: 18 },
-  change: { alignSelf: 'stretch', height: 56, borderRadius: 28, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
-  changePressed: { backgroundColor: 'rgba(255,255,255,0.16)' },
-  changeText: { fontFamily: Font.body800, fontSize: 16, lineHeight: 22 },
 });

@@ -27,6 +27,7 @@ import { toggleExpression, useSavedExpressions } from '@/state/expressions';
 import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { stopSpeaking } from '@/lib/tts';
+import { seeAt, SEE } from '@/lib/see';
 
 /**
  * 리스닝 룸 (프로토타입 openListen · lrRender): 붙어 있는 보라 재생 카드 · 설정 칩 · 재생 목록 칩 · 문장 줄.
@@ -318,7 +319,8 @@ function MarkButton({ en, ko, source }: { en: string; ko: string; source: string
       onPress={() => {
         const on = toggleExpression({ en, ko, source });
         sfx(on ? 'save' : 'tap');
-        showToast(on ? '내 표현함에 저장했어요' : '표현함에서 뺐어요');
+        if (on) showToast('내 표현함에 저장했어요', seeAt(SEE.expressions));
+        else showToast('표현함에서 뺐어요');
       }}
       accessibilityRole="button"
       accessibilityState={{ selected: saved }}

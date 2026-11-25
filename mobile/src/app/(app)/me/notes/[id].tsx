@@ -21,6 +21,7 @@ import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useMe } from '@/state/me';
 import { MemberOnly } from '@/components/common/member-lock';
 import { HeartPop } from '@/components/ui/heart-pop';
+import { seeAt } from '@/lib/see';
 
 /**
  * PRO'S NOTE 한 장 (프로토타입 pnDetHTML): 표현 · 바로잡기 · 뜻 · 질문 항목(항목별 저장 → 내 표현함) · 스터디 일기 · 프로님께 보낸 마음.
@@ -196,7 +197,8 @@ function NoteItem({ n, i }: { n: ProNote; i: number }) {
         onPress={() => {
           const saved = toggleExpression(expr);
           sfx(saved ? 'save' : 'tap');
-          showToast(saved ? "PRO'S NOTE › 저장한 표현에 담았어요" : '저장을 취소했어요');
+          if (saved) showToast("PRO'S NOTE › 저장한 표현에 담았어요", seeAt('/me/notes?tab=saved'));
+          else showToast('저장을 취소했어요');
         }}
         accessibilityRole="button"
         accessibilityState={{ selected: on }}

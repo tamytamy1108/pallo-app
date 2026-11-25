@@ -44,6 +44,7 @@ import { CountStepper, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
 import { CountPicker } from '@/components/ui/count-picker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
+import { seeAt } from '@/lib/see';
 
 import { ChLoungePreview } from './cards';
 import { ChIcon } from './icons';
@@ -156,11 +157,11 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           showToast('카드 문구를 적어 주세요');
           return;
         }
-        createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), ...cardOf(usedCard(card, covers.length > 0, chPbgOf(cat))), plan, cover: covers[0] });
+        const made = createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), ...cardOf(usedCard(card, covers.length > 0, chPbgOf(cat))), plan, cover: covers[0] });
         sfx('save');
         haptic('success');
         onClose();
-        showToast(plan.off ? `챌린지를 열었어요 · ${plan.md}에 시작해요` : `챌린지를 열었어요 · 오늘부터 ${plan.freqT} 인증`);
+        showToast(plan.off ? `챌린지를 열었어요 · ${plan.md}에 시작해요` : `챌린지를 열었어요 · 오늘부터 ${plan.freqT} 인증`, seeAt({ pathname: '/challenge/[id]', params: { id: made.id } }));
         return;
       }
       if (dup) {
@@ -171,11 +172,11 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
         showToast('불러올 표현을 1개 이상 골라 주세요');
         return;
       }
-      createExpression({ card: picked, D: xdur, first: first.trim() });
+      const made = createExpression({ card: picked, D: xdur, first: first.trim() });
       sfx('save');
       haptic('success');
       onClose();
-      showToast(`나만의 문장 완성하기를 열었어요 · ${xdur}일 동안 함께해요`);
+      showToast(`나만의 문장 완성하기를 열었어요 · ${xdur}일 동안 함께해요`, seeAt({ pathname: '/challenge/[id]', params: { id: made.id } }));
     }, '챌린지를 열려면');
 
   const pwDef = (CH_PW[cat as DailyCatKey] || CH_PW.free).split('\n');

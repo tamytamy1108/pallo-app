@@ -268,7 +268,9 @@ export function FeeBlock({ fee, fee0 }: { fee?: number; fee0?: string }) {
 export type MainVariant = 'y' | 'pu' | 'done' | 'wh' | 'off' | 'on';
 /** 큰 행동 버튼 (참여하기 · 가입하기 · 후기 보기 — 54 · 둥글기 20) */
 export function MainBtn({ label, variant = 'y', onPress, grow = true }: { label: string; variant?: MainVariant; onPress?: () => void; grow?: boolean }) {
-  return <LgButton label={label} variant={variant} height={54} fontSize={15.5} radius={20} paddingH={6} grow={grow} onPress={onPress} />;
+  const btn = <LgButton label={label} variant={variant} height={54} fontSize={15.5} radius={20} paddingH={6} grow={grow} onPress={onPress} />;
+  // 늘어나지 않는 버튼(후기 보기 · 모집 닫기 · 신청 중)은 아래 바 오른쪽 끝에 붙여요
+  return grow ? btn : <View style={styles.right}>{btn}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -309,6 +311,7 @@ const styles = StyleSheet.create({
   hiaT: { fontFamily: Font.body800, fontSize: 12.5, color: Colors.inkSub },
   dnote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 14 },
   dnoteT: { flex: 1, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 19, color: Colors.inkSub },
+  right: { marginLeft: 'auto' },
   fee: { justifyContent: 'center', paddingHorizontal: 2, flexShrink: 0 },
   feeS: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 13.8, color: Colors.inkSub },
   feeS0: { fontFamily: Font.body700, fontSize: 11.5, color: '#A39C8E', textDecorationLine: 'line-through' },

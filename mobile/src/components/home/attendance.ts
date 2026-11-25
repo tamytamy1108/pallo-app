@@ -6,7 +6,8 @@
 import { useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
 
-import { ATTEND_POINTS, LANGS, MY_LANG, MY_SLOT, QR_AFTER, QR_BEFORE, SLOTS } from '@/data/home';
+import { ATTEND_POINTS, LANGS, MY_LANG, MY_SLOT, myTeamsOn, QR_AFTER, QR_BEFORE, RSVP_BEFORE, SLOTS, type MyTeamToday } from '@/data/home';
+import { hourLabel } from '@/data/account';
 import { SPARK_ATTEND } from '@/data/my';
 import { createStore } from '@/lib/store';
 import { awardPoints, awardSparks } from '@/state/ledger';
@@ -50,21 +51,27 @@ export const fmtMin = (m: number) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`
 
 /* ───────── 출석 규칙 ───────── */
 
-/** 시작 전까지 사전 출석 가능 */
-export const rsvpOpen = (i: number, m: number) => m < SLOTS[i].start;
+/** 사전 출석: 시작 24시간 전까지만 (오늘 수업은 이미 지났어요 — 그 뒤엔 QR 출석만) */
+export const rsvpOpen = (i: number, m: number) => SLOTS[i].start - m >= RSVP_BEFORE;
 /** QR 출석: 시작 30분 전 ~ 시작 20분 후 */
 export const qrOpen = (i: number, m: number) => m >= SLOTS[i].start - QR_BEFORE && m <= SLOTS[i].start + QR_AFTER;
-export const anyQrOpen = (m: number) => SLOTS.some((_, i) => qrOpen(i, m));
+/** 오늘 열린 내 수업 중 QR 출석이 열린 게 있나 */
+export const anyQrOpen = (m: number) => openTeams().some((t) => qrOpen(t.slot, m));
 
 /** 시트 모드: 사전 출석(시작 전까지) · 출석(QR 창이 열린 시간대만) */
 export type SheetMode = 'rsvp' | 'checkin';
 export const slotSelectable = (i: number, mode: SheetMode, m: number) => (mode === 'checkin' ? qrOpen(i, m) : rsvpOpen(i, m));
 export function slotSub(i: number, mode: SheetMode, m: number) {
   if (qrOpen(i, m)) return '지금 출석 가능';
-  if (rsvpOpen(i, m)) return mode === 'checkin' ? `${fmtMin(SLOTS[i].start - QR_BEFORE)}부터 출석` : '참석 알림 가능';
-  return '출석 마감';
+  if (m > SLOTS[i].start + QR_AFTER) return '출석 마감';
+  if (mode === 'rsvp') return rsvpOpen(i, m) ? '참석 알림 가능' : '사전 출석 마감 · 24시간 전까지';
+  return `${fmtMin(SLOTS[i].start - QR_BEFORE)}부터 출석`;
 }
-export const summary = (slot: number, lang: number) => `${SLOTS[slot].t} · ${LANGS[lang].ko}`;
+/** 고른 수업 이름: 내 팀이면 팀 이름 (영어 월수 8시) · 아니면 '20:00 · 영어' */
+export function summary(slot: number, lang: number) {
+  const t = openTeamAt(slot, lang);
+  return t ? teamName(t) : `${SLOTS[slot].t} · ${LANGS[lang].ko}`;
+}
 
 /* ───────── 내 출석 상태 (가짜 서버) ───────── */
 
@@ -131,28 +138,58 @@ export function heroOf(a: Attend, d: Date): Hero {
   return { kind: 'ready', badge: 'READY', live: 'idle', started };
 }
 
-/** 위 칸: 스터디 시각 · 시작까지(진행 중) 남은 시간 */
-export function countOf(a: Attend, d: Date) {
-  const mine = a.checked || a.rsvp === 'yes';
-  const m = minuteOf(d);
-  const target = mine ? a.slot : SLOTS.findIndex((s) => s.start > m);
-  if (target < 0) return { time: 'NOW', label: '스터디', value: 'ON' };
-  const diff = SLOTS[target].start * 60 - secondOf(d);
-  if (mine && diff <= 0) {
-    // 내 스터디가 시작됨: 지난 시간
-    const el = -diff;
-    const value = '+' + (el >= 3600 ? `${Math.floor(el / 3600)}:${pad(Math.floor((el % 3600) / 60))}` : `${pad(Math.floor(el / 60))}:${pad(el % 60)}`);
-    return { time: SLOTS[target].t, label: '진행 중', value };
+/** 오늘 내 스터디: 사전 출석 · 출석한 팀 → 아직 출석 마감 전인 첫 열린 수업 → 마지막 열린 수업. 오늘 열린 수업이 없으면 null */
+export function todayTeam(a: Attend, m: number): OpenTeam | null {
+  if (a.checked || a.rsvp === 'yes') {
+    const mine = openTeamAt(a.slot, a.lang);
+    if (mine) return mine;
   }
-  const left = Math.max(0, diff);
-  // 1시간 넘게 남으면 시:분 (앱에서 다듬은 모양 그대로 · 프로토타입은 'n시간 mm분')
-  const value = left >= 3600 ? `${pad(Math.floor(left / 3600))}:${pad(Math.floor((left % 3600) / 60))}` : `${pad(Math.floor(left / 60))}:${pad(left % 60)}`;
-  return { time: SLOTS[target].t, label: '시작까지', value };
+  const open = openTeams().sort((p, q) => SLOTS[p.slot].start - SLOTS[q.slot].start || p.lang - q.lang);
+  return open.find((t) => m <= SLOTS[t.slot].start + QR_AFTER) ?? open[open.length - 1] ?? null;
 }
 
-/** 시트를 열 때 처음 골라 둘 시간대: 지금 고른 것 → 내 수업 → 고를 수 있는 첫 시간대 */
-export function firstSelectable(slot: number, mode: SheetMode, m: number) {
-  if (slotSelectable(slot, mode, m)) return slot;
-  if (slotSelectable(MY_SLOT, mode, m)) return MY_SLOT;
-  return SLOTS.findIndex((_, i) => slotSelectable(i, mode, m));
+/** 위 칸: 오늘 스터디 이름 · 시작까지(진행 중) 남은 시간 */
+export function countOf(a: Attend, d: Date) {
+  const team = todayTeam(a, minuteOf(d));
+  if (!team) return { name: '오늘 수업 없어요', label: '시작까지', value: '--:--' };
+  const name = teamName(team);
+  const diff = SLOTS[team.slot].start * 60 - secondOf(d);
+  if (diff <= 0) {
+    // 스터디가 시작됨: 지난 시간
+    const el = -diff;
+    const value = '+' + (el >= 3600 ? `${Math.floor(el / 3600)}:${pad(Math.floor((el % 3600) / 60))}` : `${pad(Math.floor(el / 60))}:${pad(el % 60)}`);
+    return { name, label: '진행 중', value };
+  }
+  // 1시간 넘게 남으면 시:분 (앱에서 다듬은 모양 그대로 · 프로토타입은 'n시간 mm분')
+  const value = diff >= 3600 ? `${pad(Math.floor(diff / 3600))}:${pad(Math.floor((diff % 3600) / 60))}` : `${pad(Math.floor(diff / 60))}:${pad(diff % 60)}`;
+  return { name, label: '시작까지', value };
+}
+
+/* ───────── 내 팀 (다 보이고 · 오늘 열린 수업만 누를 수 있어요) ───────── */
+
+/** 팀 이름 · 예) 영어 월수 8시 · 영어 화목 7시 30분 */
+export function teamName(t: Pick<MyTeamToday, 'lang' | 'when'>) {
+  const [days, time] = t.when.split(' ');
+  return `${LANGS[t.lang].ko} ${days} ${hourLabel(time)}`;
+}
+
+/** 전산에서 오늘 수업을 연 내 팀 */
+export type OpenTeam = MyTeamToday & { slot: number };
+export const isOpenToday = (t: MyTeamToday): t is OpenTeam => t.slot !== null;
+/** 내 팀 · 오늘 열린 수업 (가짜 전산은 요일로 열어요 · 개발용 ?now= 기준) */
+export const myTeams = () => myTeamsOn(nowDate().getDay());
+export const openTeams = () => myTeams().filter(isOpenToday);
+export const openTeamAt = (slot: number, lang: number) => openTeams().find((t) => t.slot === slot && t.lang === lang);
+
+/** 이 팀을 지금 누를 수 있나: 오늘 열린 수업 + 시트 모드의 시간 창 */
+export const teamSelectable = (t: MyTeamToday, mode: SheetMode, m: number) => isOpenToday(t) && slotSelectable(t.slot, mode, m);
+export function teamSub(t: MyTeamToday, mode: SheetMode, m: number) {
+  return isOpenToday(t) ? slotSub(t.slot, mode, m) : '오늘 수업 없어요';
+}
+
+/** 시트를 열 때 처음 골라 둘 팀: 지금 고른 것 → 누를 수 있는 첫 팀. 없으면 null */
+export function firstTeam(slot: number, lang: number, mode: SheetMode, m: number) {
+  const cur = openTeamAt(slot, lang);
+  if (cur && slotSelectable(cur.slot, mode, m)) return cur;
+  return openTeams().find((t) => slotSelectable(t.slot, mode, m)) ?? null;
 }

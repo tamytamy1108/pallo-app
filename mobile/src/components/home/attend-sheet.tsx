@@ -8,10 +8,10 @@ import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { ATTEND_POINTS, LANGS, SLOTS } from '@/data/home';
+import { ATTEND_POINTS, LANGS, SLOTS, type MyTeamToday } from '@/data/home';
 import { haptic, sfx } from '@/lib/feedback';
 
-import { firstSelectable, minuteOf, nowDate, slotSelectable, slotSub, summary, useAttend, type SheetMode } from './attendance';
+import { firstTeam, minuteOf, myTeams, nowDate, openTeamAt, slotSelectable, summary, teamName, teamSelectable, teamSub, useAttend, type SheetMode } from './attendance';
 import { HomeSheet, SheetClose } from './home-sheet';
 import { CHECK_PATH, QR_PATH } from './icons';
 import { Hard, SumRow, WideButton } from './parts';
@@ -19,7 +19,7 @@ import { Hard, SumRow, WideButton } from './parts';
 /**
  * 출석 시트 (프로토타입 #sheet · #sheetForm · #sheetDone · renderSheet · openSheet).
  * 사전 출석(rsvp) · 출석(checkin) 두 모드를 같은 시트로 쓰고, 출석이 끝나면 같은 자리에서 출석 완료(done)를 보여 줘요.
- * 언어는 처음엔 비어 있어요 (출석 모드에서 사전 출석한 수업이면 그 언어가 미리 골라져요).
+ * 내 팀이 다 보이고, 전산에서 오늘 수업을 연 팀만 누를 수 있어요. 누를 수 있는 첫 팀이 미리 골라져요 (사전 출석한 팀이 있으면 그 팀).
  */
 export type AttendSheetMode = SheetMode | 'done';
 
@@ -37,7 +37,7 @@ export function AttendSheet({
   onConfirm: (mode: SheetMode, slot: number, lang: number) => void;
 }) {
   const a = useAttend();
-  // 시트를 열 때마다 처음 값으로 (프로토타입 openSheet: sheetLang · firstSelectable)
+  // 시트를 열 때마다 처음 값으로 (프로토타입 openSheet · 지금은 내 팀 중에서)
   const [slot, setSlot] = useState(a.slot);
   const [lang, setLang] = useState<number | null>(null);
   const [m, setM] = useState(() => minuteOf(nowDate()));
@@ -51,11 +51,11 @@ export function AttendSheet({
       setShown(mode);
       if (mode !== 'done') {
         const now = minuteOf(nowDate());
-        const f = firstSelectable(a.slot, mode, now);
+        const f = firstTeam(a.slot, a.lang, mode, now);
         setM(now);
-        setSlot(f >= 0 ? f : a.slot);
-        setLang(mode === 'checkin' && a.rsvp === 'yes' ? a.lang : null);
-        if (preset && mode === 'rsvp') {
+        setSlot(f ? f.slot : a.slot);
+        setLang(f ? f.lang : null);
+        if (preset && mode === 'rsvp' && openTeamAt(preset.slot, preset.lang)) {
           setSlot(preset.slot);
           setLang(preset.lang);
         }
@@ -68,13 +68,29 @@ export function AttendSheet({
       {shown === 'done' ? (
         <DoneView summaryText={summary(a.slot, a.lang)} week={a.week} onClose={onClose} />
       ) : (
-        <FormView mode={shown} m={m} slot={slot} lang={lang} rsvpd={a.rsvp === 'yes'} onSlot={setSlot} onLang={setLang} onClose={onClose} onConfirm={() => lang !== null && onConfirm(shown, slot, lang)} />
+        <FormView
+          mode={shown}
+          m={m}
+          slot={slot}
+          lang={lang}
+          rsvpd={a.rsvp === 'yes'}
+          onPick={(sl, lg) => {
+            setSlot(sl);
+            setLang(lg);
+          }}
+          onClose={onClose}
+          onConfirm={() => lang !== null && openTeamAt(slot, lang) && onConfirm(shown, slot, lang)}
+        />
       )}
     </HomeSheet>
   );
 }
 
-/* ───────── 시간 · 언어 고르기 ───────── */
+/* ───────── 내 팀 고르기 (등록된 팀만) ───────── */
+
+/** 오늘 열린 수업 먼저 (시간순 · 같은 시간이면 언어순) → 오늘 수업 없는 팀 */
+const startOf = (t: MyTeamToday) => (t.slot === null ? Infinity : SLOTS[t.slot].start);
+const sortTeams = (ts: MyTeamToday[]) => ts.sort((p, q) => startOf(p) - startOf(q) || p.lang - q.lang);
 
 function FormView({
   mode,
@@ -82,8 +98,7 @@ function FormView({
   slot,
   lang,
   rsvpd,
-  onSlot,
-  onLang,
+  onPick,
   onClose,
   onConfirm,
 }: {
@@ -92,16 +107,25 @@ function FormView({
   slot: number;
   lang: number | null;
   rsvpd: boolean;
-  onSlot: (i: number) => void;
-  onLang: (i: number) => void;
+  /** 팀 고르기 (시간대 · 언어) */
+  onPick: (slot: number, lang: number) => void;
   onClose: () => void;
   onConfirm: () => void;
 }) {
   const checkin = mode === 'checkin';
-  const ready = lang !== null;
-  const sum = ready ? summary(slot, lang) : `${SLOTS[slot].t} · 언어 선택 전`;
-  const sub = checkin ? (rsvpd && ready ? '미리 알린 수업으로 골라뒀어요 · 맞는지 확인해요' : '시간과 언어를 골라요') : '오늘 들을 스터디의 시간과 언어를 골라요';
-  const btn = !ready ? '언어를 골라주세요' : checkin ? `${summary(slot, lang)} QR 찍고 출석` : `${summary(slot, lang)} 참석 알리기`;
+  const ready = lang !== null && !!openTeamAt(slot, lang) && slotSelectable(slot, mode, m);
+  const teams = sortTeams(myTeams());
+  const none = teams.length === 0;
+  const closed = !none && !teams.some((t) => t.slot !== null);
+  const sum = ready ? summary(slot, lang) : '팀 선택 전';
+  const sub = none
+    ? '등록된 팀이 없어요'
+    : closed
+      ? '오늘 열린 수업이 없어요'
+      : checkin
+      ? rsvpd && ready ? '미리 알린 팀으로 골라뒀어요 · 맞는지 확인해요' : '오늘 출석할 내 팀을 골라요'
+      : '오늘 들을 내 팀을 골라요';
+  const btn = none ? '등록된 팀이 없어요' : closed ? '오늘 열린 수업이 없어요' : !ready ? '팀을 골라주세요' : checkin ? `${summary(slot, lang)} QR 찍고 출석` : `${summary(slot, lang)} 참석 알리기`;
 
   return (
     <View style={styles.form}>
@@ -117,72 +141,60 @@ function FormView({
         <SheetClose onPress={onClose} />
       </View>
 
-      <PText style={styles.label}>① 시간</PText>
-      <View style={styles.row} accessibilityRole="radiogroup" accessibilityLabel="스터디 시간">
-        {SLOTS.map((s, i) => {
-          const can = slotSelectable(i, mode, m);
-          const on = i === slot;
-          return (
-            <Pressable
-              key={s.id}
-              disabled={!can}
-              onPress={() => {
-                sfx('tap');
-                onSlot(i);
-              }}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: on, disabled: !can }}
-              accessibilityLabel={`${s.t} ${slotSub(i, mode, m)}`}
-              style={styles.cell}>
-              <Hard x={on || !can ? 0 : 3} y={on || !can ? 0 : 3} radius={18} color={on || !can ? 'transparent' : Colors.ink}>
-                <View style={StyleSheet.flatten([styles.time, on && styles.timeOn, !can && styles.timeOff])}>
-                  {!can && <Stripes />}
-                  <PText style={styles.timeT} color={can ? Colors.ink : '#8C8597'}>
-                    {s.t}
-                  </PText>
-                  <PText style={styles.timeSub} color={can ? Colors.ink : '#8C8597'}>
-                    {slotSub(i, mode, m)}
-                  </PText>
-                </View>
-              </Hard>
-            </Pressable>
-          );
-        })}
-      </View>
+      {!none && (
+        <>
+          <PText style={styles.label}>① 내 팀</PText>
+          <View style={styles.teams} accessibilityRole="radiogroup" accessibilityLabel="내 팀">
+            {teams.map((t) => {
+              const l = LANGS[t.lang];
+              const can = teamSelectable(t, mode, m);
+              const on = t.slot === slot && t.lang === lang;
+              const ink = can ? Colors.ink : '#8C8597';
+              const name = teamName(t);
+              const status = teamSub(t, mode, m);
+              return (
+                <Pressable
+                  key={t.no}
+                  disabled={!can}
+                  onPress={() => {
+                    if (t.slot === null) return;
+                    sfx('tap');
+                    onPick(t.slot, t.lang);
+                  }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on, disabled: !can }}
+                  accessibilityLabel={`${name} ${status}`}>
+                  <Hard x={on || !can ? 0 : 3} y={on || !can ? 0 : 3} radius={18} color={on || !can ? 'transparent' : Colors.ink}>
+                    <View style={StyleSheet.flatten([styles.team, on && styles.timeOn, !can && styles.timeOff])}>
+                      {!can && <Stripes />}
+                      <View style={StyleSheet.flatten([styles.glyph, { backgroundColor: can ? l.color : '#E4DED2' }, !can && styles.glyphOff])}>
+                        <PText style={styles.glyphText} color={can ? l.ink : '#8C8597'}>
+                          {l.g}
+                        </PText>
+                      </View>
+                      <View style={styles.teamText}>
+                        <PText style={styles.teamName} color={ink} numberOfLines={1}>
+                          {name}
+                        </PText>
+                        <PText style={styles.timeSub} color={ink}>
+                          {status}
+                        </PText>
+                      </View>
+                      {on && (
+                        <View style={styles.pick}>
+                          <PText style={styles.pickText}>✓</PText>
+                        </View>
+                      )}
+                    </View>
+                  </Hard>
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
+      )}
 
-      <PText style={styles.label}>② 언어</PText>
-      <View style={styles.row4} accessibilityRole="radiogroup" accessibilityLabel="스터디 언어">
-        {LANGS.map((l, i) => {
-          const on = i === lang;
-          return (
-            <Pressable
-              key={l.key}
-              onPress={() => {
-                sfx('tap');
-                onLang(i);
-              }}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
-              accessibilityLabel={l.ko}
-              style={styles.cell}>
-              <Hard x={on ? 0 : 3} y={on ? 0 : 3} radius={18} color={on ? 'transparent' : Colors.ink}>
-                <View style={StyleSheet.flatten([styles.lang, { backgroundColor: on ? l.color : Colors.white }, on && styles.langOn, !ready && styles.langNeed])}>
-                  <View style={StyleSheet.flatten([styles.glyph, { backgroundColor: on ? Colors.white : l.color }])}>
-                    <PText style={styles.glyphText} color={on ? Colors.ink : l.ink}>
-                      {l.g}
-                    </PText>
-                  </View>
-                  <PText style={styles.langText} color={on ? l.ink : Colors.ink}>
-                    {l.ko}
-                  </PText>
-                </View>
-              </Hard>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <SumRow label={checkin ? '③ 입구 QR 찍기' : '도착하면 QR만 찍으면 돼요'} value={sum} />
+      <SumRow label={checkin ? '② 입구 QR 찍기' : '도착하면 QR만 찍으면 돼요'} value={sum} />
       <WideButton label={btn} icon={checkin ? QR_PATH : CHECK_PATH} disabled={!ready} onPress={onConfirm} style={styles.go} />
     </View>
   );
@@ -283,20 +295,18 @@ const styles = StyleSheet.create({
   headText: { flex: 1 },
   sub: { marginTop: 4, fontFamily: Font.body700, fontSize: 13, lineHeight: 18 },
   label: { marginTop: 18, fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
-  row: { marginTop: 8, flexDirection: 'row', gap: 10 },
-  row4: { marginTop: 8, flexDirection: 'row', gap: 8 },
-  cell: { flex: 1 },
-  time: { height: 72, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, overflow: 'hidden' },
+  teams: { marginTop: 8, gap: 10 },
+  team: { minHeight: 68, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, overflow: 'hidden' },
+  teamText: { flex: 1 },
+  teamName: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
+  pick: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  pickText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 17 },
   timeOn: { backgroundColor: Colors.yellow, transform: [{ translateX: 3 }, { translateY: 3 }] },
   timeOff: { borderColor: '#C9C2B3' },
-  timeT: { fontFamily: Font.display, fontSize: 19, lineHeight: 24 },
-  timeSub: { marginTop: 3, fontFamily: Font.body700, fontSize: 12, lineHeight: 16 },
-  lang: { height: 80, alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink },
-  langOn: { transform: [{ translateX: 3 }, { translateY: 3 }] },
-  langNeed: { borderStyle: 'dashed' },
+  timeSub: { marginTop: 2, fontFamily: Font.body700, fontSize: 12, lineHeight: 16 },
   glyph: { width: 32, height: 32, borderRadius: 11, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
+  glyphOff: { borderColor: '#C9C2B3' },
   glyphText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 17 },
-  langText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 17 },
   go: { marginTop: 12, marginRight: 4 },
   done: { alignItems: 'center', paddingBottom: 6 },
   art: { width: 250, height: 150, marginTop: 4 },
