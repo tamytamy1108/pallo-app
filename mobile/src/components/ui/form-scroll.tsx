@@ -59,9 +59,12 @@ export function keepInView(target: ViewInstance | null, box: ViewInstance | null
 /**
  * 시트 쪽: 스크롤 · 보이는 칸을 기억하고 reveal · keep 을 만들어요.
  * room: 쓰는 줄 아래로 비워 둘 높이 (스크롤 칸 아래를 덮는 흐림이 있으면 그 높이까지 더해요)
+ * outer: 화면이 이미 가진 스크롤 ref (없으면 새로 만들어요)
  */
-export function useFormScroll(room = CARET_ROOM) {
-  const scroll = useRef<ScrollViewInstance>(null);
+export function useFormScroll(room = CARET_ROOM, outer?: RefObject<ScrollViewInstance | null>) {
+  const own = useRef<ScrollViewInstance>(null);
+  // 화면이 스크롤 ref 를 따로 들고 있으면 (맨 위로 올리기 등) 그걸 같이 써요
+  const scroll = outer ?? own;
   const box = useRef<ViewInstance>(null);
   const y = useRef(0);
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {

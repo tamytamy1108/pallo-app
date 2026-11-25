@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { FieldLabel, keepAll, SheetButton } from '@/components/common/sheet-parts';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -28,7 +28,17 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub }: { c: C
   const myHi = useMeetStore((s) => (q ? (s.shi[q.id] ?? '') : ''));
   const [edit, setEdit] = useState(false);
   const [done, setDone] = useState(false);
-  const open = !!q && !done;
+  // 상세 시트 ↔ '참석 완료!' 시트는 하나가 다 내려간 뒤에 다른 하나를 올려요 (아이폰은 내려가는 중에 다른 시트를 못 띄워요)
+  const [away, setAway] = useState(false);
+  const open = !!q && !away;
+  const showDone = () => {
+    setAway(true);
+    runAfterSheetClose(() => setDone(true));
+  };
+  const backToDetail = () => {
+    setDone(false);
+    runAfterSheetClose(() => setAway(false));
+  };
   if (!q) return null;
   const full = q.cur >= q.cap && !q.me;
   const at = sessionMembers(all, q, me, myHi);
@@ -36,7 +46,7 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub }: { c: C
 
   const attend = () => {
     toggleIn('att', q.id);
-    if (!q.me) setDone(true);
+    if (!q.me) showDone();
     else showToast('참석을 취소했어요');
   };
 
@@ -142,16 +152,16 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub }: { c: C
       </Sheet>
       <DoneSheet
         open={done}
-        onClose={() => setDone(false)}
+        onClose={backToDetail}
         label="참석 완료"
         title="참석 완료!"
         desc={`${q.label} · ${q.th}\n함께할 멤버들에게 인사말 남겨 보세요!\n전날 알림도 보내 드려요.`}
         button="인사말 남기기"
         onMain={() => {
-          setDone(false);
           setEdit(true);
+          backToDetail();
         }}
-        onSkip={() => setDone(false)}
+        onSkip={backToDetail}
       />
     </>
   );
