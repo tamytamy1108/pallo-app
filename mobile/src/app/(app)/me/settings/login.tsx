@@ -13,85 +13,53 @@ import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 
 /**
- * 설정 › 로그인 계정 (프로토타입 loginHTML): 카카오 · 애플 · 구글 연결 · 해제(마지막 하나는 해제 못 함),
- * 휴대폰 번호 변경(번호 확인) · 이메일 등록(형식 확인). 맞는 API: `/me/auth-providers/:provider`
+ * 설정 › 로그인 계정: 로그인 방법은 카카오 · 이메일 두 가지만 (2026-11-25 · 애플 · 구글 · 휴대폰 번호 줄은 뺐어요).
+ * 카카오 연결 · 해제(마지막 하나는 해제 못 함) · 이메일 등록(형식 확인). 맞는 API: `/me/auth-providers/:provider`
  */
 export default function LoginAccountScreen() {
   const logins = useLogins();
-  const [sheet, setSheet] = useState<null | 'phone' | 'email'>(null);
-  const [phone, setPhone] = useState('');
+  const [sheet, setSheet] = useState<null | 'email'>(null);
   const [email, setEmail] = useState('');
 
   return (
     <AccountPage title="로그인 계정" bodyStyle={styles.body}>
-      <Head style={styles.h1}>간편 로그인</Head>
+      {/* 로그인 방법은 카카오 · 이메일 두 가지만 (2026-11-25) */}
+      <Head style={styles.h1}>로그인 방법</Head>
       <Box style={styles.go}>
-        {Object.keys(logins).map((k, i) => {
-          const on = logins[k];
-          return (
-            <Pressable
-              key={k}
-              onPress={() => {
-                sfx('tap');
-                if (!toggleLogin(k)) {
-                  showToast('로그인 방법이 하나는 있어야 해요');
-                  return;
-                }
-                showToast(on ? `${k} 연결을 해제했어요` : `${k} 계정을 연결했어요`);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`${k} ${on ? '연결 해제' : '연결'}`}
-              style={({ pressed }) => [styles.row, i > 0 && styles.line, pressed && styles.pressed]}>
-              <View style={styles.flex}>
-                <PText style={styles.b}>{k}</PText>
-                <PText style={styles.s}>{on ? '연결됨' : '연결 안 됨'}</PText>
-              </View>
-              <PText style={[styles.act, { color: on ? Colors.rosePink : Colors.purple }]}>{on ? '해제' : '연결'}</PText>
-            </Pressable>
-          );
-        })}
-      </Box>
-      <Head>연락처</Head>
-      <Box style={styles.go}>
-        <Pressable onPress={() => setSheet('phone')} accessibilityRole="button" style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-          <View style={styles.flex}>
-            <PText style={styles.b}>휴대폰 번호</PText>
-            <PText style={styles.s}>010-****-5678 · 로그인 · 알림에 써요</PText>
-          </View>
-          <PText style={styles.more}>변경 ›</PText>
-        </Pressable>
+        {Object.keys(logins)
+          .filter((k) => k === '카카오')
+          .map((k) => {
+            const on = logins[k];
+            return (
+              <Pressable
+                key={k}
+                onPress={() => {
+                  sfx('tap');
+                  if (!toggleLogin(k)) {
+                    showToast('로그인 방법이 하나는 있어야 해요');
+                    return;
+                  }
+                  showToast(on ? `${k} 연결을 해제했어요` : `${k} 계정을 연결했어요`);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`${k} ${on ? '연결 해제' : '연결'}`}
+                style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+                <View style={styles.flex}>
+                  <PText style={styles.b}>{k}</PText>
+                  <PText style={styles.s}>{on ? '연결됨' : '연결 안 됨'}</PText>
+                </View>
+                <PText style={[styles.act, { color: on ? Colors.rosePink : Colors.purple }]}>{on ? '해제' : '연결'}</PText>
+              </Pressable>
+            );
+          })}
         <Pressable onPress={() => setSheet('email')} accessibilityRole="button" style={({ pressed }) => [styles.row, styles.line, pressed && styles.pressed]}>
           <View style={styles.flex}>
             <PText style={styles.b}>이메일</PText>
-            <PText style={styles.s}>영수증을 받을 곳 · 아직 없어요</PText>
           </View>
           <PText style={styles.more}>등록 ›</PText>
         </Pressable>
       </Box>
 
-      <Sheet
-        open={sheet === 'phone'}
-        onClose={() => setSheet(null)}
-        title="휴대폰 번호 변경"
-        footer={
-          <View>
-            <Button
-              label="인증번호 받기"
-              wide
-              onPress={() => {
-                if (!/^01\d{8,9}$/.test(phone.replace(/[^0-9]/g, ''))) {
-                  showToast('휴대폰 번호를 확인해 주세요');
-                  return;
-                }
-                setSheet(null);
-                showToast('인증번호를 보냈어요 · 3분 안에 입력해 주세요');
-              }}
-            />
-          </View>
-        }>
-        <PText style={styles.lb}>새 휴대폰 번호</PText>
-        <TextInput value={phone} onChangeText={setPhone} placeholder="010-0000-0000" placeholderTextColor="#9B94A6" keyboardType="phone-pad" autoComplete="tel" accessibilityLabel="새 휴대폰 번호" style={styles.input} />
-      </Sheet>
       <Sheet
         open={sheet === 'email'}
         onClose={() => setSheet(null)}

@@ -18,8 +18,8 @@ import { setSfxOn, sfx, useSfxOn } from '@/lib/feedback';
 import { updateMe, useMe } from '@/state/me';
 
 /**
- * 설정 — 꼭 필요한 것만 (2026-11-25 줄임): 계정(닉네임 · 로그인) · 알림 4개 · 효과음 · 안전(퀘스트 공유 · 차단) · 도움(고객센터 · 약관) · 로그아웃 · 회원 탈퇴.
- * 뺀 것: 내 지점 · 학습 언어 · 레벨(전산 웹 · 프로가 정해요) · 세세한 알림 · 말하기 어려움 · 소리 끄기(레슨 안에 있어요) · 하루 목표 · 공개 범위 · 신고 내역 · 이용권 · 결제 내역 · 공지사항 · 앱 버전.
+ * 설정 — 꼭 필요한 것만 (2026-11-25 줄임): 계정(닉네임 · 로그인) · 알림 8개 · 효과음 · 안전(퀘스트 공유 · 차단) · 로그아웃.
+ * 뺀 것: 내 지점 · 학습 언어 · 레벨(전산 웹 · 프로가 정해요) · 도움(고객센터 · 약관) · 회원 탈퇴 · 말하기 어려움 · 소리 끄기(레슨 안에 있어요) · 하루 목표 · 공개 범위 · 신고 내역 · 이용권 · 결제 내역 · 공지사항 · 앱 버전.
  * 뺀 설정 값은 기본값 그대로 서버에 남아요. 효과음은 @/lib/feedback 이 가져요.
  * 맞는 API: 30 `GET / PUT /me/settings`
  */
@@ -44,9 +44,13 @@ export default function SettingsScreen() {
         <GoRow title="로그인 계정" value={loginName ? `${loginName} 연결됨` : ''} onPress={() => go('/me/settings/login')} />
       </Sec>
       <Sec title="알림" onLayout={onNotiLayout}>
-        <ToggleRow title="세션 알림" sub="세션 전날 저녁 · 예습이 남았으면 알려 줘요" value={set.nSession} onPress={() => updateSettings({ nSession: !set.nSession })} />
+        <ToggleRow title="스터디 세션 알림" sub="세션 전날 저녁 · 예습이 남았으면 알려 줘요" value={set.nSession} onPress={() => updateSettings({ nSession: !set.nSession })} />
+        <ToggleRow title="세션 1시간 전" value={set.nSession1h} onPress={() => updateSettings({ nSession1h: !set.nSession1h })} />
         <ToggleRow title="번개 · 이벤트 소식" sub="내 지점과 참여한 모임 위주로" value={set.nMeet} onPress={() => updateSettings({ nMeet: !set.nMeet })} />
+        <ToggleRow title="동아리 채팅" value={set.nClubChat} onPress={() => updateSettings({ nClubChat: !set.nClubChat })} />
         <ToggleRow title="팔로우 알림" sub="새 팔로워 · 내가 팔로우한 멤버의 새 글" value={set.nFriend} onPress={() => updateSettings({ nFriend: !set.nFriend })} />
+        <ToggleRow title="댓글 · 좋아요 · 인사" value={set.nCmt} onPress={() => updateSettings({ nCmt: !set.nCmt })} />
+        <ToggleRow title="랭킹 변동" sub="순위가 바뀌면 하루 한 번" value={set.nRank} onPress={() => updateSettings({ nRank: !set.nRank })} />
         <ToggleRow
           title="이벤트 · 혜택 정보 (광고)"
           sub="켜면 수신 동의 날짜가 기록돼요"
@@ -70,17 +74,9 @@ export default function SettingsScreen() {
         />
         <GoRow title="차단한 멤버" value="0명" onPress={() => setSheet('block')} />
       </Sec>
-      <Sec title="도움">
-        {/* 고객센터 한 곳: 자주 묻는 질문 + 1:1 문의 + 카카오톡 상담 + 내 지점 전화 */}
-        <GoRow title="고객센터 · 자주 묻는 질문" onPress={() => go('/me/support')} />
-        <GoRow title="이용약관 · 개인정보 처리방침" onPress={() => go('/me/settings/terms')} />
-      </Sec>
       <View style={styles.out}>
         <Pressable onPress={() => setSheet('logout')} accessibilityRole="button" hitSlop={8}>
           <PText style={styles.outText}>로그아웃</PText>
-        </Pressable>
-        <Pressable onPress={() => go('/me/delete')} accessibilityRole="button" hitSlop={8}>
-          <PText style={styles.outText}>회원 탈퇴</PText>
         </Pressable>
       </View>
 
