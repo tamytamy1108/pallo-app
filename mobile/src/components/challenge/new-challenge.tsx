@@ -42,12 +42,16 @@ import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { CountStepper, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
+import { CountPicker } from '@/components/ui/count-picker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 
 import { ChLoungePreview } from './cards';
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
 
+/** 기간: 알약(자주 쓰는 날 수) 말고도 −/+ · 직접 적기로 1~100일 */
+const DUR_MIN = 1;
+const DUR_MAX = 100;
 /** 표현 목록: 이보다 많으면 찾기 · 나온 곳 칩 · 'N개 더 보기' (CH_PAGE) */
 const PAGE = 6;
 const SRC_KEYS = Object.keys(CH_SRC) as ChSrcKind[];
@@ -198,7 +202,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           {dup ? <DupBox p={dup} count={entriesOf(dup, s, hide).length} onGo={() => onGoChallenge(dup)} /> : null}
           <View style={styles.fl}>
             <FieldLabel req>기간</FieldLabel>
-            <Pills options={XDUR_OPTS} value={xdur} onChange={setXdur} label={(d) => `${d}일`} />
+            <CountPicker value={xdur} presets={XDUR_OPTS} min={DUR_MIN} max={DUR_MAX} unit="일" typable onChange={setXdur} />
           </View>
           <View style={styles.fl}>
             <FieldLabel>내가 먼저 만든 문장 · 선택</FieldLabel>
@@ -217,7 +221,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           </View>
           <View style={styles.fl}>
             <FieldLabel req>기간</FieldLabel>
-            <Pills options={DUR_OPTS} value={dur} onChange={setDur} label={(d) => `${d}일`} />
+            <CountPicker value={dur} presets={DUR_OPTS} min={DUR_MIN} max={DUR_MAX} unit="일" typable onChange={setDur} />
           </View>
           <View style={styles.fl}>
             <FieldLabel req>인증 주기</FieldLabel>
