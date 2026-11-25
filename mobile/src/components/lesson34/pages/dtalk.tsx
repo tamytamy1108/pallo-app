@@ -630,7 +630,7 @@ export function DailyTalk({
           )
         }
       />
-      <PFoot lift={kbH}>
+      <PFoot keyboard>
         <ModeTabs<Mode>
           list={[
             ["voice", "말하기"],

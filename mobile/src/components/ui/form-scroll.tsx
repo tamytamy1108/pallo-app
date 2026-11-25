@@ -11,6 +11,8 @@
 import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
 import { Keyboard, Platform, TextInput, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 
+import { keyboardTopY } from '@/lib/keyboard';
+
 /** 고른 칸 아래로 이만큼은 보여야 '다음 칸이 보인다' (다음 질문 제목 + 알약 한 줄쯤) */
 const NEXT_ROOM = 150;
 /** 쓰는 줄 아래 숨 쉴 틈 */
@@ -32,7 +34,7 @@ export function useRevealNext(): Reveal {
 export const useKeepVisible = () => useContext(KeepVisibleContext);
 
 /** 키보드 위쪽 끝 (화면 기준). 네이티브에서 키보드가 떠 있을 때만 */
-const keyboardTop = () => (Platform.OS === 'web' ? Infinity : (Keyboard.metrics()?.screenY ?? Infinity));
+const keyboardTop = keyboardTopY;
 
 /**
  * target 아래 끝 + room 이 box(보이는 스크롤 칸) · 키보드 위로 들어오게 scroll 을 내려요. 위로는 안 올려요.
@@ -112,12 +114,26 @@ export function useShowFocusedOnKeyboard(box: RefObject<ViewInstance | null>, sh
         () => {},
       );
     };
-    const sub = Keyboard.addListener('keyboardDidShow', () => {
-      clear();
-      // 안드로이드: 키보드가 다 올라온 뒤에도 시트(KeyboardAvoidingView)가 줄어드는 데 시간이 조금 걸려요.
-      // 바로 재면 아직 큰 칸 기준이라 '안 가려짐'으로 보고 그냥 지나가서, 맨 아래 칸이 버튼 뒤에 가려졌어요 → 자리 잡은 뒤 한 번 더 (이미 보이면 그대로)
-      timers.push(setTimeout(check, 60), setTimeout(check, 320));
-    });
+    // 아이폰: 키보드가 올라오기 시작하면 바로 따라 맞추기 시작해요 (다 올라온 뒤에 움직이면 늦어 보여요). 다 올라오면 한 번 더 (이미 보이면 그대로)
+    const subs = [
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillShow', (e) => {
+            clear();
+            timers.push(setTimeout(check, Math.max(0, (e.duration || 250) * 0.45)));
+          })
+        : null,
+      Keyboard.addListener('keyboardDidShow', () => {
+        if (Platform.OS === 'ios') {
+          timers.push(setTimeout(check, 0));
+          return;
+        }
+        clear();
+        // 안드로이드: 키보드가 다 올라온 뒤에도 시트(KeyboardAvoidingView)가 줄어드는 데 시간이 조금 걸려요.
+        // 바로 재면 아직 큰 칸 기준이라 '안 가려짐'으로 보고 그냥 지나가서, 맨 아래 칸이 버튼 뒤에 가려졌어요 → 자리 잡은 뒤 한 번 더 (이미 보이면 그대로)
+        timers.push(setTimeout(check, 60), setTimeout(check, 320));
+      }),
+    ];
+    const sub = { remove: () => subs.forEach((x) => x?.remove()) };
     return () => {
       sub.remove();
       clear();

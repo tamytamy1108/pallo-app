@@ -57,7 +57,7 @@ export function StudyButton({ label, onPress, disabled = false, bg = Colors.yell
 }
 
 // 프로토타입 .press: transform · box-shadow .15s cubic-bezier(.16,1,.3,1)
-const press = css.create({ t: { transitionProperty: ['transform', 'boxShadow'], transitionDuration: '150ms', transitionTimingFunction: cubicBezier(0.16, 1, 0.3, 1) } }).t;
+const press = css.create({ t: { transitionProperty: ['transform', 'boxShadow'], transitionDuration: '100ms', transitionTimingFunction: cubicBezier(0.16, 1, 0.3, 1) } }).t;
 
 const styles = StyleSheet.create({
   pill: {

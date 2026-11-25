@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { BackHandler, Keyboard, StyleSheet, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LgIcon } from '@/components/lounge/icons';
@@ -12,7 +13,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LG_SCAT, type StickerSpot, type StoryCat } from '@/data/lounge';
-import { useKeyboardHeight } from '@/lib/keyboard';
+import { useKeyboardLiftStyle } from '@/lib/keyboard';
 import { isPlainFraming, type PhotoFraming } from '@/lib/photo-framing';
 
 type Props = {
@@ -49,7 +50,8 @@ const MAX_TEXT = 60;
  */
 export function StoryEditor({ img, onFraming, cat, branch, text, onText, spot, onSpot, typing, onTyping, feed, onFeed, pin, onPin, onRetake, onSubmit }: Props) {
   const insets = useSafeAreaInsets();
-  const kbH = useKeyboardHeight();
+  // 글 쓰는 칸: 키보드와 같은 프레임에 올라가요 (아이폰 · UI 스레드)
+  const kbLift = useKeyboardLiftStyle(24);
   const top = Math.max(insets.top, 12) + 4;
   const { bg, fg } = storyChipColors(cat);
   // 적는 글은 입력칸이 들고 있어요 (value 로 다시 넣지 않아요 — 한글 조합 중에 덮어쓰면 'ㅏ안녕'처럼 자모가 남아요)
@@ -132,7 +134,7 @@ export function StoryEditor({ img, onFraming, cat, branch, text, onText, spot, o
       </View>
 
       {typing ? (
-        <View style={[styles.typing, { paddingTop: top + 50, paddingBottom: kbH + 24 }]}>
+        <Animated.View style={[styles.typing, { paddingTop: top + 50, paddingBottom: 24 }, kbLift]}>
           <Pressable onPress={doneTyping} accessibilityRole="button" accessibilityLabel="다 적었어요" hitSlop={8} style={[styles.done, { top }]}>
             <PText style={styles.doneT}>완료</PText>
           </Pressable>
@@ -159,7 +161,7 @@ export function StoryEditor({ img, onFraming, cat, branch, text, onText, spot, o
           <View style={styles.colorRow}>
             <StickerColors c={col} onPick={setCol} />
           </View>
-        </View>
+        </Animated.View>
       ) : null}
     </View>
   );

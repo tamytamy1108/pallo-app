@@ -3,8 +3,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, StyleSheet, type TextInputInstance, useWindowDimensions, View } from 'react-native';
-import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Keyboard, Platform, StyleSheet, type TextInputInstance, useWindowDimensions, View } from 'react-native';
+import Animated, { cancelAnimation, Easing, useAnimatedKeyboard, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -31,7 +31,7 @@ import { addStoryComment, dropStory, getLounge, isRecent, markSeen, restoreStory
 import { useMe } from '@/state/me';
 import { HeartPop } from '@/components/ui/heart-pop';
 import { FramedImage } from '@/components/ui/photo-frame';
-import { useKeyboardHeight, useKeyboardShown } from '@/lib/keyboard';
+import { useKeyboardShown } from '@/lib/keyboard';
 import { whenLabel } from '@/lib/when';
 
 const DUR = 5000;
@@ -47,7 +47,11 @@ export default function StoryScreen() {
   const insets = useSafeAreaInsets();
   // 키보드가 올라오면 홈 바 자리 여백은 빼요 (입력칸과 키보드 사이가 뜨지 않게)
   const kb = useKeyboardShown();
-  const kbH = useKeyboardHeight();
+  // 댓글 줄 · 뒤 판은 키보드와 같은 프레임에 움직여요 (아이폰 · UI 스레드). 안드로이드는 창이 줄어서 0
+  const kbA = useAnimatedKeyboard();
+  const IOS_KB = Platform.OS === 'ios';
+  const footLift = useAnimatedStyle(() => ({ bottom: IOS_KB ? kbA.height.value : 0 }));
+  const backLift = useAnimatedStyle(() => ({ height: (IOS_KB ? kbA.height.value : 0) + 84 }));
   // 연 순간의 묶음 순서를 그대로 써요 (보는 동안 '본 것'이 바뀌어도 순서가 흔들리지 않게)
   const [groups, setGroups] = useState<StoryGroup[]>(() => {
     const s = getLounge();
@@ -315,9 +319,9 @@ export default function StoryScreen() {
 
       {/* 댓글 줄: 키보드가 올라오면 그 높이만큼 위로 (가리지 않게) */}
       {/* 키보드가 떠 있으면 입력 줄 뒤 ~ 키보드 아래까지 어둡게 채워요 (스토리 글자가 비치거나 키보드 모서리에 틈이 보이지 않게) */}
-      {kb && <View pointerEvents="none" style={[styles.kbBack, { height: kbH + 84 }]} />}
-      <View
-        style={[styles.foot, { bottom: kbH, paddingBottom: kb ? 12 : 22 + insets.bottom }]}
+      {kb && <Animated.View pointerEvents="none" style={[styles.kbBack, backLift]} />}
+      <Animated.View
+        style={[styles.foot, { paddingBottom: kb ? 12 : 22 + insets.bottom }, footLift]}
         pointerEvents="box-none"
         // 키보드가 떠 있을 땐 높이를 다시 재지 않아요 (글이 키보드 따라 출렁이지 않게)
         onLayout={(e) => (kb ? undefined : setFootH(e.nativeEvent.layout.height))}>
@@ -371,7 +375,7 @@ export default function StoryScreen() {
             <LgIcon name="cmt" size={20} />
           </SquareButton>
         </View>
-      </View>
+      </Animated.View>
 
       <CommentsSheet open={cmtOpen} onClose={() => openCmts(false)} comments={cmts} onSend={(t) => guardMember(() => addStoryComment(st.id, me.name, t), '댓글을 달려면')} />
     </Animated.View>

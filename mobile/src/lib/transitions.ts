@@ -1,8 +1,9 @@
 /**
  * 화면 넘어가는 효과 (프로토타입 그대로). 앱 전체 Stack 이 이 값을 써요.
- * - push: 오른쪽에서 밀려 들어와요 .5초. 뒤 화면은 왼쪽으로 24% 밀리고 흐려져요(.6) — 프로토타입 .push / .app.pushed
- * - rise: 아래에서 올라와요 .45초 (레슨 · 듣기) — 프로토타입 .practice
- * - fade: 서서히 나타나요 .35초 (로그인 · 스토리)
+ * - push: 오른쪽에서 밀려 들어와요 .36초 · 뒤로는 .28초. 뒤 화면은 왼쪽으로 24% 밀리고 흐려져요(.6) — 프로토타입 .push / .app.pushed
+ * - rise: 아래에서 올라와요 .38초 · 내려가기 .28초 (레슨 · 듣기) — 프로토타입 .practice
+ * - fade: 서서히 나타나요 .24초 · 사라지기 .2초 (로그인 · 스토리)
+ * 프로토타입 값(.5초)은 폰에서 느리다는 의견이 있어 짧게 줄였어요 (2026-11-26). 닫힐 때(뒤로)는 열릴 때보다 더 빨리.
  * 웹은 기본이 '효과 없음'이라 animation: 'default' 로 꼭 켜 줘요.
  * - overlay: 뒤 화면 위에 투명하게 겹쳐요. 시트가 스스로 올라와요 (효과 없음)
  */
@@ -16,7 +17,7 @@ type TransitionSpec = NonNullable<StackNavigationOptions['transitionSpec']>['ope
 /** 프로토타입 --ease */
 const EASE = Easing.bezier(0.16, 1, 0.3, 1);
 const timing = (duration: number): TransitionSpec => ({ animation: 'timing', config: { duration, easing: EASE } });
-const both = (duration: number) => ({ open: timing(duration), close: timing(duration) });
+const both = (open: number, close = open) => ({ open: timing(open), close: timing(close) });
 const clamp = 'clamp' as const;
 
 const forPush: StackCardStyleInterpolator = ({ current, next, layouts: { screen } }) => {
@@ -53,12 +54,12 @@ const forNone: StackCardStyleInterpolator = () => ({});
 export const CARD = { flex: 1, overflow: 'hidden' } as const;
 
 export const SCREEN = {
-  push: { animation: 'default', cardStyleInterpolator: forPush, transitionSpec: both(500), gestureDirection: 'horizontal', cardOverlayEnabled: false },
-  rise: { animation: 'default', cardStyleInterpolator: forRise, transitionSpec: both(450), gestureEnabled: false, cardOverlayEnabled: false },
-  fade: { animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(350), gestureEnabled: false, cardOverlayEnabled: false },
+  push: { animation: 'default', cardStyleInterpolator: forPush, transitionSpec: both(360, 280), gestureDirection: 'horizontal', cardOverlayEnabled: false },
+  rise: { animation: 'default', cardStyleInterpolator: forRise, transitionSpec: both(380, 280), gestureEnabled: false, cardOverlayEnabled: false },
+  fade: { animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(240, 200), gestureEnabled: false, cardOverlayEnabled: false },
   overlay: { presentation: 'transparentModal', animation: 'none', cardStyleInterpolator: forNone, transitionSpec: both(0), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { ...CARD, backgroundColor: 'transparent' } },
   /** 뒤 화면 위에 겹치면서 서서히 (이벤트 시트 화면) */
-  overlayFade: { presentation: 'transparentModal', animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(350), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { ...CARD, backgroundColor: 'transparent' } },
+  overlayFade: { presentation: 'transparentModal', animation: 'default', cardStyleInterpolator: forFade, transitionSpec: both(240, 200), gestureEnabled: false, cardOverlayEnabled: false, cardStyle: { ...CARD, backgroundColor: 'transparent' } },
 } satisfies Record<string, StackNavigationOptions>;
 
 /** 모든 Stack(가장 바깥 · 그룹 폴더 안)의 기본값: 머리 없음 · 크림 바탕 · 오른쪽에서 밀려 들어오기 */

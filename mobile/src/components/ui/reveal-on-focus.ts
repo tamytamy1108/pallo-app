@@ -21,14 +21,24 @@ export function useRevealOnFocus() {
       setTimeout(run, 60);
       return;
     }
+    // 아이폰: 키보드가 올라오는 도중에 한 번(같이 움직이게) · 다 올라오면 한 번 더 (이미 보이면 그대로)
+    const early =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillShow', (e) => {
+            early?.remove();
+            setTimeout(run, Math.max(0, (e.duration || 250) * 0.45));
+          })
+        : null;
     const sub = Keyboard.addListener('keyboardDidShow', () => {
       sub.remove();
+      early?.remove();
       clearTimeout(fallback);
-      // KeyboardAvoidingView 가 시트를 줄인 뒤에 재요
-      setTimeout(run, 40);
+      // 시트가 키보드만큼 줄어든 뒤에 재요 (아이폰은 같은 프레임에 줄어서 바로)
+      setTimeout(run, Platform.OS === 'ios' ? 0 : 40);
     });
     const fallback = setTimeout(() => {
       sub.remove();
+      early?.remove();
       run();
     }, FALLBACK_MS);
   };
