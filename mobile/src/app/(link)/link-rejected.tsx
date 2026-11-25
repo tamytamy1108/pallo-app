@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';

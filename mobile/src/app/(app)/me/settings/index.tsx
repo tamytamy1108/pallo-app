@@ -8,13 +8,14 @@ import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Toggle } from '@/components/account/parts';
 import { setMarketing, updateSettings, useLogins, useSettings } from '@/components/account/store';
+import { BranchMultiPicker, withJeom } from '@/components/onboarding/branch-sheet';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { APP_VERSION, BRANCH_REGIONS, BRANCHES, getMembership, PROFILE_SCOPES, type Settings } from '@/data/account';
+import { APP_VERSION, getMembership, PROFILE_SCOPES, type Settings } from '@/data/account';
 import { setSfxOn, sfx, useSfxOn } from '@/lib/feedback';
 import { setNoListen, setNoSpeak, useLearnPrefs } from '@/state/learn-prefs';
 import { updateMe, useMe } from '@/state/me';
@@ -33,11 +34,11 @@ export default function SettingsScreen() {
   const { noSpeak, noListen } = useLearnPrefs();
   const sound = useSfxOn();
   const ms = getMembership();
-  const [sheet, setSheet] = useState<null | 'nick' | 'branch' | 'block' | 'logout'>(null);
+  // 알림함의 '알림 설정'처럼 ?section=noti 로 오면 그 칸까지 내려가요 · 마이 '한 줄 소개를 남겨 보세요'는 ?sheet=nick 으로 소개 창부터
+  const { section, sheet: openSheet } = useLocalSearchParams<{ section?: string; sheet?: string }>();
+  const [sheet, setSheet] = useState<null | 'nick' | 'branch' | 'block' | 'logout'>(openSheet === 'nick' ? 'nick' : null);
   const loginName = Object.keys(logins).find((k) => logins[k]);
   const latest = APP_VERSION.now === APP_VERSION.latest;
-  // 알림함의 '알림 설정'처럼 ?section=noti 로 오면 그 칸까지 내려가요
-  const { section } = useLocalSearchParams<{ section?: string }>();
   const scrollRef = useRef<ScrollViewInstance>(null);
   const onNotiLayout = (e: LayoutChangeEvent) => {
     if (section === 'noti') scrollRef.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 12), animated: true });
@@ -49,7 +50,7 @@ export default function SettingsScreen() {
     <AccountPage title="설정" bodyStyle={styles.body} scrollRef={scrollRef}>
       <Sec title="계정">
         <GoRow title="닉네임 · 한 줄 소개" value={me.name} onPress={() => setSheet('nick')} />
-        <GoRow title="내 지점" value={set.branches.length ? set.branches.join(' · ') : me.branch} onPress={() => setSheet('branch')} />
+        <GoRow title="내 지점" value={set.branches.length ? set.branches.map(withJeom).join(' · ') : me.branch} onPress={() => setSheet('branch')} />
         <GoRow title="학습 언어 · 레벨" value={`${set.lang} ${me.level}`} onPress={() => go('/me/settings/langlv')} />
         <GoRow title="로그인 계정" value={loginName ? `${loginName} 연결됨` : ''} onPress={() => go('/me/settings/login')} />
       </Sec>
@@ -129,7 +130,7 @@ export default function SettingsScreen() {
         onClose={() => setSheet(null)}
         title="로그아웃할까요?"
         footer={
-          <View style={styles.flex}>
+          <View>
             <Button
               label="로그아웃"
               wide
@@ -214,7 +215,7 @@ function NickSheet({ open, onClose, name, bio }: { open: boolean; onClose: () =>
       onClose={onClose}
       title="닉네임 · 한 줄 소개"
       footer={
-        <View style={styles.flex}>
+        <View>
           <Button
             label="저장하기"
             wide
@@ -259,8 +260,9 @@ function BranchSheet({ open, onClose, current }: { open: boolean; onClose: () =>
       open={open}
       onClose={onClose}
       title="내 지점"
+      tall
       footer={
-        <View style={styles.flex}>
+        <View>
           <Button
             label="저장하기"
             wide
@@ -271,34 +273,13 @@ function BranchSheet({ open, onClose, current }: { open: boolean; onClose: () =>
               }
               updateSettings({ branches: pick });
               onClose();
-              showToast(`내 지점: ${pick.join(' · ')} · 매니저가 확인하면 바뀌어요`);
+              showToast(`내 지점: ${pick.map(withJeom).join(' · ')} · 매니저가 확인하면 바뀌어요`);
             }}
           />
         </View>
       }>
       <PText style={styles.ds}>두 지점을 다니면 둘 다 골라요. 지점 변경은 다니는 지점 매니저가 확인해요.</PText>
-      {BRANCH_REGIONS.map((r) => (
-        <View key={r}>
-          <PText style={styles.rgl}>{r}</PText>
-          {BRANCHES.filter((b) => b[1] === r).map(([b]) => {
-            const on = pick.includes(b);
-            return (
-              <Pressable
-                key={b}
-                onPress={() => {
-                  sfx('tap');
-                  setPick(on ? pick.filter((x) => x !== b) : [...pick, b].slice(-2));
-                }}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: on }}
-                style={styles.chk}>
-                <View style={[styles.bx, on && styles.bxOn]}>{on ? <PText style={styles.bxMark}>✓</PText> : null}</View>
-                <PText style={styles.chkText}>{b}</PText>
-              </Pressable>
-            );
-          })}
-        </View>
-      ))}
+      <BranchMultiPicker selected={pick} onChange={setPick} max={2} mine={current} />
     </Sheet>
   );
 }
@@ -325,10 +306,4 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },
   inputGrow: { paddingVertical: 13, lineHeight: 22 },
   input: { minHeight: 52, paddingHorizontal: 16, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 15, color: Colors.ink },
-  rgl: { paddingTop: 12, paddingBottom: 4, fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  chk: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
-  bx: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
-  bxOn: { backgroundColor: Colors.yellow },
-  bxMark: { fontFamily: Font.body900, fontSize: 13, lineHeight: 16 },
-  chkText: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 21 },
 });

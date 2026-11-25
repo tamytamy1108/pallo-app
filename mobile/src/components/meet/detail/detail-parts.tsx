@@ -147,7 +147,8 @@ export function HiForm({ initial = '', placeholder, button, onSave, onCancel }: 
 }
 
 /** 멤버 목록 + 내 인사 (프로토타입 lgMemSec) */
-export function MemberSection({ title, members, club, onHi, onHiDel }: { title: string; members: Member[]; club?: boolean; onHi: (t: string) => void; onHiDel: () => void }) {
+/** ended: 끝난 모임 — 인사 남기기 칸 · '참여하면 인사를…' 안내를 숨겨요 */
+export function MemberSection({ title, members, club, ended, onHi, onHiDel }: { title: string; members: Member[]; club?: boolean; ended?: boolean; onHi: (t: string) => void; onHiDel: () => void }) {
   const [all, setAll] = useState(false);
   const [edit, setEdit] = useState(false);
   const mine = members.find((m) => m.me);
@@ -189,7 +190,7 @@ export function MemberSection({ title, members, club, onHi, onHiDel }: { title: 
           <PText style={styles.mallT}>멤버 {members.length}명 모두 보기 ›</PText>
         </Pressable>
       ) : null}
-      {mine ? (
+      {ended ? null : mine ? (
         mine.hi ? null : (
           <View style={{ marginTop: 8 }}>
             <HiForm placeholder={club ? '동아리 멤버들에게 인사 남기기' : '함께할 멤버들에게 인사 남기기'} button="남기기" onSave={onHi} />

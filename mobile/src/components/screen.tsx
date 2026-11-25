@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { PText } from '@/components/ui/text';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';

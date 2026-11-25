@@ -3,7 +3,8 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { ChallengeTab } from '@/components/challenge/challenge-tab';

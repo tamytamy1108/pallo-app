@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { apiErrorMessage } from '@/api/errors';
 import { bookShelfQuery, situationMapsQuery } from '@/api/queries';

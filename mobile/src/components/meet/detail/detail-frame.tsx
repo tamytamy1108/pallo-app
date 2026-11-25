@@ -207,7 +207,7 @@ function PosterStack({ id, slides, height, onOpen }: { id: string; slides: Slide
   return (
     <Pressable onPress={() => onOpen(i)} accessibilityRole="button" accessibilityLabel={`포스터 ${n}장 크게 보기`} style={[styles.poster, { height }]}>
       <FadeIn key={i}>
-        <Poster id={id} slide={slides[i]} height={height} wordSize={54} wordStyle={styles.pw} />
+        <Poster id={id} slide={slides[i]} height={height} wordSize={54} wordStyle={styles.pw} safeTop={56} />
       </FadeIn>
       {n > 1 ? <PText style={styles.ex}>{`${i + 1} / ${n}`}</PText> : null}
     </Pressable>

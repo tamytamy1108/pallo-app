@@ -3,7 +3,7 @@ import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 import Svg, { Path } from 'react-native-svg';
 
 import { apiErrorMessage } from '@/api/errors';

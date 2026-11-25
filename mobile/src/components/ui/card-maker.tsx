@@ -6,7 +6,9 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
-import { CARD_COLORS, cardDark, fitWordSize, newCard, type MadeCard } from '@/data/poster-colors';
+import { CARD_COLORS, CARD_DESIGNS, cardDark, fitWordSize, newCard, type CardDesign, type MadeCard } from '@/data/poster-colors';
+
+import { CardArt } from './card-art';
 
 /*
  * '카드 만들기' 칸: 카드 색 고르기 · 큰 글자 두 줄 · 미리보기.
@@ -16,9 +18,15 @@ import { CARD_COLORS, cardDark, fitWordSize, newCard, type MadeCard } from '@/da
  * 번개 · 동아리는 미리보기에 기본 포스터 모양을 그려 넣어요 (renderPreview).
  */
 
-/** 단색 카드 + 큰 글자 (챌린지 네모 칸 · 이벤트 제안 썸네일 · 기본 미리보기). width 를 주면 긴 글자를 칸에 맞게 줄여요 */
-export function ColorCard({ color, words, size: max, width, center = false, style }: { color: string; words: string[]; size: number; width?: number; center?: boolean; style?: StyleProp<ViewStyle> }) {
+/** 단색 카드 + 큰 글자 (디자인을 주면 그 디자인으로 그려요 — 이벤트 제안 썸네일 · 기본 미리보기). width 를 주면 긴 글자를 칸에 맞게 줄여요 */
+export function ColorCard({ color, words, size: max, width, center = false, style, design }: { color: string; words: string[]; size: number; width?: number; center?: boolean; style?: StyleProp<ViewStyle>; design?: CardDesign }) {
   const size = width ? fitWordSize(words, width, max) : max;
+  if (design)
+    return (
+      <View style={[styles.card, style]}>
+        <CardArt design={design} color={color} words={words} />
+      </View>
+    );
   return (
     <View style={[styles.card, { backgroundColor: color }, center ? styles.center : styles.corner, style]}>
       <PText style={[styles.words, { fontSize: size, lineHeight: size * 1.02, color: cardDark(color) ? Colors.yellow : Colors.ink, textAlign: center ? 'center' : 'left' }]}>{words.join('\n')}</PText>
@@ -58,6 +66,12 @@ export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor
     onChange(value ? null : newCard(defaultColor));
   };
   const setWord = (i: number, t: string) => card && onChange({ ...card, words: card.words.map((w, k) => (k === i ? clean(t) : w)) });
+  const pickDesign = (design: CardDesign) => {
+    if (!card || (card.design ?? 'circle') === design) return;
+    sfx('pick');
+    haptic('select');
+    onChange({ ...card, design });
+  };
   const pick = (color: string) => {
     if (!card || card.color === color) return;
     sfx('pick');
@@ -92,7 +106,7 @@ export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor
         <>
           <View style={styles.row}>
             <View style={[styles.pv, { width: pw, height: ph, borderRadius: square ? 16 : 14 }, !typed.length && styles.ghost]}>
-              {renderPreview ? renderPreview(card, words, pw, ph) : <ColorCard color={card.color} words={words} size={square ? 18 : 26} width={pw} center={square} style={StyleSheet.absoluteFill} />}
+              {renderPreview ? renderPreview(card, words, pw, ph) : <CardArt design={card.design ?? 'circle'} color={card.color} words={words} />}
             </View>
             <View style={[styles.ins, { height: ph }]}>
               {[0, 1].map((i) => (
@@ -110,6 +124,21 @@ export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor
               ))}
             </View>
           </View>
+          <PText style={styles.sub}>디자인</PText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.designs}>
+            {CARD_DESIGNS.map((d) => {
+              const sel = d.key === (card.design ?? 'circle');
+              return (
+                <Pressable key={d.key} onPress={() => pickDesign(d.key)} accessibilityRole="button" accessibilityState={{ selected: sel }} accessibilityLabel={`카드 디자인 ${d.name}`} style={styles.des}>
+                  <View style={[styles.desCard, sel && styles.desOn]}>
+                    <CardArt design={d.key} color={card.color} words={words} />
+                  </View>
+                  <PText style={[styles.desT, sel && styles.desTOn]}>{d.name}</PText>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <PText style={styles.sub}>색</PText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colors}>
             {CARD_COLORS.map((c) => {
               const sel = c.hex === card.color;
@@ -152,12 +181,20 @@ const styles = StyleSheet.create({
   pv: { overflow: 'hidden', borderWidth: 2, borderColor: Colors.ink },
   // 문구 칸 두 개를 미리보기 카드 높이 안에서 가운데로 (카드와 위아래가 맞게)
   ins: { flex: 1, gap: 8, justifyContent: 'center' },
-  in: { height: 40, borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
+  // Android: 기본 위아래 여백 · 글꼴 여백 때문에 40 칸 안에서 글자가 위로 잘려 보여서 0 으로 · 가운데 정렬 (TextField 와 같게)
+  in: { height: 40, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
   ghost: { opacity: 0.45 },
   list: { gap: 6, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
   listL: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   hint: { marginTop: -2, fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   colors: { gap: 8, paddingVertical: 2, paddingRight: 4 },
+  sub: { marginBottom: -4, fontFamily: Font.body900, fontSize: 12, lineHeight: 17 },
+  designs: { gap: 8, paddingVertical: 3, paddingRight: 4 },
+  des: { alignItems: 'center', gap: 4 },
+  desCard: { width: 56, height: 70, borderRadius: 10, borderWidth: 1.5, borderColor: 'rgba(30,26,43,0.35)', overflow: 'hidden' },
+  desOn: { borderWidth: 3, borderColor: Colors.ink },
+  desT: { fontFamily: Font.body700, fontSize: 10.5, lineHeight: 14, color: Colors.inkSub },
+  desTOn: { fontFamily: Font.body900, color: Colors.ink },
   dot: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(30,26,43,0.25)', alignItems: 'center', justifyContent: 'center' },
   dotOn: { borderWidth: 2.5, borderColor: Colors.ink },
 });

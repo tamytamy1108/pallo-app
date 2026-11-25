@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
-import { SafeAreaInsetsContext, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
@@ -52,7 +53,7 @@ export default function EventScreen() {
           </PText>
         </View>
         <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">
-          <BranchSelect value={branch} onChange={setBranch} />
+          <BranchSelect value={branch} onChange={setBranch} title="어느 지점 이벤트를 볼까요?" />
           <View style={styles.sep} />
           {EVENT_FILTERS.map(([k, l]) => {
             const on = kind === k;

@@ -9,6 +9,8 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, CLUB_ACT, CLUB_CATS, type Club, type ClubCat } from '@/data/meet';
 import { ChipScroll } from '@/components/ui/chip-scroll';
+import { CardArt } from '@/components/ui/card-art';
+import type { CardDesign } from '@/data/poster-colors';
 
 import { Icon, type IconName } from './icons';
 import { useMeetStore } from './meet-store';
@@ -16,9 +18,15 @@ import { clubCat, clubDesc, clubX } from './model';
 import { isDarkBg, posterSlides } from './poster';
 
 /** 동아리 목록 썸네일 (64 · 포스터 첫 줄만 · 사진이면 사진) — 카드 만들기 미리보기도 이걸 써요 */
-export function ClubThumb({ words, bg, uri }: { words: string[]; bg: string; uri?: string }) {
+export function ClubThumb({ words, bg, uri, design }: { words: string[]; bg: string; uri?: string; /** 만든 카드면 그 디자인 */ design?: CardDesign }) {
   const w0 = words[0] ?? '';
   const fs = w0.length <= 4 ? 13 : w0.length <= 6 ? 10.5 : 8.5;
+  if (design && !uri)
+    return (
+      <View style={styles.th}>
+        <CardArt design={design} color={bg} words={[w0]} />
+      </View>
+    );
   return (
     <View style={[styles.th, { backgroundColor: bg }]}>
       {uri ? <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
@@ -28,14 +36,15 @@ export function ClubThumb({ words, bg, uri }: { words: string[]; bg: string; uri
 }
 
 /** 동아리 한 줄 (프로토타입 lgClubRow · .lg-cr): 포스터 썸네일 · 이름 · 한 줄 소개 · 카테고리 · 지점 · 멤버 수 · 최근 대화 */
-export function ClubRow({ c, first }: { c: Club; first?: boolean }) {
+/** onOpen: 시트 안 등에서 열 때 (안 주면 바로 상세로) */
+export function ClubRow({ c, first, onOpen }: { c: Club; first?: boolean; onOpen?: () => void }) {
   const inC = useMeetStore((s) => s.club[c.id] === 'in');
-  const { words, bg, uri } = posterSlides(c.id, true, c.posters, c.card)[0];
+  const { words, bg, uri, made, design } = posterSlides(c.id, true, c.posters, c.card)[0];
   const x = clubX(c);
   const cat = clubCat(c);
   return (
-    <Pressable onPress={() => router.push(`/club/${c.id}`)} accessibilityRole="button" accessibilityLabel={`${c.name} 자세히 보기`} style={({ pressed }) => [styles.row, !first && styles.rowLine, pressed && { opacity: 0.7 }]}>
-      <ClubThumb words={words} bg={bg} uri={uri} />
+    <Pressable onPress={onOpen ?? (() => router.push(`/club/${c.id}`))} accessibilityRole="button" accessibilityLabel={`${c.name} 자세히 보기`} style={({ pressed }) => [styles.row, !first && styles.rowLine, pressed && { opacity: 0.7 }]}>
+      <ClubThumb words={words} bg={bg} uri={uri} design={made ? (design ?? 'circle') : undefined} />
       <View style={styles.tx}>
         <View style={styles.tRow}>
           <PText numberOfLines={1} style={styles.t}>

@@ -1,7 +1,7 @@
 import * as Tts from 'expo-speech';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { LessonTop } from '@/components/lesson/lesson-top';
 import { Peek } from '@/components/lesson/peek';

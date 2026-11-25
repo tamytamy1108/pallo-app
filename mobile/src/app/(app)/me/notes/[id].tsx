@@ -214,7 +214,7 @@ function ThanksSheet({ n, open, onClose }: { n: ProNote; open: boolean; onClose:
       onClose={onClose}
       title={`${n.pro} 프로님께 감사 인사`}
       footer={
-        <View style={styles.flex}>
+        <View>
           <Button label="감사 인사 보내기" wide onPress={send} />
         </View>
       }>

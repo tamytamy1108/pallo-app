@@ -62,7 +62,7 @@ const bulletize = (t: string) =>
     .map((l) => (!l.trim() || l.startsWith('• ') ? l : `• ${l.replace(/^\s*[•·\-*]\s*/, '')}`))
     .join('\n');
 /** 만든 카드 → createDaily 값 (문구 · 카드 색) */
-const cardOf = (c?: MadeCard) => ({ pw: c ? c.words.map((w) => w.trim()).filter(Boolean) : [], pbg: c?.color });
+const cardOf = (c?: MadeCard) => ({ pw: c ? c.words.map((w) => w.trim()).filter(Boolean) : [], pbg: c?.color, pdes: c?.design });
 /** 카드 문구 칸: 영어 대문자 · 숫자 · 몇 가지 기호만 */
 const cleanPw = (t: string) => t.toUpperCase().replace(/[^A-Z0-9 &:!'’.-]/g, '');
 
@@ -146,6 +146,10 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
         }
         if (!name.trim()) {
           showToast('챌린지 이름을 적어 주세요');
+          return;
+        }
+        if (!guide.replace(/[•\s]/g, '')) {
+          showToast('챌린지 소개를 적어 주세요');
           return;
         }
         if (missingWords(usedCard(card, covers.length > 0, chPbgOf(cat)))) {
@@ -264,7 +268,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <PText style={styles.wayd}>{photo ? '사진을 1장 이상 올려야 체크돼요. 댓글은 함께 남겨요.' : '그날 댓글 한 줄만 남기면 체크돼요.'}</PText>
           </View>
           <View style={styles.fl}>
-            <FieldLabel>챌린지 소개 · 한 줄에 하나씩 · 선택</FieldLabel>
+            <FieldLabel req>챌린지 소개 · 한 줄에 하나씩</FieldLabel>
             <Field multiline value={guide} onChangeText={(t) => setGuide(bulletize(t))} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="챌린지 소개" />
           </View>
           <View style={styles.fl}>

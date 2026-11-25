@@ -13,7 +13,7 @@ import type { TrialDraft } from '@/state/trial-booking';
 import { ONB_LANGS, WHY_REASONS } from './app-parts';
 import { BranchSheet } from './branch-sheet';
 import { Chip, Chips, Field, FieldLabel, NextButton, OnbInput, OnbScreen, PickField, useRequired } from './parts';
-import { TrialSlots, TrialWait, trialDayTiles, trialSlots } from './trial-slots';
+import { isTrialDay, TrialSlots, TrialWait, trialDayTiles, trialSlots } from './trial-slots';
 
 /** onboarding: 가입 4/4 (진행 바 · 뒤로는 앞 단계) · app: 앱 안 전체 화면 (진행 바 없이 ‹ 는 닫기) */
 export type TrialFormMode = 'onboarding' | 'app';
@@ -33,8 +33,8 @@ export function TrialForm({ mode, value: v, onChange, onSubmit, onBack }: { mode
   const [days] = useState(trialDayTiles);
 
   const lang = ONB_LANGS.find((l) => l.key === v.langs[0]) ?? ONB_LANGS[0];
-  // 날짜는 고른 게 없으면 첫날(내일)을 보여 줘요. 시간은 직접 골라야 해요
-  const day = days.some((d) => d.key === v.trialDay) ? v.trialDay : days[0].key;
+  // 날짜는 고른 게 없으면 첫날(내일)을 보여 줘요 · 2주 줄 밖이어도 달력에서 고른 날(두 달 안)이면 그대로. 시간은 직접 골라야 해요
+  const day = days.some((d) => d.key === v.trialDay) || isTrialDay(v.trialDay) ? v.trialDay : days[0].key;
   const slots = v.branch ? trialSlots(v.branch, day, lang.key) : [];
   const time = slots.some((s) => s.time === v.trialTime && !s.full) ? v.trialTime : '';
 
