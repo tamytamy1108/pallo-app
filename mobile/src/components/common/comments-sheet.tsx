@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View, type ScrollViewInstance, type TextInputIn
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
+import { openProfileFromSheet, ProfileTap } from '@/components/common/profile-tap';
 import { LgIcon } from '@/components/common/icons';
 import { MemberFace } from '@/components/common/member-face';
 import { keepAll, SheetButton, SheetDesc } from '@/components/common/sheet-parts';
@@ -56,6 +57,8 @@ export type CommentsSheetProps = {
    * 올린 사람에게만 보이는 '답장 보내기'는 StoryReplySheet 를 따로 써요.
    */
   story?: { who: string; mine?: boolean };
+  /** 비었을 때 두 줄 (기본 '아직 댓글이 없어요' · '첫 댓글을 남겨 보세요.') — 후기 창 등 */
+  empty?: [string, string];
 };
 
 type Mode = { t: 'reply' | 'edit'; id: string } | null;
@@ -69,7 +72,7 @@ const newId = () => `c-new-${Date.now()}-${++seq}`;
  * 내 댓글 수정 · 삭제(되돌리기) · 아래 고정 입력칸. 비회원은 답글 · 보내기에서 체험 안내 시트가 떠요 (좋아요는 그대로).
  * 담당: 공통 부품. props 는 바꾸지 않아요(늘리기만).
  */
-export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글', author, placeholder, head, onChange, story }: CommentsSheetProps) {
+export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글', author, placeholder, head, onChange, story, empty = ['아직 댓글이 없어요', '첫 댓글을 남겨 보세요.'] }: CommentsSheetProps) {
   const me = useMe();
   const [own, setOwn] = useState<Comment[]>(comments);
   const [wasOpen, setWasOpen] = useState(open);
@@ -187,6 +190,7 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
         {list.length ? (
           list.map((c) => (
             <CommentRow
+              onWho={(n) => openProfileFromSheet(n, onClose)}
               key={c.id}
               c={c}
               mine={isMine(c)}
@@ -203,8 +207,8 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
           ))
         ) : head ? null : (
           <View style={styles.cs0}>
-            <PText style={styles.cs0b}>아직 댓글이 없어요</PText>
-            <PText style={styles.cs0s}>첫 댓글을 남겨 보세요.</PText>
+            <PText style={styles.cs0b}>{empty[0]}</PText>
+            <PText style={styles.cs0s}>{empty[1]}</PText>
           </View>
         )}
       </ScrollView>
@@ -256,6 +260,8 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
 }
 
 type RowProps = {
+  /** 얼굴을 누르면 시트를 닫고 그 사람 프로필 */
+  onWho: (name: string) => void;
   c: Comment;
   mine: boolean;
   isAuthor: boolean;
@@ -270,11 +276,13 @@ type RowProps = {
 };
 
 /** 댓글 한 줄 (.cr) — 답글은 같은 모양을 작게 (.cr.rp) */
-function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onLike, onReply, onEdit, onDelete }: RowProps) {
+function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onLike, onReply, onEdit, onDelete, onWho }: RowProps) {
   const reps = c.replies ?? [];
   return (
     <View style={styles.cr}>
-      <MemberFace name={c.author} me={mine} size={38} />
+      <ProfileTap name={c.author} onPress={() => onWho(c.author)}>
+        <MemberFace name={c.author} me={mine} size={38} />
+      </ProfileTap>
       <View style={styles.cb}>
         <Head c={c} isAuthor={isAuthor} />
         <PText style={styles.ct}>{c.text}</PText>
@@ -285,7 +293,7 @@ function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onL
         </View>
         {reps.length ? (
           open ? (
-            reps.map((r) => <ReplyRow key={r.id} r={r} mine={r.mine || r.author === meName} isAuthor={r.author === authorName} onLike={onLike} />)
+            reps.map((r) => <ReplyRow key={r.id} r={r} mine={r.mine || r.author === meName} isAuthor={r.author === authorName} onLike={onLike} onWho={onWho} />)
           ) : (
             <Pressable
               onPress={() => {
@@ -306,10 +314,12 @@ function CommentRow({ c, mine, isAuthor, authorName, meName, open, onExpand, onL
   );
 }
 
-function ReplyRow({ r, mine, isAuthor, onLike }: { r: Comment; mine: boolean; isAuthor: boolean; onLike: (id: string) => void }) {
+function ReplyRow({ r, mine, isAuthor, onLike, onWho }: { r: Comment; mine: boolean; isAuthor: boolean; onLike: (id: string) => void; onWho: (name: string) => void }) {
   return (
     <View style={[styles.cr, styles.rp]}>
-      <MemberFace name={r.author} me={mine} size={28} />
+      <ProfileTap name={r.author} onPress={() => onWho(r.author)}>
+        <MemberFace name={r.author} me={mine} size={28} />
+      </ProfileTap>
       <View style={styles.cb}>
         <Head c={r} isAuthor={isAuthor} />
         <PText style={styles.ct}>{r.text}</PText>

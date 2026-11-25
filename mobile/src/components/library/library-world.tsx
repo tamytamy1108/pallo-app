@@ -1,13 +1,15 @@
+import { useIsFocused } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { Raised } from '@/components/ui/raised';
 import { Colors } from '@/constants/theme';
+import { noteTouch, quietFor, useTabsFront } from '@/lib/quiet';
 
 import type { WorldSC } from './world/scenes';
 import { INTRO_MS } from './world/stage';
-import { liteWorld } from './world/world-support';
+import { liteWorld, warmAllInBackground } from './world/world-support';
 import { WorldView, type WorldCtl } from './world/world-view';
 
 /** 지도 칸에 올릴 지도 하나. slot: 자리 이름 (스터디 맵 · 상황 맵마다 하나) · order: 상황 맵 순서 (스터디 맵은 -1) */
@@ -17,8 +19,11 @@ type Role = 'top' | 'under' | 'idle';
 
 const keyOf = (w: LibWorld) => `${w.slot}|${w.id}|${JSON.stringify(w.sc)}|${w.sc.sel ?? ''}`;
 
-/** 아직 안 만든 지도로 바꾸면: 이만큼(ms) 안에 그려지면 돌며 들어오고, 넘으면 그 지도의 사진판부터 띄워요 */
-const SWAP_WAIT_MS = 1200;
+/**
+ * 아직 안 만든 지도로 바꾸면: 이만큼(ms) 안에 그려지면 돌며 들어오고, 넘으면 그 지도의 사진판부터 띄워요.
+ * 폰에서 한 장 만드는 데 0.4~1.3초라, 길게 기다리면 누른 뒤 앞 지도가 그대로 멈춰 있는 것처럼 보였어요 → 짧게 기다리고 사진판으로 바로 바꿔요
+ */
+const SWAP_WAIT_MS = 300;
 /**
  * 미리 만들기: 지금 지도가 다 뜨고(인트로 · 서서히 뜨기 끝) 하나씩 이어서 — 한 장 만드는 동안 JS 가 0.3~1.3초 멈춰요.
  * 그사이 이만큼(ms) 쉬어요 (누르기 · 화면 갱신이 끼어들 틈)
@@ -31,11 +36,8 @@ const LITE_WARM = 2;
  * 다음에 누를 것 같은 첫 장(상황 맵 탭을 누르면 뜰 맵)만 바로 만들고, 나머지는 마지막 터치 · 스크롤 뒤 이만큼(ms) 조용할 때 하나씩.
  */
 const IDLE_MS = 1800;
-let lastTouch = 0;
 /** 라이브러리 화면이 터치 · 스크롤 때마다 불러요 (미리 만들기가 끼어들지 않게) */
-export const noteLibTouch = () => {
-  lastTouch = Date.now();
-};
+export const noteLibTouch = noteTouch;
 
 /** 새 지도가 뜨는 시간 (프로토타입 m3Fade 0.4초 → 인트로를 빠르게 하면서 함께 줄였어요) */
 const FADE = { duration: 200, easing: Easing.out(Easing.ease) };
@@ -47,8 +49,7 @@ const FADE = { duration: 200, easing: Easing.out(Easing.ease) };
  * 미리 만든 지도로 바꾸면 만들 것 없이 바로 돌며 들어와요. 아직 안 만든 지도면 그려질 때까지 앞 지도가 그대로 있다가
  * 그려지면 돌며 들어오고, SWAP_WAIT_MS 를 넘으면 사진판부터 떠요. 메모리가 적은 폰(liteWorld)은 LITE_WARM 장만 미리 만들어요.
  * 새 지도가 돌며 들어오는 동안 아래 지도는 그리기를 멈춰요 (한 프레임에 한 장만 그려서 더 매끄럽게).
- * 미리 만들 지도가 남아 있는 동안 보이는 지도는 첫 장면 그대로 멈춰 있다가 다 만들면 움직여요 —
- * 만드는 사이사이 움직이면 분수 · 꽃잎이 뚝뚝 끊겨 보여서요 (처음 라이브러리에 들어올 때 2초 남짓).
+ * 다른 지도를 만드는 그 순간에만 보이는 지도를 멈춰 둬요 (만드는 동안 JS 가 멈춰서 움직임이 끊겨 보여요).
  * 오른쪽 맵으로 가면 시계 방향, 왼쪽이면 반대로 돌며 들어와요.
  */
 export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { world: LibWorld; warm?: LibWorld[]; onOpen: (no: number) => void; visible?: boolean }) {
@@ -101,17 +102,24 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
 
   // 미리 만들기: 하나씩, 바꾸는 중이 아닐 때만. warm 에 없는 숨은 지도(진도가 바뀐 옛 지도 · 다른 언어)는 치워요
   const [idleTick, setIdleTick] = useState(0);
+  // 다른 탭에 있을 때도(탭 바가 라이브러리를 미리 열어 둬요) 웹은 화면을 안 만질 때 이어서 만들어요 — 들어오면 이미 다 만들어져 있게.
+  // 폰은 한 장에 JS 가 멈춰서 다른 탭에서는 보이는 지도만 (warmAllInBackground)
+  // 레슨 · 장면 같은 화면이 위에 있으면 멈췄다가 돌아오면 이어서 — 만드는 동안 JS 가 멈춰서 그 화면 누르기가 씹혀요
+  const focused = useIsFocused();
+  const tabsFront = useTabsFront();
   useEffect(() => {
-    if (under || warming || !drawn.has(top)) return;
+    if (!(focused || (tabsFront && warmAllInBackground())) || under || warming || !drawn.has(top)) return;
     const keys = new Set(warmSig.split('\n'));
     const next = warmNow.current.find((w) => !layers.some((l) => l.key === keyOf(w)));
     const stale = layers.some((l) => l.key !== top && !keys.has(l.key));
     if (!next && !stale) return;
     // 첫 장(다음에 누를 것 같은 지도)은 바로, 나머지는 화면을 안 만질 때만 (만지는 중이면 조용해질 때 다시 봐요)
     const first = !!next && keyOf(next) === keyOf(warmNow.current[0] ?? next);
-    const quietFor = Date.now() - lastTouch;
-    if (next && !first && quietFor < IDLE_MS) {
-      const r = setTimeout(() => setIdleTick((n) => n + 1), IDLE_MS - quietFor + 30);
+    // 다른 탭에 있을 때는 첫 장도 조용할 때만 (그 탭 누르기가 씹히지 않게)
+    const quiet = quietFor();
+    // 폰은 첫 장도 조용할 때만 — 들어오자마자 만들면 보는 중에 지도가 멈칫해요
+    if (next && (!first || !focused || !warmAllInBackground()) && quiet < IDLE_MS) {
+      const r = setTimeout(() => setIdleTick((n) => n + 1), IDLE_MS - quiet + 30);
       return () => clearTimeout(r);
     }
     const t = setTimeout(() => {
@@ -125,10 +133,11 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
       }
     }, WARM_GAP_MS);
     return () => clearTimeout(t);
-  }, [under, warming, drawn, top, layers, warmSig, idleTick]);
+  }, [focused, tabsFront, under, warming, drawn, top, layers, warmSig, idleTick]);
 
-  // 아직 만들 지도가 있어요 (지금 만드는 중이거나 · 다음 차례) → 보이는 지도는 멈춰 둬요
-  const pending = !!warming || (drawn.has(top) && want.some((w) => !layers.some((l) => l.key === keyOf(w))));
+  // 지금 다른 지도를 만드는 중이에요 → 그동안만 보이는 지도를 멈춰 둬요 (만드는 동안 JS 가 멈춰서 움직임이 뚝뚝 끊겨 보여요).
+  // 전에는 만들 지도가 남아 있기만 해도 멈춰서, 화면을 만지는 동안(미리 만들기가 미뤄지는 동안) 지도가 계속 멈춰 있었어요
+  const pending = !!warming;
   const wasPending = useRef(false);
   useEffect(() => {
     if (__DEV__ && wasPending.current !== pending) console.log(pending ? '[lib] 미리 만드는 동안 지도를 멈춰요' : '[lib] 미리 만들기 끝 · 지도가 움직여요');

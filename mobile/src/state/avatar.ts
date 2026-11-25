@@ -94,3 +94,8 @@ export function buyAndSave(d: Avatar): { ok: true; cost: number; need: string[] 
   store.set({ saved: cloneAvatar(d), own: [...own, ...add] });
   return { ok: true, cost, need };
 }
+
+/** 서버가 돌려준 모습 · 가진 것으로 바꿔요 (api/avatar.ts — PUT /me/avatar · POST /me/avatar/purchase 응답) */
+export function applyAvatarState(s: { saved: Avatar; own: readonly string[] }) {
+  store.set({ saved: cloneAvatar(s.saved), own: [...new Set([...AV_OWN0, ...s.own])] });
+}

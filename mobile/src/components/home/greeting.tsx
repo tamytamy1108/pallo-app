@@ -4,20 +4,18 @@ import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { runFont, SCRIPT_RUNS } from '@/lib/script-fonts';
 
 const BASE = 30;
 const MIN = 20;
-const HANGUL = /[ㄱ-ㆎ가-힣]/;
-const JAPANESE = /[぀-ヿ㐀-鿿ｦ-ﾟ]/;
-const RUNS = /([ㄱ-ㆎ가-힣]+|[぀-ヿ㐀-鿿ｦ-ﾟ]+)/;
 
 /** 닉네임을 글자 종류별로 나눠 글꼴을 붙여요: 영문 · 숫자 Unbounded, 한글 Black Han Sans, 일본어 Dela Gothic One */
 function NameRuns({ name, size }: { name: string; size: number }) {
   return (
     <Text style={{ fontSize: size, letterSpacing: -size / 30 }}>
-      {name.split(RUNS).map((part, i) => {
+      {name.split(SCRIPT_RUNS).map((part, i) => {
         if (!part) return null;
-        const font = HANGUL.test(part) ? Font.nameKo : JAPANESE.test(part) ? Font.nameJa : Font.display;
+        const font = runFont(part, Font.display);
         const ls = font === Font.display ? -size / 30 : -size / 60;
         return (
           <Text key={i} style={{ fontFamily: font, letterSpacing: ls }}>

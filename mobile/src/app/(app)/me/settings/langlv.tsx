@@ -90,7 +90,7 @@ export default function LangLevelScreen() {
         onClose={() => setSheet(null)}
         title="레벨 변경 요청"
         footer={
-          <View style={styles.flex}>
+          <View>
             <Button
               label="요청하기"
               wide

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { TrialBookingSheet } from '@/components/common/trial-booking';
 import { memberGate, openTrial } from '@/components/common/trial-guide';

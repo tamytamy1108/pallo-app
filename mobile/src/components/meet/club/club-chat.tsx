@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { meetRoleKind, RoleTag } from '@/components/common/role-tag';
 import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { keepAll } from '@/components/common/sheet-parts';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -59,14 +61,17 @@ export function ClubChat({ c, inC, myName, staff }: { c: Club; inC: boolean; myN
         </View>
       );
     const r = peek ? (m.host ? '호스트' : '') : role(m.n, m.host);
+    const kind = meetRoleKind(r);
     return (
       <View key={i} style={styles.msg}>
-        <CrownFace name={m.n ?? ''} size={32} role={peek ? '' : r} />
+        <ProfileTap name={m.n ?? ''}>
+          <CrownFace name={m.n ?? ''} size={32} role={peek ? '' : r} />
+        </ProfileTap>
         <View style={{ flexShrink: 1 }}>
-          <PText style={styles.b}>
-            {m.n}
-            {r ? ` · ${r}` : ''}
-          </PText>
+          <View style={styles.who}>
+            <PText style={styles.b}>{m.n}</PText>
+            {kind ? <RoleTag kind={kind} /> : null}
+          </View>
           <View style={styles.bb}>
             <PText style={[styles.p, keepAll]}>{m.x}</PText>
             <PText style={styles.time}>{m.t}</PText>
@@ -121,6 +126,7 @@ const styles = StyleSheet.create({
   sys: { alignSelf: 'center', fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   msg: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, maxWidth: '86%' },
   me: { alignSelf: 'flex-end' },
+  who: { flexDirection: 'row', alignItems: 'center' },
   b: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   bb: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 3 },
   p: { flexShrink: 1, fontFamily: Font.body600, fontSize: 14, lineHeight: 20.3, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: Colors.line, borderRadius: 16, borderTopLeftRadius: 4, backgroundColor: Colors.white, overflow: 'hidden' },

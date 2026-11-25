@@ -1,0 +1,153 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>역할별 앱 시안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Noto+Sans+KR:wght@600;700;800;900&display=swap">
+<style>
+:root{--cream:#FBF6EA;--ink:#1E1A2B;--sub:#5A5366;--line:#E3DCCB;--pink:#E0457B;--fd:'Unbounded','Noto Sans KR',sans-serif;--fb:'Noto Sans KR',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#E7E0CF;font-family:var(--fb);color:var(--ink);word-break:keep-all}
+.wrap{padding:22px 26px 80px;max-width:1600px}
+h1{font-family:var(--fd);font-size:21px;margin:0 0 6px;letter-spacing:-.5px}
+.lead{font-size:13.5px;font-weight:700;color:var(--sub);margin:0 0 6px;line-height:1.65;max-width:1000px}
+.lead i{font-style:normal;outline:2.5px dashed var(--pink);outline-offset:1px;border-radius:5px;padding:0 4px;color:var(--ink)}
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;padding:12px 0;background:#E7E0CF}
+.tabs button{font:900 13.5px var(--fb);height:40px;padding:0 16px;border-radius:20px;border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;box-shadow:2px 3px 0 var(--ink)}
+.tabs button.on{background:var(--ink);color:#fff}
+.pg{display:none}.pg.on{display:block}
+.intro{font-size:13px;font-weight:700;color:var(--sub);margin:4px 0 14px;line-height:1.6;max-width:1000px}
+.sec{font-size:15px;font-weight:900;margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+.row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.col{width:250px}
+.who{display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:13px;border:2px solid var(--ink);background:#fff;font-size:12.5px;font-weight:900;margin-bottom:8px}
+.who.m{background:var(--ink);color:#fff}
+.shot{position:relative;width:250px;border:2.5px solid var(--ink);border-radius:30px;overflow:hidden;box-shadow:4px 5px 0 var(--ink);background:var(--cream)}
+.shot img{display:block;width:100%;height:auto}
+.ovl{position:absolute;left:0;right:0;bottom:0;background-repeat:no-repeat;background-size:100% auto;background-position:center bottom}
+.dim{position:absolute;inset:0;background:rgba(30,26,43,.42)}
+.same{width:250px;aspect-ratio:390/844;border:2.5px dashed #BFB59F;border-radius:30px;display:grid;place-items:center;text-align:center;font-size:13px;font-weight:800;color:#8D8574;padding:20px;line-height:1.6}
+ul.ch{margin:10px 0 0;padding:0;list-style:none}
+ul.ch li{font-size:12px;font-weight:700;line-height:1.5;padding:3px 0 3px 14px;position:relative}
+ul.ch li:before{content:"";position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--pink)}
+ul.ch li.q{color:var(--sub)}ul.ch li.q:before{background:#E0A21E}
+.ovw{overflow-x:auto;background:#fff;border:2px solid var(--ink);border-radius:16px;box-shadow:3px 4px 0 var(--ink)}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:12.5px}
+th,td{padding:9px 11px;text-align:left;vertical-align:top;border-bottom:1.5px solid var(--line);line-height:1.5;font-weight:700}
+thead th{background:var(--ink);color:#fff;font-weight:900;white-space:nowrap}
+tbody th{background:var(--cream);font-weight:900;white-space:nowrap;width:120px}
+td.eq{color:#B3AA98;font-weight:900}
+tr:last-child th,tr:last-child td{border-bottom:0}
+.note{font-size:12px;font-weight:700;color:var(--sub);margin-top:10px;line-height:1.6;max-width:1000px}
+</style></head><body>
+<div class="wrap">
+<h1>역할별 앱 시안 · 지금 앱 화면 그대로</h1>
+<p class="lead">실제 앱(Expo 웹, 390×844)을 그대로 찍은 화면이에요. <b>디자인 · 부품은 그대로</b> 두고, 역할마다 <b>달라지는 정보만</b> 바꿨어요. 바뀐 곳은 <i>분홍 점선</i>이에요. 회원 화면이 기준이고, 같은 화면을 역할별로 나란히 놓았어요.</p>
+<div class="tabs" id="tabs"></div>
+<div id="pages"></div>
+</div>
+<script>
+const R = { m: '회원 (기준)', pro: '프로', staff: '스텝', host: '호스트', co: '코호스트' };
+const img = (f, o = {}) => `<div class="shot"><img src="assets/roles/${f}.jpg?v=5" alt="" loading="lazy" decoding="async">${o.sheet ? `<div class="dim"></div><div class="ovl" style="height:${o.sheet}%;background-image:url(assets/roles/${o.sheetImg}.jpg?v=3)"></div>` : ''}${o.tab ? `<div class="ovl" style="height:9.6%;background-image:url(assets/roles/tabbar-ops.jpg?v=3)"></div>` : ''}</div>`;
+const col = (r, body, ch = []) => `<div class="col"><div class="who${r === 'm' ? ' m' : ''}">${R[r]}</div>${body}${ch.length ? `<ul class="ch">${ch.map((c) => (c.startsWith('?') ? `<li class="q">${c.slice(1)}</li>` : `<li>${c}</li>`)).join('')}</ul>` : ''}</div>`;
+const same = (t = '회원과 같아요') => `<div class="same">${t}</div>`;
+const sec = (t) => `<div class="sec">${t}</div>`;
+
+const OV = [
+  ['하단 탭', '홈 · 라이브러리 · 라운지 · 이벤트 · 마이', '=', '=', '=', '='],
+  ['홈 출석 카드', '스터디 시각 · 사전 출석체크', '<b>세션</b> 시각 · <b>프로 출석 체크</b>', '<b>오늘 세션 · 출석 인원</b> · <b>QR 출석 코드 띄우기</b>', '=', '='],
+  ['출석 체크', '등록된 팀 세션만 · 멤버로', '<b>제약 없음</b> · QR을 찍으면 <b>프로로 / 멤버로</b> 골라요', '<b>제약 없음</b> · QR을 찍으면 <b>프로로 / 멤버로</b> 골라요', '=', '='],
+  ['마이 · 프로필', '지점 · 언어 Lv · 회원 · 연동됨 / 팔로잉 · 팔로워', '이름 옆 <b>PRO</b> · 지점 · 언어', '이름 옆 <b>STAFF</b> · 하남점 · 지점 관리자', '팔로워 옆 <b>운영 중 n</b>', '팔로워 옆 <b>운영 중 n</b>'],
+  ['마이 · 숫자 칸', '연속 학습 · 랭킹 · 모임 · 배지', '<b>이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요</b>', '=', '배지 → <b>호스트 점수 ★</b>', '='],
+  ['마이 · PRO\'S NOTE 카드', '받은 노트', '<b>쓰는 중인 내 노트</b> · 이어 쓰기 · 반에 보내기', '보여 주기 예시', '=', '='],
+  ['마이 · 내 스터디', '이용권 · 남은 횟수 · 팀 · 연기 버튼', '<b>내 수업</b> (이번 주 맡은 세션) · 내 일정 전체 보기', '보여 주기 예시', '=', '='],
+  ['마이 · 랭킹', '내 순위', '= (랭킹에 들어가요)', '= (랭킹에 들어가요)', '=', '='],
+  ['마이 · 내 활동 · 기타', '내 모임 · 찜 · 글 · 표현함 / 설정 · 고객센터', '=', '=', '+ <b>내가 연 모임</b>', '+ <b>함께 운영하는 모임</b>'],
+  ['다른 사람 프로필', '학습 언어 · 팔로잉 · 팔로워 + <b>운영 중 n</b> → 누르면 <b>운영 중 · 참여 중 · 참여 예정</b> 목록', '=', '=', '=', '='],
+  ['라운지 글 · 프로필 얼굴', '이름 옆 역할 글자 (지금 \'리더\')', '얼굴에 보라 <b>PALLO 스파크</b> + 이름 옆 <b>PRO</b>', '얼굴에 노랑 <b>집</b> + 이름 옆 <b>STAFF</b>', '그 모임 안에서 노랑 <b>왕관</b> + <b>HOST</b>', '그 모임 안에서 흰 <b>왕관</b> + <b>CO-HOST</b>'],
+  ['글 ⋯ 메뉴', '신고 · 차단', '+ <b>공지로 고정 · 글 숨기기</b>', '+ <b>공지로 고정 · 글 숨기기</b>', '=', '='],
+  ['동아리 화면', '가입 신청 버튼', '=', '자기 지점 모임은 호스트와 같음', '버튼 → <b>관리</b> · 가입 신청 n명 줄 · 관리 7가지', '버튼 → <b>관리</b> · 관리 4가지'],
+  ['PRO\'S NOTE', '받은 노트 읽기 · 고마워요 · 감사 인사', '<b>보낸 노트 목록 · 쓰기</b> · 항목 더하기 · 반에 보내기', '=', '=', '='],
+  ['알림', '세션 · 퀘스트 · 공지 · 댓글', '=', '= (연동 · 체험 처리는 전산 웹)', '=', '='],
+];
+
+const PAGES = [
+  { k: 'all', name: '한눈에', html: `<p class="intro">화면마다 무엇이 달라지는지 표로 모았어요. <b>=</b> 는 회원과 같아요. 굵은 글씨가 바뀌는 정보예요. 화면은 위 버튼에서 봐요.</p>
+    <div class="ovw"><table><thead><tr><th></th><th>${R.m}</th><th>${R.pro}</th><th>${R.staff} <small style="font-weight:700">지점 관리자 · 본사 운영자</small></th><th>${R.host}</th><th>${R.co}</th></tr></thead>
+    <tbody>${OV.map((r) => `<tr>${r.map((c, i) => (i === 0 ? `<th>${c}</th>` : `<td class="${c === '=' ? 'eq' : ''}">${c}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="note">마이의 '이용권 · 결제 내역' 줄은 모든 역할에서 뺐어요 (2026-11-25). 얼굴 오른쪽 아래 역할 표시(프로 = PALLO 스파크, 스텝 = 집)는 지금 동아리 화면의 왕관 자리 · 크기를 그대로 써요. 프로 · 스텝은 회원 화면을 '보여 주기 모드'로 써서, 신청 · 제출 버튼을 누르면 지금 앱의 토스트로 '보여 주기용이라 신청되지 않아요'가 떠요.</p>` },
+  { k: 'my', name: '마이', html: `<p class="intro">마이는 길어서 나눠 찍었어요. 역할마다 같은 부분끼리 옆에 놓았어요. 지점 안내 · 랭킹 · 배지는 모든 역할이 회원과 같아요 (프로 · 스텝도 랭킹에 들어가요).</p>
+    ${sec('① 프로필 · 숫자 칸 · PRO\'S NOTE')}<div class="row">
+      ${col('m', img('my-member-1'))}
+      ${col('pro', img('my-pro-1'), ['이름 옆 <b>PRO</b> 태그 (정한 디자인) · 아래 줄은 지점 · 가르치는 언어', '숫자 칸: 이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요', 'PRO\'S NOTE: 쓰는 중인 내 노트 · 이어 쓰기 · 반에 보내기 (보낸 노트는 \'모두 보기\'에서)', '?숫자 칸 아이콘은 지금 그대로예요 (바꿀지 정해요)'])}
+      ${col('staff', img('my-staff-1'), ['이름 옆 <b>STAFF</b> 태그 (정한 디자인) · 아래 줄은 하남점 · 지점 관리자', '숫자 칸 · PRO\'S NOTE는 회원과 같아요 (보여 주기 예시)'])}
+      ${col('host', img('my-host-1'), ['팔로워 옆 <b>2 운영 중</b> (누르면 운영 · 참여 모임 목록)', '숫자 칸 네 번째: 받은 배지 → <b>호스트 점수 ★4.8</b>'])}
+      ${col('co', img('my-co-1'), ['팔로워 옆 <b>1 운영 중</b> (누르면 운영 · 참여 모임 목록)'])}
+    </div>
+    ${sec('② 내 스터디')}<div class="row">
+      ${col('m', img('my-member-2'))}
+      ${col('pro', img('my-pro-2'), ['내 스터디 → <b>내 수업</b>: 이번 주 맡은 세션 수 · 언어별 · 내 반', '시간표 = 이번 주 맡은 세션', '연기 · 팀 · 지점 변경 버튼 자리 → <b>내 일정 전체 보기</b>: 이번 주 · 다음 주 맡은 세션 전체 목록 (보기만, 대강은 앱에서 안 해요)', '?세션 줄을 누르면 그 세션의 출석 명단 · 진도 · 반 공지가 열리게 할지 정해요 (프로는 운영 탭이 없어서)'])}
+      ${col('staff', img('my-staff-2'), ['같은 카드를 <b>보여 주기 예시</b>로 채워요 → 회원에게 연기 화면까지 보여 줄 수 있어요 (신청만 막힘)'])}
+      ${col('host', same())}${col('co', same())}
+    </div>
+    ${sec('③ 내 활동 · 기타')}<div class="row">
+      ${col('m', img('my-member-4'), ['이용권 · 결제 내역 줄은 뺐어요'])}
+      ${col('pro', same())}
+      ${col('staff', same())}
+      ${col('host', img('my-host-4'), ['내 활동 + <b>내가 연 모임 · 가입 신청 n</b>'])}
+      ${col('co', img('my-co-4'), ['내 활동 + <b>함께 운영하는 모임 · 가입 신청 n</b>'])}
+    </div>` },
+  { k: 'profile', name: '다른 사람 프로필', html: `<p class="intro">라운지 · 멤버 목록에서 다른 사람을 누르면 뜨는 프로필 시트예요. 학습 언어 · 팔로잉 · 팔로워는 그대로 두고, 팔로워 옆에 <b>운영 중</b> 숫자가 붙어요. 숫자를 누르면 지금 팔로워 목록 시트와 같은 시트에 <b>운영 중 · 참여 중 · 참여 예정</b> 모임이 떠요. 모든 사람의 프로필에 같아요 (예시: 호스트 소라를 회원이 볼 때).</p><div class="row">
+      ${col('m', img('profile-other-1'), ['팔로워 옆 <b>2 운영 중</b> (호스트 · 코호스트인 모임 수, 0이면 안 보여요)', '학습 언어 칸은 지금 그대로'])}
+      ${col('m', img('profile-meets'), ['숫자를 누르면: 팔로워 · 팔로잉 목록 시트와 같은 모양', '탭: <b>운영 중 · 참여 중 · 참여 예정</b> (동아리 · 번개 · 챌린지 · 이벤트)', '줄을 누르거나 <b>보기</b> → 그 모임 화면', '?왼쪽 동그라미는 모임 대표 사진으로 (지금은 예시 얼굴)'])}
+    </div>` },
+  { k: 'home', name: '홈', html: `<p class="intro">홈 출석 카드(클래퍼보드)는 모양 · 색 그대로 두고 칸 안 글자만 바뀌어요. 아래 스터디 맵은 그대로예요.</p><div class="row">
+      ${col('m', img('home-member'))}
+      ${col('pro', img('home-pro'), ['카드: 스터디 → <b>세션</b> 시각', '버튼: 사전 출석체크 → <b>프로 출석 체크</b> (테이블 QR → 프로스 노트가 바로 열려요)', '하단 탭은 회원과 같아요', '멤버로 참여하면 카드 · 출석이 회원과 똑같아요'])}
+      ${col('staff', img('home-staff'), ['카드: <b>오늘 세션 4개 · 출석 21/33</b>', '줄: READY → <b>하남점 현황</b>', '버튼: <b>QR 출석 코드 띄우기</b>',  '하단 탭: 이벤트 → <b>운영</b>'])}
+      ${col('host', same())}${col('co', same())}
+    </div>
+    ${sec('출석 체크할 때 고르기 (프로 · 스텝)')}<p class="intro">프로 · 스텝은 등록된 팀이 아니어도 어느 세션이든 들어가요. 테이블 QR을 찍으면 지금 앱의 메뉴 시트로 <b>프로로 참여 / 멤버로 참여</b>를 골라요.</p><div class="row">
+      ${col('pro', img('home-pro', { sheet: 33.6, sheetImg: 'sheet-checkin' }), ['맡은 세션이면 <b>프로로 참여</b>가 위 (프로스 노트가 바로 열려요)', '멤버로 참여 → 회원과 같은 출석 · 포인트 · 랭킹, 그 세션 프로의 노트를 받아요'])}
+      ${col('staff', img('home-staff', { sheet: 33.6, sheetImg: 'sheet-checkin' }), ['스텝도 같은 시트 · <b>프로로 참여</b>를 고르면 그 세션의 프로가 돼요 (노트 열림)', '<b>멤버로 참여</b>는 진짜로 출석돼요 (보여 주기 모드여도)'])}
+    </div>` },
+  { k: 'lounge', name: '라운지', html: `<p class="intro">정한 역할 표시를 지금 화면에 그대로 얹었어요: 얼굴 오른쪽 아래 표시(지금 왕관과 같은 18px 동그라미) + 이름 옆 태그. 프로 · 스텝은 어디서나, 호스트 · 코호스트는 그 모임 화면 · 그 모임 글에서만 보여요.</p>
+    ${sec('글 목록')}<div class="row">
+      ${col('pro', img('lounge-pro'), ['얼굴: 보라 동그라미 속 흰 <b>PALLO 스파크</b>', '이름 옆 <b>PRO</b> (지금 앱의 \'리더\' 글자 자리)'])}
+      ${col('staff', img('lounge-staff'), ['얼굴: 잉크 동그라미 속 노랑 <b>집</b>', '이름 옆 <b>STAFF</b>'])}
+    </div>
+    ${sec('⋯ 글 메뉴')}<div class="row">
+      ${col('m', img('lounge-menu-member'))}
+      ${col('pro', img('lounge-menu-pro'), ['+ <b>공지로 고정 · 이 글 숨기기</b> (지금 앱에 있는 기능)', '설명 줄: 리더 · 매니저 도구 → <b>프로 · 스텝 도구</b>'])}
+      ${col('staff', same('프로와 같아요'))}
+    </div>` },
+  { k: 'club', name: '동아리', html: `<p class="intro">동아리 화면은 지금 그대로고, 아래 버튼과 안내 줄만 바뀌어요. '관리'를 누르면 지금 앱의 메뉴 시트(⋯ 글 메뉴와 같은 시트)에 관리 항목이 떠요.</p>
+    ${sec('동아리 홈')}<div class="row">
+      ${col('m', img('club-member'), ['호스트 줄: 얼굴(노랑 왕관) · 이름 · <b>HOST</b> · 프로필 ›, 아래 줄 코호스트: 얼굴(흰 왕관) · 이름 · <b>CO-HOST</b>', '얼굴 · 이름을 누르면 그 사람 프로필 (앱에 반영했어요)'])}
+      ${col('host', img('club-host'), ['아래 줄: 최근 가입 → <b>가입 신청 3명 · 대기자 2명</b>', '버튼: 가입 신청 → <b>관리</b> — 누르면 아래 <b>관리 시트</b> (가입 신청 · 멤버 · 코호스트 정하기 · 고치기 · 공지 · 정기 모임 · 참석 확인 · 넘기기 · 닫기)', '호스트 줄에 (나)'])}
+      ${col('co', img('club-co'), ['아래 줄 · 버튼은 호스트와 같아요', '코호스트 줄에 (나)'])}
+    </div>
+    ${sec('관리 시트')}<div class="row">
+      ${col('host', img('club-host', { sheet: 61.6, sheetImg: 'sheet-host' }), ['가입 신청 · 대기자 / 멤버 목록(누르면 프로필) / 코호스트 정하기(지점 관리자에게도 알림) / 소개 · 사진 · 장소 · 시간 고치기 / 공지 · 정기 모임 · 참석 확인', '빨간 줄: 호스트 넘기기 · 동아리 닫기'])}
+      ${col('co', img('club-co', { sheet: 48.7, sheetImg: 'sheet-co' }), ['가입 신청 · 공지 · 정기 모임 일정 · 참석 확인 4가지', '나머지는 흐린 줄 하나로: 호스트만 할 수 있어요'])}
+    </div>
+    ${sec('관리 항목 자세히 (누르면 뭐가 뜨나요)')}<p class="intro">모두 지금 앱에 있는 부품(목록 화면 · 메뉴 시트 · 확인 창 · 토스트)으로 만들어요. 아래는 제안이에요.</p><div class="ovw"><table><thead><tr><th>항목</th><th>누가</th><th>누르면 뜨는 것</th><th>그다음 · 알림</th></tr></thead><tbody><tr><th>가입 신청 · 대기자</th><td>호스트 · 코호스트</td><td>'가입 신청' 화면. 탭 두 개: 신청 n · 대기자 n. 줄마다 얼굴(누르면 프로필) · 이름 · 지점 · 레벨 · 가입 인사, 오른쪽에 [거절] [승인].</td><td>승인 → 바로 멤버가 되고 신청자에게 '원서 북클럽에 가입됐어요' 알림. 정원이 차 있으면 [승인] 대신 [대기자로]. 거절 → 이유를 고르는 시트(정원이 찼어요 · 가입 조건이 안 맞아요 · 직접 쓰기) → 신청자에게 이유와 함께 알림.</td></tr><tr><th>멤버 목록</th><td>호스트만</td><td>'멤버 n명' 목록. 줄마다 이름 · 지점 · HOST/CO-HOST. <b>누르면 그 멤버 프로필</b>.</td><td>멤버 내보내기는 없어요 (2026-11-25).</td></tr><tr><th>코호스트 정하기</th><td>호스트만</td><td>시트: 멤버 목록에 체크칸, 지금 코호스트는 체크돼 있어요. 위에 지금 몇 명인지('코호스트 2명'). 인원 제한은 없어요.</td><td>[저장] → 새로 정해진 사람에게 '원서 북클럽 코호스트가 됐어요' 알림, 얼굴에 흰 왕관 · CO-HOST. 뺀 사람에게도 알림. <b>지점 관리자에게도 알림</b>이 가요.</td></tr><tr><th>소개 · 사진 · 장소 · 시간 고치기</th><td>호스트만</td><td>동아리 만들기 화면을 지금 내용이 채워진 채로 열어요 (포스터 · 이름 · 소개 · 지역 · 정기 모임 요일 · 시간 · 정원 · 가입 조건).</td><td>[저장] → 시간 · 장소가 바뀌면 멤버 모두에게 '모임 정보가 바뀌었어요' 알림. 소개 · 사진만 바뀌면 알림 없음.</td></tr><tr><th>공지 · 정기 모임 · 참석 확인</th><td>호스트 · 코호스트</td><td>작은 메뉴 시트 3줄: <b>공지 쓰기</b>(게시판 공지 + 채팅방 위 고정) · <b>정기 모임 일정</b>(요일 · 시간 · 장소, 이번 회차 쉬기) · <b>참석 확인</b>(지난 회차를 고르면 멤버마다 왔어요 / 안 왔어요).</td><td>공지 → 멤버 모두에게 알림. 회차 쉬기 · 시간 변경 → 참석 신청한 멤버에게 알림. 참석 확인 → 호스트 점수 ★과 멤버 '함께한 모임'에 쓰여요 (알림 없음).</td></tr><tr><th>호스트 넘기기</th><td>호스트만 · 빨강</td><td>멤버 고르기 시트 → 확인 창 'Leo님에게 호스트를 넘길까요? 나는 코호스트가 돼요.'</td><td>받는 사람에게 '호스트를 맡아 줄래요?' 알림 → <b>수락해야</b> 넘어가요. 거절하면 나에게 알림, 그대로.</td></tr><tr><th>동아리 닫기</th><td>호스트만 · 빨강</td><td>확인 창 '원서 북클럽을 닫을까요? 멤버 7명에게 알림이 가고, 다가오는 정기 모임 12회가 취소돼요. 게시판 · 사진은 30일 동안 볼 수 있어요.' [닫기](빨강) · [취소].</td><td>닫으면 라운지 목록에서 빠지고 멤버 모두에게 알림. 30일 뒤 게시판 · 사진이 지워져요.</td></tr></tbody></table></div>
+    <p class="note">관리 시트는 라운지에서 띄운 실제 시트를 잘라 동아리 화면 위에 겹쳤어요. 시트 모양은 지금 앱 그대로예요. 스텝(지점 관리자)은 자기 지점 모임에서 호스트와 같은 관리 시트를 봐요.</p>` },
+  { k: 'note', name: 'PRO\'S NOTE', html: `<p class="intro">회원이 받는 PRO'S NOTE 화면을 그대로 써서, 프로는 같은 화면에서 쓰고 보내요. 프로 출석 체크를 하면 오늘 노트(아래 오른쪽)가 바로 열려요.</p>
+    ${sec('노트 목록')}<div class="row">
+      ${col('m', img('notes-member'))}
+      ${col('pro', img('notes-pro'), ['위 안내 · 노란 카드: <b>오늘 노트 쓰는 중</b> · 항목 수 · 임시 저장', '카드 두 개: 나의 스터디 일기 → <b>보낸 노트</b>, 저장한 표현 → <b>받은 고마워요</b>', '목록: 프로 이름 대신 <b>보냄 · n명 읽음</b>'])}
+    </div>
+    ${sec('노트 한 개')}<div class="row">
+      ${col('m', img('note-member'))}
+      ${col('pro', img('note-pro'), ['제목: <b>쓰는 중</b> · 내 노트 · 항목 수 · 임시 저장됨', '아래 버튼: 고마워요 → <b>항목 더하기</b>, 감사 인사 보내기 → <b>반에 보내기</b>', '?회원 화면에서 항목 카드 오른쪽 위 동그라미는 <b>책갈피</b>(그 표현을 내 표현함에 저장)예요. 프로는 자기가 쓴 항목을 저장할 일이 없으니, 이 자리를 <b>✎ 고치기</b>(항목 내용 고치기 · 지우기) 버튼으로 바꿀지 정해요'])}
+    </div>` },
+  ];
+
+const tabs = document.getElementById('tabs'), pages = document.getElementById('pages');
+PAGES.forEach((p) => {
+  const b = document.createElement('button'); b.textContent = p.name; b.dataset.k = p.k; tabs.appendChild(b);
+  const s = document.createElement('section'); s.className = 'pg'; s.id = 'p-' + p.k; s.innerHTML = p.html; pages.appendChild(s);
+});
+const show = (k) => { document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.k === k)); document.querySelectorAll('.pg').forEach((s) => s.classList.toggle('on', s.id === 'p-' + k)); try { history.replaceState(null, '', '?tab=' + k); } catch (e) {} };
+tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.k); });
+show(new URLSearchParams(location.search).get('tab') || 'all');
+</script>
+</body></html>

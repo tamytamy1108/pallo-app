@@ -5,7 +5,7 @@ import { Stack } from 'expo-router/js-stack';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 import Svg, { Path, Rect } from 'react-native-svg';
 
 import { bookShelfQuery, situationMapsQuery } from '@/api/queries';

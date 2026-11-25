@@ -1,3 +1,5 @@
+import { useMutation } from '@tanstack/react-query';
+import { usePreventRemove, useNavigation } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
@@ -12,7 +14,10 @@ import { Lift } from '@/components/my/lift';
 import { SparkSheet } from '@/components/my/my-sheets';
 import { PageTop } from '@/components/my/page-top';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { INSUFFICIENT_SPARKS, PRICE_CHANGED, purchaseAvatar, saveAvatar } from '@/api/avatar';
+import { apiErrorMessage, isApiError } from '@/api/errors';
+import { ConfirmDialog } from '@/components/ui/dialog';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import {
@@ -33,10 +38,12 @@ import {
   type AvTab,
 } from '@/data/my';
 import { sfx } from '@/lib/feedback';
-import { avatarChanged, avatarCost, buyAndSave, cloneAvatar, getMyAvatar, isOwned, useMyAvatar, useOwned } from '@/state/avatar';
-import { useMe } from '@/state/me';
+import { avatarChanged, avatarCost, cloneAvatar, getMyAvatar, isOwned, useMyAvatar, useOwned } from '@/state/avatar';
+import { getMe, useMe } from '@/state/me';
 
 const pk = <T,>(L: readonly T[]) => L[Math.floor(Math.random() * L.length)];
+const newReqId = () => `av-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+type LeaveAction = Parameters<NonNullable<Parameters<typeof usePreventRemove>[1]>>[0]['data']['action'];
 
 /**
  * 꾸미기 · 스파크 상점 (프로토타입 renderMyPush 'shop'): 위 줄 · 붙어 있는 미리보기(좌우 · 랜덤 · 원래대로 · 초기화)
@@ -51,6 +58,10 @@ export default function CustomizeScreen() {
   const [cat, setCat] = useState<AvTab>('char');
   const [gen, setGen] = useState(0); // 색 막대를 다시 맞출 때 (원래대로 · 초기화 · 랜덤)
   const [earn, setEarn] = useState(false);
+  const [ask, setAsk] = useState(false); // 사기 전 확인
+  const reqId = useRef(newReqId()); // 같은 구매를 다시 보내도 두 번 빼지 않게 (성공하면 새로)
+  const navigation = useNavigation();
+  const [leaveAction, setLeaveAction] = useState<LeaveAction | null>(null); // 저장 안 하고 나가려 할 때
   const tabs = useRef<ScrollViewInstance>(null);
   const tabX = useRef<Record<string, { x: number; w: number }>>({});
   const tabW = useRef(0);
@@ -62,6 +73,14 @@ export default function CustomizeScreen() {
 
   const { cost, need } = avatarCost(d, own);
   const changed = avatarChanged(d, saved);
+
+  // 바꾼 모습을 저장하지 않고 나가면 (뒤로 · 밀어서 닫기 · 안드로이드 뒤로) 한 번 물어요
+  // [나가기]를 고르면 막기를 먼저 끈 뒤(다음 그리기) 미뤄 둔 이동을 그대로 해요
+  const [leaving, setLeaving] = useState<LeaveAction | null>(null);
+  usePreventRemove(changed && !leaving, ({ data }) => setLeaveAction(data.action));
+  useEffect(() => {
+    if (leaving) navigation.dispatch(leaving);
+  }, [leaving, navigation]);
   const edit = (fn: (x: Avatar) => void) =>
     setD((cur) => {
       const x = cloneAvatar(cur);
@@ -120,14 +139,44 @@ export default function CustomizeScreen() {
     }
   };
 
+  // 스파크가 모자랄 때: 경고 알림 + [모으는 방법] (스파크 시트)
+  const warnShort = (msg: string) => showWarnToast(msg, { label: '모으는 방법', onPress: () => setEarn(true) });
+
+  const buy = useMutation({
+    mutationFn: () => purchaseAvatar(d, cost, reqId.current),
+    onSuccess: (r) => {
+      reqId.current = newReqId();
+      sfx('save');
+      showToast(`${r.bought.join(' · ')} 샀어요 · 남은 스파크 ${getMe().sparks.toLocaleString()}개`);
+    },
+    onError: (e) => {
+      if (isApiError(e) && e.code === INSUFFICIENT_SPARKS) warnShort(e.message);
+      else if (isApiError(e) && e.code === PRICE_CHANGED) showWarnToast('가격이 바뀌었어요 · 합계를 다시 확인해 주세요');
+      else showWarnToast(apiErrorMessage(e));
+    },
+  });
+  const keep = useMutation({
+    mutationFn: () => saveAvatar(d),
+    onSuccess: () => {
+      sfx('save');
+      showToast('저장했어요');
+    },
+    onError: (e) => showWarnToast(apiErrorMessage(e)),
+  });
+  const busy = buy.isPending || keep.isPending;
+
+  // 새로 살 게 있으면 바로 사지 않고 한 번 물어요 (모자라면 묻지 않고 바로 알려요)
   const save = () => {
-    const r = buyAndSave(d);
-    if (!r.ok) {
-      showToast(`스파크가 ${r.short.toLocaleString()}개 모자라요`);
+    if (busy) return;
+    if (!cost) {
+      keep.mutate();
       return;
     }
-    sfx('save');
-    showToast(r.cost ? `${r.need.join(' · ')} 샀어요 · 저장했어요` : '저장했어요');
+    if (cost > me.sparks) {
+      warnShort(`스파크가 ${(cost - me.sparks).toLocaleString()}개 모자라요`);
+      return;
+    }
+    setAsk(true);
   };
 
   // ---- 타일 ----
@@ -317,7 +366,7 @@ export default function CustomizeScreen() {
             <PText style={styles.feeS}>{cost ? `새 아이템 ${need.length}개` : changed ? '바뀐 모습' : '지금 모습'}</PText>
             <PText style={styles.feeB}>{cost ? `${cost.toLocaleString()} 스파크` : '추가 비용 없음'}</PText>
           </View>
-          <Pressable onPress={save} disabled={!changed} accessibilityRole="button" accessibilityState={{ disabled: !changed }} style={styles.mainWrap}>
+          <Pressable onPress={save} disabled={!changed || busy} accessibilityRole="button" accessibilityState={{ disabled: !changed, busy }} style={styles.mainWrap}>
             {({ pressed }) => (
               <Lift radius={27} x={3} y={3} pressed={pressed && changed} shadow={changed} style={!changed && styles.dim}>
                 <View style={[styles.main, !changed && styles.mainOff]}>
@@ -330,6 +379,31 @@ export default function CustomizeScreen() {
       </BottomBar>
 
       <SparkSheet open={earn} onClose={() => setEarn(false)} />
+      <ConfirmDialog
+        open={ask}
+        title={`${cost.toLocaleString()} 스파크로 살까요?`}
+        message={`${need.join(' · ')}\n사고 나면 ${(me.sparks - cost).toLocaleString()} 스파크가 남아요.`}
+        confirmLabel="사고 저장하기"
+        cancelLabel="취소"
+        onCancel={() => setAsk(false)}
+        onConfirm={() => {
+          setAsk(false);
+          buy.mutate();
+        }}
+      />
+      <ConfirmDialog
+        open={!!leaveAction}
+        title="저장하지 않고 나갈까요?"
+        message="지금 고른 모습은 사라져요."
+        confirmLabel="나가기"
+        cancelLabel="계속 꾸미기"
+        destructive
+        onCancel={() => setLeaveAction(null)}
+        onConfirm={() => {
+          setLeaving(leaveAction);
+          setLeaveAction(null);
+        }}
+      />
     </View>
   );
 }

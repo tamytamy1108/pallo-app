@@ -45,7 +45,9 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 let mockLite = false;
-jest.mock('@/components/library/world/world-support', () => ({ liteWorld: () => mockLite }));
+jest.mock('@/components/library/world/world-support', () => ({ liteWorld: () => mockLite, warmAllInBackground: () => true }));
+// 지도 칸은 라이브러리 화면 안에서만 미리 만들어요 (테스트엔 길 안내가 없어서 늘 보고 있는 것으로)
+jest.mock('expo-router', () => ({ useIsFocused: () => true }));
 jest.mock('@/components/ui/raised', () => ({ Raised: ({ children }: { children: ReactNode }) => children }));
 
 const W = (slot: string, order: number): LibWorld => ({ slot, id: slot, sc: [['a', 'b', 'open']], order });
@@ -81,15 +83,16 @@ describe('라이브러리 지도 바꾸기', () => {
     expect(fakes.map((f) => f.id)).toEqual(['study', 'travel', 'biz']);
   });
 
-  it('미리 만들 지도가 남아 있는 동안 보이는 지도는 멈춰 있다가 다 만들면 움직여요', async () => {
+  it('다른 지도를 만드는 동안만 보이는 지도를 멈추고, 그 사이에는 움직여요', async () => {
     await render(<LibraryWorld world={study} warm={[travel, biz]} onOpen={() => {}} />);
     expect(of('study')[0].active).toBe(true); // 만드는 중 (아직 그리기 전)
     await draw('study');
-    expect(of('study')[0].active).toBe(false);
-    await tick(1000);
+    await tick(100);
+    expect(of('study')[0].active).toBe(false); // travel 을 만드는 중
     await draw('travel');
-    expect(of('study')[0].active).toBe(false); // biz 가 남았어요
+    expect(of('study')[0].active).toBe(true); // 다음 차례(biz)를 기다리는 동안은 움직여요
     await tick(1000);
+    expect(of('study')[0].active).toBe(false); // biz 를 만드는 중
     await draw('biz');
     expect(of('study')[0].active).toBe(true);
     expect(of('travel')[0].active).toBe(false);
@@ -138,7 +141,7 @@ describe('라이브러리 지도 바꾸기', () => {
     await tick(50);
     expect(of('biz')[0].replays).toEqual([]);
     expect(of('travel')[0].active).toBe(true); // 그려질 때까지 앞 지도가 그대로
-    await tick(500);
+    await tick(150);
     await draw('biz');
     expect(of('biz')[0].replays).toEqual([1]);
     expect(of('travel')[0].active).toBe(false);

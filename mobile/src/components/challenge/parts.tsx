@@ -1,7 +1,8 @@
-import { useEffect, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { Keyboard, Platform, StyleSheet, TextInput, View, type StyleProp, type ViewInstance, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
+import { useRevealNext } from '@/components/ui/form-scroll';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
@@ -191,8 +192,14 @@ export function Pills<T extends string | number>({
 }
 
 /** .lg-fl > .lb: 칸 이름 (12.5px · 900 — 번개 · 동아리 · 이벤트 만들기와 같아요) */
-export function FieldLabel({ children }: { children: string }) {
-  return <PText style={styles.lb}>{children}</PText>;
+/** 칸 이름표 · req 면 빨간 * (꼭 정해요 — 번개 · 동아리 · 이벤트 제안과 같은 모양) */
+export function FieldLabel({ children, req }: { children: string; req?: boolean }) {
+  return (
+    <PText style={styles.lb}>
+      {children}
+      {req ? <PText style={styles.req}> *</PText> : null}
+    </PText>
+  );
 }
 
 /** 시트 입력칸 (.lg-fl textarea: 흰 · 잉크 2px · 둥글기 18 · 안쪽 12 14) */
@@ -207,8 +214,19 @@ export function Field({ multiline, style, ...rest }: TextInputProps & { style?: 
 
 /** .ch-find: 찾기 칸 (둥근 흰 칸 + 돋보기) */
 export function SearchBox({ value, onChangeText, placeholder, label }: { value: string; onChangeText: (t: string) => void; placeholder: string; label: string }) {
+  // 시트 안에서 찾기 칸을 누르면: 키보드가 올라온 뒤 칸 아래 결과가 보이게 올려 줘요 (안 그러면 키보드 · 아래 버튼 사이에 결과가 가려져요)
+  const reveal = useRevealNext();
+  const box = useRef<ViewInstance>(null);
+  const onFocus = () => {
+    if (Platform.OS === 'web') return;
+    if (Keyboard.isVisible()) return reveal(box.current);
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      sub.remove();
+      reveal(box.current);
+    });
+  };
   return (
-    <View style={styles.find}>
+    <View ref={box} collapsable={false} style={styles.find}>
       <ChIcon name="search" size={16} />
       <TextInput
         value={value}
@@ -218,6 +236,7 @@ export function SearchBox({ value, onChangeText, placeholder, label }: { value: 
         autoCorrect={false}
         autoCapitalize="none"
         accessibilityLabel={label}
+        onFocus={onFocus}
         style={styles.findIn}
       />
     </View>
@@ -237,6 +256,7 @@ export function IconLine({ icon, text, size = 13, color = SUB, style, textStyle 
 }
 
 const styles = StyleSheet.create({
+  req: { color: '#E5484D' },
   inline: { alignSelf: 'flex-start' },
   wide: { alignSelf: 'stretch' },
   btnShadow: { position: 'absolute', right: 0, bottom: 0, backgroundColor: Colors.ink },

@@ -2,7 +2,7 @@ import { useFocusEffect } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useCallback } from 'react';
 import { BackHandler, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { Button } from '@/components/ui/button';
 import { Colors } from '@/constants/theme';

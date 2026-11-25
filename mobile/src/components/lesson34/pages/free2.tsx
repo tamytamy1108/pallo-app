@@ -12,7 +12,7 @@ import { Font } from "@/constants/fonts";
 import { Colors } from "@/constants/theme";
 import type { Lv4Unit } from "@/data/lessons34";
 import { sfx } from "@/lib/feedback";
-import { useSpeech } from "@/lib/speech";
+import { SPEECH_PROBLEM_TEXT, useSpeech } from "@/lib/speech";
 import { useLearnPrefs } from "@/state/learn-prefs";
 import { stepKey } from "@/state/progress";
 
@@ -113,6 +113,7 @@ export function FreeTalk1({
     onEnd: (text) => {
       if (text.trim()) sendRef.current(text.trim());
     },
+    onProblem: (p) => showToast(SPEECH_PROBLEM_TEXT[p]),
   });
 
   // 이 질문 남은 시간 (질문이 올 때마다 1분)

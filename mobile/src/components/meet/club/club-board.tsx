@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { meetRoleKind, RoleTag } from '@/components/common/role-tag';
 import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { FieldLabel, keepAll, SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
 import { TextField } from '@/components/ui/field';
@@ -73,14 +75,15 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
       );
     const on = !!liked[q.id];
     const role = roleOf(q.w);
+    const kind = meetRoleKind(role);
     return (
       <View key={q.id} style={[styles.bp, i > 0 && styles.line]}>
         <View style={styles.hd}>
-          <CrownFace name={q.w} size={26} me={q.w === myName} role={role} />
-          <PText style={styles.hdB}>
-            {q.w}
-            {role ? ` · ${role}` : ''}
-          </PText>
+          <ProfileTap name={q.w}>
+            <CrownFace name={q.w} size={26} me={q.w === myName} role={role} />
+          </ProfileTap>
+          <PText style={styles.hdB}>{q.w}</PText>
+          {kind ? <RoleTag kind={kind} /> : null}
           <View style={{ flex: 1 }} />
           <PText style={styles.hdS}>
             {q.t} · {KIND[q.k]}

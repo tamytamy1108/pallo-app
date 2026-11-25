@@ -2,11 +2,12 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { BackButton } from '@/components/ui/back-button';
 import { FramedImage } from '@/components/ui/photo-frame';
 import { Pressable } from '@/components/ui/pressable';
+import { ProfileTap } from '@/components/common/profile-tap';
 import { BottomBar } from '@/components/bottom-bar';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { ReportSheet, useBlockedNames } from '@/components/common/report-sheet';
@@ -488,7 +489,9 @@ function RankTab({ p, s }: { p: Challenge; s: ChView }) {
             const r = top[k];
             return (
               <View key={k} style={styles.podCol}>
-                <Face name={r.n} color={r.c} size={k === 0 ? 54 : 44} />
+                <ProfileTap name={r.n}>
+                  <Face name={r.n} color={r.c} size={k === 0 ? 54 : 44} />
+                </ProfileTap>
                 <PText numberOfLines={1} style={[styles.podB, r.me && { color: Colors.purple }]}>{`${r.n}${r.me ? ' (나)' : ''}`}</PText>
                 <PText style={styles.podS}>{`${r.d}${u}`}</PText>
                 <View style={[styles.podSt, { height: [72, 54, 42][k], backgroundColor: [Colors.yellow, Colors.lavender, Colors.skyMist][k] }]}>
@@ -520,7 +523,9 @@ function RankLine({ r, no, first = false, of, u, host }: { r: RankRow; no: numbe
   return (
     <View style={[styles.rl, !first && styles.rlLine, r.me && styles.rlMe]}>
       <PText style={styles.rlNo}>{no}</PText>
-      <Face name={r.n} color={r.c} size={30} />
+      <ProfileTap name={r.n}>
+        <Face name={r.n} color={r.c} size={30} />
+      </ProfileTap>
       <View style={styles.rlNm}>
         <PText numberOfLines={1} style={styles.rlN}>
           {r.n}

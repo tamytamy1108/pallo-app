@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { apiErrorMessage } from '@/api/errors';
 import { sendAttendance, sendRsvp } from '@/api/home';
@@ -12,6 +12,7 @@ import { guardMember } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-sheet';
 import { getAttend, summary, type SheetMode } from '@/components/home/attendance';
+import { setDecoOnScreen } from '@/components/home/deco-on-screen';
 import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/components/home/dev';
 import { GoalCard } from '@/components/home/goal-card';
 import { Greeting } from '@/components/home/greeting';
@@ -55,8 +56,10 @@ export default function HomeScreen() {
   const plan = useMe((m) => m.plan);
   const unread = useUnreadCount();
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('home', () => scroll.current?.scrollTo({ y: 0, animated: true }));
+  useTabReselect('home', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const mapY = useRef(0);
+  const mapH = useRef(0);
+  const viewH = useRef(0);
 
   // 출석: 시트(사전 출석 · 출석 · 완료) → QR 스캐너 (프로토타입 openSheet · openScanner)
   const [sheet, setSheet] = useState<AttendSheetMode | null>(null);
@@ -132,7 +135,16 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView ref={scroll} contentContainerStyle={styles.body}>
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={styles.body}
+        onLayout={(e) => (viewH.current = e.nativeEvent.layout.height)}
+        // 스터디 맵 카드가 화면 밖으로 나가면 카드 장식 움직임을 멈춰요 (스크롤이 부드럽게)
+        onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          setDecoOnScreen(y + viewH.current > mapY.current && y < mapY.current + mapH.current);
+        }}
+        scrollEventThrottle={64}>
         {/* 칸마다 조금씩 늦게 아래에서 올라와요 (프로토타입 .rise · 0 / .04 / .06 / .1 / .14 / .26초) */}
         <Appear kind="rise" style={styles.head}>
           <Logo />
@@ -161,7 +173,13 @@ export default function HomeScreen() {
           <NoticeStrip />
         </Appear>
         <Appear kind="rise" delay={100}>{plan === 'app' ? <GoalCard onContinue={continueGoal} /> : <HomeCard onOpen={openAttend} />}</Appear>
-        <Appear kind="rise" delay={140} onLayout={(e) => (mapY.current = e.nativeEvent.layout.y)}>
+        <Appear
+          kind="rise"
+          delay={140}
+          onLayout={(e) => {
+            mapY.current = e.nativeEvent.layout.y;
+            mapH.current = e.nativeEvent.layout.height;
+          }}>
           <StudyMap />
         </Appear>
         <Appear kind="rise" delay={260}>

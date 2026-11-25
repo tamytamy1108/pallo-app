@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { ProfileTap } from '@/components/common/profile-tap';
+import { RoleTag } from '@/components/common/role-tag';
 import { StyleSheet, View } from 'react-native';
 
 import { keepAll } from '@/components/common/sheet-parts';
@@ -11,7 +13,7 @@ import { HOST_INTRO, hashId, joinFree, type Club } from '@/data/meet';
 import { useMe } from '@/state/me';
 
 import { ClubRow } from '../club-list';
-import { DSec, InfoRow, InfoRows, MemberSection } from '../detail/detail-parts';
+import { DSec, HostRow, InfoRow, InfoRows, infoStyles, MemberSection } from '../detail/detail-parts';
 import { setText, useMeetStore } from '../meet-store';
 import { CrownFace } from '../member-face';
 import { clubCapLine, clubContent, clubDesc, clubHost, clubLangLine, clubSessions, type Member, type Session } from '../model';
@@ -43,7 +45,26 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
         <InfoRow first icon="cal" main={c.when} sub="매주 모여요" />
         <InfoRow icon="pin" main={`${c.br}${c.reg ? ' · ' + c.reg : ''}`} sub={clubLangLine(c)} />
         <InfoRow icon="users" main={`멤버 ${c.n + (inC ? 1 : 0)}명`} sub={clubCapLine(c)} />
-        <InfoRow icon="crown" main={`호스트 ${host}`} sub={staff.length ? `코호스트 ${staff.join(' · ')}` : '코호스트는 아직 없어요'} />
+        <HostRow name={c.mine ? me.name : host} branch={c.br} me={!!c.mine} sub={c.br} />
+        <InfoRow
+          icon="crown"
+          main={
+            staff.length ? (
+              <View style={styles.coRow}>
+                {staff.map((n) => (
+                  <ProfileTap key={n} name={n} style={styles.who}>
+                    <CrownFace name={n} size={22} role="코호스트" />
+                    <PText style={infoStyles.main}>{n}</PText>
+                    <RoleTag kind="co" />
+                  </ProfileTap>
+                ))}
+              </View>
+            ) : (
+              '코호스트는 아직 없어요'
+            )
+          }
+          sub="가입 승인 · 공지 · 정기 모임을 함께 맡아요"
+        />
         <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub={joinFree(c.cond, c.br, me.branch) ? '가입 인사만 쓰면 바로 가입돼요' : `${c.br} 멤버가 아니면 호스트가 확인하면 가입돼요`} />
       </InfoRows>
 
@@ -65,7 +86,9 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
       <DSec>호스트 소개</DSec>
       <View style={styles.host}>
         <View style={styles.hd}>
-          <CrownFace name={host} size={44} role="호스트" />
+          <ProfileTap name={host}>
+            <CrownFace name={host} size={44} role="호스트" />
+          </ProfileTap>
           <View>
             <PText style={styles.hdB}>{host}</PText>
             <PText style={styles.hdS}>{3 + (h % 10)}개월째 모임 운영 중</PText>
@@ -138,6 +161,8 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
 }
 
 const styles = StyleSheet.create({
+  who: { flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start' },
+  coRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 },
   desc: { fontFamily: Font.body600, fontSize: 14.5, lineHeight: 24.65 },
   schhd: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, marginBottom: 8, minHeight: 31 },
   schT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },

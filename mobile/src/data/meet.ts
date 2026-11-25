@@ -129,12 +129,12 @@ export const hashId = (id: string) => [...id].reduce((a, c) => a + c.charCodeAt(
 export const won = (n: number) => `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
 export const MEETS: Meet[] = [
-  { id: 'm1', br: '영등포', reg: '서울', day: '14', mon: 'NOV', wd: '금 20:00', title: '퇴근 후 영어 맥주 번개', place: '영등포 근처 수제맥주집', host: '하나 리더', cur: 6, max: 8 },
+  { id: 'm1', br: '영등포', reg: '서울', day: '14', mon: 'NOV', wd: '금 20:00', title: '퇴근 후 영어 맥주 번개', place: '영등포 근처 수제맥주집', host: '하나 프로', cur: 6, max: 8 },
   { id: 'm3', br: '영등포', reg: '경기', day: '18', mon: 'NOV', wd: '화 12:30', title: '판교 점심 영어 산책', place: '판교역 4번 출구', host: '태오', cur: 3, max: 6 },
-  { id: 'm4', br: '연신내', reg: '부산', day: '16', mon: 'NOV', wd: '일 08:00', title: '광안리 러닝 & 스몰토크', place: '광안리 해변 · 연신내', host: 'Leo 리더', cur: 5, max: 8 },
+  { id: 'm4', br: '연신내', reg: '부산', day: '16', mon: 'NOV', wd: '일 08:00', title: '광안리 러닝 & 스몰토크', place: '광안리 해변 · 연신내', host: 'Leo 프로', cur: 5, max: 8 },
   { id: 'm5', br: '대전 둔산점', reg: '대구', day: '15', mon: 'NOV', wd: '토 19:00', title: '동성로 영어 보드게임', place: '동성로 보드게임 카페', host: '지우', cur: 4, max: 4 },
-  { id: 'm6', br: '영등포', reg: '서울', day: '08', mon: 'NOV', wd: '토 19:00', title: '할로윈 영어 펍 번개', place: '이태원 펍 · 영등포', host: '하나 리더', cur: 8, max: 8 },
-  { id: 'm7', br: '연신내', reg: '부산', day: '02', mon: 'NOV', wd: '일 07:00', title: '해운대 일출 러닝', place: '해운대 해변 · 연신내', host: 'Leo 리더', cur: 6, max: 8 },
+  { id: 'm6', br: '영등포', reg: '서울', day: '08', mon: 'NOV', wd: '토 19:00', title: '할로윈 영어 펍 번개', place: '이태원 펍 · 영등포', host: '하나 프로', cur: 8, max: 8 },
+  { id: 'm7', br: '연신내', reg: '부산', day: '02', mon: 'NOV', wd: '일 07:00', title: '해운대 일출 러닝', place: '해운대 해변 · 연신내', host: 'Leo 프로', cur: 6, max: 8 },
   { id: 'm8', br: '영등포', reg: '경기', day: '30', mon: 'OCT', wd: '목 12:30', title: '판교 점심 영어 산책', place: '판교역 4번 출구', host: '태오', cur: 5, max: 6 },
   { id: 'm9', br: '연신내', reg: '서울', day: '13', mon: 'NOV', wd: '목 19:30', title: '홍대 일본어 이자카야 번개', place: '홍대 이자카야 · 연신내', host: '유키', cur: 5, max: 8 },
   { id: 'm10', br: '영등포', reg: '서울', day: '20', mon: 'NOV', wd: '목 20:00', title: '영등포 영어 보드게임', place: '영등포 앞 보드게임 카페', host: '소라', cur: 3, max: 6 },
@@ -142,6 +142,9 @@ export const MEETS: Meet[] = [
   { id: 'm12', br: '대구 달서점', reg: '대구', day: '22', mon: 'NOV', wd: '토 15:00', title: '달서 카페 영어 수다', place: '두류공원 앞 카페 · 대구 달서점', host: '민서', cur: 2, max: 6 },
   { id: 'm13', at: SEED_NEW_AT, br: '부산 수영점', reg: '부산', day: '23', mon: 'NOV', wd: '일 10:00', title: '광안리 바다 산책 & 영어', place: '광안리 해변 · 부산 수영점', host: '하람', cur: 6, max: 10 },
   { id: 'm14', br: '영등포', reg: '경기', day: '19', mon: 'NOV', wd: '수 19:00', title: '수원 행궁동 영어 산책', place: '행궁동 공방거리', host: '태오', cur: 2, max: 5 },
+  { id: 'm15', br: '하남점', reg: '경기', day: '28', mon: 'NOV', wd: '금 20:00', title: '하남 스타필드 영어 저녁 번개', place: '스타필드 하남 푸드코트 · 하남점', host: '서연', cur: 5, max: 8 },
+  { id: 'm16', br: '잠실점', reg: '서울', day: '03', mon: 'DEC', wd: '수 19:30', title: '석촌호수 야경 산책 & 영어', place: '석촌호수 동호 입구 · 잠실점', host: '태오', cur: 4, max: 8 },
+  { id: 'm17', br: '연신내', reg: '서울', day: '07', mon: 'DEC', wd: '일 14:00', title: '일본어 카페 수다 번개', place: '연신내역 앞 카페 · 연신내', host: '유키', cur: 3, max: 6 },
 ];
 
 export const CLUBS: Club[] = [
@@ -172,6 +175,9 @@ export const POSTER_WORDS: Record<string, PosterWords> = {
   m12: [['CAFE', 'CHAT'], C.sky],
   m13: [['SEA', 'WALK'], C.sky],
   m14: [['OLD', 'TOWN', 'WALK'], C.y],
+  m15: [['DINNER', 'TALK'], C.pk],
+  m16: [['NIGHT', 'WALK'], C.pu],
+  m17: [['CAFE', 'NIHONGO'], C.y],
   cl1: [['BOOK', 'CLUB'], C.lpu],
   cl2: [['RUN', 'CLUB'], C.y],
   cl3: [['TAPAS', '& HOLA'], C.pk],

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { keepAll, SheetButton, SheetDesc } from '@/components/common/sheet-parts';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -46,7 +46,8 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
               setClubState(c.id, free ? 'in' : 'ask');
               sfx('save');
               onClose();
-              setDone(true);
+              // 가입 시트가 다 내려간 뒤에 열어요 (아이폰은 내려가는 중에 다른 시트를 못 띄워요)
+              runAfterSheetClose(() => setDone(true));
             }}
           />
         }>

@@ -155,14 +155,21 @@ function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; set
   const [w, setW] = useState(0);
   const many = list.length > 1;
   const ref = useRef<ScrollViewInstance>(null);
+  // ‹ › 로 넘기는 중인 목표 장 — 미끄러지는 동안 지나가는 자리로 번호를 되돌리지 않게 (한 번 눌렀는데 두 장 넘어가던 문제)
+  const target = useRef<number | null>(null);
   const go = (to: number) => {
     const k = (to + list.length) % list.length;
+    target.current = still ? null : k;
     setI(k);
     ref.current?.scrollTo({ x: k * w, animated: !still });
   };
   // 밀다가 멈춘 자리로 몇 번째인지 맞춰요
   const settle = (offset: number) => {
     if (!w) return;
+    if (target.current !== null) {
+      if (Math.abs(offset - target.current * w) < 1) target.current = null;
+      return;
+    }
     const k = Math.max(0, Math.min(list.length - 1, Math.round(offset / w)));
     if (k !== i) setI(k);
   };
@@ -177,8 +184,8 @@ function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; set
           scrollEnabled={many}
           bounces={false}
           showsHorizontalScrollIndicator={false}
-          contentOffset={{ x: i * w, y: 0 }}
           onScroll={(e) => settle(e.nativeEvent.contentOffset.x)}
+          onScrollBeginDrag={() => (target.current = null)}
           scrollEventThrottle={32}
           accessibilityRole="adjustable"
           accessibilityLabel={`공지 ${i + 1} / ${list.length}`}

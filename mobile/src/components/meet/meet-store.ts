@@ -5,13 +5,14 @@
  *   · 88 `/events/:id/applications` · 92 `/event-proposals` · 찜 `/events/:id/save`
  */
 import type { MadeCard } from '@/data/poster-colors';
+import { apiConfig } from '@/api/config';
 import { createStore } from '@/lib/store';
 import type { Club, Meet } from '@/data/meet';
 
 /** 설문 답: 질문 번호 → 고른 보기 번호(하나) · 번호들(여럿) · 글(짧은 답) */
 export type SurveyAnswers = Record<number, number | number[] | string>;
 
-export type Proposal = { id: string; title: string; br: string; date: string; cat: string; cover?: string; /** 만든 카드 (있으면 대표) */ card?: MadeCard };
+export type Proposal = { id: string; title: string; br: string; date: string; cat: string; cover?: string; /** 만든 카드 (있으면 대표) */ card?: MadeCard; /** 예상 인원 (0 = 무관) */ cap?: number; /** 희망 시간 [시작, 끝] ('19:00', '21:00') */ time?: [string, string]; body?: string };
 
 export type ChatMsg = { day?: string; sys?: string; n?: string; host?: boolean; x?: string; t?: string; me?: boolean };
 
@@ -40,9 +41,14 @@ type State = {
   myClubs: Club[];
 };
 
+/**
+ * 가짜 서버로 볼 때의 예시 (마이 › 내 모임이 비어 보이지 않게): 다가오는 · 지난 번개, 가입한 · 신청 중인 동아리, 다가오는 · 지난 이벤트, 제안 하나.
+ * 진짜 서버면 비어서 시작해요 (서버가 내 참여 목록을 줘요).
+ */
+const SAMPLE = apiConfig.useMock;
 const MEET0: State = {
-  joined: {},
-  club: {},
+  joined: SAMPLE ? { m15: true, m16: true, m17: true, m1: true, m9: true, m6: true, m2: true, e4: true, e3: true, e6: true } : {},
+  club: SAMPLE ? { cl1: 'in', cl2: 'in', cl10: 'in', cl4: 'ask' } : {},
   saved: {},
   vac: {},
   mhi: {},
@@ -50,14 +56,14 @@ const MEET0: State = {
   att: {},
   shi: {},
   ans: {},
-  props: [],
+  props: SAMPLE ? [{ id: 'pr-sample', title: '한강 영어 피크닉', br: '영등포', date: '2026-12-13', cat: '액티비티', time: ['14:00', '17:00'], cap: 20, card: { color: '#FFE200', words: ['PICNIC', ''] }, body: '돗자리 펴고 영어로 수다 떠는 피크닉이에요.' }] : [],
   board: {},
   bliked: {},
   chat: {},
   myMeets: [],
   myClubs: [],
 };
-const store = createStore<State>(MEET0, { persist: { key: 'meets' } });
+const store = createStore<State>(MEET0, { persist: { key: 'meets', version: 2 } });
 
 export const useMeetStore = store.useStore;
 export const getMeetStore = store.get;

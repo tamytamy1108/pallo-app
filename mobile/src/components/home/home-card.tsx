@@ -46,7 +46,7 @@ function TrialCard({ trial }: { trial: TrialBooking }) {
   const left = trialDaysLeft(trial, now);
   const dday = stage === 'before' ? `D-${left}` : stage === 'today' ? 'D-DAY' : 'DONE';
   const copy = {
-    before: { badge: 'TRIAL', title: 'Your first take.', line: `${trial.branch} 회화 상담 + 체험 세션 1회`, note: '상담 전에 지점에서 연락드려요' },
+    before: { badge: 'TRIAL', title: 'Your first take.', line: `${trial.branch} 회화 상담`, note: '상담 전에 지점에서 연락드려요' },
     today: { badge: 'D-DAY', title: "Today's your take.", line: `오늘 ${trial.time} 상담이에요`, note: `${trial.branch}에서 기다릴게요` },
     after: { badge: "THAT'S A WRAP", title: 'How was your take?', line: '체험은 어땠어요?', note: '마음에 들었다면 지점에서 바로 회원 등록을 도와드려요' },
   }[stage];

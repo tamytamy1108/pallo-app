@@ -1,7 +1,7 @@
 import { router, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { Pressable } from '@/components/ui/pressable';
 import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';

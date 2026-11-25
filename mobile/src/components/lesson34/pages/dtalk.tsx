@@ -17,7 +17,7 @@ import { Font } from "@/constants/fonts";
 import { Colors } from "@/constants/theme";
 import { STEPS34, type Lv3Unit } from "@/data/lessons34";
 import { sfx } from "@/lib/feedback";
-import { useSpeech } from "@/lib/speech";
+import { SPEECH_PROBLEM_TEXT, useSpeech } from "@/lib/speech";
 import { useLearnPrefs } from "@/state/learn-prefs";
 import { isDone, stepKey } from "@/state/progress";
 
@@ -166,7 +166,7 @@ export function DailyTalk({
   const [cm, setCm] = useState<Mode>(noSpeak ? "write" : "voice");
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState<string | null>(null);
-  const speech = useSpeech({ onText: (text) => setDraft(text) });
+  const speech = useSpeech({ onText: (text) => setDraft(text), onProblem: (p) => showToast(SPEECH_PROBLEM_TEXT[p]) });
 
   useEffect(() => () => stopSpeaking(), []);
 

@@ -4,25 +4,28 @@ import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
-import { SheetButton, SheetOptions, SheetPills } from '@/components/common/sheet-parts';
-import { MonthCalendar, PlacePicker, PosterPicker, type Place } from '@/components/event/form-parts';
+import { SheetButton, SheetPills } from '@/components/common/sheet-parts';
+import { defaultEnd, MonthCalendar, PlacePicker, PosterPicker, TimeRange, type Place } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
+import { BranchSheet, withJeom } from '@/components/onboarding/branch-sheet';
 import { Icon } from '@/components/meet/icons';
 import { addProposal } from '@/components/meet/meet-store';
+import { ProposalCard } from '@/components/event/proposal-cards';
 import { TextField } from '@/components/ui/field';
-import { Sheet } from '@/components/ui/sheet';
+import { CountPicker } from '@/components/ui/count-picker';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BRANCH_REGIONS, BRANCHES, PROPOSAL_CATS } from '@/data/events';
-import { WEEK } from '@/data/meet';
+import { BRANCHES, PROPOSAL_CATS } from '@/data/events';
+import { NO_LIMIT, WEEK } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
-const CAPS = ['10명 이하', '20명 정도', '30명 정도', '40명 이상'];
+const CAP_MIN = 2;
+const CAP_MAX = 300;
 const FEES = ['무료', '유료 (금액은 매니저와 정해요)'];
 
 /**
@@ -41,19 +44,25 @@ export default function ProposeEvent() {
   const [place, setPlace] = useState<Place | null>(null);
   const [addr, setAddr] = useState('');
   const [date, setDate] = useState('');
+  // 희망 시간: 시작 ~ 끝 (끝은 시작 30분 뒤부터 · 밤 12:00 까지)
+  const [time, setTime] = useState('19:00');
+  const [endTime, setEndTime] = useState(() => defaultEnd('19:00'));
   const [cat, setCat] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [cap, setCap] = useState('20명 정도');
+  // 예상 인원: 숫자 (알약 · −/+ · 직접 적기) 또는 null(무관 — 0 으로 보내요)
+  const [cap, setCap] = useState<number | null>(20);
   const [fee, setFee] = useState('무료');
   const region = (BRANCHES.find((b) => b[0] === br) || BRANCHES[0])[2];
 
   const send = () => {
+    // 화면 위에서부터 (대표 카드 → 날짜 → 카테고리 → 제목 → 소개) 첫 빈칸을 알려요
+    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     if (!date) return showToast('희망 날짜를 골라 주세요');
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
-    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
-    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0) });
+    if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
+    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim() });
     sfx('save');
     router.back();
     showToast('제안을 보냈어요 · 매니저가 2~3일 안에 연락드려요');
@@ -71,11 +80,25 @@ export default function ProposeEvent() {
       </View>
       <Field label="대표 이미지 · 사진 여러 장 또는 카드" hint={pics.length ? (card ? '카드가 대표예요. 사진은 그 뒤에 보여요.' : '첫 장이 대표 사진이 돼요. 사진을 누르면 대표로 바꿔요.') : '사진이 없으면 아래 카드가 대표예요.'}>
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />
-        <CardMaker value={card} onChange={setCard} hasPhoto={pics.length > 0} example={['NEW', 'EVENT']} square />
+        <CardMaker
+          value={card}
+          onChange={setCard}
+          hasPhoto={pics.length > 0}
+          example={['NEW', 'EVENT']}
+          square
+          listPreview={{
+            label: "이벤트 탭 '내가 제안한 이벤트'에 이렇게 보여요 · 누르기 전 모습",
+            render: (c) => (
+              <View pointerEvents="none">
+                <ProposalCard q={{ id: 'preview', title: title.trim() || '이벤트 제목', br, date, time: [time, endTime], cat: cat ?? '분류 고르기 전', cover: pics[0], card: card || !pics.length ? c : undefined }} />
+              </View>
+            ),
+          }}
+        />
       </Field>
       <Field label="진행 지점" req>
         <Pressable onPress={() => setBrOpen(true)} accessibilityRole="button" accessibilityLabel={`진행 지점 ${br}`} style={styles.sel}>
-          <PText style={styles.selT}>{br}</PText>
+          <PText style={styles.selT}>{withJeom(br)}</PText>
           <View style={{ transform: [{ rotate: '-90deg' }] }}>
             <Icon name="back" size={16} />
           </View>
@@ -85,40 +108,44 @@ export default function ProposeEvent() {
         <PlacePicker region={region} value={place} onChange={setPlace} />
       </Field>
       <TextField label="상세 주소 · 직접 적어요 (선택)" value={addr} onChangeText={setAddr} placeholder="예) 3층 세미나실 · 입구에서 오른쪽" />
-      <Field label="희망 날짜" req hint="희망 날짜는 매니저와 이야기하며 바뀔 수 있어요.">
+      <Field label="희망 날짜" req>
         <MonthCalendar value={date} onChange={setDate} minDays={7} maxDays={90} hint="1주 뒤부터 3달 안에서 골라요" pick={(d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]}) 희망`} />
+      </Field>
+      <Field label="희망 시간 · 시작 ~ 끝" req hint="희망 날짜 · 시간은 매니저와 이야기하며 바뀔 수 있어요.">
+        <TimeRange
+          start={time}
+          end={endTime}
+          onChange={(s, e) => {
+            setTime(s);
+            setEndTime(e);
+          }}
+        />
       </Field>
       <Field label="카테고리" req>
         <SheetPills options={PROPOSAL_CATS} value={cat} onChange={setCat} label="카테고리" />
       </Field>
       <TextField label="이벤트 제목 *" value={title} onChangeText={setTitle} placeholder="예) 한강 영어 피크닉" />
-      <Field label="어떤 이벤트인가요?">
+      <Field label="어떤 이벤트인가요?" req>
         <GrowInput value={body} onChangeText={setBody} multiline maxLength={500} placeholder="예) 돗자리 펴고 영어로 수다 떠는 피크닉이에요. 도시락은 각자, 게임은 제가 준비할게요." placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="어떤 이벤트인가요?" />
       </Field>
-      <Field label="예상 인원">
-        <SheetPills options={CAPS} value={cap} onChange={setCap} label="예상 인원" />
+      <Field label="예상 인원 · 나 포함" req>
+        <CountPicker value={cap} presets={[10, 20, 30, 40]} min={CAP_MIN} max={CAP_MAX} typable anyLabel="무관" onChange={setCap} />
       </Field>
       <Field label="참가비">
         <SheetPills options={FEES} value={fee} onChange={setFee} label="참가비" />
       </Field>
 
-      <Sheet open={brOpen} onClose={() => setBrOpen(false)} title="진행 지점" tall>
-        {BRANCH_REGIONS.map((r) => (
-          <View key={r} style={{ gap: 6 }}>
-            <PText style={styles.lb}>{r}</PText>
-            <SheetOptions
-              radio
-              selected={br}
-              items={BRANCHES.filter((b) => b[2] === r).map((b) => ({ key: b[0], label: b[0] }))}
-              onPick={(k) => {
-                setBr(k);
-                setPlace(null);
-                setBrOpen(false);
-              }}
-            />
-          </View>
-        ))}
-      </Sheet>
+      <BranchSheet
+        open={brOpen}
+        onClose={() => setBrOpen(false)}
+        title="진행 지점을 골라요"
+        value={br}
+        raw
+        onPick={(k) => {
+          if (k !== br) setPlace(null);
+          setBr(k);
+        }}
+      />
     </SheetPage>
   );
 }
