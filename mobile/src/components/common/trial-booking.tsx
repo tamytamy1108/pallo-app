@@ -77,7 +77,7 @@ export function TrialBookingSheet({ trial, open, onClose }: { trial: TrialBookin
         <Row label="날짜" value={`${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`} />
         <Row label="시간" value={trial.time} />
         <Row label="언어" value={LANG_KO[trial.lang]} />
-        <Row label="내용" value="회화 상담 + 체험 세션 1회" last={!note} />
+        <Row label="내용" value="회화 상담" last={!note} />
         {note ? <Row label="전달 사항" value={note} last /> : null}
       </View>
       <PText style={styles.hint} color={Colors.inkSub}>
