@@ -46,6 +46,8 @@ jest.mock('react-native-reanimated', () => {
 });
 let mockLite = false;
 jest.mock('@/components/library/world/world-support', () => ({ liteWorld: () => mockLite }));
+// 지도 칸은 라이브러리 화면 안에서만 미리 만들어요 (테스트엔 길 안내가 없어서 늘 보고 있는 것으로)
+jest.mock('expo-router', () => ({ useIsFocused: () => true }));
 jest.mock('@/components/ui/raised', () => ({ Raised: ({ children }: { children: ReactNode }) => children }));
 
 const W = (slot: string, order: number): LibWorld => ({ slot, id: slot, sc: [['a', 'b', 'open']], order });

@@ -1,3 +1,4 @@
+import { useIsFocused } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
@@ -101,8 +102,10 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
 
   // 미리 만들기: 하나씩, 바꾸는 중이 아닐 때만. warm 에 없는 숨은 지도(진도가 바뀐 옛 지도 · 다른 언어)는 치워요
   const [idleTick, setIdleTick] = useState(0);
+  // 다른 화면(레슨 · 다른 탭)으로 가면 멈췄다가 돌아오면 이어서 — 만드는 동안 JS 가 멈춰서 그 화면 누르기가 씹혀요
+  const focused = useIsFocused();
   useEffect(() => {
-    if (under || warming || !drawn.has(top)) return;
+    if (!focused || under || warming || !drawn.has(top)) return;
     const keys = new Set(warmSig.split('\n'));
     const next = warmNow.current.find((w) => !layers.some((l) => l.key === keyOf(w)));
     const stale = layers.some((l) => l.key !== top && !keys.has(l.key));
@@ -125,7 +128,7 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
       }
     }, WARM_GAP_MS);
     return () => clearTimeout(t);
-  }, [under, warming, drawn, top, layers, warmSig, idleTick]);
+  }, [focused, under, warming, drawn, top, layers, warmSig, idleTick]);
 
   // 아직 만들 지도가 있어요 (지금 만드는 중이거나 · 다음 차례) → 보이는 지도는 멈춰 둬요
   const pending = !!warming || (drawn.has(top) && want.some((w) => !layers.some((l) => l.key === keyOf(w))));

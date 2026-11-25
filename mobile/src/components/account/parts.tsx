@@ -8,6 +8,7 @@ import { SafeAreaView } from '@/components/ui/safe-area';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { KeepVisibleContext, useFormScroll, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
 import { Pressable } from '@/components/ui/pressable';
 import { TopBar } from '@/components/ui/top-bar';
 import { BottomBar } from '@/components/bottom-bar';
@@ -63,6 +64,9 @@ type PageProps = {
 
 /** 마이 B 하위 화면 틀: 크림 바탕 · 위 줄 · 스크롤 · 아래 고정 바 */
 export function AccountPage({ title, onBack, right, children, footer, bottom, bodyStyle, scrollRef, plain }: PageProps) {
+  // 글 칸을 눌러 키보드가 올라오면 그 칸이 키보드 · 아래 바 위로 다 보이게 (시트와 같은 방식 · ui/form-scroll)
+  const [formScroll, formBox, onFormScroll, , keepCaret, showFocused] = useFormScroll(undefined, scrollRef);
+  useShowFocusedOnKeyboard(formBox, showFocused);
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar title={title} onBack={onBack} right={right} fallback="/my" />
@@ -70,9 +74,11 @@ export function AccountPage({ title, onBack, right, children, footer, bottom, bo
         {plain ? (
           <View style={[styles.flex, bodyStyle]}>{children}</View>
         ) : (
-          <ScrollView ref={scrollRef} style={styles.flex} contentContainerStyle={[styles.body, bodyStyle]} keyboardShouldPersistTaps="handled">
-            {children}
-          </ScrollView>
+          <View ref={formBox} collapsable={false} style={styles.flex}>
+            <ScrollView ref={formScroll} onScroll={onFormScroll} scrollEventThrottle={32} style={styles.flex} contentContainerStyle={[styles.body, bodyStyle]} keyboardShouldPersistTaps="handled">
+              <KeepVisibleContext.Provider value={keepCaret}>{children}</KeepVisibleContext.Provider>
+            </ScrollView>
+          </View>
         )}
         {bottom}
         {footer ? <BottomBar>{footer}</BottomBar> : null}

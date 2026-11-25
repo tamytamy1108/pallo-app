@@ -6,7 +6,7 @@ import { SCREEN, STACK_OPTIONS } from '@/lib/transitions';
  * 로그인 · 가입까지 마친 사람의 화면 전부 (app/_layout.tsx 의 Stack.Protected). 탭 화면 위로 다른 화면이 쌓여요.
  * 새 화면은 이 폴더에 파일만 만들면 저절로 등록돼요. 화면별 옵션(아래에서 올라오기 등)은 여기나 그 화면 파일 안의 <Stack.Screen options /> 로 정해요.
  */
-export const unstable_settings = { initialRouteName: '(tabs)' };
+export const unstable_settings = { anchor: '(tabs)' };
 
 export default function AppLayout() {
   return (
