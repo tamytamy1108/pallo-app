@@ -141,7 +141,7 @@ describe('라이브러리 지도 바꾸기', () => {
     await tick(50);
     expect(of('biz')[0].replays).toEqual([]);
     expect(of('travel')[0].active).toBe(true); // 그려질 때까지 앞 지도가 그대로
-    await tick(500);
+    await tick(150);
     await draw('biz');
     expect(of('biz')[0].replays).toEqual([1]);
     expect(of('travel')[0].active).toBe(false);

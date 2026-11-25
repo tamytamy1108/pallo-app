@@ -1,4 +1,4 @@
-import { Image } from 'expo-image';
+import { Image, type ImageProps } from 'expo-image';
 import { memo, useId, useMemo, useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { css, useReducedMotion } from 'react-native-reanimated';
@@ -19,6 +19,14 @@ import { AV_ART, AV_BG_ART, AV_BODY, AV_GEO, AV_HAIR_FILL, AV_HAIR_FRONT, AV_TIN
  * 아이템은 캐릭터 원본 좌표 위에 그린 그림(scripts/av-art)을 뜬 PNG 라 눈 · 팔 · 다리 자리에 꼭 맞아요.
  * 겹침: 날개 · 망토 · 손에 든 것 · 헤어 → 모자(캐릭터 뒤) · 몸 · 칠한 옷 · 눈 · 깜빡임 · 앞머리(모자 없을 때) · 앞 아이템. 효과(fx)는 무대에서 캐릭터 위에.
  */
+
+/**
+ * 캐릭터 그림 한 장: 메모리에 두고 바로 꺼내 써요 (기본값 'disk' 는 보일 때마다 다시 읽어서 프사 · 랜덤 캐릭터가 조각조각 늦게 떴어요).
+ * 앱을 켤 때 preload-art.ts 가 미리 읽어 둬요.
+ */
+function AvImg(props: ImageProps) {
+  return <Image cachePolicy="memory-disk" transition={0} {...props} />;
+}
 
 export const CHAR_RATIO = 332 / 520;
 export const STAGE_RATIO = 220 / 300;
@@ -46,15 +54,15 @@ const rectStyle = (r: AvRect, w: number, h: number) => ({ position: 'absolute' a
 /** 몸: 추천 색은 원본 PNG · 직접 고른 색은 4장 겹치기 (노랑을 뺀 원본 + 회색(명도) + 목표 색(채도만큼) + 그림자) */
 function Body({ color, w, h }: { color: string; w: number; h: number }) {
   const box = { position: 'absolute' as const, left: 0, top: 0, width: w, height: h };
-  if (color[0] !== '#') return <Image source={AV_BODY[color] ?? AV_BODY.yellow} style={box} contentFit="fill" />;
+  if (color[0] !== '#') return <AvImg source={AV_BODY[color] ?? AV_BODY.yellow} style={box} contentFit="fill" />;
   const v = Math.max(...hexRgb(color));
   const gray = rgbHex(v, v, v);
   return (
     <>
-      <Image source={AV_TINT.base} style={box} contentFit="fill" />
-      <Image source={AV_TINT.fill} style={box} contentFit="fill" tintColor={gray} />
-      <Image source={AV_TINT.sat} style={box} contentFit="fill" tintColor={color} />
-      <Image source={AV_TINT.shade} style={box} contentFit="fill" />
+      <AvImg source={AV_TINT.base} style={box} contentFit="fill" />
+      <AvImg source={AV_TINT.fill} style={box} contentFit="fill" tintColor={gray} />
+      <AvImg source={AV_TINT.sat} style={box} contentFit="fill" tintColor={color} />
+      <AvImg source={AV_TINT.shade} style={box} contentFit="fill" />
     </>
   );
 }
@@ -136,8 +144,8 @@ function Tinted({ base, fill, r, hc, w, h }: { base: number; fill: number; r: Av
   const box = rectStyle(r, w, h);
   return (
     <>
-      <Image source={base} style={box} contentFit="fill" />
-      <Image source={fill} style={box} contentFit="fill" tintColor={hc} />
+      <AvImg source={base} style={box} contentFit="fill" />
+      <AvImg source={fill} style={box} contentFit="fill" tintColor={hc} />
     </>
   );
 }
@@ -148,7 +156,7 @@ function Sticker({ it, hc, w, h }: { it: AvItem; hc: string; w: number; h: numbe
   if (!g) return null;
   if (g.k === 'hair') return <Tinted base={AV_ART[it.id]} fill={AV_HAIR_FILL[it.id]} r={g.back} hc={hc} w={w} h={h} />;
   if (g.k !== 'box') return null;
-  return <Image source={AV_ART[it.id]} style={rectStyle(g.r, w, h)} contentFit="fill" />;
+  return <AvImg source={AV_ART[it.id]} style={rectStyle(g.r, w, h)} contentFit="fill" />;
 }
 
 /** 모자 아랫선 아래로 앞머리가 이만큼(원본 좌표)도 안 남으면 앞머리를 숨겨요 — 눈 위에 가는 띠로 걸쳐 보여서 */
@@ -217,11 +225,11 @@ export function AvatarStage({ av, width, border = false, big = false, style }: S
   const bg = hexBg ? null : AV_BG.find((b) => b.id === av.bg) ? av.bg : 'cream';
   return (
     <View style={[styles.stage, { width, height: width * STAGE_RATIO, borderWidth: bw, backgroundColor: hexBg ? av.bg : Colors.cream }, style]}>
-      {bg && <Image source={AV_BG_ART[bg]} style={{ position: 'absolute', left: 0, top: 0, width: iw, height: ih }} contentFit="fill" />}
+      {bg && <AvImg source={AV_BG_ART[bg]} style={{ position: 'absolute', left: 0, top: 0, width: iw, height: ih }} contentFit="fill" />}
       <AvatarChar av={av} width={cw} style={{ position: 'absolute', left: iw * 0.18, top: ih * 0.9 - cw * CHAR_RATIO }} />
       {fx.map((i) => {
         const g = AV_GEO[i.id];
-        return g && g.k === 'stage' ? <Image key={i.id} source={AV_ART[i.id]} style={rectStyle(g.r, iw, ih)} contentFit="fill" /> : null;
+        return g && g.k === 'stage' ? <AvImg key={i.id} source={AV_ART[i.id]} style={rectStyle(g.r, iw, ih)} contentFit="fill" /> : null;
       })}
       {!!av.say && <SayBubble text={av.say} big={big} maxWidth={iw * 0.46} left={iw * 0.06} top={ih * 0.2} />}
     </View>
@@ -294,12 +302,12 @@ export function ItemArt({ it, width, height, hc = '#3B2A20' }: { it: AvItem; wid
 
 /** 효과 · 배경 타일 그림 (무대 그림을 작게) */
 export function StageArt({ it, bgId, width, height }: { it?: AvItem; bgId?: string; width: number; height: number }) {
-  if (bgId) return <Image source={AV_BG_ART[bgId]} style={{ width, height }} contentFit="cover" />;
+  if (bgId) return <AvImg source={AV_BG_ART[bgId]} style={{ width, height }} contentFit="cover" />;
   const g = it ? AV_GEO[it.id] : null;
   if (!it || !g || g.k !== 'stage') return null;
   return (
     <View style={{ width, height, backgroundColor: Colors.cream }}>
-      <Image source={AV_ART[it.id]} style={rectStyle(g.r, width, height)} contentFit="fill" />
+      <AvImg source={AV_ART[it.id]} style={rectStyle(g.r, width, height)} contentFit="fill" />
     </View>
   );
 }
