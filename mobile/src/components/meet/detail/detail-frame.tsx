@@ -52,7 +52,7 @@ type Props = {
   tabKey?: string;
 };
 
-const BAR = 44; // .dtop 안 높이 (위아래 8씩)
+const BAR = 44; // .dtop 안 높이 (아래 8) — 줄 가운데가 탭 화면 머리줄과 같게 위 여백은 없어요
 /** 칸을 눌러 키보드가 올라오면 칸 아래로 이만큼 띄워 보여요 */
 const KB_ROOM = 28;
 
@@ -73,7 +73,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
   const [tabRel, setTabRel] = useState(-1);
   const { height: winH } = useWindowDimensions();
   const [view, setView] = useState<number | null>(null);
-  const topH = insets.top + BAR + 16;
+  const topH = insets.top + BAR + 8;
   const posterH = w ? (w * 5) / 4 : 0;
   const h2Bottom = posterH + h2Rel;
   const tabY = tabRel < 0 ? -1 : posterH + tabRel;
@@ -155,7 +155,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
       </ScrollView>
 
       {/* 위 막대: 뒤로 · (모임 이름) */}
-      <View style={[styles.dtop, { paddingTop: insets.top + 8, height: topH }, solid && styles.dtopSolid]} pointerEvents="box-none">
+      <View style={[styles.dtop, { paddingTop: insets.top, height: topH }, solid && styles.dtopSolid]} pointerEvents="box-none">
         <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} color={ink} />
         <FadeTitle show={titled} text={title} />
         {/* 공유 버튼은 웹 주소가 생기면 다시 (지금은 자리만 맞춰요) */}

@@ -250,25 +250,6 @@ describe('멈춰야 할 때', () => {
     expect(s().problem).toBe('denied');
     expect(s().listening).toBe(false);
   });
-  test('마이크를 못 켜면(audio-capture) 화면에 알려 줘요 (onProblem) — 누를 때마다', async () => {
-    const onProblem = jest.fn();
-    const hook = await renderHook(() => useSpeech({ onText: jest.fn(), onProblem }));
-    const s = () => hook.result.current;
-    for (let i = 0; i < 2; i++) {
-      await begin(s);
-      await act(() => mockEngine.emit('error', { error: 'audio-capture', message: '' }));
-      await act(() => mockEngine.emit('end'));
-    }
-    expect(onProblem.mock.calls).toEqual([['other'], ['other']]);
-    expect(s().listening).toBe(false);
-  });
-  test('조용해서 끝난 건(no-speech) 알리지 않아요', async () => {
-    const onProblem = jest.fn();
-    const hook = await renderHook(() => useSpeech({ onText: jest.fn(), onProblem }));
-    await begin(() => hook.result.current);
-    await act(() => mockEngine.emit('error', { error: 'no-speech', message: '' }));
-    expect(onProblem).not.toHaveBeenCalled();
-  });
   test('전화 등으로 끊기면(interrupted) 멈추고 안내해요', async () => {
     const { s } = await setup();
     await begin(s);

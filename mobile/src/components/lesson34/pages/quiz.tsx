@@ -16,7 +16,7 @@ import { Colors } from '@/constants/theme';
 import { BAD_REACTIONS, GOOD_REACTIONS } from '@/data/lessons';
 import type { SpeakItem } from '@/data/lessons34';
 import { haptic, sfx } from '@/lib/feedback';
-import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
+import { useSpeech } from '@/lib/speech';
 import { useLearnPrefs } from '@/state/learn-prefs';
 
 import type { StepCtx } from '../finish';
@@ -54,7 +54,7 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
   const [res, setRes] = useState<Res | null>(null);
   const [draft, setDraft] = useState('');
   const [line, setLine] = useState<number[]>([]);
-  const speech = useSpeech({ onText: (text) => setDraft(text), onEnd: (text) => text.trim() && check(text.trim()), onProblem: (p) => showToast(SPEECH_PROBLEM_TEXT[p]) });
+  const speech = useSpeech({ onText: (text) => setDraft(text), onEnd: (text) => text.trim() && check(text.trim()) });
   useEffect(() => () => void Tts.stop(), []);
 
   const it = items[order[Math.min(i, order.length - 1)]];

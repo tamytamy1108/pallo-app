@@ -5,22 +5,21 @@ import { FlatList, StyleSheet, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import { GrowInput } from "@/components/ui/grow-input";
-import { MicIcon, SpeakerIcon } from "@/components/lesson/icons";
+import { SpeakerIcon } from "@/components/lesson/icons";
 import { Pressable } from "@/components/ui/pressable";
 import { PText } from "@/components/ui/text";
-import { showToast } from "@/components/ui/toast";
 import { Font } from "@/constants/fonts";
 import { Colors } from "@/constants/theme";
 import type { Lv4Unit } from "@/data/lessons34";
 import { sfx } from "@/lib/feedback";
-import { SPEECH_PROBLEM_TEXT, useSpeech } from "@/lib/speech";
+import { useSpeech } from "@/lib/speech";
 import { useLearnPrefs } from "@/state/learn-prefs";
 import { stepKey } from "@/state/progress";
 
 import type { StepCtx } from "../finish";
 import { setTalk } from "../store";
 import { fmtS, nrm, words } from "../text";
-import { ChkRow, GoBtn, ModeTabs, PINK_INK, SUB, sayEn } from "../ui";
+import { ChkRow, FootRow, GoBtn, MicKey, ModeTabs, PINK_INK, SUB, sayEn } from "../ui";
 import { Intro, PFoot, Stats } from "./common";
 import type { PageApi } from "./study-shell";
 
@@ -113,7 +112,6 @@ export function FreeTalk1({
     onEnd: (text) => {
       if (text.trim()) sendRef.current(text.trim());
     },
-    onProblem: (p) => showToast(SPEECH_PROBLEM_TEXT[p]),
   });
 
   // 이 질문 남은 시간 (질문이 올 때마다 1분)
@@ -351,25 +349,25 @@ export function FreeTalk1({
                 setCm(k === "voice" ? "say" : "write");
               }}
             />
+            {/* 다른 학습 화면(말하기 · 쓰기 단계)과 같은 아래 칸: 넓은 마이크 키 / 입력칸 + 넓은 노랑 보내기 */}
             {cm === "say" ? (
-              <Pressable
-                onPress={() =>
-                  speech.listening ? speech.stop() : void speech.start(C.chips)
-                }
-                accessibilityRole="button"
-                accessibilityLabel="눌러서 말하기"
-                style={StyleSheet.flatten([
-                  st.ftMic,
-                  speech.listening && st.ftMicOn,
-                ])}
-              >
-                <MicIcon size={20} color={Colors.white} />
-                <PText style={st.ftMicT} color={Colors.white}>
-                  {speech.listening ? draft || "듣고 있어요…" : "눌러서 말하기"}
-                </PText>
-              </Pressable>
+              <>
+                {speech.listening ? (
+                  <PText style={st.said} color={draft ? Colors.ink : SUB}>
+                    {draft || "듣고 있어요…"}
+                  </PText>
+                ) : null}
+                <MicKey
+                  label="눌러서 말하기"
+                  live="다 말했어요"
+                  on={speech.listening}
+                  onPress={() =>
+                    speech.listening ? speech.stop() : void speech.start(C.chips)
+                  }
+                />
+              </>
             ) : (
-              <View style={st.inp}>
+              <>
                 <GrowInput
                   value={draft}
                   onChangeText={setDraft}
@@ -379,33 +377,10 @@ export function FreeTalk1({
                   style={st.ta}
                   accessibilityLabel="내 답"
                 />
-                <Pressable
-                  onPress={() => {
-                    const v = draft.trim();
-                    if (!v) {
-                      showToast("영어로 한마디 적어 주세요");
-                      return;
-                    }
-                    send(v);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="보내기"
-                  style={st.sendBtn}
-                >
-                  <Svg
-                    width={20}
-                    height={20}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={Colors.ink}
-                    strokeWidth={2.4}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <Path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" />
-                  </Svg>
-                </Pressable>
-              </View>
+                <FootRow>
+                  <GoBtn label="보내기" disabled={!draft.trim()} onPress={() => send(draft.trim())} />
+                </FootRow>
+              </>
             )}
           </>
         )}
@@ -512,36 +487,14 @@ const st = StyleSheet.create({
     justifyContent: "center",
   },
   bulbOn: { backgroundColor: Colors.yellow },
-  ftMic: {
-    height: 54,
-    borderRadius: 27,
-    borderWidth: 2,
-    borderColor: Colors.ink,
-    backgroundColor: Colors.purple,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    boxShadow: `0px 4px 0px ${Colors.ink}`,
-    marginBottom: 4,
-  },
-  ftMicOn: { backgroundColor: Colors.rosePink },
-  ftMicT: {
-    fontFamily: Font.body900,
-    fontSize: 15.5,
-    lineHeight: 22,
-    flexShrink: 1,
-  },
-  inp: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+  said: { fontFamily: Font.body700, fontSize: 15, lineHeight: 22, textAlign: "center", paddingHorizontal: 8 },
   ta: {
-    flex: 1,
-    minHeight: 54,
+    minHeight: 64,
     maxHeight: 120,
     borderWidth: 2,
     borderColor: Colors.ink,
     borderRadius: 16,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.cream,
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontFamily: Font.body500,
@@ -549,15 +502,5 @@ const st = StyleSheet.create({
     lineHeight: 22,
     color: Colors.ink,
     textAlignVertical: "top",
-  },
-  sendBtn: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    borderWidth: 2,
-    borderColor: Colors.ink,
-    backgroundColor: Colors.yellow,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

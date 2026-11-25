@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { canPreloadWorld } from '@/components/library/world/world-support';
-import { useLoungeHasNew } from '@/components/lounge/new-posts';
 import { Pressable } from '@/components/ui/pressable';
 import { Colors } from '@/constants/theme';
 import { SPRING } from '@/lib/motion';
@@ -173,19 +172,12 @@ function TabButton({ tab, icon, label, isFocused, ref: _ref, onPress, ...props }
         <Svg width={21} height={21} viewBox="0 0 24 24">
           <Path d={icon} fill={isFocused ? Colors.yellow : 'none'} stroke={isFocused ? Colors.ink : '#3A3A48'} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
-        {tab === 'lounge' ? <LoungeNewDot /> : null}
       </Animated.View>
       <Text style={[styles.label, isFocused && styles.labelOn]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
   );
-}
-
-/** 라운지 어느 탭에든 새 글이 있으면 아이콘 오른쪽 위에 분홍 점 */
-function LoungeNewDot() {
-  const has = useLoungeHasNew();
-  return has ? <View pointerEvents="none" style={styles.newDot} /> : null;
 }
 
 const styles = StyleSheet.create({
@@ -219,6 +211,5 @@ const styles = StyleSheet.create({
   ind: { position: 'absolute', top: 6, bottom: 6, left: 6, borderRadius: 24, backgroundColor: '#ECEAE6' },
   pressed: { transform: [{ scale: 0.92 }] },
   label: { fontSize: 11.5, fontWeight: '600', color: '#3A3A48' },
-  newDot: { position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 4.5, backgroundColor: '#E8577A', borderWidth: 2, borderColor: Colors.white },
   labelOn: { fontWeight: '900', color: Colors.ink },
 });
