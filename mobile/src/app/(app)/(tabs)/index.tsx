@@ -12,6 +12,7 @@ import { guardMember } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-sheet';
 import { getAttend, summary, type SheetMode } from '@/components/home/attendance';
+import { setDecoOnScreen } from '@/components/home/deco-on-screen';
 import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/components/home/dev';
 import { GoalCard } from '@/components/home/goal-card';
 import { Greeting } from '@/components/home/greeting';
@@ -31,7 +32,7 @@ import { Appear } from '@/components/ui/appear';
 import { Raised } from '@/components/ui/raised';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
+import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { LANGS, SLOTS } from '@/data/home';
 import { shouldAskInvite } from '@/state/invite-prompt';
@@ -55,8 +56,10 @@ export default function HomeScreen() {
   const plan = useMe((m) => m.plan);
   const unread = useUnreadCount();
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('home', () => scroll.current?.scrollTo({ y: 0, animated: true }));
+  useTabReselect('home', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const mapY = useRef(0);
+  const mapH = useRef(0);
+  const viewH = useRef(0);
 
   // 출석: 시트(사전 출석 · 출석 · 완료) → QR 스캐너 (프로토타입 openSheet · openScanner)
   const [sheet, setSheet] = useState<AttendSheetMode | null>(null);
@@ -132,7 +135,16 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView ref={scroll} contentContainerStyle={styles.body}>
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={styles.body}
+        onLayout={(e) => (viewH.current = e.nativeEvent.layout.height)}
+        // 스터디 맵 카드가 화면 밖으로 나가면 카드 장식 움직임을 멈춰요 (스크롤이 부드럽게)
+        onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          setDecoOnScreen(y + viewH.current > mapY.current && y < mapY.current + mapH.current);
+        }}
+        scrollEventThrottle={64}>
         {/* 칸마다 조금씩 늦게 아래에서 올라와요 (프로토타입 .rise · 0 / .04 / .06 / .1 / .14 / .26초) */}
         <Appear kind="rise" style={styles.head}>
           <Logo />
@@ -161,7 +173,13 @@ export default function HomeScreen() {
           <NoticeStrip />
         </Appear>
         <Appear kind="rise" delay={100}>{plan === 'app' ? <GoalCard onContinue={continueGoal} /> : <HomeCard onOpen={openAttend} />}</Appear>
-        <Appear kind="rise" delay={140} onLayout={(e) => (mapY.current = e.nativeEvent.layout.y)}>
+        <Appear
+          kind="rise"
+          delay={140}
+          onLayout={(e) => {
+            mapY.current = e.nativeEvent.layout.y;
+            mapH.current = e.nativeEvent.layout.height;
+          }}>
           <StudyMap />
         </Appear>
         <Appear kind="rise" delay={260}>
@@ -199,8 +217,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   center: { justifyContent: 'center' },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: 0, paddingBottom: TabBarSpace + 40, gap: Spacing.stack },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 40, gap: Spacing.stack },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, transform: [{ translateY: Spacing.headDrop }] },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   // .icon-btn.has-dot::after: 안 읽은 알림이 있으면 분홍 점
   bellDot: { position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 4.5, backgroundColor: Colors.rosePink, borderWidth: 2, borderColor: Colors.white },

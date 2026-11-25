@@ -42,3 +42,17 @@ export function liteWorld(): boolean {
 
 /** 개발용(웹): 2D 지도 사진 찍기 모드 */
 export const devCapture = () => devMap() === 'capture';
+
+/**
+ * 라이브러리 탭을 뒤에서(다른 탭에 있을 때) 미리 열어 지도를 만들어 둘지.
+ * 시뮬레이터 · 에뮬레이터는 GL 을 소프트웨어로 그려서 지도 한 장에 10초~3분 JS 가 멈춰요 → 미리 열지 않아요 (그동안 앱이 안 눌려요).
+ */
+export function canPreloadWorld(): boolean {
+  return Platform.OS === 'web' || Device.isDevice;
+}
+
+/**
+ * 다른 탭에 있을 때 지도를 몇 장까지 미리 만들지: 웹은 한 장에 0.1초 안이라 다 만들고,
+ * 폰은 한 장에 JS 가 0.3~1.3초 멈춰서 보이는 지도(첫 장)만 — 나머지는 라이브러리에 들어온 뒤 조용할 때 만들어요.
+ */
+export const warmAllInBackground = () => Platform.OS === 'web';

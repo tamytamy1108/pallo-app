@@ -26,7 +26,9 @@ import { useMe } from '@/state/me';
 
 const CAP_MIN = 2;
 const CAP_MAX = 300;
-const FEES = ['무료', '유료 (금액은 매니저와 정해요)'];
+const FEES = ['무료', '유료'];
+/** 1인 참가비 상한 (원) */
+const FEE_MAX = 1000000;
 
 /**
  * 이벤트 제안 (docs/pages/06-event.md '이벤트 제안 (회원)' — 프로토타입 lgPropEvent).
@@ -52,7 +54,11 @@ export default function ProposeEvent() {
   const [body, setBody] = useState('');
   // 예상 인원: 숫자 (알약 · −/+ · 직접 적기) 또는 null(무관 — 0 으로 보내요)
   const [cap, setCap] = useState<number | null>(20);
-  const [fee, setFee] = useState('무료');
+  // 참가비는 꼭 골라요 (처음엔 비어 있어요)
+  const [fee, setFee] = useState<string | null>(null);
+  // 유료면 1인 금액을 직접 적어요 (숫자만 · 쉼표는 보여 줄 때만)
+  const [price, setPrice] = useState('');
+  const priceN = Number(price) || 0;
   const region = (BRANCHES.find((b) => b[0] === br) || BRANCHES[0])[2];
 
   const send = () => {
@@ -62,7 +68,9 @@ export default function ProposeEvent() {
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
-    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim() });
+    if (!fee) return showToast('참가비를 골라 주세요');
+    if (fee === '유료' && !priceN) return showToast('참가비 금액을 적어 주세요');
+    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim(), fee: fee === '유료' ? priceN : 0 });
     sfx('save');
     router.back();
     showToast('제안을 보냈어요 · 매니저가 2~3일 안에 연락드려요');
@@ -131,8 +139,23 @@ export default function ProposeEvent() {
       <Field label="예상 인원 · 나 포함" req>
         <CountPicker value={cap} presets={[10, 20, 30, 40]} min={CAP_MIN} max={CAP_MAX} typable anyLabel="무관" onChange={setCap} />
       </Field>
-      <Field label="참가비">
+      <Field label="참가비" req hint={fee === '유료' ? '1인 금액이에요. 매니저와 이야기하며 바뀔 수 있어요.' : undefined}>
         <SheetPills options={FEES} value={fee} onChange={setFee} label="참가비" />
+        {fee === '유료' ? (
+          <View style={styles.price}>
+            <View style={styles.priceIn}>
+              <TextField
+                value={priceN ? priceN.toLocaleString('ko-KR') : ''}
+                onChangeText={(t) => setPrice(String(Math.min(FEE_MAX, Number(t.replace(/\D/g, '')) || 0) || ''))}
+                keyboardType="number-pad"
+                placeholder="예) 15,000"
+                accessibilityLabel="1인 참가비 (원)"
+                maxLength={9}
+              />
+            </View>
+            <PText style={styles.won}>원</PText>
+          </View>
+        ) : null}
       </Field>
 
       <BranchSheet
@@ -174,5 +197,8 @@ const styles = StyleSheet.create({
   hint: { fontFamily: Font.body700, fontSize: 12, lineHeight: 18, color: Colors.inkSub },
   sel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 48, paddingHorizontal: 16, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white },
   selT: { fontFamily: Font.body800, fontSize: 15, lineHeight: 20 },
+  price: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  priceIn: { flex: 1 },
+  won: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
   ta: { minHeight: 110, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, fontFamily: Font.body600, fontSize: 14, lineHeight: 22.4, color: Colors.ink, textAlignVertical: 'top' },
 });

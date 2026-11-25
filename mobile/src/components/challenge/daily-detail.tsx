@@ -57,7 +57,7 @@ const TABS: [Tab, string][] = [
   ['feed', '인증'],
   ['rank', '순위'],
 ];
-const TOP_H = 60;
+const TOP_H = 44;
 
 /**
  * 일상 챌린지 상세 (프로토타입 lgChalDetail): 진행 카드 → 카테고리 · 이름 · 지점 · 멤버 → 홈 | 인증 | 순위 탭 → 아래 고정 [찜] [참여하기 / 오늘 인증하기].
@@ -406,9 +406,7 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
     <Pressable onLongPress={q.me ? undefined : () => onReport(q.n)} delayLongPress={450} style={[styles.chf, i > 0 && styles.chfLine]}>
       {/* 위 줄: 얼굴 · 이름 · 시간 — 사진 · 버튼 · 글은 그 아래 폭 전체 (라운지 글처럼 왼쪽을 비우지 않아요) */}
       <View style={styles.chfHd}>
-        <ProfileTap name={q.n}>
-          <Face name={q.n} color={q.c} size={34} />
-        </ProfileTap>
+        <Face name={q.n} color={q.c} size={34} />
         <PText style={styles.chfN} numberOfLines={1}>{`${q.n}${q.me ? ' (나)' : ''}`}</PText>
         <PText style={styles.chfT}>{q.t}</PText>
       </View>

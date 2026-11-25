@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { memberGate } from '@/components/common/trial-guide';
@@ -12,7 +12,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { QR_BEFORE, SLOTS } from '@/data/home';
 import { sfx } from '@/lib/feedback';
-import { kf, SPRING, useLoop } from '@/lib/motion';
+import { kf, SPRING, useLoop, useStill } from '@/lib/motion';
 import { createStore } from '@/lib/store';
 import { finishHomeMoment, useLinkEvents } from '@/state/link-events';
 import { useMe } from '@/state/me';
@@ -204,7 +204,7 @@ const pulseRing = css.keyframes({
   '100%': { opacity: 0, transform: [{ scale: 2.6 }] },
 });
 function PulseDot({ size, square }: { size: number; square?: boolean }) {
-  const still = useReducedMotion();
+  const still = useStill();
   const shape = { width: size, height: size, borderRadius: square ? 5 : size / 2 };
   return (
     <View>
@@ -321,7 +321,7 @@ function QrBadge({ d }: { d: string }) {
 
 /** 제목 문구가 바뀔 때마다 아래에서 톡 올라와요 (lineIn .55초) */
 function SwapTitle({ text }: { text: string }) {
-  const still = useReducedMotion();
+  const still = useStill();
   const p = useSharedValue(1);
   useEffect(() => {
     if (still) return;
@@ -346,7 +346,7 @@ const liveRing = css.keyframes({
   '70%, 100%': { opacity: 0, transform: [{ scale: 2.6 }] },
 });
 function LiveDot({ live }: { live: Hero['live'] }) {
-  const still = useReducedMotion();
+  const still = useStill();
   // 대기: 흰 점 · 출석 가능 / 스터디 중: 빨간 점 + 퍼지는 빛 · 입장 완료: 잉크 점 (.hero-live · .on · .done)
   const fill = live === 'on' ? '#FF4D4D' : live === 'done' ? Colors.ink : Colors.white;
   return (
@@ -363,7 +363,7 @@ function LiveDot({ live }: { live: Hero['live'] }) {
 
 /** 출석 버튼 위로 흰 빛이 5초마다 스쳐 지나가요 (btnShine 5초 · 1초 뒤 시작 · CSS 애니메이션) */
 function Shine() {
-  const still = useReducedMotion();
+  const still = useStill();
   const [w, setW] = useState(0);
   const kf = useMemo(
     () =>
@@ -408,18 +408,19 @@ const breathe = css.keyframes({
 
 export type Pose = 'standard' | 'tilt' | 'jump';
 const POSES: Pose[] = ['standard', 'tilt', 'jump'];
-/** 포즈마다 이미지 · 크기 · 자리 · 눈 위치 [가운데 x, y, 가로 반지름, 세로 반지름, 기울기°] (원본 픽셀 · 프로토타입 HERO_EYES) */
+/** 포즈마다 이미지 · 크기 · 자리 · 눈 위치 [가운데 x, y, 가로 반지름, 세로 반지름, 기울기°] (원본 픽셀 — 그림의 검은 테 안쪽 흰자에 맞춰 잰 값 · 테 쪽으로 1.5 더) */
+// 카드 안쪽에 다 들어오게 (전엔 오른쪽 · 아래로 삐져나가 카드 끝에서 팔이 잘렸어요)
 const POSE = {
-  standard: { src: require('@/assets/characters/c-purple-standard-3d.png'), W: 480, H: 335, width: 150, right: -22, bottom: -26, eyes: [[172.5, 69.6, 33.3, 47.2, -4.1], [251.0, 68.0, 33.4, 47.5, -5.2]] },
-  tilt: { src: require('@/assets/characters/c-purple-tilt-3d.png'), W: 480, H: 352, width: 124, right: -12, bottom: -20, eyes: [[180.9, 69.1, 33.5, 47.6, 7.8], [258.5, 83.9, 33.5, 47.6, 6.7]] },
-  jump: { src: require('@/assets/characters/c-purple-jump-3d.png'), W: 480, H: 484, width: 96, right: -2, bottom: -12, eyes: [[179.9, 68.6, 33.4, 47.4, 5.8], [256.4, 80.5, 33.4, 47.4, 4.9]] },
+  standard: { src: require('@/assets/characters/c-purple-standard-3d.png'), W: 480, H: 335, width: 132, right: 8, bottom: -6, eyes: [[166.5, 68.7, 25.2, 44.9, -0.5], [245.3, 67.0, 25.2, 44.9, -0.6]] },
+  tilt: { src: require('@/assets/characters/c-purple-tilt-3d.png'), W: 480, H: 352, width: 116, right: 8, bottom: -6, eyes: [[174.6, 66.9, 25.3, 45.0, 11.5], [252.1, 81.7, 25.3, 44.9, 11.7]] },
+  jump: { src: require('@/assets/characters/c-purple-jump-3d.png'), W: 480, H: 484, width: 92, right: 10, bottom: -4, eyes: [[173.2, 66.4, 24.7, 44.4, 9.6], [251.0, 78.6, 25.3, 44.7, 9.8]] },
 } as const;
 
 /** 보라 팔로: 숨 쉬듯 살짝 눌렸다 펴지고(cornerBreathe 3초), 3초마다 눈을 깜빡여요 (avBlink) */
 export function HeroChar({ pose }: { pose: Pose }) {
   const p = POSE[pose];
   const h = (p.width * p.H) / p.W;
-  const still = useReducedMotion();
+  const still = useStill();
   const body = still ? {} : { animationName: breathe, animationDuration: '3s', animationIterationCount: 'infinite' as const, animationTimingFunction: 'ease-in-out' as const };
   const [delay] = useState(() => Math.round(Math.random() * 3000));
   const blink = useLoop(3000, { delay });

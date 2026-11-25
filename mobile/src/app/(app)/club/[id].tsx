@@ -8,6 +8,7 @@ import { ClubBoard } from '@/components/meet/club/club-board';
 import { ClubChat } from '@/components/meet/club/club-chat';
 import { ClubHome } from '@/components/meet/club/club-home';
 import { ClubJoin } from '@/components/meet/club/club-join';
+import { ClubManage, manageCounts, type ManageRole } from '@/components/meet/club/club-manage';
 import { SessionSheet } from '@/components/meet/club/session-sheet';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
 import { MainBtn, SaveBtn } from '@/components/meet/detail/detail-parts';
@@ -15,13 +16,14 @@ import { AskSheet } from '@/components/meet/detail/sheets';
 import { guardMember } from '@/components/common/trial-guide';
 import { Icon } from '@/components/meet/icons';
 import { setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
-import { clubCat, clubSessions, clubStaff, clubX, findClub, membersOf, useAllClubs } from '@/components/meet/model';
+import { clubCat, clubHost, clubSessions, clubStaff, clubX, findClub, membersOf, useAllClubs } from '@/components/meet/model';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, joinFree } from '@/data/meet';
+import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -40,7 +42,8 @@ const TABS: [Tab, string][] = [
  * 맞는 API: 63 `/clubs/:id` · 65 `/clubs/:id/members` · 67 `/board` · `/photos` · 68 `/chat`(실시간 — Q-T6) · 69 `/sessions`
  */
 export default function ClubDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // 개발용 ?as=host · ?as=co, 또는 마이 '개발 · 사람'의 동아리 역할(lib/dev-profile devClubRole): 호스트 · 코호스트 · 멤버로 보기
+  const { id, as } = useLocalSearchParams<{ id: string; as?: string }>();
   const key = String(id);
   const myClubs = useMeetStore((s) => s.myClubs);
   const c = findClub(key, myClubs);
@@ -54,9 +57,11 @@ export default function ClubDetail() {
   const [join, setJoin] = useState(false);
   const [leave, setLeave] = useState(false);
   const [sid, setSid] = useState<string | null>(null);
+  const [manage, setManage] = useState(false);
 
   if (!c) return <EmptyState title="동아리를 찾을 수 없어요" />;
-  const inC = st === 'in';
+  // 개발용 동아리 역할을 골랐으면 가입한 사람으로 봐요
+  const inC = st === 'in' || (__DEV__ && devClubRole !== 'auto');
   const cur = c.n + (inC ? 1 : 0);
   const meArg = { name: me.name, branch: me.branch };
   const staff = clubStaff(c, cur, meArg);
@@ -65,8 +70,14 @@ export default function ClubDetail() {
   const cat = clubCat(c);
   const recs = clubs.filter((q) => q.id !== c.id && q.cc === c.cc).slice(0, 3);
   const q = sid ? clubSessions(c, att, 12, 85).find((s) => s.id === sid) ?? null : null;
+  const devAs = __DEV__ ? (as === 'host' || as === 'co' ? as : devClubRole) : 'auto';
+  const devRole: ManageRole | null = devAs === 'host' || devAs === 'co' ? devAs : null;
+  const role: ManageRole | null = devRole ?? (devAs === 'member' ? null : c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
+  const counts = manageCounts();
 
-  const btn = c.wait ? (
+  const btn = role ? (
+    <MainBtn label="관리" variant="pu" onPress={() => setManage(true)} />
+  ) : c.wait ? (
     <MainBtn label="승인 대기" variant="off" />
   ) : inC ? (
     <MainBtn label="가입 완료" variant="done" onPress={() => setLeave(true)} />
@@ -122,7 +133,11 @@ export default function ClubDetail() {
         tabKey={tab}
         tabBody={body}
         ctaNote={
-          x.j30 ? (
+          role ? (
+            <PText style={styles.j30}>
+              가입 신청 <PText style={styles.j30B}>{counts.ask}명</PText> · 대기자 <PText style={styles.j30B}>{counts.wait}명</PText> · 관리에서 승인해요
+            </PText>
+          ) : x.j30 ? (
             <PText style={styles.j30}>
               최근 30일 동안 <PText style={styles.j30B}>{x.j30}명</PText>이 가입했어요
             </PText>
@@ -145,6 +160,7 @@ export default function ClubDetail() {
       </DetailFrame>
 
       <ClubJoin c={c} open={join} onClose={() => setJoin(false)} />
+      {role ? <ClubManage c={c} role={role} open={manage} onClose={() => setManage(false)} members={members} staff={staff} /> : null}
       <AskSheet
         open={leave}
         onClose={() => setLeave(false)}

@@ -72,7 +72,6 @@ function BranchSheet({ open, title, initial, onClose, onClosed, onApply }: { ope
       title={title}
       tall
       footer={<LgButton label={!pick.length || pick.length === LG_BRS.length ? '적용하기 · 전체 지점' : `적용하기 · ${pick.length}곳`} wide height={52} fontSize={15.5} onPress={apply} />}>
-      <PText style={styles.ds}>권역이나 지점을 여러 개 함께 고를 수 있어요. 안 고르면 전체 지점이 보여요 · 전 지점 행사는 늘 보여요.</PText>
       <BranchMultiPicker selected={pick} onChange={setPick} allOption mine={me.branch.split(' · ')} />
     </Sheet>
   );
@@ -83,5 +82,4 @@ const styles = StyleSheet.create({
   brOn: { backgroundColor: Colors.yellow },
   brText: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17 },
   pressed: { transform: [{ scale: 0.96 }] },
-  ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 22.4, color: Colors.inkSub },
 });

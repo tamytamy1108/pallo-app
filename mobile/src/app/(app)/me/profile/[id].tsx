@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -22,7 +22,15 @@ export default function ProfileScreen() {
     if (mine) router.replace('/my');
   }, [mine]);
 
+  // 시트 안 모임 줄을 누르면: 시트가 내려가길 기다리지 않고 이 화면 자리에 바로 그 상세를 열어요
+  // (시트 두 장이 차례로 닫히고 뒤 화면이 비친 뒤 넘어가면 여러 화면을 거치는 것처럼 보여요). 뒤로 가면 원래 화면.
   const close = () => setOpen(false);
+  // 시트를 바로 치우고(닫는 움직임 없이) 그 상세로 — 새 화면이 시트 위로 겹쳐 지나가지 않게
+  const [gone, setGone] = useState(false);
+  const go = (href: Href) => {
+    setGone(true);
+    router.replace(href);
+  };
   const leave = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/my');
@@ -31,17 +39,17 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1 }}>
       <Stack.Screen options={SCREEN.overlay} />
-      {!mine && <ProfileSheetHost name={name} open={open} onClose={close} onClosed={leave} onOpen={(n) => (n === getMe().name ? leave() : setName(n))} />}
+      {!mine && !gone && <ProfileSheetHost name={name} open={open} onClose={close} onGo={go} onClosed={leave} onOpen={(n) => (n === getMe().name ? leave() : setName(n))} />}
     </View>
   );
 }
 
 /** 시트가 다 내려간 뒤에 화면을 닫아요 */
-function ProfileSheetHost({ name, open, onClose, onClosed, onOpen }: { name: string; open: boolean; onClose: () => void; onClosed: () => void; onOpen: (n: string) => void }) {
+function ProfileSheetHost({ name, open, onClose, onGo, onClosed, onOpen }: { name: string; open: boolean; onClose: () => void; onGo: (href: Href) => void; onClosed: () => void; onOpen: (n: string) => void }) {
   useEffect(() => {
     if (open) return;
     const t = setTimeout(onClosed, 460);
     return () => clearTimeout(t);
   }, [open, onClosed]);
-  return <ProfileSheet key={name} name={name} open={open} onClose={onClose} onOpen={onOpen} />;
+  return <ProfileSheet key={name} name={name} open={open} onClose={onClose} onGo={onGo} onOpen={onOpen} />;
 }

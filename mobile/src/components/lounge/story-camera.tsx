@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions, type CameraType } from 'expo-camera';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -43,7 +43,8 @@ type Props = {
 /**
  * 스토리 1단계 — 카메라 (인스타그램처럼 바로 찍기).
  * 위: 닫기 · '스토리 · 24시간 동안 보여요' · 플래시. 화면 아래: 카테고리 칩. 그 아래: 앨범 · 셔터 · 앞뒤 바꾸기.
- * 카메라 권한이 없으면 허용 안내를 보여 주고, 앨범에서 고르기는 그대로 돼요. 웹은 카메라 없이 앨범만.
+ * 처음 열면 바로 카메라 허용을 물어봐요 (허용하면 곧장 카메라가 떠요).
+ * 허용하지 않았으면 허용 안내를 보여 주고, 앨범에서 고르기는 그대로 돼요. 웹은 카메라 없이 앨범만.
  */
 export function StoryCamera({ cats, cat, onCat, onShot, onClose }: Props) {
   const insets = useSafeAreaInsets();
@@ -55,6 +56,14 @@ export function StoryCamera({ cats, cat, onCat, onShot, onClose }: Props) {
   const [flash, setFlash] = useState(false);
   const [thumb, setThumb] = useState(lastPick);
   const live = !isWeb && !!perm?.granted;
+  // 아직 안 물어봤으면 열자마자 물어봐요 — 안내 화면에서 한 번 더 누르지 않게 (한 번 거절했으면 안내 화면의 단추로)
+  const asked = useRef(false);
+  const askNow = !isWeb && !!perm && !perm.granted && perm.canAskAgain && perm.status === 'undetermined';
+  useEffect(() => {
+    if (!askNow || asked.current) return;
+    asked.current = true;
+    void requestPerm();
+  }, [askNow, requestPerm]);
 
   const pickAlbum = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.86 });

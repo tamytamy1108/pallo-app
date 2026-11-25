@@ -233,6 +233,8 @@ export const NOTIS: Noti[] = [
   { id: 'inv1', kind: 'learn', who: { name: '민준', bg: '#E3EAF8', body: 'sky' }, text: '민준님이 오늘 20:00 영어 세션에 가요. 같이 갈래요?', time: '5분 전', href: '/?attend=rsvp&slot=1&lang=0', read: false, action: '같이 가기' },
   // 팔로우한 멤버의 퀘스트 성공 → 같은 단계로 (첫 챕터 · 회원 잠금은 레슨 화면이 지켜요)
   { id: 'qs1', kind: 'learn', who: { name: '소라', bg: '#CDEBD0', body: 'pink' }, text: '소라님이 「1과 Cafe Complaint · 본학습」 퀘스트를 성공했어요!', time: '20분 전', href: '/lesson/sit?lv=1&unit=1', read: false, action: '나도 이어서 하기', toMyLast: true },
+  // 시즌 보상 미리 알림 (서버 자동 · api-additions '시즌 보상 자동 지급'): 시즌 시작 · 거의 다 채웠을 때 · 받았을 때
+  { id: 'rw-santa-0', kind: 'event', icon: 'flag', text: '12월 시즌 보상 · 12월에 출석 7일을 채우면 산타 세트(모자 · 수염 · 옷 · 부츠 · 눈 오는 밤 배경)를 받아요', time: '40분 전', href: '/me/customize', read: false },
   { id: 'nc0', kind: 'notice', icon: 'tack', text: '[공지] 이번 달 스터디 일정 안내', time: '30분 전', href: '/notice/n1', read: false },
   { id: 'n1', kind: 'learn', icon: 'book', text: '내일 20:00 세션이에요. 1과 예습이 남았어요', time: '1시간 전', href: '/unit/1?lv=1', read: false },
   { id: 'n2', kind: 'lounge', who: { name: '하나', bg: '#FFE200', body: 'pink' }, text: '하나님이 내 글에 댓글을 남겼어요 “최고예요!”', time: '2시간 전', href: '/post/p1?comments=1', read: false },

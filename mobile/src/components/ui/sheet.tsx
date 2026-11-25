@@ -6,7 +6,7 @@ import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'reac
 
 import { Pressable } from '@/components/ui/pressable';
 import { Colors, Radius } from '@/constants/theme';
-import { useKeyboardHeight, useKeyboardShown } from '@/lib/keyboard';
+import { dismissKeyboardBehind, useKeyboardHeight, useKeyboardShown } from '@/lib/keyboard';
 import { EASE } from '@/lib/motion';
 
 import { FormScrollContext, KeepVisibleContext, useFormScroll, useShowFocusedOnKeyboard } from './form-scroll';
@@ -131,6 +131,8 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   const wasOpen = useRef(false);
   useEffect(() => {
     if (open) {
+      // 뒤 화면에서 쓰던 키보드가 남아 있으면 내려요 — 안 그러면 시트 아래 버튼(확인 · 신청하기)을 덮어요
+      if (!wasOpen.current) dismissKeyboardBehind();
       wasOpen.current = true;
       if (!IOS || presented.current) {
         enter();

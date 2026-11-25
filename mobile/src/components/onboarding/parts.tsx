@@ -409,7 +409,7 @@ export function FieldShell({ children, name, error, fixed = false, quiet, style 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   flex: { flex: 1 },
-  top: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingRight: 20 },
+  top: { height: 44, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingRight: 20 },
   back: { marginRight: -2 },
   count: { fontFamily: Font.display, fontSize: 12, lineHeight: 16, color: Colors.inkSub },
   body: { paddingHorizontal: 22, paddingBottom: 24, flexGrow: 1 },

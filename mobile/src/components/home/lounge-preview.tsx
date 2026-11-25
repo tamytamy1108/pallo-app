@@ -3,19 +3,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { loungeHighlightsQuery } from '@/api/queries';
 import { PIC_BG, PostArt } from '@/components/lounge/pics';
 import { Pressable } from '@/components/ui/pressable';
-import { ProfileTap } from '@/components/common/profile-tap';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LANG_CHIP, type LoungeHighlight, type Poster } from '@/data/home';
-import { EASE } from '@/lib/motion';
+import { EASE, useStill } from '@/lib/motion';
 
 import { ARROW_PATH, LineIcon } from './icons';
 import { MemberFace } from './member-face';
@@ -37,7 +36,7 @@ export function LoungePreview() {
 
 function LoungeSlides({ items }: { items: LoungeHighlight[] }) {
   const n = items.length;
-  const still = useReducedMotion();
+  const still = useStill();
   const [idx, setIdx] = useState(0);
   const [w, setW] = useState(0);
   const [heights, setHeights] = useState<Record<string, number>>({});
@@ -181,9 +180,7 @@ function SlideCard({ item, d, w, cardW, still, onLayout, onPress }: { item: Loun
           )}
           <View style={styles.body}>
             <View style={styles.who}>
-              <ProfileTap name={item.who}>
-                <MemberFace size={28} bg={item.face.bg} body={item.face.body} />
-              </ProfileTap>
+              <MemberFace size={28} bg={item.face.bg} body={item.face.body} />
               <PText style={styles.whoName}>{item.who}</PText>
               <PText style={styles.whoTime} color={Colors.inkSub}>
                 · {item.time}

@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { css, useReducedMotion } from 'react-native-reanimated';
+import Animated, { css } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 
 import type { Season } from '@/constants/season';
+import { useStill } from '@/lib/motion';
+
+import { useDecoOnScreen } from './deco-on-screen';
 
 /*
  * 봄 · 여름 · 가을 · 겨울 스터디 맵 장식 (프로토타입 renderSeason · SFXK 'e' 종이 컷아웃 · SFX_STY.e).
@@ -112,7 +115,9 @@ function Falling({ p, height }: { p: Piece; height: number }) {
 
 /** 맵 카드 뒤에 까는 계절 장식 (24개 · 18~28px · 12~18초에 한 번 떨어져요) */
 export function SeasonLayer({ season }: { season: Plain }) {
-  const still = useReducedMotion();
+  // 움직임 줄이기 · 다른 화면 · 카드가 스크롤로 화면 밖이면 멈춰요
+  const onScreen = useDecoOnScreen();
+  const still = useStill() || !onScreen;
   const [height, setHeight] = useState(0);
   const [pieces] = useState<Piece[]>(() =>
     Array.from({ length: 24 }, () => {

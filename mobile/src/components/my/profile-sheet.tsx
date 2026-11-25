@@ -1,3 +1,4 @@
+import type { Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
@@ -11,12 +12,13 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { findMember, followLists, MEMBERS, memberAvatar, memberHandle, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
+import { findMember, followLists, MEMBERS, memberAvatar, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { useMyAvatar } from '@/state/avatar';
 import { toggleFollow, useMe } from '@/state/me';
 
 import { PfIcon } from './icons';
+import { profileMeetCount, ProfileMeetsSheet } from './profile-meets';
 import { Lift } from './lift';
 import { BadgeGrid } from './my-blocks';
 import { FollowSheet, MemberRow } from './my-sheets';
@@ -75,11 +77,11 @@ function H2({ title, right, big }: { title: string; right?: ReactNode; big?: boo
 }
 
 /**
- * 멤버 프로필 시트 (프로토타입 openProfile · #lgSheet.tall.pfs): 캐릭터 룸 · 이름 · @아이디 · 지점 · 학습 언어 · 팔로잉/팔로워
- * · 함께 아는 멤버 · [팔로우] → 팔로우하면 추천 멤버 · 이번 주 포인트 달리기 · 학습 현황 · 배지 · 신고 / 차단.
+ * 멤버 프로필 시트 (프로토타입 openProfile · #lgSheet.tall.pfs): 캐릭터 룸 · 이름 · 학습 언어 · 지점 · 가입 연도
+ * · 팔로잉 · 팔로워 · 참여 중(누르면 동아리 · 번개 · 챌린지 탭) · 함께 아는 멤버 · [팔로우] → 팔로우하면 추천 멤버 · 이번 주 포인트 달리기 · 학습 현황 · 배지 · 신고 / 차단.
  * 라운지 · 랭킹에서 얼굴을 누르면 열려요 (/me/profile/[이름]).
  */
-export function ProfileSheet({ name, open, onClose, onOpen }: { name: string; open: boolean; onClose: () => void; /** 시트 안에서 다른 멤버를 누르면 (같은 시트에 그 사람으로 바꿔요) */ onOpen: (name: string) => void }) {
+export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: string; open: boolean; onClose: () => void; /** 모임 줄을 누르면 (바로 그 상세로) */ onGo: (href: Href) => void; /** 시트 안에서 다른 멤버를 누르면 (같은 시트에 그 사람으로 바꿔요) */ onOpen: (name: string) => void }) {
   const { width: winW } = useWindowDimensions();
   const me = useMe();
   const [justFollowed, setJustFollowed] = useState(false);
@@ -87,6 +89,8 @@ export function ProfileSheet({ name, open, onClose, onOpen }: { name: string; op
   const [list, setList] = useState<'fing' | 'fer' | null>(null);
   const [recAll, setRecAll] = useState(false);
   const [report, setReport] = useState<'report' | 'block' | null>(null);
+  const [meets, setMeets] = useState(false);
+  const meetN = profileMeetCount(name);
 
   const W = Math.min(winW, 520) - 36;
   const h = nameHash(name);
@@ -127,14 +131,10 @@ export function ProfileSheet({ name, open, onClose, onOpen }: { name: string; op
         <View style={styles.id}>
           <PText style={styles.name}>{name}</PText>
           <PText style={styles.idS}>
-            {memberHandle(name)} · {br} · 2026년 가입
+            {[...langs, br, '2026년 가입'].filter(Boolean).join(' · ')}
           </PText>
         </View>
         <View style={styles.cnt}>
-          <View style={styles.cntC}>
-            <PText style={[styles.cntLang, langs.length > 1 && styles.cntLang2]}>{langs.join(' · ')}</PText>
-            <PText style={styles.cntS}>학습 언어</PText>
-          </View>
           <Pressable onPress={() => setList('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${L.fing.length}`} style={styles.cntC}>
             <PText style={styles.cntN}>{L.fing.length}</PText>
             <PText style={styles.cntS}>팔로잉</PText>
@@ -142,6 +142,11 @@ export function ProfileSheet({ name, open, onClose, onOpen }: { name: string; op
           <Pressable onPress={() => setList('fer')} accessibilityRole="button" accessibilityLabel={`팔로워 ${L.fer.length}`} style={styles.cntC}>
             <PText style={styles.cntN}>{L.fer.length}</PText>
             <PText style={styles.cntS}>팔로워</PText>
+          </Pressable>
+          {/* 참여 중: 동아리 · 번개 · 챌린지 (호스트인 것 포함) → 누르면 분야별 목록 시트 */}
+          <Pressable onPress={() => setMeets(true)} accessibilityRole="button" accessibilityLabel={`참여 중 ${meetN}`} style={styles.cntC}>
+            <PText style={styles.cntN}>{meetN}</PText>
+            <PText style={styles.cntS}>참여 중</PText>
           </Pressable>
         </View>
         <View style={styles.mut}>
@@ -278,6 +283,7 @@ export function ProfileSheet({ name, open, onClose, onOpen }: { name: string; op
         </View>
       </Sheet>
 
+      <ProfileMeetsSheet name={name} open={meets} onClose={() => setMeets(false)} onGo={onGo} />
       <FollowSheet name={list ? name : null} tab={list ?? 'fer'} onTab={setList} onClose={() => setList(null)} onOpen={openOther} />
       <Sheet open={recAll} onClose={() => setRecAll(false)} title={`추천 멤버 ${recs.length}명`} label="추천 멤버">
         <PText style={styles.ds}>함께 아는 멤버 · 같은 세션 · 같은 동아리</PText>
@@ -313,8 +319,6 @@ const styles = StyleSheet.create({
   idS: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   cnt: { flexDirection: 'row', paddingVertical: 6 },
   cntC: { flex: 1, alignItems: 'center' },
-  cntLang: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23 },
-  cntLang2: { fontSize: 15, lineHeight: 23 },
   cntN: { fontFamily: Font.display, fontSize: 19, lineHeight: 23 },
   cntS: { marginTop: 3, fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   mut: { flexDirection: 'row', alignItems: 'center', gap: 8 },

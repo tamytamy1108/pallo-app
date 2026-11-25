@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import * as Tts from 'expo-speech';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
@@ -17,8 +16,9 @@ import { Colors } from '@/constants/theme';
 import { BAD_REACTIONS, GOOD_REACTIONS } from '@/data/lessons';
 import type { SpeakItem } from '@/data/lessons34';
 import { haptic, sfx } from '@/lib/feedback';
-import { useSpeech } from '@/lib/speech';
+import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
 import { useLearnPrefs } from '@/state/learn-prefs';
+import { speak, stopSpeaking } from '@/lib/tts';
 
 import type { StepCtx } from '../finish';
 import { gradeWords, pickOne, shuffle } from '../text';
@@ -55,8 +55,8 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
   const [res, setRes] = useState<Res | null>(null);
   const [draft, setDraft] = useState('');
   const [line, setLine] = useState<number[]>([]);
-  const speech = useSpeech({ onText: (text) => setDraft(text), onEnd: (text) => text.trim() && check(text.trim()) });
-  useEffect(() => () => void Tts.stop(), []);
+  const speech = useSpeech({ onText: (text) => setDraft(text), onEnd: (text) => text.trim() && check(text.trim()), onProblem: (p) => showToast(SPEECH_PROBLEM_TEXT[p]) });
+  useEffect(() => () => stopSpeaking(), []);
 
   const it = items[order[Math.min(i, order.length - 1)]];
   const ws = it.en.split(/\s+/);
@@ -85,11 +85,11 @@ export function SpeakQuiz({ ctx, items, api }: { ctx: StepCtx; items: SpeakItem[
     }
     sfx(good ? 'correct' : 'wrong');
     haptic(good ? 'success' : 'error');
-    if (good) Tts.speak(it.en, { language: 'en-US', rate: 0.92 });
-    else if (n >= 2 && !api.soundOff) setTimeout(() => Tts.speak(it.en, { language: 'en-US', rate: 0.92 }), 900);
+    if (good) speak(it.en);
+    else if (n >= 2 && !api.soundOff) setTimeout(() => speak(it.en), 900);
   }
   const next = () => {
-    Tts.stop();
+    stopSpeaking();
     setI(i + 1);
     setRes(null);
     setTries(0);

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { usePreventRemove, useNavigation } from 'expo-router';
+import { useLocalSearchParams, usePreventRemove, useNavigation } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
@@ -40,6 +40,12 @@ import {
 import { sfx } from '@/lib/feedback';
 import { avatarChanged, avatarCost, cloneAvatar, getMyAvatar, isOwned, useMyAvatar, useOwned } from '@/state/avatar';
 import { getMe, useMe } from '@/state/me';
+import { useRewards } from '@/state/rewards';
+import { REWARD, rewardOfItem } from '@/data/rewards';
+import { wearReward } from '@/components/my/reward-sheet';
+
+/** 말풍선 글자 수 (10자 넘으면 두 줄이 되어 캐릭터 얼굴을 가려요) */
+const SAY_MAX = 10;
 
 const pk = <T,>(L: readonly T[]) => L[Math.floor(Math.random() * L.length)];
 const newReqId = () => `av-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -54,7 +60,10 @@ export default function CustomizeScreen() {
   const me = useMe();
   const saved = useMyAvatar();
   const own = useOwned();
-  const [d, setD] = useState<Avatar>(() => cloneAvatar(getMyAvatar()));
+  // ?try=santa: 받은 시즌 보상을 입힌 채로 열어요 (받은 창 · 알림의 '입어 보기'). 저장은 직접
+  const { try: tryReward } = useLocalSearchParams<{ try?: string }>();
+  const rewards = useRewards();
+  const [d, setD] = useState<Avatar>(() => (tryReward && REWARD[tryReward] ? wearReward(getMyAvatar(), REWARD[tryReward].items) : cloneAvatar(getMyAvatar())));
   const [cat, setCat] = useState<AvTab>('char');
   const [gen, setGen] = useState(0); // 색 막대를 다시 맞출 때 (원래대로 · 초기화 · 랜덤)
   const [earn, setEarn] = useState(false);
@@ -96,7 +105,9 @@ export default function CustomizeScreen() {
 
   const pickTile = (key: string, lock?: string) => {
     if (lock && !isOwned(own, key)) {
-      showToast(`잠긴 아이템 · ${lock}`);
+      // 시즌 보상이면 지금 진행도 같이 (예: 12월 출석 7일 보상 · 지금 2/7일)
+      const r = rewardOfItem(key) ?? rewardOfItem('bg:' + key);
+      showToast(r ? `잠긴 아이템 · ${lock} · 지금 ${rewards.progress[r.id] ?? 0}/${r.need}${r.unit}` : `잠긴 아이템 · ${lock}`);
       return;
     }
     sfx('tap');
@@ -274,11 +285,11 @@ export default function CustomizeScreen() {
   } else if (cat === 'say') {
     grid = (
       <View style={styles.sayf}>
-        <PText style={styles.sayL}>캐릭터 옆 말풍선 · 14자까지</PText>
+        <PText style={styles.sayL}>캐릭터 옆 말풍선 · 10자까지</PText>
         <TextInput
           value={d.say}
-          onChangeText={(t) => edit((x) => void (x.say = t.slice(0, 14)))}
-          maxLength={14}
+          onChangeText={(t) => edit((x) => void (x.say = t.slice(0, SAY_MAX)))}
+          maxLength={SAY_MAX}
           placeholder="예) 같이 말해요"
           placeholderTextColor="#9A93A6"
           autoComplete="off"
@@ -286,9 +297,9 @@ export default function CustomizeScreen() {
           style={styles.sayIn}
         />
         <View style={styles.ideas}>
-          {[...SAY_IDEAS, ''].map((x) => (
-            <Pressable key={x || 'none'} onPress={() => edit((y) => void (y.say = x))} accessibilityRole="button" style={styles.idea}>
-              <PText style={styles.ideaT}>{x || '말풍선 없애기'}</PText>
+          {SAY_IDEAS.map((x) => (
+            <Pressable key={x} onPress={() => edit((y) => void (y.say = x))} accessibilityRole="button" style={styles.idea}>
+              <PText style={styles.ideaT}>{x}</PText>
             </Pressable>
           ))}
         </View>
@@ -362,10 +373,13 @@ export default function CustomizeScreen() {
 
       <BottomBar>
         <View style={styles.foot}>
-          <View style={styles.fee}>
-            <PText style={styles.feeS}>{cost ? `새 아이템 ${need.length}개` : changed ? '바뀐 모습' : '지금 모습'}</PText>
-            <PText style={styles.feeB}>{cost ? `${cost.toLocaleString()} 스파크` : '추가 비용 없음'}</PText>
-          </View>
+          {/* 새로 사야 하는 아이템이 있을 때만: 몇 개 · 스파크 합계 (아이템은 스파크로 사요) */}
+          {cost ? (
+            <View style={styles.fee}>
+              <PText style={styles.feeS}>{`새 아이템 ${need.length}개`}</PText>
+              <PText style={styles.feeB}>{`${cost.toLocaleString()} 스파크`}</PText>
+            </View>
+          ) : null}
           <Pressable onPress={save} disabled={!changed || busy} accessibilityRole="button" accessibilityState={{ disabled: !changed, busy }} style={styles.mainWrap}>
             {({ pressed }) => (
               <Lift radius={27} x={3} y={3} pressed={pressed && changed} shadow={changed} style={!changed && styles.dim}>

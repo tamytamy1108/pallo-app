@@ -1,16 +1,16 @@
 import { Image } from "expo-image";
 import Animated, { css, useReducedMotion } from "react-native-reanimated";
-import * as Tts from "expo-speech";
 import { useEffect, useState } from "react";
 import {
   FlatList,
+  Keyboard,
   ScrollView,
   StyleSheet,
   View,
 } from "react-native";
 
 import { GrowInput } from "@/components/ui/grow-input";
-import { CheckIcon, MicIcon } from "@/components/lesson/icons";
+import { CheckIcon } from "@/components/lesson/icons";
 import { Pressable } from "@/components/ui/pressable";
 import { PText } from "@/components/ui/text";
 import { showToast } from "@/components/ui/toast";
@@ -18,7 +18,8 @@ import { Font } from "@/constants/fonts";
 import { Colors } from "@/constants/theme";
 import { STEPS34, type Lv3Unit } from "@/data/lessons34";
 import { sfx } from "@/lib/feedback";
-import { useSpeech } from "@/lib/speech";
+import { useKeyboardHeight } from "@/lib/keyboard";
+import { SPEECH_PROBLEM_TEXT, useSpeech } from "@/lib/speech";
 import { useLearnPrefs } from "@/state/learn-prefs";
 import { isDone, stepKey } from "@/state/progress";
 
@@ -26,15 +27,19 @@ import { leave34, type StepCtx } from "../finish";
 import { answers, setAns } from "../store";
 import { aiFix, bitOf, notEnglish, nrm, NUDGE, sentN, wordRe, words } from "../text";
 import {
+  FootRow,
   GoBtn,
   IMG,
+  MicKey,
   ModeTabs,
+  SkipBtn,
   Spk,
   SUB,
   sayEn,
 } from "../ui";
 import { PCard, PFoot, Stats } from "./common";
 import type { PageApi } from "./study-shell";
+import { stopSpeaking } from '@/lib/tts';
 
 type Msg = {
   me?: boolean;
@@ -50,9 +55,10 @@ type Mode = "voice" | "write";
  * 눈 자리는 c-upright-yellow.png(480×306)에서 잰 비율이에요.
  */
 const blink = css.keyframes({ '0%': { transform: [{ scaleY: 0 }] }, '90%': { transform: [{ scaleY: 0 }] }, '94%': { transform: [{ scaleY: 1 }] }, '98%': { transform: [{ scaleY: 0 }] }, '100%': { transform: [{ scaleY: 0 }] } });
+// 검은 테 안쪽(흰자 + 눈동자)에 맞춰 잰 값 (원본 픽셀 → 비율)
 const EYES = [
-  { l: 0.452, w: 0.075 },
-  { l: 0.61, w: 0.072 },
+  { l: 0.4483, w: 0.0971, t: 0.0552, h: 0.2745 },
+  { l: 0.604, w: 0.0975, t: 0.0608, h: 0.2739 },
 ];
 function BlinkChar({ width }: { width: number }) {
   const still = useReducedMotion();
@@ -68,9 +74,9 @@ function BlinkChar({ width }: { width: number }) {
               style={{
                 position: "absolute",
                 left: e.l * width,
-                top: 0.06 * h,
+                top: e.t * h,
                 width: e.w * width,
-                height: 0.27 * h,
+                height: e.h * h,
                 borderRadius: 999,
                 backgroundColor: "#181B21",
                 transformOrigin: "top",
@@ -166,9 +172,11 @@ export function DailyTalk({
   const [cm, setCm] = useState<Mode>(noSpeak ? "write" : "voice");
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState<string | null>(null);
-  const speech = useSpeech({ onText: (text) => setDraft(text) });
+  const speech = useSpeech({ onText: (text) => setDraft(text), onProblem: (p) => showToast(SPEECH_PROBLEM_TEXT[p]) });
+  // 키보드가 올라오면 아래 입력 줄을 키보드 바로 위로 올려요 (아이폰만 · 안드로이드는 화면이 줄어요)
+  const kbH = useKeyboardHeight();
 
-  useEffect(() => () => void Tts.stop(), []);
+  useEffect(() => () => stopSpeaking(), []);
 
   const ai = (en: string, ko: string) => {
     setLog((l) => [...l, { en, ko }]);
@@ -622,7 +630,7 @@ export function DailyTalk({
           )
         }
       />
-      <PFoot>
+      <PFoot lift={kbH}>
         <ModeTabs<Mode>
           list={[
             ["voice", "말하기"],
@@ -631,56 +639,63 @@ export function DailyTalk({
           cur={cm}
           onPick={(k) => {
             speech.stop();
+            // 말하기로 바꾸면 떠 있던 키보드도 내려요
+            if (k === "voice") Keyboard.dismiss();
             setCm(k);
           }}
         />
-        <View style={st.compose}>
-          <GrowInput
-            value={draft}
-            onChangeText={setDraft}
-            editable={cm === "write"}
-            multiline
-            placeholder={
-              cm === "voice"
-                ? "마이크를 누르고 말하면 여기에 적혀요"
-                : "3문장 이상 영어로 적어요"
-            }
-            placeholderTextColor="#B9B2A3"
-            style={st.ta}
-            accessibilityLabel="내 답"
-          />
-          {cm === "voice" ? (
-            <Pressable
-              onPress={() =>
-                speech.listening
-                  ? speech.stop()
-                  : void speech.start(D.keywords.map((k) => k[0]))
-              }
-              accessibilityRole="button"
-              accessibilityLabel="말하기"
-              accessibilityState={{ selected: speech.listening }}
-              style={StyleSheet.flatten([st.mic, speech.listening && st.micOn])}
-            >
-              <MicIcon size={20} color={Colors.white} />
-            </Pressable>
-          ) : null}
-          <View style={st.send}>
-            <GoBtn label="보내기" compact onPress={send} />
-          </View>
-        </View>
-        <Pressable
-          onPress={finishTalk}
-          disabled={answered < 3}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: answered < 3 }}
-          style={StyleSheet.flatten([st.end, answered >= 3 && st.endOn])}
-        >
-          <PText style={st.endT} color={answered >= 3 ? Colors.ink : SUB}>
-            {answered >= 3
-              ? "대화 마치기"
-              : `질문 3개 답하면 마칠 수 있어요 · ${answered}/3`}
+        {/* 다른 학습 화면(말하기 · 쓰기 단계)과 같은 아래 칸:
+            말하기 = 받아 적은 말 + 넓은 마이크 키 → 다 말하면 [다시 말하기 | 보내기]
+            쓰기 = 입력칸 + 넓은 노랑 보내기 */}
+        {cm === "voice" ? (
+          <>
+            {speech.listening || draft ? (
+              <PText style={st.said} color={draft ? Colors.ink : SUB}>
+                {draft || "듣고 있어요…"}
+              </PText>
+            ) : null}
+            {draft && !speech.listening ? (
+              <FootRow>
+                <SkipBtn label="다시 말하기" onPress={() => { setDraft(""); void speech.start(D.keywords.map((k) => k[0])); }} />
+                <GoBtn label="보내기" onPress={send} />
+              </FootRow>
+            ) : (
+              <MicKey
+                label="눌러서 말하기"
+                live="다 말했어요"
+                on={speech.listening}
+                onPress={() =>
+                  speech.listening
+                    ? speech.stop()
+                    : void speech.start(D.keywords.map((k) => k[0]))
+                }
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <GrowInput
+              value={draft}
+              onChangeText={setDraft}
+              multiline
+              placeholder="3문장 이상 영어로 적어요"
+              placeholderTextColor="#B9B2A3"
+              style={st.ta}
+              accessibilityLabel="내 답"
+            />
+            <FootRow>
+              <GoBtn label="보내기" disabled={!draft.trim()} onPress={send} />
+            </FootRow>
+          </>
+        )}
+        {/* 키보드가 떠 있을 땐 입력 줄만 남겨요 (자리가 좁아요) */}
+        {kbH > 0 ? null : answered >= 3 ? (
+          <SkipBtn label="대화 마치기" onPress={finishTalk} />
+        ) : (
+          <PText style={st.endT} color={SUB}>
+            질문 3개 답하면 마칠 수 있어요 · {answered}/3
           </PText>
-        </Pressable>
+        )}
       </PFoot>
     </>
   );
@@ -879,10 +894,8 @@ const st = StyleSheet.create({
     justifyContent: "center",
   },
   moreT: { fontFamily: Font.display, fontSize: 11, lineHeight: 15 },
-  compose: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   ta: {
-    flex: 1,
-    minHeight: 73,
+    minHeight: 64,
     maxHeight: 120,
     borderWidth: 2,
     borderColor: Colors.ink,
@@ -896,29 +909,9 @@ const st = StyleSheet.create({
     color: Colors.ink,
     textAlignVertical: "top",
   },
-  mic: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 2,
-    borderColor: Colors.ink,
-    backgroundColor: Colors.purple,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  micOn: { backgroundColor: Colors.rosePink },
-  send: { width: 84 },
-  end: {
-    height: 46,
-    borderRadius: 27,
-    borderWidth: 2,
-    borderColor: Colors.line,
-    backgroundColor: Colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  endOn: { borderColor: Colors.ink },
-  endT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
+  // 받아 적은 말 (말하기 단계의 .said 와 같아요)
+  said: { fontFamily: Font.body700, fontSize: 15, lineHeight: 22, textAlign: "center", paddingHorizontal: 8 },
+  endT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, textAlign: "center" },
   sumK: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16 },
   sumB: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
   strike: { textDecorationLine: "line-through" },

@@ -1,11 +1,10 @@
 import { type ExpoWebGLRenderingContext } from 'expo-gl';
 import { useIsFocused } from 'expo-router';
 import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, AppState, PanResponder, Platform, StyleSheet, View } from 'react-native';
+import { AppState, PanResponder, Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
 import { MyCharacter } from '@/components/character/my-character';
-import { Colors } from '@/constants/theme';
 
 import { FocusCard } from './focus-card';
 import { FLAT_MAPS, type FlatMap } from './flat-maps';
@@ -105,12 +104,12 @@ function World3D({ id, sc, onOpen, visible = true, active = true, coverNow = fal
   const xy = useSharedValue<number[]>([]);
   const rider = useSharedValue<number[]>([]);
   const zoomedNow = useRef(false);
-  // 첫 장면이 그려지기 전엔 도는 표시 (안 그려진 하늘색 판만 보이면 멈춘 것 같아서)
+  // 첫 장면을 그렸어요 (그 전엔 사진판이 같은 구도로 덮어 둬요)
   const [drawn, setDrawn] = useState(false);
   const drawnNow = useRef(false);
   const building = useRef<ReturnType<typeof setTimeout> | null>(null);
   const left = useRef(false);
-  /** 탭을 떠났거나 앱이 내려갔었어요 (폰: 돌아오면 GL 판을 새로) */
+  /** 앱이 내려갔었어요 (안드로이드: 돌아오면 GL 판을 새로) */
   const gone = useRef(false);
   /** GL 판이 한 번이라도 붙었어요 (시간 초과 2D 판단용) */
   const glStarted = useRef(false);
@@ -118,7 +117,7 @@ function World3D({ id, sc, onOpen, visible = true, active = true, coverNow = fal
   const glWaited = useRef(0);
   const glTries = useRef(0);
   const [glKey, setGlKey] = useState(0);
-  /** 만드는 동안 보여 줄 지도 사진판 (2D 사진 지도 · 이름표 · 팔로까지 같은 자리). 없으면 도는 표시 */
+  /** 만드는 동안 보여 줄 지도 사진판 (2D 사진 지도 · 이름표 · 팔로까지 같은 자리). 없으면 바탕(하늘색)만 */
   const [cover] = useState<FlatMap | null>(() => {
     const m = FLAT_MAPS[id];
     return m && sc.length <= m.stops.length ? m : null;
@@ -175,12 +174,13 @@ function World3D({ id, sc, onOpen, visible = true, active = true, coverNow = fal
     return () => cancelAnimationFrame(raf);
   }, [size, glKey]);
   // 탭을 떠나거나 앱이 내려가면 그리기 멈춤.
-  // 폰은 그때 그리기 판(GL)이 사라져서, 돌아오면 판만 새로 만들어 붙여요 (지도는 다시 만들지 않아요 · stage.rebind)
+  // 탭을 떠나도 GL 판은 그대로예요 (탭 바가 라이브러리 탭을 화면에서 떼지 않아요) → 돌아오면 바로 이어서 그려요.
+  // 안드로이드는 앱이 내려가면 그리기 판(TextureView)이 사라져서, 돌아오면 판만 새로 만들어 붙여요 (지도는 다시 만들지 않아요 · stage.rebind)
   // 숨은 지도(active=false)는 보일 차례가 올 때 붙여요 — 돌아올 때 숨은 지도까지 한꺼번에 붙이면 멈칫해요
   useEffect(() => {
     const set = (appActive: boolean) => {
-      if (!focused || !appActive) gone.current = true;
-      else if (gone.current && active && stage.current && Platform.OS !== 'web') {
+      if (!appActive && Platform.OS === 'android') gone.current = true;
+      else if (gone.current && appActive && focused && active && stage.current) {
         gone.current = false;
         if (host.current) host.current.paused = true;
         drawnNow.current = false;
@@ -300,11 +300,6 @@ function World3D({ id, sc, onOpen, visible = true, active = true, coverNow = fal
         ))}
       </View>
       <FocusCard info={focus} onGo={(no) => open.current(no)} onClose={() => stage.current?.reset()} />
-      {!drawn && cover == null && (
-        <View style={styles.loading} pointerEvents="none">
-          <ActivityIndicator size="large" color={Colors.ink} />
-        </View>
-      )}
     </View>
   );
 }
@@ -364,7 +359,6 @@ function RiderView({ rider }: { rider: SharedValue<number[]> }) {
 
 const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
-  loading: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   labelBox: { position: 'absolute', left: 0, top: 0, width: BOX, alignItems: 'center' },
   rider: { position: 'absolute', left: 0, top: 0, width: RIDER_W, height: RIDER_H, transformOrigin: 'bottom' },
   riderImg: { width: RIDER_W, height: RIDER_H },

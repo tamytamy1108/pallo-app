@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import Animated, { css, cubicBezier, useReducedMotion, type CSSKeyframesRule } from 'react-native-reanimated';
+import Animated, { css, cubicBezier, type CSSKeyframesRule } from 'react-native-reanimated';
 import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { AvatarChar } from '@/components/character/avatar';
+import { useStill } from '@/lib/motion';
 import { useMyAvatar } from '@/state/avatar';
 
 /*
@@ -90,7 +91,7 @@ const RIDER_LEAD = 40;
 
 /** 정류장 뒤: 노란 스포트라이트(숨 쉬듯) · 천천히 도는 빛살 · 바닥 그림자. chest: 열 수 있는 보상 상자 뒤 (조금 작게 · 바닥 그림자 없이 · .chest-fx) */
 export function CurrentFx({ chest = false }: { chest?: boolean }) {
-  const still = useReducedMotion();
+  const still = useStill();
   const [beat] = useState(() => onBeat());
   // repeating-conic-gradient: 30도마다 12도 폭 빛살. CSS 의 radial-gradient(circle …) 는 반지름이 상자 '모서리'까지라 66√2 ≈ 93px
   const R = 66 * Math.SQRT2;
@@ -137,7 +138,7 @@ export function CurrentFx({ chest = false }: { chest?: boolean }) {
 
 /** 지금 정류장은 말랑하게 통통 (nodeHop 1.4초 · 아래를 기준으로) */
 export function NodeHop({ on, style, children }: { on: boolean; style: ViewStyle; children: ReactNode }) {
-  const still = useReducedMotion();
+  const still = useStill();
   // 눌렀다 떼면 다시 시작하니, 그때마다 박자를 새로 맞춰요
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const beat = useMemo(() => onBeat(), [on]);
@@ -154,7 +155,7 @@ const BODY_H = (332 * BODY_W) / 520;
 
 /** 정류장 앞의 내 캐릭터: 통통 뛰어올라요 + 바닥 그림자 (rideJump · rideSh 1.4초) · 가끔 공중에서 좌우로 홱 */
 export function Rider() {
-  const still = useReducedMotion();
+  const still = useStill();
   const av = useMyAvatar();
   const [beat] = useState(() => onBeat(RIDER_LEAD));
   const [flip, setFlip] = useState(false);

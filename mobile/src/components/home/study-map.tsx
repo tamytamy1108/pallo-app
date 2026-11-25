@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
+import Animated, { css, cubicBezier } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Path, Pattern, Rect } from 'react-native-svg';
 
 import { bookShelfQuery } from '@/api/queries';
@@ -17,12 +17,13 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
-import { Colors } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { chestReward, SKIP_POINTS } from '@/data/home';
 import { lessonName, STUDY_STEPS } from '@/data/library';
 import { STUDY_LEVELS } from '@/data/library-lessons';
 import { MY_BOOK, STAGES } from '@/data/mock';
 import { sfx } from '@/lib/feedback';
+import { useStill } from '@/lib/motion';
 import { awardPoints } from '@/state/ledger';
 import { chestKey, markChestOpened, useChestOpened } from '@/state/chest';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
@@ -160,7 +161,7 @@ export function StudyMap() {
   const [chestShake, setChestShake] = useState(0);
   const [chestOpen, setChestOpen] = useState(false);
   const opened = useChestOpened(chestKey(LV, lesson));
-  const still = useReducedMotion();
+  const still = useStill();
 
   /** 고른 과가 칩 줄 밖으로 잘리지 않게 가운데로 */
   const reveal = (n: number) => {
@@ -386,8 +387,13 @@ export function StudyMap() {
             )}
           </View>
 
+          {/* 다음 챕터: 라이브러리(스터디 맵 · 이 레벨 교재)로 가요. 비회원이 잠긴 챕터를 누르면 잠김 안내 */}
           {next && (
-            <Pressable onPress={() => tryLesson(nextNo)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${next}${!isFree(nextNo) ? ', 잠김' : ''}`}>
+            <Pressable
+              onPress={() => (isFree(nextNo) ? openLibrary() : tryLesson(nextNo))}
+              accessibilityRole="button"
+              accessibilityLabel={`다음 챕터 ${next}${!isFree(nextNo) ? ', 잠김' : ' · 라이브러리에서 보기'}`}
+              style={styles.nextWrap}>
               {({ pressed }) => (
                 <Raised radius={20} pressed={pressed}>
                   <View style={StyleSheet.flatten([styles.nextBtn, !isFree(nextNo) && styles.nextLocked])}>
@@ -469,7 +475,7 @@ const wkAnim = css.create({
 });
 
 function ChapChip({ M, n, on, week, locked, bounce, onPress, onLayout }: { M: LevelMap; n: number; on: boolean; week: boolean; locked: boolean; bounce: number; onPress: () => void; onLayout: (x: number, w: number) => void }) {
-  const still = useReducedMotion();
+  const still = useStill();
   const count = useDoneCount(`${M.lv}:${n}:`);
   const full = count >= M.steps.length;
   const part = count > 0 && !full;
@@ -525,7 +531,7 @@ const lockedShake = css.keyframes({
  * 누르면 챕터 완료 보상 화면 (ChestCelebrate).
  */
 function ChestNode({ M, x, y, ready, opened, lesson, xmas, shake, onPress }: { M: LevelMap; x: number; y: number; ready: boolean; opened: boolean; lesson: number; xmas: boolean; shake: number; onPress: () => void }) {
-  const still = useReducedMotion();
+  const still = useStill();
   const live = ready && !opened;
   const W = ready ? 80 : 72;
   const H = Math.round(W * (106 / 120));
@@ -753,6 +759,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  // 장식(나무 · 눈 언덕)보다 위에 · 카드 아래 끝에서 띄워요
+  nextWrap: { zIndex: 5, marginBottom: Spacing.stack },
   // 비회원: 다음 챕터 잠김 (흐린 면 · 자물쇠)
   nextLocked: { backgroundColor: '#EEE8DA' },
   nextText: { flex: 1, fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },

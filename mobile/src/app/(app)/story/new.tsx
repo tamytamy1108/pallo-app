@@ -5,8 +5,9 @@ import { useState } from 'react';
 
 import { StoryCamera, type StoryShot } from '@/components/lounge/story-camera';
 import { StoryEditor } from '@/components/lounge/story-editor';
+import { DEFAULT_SPOT } from '@/components/lounge/story-sticker';
 import { showToast } from '@/components/ui/toast';
-import { LG_C, LG_SCAT, STORY_CATS, type StoryCat } from '@/data/lounge';
+import { LG_C, LG_SCAT, type StickerSpot, STORY_CATS, type StoryCat } from '@/data/lounge';
 import { addPost, addStory } from '@/data/lounge-store';
 import { CARD, SCREEN } from '@/lib/transitions';
 import { plainFraming, type PhotoFraming } from '@/lib/photo-framing';
@@ -15,7 +16,7 @@ import { useMe } from '@/state/me';
 /**
  * 스토리 올리기 — 카메라 먼저 (인스타그램처럼).
  * 1) 카메라: 카테고리(이벤트는 프로 · 매니저만) 고르고 찍기 · 앨범에서 고르기
- * 2) 다듬기: 사진 맞추기(PhotoFrame) · 'Aa' 한 줄 이야기 · 라운지 피드에도 올리기 · (매니저) 고정 → [스토리 올리기]
+ * 2) 다듬기: 사진 맞추기(PhotoFrame) · 'Aa' 사진 위 글(원할 때만 · 끌어서 옮기기 · 색 고르기) · 라운지 피드에도 올리기 · (매니저) 고정 → [스토리 올리기]
  * 24시간 동안 내 얼굴 동그라미로 보이고, 그다음엔 고른 카테고리 하이라이트로 옮겨져요.
  * 사진은 기기 안에서만 보여요 — 올리기(업로드)는 백엔드 Q-T7.
  */
@@ -25,6 +26,7 @@ export default function StoryNewScreen() {
   const cats = STORY_CATS.filter((k) => k !== 'event' || staff);
   const [cat, setCat] = useState<StoryCat>(cats[0]);
   const [text, setText] = useState('');
+  const [spot, setSpot] = useState<StickerSpot>(DEFAULT_SPOT);
   const [typing, setTyping] = useState(false);
   // 찍은 · 고른 사진과 맞춘 확대 · 위치 (없으면 카메라 단계)
   const [img, setImg] = useState<{ uri: string; framing: PhotoFraming } | null>(null);
@@ -39,11 +41,9 @@ export default function StoryNewScreen() {
   };
 
   const submit = () => {
+    // 글은 원할 때만 — 사진만 올려도 돼요
     const t = text.trim();
-    if (!t) {
-      setTyping(true);
-      return showToast('한 줄 이야기를 적어 주세요');
-    }
+    const lbl = t && img ? spot : undefined;
     const c = LG_SCAT[cat];
     const role = me.role === 'leader' ? '프로' : me.role === 'manager' ? '매니저' : '';
     addStory({
@@ -56,12 +56,13 @@ export default function StoryNewScreen() {
       time: '방금',
       h: 0,
       big: t,
-      ds: feed ? '커뮤니티 피드에도 올렸어요' : '24시간 동안 내 스토리로 보여요',
+      ds: '',
       art: [c.color === LG_C.ink ? LG_C.y : c.color, c.name],
       mine: true,
       pin: pin || undefined,
       img: img?.uri,
       frame: img?.framing,
+      lbl,
     });
     if (feed)
       addPost({
@@ -78,6 +79,7 @@ export default function StoryNewScreen() {
         pic: img ? undefined : cat === 'rev' ? 'run' : cat === 'event' ? 'party' : 'cafe',
         imgs: img ? [img.uri] : undefined,
         frames: img ? [img.framing] : undefined,
+        lbl,
         n: 1,
         likes: 0,
         text: t,
@@ -98,6 +100,8 @@ export default function StoryNewScreen() {
           branch={me.branch}
           text={text}
           onText={setText}
+          spot={spot}
+          onSpot={setSpot}
           typing={typing}
           onTyping={setTyping}
           feed={feed}

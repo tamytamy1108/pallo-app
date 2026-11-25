@@ -1,4 +1,3 @@
-import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
@@ -9,6 +8,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
+import { stopSpeaking } from '@/lib/tts';
 
 import { Body, Foot, useRunner } from '../frame';
 import { AnsCards, ExtraView, FollowBubble, Marked, ModelCard, SplitView, TopPart, UpgradeCard } from '../parts';
@@ -91,7 +91,7 @@ function SayInner({ task }: { task: SayTask }) {
     rt.setKick(st.follow ? t.kick : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st.follow]);
-  useEffect(() => () => void Tts.stop(), []);
+  useEffect(() => () => stopSpeaking(), []);
 
   // ---- 채점 (프로토타입 sayEval) ----
   const evaluate = (raw: string, sec: number | null) => {
@@ -211,7 +211,7 @@ function SayInner({ task }: { task: SayTask }) {
       showToast(SPEECH_PROBLEM_TEXT.unavailable);
       return;
     }
-    Tts.stop();
+    stopSpeaking();
     cd.stop();
     t0.current = Date.now();
     setHeard('');
@@ -219,7 +219,8 @@ function SayInner({ task }: { task: SayTask }) {
     haptic('tap');
     void speech.start();
     if (t.limit) {
-      cd.start(t.limit, () => speech.stop());
+      // 말하는 동안은 째깍 소리를 내지 않아요 (마이크에 들어가지 않게)
+      cd.start(t.limit, () => speech.stop(), { quiet: true });
     }
   };
 

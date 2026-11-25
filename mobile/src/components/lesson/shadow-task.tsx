@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
@@ -25,6 +24,7 @@ import { SPEECH_PROBLEM_TEXT, useSpeech } from '@/lib/speech';
 import { matchSpeech, shuffled, wordKey } from '@/lib/words';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useLearnPrefs } from '@/state/learn-prefs';
+import { stopSpeaking } from '@/lib/tts';
 
 const PURPLE = Colors.purple;
 const PINK = Colors.rosePink;
@@ -157,7 +157,7 @@ export function ShadowTask({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => () => void Tts.stop(), []);
+  useEffect(() => () => stopSpeaking(), []);
 
   /** 폰이 준 후보 중 카드를 가장 많이 잇는 것 (같으면 첫 번째) */
   const bestOf = (text: string, alts: string[]) => {
@@ -310,7 +310,7 @@ export function ShadowTask({
     segStart.current = 0;
     setHeard('');
     setWrongToks([]);
-    Tts.stop(); // 읽어 주는 소리를 마이크가 듣지 않게
+    stopSpeaking(); // 읽어 주는 소리를 마이크가 듣지 않게
     speech.start(words.map((w) => w.replace(/[.,!?]/g, '')).concat(task.en));
   };
 

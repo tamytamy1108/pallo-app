@@ -32,9 +32,10 @@
 | 수강 · 결제 | 7 | 6 | 7 | 20 |
 | 프로 노트 | 1 | 2 | 7 | 10 |
 | 설정 · 지원 | 1 | 1 | 10 | 12 |
-| **합계** | **63** | **45** | **167** | **275** |
+| 프로 · 직원 | 0 | 0 | 15 | 15 |
+| **합계** | **63** | **45** | **182** | **290** |
 
-목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my)
+목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
 
 <a id="core"></a>
@@ -133,7 +134,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 | 사전 출석 변경 | DELETE 이전 → POST 새 courseId | existing | attendance.ts sendRsvp (덮어쓰기) |
 | QR 인식 → 어느 지점 · 테이블 | GET /tables/{qrCode} | existing | qr-scanner.tsx onScanned |
 | (QR 안 읽힐 때 직접 고르기 · 앱에 없음) | GET /tables?branchId= | existing | 없음 |
-| 출석 → +30P · 이번 주 n번째 | POST /study/sessions/{sessionId}/check-in {tableId, role} | change (firstTime · points · sparks · weekCount) | api/home.ts sendAttendance · state/ledger awardPoints/awardSparks |
+| 출석 → +30P · 이번 주 n번째 (프로 · 직원은 '프로로 참여 / 멤버로 참여'를 골라 role LEADER · MEMBER, 등록 팀 · 이용권 확인 없음 — 아래 [프로 · 직원](#staff)) | POST /study/sessions/{sessionId}/check-in {tableId, role} | change (firstTime · points · sparks · weekCount) | api/home.ts sendAttendance · state/ledger awardPoints/awardSparks |
 
 기기에만 저장 (API 없음): 없음 — 지금 기기에 남기는 출석 상태(attendance)는 전부 서버 값으로 바뀌어요.
 열린 질문:
@@ -995,3 +996,54 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 5. 프로 노트 모양(items vs questions) — 위 프로 노트 참고.
 6. GET /me 를 다른 도메인(인증 · 공통)도 정의할 수 있어요 — 합칠 때 MeDetail 하나로.
 7. 회원 전용 화면(`app/me/change.tsx` · `study.tsx` · `pass.tsx` · `notes/index.tsx` · `notes/[id].tsx`)은 지점 연동 전(GET /me role guest)이면 앱이 'MemberOnly · 지점 회원이 되면 열려요' 칸만 보여 주고 API 를 부르지 않아요 (components/common/member-lock.tsx). 서버도 그 API 들에서 비회원이면 403 member_only 로 막아 주세요.
+
+
+<a id="staff"></a>
+
+## 프로 · 직원 (역할별) — 화면별 API
+
+**누가 무엇을 할 수 있는지**는 `openapi.yaml` 맨 위 '누가 부를 수 있나'와 각 API 의 `x-roles` · `x-demo-blocked` 에 있어요. 화면 · 버튼까지 전체 표는 [10-roles](../pages/10-roles.md) (6장 행동별 권한).
+계정 역할은 GET /me `role` = `guest · member · pro · manager · hq` (예전 `leader` → `pro`). 프로 · 직원도 **회원 앱을 그대로** 써요 (홈 · 스터디 맵 · 레슨 — 공부도 해요). 아래는 그 위에 더하는 것이에요. 앱 화면은 아직 없고 시안 `prototype/role-screens.html` 기준이에요.
+
+### 역할마다 서버가 막아야 하는 것 (앱만 막으면 안 돼요)
+| 하는 일 | 누가 | 서버 | API |
+|---|---|---|---|
+| 회원 전용 (출석 · 내 스터디 · 이용권 · 프로 노트 · 글쓰기 · 참여) | guest | 403 member_only | 여러 API (GET /me 설명) |
+| 연기 · 팀 · 지점 · 레벨 변경 신청 · 지점 연동 요청 · 체험 예약 · 이벤트 신청 (보여 주기 모드) | pro · manager · hq | 403 demo_account (`x-demo-blocked`) | POST /me/deferral-requests · /me/course-change-requests · /me/branch-transfer-requests · /me/level-change-requests · /me/branch-link-requests · /candidate-inquiries · /events/{id}/applications |
+| 공지 고정 · 글 숨기기 · 이벤트 바로 열기 | pro · manager · hq | 나머지 403 (`x-roles`) | POST · DELETE /community/posts/{postId}/pin · /hide, POST /events |
+| 스토리 고정 · 다른 사람 스토리 내리기 | manager | 나머지 403 | PUT · DELETE /stories/{storyId}/pin, POST /stories/{storyId}/takedown |
+| 이벤트 입금 확인 · 설문 결과 | manager · 그 이벤트 주최 | 나머지 403 | PATCH /events/{id}/applications/{applicationId}, GET /events/{id}/survey-results(.xlsx) |
+| 코호스트 정하기 | 그 동아리 HOST · 자기 지점 manager | 나머지 403 | PUT /clubs/{id}/staff |
+| 출석 (어느 세션이든 · 등록 팀 · 이용권 확인 없음) | pro · manager · hq | **허용** (진짜 기록 · 포인트 · 랭킹) | POST /study/sessions/{sessionId}/check-in |
+
+### 프로 (pro · hq) — 홈 출석 카드 · 마이 '내 수업' · PRO'S NOTE
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 오늘 내 세션 카드 (여러 개면 옆으로 · 없으면 다음 세션) | GET /staff/sessions/today | new | 없음 |
+| 프로 출석 체크 (테이블 QR → 프로로 참여) → 노트 쓰기 바로 열기 | POST /study/sessions/{sessionId}/check-in {role LEADER} → prosNoteId | change | 없음 |
+| 프로스 노트 쓰기 · 임시 저장 | GET · PUT /staff/pros-notes/{noteId} | new | 없음 (회원 노트 화면 모양 그대로) |
+| 반에 보내기 → 회원 알림 | POST /staff/pros-notes/{noteId}/send | new | 없음 |
+| 보낸 노트 목록 (n명 읽음 · 고마워요) | GET /staff/pros-notes | new | 없음 |
+| 출석 명단 · 손 출석 · 지각 · 결석 | GET /staff/sessions/{sessionId}/roster · PATCH …/roster/{memberCode} | new | 없음 |
+| 세션 진행 (진도 · 토픽 · 질문 카드 · 타이머) | GET /staff/sessions/{sessionId}/plan | new | 없음 |
+| 내 일정 (이번 주 · 다음 주, 보기만) | GET /staff/sessions?from&to | new | 없음 |
+| 내 반 · 내 반 학생 | GET /staff/teams · GET /staff/teams/{teamId}/students | new | 없음 |
+| 반 공지 (휴강 · 교실 · 준비물) | POST /staff/teams/{teamId}/notices | new | 없음 |
+| 마이 숫자 칸 (이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요) | GET /staff/me/summary | new | 없음 |
+| 이름 옆 `PRO` (라운지 · 프로필) | AuthorRole PRO (글 · 댓글 · 스토리 · 프로필) | change | 앱은 지금 '리더' 글자 |
+
+### 지점 관리자 (manager)
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 오늘 지점 현황 (세션별 출석 인원 · 프로 출석 체크) | GET /manager/branch/today | new | 없음 |
+| QR 출석 코드 띄우기 | GET /manager/branch/qr | new | 없음 |
+| 출석 명단 보기 | GET /staff/sessions/{sessionId}/roster | new | 없음 |
+| 이름 옆 `STAFF` · 소속 줄(지점 이름 · 본사는 PALLO) | AuthorRole STAFF | change | 앱은 지금 '매니저' 글자 |
+| 연동 · 체험 · 신고 · 회원 요청 처리 | 앱에 없어요 — 전산(관리자) 웹 | — | — |
+
+기기에만 저장 (API 없음): 개발용 '사람 바꾸기'(마이 DEV · `lib/dev-profile.ts`) — 가짜 서버로 역할마다 화면을 볼 때만 써요.
+열린 질문:
+- 앱 `state/me.ts` 의 role 값은 아직 `leader` · `manager` 예요. 서버가 `pro` · `hq` 로 주면 앱도 이름을 바꿔요.
+- 한 세션에 프로가 둘이 되면(이미 맡은 프로가 있는데 또 '프로로 참여') 둘 다 노트를 쓸지, 한 명만 (10-roles 3-1).
+- 프로스 노트 모양: 백엔드는 '리더 질문 → AI 답', 앱은 태그 항목(표현 · 바로잡기 · 뜻 · 질문) + 마무리 인사 (README 9번).
+- 보여 주기 모드 오류 코드 이름 `demo_account` 로 할지 (10-roles 7장과 같은 이름).

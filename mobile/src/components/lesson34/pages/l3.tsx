@@ -1,4 +1,3 @@
-import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -13,6 +12,7 @@ import { Colors } from '@/constants/theme';
 import type { Lv3Unit } from '@/data/lessons34';
 import { haptic, sfx } from '@/lib/feedback';
 import { stepKey } from '@/state/progress';
+import { readLines, stopSpeaking } from '@/lib/tts';
 
 import type { StepCtx } from '../finish';
 import { answers, setAfter, setAns, useAnswers } from '../store';
@@ -38,35 +38,27 @@ export function TopicRead({ D, api }: P) {
   const [speed, setSpeed] = useState(1);
   const speedRef = useRef(1);
   const [now, setNow] = useState<number | null>(null);
-  const tok = useRef(0);
-  useEffect(
-    () => () => {
-      tok.current += 1;
-      Tts.stop();
-    },
-    [],
-  );
-  // 전체 듣기: 줄마다 차례로 읽고 지금 줄을 표시해요 (한 번 더 누르면 멈춰요)
+  // 전체 듣기를 멈추는 함수 (듣는 중일 때만)
+  const cancel = useRef<(() => void) | null>(null);
+  useEffect(() => () => cancel.current?.(), []);
+  // 전체 듣기: 줄마다 차례로 읽고 지금 줄을 표시해요 (한 번 더 누르면 멈춰요).
+  // 줄 옆 듣기 단추 · 소리 끄기 · 다음으로 가면 거기서 멈춰요 (lib/tts readLines)
   const playAll = () => {
-    if (now != null) {
-      tok.current += 1;
-      Tts.stop();
-      setNow(null);
+    if (cancel.current) {
+      cancel.current();
       return;
     }
-    const my = (tok.current += 1);
-    const step = (i: number) => {
-      if (tok.current !== my) return;
-      if (i >= T.lines.length) {
-        setNow(null);
-        return;
-      }
-      setNow(i);
-      sayEn(T.lines[i][0], api.soundOff, SPEEDS[speedRef.current][1], () => {
-        setTimeout(() => step(i + 1), 250);
-      });
-    };
-    step(0);
+    cancel.current = readLines(
+      T.lines.map(([en]) => en),
+      {
+        rate: () => SPEEDS[speedRef.current][1],
+        onLine: setNow,
+        onFinish: () => {
+          cancel.current = null;
+          setNow(null);
+        },
+      },
+    );
   };
   const hl = new RegExp(`(${T.expr.map(([x]) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "['’]")).join('|')})`, 'i');
   return (
@@ -138,9 +130,8 @@ export function TopicRead({ D, api }: P) {
           label="다 읽었어요"
           onPress={() => {
             // 전체 듣기 중이면 소리부터 멈춰요 (축하 화면 위로 계속 읽지 않게)
-            tok.current += 1;
-            Tts.stop();
-            setNow(null);
+            cancel.current?.();
+            stopSpeaking();
             api.finish();
           }}
         />
