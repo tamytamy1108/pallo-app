@@ -409,10 +409,11 @@ const breathe = css.keyframes({
 export type Pose = 'standard' | 'tilt' | 'jump';
 const POSES: Pose[] = ['standard', 'tilt', 'jump'];
 /** 포즈마다 이미지 · 크기 · 자리 · 눈 위치 [가운데 x, y, 가로 반지름, 세로 반지름, 기울기°] (원본 픽셀 · 프로토타입 HERO_EYES) */
+// 카드 안쪽에 다 들어오게 (전엔 오른쪽 · 아래로 삐져나가 카드 끝에서 팔이 잘렸어요)
 const POSE = {
-  standard: { src: require('@/assets/characters/c-purple-standard-3d.png'), W: 480, H: 335, width: 150, right: -22, bottom: -26, eyes: [[172.5, 69.6, 33.3, 47.2, -4.1], [251.0, 68.0, 33.4, 47.5, -5.2]] },
-  tilt: { src: require('@/assets/characters/c-purple-tilt-3d.png'), W: 480, H: 352, width: 124, right: -12, bottom: -20, eyes: [[180.9, 69.1, 33.5, 47.6, 7.8], [258.5, 83.9, 33.5, 47.6, 6.7]] },
-  jump: { src: require('@/assets/characters/c-purple-jump-3d.png'), W: 480, H: 484, width: 96, right: -2, bottom: -12, eyes: [[179.9, 68.6, 33.4, 47.4, 5.8], [256.4, 80.5, 33.4, 47.4, 4.9]] },
+  standard: { src: require('@/assets/characters/c-purple-standard-3d.png'), W: 480, H: 335, width: 132, right: 8, bottom: -6, eyes: [[172.5, 69.6, 33.3, 47.2, -4.1], [251.0, 68.0, 33.4, 47.5, -5.2]] },
+  tilt: { src: require('@/assets/characters/c-purple-tilt-3d.png'), W: 480, H: 352, width: 116, right: 8, bottom: -6, eyes: [[180.9, 69.1, 33.5, 47.6, 7.8], [258.5, 83.9, 33.5, 47.6, 6.7]] },
+  jump: { src: require('@/assets/characters/c-purple-jump-3d.png'), W: 480, H: 484, width: 92, right: 10, bottom: -4, eyes: [[179.9, 68.6, 33.4, 47.4, 5.8], [256.4, 80.5, 33.4, 47.4, 4.9]] },
 } as const;
 
 /** 보라 팔로: 숨 쉬듯 살짝 눌렸다 펴지고(cornerBreathe 3초), 3초마다 눈을 깜빡여요 (avBlink) */

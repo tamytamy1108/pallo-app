@@ -10,8 +10,12 @@ import { Colors } from '@/constants/theme';
 
 // ---------- 날짜 도우미 ----------
 
-/** 예시 화면 기준 날짜 (프로토타입 CG_TODAY = 11/11 수). 실제 앱은 서버 시각 */
-export const TODAY = new Date(2026, 10, 11);
+/**
+ * 오늘 (기기 날짜의 0시). 예전엔 프로토타입 기준일(11/11)로 고정해서, 실제 오늘(11/25)에 '2주 뒤(11/25)부터'처럼 오늘이 2주 뒤로 보였어요.
+ * 서버가 생기면 서버 시각으로 바꿔요.
+ */
+const NOW = new Date();
+export const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
 export const DOW = ['일', '월', '화', '수', '목', '금', '토'] as const;
 
 export const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
@@ -142,10 +146,28 @@ export const CHANGE_KIND: Record<ChangeKind, [string, string]> = {
   branch: ['지점 옮기기', '지점 이동'],
   add: ['팀 하나 더하기', '팀 추가'],
 };
-export const REST_LENGTHS = ['1주', '2주', '3주', '1달'] as const;
+/** '1달 넘게'는 임신 · 군 입대 같은 특별한 경우만 — 사유를 꼭 적고, 운영진이 확인해요 */
+export const REST_LENGTHS = ['1주', '2주', '3주', '1달', '1달 넘게'] as const;
 export type RestLength = (typeof REST_LENGTHS)[number];
-/** 새 일정은 오늘 + 2주부터 */
+export const REST_LONG: RestLength = '1달 넘게';
+/** 1달 넘게 쉬는 사유 (고른 뒤 자세한 내용을 꼭 적어요) */
+export const REST_LONG_REASONS = ['임신 · 출산', '군 입대', '그 밖의 사유'] as const;
+export type RestLongReason = (typeof REST_LONG_REASONS)[number];
+/** 1달 넘게 쉴 때 적는 사유의 최소 글자 수 */
+export const REST_REASON_MIN = 5;
+/** 1달 넘게 쉴 때 고를 수 있는 가장 긴 기간 (개월) */
+export const REST_LONG_MAX_MONTHS = 24;
+/** 새 일정(팀 · 지점 변경 · 팀 추가)은 오늘 + 2주부터 */
 export const CHANGE_MIN = addDays(TODAY, 14);
+/** 쉬어가기는 내일부터 (오늘은 고를 수 없어요) */
+export const REST_MIN = addDays(TODAY, 1);
+/** n달 뒤 같은 날 (말일이 없으면 그 달 말일로) */
+export function addMonths(d: Date, n: number) {
+  const last = new Date(d.getFullYear(), d.getMonth() + n + 1, 0).getDate();
+  return new Date(d.getFullYear(), d.getMonth() + n, Math.min(d.getDate(), last));
+}
+/** 달력 달 번호: 2026년 1월 = 0 (2027년 1월 = 12) */
+export const monIdx = (d: Date) => (d.getFullYear() - 2026) * 12 + d.getMonth();
 
 // ---------- PRO'S NOTE ----------
 

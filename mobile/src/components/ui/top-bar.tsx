@@ -24,7 +24,7 @@ type TopBarProps = {
 };
 
 /**
- * 모든 하위 화면 공통 위 줄 (프로토타입 .dtop.mp-top): 높이 60 · ‹ 44 칸(상자 없음) · 제목 15/900 · 오른쪽 칸 · 아래 연한 선.
+ * 모든 하위 화면 공통 위 줄 (프로토타입 .dtop.mp-top): 높이 44(탭 화면 머리줄과 같은 줄) · ‹ 44 칸(상자 없음) · 제목 15/900 · 오른쪽 칸 · 아래 연한 선.
  */
 export function TopBar({ title, right, onBack, fallback, backLabel, line = !!title, safeTop = false, style }: TopBarProps) {
   const insets = useSafeAreaInsets();
@@ -42,7 +42,7 @@ export function TopBar({ title, right, onBack, fallback, backLabel, line = !!tit
   );
 }
 
-export const TOP_BAR_H = 60;
+export const TOP_BAR_H = 44;
 
 /** 위 줄 오른쪽 아이콘 칸 — 뒤로 칸과 같은 44 */
 export const TOP_ICON = BACK_BOX;

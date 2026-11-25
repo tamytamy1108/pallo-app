@@ -208,7 +208,7 @@ function StepCard({ L, ls, s, i, stage, next, onPress }: { L: StudyLevel; ls: Le
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingBottom: 10 },
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   mid: { flex: 1, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 },
   midText: { flexShrink: 1, fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },

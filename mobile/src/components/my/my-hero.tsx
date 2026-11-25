@@ -1,5 +1,5 @@
 import { router, useIsFocused } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
@@ -14,85 +14,102 @@ import { sfx } from '@/lib/feedback';
 import { EASE, SPRING } from '@/lib/motion';
 import { finishMyMoment, useLinkEvents } from '@/state/link-events';
 import { useMyAvatar } from '@/state/avatar';
-import { canUse } from '@/state/access';
 import { useMe } from '@/state/me';
 
-import { DecoIcon, SparkIcon } from './icons';
+import { BioSheet } from './bio-sheet';
+import { DecoIcon, LgIcon, SparkIcon } from './icons';
 import { Lift } from './lift';
 
 const LANG_NAME = { en: '영어', ja: '일본어', zh: '중국어', es: '스페인어' } as const;
 
 /**
- * 마이 맨 위 캐릭터 룸 카드 (프로토타입 .my-hero): 무대 + [꾸미기] 붓 · 스파크 잔액 + 이름 · 지점 줄 · 한 줄 소개 · 팔로잉/팔로워.
+ * 마이 맨 위 캐릭터 룸 카드 (프로토타입 .my-hero): 무대 + [꾸미기] 붓 · 스파크 잔액 + 이름 · 지점 줄 · 한 줄 소개(누르면 쓰기 · 고치기 창) · 팔로잉/팔로워.
  * width = 카드 바깥 폭 (그림자 제외).
  */
 export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing' | 'fer') => void }) {
   const me = useMe();
   const av = useMyAvatar();
+  const [bioOpen, setBioOpen] = useState(false);
   const lists = followLists(me.name, me, me.following);
   // 카드 테두리 2 · 안쪽 여백 10
   const stageW = width - 4 - 20;
   return (
-    <Raised radius={Radius.card}>
-      <View style={[styles.card, { width }]}>
-        <AvatarStage av={av} width={stageW} border big />
-        <Pressable
-          onPress={() => {
-            sfx('tap');
-            router.push('/me/customize');
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="캐릭터 꾸미기"
-          hitSlop={4}
-          style={styles.deco}>
-          {({ pressed }) => (
-            <Lift radius={19} pressed={pressed}>
-              <View style={styles.decoBtn}>
-                <DecoIcon />
-              </View>
-            </Lift>
-          )}
-        </Pressable>
-        <View style={styles.spark} accessibilityLabel={`스파크 ${me.sparks}개`}>
-          <SparkIcon />
-          <PText style={styles.sparkN}>{me.sparks.toLocaleString()}</PText>
-        </View>
-        <View style={styles.id}>
-          <PText style={styles.name}>{me.name}</PText>
-          <View style={styles.subRow}>
-            {/* 지점: 연동했거나 요청한 지점 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어서 언어 · 레벨만 */}
-            <PText style={styles.sub}>
-              {me.link !== 'none' ? `${me.branch} · ` : me.trial ? `${me.trial.branch} · ` : ''}
-              {LANG_NAME[me.lang]}
-              {/* 레벨은 지점 회원(연동 요청 · 연동됨)만 — 비회원은 아직 레벨 테스트 전이에요 */}
-              {me.link !== 'none' ? ` ${me.level}` : ''}
-              {me.link === 'linked' ? ' · 회원' : ''}
-            </PText>
-            {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
-                비회원은 '체험 예약' · '비회원' 표시만 */}
-            {me.link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={me.link !== 'none' ? me.link : me.trial ? 'trial' : 'guest'} />}
+    <>
+      <Raised radius={Radius.card}>
+        <View style={[styles.card, { width }]}>
+          <AvatarStage av={av} width={stageW} border big />
+          <Pressable
+            onPress={() => {
+              sfx('tap');
+              router.push('/me/customize');
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="캐릭터 꾸미기"
+            hitSlop={4}
+            style={styles.deco}>
+            {({ pressed }) => (
+              <Lift radius={19} pressed={pressed}>
+                <View style={styles.decoBtn}>
+                  <DecoIcon />
+                </View>
+              </Lift>
+            )}
+          </Pressable>
+          <View style={styles.spark} accessibilityLabel={`스파크 ${me.sparks}개`}>
+            <SparkIcon />
+            <PText style={styles.sparkN}>{me.sparks.toLocaleString()}</PText>
           </View>
-          {me.bio || !canUse(me, 'settings') ? (
-            <PText style={styles.bio}>{me.bio || '한 줄 소개를 남겨 보세요'}</PText>
-          ) : (
-            // 비어 있으면 누르면 바로 설정 › 닉네임 · 한 줄 소개 창이 열려요
-            <Pressable onPress={() => router.push('/me/settings?sheet=nick')} accessibilityRole="button" accessibilityLabel="한 줄 소개 남기기" hitSlop={6} style={styles.bioBtn}>
-              <PText style={[styles.bio, styles.bioEmpty]}>한 줄 소개를 남겨 보세요 ›</PText>
+          <View style={styles.id}>
+            <PText style={styles.name}>{me.name}</PText>
+            <View style={styles.subRow}>
+              {/* 지점: 연동했거나 요청한 지점 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어서 언어 · 레벨만 */}
+              <PText style={styles.sub}>
+                {me.link !== 'none' ? `${me.branch} · ` : me.trial ? `${me.trial.branch} · ` : ''}
+                {LANG_NAME[me.lang]}
+                {/* 레벨은 지점 회원(연동 요청 · 연동됨)만 — 비회원은 아직 레벨 테스트 전이에요 */}
+                {me.link !== 'none' ? ` ${me.level}` : ''}
+                {me.link === 'linked' ? ' · 회원' : ''}
+              </PText>
+              {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
+                  비회원은 '체험 예약' · '비회원' 표시만 */}
+              {me.link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={me.link !== 'none' ? me.link : me.trial ? 'trial' : 'guest'} />}
+            </View>
+            {/* 한 줄 소개: 누르면 바로 쓰기 · 고치기 창 (비어 있으면 흐린 안내 글 + 연필) */}
+            <Pressable
+              onPress={() => {
+                sfx('tap');
+                setBioOpen(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={me.bio ? `한 줄 소개 ${me.bio} · 고치기` : '한 줄 소개 남기기'}
+              hitSlop={6}
+              style={styles.bioBtn}>
+              {({ pressed }) => (
+                <View style={[styles.bioRow, pressed && styles.bioPressed]}>
+                  <PText style={[styles.bio, !me.bio && styles.bioEmpty]} numberOfLines={2}>
+                    {me.bio || '한 줄 소개를 남겨 보세요'}
+                  </PText>
+                  <View style={styles.bioPen}>
+                    <LgIcon name="pen" size={14} stroke={Colors.inkSub} sw={2.2} />
+                  </View>
+                </View>
+              )}
             </Pressable>
-          )}
-          <View style={styles.fol}>
-            <Pressable onPress={() => onFollow('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${lists.fing.length}명`} hitSlop={10} style={styles.folBtn}>
-              <PText style={styles.folN}>{lists.fing.length}</PText>
-              <PText style={styles.folT}>팔로잉</PText>
-            </Pressable>
-            <Pressable onPress={() => onFollow('fer')} accessibilityRole="button" accessibilityLabel={`팔로워 ${lists.fer.length}명`} hitSlop={10} style={styles.folBtn}>
-              <PText style={styles.folN}>{lists.fer.length}</PText>
-              <PText style={styles.folT}>팔로워</PText>
-            </Pressable>
+            <View style={styles.fol}>
+              <Pressable onPress={() => onFollow('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${lists.fing.length}명`} hitSlop={10} style={styles.folBtn}>
+                <PText style={styles.folN}>{lists.fing.length}</PText>
+                <PText style={styles.folT}>팔로잉</PText>
+              </Pressable>
+              <Pressable onPress={() => onFollow('fer')} accessibilityRole="button" accessibilityLabel={`팔로워 ${lists.fer.length}명`} hitSlop={10} style={styles.folBtn}>
+                <PText style={styles.folN}>{lists.fer.length}</PText>
+                <PText style={styles.folT}>팔로워</PText>
+              </Pressable>
+            </View>
           </View>
         </View>
-      </View>
-    </Raised>
+      </Raised>
+      <BioSheet open={bioOpen} onClose={() => setBioOpen(false)} bio={me.bio} />
+    </>
   );
 }
 
@@ -189,9 +206,13 @@ const styles = StyleSheet.create({
   tagDot: { width: 6, height: 6, borderRadius: 3 },
   tagText: { fontFamily: Font.body900, fontSize: 10.5, lineHeight: 14, letterSpacing: -0.2, color: Colors.ink },
   tagTextGuest: { color: Colors.inkSub },
-  bio: { marginTop: 4, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
-  bioBtn: { alignSelf: 'flex-start' },
-  bioEmpty: { color: Colors.purple, fontFamily: Font.body800 },
+  bio: { flexShrink: 1, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
+  bioBtn: { alignSelf: 'flex-start', maxWidth: '100%', marginTop: 4 },
+  bioRow: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 8 },
+  bioPressed: { opacity: 0.6 },
+  // 비어 있으면 본문이 아니라 누르는 자리로 보이게: 흐린 보조색
+  bioEmpty: { color: Colors.inkSub, fontFamily: Font.body700 },
+  bioPen: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.cream, alignItems: 'center', justifyContent: 'center' },
   fol: { flexDirection: 'row', gap: 16, marginTop: 8 },
   folBtn: { flexDirection: 'row', alignItems: 'baseline' },
   folN: { fontFamily: Font.display, fontSize: 15, lineHeight: 20, marginRight: 4 },

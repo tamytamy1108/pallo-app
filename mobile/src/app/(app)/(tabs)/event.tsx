@@ -16,7 +16,7 @@ import { Icon } from '@/components/meet/icons';
 import { branchOk } from '@/components/meet/model';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
+import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { EVENT_FILTERS, EVENTS, type EventKind } from '@/data/events';
 import { useMe } from '@/state/me';
 import { useTabReselect } from '@/lib/tab-reselect';
@@ -118,7 +118,7 @@ function TabBtn({ on, label, n, onPress }: { on: boolean; label: string; n?: num
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  page: { paddingTop: 0, paddingBottom: TabBarSpace + 80 },
+  page: { paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 80 },
   // 첫 줄(제목) · 둘째 줄(칩) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (칩 줄 안쪽 위 12 를 빼요)
   hd: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: Spacing.gutter },
   subs: { flexGrow: 0, marginTop: Spacing.stack - 12 },

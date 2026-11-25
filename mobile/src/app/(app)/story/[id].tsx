@@ -21,6 +21,7 @@ import { LgIcon } from '@/components/lounge/icons';
 import { LgButton } from '@/components/lounge/lg-button';
 import { go } from '@/components/lounge/nav';
 import { isDarkBg } from '@/components/lounge/pics';
+import { PlacedSticker } from '@/components/lounge/story-sticker';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -31,13 +32,14 @@ import { useMe } from '@/state/me';
 import { HeartPop } from '@/components/ui/heart-pop';
 import { FramedImage } from '@/components/ui/photo-frame';
 import { useKeyboardHeight, useKeyboardShown } from '@/lib/keyboard';
+import { whenLabel } from '@/lib/when';
 
 const DUR = 5000;
 
 /**
  * 스토리 보기 (프로토타입 lgStoryOpen · lgStoryShow · #lgStory).
  * 전체 화면 · 5초씩 넘어가요. 왼쪽 / 오른쪽 누르기로 이동, 누르고 있으면 멈춤. 사람 → 다음 사람 → … → 하이라이트 순.
- * 아래: '○○에게 댓글 달기'(공개 댓글) + 보내기 · ♡ · 💬(전체 댓글 창). 번개 · 파티 스토리는 [참여하기], 내 스토리는 [지우기].
+ * 아래: '○○에게 댓글 달기'(공개 댓글) + 보내기 · ♡ · 💬(전체 댓글 창). 번개 · 파티 스토리는 [참여하기]. 내 스토리는 위쪽 이름 줄에 작은 '지우기'.
  */
 export default function StoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -210,6 +212,8 @@ export default function StoryScreen() {
     setPos({ gi: pos.gi, i: Math.min(pos.i, L.length - 1) });
   };
 
+  // 아래 조작 줄(댓글 · 참여 · 매니저 도구) 높이 — 글 · 캐릭터를 그 위에만 놓아 겹치지 않게
+  const [footH, setFootH] = useState(0);
   const barStyle = useAnimatedStyle(() => ({ width: `${prog.get() * 100}%` }));
   const fresh = useMemo(() => (st ? !getLounge().seen[st.id] : false), [st]);
   if (!group || !st) return null;
@@ -217,6 +221,11 @@ export default function StoryScreen() {
   const top = Math.max(insets.top, 16);
   const recent = isRecent(st);
   const manager = me.role === 'manager';
+  // 사진 위 글 스티커로 올린 스토리는 글을 사진 위 그 자리에 보여요 (아래 큰 글씨는 안 써요)
+  const lbl = st.img && st.big ? st.lbl : undefined;
+  const sticker = !!lbl;
+  // 예전에 올린 내 스토리에 남은 '24시간 동안 …' 안내 글은 보이지 않아요
+  const ds = st.mine && st.ds.startsWith('24시간') ? '' : st.ds;
   // 노란 · 밝은 배경에서는 노란 글씨가 안 보여요 → 흰 글씨로
   const accent = { color: isDarkBg(st.art[0]) ? Colors.yellow : '#fff' };
   return (
@@ -228,19 +237,27 @@ export default function StoryScreen() {
         {st.img ? <FramedImage uri={st.img} framing={st.frame} /> : <PText style={[styles.word, { top: top + 84, color: isDarkBg(st.art[0]) ? LG_C.y : Colors.ink }]}>{st.art[1]}</PText>}
       </View>
       <LinearGradient colors={['rgba(30,26,43,0.38)', 'rgba(30,26,43,0)', 'rgba(30,26,43,0)', 'rgba(30,26,43,0.78)']} locations={[0, 0.13, 0.52, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
-      {st.img ? null : <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.char} contentFit="contain" pointerEvents="none" />}
+      {lbl ? (
+        <View style={[styles.stickerLayer, { top: top + 96, bottom: (footH || 120 + insets.bottom) + 8 }]} pointerEvents="none">
+          <PlacedSticker text={st.big} spot={lbl} />
+        </View>
+      ) : null}
 
-      <View style={[styles.content, { paddingBottom: 190 + insets.bottom }]} pointerEvents="none">
+      {/* 글 · 캐릭터는 아래 조작 줄 위에서만 (캐릭터도 흐름 안에 두어 버튼 · 입력칸을 덮지 않아요) */}
+      <View style={[styles.content, { paddingBottom: (footH || 190 + insets.bottom) + 16 }]} pointerEvents="none">
+        {st.img ? null : <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.char} contentFit="contain" />}
         <PText style={[styles.kick, accent]}>
           {c.name}
           {st.pin ? ' · 매니저 고정' : ''}
         </PText>
-        <PText style={styles.big}>{st.big}</PText>
-        <PText style={styles.ds}>{st.ds}</PText>
-        <View style={styles.note}>
-          <LgIcon name={st.pin ? 'tack' : recent ? 'cal' : 'check'} size={14} color="rgba(255,255,255,0.8)" />
-          <PText style={styles.noteText}>{st.pin ? '매니저가 고정한 소식이라 계속 남아 있어요' : recent ? `24시간이 지나면 ${c.name} 하이라이트로 옮겨져요` : `${c.name} 하이라이트에 모아 둔 스토리예요`}</PText>
-        </View>
+        {st.big && !sticker ? <PText style={styles.big}>{st.big}</PText> : null}
+        {ds ? <PText style={styles.ds}>{ds}</PText> : null}
+        {st.pin || !recent ? (
+          <View style={styles.note}>
+            <LgIcon name={st.pin ? 'tack' : 'check'} size={14} color="rgba(255,255,255,0.8)" />
+            <PText style={styles.noteText}>{st.pin ? '매니저가 고정한 소식이라 계속 남아 있어요' : `${c.name} 하이라이트에 모아 둔 스토리예요`}</PText>
+          </View>
+        ) : null}
       </View>
 
       {/* 왼쪽 / 오른쪽 누르기 · 누르고 있으면 멈춤 · 키보드가 떠 있으면 먼저 키보드만 내려요 */}
@@ -282,9 +299,14 @@ export default function StoryScreen() {
               {st.role ? <PText style={[styles.role, accent]}>{st.role}</PText> : null}
             </View>
             <PText style={styles.small} numberOfLines={1}>
-              {group.kind === 'c' ? `${c.name} 하이라이트 ${pos.i + 1}/${group.list.length}` : c.name} · {st.br} · {st.time}
+              {group.kind === 'c' ? `${c.name} 하이라이트 ${pos.i + 1}/${group.list.length}` : c.name} · {st.br} · {whenLabel(st.time)}
             </PText>
           </View>
+          {st.mine ? (
+            <Pressable onPress={() => drop('내 스토리를 지웠어요')} accessibilityRole="button" accessibilityLabel="내 스토리 지우기" hitSlop={8} style={styles.del}>
+              <PText style={styles.delText}>지우기</PText>
+            </Pressable>
+          ) : null}
           <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="스토리 닫기" hitSlop={6} style={styles.x}>
             <LgIcon name="x" size={24} color="#fff" />
           </Pressable>
@@ -294,15 +316,11 @@ export default function StoryScreen() {
       {/* 댓글 줄: 키보드가 올라오면 그 높이만큼 위로 (가리지 않게) */}
       {/* 키보드가 떠 있으면 입력 줄 뒤 ~ 키보드 아래까지 어둡게 채워요 (스토리 글자가 비치거나 키보드 모서리에 틈이 보이지 않게) */}
       {kb && <View pointerEvents="none" style={[styles.kbBack, { height: kbH + 84 }]} />}
-      <View style={[styles.foot, { bottom: kbH, paddingBottom: kb ? 12 : 22 + insets.bottom }]} pointerEvents="box-none">
-        {st.mine ? (
-          <View style={styles.mgr}>
-            <LgIcon name="cal" size={15} color="#fff" />
-            <PText style={styles.mgrText}>내 스토리</PText>
-            <View style={styles.sp} />
-            <MgrButton label="지우기" onPress={() => drop('내 스토리를 지웠어요')} />
-          </View>
-        ) : null}
+      <View
+        style={[styles.foot, { bottom: kbH, paddingBottom: kb ? 12 : 22 + insets.bottom }]}
+        pointerEvents="box-none"
+        // 키보드가 떠 있을 땐 높이를 다시 재지 않아요 (글이 키보드 따라 출렁이지 않게)
+        onLayout={(e) => (kb ? undefined : setFootH(e.nativeEvent.layout.height))}>
         {manager ? (
           <View style={styles.mgr}>
             <LgIcon name="shield" size={15} color="#fff" />
@@ -381,7 +399,8 @@ function SquareButton({ label, selected, onPress, children }: { label: string; s
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   word: { position: 'absolute', left: 20, right: 16, fontFamily: Font.display, fontSize: 76, lineHeight: 68.4, letterSpacing: -3 },
-  char: { position: 'absolute', right: -22, bottom: 64, width: '54%', maxWidth: 220, aspectRatio: 1.569 },
+  char: { alignSelf: 'flex-end', marginRight: -42, marginBottom: 4, width: '50%', maxWidth: 200, aspectRatio: 1.569 },
+  stickerLayer: { position: 'absolute', left: 0, right: 0 },
   content: { ...StyleSheet.absoluteFill, paddingHorizontal: 20, justifyContent: 'flex-end', gap: 8 },
   kick: { fontFamily: Font.display, fontSize: 11, lineHeight: 16, letterSpacing: 0.3, color: Colors.yellow },
   big: { fontFamily: Font.display, fontSize: 30, lineHeight: 34.5, letterSpacing: -1, color: '#fff', textShadowColor: 'rgba(30,26,43,0.35)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 12 },
@@ -401,6 +420,8 @@ const styles = StyleSheet.create({
   role: { fontFamily: Font.body900, fontSize: 11, lineHeight: 13.2, color: Colors.yellow, marginLeft: 5 },
   small: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 13.8, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
   x: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  del: { height: 28, paddingHorizontal: 8, justifyContent: 'center' },
+  delText: { fontFamily: Font.body700, fontSize: 12, lineHeight: 16, color: 'rgba(255,255,255,0.72)' },
   foot: { position: 'absolute', left: 16, right: 16, bottom: 0 },
   kbBack: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(30,26,43,0.92)' },
   sp: { flex: 1 },

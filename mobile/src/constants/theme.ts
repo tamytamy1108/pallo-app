@@ -41,3 +41,5 @@ export const Spacing = {
 
 /** 아래 떠 있는 탭 바 높이 + 여백 — 화면 아래쪽 내용이 가려지지 않게 이만큼 띄워요. */
 export const TabBarSpace = 96;
+/** 다섯 탭(홈 · 라이브러리 · 라운지 · 이벤트 · 마이)의 첫 줄(제목) 위 여백 — 상태 바 · 아일랜드 바로 밑에 붙지 않게, 다섯 탭이 같아요 */
+export const TabHeadTop = 10;

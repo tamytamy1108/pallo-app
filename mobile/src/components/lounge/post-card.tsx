@@ -16,6 +16,7 @@ import { Colors } from '@/constants/theme';
 import { type Abroad, LANG_COLOR, LG_C, LG_LIKERS, memberLangs, nameHash, type Post } from '@/data/lounge';
 import { addPostComment, hideMember, likeOn, postComments, toggleLike, toggleSave, unhideMember, useLounge } from '@/data/lounge-store';
 import { kfc, SPRING } from '@/lib/motion';
+import { whenLabel } from '@/lib/when';
 import { useMe } from '@/state/me';
 import { HeartPop } from '@/components/ui/heart-pop';
 
@@ -24,6 +25,7 @@ import { LgIcon } from './icons';
 import { LgButton } from './lg-button';
 import { go } from './nav';
 import { PIC_BG, PostArt } from './pics';
+import { PlacedSticker } from './story-sticker';
 
 /** lgBurst .8s var(--spring) — 키프레임 구간마다 */
 const BURST_EASE = Easing.bezierFn(0.2, 0.9, 0.3, 1.3);
@@ -165,7 +167,7 @@ function Pic({ p }: { p: Post }) {
           accessibilityActions={many ? [{ name: 'increment' }, { name: 'decrement' }] : undefined}
           onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
           onLayout={(e) => setW(e.nativeEvent.layout.width - 4)}
-          style={[styles.pic, img ? { aspectRatio: p.ratio ?? 1, height: undefined, backgroundColor: Colors.ink } : { backgroundColor: PIC_BG[p.pic ?? 'party'] }]}>
+          style={[styles.pic, img ? { aspectRatio: p.ratio ?? 1, height: undefined, backgroundColor: Colors.line } : { backgroundColor: PIC_BG[p.pic ?? 'party'] }]}>
           <ScrollView
             ref={pager}
             horizontal
@@ -182,6 +184,7 @@ function Pic({ p }: { p: Post }) {
               return (
                 <Pressable key={k} onPress={onTap} sound={false} style={[styles.page, { width: w }]}>
                   {src ? <FramedImage uri={src} framing={p.imgs?.[k] ? p.frames?.[k] : p.frames?.[0]} /> : <PostArt pic={p.pic ?? 'party'} uid={`${p.id}-${k}`} />}
+                  {k === 0 && p.lbl && p.text ? <PlacedSticker text={p.text} spot={p.lbl} sm /> : null}
                 </Pressable>
               );
             })}
@@ -216,13 +219,16 @@ export function PostCard({ p }: { p: Post }) {
   const [sheet, setSheet] = useState<null | 'cmt' | 'more' | 'likers'>(null);
   return (
     <View>
-      <Who who={p.who} av={p.av} role={p.role} sub={`${p.br}${p.club ? ` · ${p.club}` : ''} · ${p.time}`} onMore={() => setSheet('more')} />
+      <Who who={p.who} av={p.av} role={p.role} sub={`${p.br}${p.club ? ` · ${p.club}` : ''} · ${whenLabel(p.time, p.at)}`} onMore={() => setSheet('more')} />
       <Pic p={p} />
       <Acts id={p.id} likes={p.likes} cmts={cmts.length} onCmt={() => setSheet('cmt')} onLikers={() => setSheet('likers')} />
-      <PText style={styles.capt}>
-        <PText style={styles.captWho}>{p.who} </PText>
-        {p.text}
-      </PText>
+      {/* 글 없이 올린 사진 · 사진 위 스티커로 글을 보인 글은 캡션을 따로 달지 않아요 */}
+      {p.text && !p.lbl ? (
+        <PText style={styles.capt}>
+          <PText style={styles.captWho}>{p.who} </PText>
+          {p.text}
+        </PText>
+      ) : null}
       <CommentsSheet open={sheet === 'cmt'} onClose={() => setSheet(null)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t), '댓글을 달려면')} />
       <PostMenu open={sheet === 'more'} who={p.who} onClose={() => setSheet(null)} />
       <LikersSheet open={sheet === 'likers'} id={p.id} who={p.who} likes={p.likes} onClose={() => setSheet(null)} />
@@ -237,7 +243,7 @@ export function AbroadCard({ p }: { p: Abroad }) {
   const [sheet, setSheet] = useState<null | 'cmt' | 'more' | 'likers' | 'ask'>(null);
   return (
     <View>
-      <Who who={p.who} av={p.av} sub={`${p.br} · ${p.time}`} onMore={() => setSheet('more')} />
+      <Who who={p.who} av={p.av} sub={`${p.br} · ${whenLabel(p.time, p.at)}`} onMore={() => setSheet('more')} />
       <View style={styles.abShadow}>
         <View style={styles.ab}>
           <View style={styles.abTop}>
