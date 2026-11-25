@@ -11,6 +11,7 @@ import { apiErrorMessage } from '@/api/errors';
 import { ApiProvider } from '@/api/provider';
 import { useSession } from '@/api/session';
 import { preloadAllAvatarArt, preloadMyAvatar } from '@/components/character/preload-art';
+import { FLAT_MAPS } from '@/components/library/world/flat-maps';
 import { TrialGuideHost } from '@/components/common/trial-guide';
 import { DevNotch } from '@/components/dev-notch';
 import { LinkPushHost } from '@/components/home/link-push';
@@ -55,7 +56,8 @@ function RootNavigator() {
   const [artReady, setArtReady] = useState(false);
   useEffect(() => {
     let alive = true;
-    void preloadMyAvatar(getMyAvatar()).then(() => {
+    // 라이브러리 지도 사진판도 같이 — 3D 가 그려지기 전에 같은 구도의 사진이 바로 보여야 해요 (빈 하늘색 칸이 안 보이게)
+    void preloadMyAvatar(getMyAvatar(), 1500, Object.values(FLAT_MAPS).map((m) => m.img)).then(() => {
       if (alive) setArtReady(true);
       preloadAllAvatarArt();
     });

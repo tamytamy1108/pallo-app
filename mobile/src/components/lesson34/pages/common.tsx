@@ -25,10 +25,11 @@ export const Intro = ({ text }: { text: string }) => (
 export const PCard = ({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) => <View style={StyleSheet.flatten([s.card, style])}>{children}</View>;
 
 /** 아래 고정 칸 .st-foot */
-export function PFoot({ children }: { children: ReactNode }) {
+export function PFoot({ children, lift = 0 }: { children: ReactNode; lift?: number }) {
   const insets = useSafeAreaInsets();
+  // lift: 키보드 높이 (아이폰). 키보드가 홈 바 자리를 덮으니 그 여백은 빼고 키보드 바로 위에 붙어요
   return (
-    <View style={StyleSheet.flatten([s.foot, { paddingBottom: 16 + insets.bottom }])}>
+    <View style={StyleSheet.flatten([s.foot, lift > 0 ? { paddingBottom: 12, marginBottom: lift } : { paddingBottom: 16 + insets.bottom }])}>
       <FootFade />
       {children}
     </View>

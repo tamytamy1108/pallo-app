@@ -139,7 +139,7 @@ export default function LibraryScreen() {
         {q.isPending ? (
           // 맵 목록을 아직 못 받았어요 (보통은 스플래시 동안 받아 둬요): 도는 표시 대신 같은 자리 · 같은 크기의 지도 판을 먼저
           <Raised radius={26}>
-            <View style={styles.flat}>{!st.sitMode && <Image source={FLAT_MAPS.study2.img} style={StyleSheet.absoluteFill} contentFit="fill" accessible={false} />}</View>
+            <View style={styles.flat}>{!st.sitMode && <Image source={FLAT_MAPS.study2.img} style={StyleSheet.absoluteFill} contentFit="fill" cachePolicy="memory-disk" transition={0} accessible={false} />}</View>
           </Raised>
         ) : q.isError ? (
           <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />

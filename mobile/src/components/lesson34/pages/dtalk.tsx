@@ -4,6 +4,7 @@ import * as Tts from "expo-speech";
 import { useEffect, useState } from "react";
 import {
   FlatList,
+  Keyboard,
   ScrollView,
   StyleSheet,
   View,
@@ -12,12 +13,14 @@ import {
 import { GrowInput } from "@/components/ui/grow-input";
 import { CheckIcon, MicIcon } from "@/components/lesson/icons";
 import { Pressable } from "@/components/ui/pressable";
+import { STUDY_BTN } from "@/components/ui/study-button";
 import { PText } from "@/components/ui/text";
 import { showToast } from "@/components/ui/toast";
 import { Font } from "@/constants/fonts";
 import { Colors } from "@/constants/theme";
 import { STEPS34, type Lv3Unit } from "@/data/lessons34";
 import { sfx } from "@/lib/feedback";
+import { useKeyboardHeight } from "@/lib/keyboard";
 import { useSpeech } from "@/lib/speech";
 import { useLearnPrefs } from "@/state/learn-prefs";
 import { isDone, stepKey } from "@/state/progress";
@@ -167,6 +170,8 @@ export function DailyTalk({
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const speech = useSpeech({ onText: (text) => setDraft(text) });
+  // 키보드가 올라오면 아래 입력 줄을 키보드 바로 위로 올려요 (아이폰만 · 안드로이드는 화면이 줄어요)
+  const kbH = useKeyboardHeight();
 
   useEffect(() => () => void Tts.stop(), []);
 
@@ -622,7 +627,7 @@ export function DailyTalk({
           )
         }
       />
-      <PFoot>
+      <PFoot lift={kbH}>
         <ModeTabs<Mode>
           list={[
             ["voice", "말하기"],
@@ -631,24 +636,29 @@ export function DailyTalk({
           cur={cm}
           onPick={(k) => {
             speech.stop();
+            // 말하기로 바꾸면 떠 있던 키보드도 내려요
+            if (k === "voice") Keyboard.dismiss();
             setCm(k);
           }}
         />
+        {/* 입력칸은 한 줄을 다 써요 (말하기: 받아 적은 글만 보여 주고 눌러도 키보드가 안 떠요) */}
+        <GrowInput
+          value={draft}
+          onChangeText={setDraft}
+          editable={cm === "write"}
+          showSoftInputOnFocus={cm === "write"}
+          multiline
+          placeholder={
+            cm === "voice"
+              ? "마이크를 누르고 말하면 여기에 적혀요"
+              : "3문장 이상 영어로 적어요"
+          }
+          placeholderTextColor="#B9B2A3"
+          style={st.ta}
+          accessibilityLabel="내 답"
+        />
+        {/* 아래 줄: 말하기는 마이크가 주인공 + 보내기, 쓰기는 보내기만 (높이 · 가운데를 맞춰요) */}
         <View style={st.compose}>
-          <GrowInput
-            value={draft}
-            onChangeText={setDraft}
-            editable={cm === "write"}
-            multiline
-            placeholder={
-              cm === "voice"
-                ? "마이크를 누르고 말하면 여기에 적혀요"
-                : "3문장 이상 영어로 적어요"
-            }
-            placeholderTextColor="#B9B2A3"
-            style={st.ta}
-            accessibilityLabel="내 답"
-          />
           {cm === "voice" ? (
             <Pressable
               onPress={() =>
@@ -657,30 +667,41 @@ export function DailyTalk({
                   : void speech.start(D.keywords.map((k) => k[0]))
               }
               accessibilityRole="button"
-              accessibilityLabel="말하기"
+              accessibilityLabel={speech.listening ? "말하기 멈추기" : "눌러서 말하기"}
               accessibilityState={{ selected: speech.listening }}
               style={StyleSheet.flatten([st.mic, speech.listening && st.micOn])}
             >
               <MicIcon size={20} color={Colors.white} />
+              <PText style={st.micT} color={Colors.white} numberOfLines={1}>
+                {speech.listening ? "듣고 있어요 · 눌러서 멈추기" : "눌러서 말하기"}
+              </PText>
             </Pressable>
           ) : null}
-          <View style={st.send}>
-            <GoBtn label="보내기" compact onPress={send} />
-          </View>
+          {cm === "voice" ? (
+            <View style={st.send}>
+              <GoBtn label="보내기" compact disabled={!draft.trim()} onPress={send} />
+            </View>
+          ) : (
+            // 쓰기: 보내기가 줄을 다 써요 (감싸는 View 없이 — 안에서 flex: 1 이 높이를 0 으로 만들었어요)
+            <GoBtn label="보내기" compact disabled={!draft.trim()} onPress={send} />
+          )}
         </View>
-        <Pressable
-          onPress={finishTalk}
-          disabled={answered < 3}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: answered < 3 }}
-          style={StyleSheet.flatten([st.end, answered >= 3 && st.endOn])}
-        >
-          <PText style={st.endT} color={answered >= 3 ? Colors.ink : SUB}>
-            {answered >= 3
-              ? "대화 마치기"
-              : `질문 3개 답하면 마칠 수 있어요 · ${answered}/3`}
-          </PText>
-        </Pressable>
+        {/* 키보드가 떠 있을 땐 입력 줄만 남겨요 (자리가 좁아요) */}
+        {kbH > 0 ? null : (
+          <Pressable
+            onPress={finishTalk}
+            disabled={answered < 3}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: answered < 3 }}
+            style={StyleSheet.flatten([st.end, answered >= 3 && st.endOn])}
+          >
+            <PText style={st.endT} color={answered >= 3 ? Colors.ink : SUB}>
+              {answered >= 3
+                ? "대화 마치기"
+                : `질문 3개 답하면 마칠 수 있어요 · ${answered}/3`}
+            </PText>
+          </Pressable>
+        )}
       </PFoot>
     </>
   );
@@ -879,10 +900,9 @@ const st = StyleSheet.create({
     justifyContent: "center",
   },
   moreT: { fontFamily: Font.display, fontSize: 11, lineHeight: 15 },
-  compose: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+  compose: { flexDirection: "row", alignItems: "center", gap: 8 },
   ta: {
-    flex: 1,
-    minHeight: 73,
+    minHeight: 64,
     maxHeight: 120,
     borderWidth: 2,
     borderColor: Colors.ink,
@@ -896,18 +916,26 @@ const st = StyleSheet.create({
     color: Colors.ink,
     textAlignVertical: "top",
   },
+  // 보내기(StudyButton)와 같은 높이 · 테두리 · 아래 그림자라 한 줄에 나란히 맞아요
   mic: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 2,
+    flex: 1,
+    minWidth: 0,
+    height: STUDY_BTN.height,
+    borderRadius: STUDY_BTN.radius,
+    borderWidth: STUDY_BTN.border,
     borderColor: Colors.ink,
     backgroundColor: Colors.purple,
+    marginBottom: STUDY_BTN.drop,
+    boxShadow: `0px ${STUDY_BTN.drop}px 0px ${Colors.ink}`,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
   },
   micOn: { backgroundColor: Colors.rosePink },
-  send: { width: 84 },
+  micT: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22, flexShrink: 1 },
+  send: { width: 104 },
   end: {
     height: 46,
     borderRadius: 27,

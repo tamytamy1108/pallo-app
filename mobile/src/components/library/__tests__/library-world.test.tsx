@@ -133,23 +133,33 @@ describe('라이브러리 지도 바꾸기', () => {
     expect(of('travel')[0].replays).toEqual([-1]);
   });
 
-  it('아직 안 만든 지도: 제때 그려지면 돌며 들어오고, 늦으면 돌지 않아요', async () => {
+  it('아직 안 만든 지도: 기다리지 않고 사진판부터 띄우고, 그려지면 같은 구도로 이어져요', async () => {
     const r = await render(<LibraryWorld world={travel} onOpen={() => {}} />);
     await draw('travel');
     await r.rerender(<LibraryWorld world={biz} onOpen={() => {}} />);
     expect(of('biz')).toHaveLength(0); // 탭 · 칩이 먼저 바뀌어 보이게, 새 지도는 두 프레임 뒤에 만들어요
     await tick(50);
     expect(of('biz')[0].replays).toEqual([]);
-    expect(of('travel')[0].active).toBe(true); // 그려질 때까지 앞 지도가 그대로
     await tick(150);
     await draw('biz');
-    expect(of('biz')[0].replays).toEqual([1]);
-    expect(of('travel')[0].active).toBe(false);
+    expect(of('biz')[0].replays).toEqual([]); // 사진판이 먼저 떴어요 → 돌지 않고 이어져요
 
     await r.rerender(<LibraryWorld world={cafe} onOpen={() => {}} />);
     await tick(50);
     await tick(1500);
     await draw('cafe');
     expect(of('cafe')[0].replays).toEqual([]); // 사진판이 먼저 떴어요 → 같은 구도로 이어져요
+  });
+
+  it('바꾼 직후 화면이 한 번 더 그려져도(같은 지도 · 새 객체) 새 지도가 올라와요', async () => {
+    const r = await render(<LibraryWorld world={study} onOpen={() => {}} />);
+    await draw('study');
+    await r.rerender(<LibraryWorld world={W('travel', 0)} onOpen={() => {}} />);
+    // 두 프레임이 지나기 전에 화면이 다시 그려져요 (NEW 끄기 · 스크롤 등) — 내용은 같고 객체만 새것
+    await r.rerender(<LibraryWorld world={W('travel', 0)} onOpen={() => {}} />);
+    await tick(50);
+    expect(of('travel')).toHaveLength(1);
+    await draw('travel');
+    expect(of('travel')[0].replays).toEqual([1]);
   });
 });

@@ -31,8 +31,6 @@ const APPLICANTS: Applicant[] = [
 /** 아래 고정 바 위 한 줄 '가입 신청 n명 · 대기자 n명' (예시 데이터 기준) */
 export const manageCounts = () => ({ ask: APPLICANTS.filter((a) => !a.wait).length, wait: APPLICANTS.filter((a) => a.wait).length });
 const REJECT_REASONS = ['정원이 찼어요', '가입 조건이 안 맞아요', '모임 분위기와 맞지 않아요'];
-const KICK_REASONS = ['모임에 계속 안 나와요', '모임 규칙을 어겼어요', '다른 멤버를 불편하게 했어요'];
-const CO_MAX = 3;
 
 type Stage =
   | { k: 'menu' }
@@ -40,8 +38,6 @@ type Stage =
   | { k: 'applicant'; a: Applicant }
   | { k: 'reject'; a: Applicant }
   | { k: 'members' }
-  | { k: 'member'; m: Member }
-  | { k: 'kick'; m: Member }
   | { k: 'cohost' }
   | { k: 'meet' }
   | { k: 'notice' }
@@ -55,9 +51,7 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
   const [wasOpen, setWasOpen] = useState(open);
   const [pending, setPending] = useState<Applicant[]>(APPLICANTS);
   const [co, setCo] = useState<string[]>(staff);
-  const [out, setOut] = useState<string[]>([]);
   const [reason, setReason] = useState<string | null>(null);
-  const [ban, setBan] = useState(false);
   const [pick, setPick] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [pin, setPin] = useState(true);
@@ -67,7 +61,6 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
   }
   const go = (s: Stage) => {
     setReason(null);
-    setBan(false);
     setPick(null);
     setStage(s);
   };
@@ -75,8 +68,8 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
 
   const asks = pending.filter((a) => !a.wait);
   const waits = pending.filter((a) => a.wait);
-  // 관리할 수 있는 멤버: 나 · 호스트는 빼고, 내보낸 사람도 빼요
-  const others = members.filter((m) => !m.me && !m.t?.startsWith('호스트') && !out.includes(m.n));
+  // 코호스트로 정할 수 있는 멤버: 나 · 호스트는 빼요
+  const others = members.filter((m) => !m.me && !m.t?.startsWith('호스트'));
   const host = role === 'host';
 
   if (stage.k === 'apply') {
@@ -140,79 +133,30 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
   }
 
   if (stage.k === 'members') {
+    const list = members.filter((m) => !m.me);
     return (
-      <Sheet open={open} onClose={onClose} title={`멤버 ${members.length - out.length}명`} label="멤버 목록" scrollKey="members">
-        <SheetDesc>멤버를 누르면 프로필 보기 · 코호스트 정하기 · 내보내기를 골라요.</SheetDesc>
-        <SheetOptions items={others.map((m) => opt(m.n, m.n, `${m.b}${co.includes(m.n) ? ' · CO-HOST' : ''}`))} onPick={(k) => go({ k: 'member', m: others.find((m) => m.n === k) ?? others[0] })} />
+      <Sheet open={open} onClose={onClose} title={`멤버 ${members.length}명`} label="멤버 목록" scrollKey="members">
+        <SheetDesc>멤버를 누르면 프로필이 열려요.</SheetDesc>
+        <SheetOptions items={list.map((m) => opt(m.n, m.n, `${m.b}${m.t?.startsWith('호스트') ? ' · HOST' : co.includes(m.n) ? ' · CO-HOST' : ''}`))} onPick={(k) => openProfileFromSheet(k, onClose)} />
         {back()}
-      </Sheet>
-    );
-  }
-
-  if (stage.k === 'member') {
-    const m = stage.m;
-    const isCo = co.includes(m.n);
-    const rows = [opt('profile', '프로필 보기'), opt('co', isCo ? '코호스트에서 빼기' : '코호스트로 정하기', isCo ? undefined : `${co.length} / ${CO_MAX}명`), opt('kick', '내보내기', '이유를 고르면 본인에게 알려요', true)];
-    return (
-      <Sheet open={open} onClose={onClose} title={m.n} label={`${m.n} 관리`} scrollKey={`m-${m.n}`}>
-        <SheetOptions
-          items={rows}
-          onPick={(k) => {
-            if (k === 'profile') openProfileFromSheet(m.n, onClose);
-            else if (k === 'kick') go({ k: 'kick', m });
-            else if (isCo) {
-              setCo((L) => L.filter((x) => x !== m.n));
-              showToast(`${m.n}님을 코호스트에서 뺐어요`);
-            } else if (co.length >= CO_MAX) showToast(`코호스트는 ${CO_MAX}명까지예요`);
-            else {
-              setCo((L) => [...L, m.n]);
-              showToast(`${m.n}님이 코호스트가 됐어요 · 알림을 보냈어요`);
-            }
-          }}
-        />
-        {back({ k: 'members' })}
-      </Sheet>
-    );
-  }
-
-  if (stage.k === 'kick') {
-    const m = stage.m;
-    return (
-      <Sheet open={open} onClose={onClose} title={`${m.n}님을 내보낼까요?`} label={`${m.n} 내보내기`} scrollKey={`k-${m.n}`}>
-        <SheetDesc>정기 모임 참석 신청도 함께 취소돼요. 쓴 글 · 사진은 남아요. 고른 이유가 {m.n}님에게 알림으로 가요.</SheetDesc>
-        <SheetOptions radio items={KICK_REASONS.map((r) => opt(r, r))} selected={reason} onPick={setReason} />
-        <SheetOptions radio items={[opt('ban', '다시 가입 못 하게 막기', ban ? '켜짐 · 다시 신청할 수 없어요' : '꺼짐')]} selected={ban ? 'ban' : null} onPick={() => setBan((b) => !b)} />
-        <SheetButton
-          label="내보내기"
-          tone="bad"
-          size="inline"
-          disabled={!reason}
-          onPress={() => {
-            setOut((L) => [...L, m.n]);
-            setCo((L) => L.filter((x) => x !== m.n));
-            go({ k: 'members' });
-            showToast(`${m.n}님을 내보냈어요`, { label: '되돌리기', onPress: () => setOut((L) => L.filter((x) => x !== m.n)) });
-          }}
-        />
-        {back({ k: 'member', m })}
       </Sheet>
     );
   }
 
   if (stage.k === 'cohost') {
     return (
-      <Sheet open={open} onClose={onClose} title={`코호스트 ${co.length} / ${CO_MAX}명`} label="코호스트 정하기" scrollKey="cohost">
+      <Sheet open={open} onClose={onClose} title={`코호스트 ${co.length}명`} label="코호스트 정하기" scrollKey="cohost">
         <SheetDesc>코호스트는 가입 승인 · 공지 · 정기 모임 · 참석 확인을 함께 맡아요. 누르면 정하거나 빼요.</SheetDesc>
+        <SheetNote>정하거나 빼면 그 멤버와 지점 관리자에게 알림이 가요.</SheetNote>
         <SheetOptions
           items={others.map((m) => opt(m.n, m.n, co.includes(m.n) ? 'CO-HOST · 누르면 빼요' : m.b))}
           onPick={(k) => {
             if (co.includes(k)) {
               setCo((L) => L.filter((x) => x !== k));
-              showToast(`${k}님을 코호스트에서 뺐어요`);
-            } else if (co.length >= CO_MAX) showToast(`코호스트는 ${CO_MAX}명까지예요`);
-            else {
+              showToast(`${k}님을 코호스트에서 뺐어요 · 본인과 지점 관리자에게 알렸어요`);
+            } else {
               setCo((L) => [...L, k]);
-              showToast(`${k}님이 코호스트가 됐어요 · 알림을 보냈어요`);
+              showToast(`${k}님이 코호스트가 됐어요 · 본인과 지점 관리자에게 알림을 보냈어요`);
             }
           }}
         />
@@ -277,7 +221,7 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
   if (stage.k === 'close') {
     return (
       <Sheet open={open} onClose={onClose} title={`${c.name}을 닫을까요?`} label="동아리 닫기" scrollKey="close">
-        <SheetDesc>멤버 {members.length - out.length}명에게 알림이 가고, 다가오는 정기 모임이 모두 취소돼요. 게시판 · 사진은 30일 동안 볼 수 있어요.</SheetDesc>
+        <SheetDesc>멤버 {members.length}명에게 알림이 가고, 다가오는 정기 모임이 모두 취소돼요. 게시판 · 사진은 30일 동안 볼 수 있어요.</SheetDesc>
         <SheetButtons>
           <SheetButton label="취소" tone="white" size="pair" style={styles.flex} sound="back" onPress={() => go({ k: 'menu' })} />
           <SheetButton
@@ -297,8 +241,8 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
   const menu: (SheetOption & { to: Stage })[] = host
     ? [
         { ...opt('apply', '가입 신청 · 대기자', `신청 ${asks.length}명 · 대기자 ${waits.length}명`), to: { k: 'apply' } },
-        { ...opt('members', '멤버 목록 · 내보내기', `멤버 ${members.length - out.length}명`), to: { k: 'members' } },
-        { ...opt('cohost', '코호스트 정하기', `${co.length} / ${CO_MAX}명${co.length ? ' · ' + co.join(' · ') : ''}`), to: { k: 'cohost' } },
+        { ...opt('members', '멤버 목록', `멤버 ${members.length}명 · 누르면 프로필`), to: { k: 'members' } },
+        { ...opt('cohost', '코호스트 정하기', `${co.length}명${co.length ? ' · ' + co.join(' · ') : ''} · 지점 관리자에게도 알림`), to: { k: 'cohost' } },
         { ...opt('edit', '소개 · 사진 · 장소 · 시간 고치기', '시간 · 장소가 바뀌면 멤버에게 알림이 가요'), to: { k: 'menu' } },
         { ...opt('meet', '공지 · 정기 모임 · 참석 확인', '참석 확인은 호스트 점수 ★에 쓰여요'), to: { k: 'meet' } },
         { ...opt('handover', '호스트 넘기기', '멤버 중 한 명에게 넘겨요', true), to: { k: 'handover' } },
@@ -318,7 +262,7 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
           else if (row) go(row.to);
         }}
       />
-      {host ? null : <SheetNote>호스트만 할 수 있어요: 멤버 내보내기 · 코호스트 정하기 · 소개 · 사진 · 장소 · 시간 고치기 · 호스트 넘기기 · 동아리 닫기</SheetNote>}
+      {host ? null : <SheetNote>호스트만 할 수 있어요: 멤버 목록 · 코호스트 정하기 · 소개 · 사진 · 장소 · 시간 고치기 · 호스트 넘기기 · 동아리 닫기</SheetNote>}
       <SheetButton label="닫기" tone="white" size="inline" sound="back" onPress={onClose} />
     </Sheet>
   );
