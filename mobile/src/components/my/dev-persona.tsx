@@ -15,7 +15,7 @@ const nowLabel = DEV_PERSONAS.find((p) => p.k === devProfile)?.label ?? '보통'
 
 /**
  * 개발용 (개발 서버에서만): 마이 제목 옆 '개발 · 사람' 알약 → 시트에서 비회원 · 체험 · 연동 대기 · 회원 · 프로 · 지점 관리자 … 를 골라 앱을 다시 열어요.
- * 동아리 안 역할(멤버 · 호스트 · 코호스트)도 여기서. 고르는 법 · 저장은 lib/dev-profile.
+ * 모임(동아리 · 번개) 안 역할(멤버 · 호스트 · 코호스트)도 여기서. 고르는 법 · 저장은 lib/dev-profile.
  */
 export function DevPersonaPill() {
   const [open, setOpen] = useState(false);
@@ -40,7 +40,7 @@ export function DevPersonaPill() {
             </PText>
             <PText style={styles.pillText} color={Colors.white}>
               {nowLabel}
-              {devClubRole !== 'auto' ? ` · 동아리 ${DEV_CLUB_ROLES.find((r) => r.k === devClubRole)?.label}` : ''}
+              {devClubRole !== 'auto' ? ` · 모임 ${DEV_CLUB_ROLES.find((r) => r.k === devClubRole)?.label}` : ''}
             </PText>
           </View>
         )}
@@ -73,7 +73,7 @@ export function DevPersonaPill() {
         </View>
         <View style={styles.group}>
           <PText style={styles.groupT} color={Colors.inkSub}>
-            동아리 안에서 나
+            모임 안에서 나 (동아리 · 번개)
           </PText>
           <View style={styles.seg} accessibilityRole="radiogroup">
             {DEV_CLUB_ROLES.map((r) => (
@@ -83,7 +83,7 @@ export function DevPersonaPill() {
             ))}
           </View>
           <PText style={styles.note} color={Colors.inkSub}>
-            그대로: 내가 연 동아리만 호스트 · 나머지는 모든 동아리를 그 역할로 열어요 (번개 호스트는 번개를 직접 열어서 봐요)
+            그대로: 내가 연 모임만 호스트 · 나머지는 모든 동아리 · 번개를 그 역할로 열어요 (번개엔 코호스트가 없어서 참여한 멤버로 보여요)
           </PText>
         </View>
         <PText style={styles.note} color={Colors.inkSub}>

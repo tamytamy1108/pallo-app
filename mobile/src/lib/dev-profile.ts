@@ -5,14 +5,14 @@
  * - 개발 서버를 `EXPO_PUBLIC_DEV_PROFILE=linked npx expo start` 로 켜면, 아직 고른 적이 없을 때 '연동된 회원'으로 시작해요
  * - 사람마다 저장은 따로 (폰: 문서 폴더 `pallo@<사람>/` · 웹: localStorage `pallo@<사람>-<키>`) → 기록이 서로 섞이지 않아요
  * - 가입을 건너뛰고 홈부터 · 앱을 열 때마다 그 사람으로 돌려놔요 (state/me). 가짜 서버일 때만: 가짜 토큰으로 로그인한 채(api/token) · /me 가 가입을 끝낸 것으로(api/me)
- * - 호스트 · 코호스트는 계정이 아니라 모임 안 역할이라 따로 골라요 (devClubRole: 동아리 화면이 이 값으로 열려요)
+ * - 호스트 · 코호스트는 계정이 아니라 모임 안 역할이라 따로 골라요 (devClubRole: 동아리 · 번개 화면이 이 값으로 열려요)
  * '보통'(가입부터)은 개발용 사람 없이 첫 화면부터예요. 실제 앱(__DEV__ 아님)에서는 늘 '' 예요.
  */
 import { File, Paths } from 'expo-file-system';
 import { DevSettings, Platform } from 'react-native';
 
 export type DevPersona = 'guest' | 'trial' | 'pending' | 'rejected' | 'app' | 'linked' | 'pro' | 'manager';
-/** 동아리 안에서 나: 화면 그대로(내가 연 동아리만 호스트) · 늘 멤버처럼 · 늘 호스트 · 늘 코호스트 */
+/** 모임(동아리 · 번개) 안에서 나: 화면 그대로(내가 연 모임만 호스트) · 늘 멤버처럼 · 늘 호스트 · 늘 코호스트 */
 export type DevClubRole = 'auto' | 'member' | 'host' | 'co';
 
 /** 고르는 순서 = 화면에 보이는 순서. desc 는 그 사람의 role · link · trial · plan (state/me) */
@@ -138,10 +138,10 @@ const now: Saved = on ? pick() : { who: 'none', club: 'auto' };
 
 /** 지금 개발용 사람 ('' = 보통 · 실제 앱) */
 export const devProfile: '' | DevPersona = now.who === 'none' ? '' : now.who;
-/** 동아리 안에서 나 (auto = 화면 그대로) */
+/** 모임 안에서 나 (auto = 화면 그대로) */
 export const devClubRole: DevClubRole = now.club;
 
-/** 사람(또는 동아리 역할)을 바꾸고 앱을 다시 열어요 */
+/** 사람(또는 모임 역할)을 바꾸고 앱을 다시 열어요 */
 export function switchDevProfile(next: { who?: DevPersona | 'none'; club?: DevClubRole }) {
   if (!__DEV__) return;
   const s: Saved = { who: next.who ?? now.who, club: next.club ?? now.club };
