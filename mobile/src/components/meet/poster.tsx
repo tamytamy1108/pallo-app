@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   wrap: { position: 'relative', overflow: 'hidden', width: '100%' },
   circle: { position: 'absolute', borderWidth: 2, borderColor: C.ink },
   band: { position: 'absolute', left: -20, right: -20, top: '42%', height: 54, borderTopWidth: 2, borderBottomWidth: 2, borderColor: C.ink, transform: [{ rotate: '-6deg' }] },
-  char: { position: 'absolute', right: 6, bottom: -14, width: '38%', maxWidth: 150, aspectRatio: 480 / 306, zIndex: 1 },
+  char: { position: 'absolute', right: 6, bottom: 2, width: '38%', maxWidth: 150, aspectRatio: 480 / 306, zIndex: 1 },
   shade: { position: 'absolute', left: 0, right: 0, top: 0, height: 64, zIndex: 1 },
   words: { position: 'absolute', left: 16, right: 16, bottom: 16, zIndex: 2 },
 });

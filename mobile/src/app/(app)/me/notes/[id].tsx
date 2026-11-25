@@ -15,7 +15,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { noteReactions, PN_TAG_COLOR, PN_THANKS, PRO_NOTES, teamNameByNo, type ProNote } from '@/data/account';
+import { noteReactions, PN_TAG_COLOR, PN_THANKS, PRO_NOTES, PRO_SENT_NOTES, teamNameByNo, type ProNote, type SentNote } from '@/data/account';
 import { haptic, sfx } from '@/lib/feedback';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useMe } from '@/state/me';
@@ -30,9 +30,12 @@ import { HeartPop } from '@/components/ui/heart-pop';
 function ProNoteScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const n = PRO_NOTES.find((x) => x.id === id);
+  // 프로가 보낸 노트 (마이 › PRO'S NOTE › 보낸 노트)
+  const s = PRO_SENT_NOTES.find((x) => x.id === id);
   useEffect(() => {
     if (n) markNoteRead(n.id);
   }, [n]);
+  if (s) return <SentNoteView n={s} />;
   if (!n) {
     return (
       <AccountPage title="PRO'S NOTE">
@@ -133,6 +136,34 @@ function Note({ n, fromList }: { n: ProNote; fromList: boolean }) {
         ))}
       </View>
       <ThanksSheet n={n} open={sheet} onClose={() => setSheet(false)} />
+    </AccountPage>
+  );
+}
+
+/**
+ * 내가 보낸 노트 (프로): 같은 노트 모양 · 아래는 고마워요 버튼 대신 반에서 몇 명 읽었는지 · 받은 고마워요 · 반에 남긴 인사.
+ * 맞는 API: 프로가 보낸 노트 · 읽음 수 (제안)
+ */
+function SentNoteView({ n }: { n: SentNote }) {
+  const me = useMe();
+  const R = noteReactions(n.id);
+  return (
+    <AccountPage title={`${n.m}/${n.d}(${n.wd}) PRO'S NOTE`} bodyStyle={styles.body}>
+      <View style={styles.dh}>
+        <PText style={styles.dhB}>{`${n.m}월 ${n.d}일 ${n.wd}요일`}</PText>
+        <PText style={styles.dhS}>{`${teamNameByNo(n.team)} · 보낸 노트 · 정리 ${n.items.length}개`}</PText>
+      </View>
+      {n.items.map((_, i) => (
+        <NoteItem key={i} n={{ ...n, pro: me.name }} i={i} />
+      ))}
+      <View style={styles.sent}>
+        <PText style={styles.sentH}>반에 남긴 인사</PText>
+        <PText style={styles.byeT}>{n.bye}</PText>
+        <PText style={styles.sentH}>{`${n.readN}/${n.total}명 읽음 · 고마워요 ${n.thanksN}`}</PText>
+        {R.msgs.map((m) => (
+          <Msg key={m.who} who={m.who} color={m.color} text={m.text} time={m.time} />
+        ))}
+      </View>
     </AccountPage>
   );
 }
@@ -268,6 +299,7 @@ const styles = StyleSheet.create({
   mkOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
   sent: { gap: 10, paddingTop: 16, paddingHorizontal: 2, paddingBottom: 8 },
   sentH: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
+  byeT: { fontFamily: Font.body700, fontSize: 14, lineHeight: 22 },
   hearts: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   avs: { flexDirection: 'row', marginRight: 2 },
   avOver: { marginLeft: -8 },

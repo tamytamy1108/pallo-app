@@ -6,6 +6,8 @@ import { SafeAreaView } from '@/components/ui/safe-area';
 import { applyDevMe } from '@/components/home/dev';
 import { Pressable } from '@/components/ui/pressable';
 import { MyStudyCard } from '@/components/account/my-study-card';
+import { MyClassCard } from '@/components/account/my-class-card';
+import { PRO_SENT_NOTES, PRO_STATS } from '@/data/account';
 import { SavedChallengesSheet, useSavedChallengeCount } from '@/components/challenge/saved-sheet';
 import { MemberLock } from '@/components/common/member-lock';
 import { memberGate } from '@/components/common/trial-guide';
@@ -62,6 +64,8 @@ export default function MyScreen() {
   }, [dev.reward]);
   const me = useMe();
   const member = isMember(me);
+  const pro = me.role === 'leader';
+  const [classOpen, setClassOpen] = useState(false);
   const canSettings = canUse(me, 'settings');
   const openSettings = canSettings ? go('/me/settings') : () => memberGate('설정을 쓰려면');
   const saved = useSavedCount();
@@ -85,8 +89,9 @@ export default function MyScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView ref={scroll} contentContainerStyle={styles.body} onScroll={() => checkScrollLock('my')} scrollEventThrottle={64}>
         <Appear kind="rise" style={styles.head}>
-          <PText variant="headline" accessibilityRole="header">
-            마이
+          {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
+          <PText variant="headline" accessibilityRole="header" accessibilityLabel="마이">
+            My
           </PText>
           <View style={styles.headR}>
             {/* 개발용 사람 바꾸기 (개발 서버에서만) */}
@@ -112,12 +117,22 @@ export default function MyScreen() {
 
         <Appear kind="rise" delay={60}>
           <MyStats
-            items={[
+            items={
+              pro
+                ? // 프로: 이번 달 맡은 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요 (10-roles '마이')
+                  [
+                    { ic: 'book', v: `${PRO_STATS.sessions}회`, l: '이번 달 세션', onPress: () => setClassOpen(true) },
+                    { ic: 'bolt', v: `${PRO_STATS.checks}회`, l: '출석 체크', onPress: () => setClassOpen(true) },
+                    { ic: 'mic', v: `${PRO_SENT_NOTES.length}개`, l: '보낸 노트', onPress: go('/me/notes?box=sent') },
+                    { ic: 'heart', v: `${PRO_SENT_NOTES.reduce((a, n) => a + n.thanksN, 0)}개`, l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
+                  ]
+                : [
               { ic: 'flame', v: `${me.streak}일`, l: '연속 학습', onPress: go('/me/ranking') },
               { ic: 'crown', v: `${myRank}위`, l: '이번 주 랭킹', onPress: go('/me/ranking') },
               { ic: 'users', v: `${myMeets.active}개`, l: '참여 중인 모임', onPress: () => setMyMeetsOpen(true) },
               { ic: 'heart', v: `${MY_BADGES.filter((b) => b.on).length}개`, l: '받은 배지', onPress: () => setBadges(true) },
-            ]}
+                  ]
+            }
           />
         </Appear>
 
@@ -128,9 +143,19 @@ export default function MyScreen() {
               <ProNoteCard />
             </Appear>
             <Appear kind="rise" delay={100}>
-              {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
-              <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
-              <MyStudyCard title={false} />
+              {pro ? (
+                // 프로: 이용권 · 팀 대신 이번 주 맡은 세션 (내 일정 전체 보기)
+                <>
+                  <SecHead title="내 수업" />
+                  <MyClassCard open={classOpen} onOpen={setClassOpen} />
+                </>
+              ) : (
+                <>
+                  {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
+                  <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
+                  <MyStudyCard title={false} />
+                </>
+              )}
             </Appear>
             <Appear kind="rise" delay={120}>
               <BranchBoard />

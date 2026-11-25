@@ -59,7 +59,7 @@ const EYES = [
   [181.1, 61.8, 24.0, 42.7, 13.9],
   [254.8, 78.6, 23.4, 42.2, 14.0],
 ] as const;
-const CHAR_W = 250;
+const CHAR_W = 160;
 
 function TiltedChar() {
   const [delay] = useState(() => Math.round(Math.random() * 3000));
@@ -95,7 +95,8 @@ function TiltedChar() {
 
 const styles = StyleSheet.create({
   card: { minHeight: 190, borderRadius: 26, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, overflow: 'hidden', padding: 20 },
-  char: { position: 'absolute', right: -40, bottom: -58 },
+  /** 카드 검은 테 안쪽에 다 들어오게 (그림의 투명 여백: 오른쪽 3 · 아래 9pt) */
+  char: { position: 'absolute', right: 1, bottom: -5 },
   /** 글씨 · 버튼은 캐릭터 위로 (프로토타입 .sub-hero > *:not(.hero-char) { position: relative }) */
   front: { position: 'relative', zIndex: 1 },
   pill: { alignSelf: 'flex-start', height: 26, paddingHorizontal: 11, borderRadius: 13, backgroundColor: Colors.ink, justifyContent: 'center' },

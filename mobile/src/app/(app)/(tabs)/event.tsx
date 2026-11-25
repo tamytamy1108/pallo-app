@@ -48,8 +48,9 @@ export default function EventScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView ref={scroll} contentContainerStyle={styles.page} onScroll={() => checkScrollLock('event')} scrollEventThrottle={64}>
         <View style={styles.hd}>
-          <PText variant="headline" accessibilityRole="header">
-            이벤트
+          {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
+          <PText variant="headline" accessibilityRole="header" accessibilityLabel="이벤트">
+            Events
           </PText>
         </View>
         <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.subs} contentContainerStyle={styles.subsIn} accessibilityLabel="세부 카테고리">

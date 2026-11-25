@@ -119,8 +119,9 @@ export default function LoungeScreen() {
       {/* 카드 안 댓글 창(Modal)도 이 스크롤 안에 그려져요 — 'handled' 가 없으면 키보드가 떠 있을 때 보내기 버튼을 처음 누르면 키보드만 내려가요 */}
       <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={64} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
         <View style={styles.hd}>
-          <PText variant="headline" accessibilityRole="header">
-            라운지
+          {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
+          <PText variant="headline" accessibilityRole="header" accessibilityLabel="라운지">
+            Lounge
           </PText>
         </View>
         <View style={styles.tabsAt} onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>

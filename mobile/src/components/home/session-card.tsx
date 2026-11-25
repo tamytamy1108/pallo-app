@@ -409,10 +409,10 @@ const breathe = css.keyframes({
 export type Pose = 'standard' | 'tilt' | 'jump';
 const POSES: Pose[] = ['standard', 'tilt', 'jump'];
 /** 포즈마다 이미지 · 크기 · 자리 · 눈 위치 [가운데 x, y, 가로 반지름, 세로 반지름, 기울기°] (원본 픽셀 — 그림의 검은 테 안쪽 흰자에 맞춰 잰 값 · 테 쪽으로 1.5 더) */
-// 카드 안쪽에 다 들어오게 (전엔 오른쪽 · 아래로 삐져나가 카드 끝에서 팔이 잘렸어요)
+// 카드 안쪽에 다 들어오게 — 캐릭터가 카드 검은 테에 닿거나 잘리지 않게 그림 끝이 테 안쪽에서 3pt 넘게 떨어져요
 const POSE = {
-  standard: { src: require('@/assets/characters/c-purple-standard-3d.png'), W: 480, H: 335, width: 132, right: 8, bottom: -6, eyes: [[166.5, 68.7, 25.2, 44.9, -0.5], [245.3, 67.0, 25.2, 44.9, -0.6]] },
-  tilt: { src: require('@/assets/characters/c-purple-tilt-3d.png'), W: 480, H: 352, width: 116, right: 8, bottom: -6, eyes: [[174.6, 66.9, 25.3, 45.0, 11.5], [252.1, 81.7, 25.3, 44.9, 11.7]] },
+  standard: { src: require('@/assets/characters/c-purple-standard-3d.png'), W: 480, H: 335, width: 132, right: 8, bottom: 0, eyes: [[166.5, 68.7, 25.2, 44.9, -0.5], [245.3, 67.0, 25.2, 44.9, -0.6]] },
+  tilt: { src: require('@/assets/characters/c-purple-tilt-3d.png'), W: 480, H: 352, width: 116, right: 8, bottom: 0, eyes: [[174.6, 66.9, 25.3, 45.0, 11.5], [252.1, 81.7, 25.3, 44.9, 11.7]] },
   jump: { src: require('@/assets/characters/c-purple-jump-3d.png'), W: 480, H: 484, width: 92, right: 10, bottom: -4, eyes: [[173.2, 66.4, 24.7, 44.4, 9.6], [251.0, 78.6, 25.3, 44.7, 9.8]] },
 } as const;
 

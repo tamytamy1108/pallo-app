@@ -61,7 +61,7 @@ const settingsStore = createStore<Settings>({ ...SETTINGS_DEFAULT }, { persist: 
 export const useSettings = () => settingsStore.useStore();
 export const getSettings = settingsStore.get;
 export const updateSettings = (patch: Partial<Settings>) => settingsStore.set((s) => ({ ...s, ...patch }));
-/** 이벤트 · 혜택 정보(광고) 수신: 켜면 동의 날짜를 기록해요 */
+/** 마케팅 정보 수신 (광고성 정보 · 약관 '마케팅 정보 수신 동의'): 켜면 동의 날짜를 기록해요 */
 export const setMarketing = (on: boolean) => {
   const t = new Date();
   settingsStore.set((s) => ({ ...s, nMkt: on, mktAt: on ? `${t.getFullYear()}.${t.getMonth() + 1}.${t.getDate()}` : '' }));
