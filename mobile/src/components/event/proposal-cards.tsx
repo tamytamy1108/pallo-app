@@ -32,7 +32,7 @@ export function ProposalCard({ q }: { q: Proposal }) {
   const when = q.date ? `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})${hm} 희망` : '날짜 고르기 전';
   return (
     <View style={styles.card}>
-      {q.card ? <ColorCard color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
+      {q.card ? <ColorCard design={q.card.design ?? 'circle'} color={q.card.color} words={cardWords(q.card.words, ['NEW', 'EVENT'])} size={12} width={58} center style={styles.th} /> : q.cover ? <Image source={{ uri: q.cover }} style={styles.th} contentFit="cover" /> : <View style={[styles.th, { backgroundColor: Colors.lavender }]} />}
       <View style={styles.tx}>
         <PText numberOfLines={1} style={styles.t}>
           {q.title}

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 
@@ -8,7 +8,8 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { EVENT_POSTER_MORE, EVENT_POSTER_WORDS } from '@/data/events';
 import { C, hashId, POSTER_MORE, POSTER_WORDS, type PosterWords } from '@/data/meet';
-import { cardColor, cardDark, cardWords, fitWordSize, type MadeCard } from '@/data/poster-colors';
+import { CardArt } from '@/components/ui/card-art';
+import { cardColor, cardDark, cardWords, type CardDesign, type MadeCard } from '@/data/poster-colors';
 
 /*
  * 브랜드 색 포스터 (프로토타입 lgPoster · LG_PW). 실제 앱에서는 올린 포스터 사진으로 바뀌어요.
@@ -23,12 +24,12 @@ export const isDarkBg = (bg: string) => bg === C.pu || bg === C.pk || cardDark(b
 /** 포스터 위 글자색: 어두운 바탕이면 흰색 (프로토타입 lgCardFg · lgPstFg) */
 export const posterFg = (bg: string) => (isDarkBg(bg) || bg === C.ink ? '#fff' : C.ink);
 
-export type Slide = { words: string[]; bg: string; v: number; /** 올린 포스터 사진 */ uri?: string; /** 내가 만든 카드 (무늬는 늘 첫 무늬 · 긴 글자는 폭에 맞게) */ made?: boolean };
+export type Slide = { words: string[]; bg: string; v: number; /** 올린 포스터 사진 */ uri?: string; /** 내가 만든 카드 (고른 디자인으로 그려요 · components/ui/card-art) */ made?: boolean; design?: CardDesign };
 
 /** 한 모임의 포스터 장들 (첫 장 = 대표, 프로토타입 lgSlides · LG_PW2). 만든 카드가 있으면 카드가 대표, 올린 사진은 그 뒤에 */
 export function posterSlides(id: string, club = false, posters?: string[], card?: MadeCard): Slide[] {
   const photos = (posters ?? []).map((uri, i) => ({ words: [], bg: C.ink, v: i + (card ? 1 : 0), uri }));
-  if (card) return [{ words: cardWords(card.words, club ? ['NEW', 'CLUB'] : ['NEW', 'MEET']), bg: card.color, v: 0, made: true }, ...photos];
+  if (card) return [{ words: cardWords(card.words, club ? ['NEW', 'CLUB'] : ['NEW', 'MEET']), bg: card.color, v: 0, made: true, design: card.design }, ...photos];
   if (photos.length) return photos;
   const first: PosterWords = POSTER_WORDS[id] ?? EVENT_POSTER_WORDS[id] ?? [club ? ['NEW', 'CLUB'] : ['NEW', 'MEET'], club ? C.lpu : C.pk];
   const more = POSTER_MORE[id] ?? EVENT_POSTER_MORE[id] ?? [];
@@ -53,11 +54,16 @@ type Props = {
 export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRatio, style, children }: Props) {
   const { bg, words } = slide;
   const acc = ACC[bg] ?? cardColor(bg)?.acc ?? C.y;
-  const v = slide.made ? 0 : (hashId(id) + slide.v) % 4;
+  const v = (hashId(id) + slide.v) % 4;
   const wc = isDarkBg(bg) ? C.y : C.ink;
-  // 만든 카드: 긴 글자를 포스터 폭에 맞게 줄여요 (웹은 글자 자동 줄이기가 없어요)
-  const [pw, setPw] = useState(0);
-  const ws = slide.made && pw ? fitWordSize(words, pw, wordSize) : wordSize;
+  // 내가 만든 카드: 고른 디자인 그대로 (글자 자리 · 크기도 디자인이 정해요)
+  if (slide.made)
+    return (
+      <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: bg, height, aspectRatio }, style])}>
+        <CardArt design={slide.design} color={bg} words={words} />
+        {children}
+      </View>
+    );
   if (slide.uri)
     return (
       <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: C.ink, height, aspectRatio }, style])}>
@@ -68,7 +74,7 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
       </View>
     );
   return (
-    <View onLayout={slide.made ? (e) => setPw(e.nativeEvent.layout.width) : undefined} style={StyleSheet.flatten([styles.wrap, { backgroundColor: bg, height, aspectRatio }, style])}>
+    <View style={StyleSheet.flatten([styles.wrap, { backgroundColor: bg, height, aspectRatio }, style])}>
       {v === 0 ? (
         <>
           <View style={[styles.circle, { right: -40, top: -40, width: 190, height: 190, borderRadius: 95, backgroundColor: acc }]} />
@@ -92,7 +98,7 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
         </>
       )}
       <View style={StyleSheet.flatten([styles.words, wordStyle])} pointerEvents="none">
-        <PText style={{ fontFamily: Font.display, fontSize: ws, lineHeight: ws * 0.95, letterSpacing: -1.2, color: wc }}>{words.join('\n')}</PText>
+        <PText style={{ fontFamily: Font.display, fontSize: wordSize, lineHeight: wordSize * 0.95, letterSpacing: -1.2, color: wc }}>{words.join('\n')}</PText>
       </View>
       {children}
     </View>
@@ -136,7 +142,7 @@ export function PosterPreview({ card, words, width, realW = PREVIEW_W, realH = P
   return (
     <View style={{ width, height: h * k, overflow: 'hidden' }}>
       <View style={{ position: 'absolute', width: realW, height: h, left: (width - realW) / 2, top: (h * k - h) / 2, transform: [{ scale: k }] }}>
-        <Poster id="card-preview" slide={{ words, bg: card.color, v: 0, made: true }} height={h} wordSize={wordSize} />
+        <Poster id="card-preview" slide={{ words, bg: card.color, v: 0, made: true, design: card.design }} height={h} wordSize={wordSize} />
       </View>
     </View>
   );
