@@ -17,7 +17,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
-import { Colors } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { chestReward, SKIP_POINTS } from '@/data/home';
 import { lessonName, STUDY_STEPS } from '@/data/library';
 import { STUDY_LEVELS } from '@/data/library-lessons';
@@ -387,8 +387,13 @@ export function StudyMap() {
             )}
           </View>
 
+          {/* 다음 챕터: 라이브러리(스터디 맵 · 이 레벨 교재)로 가요. 비회원이 잠긴 챕터를 누르면 잠김 안내 */}
           {next && (
-            <Pressable onPress={() => tryLesson(nextNo)} accessibilityRole="button" accessibilityLabel={`다음 챕터 ${next}${!isFree(nextNo) ? ', 잠김' : ''}`}>
+            <Pressable
+              onPress={() => (isFree(nextNo) ? openLibrary() : tryLesson(nextNo))}
+              accessibilityRole="button"
+              accessibilityLabel={`다음 챕터 ${next}${!isFree(nextNo) ? ', 잠김' : ' · 라이브러리에서 보기'}`}
+              style={styles.nextWrap}>
               {({ pressed }) => (
                 <Raised radius={20} pressed={pressed}>
                   <View style={StyleSheet.flatten([styles.nextBtn, !isFree(nextNo) && styles.nextLocked])}>
@@ -754,6 +759,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  // 장식(나무 · 눈 언덕)보다 위에 · 카드 아래 끝에서 띄워요
+  nextWrap: { zIndex: 5, marginBottom: Spacing.stack },
   // 비회원: 다음 챕터 잠김 (흐린 면 · 자물쇠)
   nextLocked: { backgroundColor: '#EEE8DA' },
   nextText: { flex: 1, fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },

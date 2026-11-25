@@ -21,7 +21,7 @@ import type { WorldSC } from '@/components/library/world/scenes';
 import { Raised } from '@/components/ui/raised';
 import { ErrorState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
+import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
@@ -139,7 +139,7 @@ export default function LibraryScreen() {
         {q.isPending ? (
           // 맵 목록을 아직 못 받았어요 (보통은 스플래시 동안 받아 둬요): 도는 표시 대신 같은 자리 · 같은 크기의 지도 판을 먼저
           <Raised radius={26}>
-            <View style={styles.flat}>{!st.sitMode && <Image source={FLAT_MAPS.study2.img} style={StyleSheet.absoluteFill} contentFit="fill" accessible={false} />}</View>
+            <View style={styles.flat}>{!st.sitMode && <Image source={FLAT_MAPS.study2.img} style={StyleSheet.absoluteFill} contentFit="fill" cachePolicy="memory-disk" transition={0} accessible={false} />}</View>
           </Raised>
         ) : q.isError ? (
           <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
@@ -176,7 +176,7 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: 0, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
   menuBack: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 5 },
   flat: { aspectRatio: 340 / 430, borderWidth: 2, borderColor: Colors.ink, borderRadius: 26, overflow: 'hidden', backgroundColor: '#BFE4EC' },
 });

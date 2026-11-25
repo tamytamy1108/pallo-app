@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { BackHandler, Keyboard, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LgIcon } from '@/components/lounge/icons';
 import { CheckBox, LgButton } from '@/components/lounge/lg-button';
 import { storyChipColors } from '@/components/lounge/story-camera';
+import { DraggableSticker, StickerColors, StickerLabel, stickerColor } from '@/components/lounge/story-sticker';
 import { PhotoFrame } from '@/components/ui/photo-frame';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { LG_SCAT, type StoryCat } from '@/data/lounge';
+import { LG_SCAT, type StickerSpot, type StoryCat } from '@/data/lounge';
 import { useKeyboardHeight } from '@/lib/keyboard';
 import { isPlainFraming, type PhotoFraming } from '@/lib/photo-framing';
 
@@ -19,9 +20,13 @@ type Props = {
   onFraming: (f: PhotoFraming) => void;
   cat: StoryCat;
   branch: string;
+  /** 사진 위 글 (안 적어도 올릴 수 있어요) */
   text: string;
   onText: (t: string) => void;
-  /** 한 줄 이야기 칸을 열어 둘지 (비어 있는 채로 올리려 하면 밖에서 열어요) */
+  /** 글 스티커 자리 · 색 */
+  spot: StickerSpot;
+  onSpot: (s: StickerSpot) => void;
+  /** 글 적기 칸을 열어 둘지 */
   typing: boolean;
   onTyping: (on: boolean) => void;
   feed: boolean;
@@ -33,38 +38,51 @@ type Props = {
   onSubmit: () => void;
 };
 
+/** 글 길이 (넘으면 다 적은 뒤 잘라요 — maxLength 는 한글 조합을 깨뜨려서 안 써요) */
+const MAX_TEXT = 60;
+
 /**
  * 스토리 2단계 — 사진 다듬고 올리기.
- * 사진은 두 손가락으로 키우고 끌어서 맞춰요 (PhotoFrame). 'Aa' 를 누르면 한 줄 이야기를 적고, 사진 위에 노란 띠로 보여요.
+ * 사진은 두 손가락으로 키우고 끌어서 맞춰요 (PhotoFrame). 'Aa' 를 누르면 (원할 때만) 글을 적고 스티커 색을 골라요.
+ * 사진 위 스티커는 끌어서 옮기고, 누르면 다시 고쳐요.
  * 왼쪽 아래 카테고리 · 지점 칩, 그 아래 '라운지 피드에도 올리기' · [스토리 올리기].
  */
-export function StoryEditor({ img, onFraming, cat, branch, text, onText, typing, onTyping, feed, onFeed, pin, onPin, onRetake, onSubmit }: Props) {
+export function StoryEditor({ img, onFraming, cat, branch, text, onText, spot, onSpot, typing, onTyping, feed, onFeed, pin, onPin, onRetake, onSubmit }: Props) {
   const insets = useSafeAreaInsets();
   const kbH = useKeyboardHeight();
   const top = Math.max(insets.top, 12) + 4;
   const { bg, fg } = storyChipColors(cat);
-  const [draft, setDraft] = useState(text);
+  // 적는 글은 입력칸이 들고 있어요 (value 로 다시 넣지 않아요 — 한글 조합 중에 덮어쓰면 'ㅏ안녕'처럼 자모가 남아요)
+  const draft = useRef(text);
+  // 적는 동안 고르는 색 (미리 보기) — 다 적으면 스티커에 넣어요
+  const [col, setCol] = useState(spot.c);
   const openTyping = () => {
-    setDraft(text);
+    draft.current = text;
+    setCol(spot.c);
     onTyping(true);
   };
-  const doneTyping = () => {
-    onText(draft.trim());
+  const finish = () => {
+    onText(draft.current.trim().slice(0, MAX_TEXT));
+    if (col !== spot.c) onSpot({ ...spot, c: col });
     onTyping(false);
+  };
+  const doneTyping = () => {
+    finish();
     Keyboard.dismiss();
   };
 
   // 안드로이드 뒤로: 적는 중이면 적기만 닫고, 아니면 다시 찍기로 (스토리 창 전체를 닫지 않게)
+  const onBack = useEffectEvent(() => {
+    if (typing) finish();
+    else onRetake();
+  });
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (typing) {
-        onText(draft.trim());
-        onTyping(false);
-      } else onRetake();
+      onBack();
       return true;
     });
     return () => sub.remove();
-  }, [typing, draft, onText, onTyping, onRetake]);
+  }, []);
 
   return (
     <View style={styles.root}>
@@ -73,7 +91,7 @@ export function StoryEditor({ img, onFraming, cat, branch, text, onText, typing,
           <Pressable onPress={onRetake} accessibilityRole="button" accessibilityLabel="뒤로 · 다시 찍기" hitSlop={6} style={styles.round}>
             <LgIcon name="back" size={22} color={Colors.white} sw={2.6} />
           </Pressable>
-          <Pressable onPress={openTyping} accessibilityRole="button" accessibilityLabel="한 줄 이야기 적기" hitSlop={6} style={styles.round}>
+          <Pressable onPress={openTyping} accessibilityRole="button" accessibilityLabel={text ? '사진 위 글 고치기' : '사진 위에 글 적기 (선택)'} hitSlop={6} style={styles.round}>
             <PText style={styles.aa}>Aa</PText>
           </Pressable>
         </View>
@@ -82,13 +100,7 @@ export function StoryEditor({ img, onFraming, cat, branch, text, onText, typing,
             <PText style={styles.hintT}>두 손가락으로 키우고 · 끌어서 맞춰요</PText>
           </View>
         ) : null}
-        {text && !typing ? (
-          <Pressable onPress={openTyping} accessibilityRole="button" accessibilityLabel={`한 줄 이야기: ${text} · 고치기`} style={styles.labelWrap}>
-            <View style={styles.label}>
-              <PText style={styles.labelT}>{text}</PText>
-            </View>
-          </Pressable>
-        ) : null}
+        {text && !typing ? <DraggableSticker text={text} spot={spot} onMove={onSpot} onPress={openTyping} /> : null}
         <View style={styles.tags} pointerEvents="none">
           <View style={[styles.tag, { backgroundColor: bg }]}>
             <LgIcon name={LG_SCAT[cat].icon} size={13} color={fg} sw={2.4} />
@@ -124,21 +136,28 @@ export function StoryEditor({ img, onFraming, cat, branch, text, onText, typing,
           <Pressable onPress={doneTyping} accessibilityRole="button" accessibilityLabel="다 적었어요" hitSlop={8} style={[styles.done, { top }]}>
             <PText style={styles.doneT}>완료</PText>
           </Pressable>
-          <View style={[styles.label, styles.labelEdit]}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              autoFocus
-              maxLength={60}
-              returnKeyType="done"
-              submitBehavior="blurAndSubmit"
-              onSubmitEditing={doneTyping}
-              placeholder="한 줄 이야기 · 예) 영어로만 20분 버텼어요"
-              placeholderTextColor="rgba(30,26,43,0.45)"
-              selectionColor={Colors.purple}
-              accessibilityLabel="한 줄 이야기"
-              style={styles.input}
-            />
+          <View style={styles.labelEdit}>
+            <StickerLabel c={col}>
+              <TextInput
+                defaultValue={text}
+                onChangeText={(t) => {
+                  draft.current = t;
+                }}
+                autoFocus
+                multiline
+                returnKeyType="done"
+                submitBehavior="blurAndSubmit"
+                onSubmitEditing={doneTyping}
+                placeholder="사진 위에 적을 글 (안 적어도 돼요)"
+                placeholderTextColor={stickerColor(col).fg === Colors.ink ? 'rgba(30,26,43,0.45)' : 'rgba(255,255,255,0.6)'}
+                selectionColor={stickerColor(col).fg}
+                accessibilityLabel="사진 위에 적을 글"
+                style={[styles.input, { color: stickerColor(col).fg }]}
+              />
+            </StickerLabel>
+          </View>
+          <View style={styles.colorRow}>
+            <StickerColors c={col} onPick={setCol} />
           </View>
         </View>
       ) : null}
@@ -155,9 +174,6 @@ const styles = StyleSheet.create({
   aa: { fontFamily: Font.body900, fontSize: 16, lineHeight: 21, color: Colors.white },
   hint: { position: 'absolute', alignSelf: 'center', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: 'rgba(30,26,43,0.72)' },
   hintT: { fontFamily: Font.body800, fontSize: 11, lineHeight: 15, color: Colors.white },
-  labelWrap: { position: 'absolute', left: 24, right: 24, top: '52%', alignItems: 'center' },
-  label: { maxWidth: '100%', backgroundColor: Colors.yellow, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8, transform: [{ rotate: '-2deg' }] },
-  labelT: { fontFamily: Font.body900, fontSize: 19, lineHeight: 26, color: Colors.ink, textAlign: 'center' },
   tags: { position: 'absolute', left: 14, bottom: 14, flexDirection: 'row', gap: 6 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: 14 },
   tagBr: { backgroundColor: 'rgba(14,12,20,0.55)' },
@@ -170,6 +186,7 @@ const styles = StyleSheet.create({
   typing: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(14,12,20,0.66)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   done: { position: 'absolute', right: 16, height: 42, paddingHorizontal: 16, borderRadius: 21, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   doneT: { fontFamily: Font.body900, fontSize: 14, lineHeight: 19, color: Colors.ink },
-  labelEdit: { alignSelf: 'stretch', transform: [{ rotate: '0deg' }] },
+  labelEdit: { alignSelf: 'stretch' },
+  colorRow: { marginTop: 18 },
   input: { minHeight: 34, padding: 0, fontFamily: Font.body900, fontSize: 19, lineHeight: 26, color: Colors.ink, textAlign: 'center', includeFontPadding: false, outlineWidth: 0 },
 });

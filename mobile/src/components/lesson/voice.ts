@@ -1,10 +1,10 @@
-import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
 
 import { showToast } from '@/components/ui/toast';
 import { sfx } from '@/lib/feedback';
 import { useSpeech } from '@/lib/speech';
 import { getLearnPrefs, setNoListen, setNoSpeak, useLearnPrefs } from '@/state/learn-prefs';
+import { speak, stopSpeaking } from '@/lib/tts';
 
 /**
  * 레슨 소리 도우미.
@@ -19,16 +19,15 @@ export function say(text: string, rate = 0.92, who?: string, onDone?: () => void
     if (onDone) setTimeout(onDone, 300);
     return;
   }
-  Tts.stop();
-  Tts.speak(text.replace(/[’‘]/g, "'"), { language: 'en-US', rate, pitch: who ? (PITCH[who] ?? 1) : 1, onDone });
+  speak(text, { rate, pitch: who ? (PITCH[who] ?? 1) : 1, onEnd: (why) => why !== 'cancelled' && why !== 'replaced' && onDone?.() });
 }
 
-export const stopSay = () => void Tts.stop();
+export const stopSay = () => stopSpeaking();
 
 export function useSoundToggle() {
   const { noListen } = useLearnPrefs();
   const toggle = () => {
-    Tts.stop();
+    stopSpeaking();
     sfx('toggle');
     setNoListen(!noListen);
     showToast(noListen ? '소리를 다시 켰어요' : '15분 동안 소리를 꺼요');
@@ -74,7 +73,7 @@ export function useDictation(onDone: (text: string) => void) {
       speech.stop();
       return;
     }
-    Tts.stop();
+    stopSpeaking();
     finished.current = false;
     setText('');
     void speech.start(hints);

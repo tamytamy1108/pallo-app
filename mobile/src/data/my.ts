@@ -101,14 +101,17 @@ export const SAY_IDEAS = ['Hello!', '같이 말해요', '오늘도 출석!', '�
 
 /** 세션 출석 스파크 — 지금 장부(state/ledger)에 연결된 스파크 규칙은 이것 하나 (나머지는 정책 정해지면) */
 export const SPARK_ATTEND = 50;
-/** 스파크 모으는 법 (프로토타입 earn 시트) */
+/**
+ * 스파크 모으는 법 (프로토타입 earn 시트). 2026-11-25 낮췄어요: 주 2회 출석 · 퀘스트 매일 · 모임 1번 · 7일 연속이면
+ * 주 300 안팎 → 아이템(150~700 · 가운데 300) 하나에 1~2주.
+ */
 export const SPARK_EARN: readonly (readonly [string, string])[] = [
   ['세션 출석', `+${SPARK_ATTEND}`],
-  ['오늘 퀘스트 완료', '+30'],
+  ['오늘 퀘스트 완료', '+10'],
   ['번개 · 정기 모임 참여', '+40'],
-  ['7일 연속 학습', '+200'],
+  ['7일 연속 학습', '+100'],
   ['게시판 첫 글 · 첫 인사', '+20'],
-  ['주간 랭킹 TOP 3', '+300 · 왕관'],
+  ['주간 랭킹 TOP 3', '+150 · 왕관'],
 ];
 
 /** 처음 모습: 털 비니 · 줄무늬 티 · 나비넥타이 · 깃발 · 보라 운동화 */
@@ -184,7 +187,9 @@ const LANGS = ['영어', '일본어', '중국어', '스페인어'] as const;
 export type LangName = (typeof LANGS)[number];
 /** 멤버 학습 언어: 두 언어 병행이면 두 개 (프로토타입 memberLangs) */
 export function memberLangs(name: string): LangName[] {
-  if (!name || name === 'PALLO') return [];
+  if (!name) return [];
+  // PALLO 공식 계정은 모든 언어를 다뤄요
+  if (name === 'PALLO') return [...LANGS];
   const h = nameHash(name);
   const a = LANGS[h % 4];
   return h % 3 === 0 ? [a, LANGS[(h + 1) % 4]] : [a];

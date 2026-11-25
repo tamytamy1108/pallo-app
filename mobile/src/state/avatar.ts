@@ -95,6 +95,11 @@ export function buyAndSave(d: Avatar): { ok: true; cost: number; need: string[] 
   return { ok: true, cost, need };
 }
 
+/** 보상으로 받은 아이템을 가진 것에 넣어요 (스파크는 그대로 · state/rewards grantReward) */
+export function grantAvatarItems(keys: readonly string[]) {
+  store.set((s) => ({ ...s, own: [...new Set([...s.own, ...keys])] }));
+}
+
 /** 서버가 돌려준 모습 · 가진 것으로 바꿔요 (api/avatar.ts — PUT /me/avatar · POST /me/avatar/purchase 응답) */
 export function applyAvatarState(s: { saved: Avatar; own: readonly string[] }) {
   store.set({ saved: cloneAvatar(s.saved), own: [...new Set([...AV_OWN0, ...s.own])] });

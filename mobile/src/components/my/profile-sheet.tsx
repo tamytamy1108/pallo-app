@@ -12,7 +12,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { findMember, followLists, MEMBERS, memberAvatar, memberHandle, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
+import { findMember, followLists, MEMBERS, memberAvatar, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { useMyAvatar } from '@/state/avatar';
 import { toggleFollow, useMe } from '@/state/me';
@@ -77,11 +77,11 @@ function H2({ title, right, big }: { title: string; right?: ReactNode; big?: boo
 }
 
 /**
- * 멤버 프로필 시트 (프로토타입 openProfile · #lgSheet.tall.pfs): 캐릭터 룸 · 이름 · @아이디 · 학습 언어 · 지점
+ * 멤버 프로필 시트 (프로토타입 openProfile · #lgSheet.tall.pfs): 캐릭터 룸 · 이름 · 학습 언어 · 지점 · 가입 연도
  * · 팔로잉 · 팔로워 · 참여 중(누르면 동아리 · 번개 · 챌린지 탭) · 함께 아는 멤버 · [팔로우] → 팔로우하면 추천 멤버 · 이번 주 포인트 달리기 · 학습 현황 · 배지 · 신고 / 차단.
  * 라운지 · 랭킹에서 얼굴을 누르면 열려요 (/me/profile/[이름]).
  */
-export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: string; open: boolean; onClose: () => void; /** 모임 줄을 누르면 (시트를 닫고 그 상세로) */ onGo: (href: Href) => void; /** 시트 안에서 다른 멤버를 누르면 (같은 시트에 그 사람으로 바꿔요) */ onOpen: (name: string) => void }) {
+export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: string; open: boolean; onClose: () => void; /** 모임 줄을 누르면 (바로 그 상세로) */ onGo: (href: Href) => void; /** 시트 안에서 다른 멤버를 누르면 (같은 시트에 그 사람으로 바꿔요) */ onOpen: (name: string) => void }) {
   const { width: winW } = useWindowDimensions();
   const me = useMe();
   const [justFollowed, setJustFollowed] = useState(false);
@@ -131,7 +131,7 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
         <View style={styles.id}>
           <PText style={styles.name}>{name}</PText>
           <PText style={styles.idS}>
-            {memberHandle(name)} · {langs.join(' · ')} · {br} · 2026년 가입
+            {[...langs, br, '2026년 가입'].filter(Boolean).join(' · ')}
           </PText>
         </View>
         <View style={styles.cnt}>

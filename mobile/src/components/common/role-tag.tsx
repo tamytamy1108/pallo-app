@@ -20,21 +20,24 @@ export function meetRoleKind(t?: string): RoleKind | null {
   return null;
 }
 
-export function RoleTag({ kind }: { kind: RoleKind }) {
+/** big: 마이 이름(22) 옆처럼 큰 이름 옆 */
+export function RoleTag({ kind, big = false }: { kind: RoleKind; big?: boolean }) {
   return (
-    <View style={[styles.tag, styles[kind]]} accessibilityLabel={LABEL[kind]}>
-      <PText style={[styles.t, kind === 'pro' && styles.tPro, kind === 'staff' && styles.tStaff]}>{LABEL[kind]}</PText>
+    <View style={[styles.tag, big && styles.tagBig, styles[kind]]} accessibilityLabel={LABEL[kind]}>
+      <PText style={[styles.t, big && styles.tBig, kind === 'pro' && styles.tPro, kind === 'staff' && styles.tStaff]}>{LABEL[kind]}</PText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   tag: { height: 17, paddingHorizontal: 6, borderRadius: 9, justifyContent: 'center', marginLeft: 5 },
+  tagBig: { height: 22, paddingHorizontal: 9, borderRadius: 11, marginLeft: 8 },
   pro: { backgroundColor: Colors.purple },
   staff: { backgroundColor: Colors.ink },
   host: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
   co: { backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.ink },
   t: { fontFamily: Font.display, fontSize: 9, lineHeight: 12, letterSpacing: 0.3, color: Colors.ink },
+  tBig: { fontSize: 11, lineHeight: 14, letterSpacing: 0.4 },
   tPro: { color: Colors.white },
   tStaff: { color: Colors.yellow },
 });

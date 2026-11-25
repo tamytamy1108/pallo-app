@@ -21,9 +21,9 @@ const keyOf = (w: LibWorld) => `${w.slot}|${w.id}|${JSON.stringify(w.sc)}|${w.sc
 
 /**
  * 아직 안 만든 지도로 바꾸면: 이만큼(ms) 안에 그려지면 돌며 들어오고, 넘으면 그 지도의 사진판부터 띄워요.
- * 폰에서 한 장 만드는 데 0.4~1.3초라, 길게 기다리면 누른 뒤 앞 지도가 그대로 멈춰 있는 것처럼 보였어요 → 짧게 기다리고 사진판으로 바로 바꿔요
+ * 폰에서 한 장 만드는 데 0.4~1.3초라, 기다리면 누른 뒤 앞 지도가 그대로 멈춰 있는 것처럼 보였어요 → 기다리지 않고 그 지도의 사진판(같은 구도)을 바로 띄우고, 3D 가 그려지면 이어서 움직여요
  */
-const SWAP_WAIT_MS = 300;
+const SWAP_WAIT_MS = 0;
 /**
  * 미리 만들기: 지금 지도가 다 뜨고(인트로 · 서서히 뜨기 끝) 하나씩 이어서 — 한 장 만드는 동안 JS 가 0.3~1.3초 멈춰요.
  * 그사이 이만큼(ms) 쉬어요 (누르기 · 화면 갱신이 끼어들 틈)
@@ -77,9 +77,16 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
     if (__DEV__) console.log(`[lib] 지도 칸 · 가벼운 폰 ${lite} · 미리 만들 지도 ${warmNow.current.length}장`);
   }, [lite]);
 
-  // 맵이 바뀌면: 미리 만든 지도가 있으면 그걸 맨 위로, 없으면 새로 올려요. 앞 지도는 새 지도가 다 뜰 때까지 아래에
+  const worldNow = useRef(world);
+  useEffect(() => {
+    worldNow.current = world;
+  });
+  // 맵이 바뀌면: 미리 만든 지도가 있으면 그걸 맨 위로, 없으면 새로 올려요. 앞 지도는 새 지도가 다 뜰 때까지 아래에.
+  // key 가 바뀔 때만 다시 돌아요 — world 를 deps 에 두면 두 프레임 안에 화면이 다시 그려질 때(내용은 같고 객체만 새것: NEW 끄기 · 스크롤)
+  // 정리 함수가 올리기를 취소하고, 다시 돌 때는 key 가 같아 그냥 나가서 새 지도가 영영 안 올라왔어요 (앞 지도가 그대로 남음)
   useEffect(() => {
     if (last.current.key === key) return;
+    const world = worldNow.current;
     const prev = last.current;
     last.current = { key, order: world.order };
     setDir(world.order >= prev.order ? 1 : -1);
@@ -98,7 +105,7 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
     setTopIn(false);
     setTurn((t) => t + 1);
     return () => cancelAnimationFrame(raf);
-  }, [key, world]);
+  }, [key]);
 
   // 미리 만들기: 하나씩, 바꾸는 중이 아닐 때만. warm 에 없는 숨은 지도(진도가 바뀐 옛 지도 · 다른 언어)는 치워요
   const [idleTick, setIdleTick] = useState(0);

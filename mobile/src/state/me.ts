@@ -48,6 +48,8 @@ export type Me = {
   following: Record<string, boolean>;
   /** 지금 듣는 레벨 · 두 레벨 병행이면 두 개 (프로토타입 ME.lvs) */
   lvs: number[];
+  /** 프로가 가르치는 언어 (마이 이름 아래 줄 '하남점 · 영어 · 일본어'). 프로가 아니면 비어 있어요 */
+  teachLangs: StudyLang[];
 };
 
 const ME0: Me = {
@@ -60,7 +62,8 @@ const ME0: Me = {
   plan: 'study',
   link: 'linked',
   trial: null,
-  sparks: 1250,
+  // 처음 스파크: 아이템 하나(중간 300)엔 조금 모자라게 — 첫 출석 · 퀘스트로 채워 사게
+  sparks: 200,
   weekPoints: 0,
   bio: '',
   streak: 0,
@@ -69,6 +72,7 @@ const ME0: Me = {
   postCount: 0,
   following: {},
   lvs: [1, 2],
+  teachLangs: [],
 };
 
 // 기기에 남아요. 이번 주 포인트는 주가 바뀌면 0부터 (가짜 서버가 하는 일)
@@ -90,8 +94,8 @@ const devWho = devProfile;
 if (devWho) meStore.set((s) => ({ ...s, ...devMe(devWho) }));
 
 /** 개발용 사람마다 나(Me)의 role · link · trial · plan */
-function devMe(who: DevPersona): Pick<Me, 'role' | 'link' | 'trial' | 'plan'> {
-  const base = { role: 'guest' as Role, link: 'none' as Me['link'], trial: null, plan: 'study' as Me['plan'] };
+function devMe(who: DevPersona): Pick<Me, 'role' | 'link' | 'trial' | 'plan' | 'teachLangs'> {
+  const base = { role: 'guest' as Role, link: 'none' as Me['link'], trial: null, plan: 'study' as Me['plan'], teachLangs: [] as StudyLang[] };
   switch (who) {
     case 'guest':
       return base;
@@ -109,7 +113,7 @@ function devMe(who: DevPersona): Pick<Me, 'role' | 'link' | 'trial' | 'plan'> {
     case 'linked':
       return { ...base, role: 'member', link: 'linked' };
     case 'pro':
-      return { ...base, role: 'leader', link: 'linked' };
+      return { ...base, role: 'leader', link: 'linked', teachLangs: ['en', 'ja'] };
     case 'manager':
       return { ...base, role: 'manager', link: 'linked' };
   }

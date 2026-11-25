@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { RoleTag } from '@/components/common/role-tag';
 import { Pressable } from '@/components/ui/pressable';
-import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
+import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -51,7 +51,7 @@ export const profileMeetCount = (name: string) => {
 
 /**
  * 프로필 › '참여 중' 숫자를 누르면: 팔로워 목록 시트와 같은 모양 · 탭은 분야별(동아리 · 번개 · 챌린지).
- * 줄을 누르면 이 시트를 닫고 그 상세로 (onGo).
+ * 줄을 누르면 바로 그 상세로 (onGo).
  */
 export function ProfileMeetsSheet({ name, open, onClose, onGo }: { name: string; open: boolean; onClose: () => void; onGo: (href: Href) => void }) {
   const L = profileMeets(name);
@@ -63,10 +63,10 @@ export function ProfileMeetsSheet({ name, open, onClose, onGo }: { name: string;
     if (open) setTab(KINDS.find(({ k }) => L[k].length > 0)?.k ?? 'club');
   }
   const cur = L[tab];
+  // 시트를 닫는 움직임 없이 바로 그 상세로 (프로필 화면 자리를 바꿔요)
   const go = (href: Href) => {
     sfx('tap');
-    runAfterSheetClose(() => onGo(href));
-    onClose();
+    onGo(href);
   };
   return (
     <Sheet open={open} onClose={onClose} title={name} tall label={`${name} 참여 중`}>

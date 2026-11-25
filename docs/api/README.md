@@ -5,7 +5,7 @@
 
 | 파일 | 내용 |
 |---|---|
-| [`openapi.yaml`](openapi.yaml) | API 275개: 요청 · 응답 모양, 쓰는 화면, 규칙 |
+| [`openapi.yaml`](openapi.yaml) | API 290개: 요청 · 응답 모양, 쓰는 화면, 규칙 · 누가 부를 수 있나(역할) |
 | [`screens.md`](screens.md) | 화면 67개마다 무슨 API를 부르는지 · 지금 가짜 데이터가 어디 있는지 · 열린 질문 |
 | [`index.html`](index.html) | Swagger UI로 보기 |
 
@@ -23,7 +23,7 @@ cd docs/api && npx -y http-server -p 8090 .
 |---|---:|---|
 | `existing` | 63 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
 | `change` | 45 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
-| `new` | 167 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
+| `new` | 182 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
 
 `existing` · `change` 108개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음).
 각 API에 붙은 다른 표시: `x-screens`(쓰는 화면 파일) · `x-app-code`(지금 가짜 데이터 위치) · `x-inventory`(예전 목록 `docs/appendix/api-inventory.md` 번호, `docs/frontend/api-additions.md` A번호).
@@ -31,6 +31,17 @@ cd docs/api && npx -y http-server -p 8090 .
 묶음별 개수는 [`screens.md` 맨 위 표](screens.md#한눈에)에 있어요. 큰 덩어리로 보면:
 - **거의 있음**: 로그인 · `/me` · 출석(`/study`) · 커뮤니티 글 · 번개(`/hangouts`) · 동아리(`/clubs`) · 챌린지(`/challenges`) · 수강 변경 · 연기 · 지점 이동
 - **전부 새로**: 첫 화면 · 가입 마무리 · 닉네임 확인 · 사용 가이드, 학습 콘텐츠 · 진도 · 보상, 음성 · AI, 스토리, 여행 · 해외살이, 이벤트, 캐릭터 · 상점, 랭킹 · 배지, 신고 · 차단, 공지
+
+## 역할 — 누가 부를 수 있나
+
+계정 역할은 GET /me `role` = `guest · member · pro · manager · hq`, 모임 역할은 `viewerRole` (HOST · SUB_HOST(코호스트) · MEMBER).
+`openapi.yaml` 맨 위 설명에 규칙을 모았고, API 마다 표시를 붙였어요:
+- `x-roles`: 그 계정 역할만 (나머지 403 forbidden) · `x-roles-note`: 모임 역할(그 모임 HOST 등)도 되는 경우
+- `x-demo-blocked: true`: 프로 · 직원(pro · manager · hq)의 **보여 주기 모드** — 화면은 끝까지 열지만 신청 · 제출은 `403 demo_account`
+- 표시 없음: 로그인한 누구나 (회원 전용은 guest 면 `403 member_only`)
+- 프로 · 직원만 쓰는 새 API 15개는 '프로 · 직원' 태그 (`/staff/*` · `/manager/*`)
+
+화면별로는 [`screens.md` 프로 · 직원](screens.md#staff), 화면 · 버튼까지 전체 표는 [`docs/pages/10-roles.md`](../pages/10-roles.md).
 
 ## 공통 약속 (지금 백엔드 방식 그대로)
 
@@ -52,6 +63,7 @@ cd docs/api && npx -y http-server -p 8090 .
 8. **수강 변경 날짜**: 앱은 오늘 + 2주부터, 백엔드는 수업 변경 3일 · 연기 다음 날부터. 남은 변경 횟수를 하나로 셀지
 9. **프로 노트**: 백엔드는 리더 질문 + AI 답, 앱은 태그 붙은 항목(표현 · 바로잡기 · 뜻 · 질문) + 프로 한마디
 10. **랭킹**: 지점 두 곳 회원의 포인트를 어느 지점에 셀지
+11. **역할**: `role` 값 이름(`pro` · `manager` · `hq`, 예전 `leader`), 보여 주기 모드 오류 코드(`demo_account`), 한 세션에 프로가 둘일 때
 
 ## 앱 쪽에서 맞출 것 (프론트 할 일 — 참고)
 
