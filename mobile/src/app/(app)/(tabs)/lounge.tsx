@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState, useDeferredValue } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from '@/components/ui/safe-area';
@@ -26,7 +26,7 @@ import { AbroadRegSheet, PeopleRow, PersonSheet, TripCard, TripMakeSheet, WorldM
 import { MeetTab } from '@/components/meet/meet-tab';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { ALL_SUBS, type AbroadPerson, branchOk, COM_SUBS, type FeedItem, LG_TABS, type LoungeTab, TRIP_SUBS } from '@/data/lounge';
 import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge } from '@/data/lounge-store';
 import { EASE } from '@/lib/motion';
@@ -43,6 +43,9 @@ const LOUNGE_PEEK = 720;
 
 export default function LoungeScreen() {
   const tab = useLounge((s) => s.tab);
+  // 탭 줄(밑줄 · 굵은 글자)은 누르자마자 바뀌고, 무거운 본문(피드 · 챌린지 · 동아리)은 그다음에 그려요 —
+  // 본문을 한꺼번에 그리느라 누른 순간 화면이 멈춰서 탭 이동이 느리고 딱딱해 보였어요
+  const shownTab = useDeferredValue(tab);
   // /lounge?tab=all|com|chal|meet|trip 로 탭을 바로 열 수 있어요 (랭킹의 챌린지 카드 → ?tab=chal)
   const params = useLocalSearchParams<{ tab?: string }>();
   // 화면에 올 때마다 다시 봐요 (같은 주소로 다시 와도 그 탭으로 — 챌린지를 연 뒤 ?tab=chal 로 돌아올 때)
@@ -67,7 +70,7 @@ export default function LoungeScreen() {
   const region = useLounge((s) => s.region);
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('lounge', () => scroll.current?.scrollTo({ y: 0, animated: true }));
+  useTabReselect('lounge', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const tabsY = useRef(0);
   const [scrolled, setScrolled] = useState(false);
   const [sheet, setSheetRaw] = useState<null | 'create' | 'trip' | 'abroad'>(null);
@@ -116,25 +119,25 @@ export default function LoungeScreen() {
       {/* 카드 안 댓글 창(Modal)도 이 스크롤 안에 그려져요 — 'handled' 가 없으면 키보드가 떠 있을 때 보내기 버튼을 처음 누르면 키보드만 내려가요 */}
       <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={64} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
         <View style={styles.hd}>
-          <PText variant="headline" accessibilityRole="header" style={styles.h1}>
+          <PText variant="headline" accessibilityRole="header">
             라운지
           </PText>
         </View>
-        <View onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>
+        <View style={styles.tabsAt} onLayout={(e) => (tabsY.current = e.nativeEvent.layout.y)}>
           <Tabs tab={tab} counts={counts} onPick={pickTab} />
         </View>
         {/* 비회원은 모든 탭에서 위쪽(카드 1~2개)까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
-        <ScrollLock key={tab} screen="lounge" peek={LOUNGE_PEEK} inset={16}>
+        <ScrollLock key={shownTab} screen="lounge" peek={LOUNGE_PEEK} inset={16}>
           <TabSwap dir={slideDir}>
-            {tab === 'all' || tab === 'com' ? <StoryRow /> : null}
-            {tab === 'chal' ? (
+            {shownTab === 'all' || shownTab === 'com' ? <StoryRow /> : null}
+            {shownTab === 'chal' ? (
               <ChallengeTab branch={branch} header={branchBtn} />
-            ) : tab === 'meet' ? (
+            ) : shownTab === 'meet' ? (
               <MeetTab branch={branch} header={branchBtn} region={region} />
             ) : (
               <>
-                <SubRow tab={tab} branchBtn={branchBtn} />
-                <Feed tab={tab} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
+                <SubRow tab={shownTab} branchBtn={branchBtn} />
+                <Feed tab={shownTab} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
               </>
             )}
           </TabSwap>
@@ -227,11 +230,12 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
 /** 탭 내용이 바뀔 때: 고른 쪽에서 살짝 밀려 들어오며 서서히 (0.3초) — 딱 끊겨 바뀌지 않게 */
 function TabSwap({ dir, children }: { dir: number; children: ReactNode }) {
   const still = useReducedMotion();
-  const p = useSharedValue(still || dir === 0 ? 1 : 0);
+  // 완전히 투명한 데서 시작하면 빈 화면이 잠깐 보여요 → 반쯤 보이는 데서 짧게
+  const p = useSharedValue(still || dir === 0 ? 1 : 0.35);
   useEffect(() => {
-    if (!still) p.set(withTiming(1, { duration: 300, easing: EASE }));
+    if (!still) p.set(withTiming(1, { duration: 220, easing: EASE }));
   }, [still, p]);
-  const st = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ translateX: (1 - p.get()) * 28 * dir }] }));
+  const st = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ translateX: (1 - p.get()) * 24 * dir }] }));
   return <Animated.View style={st}>{children}</Animated.View>;
 }
 
@@ -380,9 +384,11 @@ function ToTop({ show, bottom, onPress }: { show: boolean; bottom: number; onPre
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  page: { paddingTop: 24, paddingBottom: 190 },
-  hd: { paddingHorizontal: 16, paddingBottom: 10, height: 54, justifyContent: 'center' },
-  h1: { lineHeight: 37 },
+  page: { paddingTop: 0, paddingBottom: 190 },
+  // 첫 줄(제목) · 둘째 줄(탭) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (홈 · 라이브러리 · 마이와 같게)
+  hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center' },
+  // 탭 밑줄이 라이브러리(스터디 맵 | 상황 맵) 밑줄과 같은 높이에 와요
+  tabsAt: { marginTop: Spacing.stack + 1 },
   tabsWrap: { borderBottomWidth: 2, borderColor: Colors.line },
   tabs: { gap: 26, paddingTop: 2, paddingLeft: 16, paddingRight: 40 },
   tab: { paddingTop: 6, paddingBottom: 12 },

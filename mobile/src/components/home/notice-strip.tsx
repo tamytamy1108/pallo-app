@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 
@@ -30,10 +30,13 @@ function NoticeTrack({ notices }: { notices: Notice[] }) {
   const [width, setWidth] = useState(0);
   const [x] = useState(() => new Animated.Value(0));
 
+  // 화면이 안 보이면(다른 탭) 넘기기를 쉬어요
+  const focused = useIsFocused();
   useEffect(() => {
+    if (!focused) return;
     const t = setInterval(() => setIndex((i) => (i + 1) % notices.length), ROTATE_MS);
     return () => clearInterval(t);
-  }, [notices.length]);
+  }, [notices.length, focused]);
 
   useEffect(() => {
     // 프로토타입 .nb-track: transform .7s var(--ease) = cubic-bezier(.16,1,.3,1)

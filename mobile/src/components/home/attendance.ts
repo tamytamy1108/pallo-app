@@ -3,6 +3,7 @@
  * 가짜 서버 상태예요. 맞는 API: 8 `/me/sessions/today` · 9 `/sessions/:id/rsvp` · 10 `/sessions/:id/attendance`
  * 실제 앱은 시각을 서버 기준으로 받아요 (지금은 기기 시각).
  */
+import { useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
 
 import { ATTEND_POINTS, LANGS, MY_LANG, MY_SLOT, QR_AFTER, QR_BEFORE, SLOTS } from '@/data/home';
@@ -23,10 +24,19 @@ export const nowDate = () => new Date(Date.now() + offsetMs);
 /** 1초마다 바뀌는 지금 시각 */
 export function useClock() {
   const [t, setT] = useState(nowDate);
+  // 화면이 안 보이면(다른 탭) 멈춰요 — 1초마다 다시 그리면 라이브러리 3D(JS 에서 그려요)가 1초마다 멈칫했어요
+  const focused = useIsFocused();
   useEffect(() => {
-    const id = setInterval(() => setT(nowDate()), 1000);
-    return () => clearInterval(id);
-  }, []);
+    if (!focused) return;
+    const tick = () => setT(nowDate());
+    // 돌아오면 바로 지금 시각으로 (멈춰 있던 동안 지난 시간)
+    const now = setTimeout(tick, 0);
+    const id = setInterval(tick, 1000);
+    return () => {
+      clearTimeout(now);
+      clearInterval(id);
+    };
+  }, [focused]);
   return t;
 }
 

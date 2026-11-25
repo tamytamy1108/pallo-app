@@ -3,13 +3,14 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router/js-stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { apiErrorMessage } from '@/api/errors';
 import { ApiProvider } from '@/api/provider';
 import { useSession } from '@/api/session';
+import { preloadAllAvatarArt, preloadMyAvatar } from '@/components/character/preload-art';
 import { TrialGuideHost } from '@/components/common/trial-guide';
 import { DevNotch } from '@/components/dev-notch';
 import { LinkPushHost } from '@/components/home/link-push';
@@ -19,6 +20,7 @@ import { ToastHost } from '@/components/ui/toast';
 import { FontAssets } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { SCREEN, STACK_OPTIONS } from '@/lib/transitions';
+import { getMyAvatar } from '@/state/avatar';
 
 SplashScreen.preventAutoHideAsync();
 // 아이폰 무음 모드(옆 스위치)에서도 표현 듣기 · 효과음이 나와요 (게임 · 학습 앱처럼). 다른 앱 음악은 끊지 않아요
@@ -49,7 +51,19 @@ export default function RootLayout() {
 function RootNavigator() {
   const session = useSession();
   const [loaded, fontError] = useFonts(FontAssets);
-  const ready = (loaded || !!fontError) && session.status !== 'restoring';
+  // 내 캐릭터(프사) 그림을 스플래시 동안 읽어 둬요 — 첫 화면부터 조각조각 뜨지 않게 (최대 1.5초 · components/character/preload-art)
+  const [artReady, setArtReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void preloadMyAvatar(getMyAvatar()).then(() => {
+      if (alive) setArtReady(true);
+      preloadAllAvatarArt();
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const ready = (loaded || !!fontError) && artReady && session.status !== 'restoring';
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
