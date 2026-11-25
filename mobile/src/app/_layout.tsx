@@ -18,6 +18,7 @@ import { LinkPushHost } from '@/components/home/link-push';
 import { ErrorState } from '@/components/ui/state-view';
 import { TightTopInsets } from '@/components/ui/safe-area';
 import { ToastHost } from '@/components/ui/toast';
+import { RewardHost } from '@/components/my/reward-sheet';
 import { FontAssets } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { SCREEN, STACK_OPTIONS } from '@/lib/transitions';
@@ -110,6 +111,8 @@ function RootNavigator() {
         <ToastHost />
         {/* 지점 연동 결과 푸시 띠: 어느 화면에 있어도 위에서 내려와요 */}
         <LinkPushHost />
+        {/* 시즌 보상을 자동으로 받았으면 한 번 뜨는 창 (로그인 · 온보딩 뒤에만) */}
+        {signedIn && !onboarding ? <RewardHost /> : null}
         </TightTopInsets>
       </DevNotch>
     </GestureHandlerRootView>

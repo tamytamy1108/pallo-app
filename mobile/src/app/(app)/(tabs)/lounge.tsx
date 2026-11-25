@@ -221,9 +221,8 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
         {LG_TABS.map(([k, l]) => {
           const on = tab === k;
           const n = BADGE_TABS.includes(k) ? counts[k] : 0;
-          // 번개 · 동아리는 수 대신 작은 점 (새로 열린 게 있다는 표시만)
-          const dot = !!n && k === 'meet';
-          const badge = n && !dot ? (n > 9 ? '9+' : String(n)) : null;
+          // 새로 올라온 수 (번개 · 동아리도 다른 탭처럼 숫자)
+          const badge = n ? (n > 9 ? '9+' : String(n)) : null;
           return (
             <Pressable
               key={k}
@@ -237,7 +236,7 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
                 onPick(k);
               }}
               accessibilityRole="tab"
-              accessibilityLabel={dot ? `${l}, 새 모임 있음` : badge ? `${l}, 새 글 ${n}개` : l}
+              accessibilityLabel={badge ? `${l}, 새 글 ${n}개` : l}
               accessibilityState={{ selected: on }}
               hitSlop={{ top: 4, bottom: 4 }}
               style={styles.tab}>
@@ -248,8 +247,6 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
                   <View pointerEvents="none" style={styles.badge}>
                     <PText style={styles.badgeText}>{badge}</PText>
                   </View>
-                ) : dot ? (
-                  <View pointerEvents="none" style={styles.dot} />
                 ) : null}
               </View>
             </Pressable>
@@ -437,7 +434,6 @@ const styles = StyleSheet.create({
   // 새 글 수: 작은 분홍 알약 · 크림 테두리로 배경에서 떼어 보여요
   badge: { position: 'absolute', top: -2, left: '100%', marginLeft: 3, minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 4, backgroundColor: '#E8577A', borderWidth: 1.5, borderColor: Colors.cream, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontFamily: Font.body900, fontSize: 9.5, lineHeight: 12, color: '#fff', fontVariant: ['tabular-nums'] },
-  dot: { position: 'absolute', top: 2, left: '100%', marginLeft: 3, width: 7, height: 7, borderRadius: 4, backgroundColor: '#E8577A' },
   fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 28 },
   subs: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 4, gap: 6, alignItems: 'center' },
   subSep: { width: 1.5, height: 22, marginHorizontal: 2, backgroundColor: '#DCD4C4' },

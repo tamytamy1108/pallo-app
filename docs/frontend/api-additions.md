@@ -43,6 +43,7 @@
 | A25 | POST | `/me/progress/events` | **퀘스트 성공** 이벤트 `{ type: quest_completed, key, title, deepLink }` → 서버가 내 팔로워에게 알림(`quest_completed`). 아래 '보내는 규칙' | `api/home.ts` `sendQuestDone` · `state/quest-share.ts` |
 | A26 | (기존 30에 추가) | `GET · PUT /me/settings` 에 `shareProgress` · `inviteSnoozeUntil` | 퀘스트 성공을 팔로워에게 알리기(기본 켜짐) · '함께 가자고 할까요?' 2주간 보지 않기 기한 | `data/account.ts` `SETTINGS_DEFAULT` · `state/invite-prompt.ts` |
 | A27 | (기존 13에 추가) | `GET /me/notifications` 항목에 `type` · `actor` · `deepLink` · `action` | 새 알림 종류 `session_invite` · `quest_completed` (아래 모양) | `data/home.ts` `Noti` · `app/notifications.tsx` |
+| A28 | GET · POST | `/me/rewards` · `/me/rewards/:id/seen` | **시즌 보상 자동 지급**: 규칙마다 진행(n/need) · 받았는지 · 안 본 보상. 받은 창을 닫으면 seen. 아래 '시즌 보상 — 자동 지급 규칙' | `data/rewards.ts` · `state/rewards.ts` · `components/my/reward-sheet.tsx` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 
@@ -55,6 +56,36 @@
   - **받는 쪽 하루 최대 3개** · 밤 10시 ~ 아침 8시는 알림함에만 쌓고 푸시는 안 보내요. 여러 친구가 같은 시간대에 성공하면 `태미님 외 2명이 퀘스트를 성공했어요` 로 하나.
   - 30일 넘은 이벤트 · 회원이 아닌(연동 전) 사람의 이벤트는 버려요.
 - **A26 기기 간 맞추기**: `inviteSnoozeUntil` 은 지금 기기에만 남아요 (`state/invite-prompt.ts`). 폰을 바꿔도 2주가 이어져야 하면 서버 설정에 넣어요. `shareProgress` 는 서버 설정이어야 해요 (서버가 보내는 쪽을 거르니까).
+
+### 시즌 보상 — 자동 지급 규칙 (A28 · 2026-11-25)
+
+시즌 아이템(산타 모자 · 눈 오는 밤 등)은 스파크로 못 사요. **서버가 조건을 세다가 채우면 자동으로** 내 아이템에 넣어요. 멤버가 '받기' 버튼을 누를 일은 없어요.
+
+| 보상 (`id`) | 들어오는 아이템 | 조건 | 기간 |
+|---|---|---|---|
+| 산타 세트 (`santa`) | `h-santa` 산타 모자 · `f-beard` 산타 수염 · `w-santa` 산타 옷 · `s-snow` 털 부츠 · `bg:snow` 눈 오는 밤 배경 | 12월에 세션 출석 7일 (같은 날 여러 번은 1일) | 12.1 ~ 12.31 (KST) |
+| 황금 왕관 (`crown`) | `h-crown` | 주간 랭킹 TOP 3 (지점 랭킹 · 주가 끝나는 월요일 0시에 확정) | 늘 |
+| 금메달 (`medal`) | `a-medal` | 지점 대항전 우승 지점의 멤버 (그 기간에 출석 1번 이상) | 대항전마다 |
+
+- **세는 때**: 출석이 확정될 때(QR · 프로 확인) · 주간 랭킹 확정 때 · 대항전 결과 확정 때. 서버가 진행 수를 올리고, `need` 에 닿는 순간 지급해요.
+- **지급**: 아이템을 가진 것(`/me/avatar` 의 `own`)에 넣고, 보상 기록 `{ id, grantedAt, seen:false }` 을 남겨요. 스파크는 그대로. **한 사람 한 보상 한 번만** (같은 시즌에 다시 채워도 또 주지 않아요 · 멱등키 `reward:{id}:{season}`).
+- **알림** (`GET /me/notifications` 의 새 `type`):
+  - `reward_teaser` — 시즌 시작 날 아침 9시, 조건 안내 `12월에 출석 7일을 채우면 산타 세트를 받아요` (회원 모두 · 한 번).
+  - `reward_progress` — 거의 다 채웠을 때 `산타 세트까지 출석 2일 남았어요` (need 의 70% · 마지막 1개 남았을 때, 두 번까지). 밤 10시 ~ 아침 8시엔 알림함에만.
+  - `reward_granted` — 받았을 때 푸시 + 알림함 `시즌 보상 · 산타 세트를 받았어요! 꾸미기에서 입어 보세요` → `deepLink: /me/customize?try=santa`.
+- **앱 표시**:
+  - 앱을 열 때 `GET /me/rewards` 에 `seen:false` 가 있으면 **받은 창**을 한 번 띄워요 — 내 캐릭터가 그 아이템을 입은 모습 · `SEASON REWARD` · `산타 세트를 받았어요!` · 무엇을 채워서 받았는지 · [나중에] [입어 보기]. 닫으면 `POST /me/rewards/:id/seen`.
+  - [입어 보기] = 꾸미기를 그 아이템을 입힌 채로 열어요 (저장은 멤버가 직접).
+  - 꾸미기의 잠긴 칸을 누르면 `잠긴 아이템 · 12월 출석 7일 보상 · 지금 2/7일` 처럼 진행을 보여 줘요.
+- **응답 모양 (제안)** `GET /me/rewards`:
+
+```json
+{ "rewards": [
+  { "id": "santa", "name": "산타 세트", "items": ["h-santa", "f-beard", "w-santa", "s-snow", "bg:snow"], "rule": "12월 출석 7일", "need": 7, "unit": "일", "progress": 2, "window": { "from": "2026-12-01", "to": "2026-12-31" }, "grantedAt": null, "seen": true }
+] }
+```
+
+- 앱 샘플: 지금은 서버가 없어서 진행은 0, 개발 서버에서 `마이?reward=santa` 로 지급을 흉내 내요 (`?reward=reset` 은 처음으로).
 
 ### 응답 모양 예시 (앱이 지금 쓰는 모양)
 
