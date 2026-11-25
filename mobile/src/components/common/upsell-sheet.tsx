@@ -108,9 +108,10 @@ export function UpsellHost({ onBook }: { onBook: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  hero: { alignSelf: 'center', width: 150, height: 120, alignItems: 'center', justifyContent: 'flex-end' },
-  burst: { position: 'absolute', bottom: 6, width: 120, height: 120, borderRadius: 60, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.lavender },
-  char: { width: 128, height: 116 },
+  // 동그라미(120)가 칸 안에 다 들어오고, 팔로 팔 끝도 동그라미 안에 들어오게 (잘리지 않게)
+  hero: { alignSelf: 'center', width: 150, height: 128, alignItems: 'center', justifyContent: 'center' },
+  burst: { position: 'absolute', top: 4, width: 120, height: 120, borderRadius: 60, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.lavender },
+  char: { width: 104, height: 70 },
   kicker: { textAlign: 'center', fontFamily: Font.display, fontSize: 11, lineHeight: 15, letterSpacing: 1.4 },
   title: { textAlign: 'center', fontFamily: Font.body900, fontSize: 21, lineHeight: 28, letterSpacing: -0.5 },
   body: { textAlign: 'center', fontFamily: Font.body600, fontSize: 13.5, lineHeight: 21 },
