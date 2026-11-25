@@ -56,15 +56,15 @@ export function GoalCard({ onContinue }: { onContinue: () => void }) {
 const W = 480;
 const H = 350;
 const EYES = [
-  [188.1, 64.5, 32.5, 45.9, 13.9],
-  [261.2, 81.3, 32.5, 45.9, 13.9],
+  [181.1, 61.8, 24.0, 42.7, 13.9],
+  [254.8, 78.6, 23.4, 42.2, 14.0],
 ] as const;
 const CHAR_W = 250;
 
 function TiltedChar() {
   const [delay] = useState(() => Math.round(Math.random() * 3000));
   const blink = useLoop(3000, { delay });
-  const ry = EYES[0][3];
+  const ry = Math.max(EYES[0][3], EYES[1][3]);
   const lid = useAnimatedProps(() => ({ height: (ry * 2 + 4) * kf(blink.get(), [0, 90, 93, 95, 100], [0, 0, 1, 1, 0]) }));
   const h = (CHAR_W * H) / W;
   return (

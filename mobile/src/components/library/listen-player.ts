@@ -3,14 +3,15 @@
  * 소리는 기기 음성(expo-speech) — 영어는 en-US, 뜻은 한국어 음성. 실서비스는 원어민 녹음(25 `/audio/:sentenceId`) 권장.
  * 소리 끄기(15분)면 읽지 않고 같은 길이만큼 기다리며 글로 따라가요.
  */
-import * as Tts from 'expo-speech';
 import { useEffect, useRef, useState } from 'react';
 
 import type { ListenItem } from '@/data/library';
 import { getLearnPrefs } from '@/state/learn-prefs';
+import { speak, stopSpeaking } from '@/lib/tts';
 
 import { listenPrefs } from './listen-prefs';
 
+/** 다 읽으면(또는 멈추거나 오류 · 너무 오래 걸리면) 끝나요. 저절로 끊긴 줄은 한 번 더 읽어요 (lib/tts) */
 function sayAsync(text: string, lang: 'en-US' | 'ko-KR', rate: number) {
   return new Promise<void>((resolve) => {
     let done = false;
@@ -23,9 +24,23 @@ function sayAsync(text: string, lang: 'en-US' | 'ko-KR', rate: number) {
       setTimeout(end, 900 + text.length * 45);
       return;
     }
-    Tts.stop();
-    Tts.speak(text.replace(/[’‘]/g, "'"), { language: lang, rate, onDone: end, onStopped: end, onError: end });
-    setTimeout(end, 12000);
+    let retried = false;
+    const go = () =>
+      speak(text, {
+        language: lang,
+        rate,
+        onEnd: (why) => {
+          if (why === 'stopped' && !retried) {
+            retried = true;
+            setTimeout(() => !done && go(), 250);
+            return;
+          }
+          end();
+        },
+      });
+    go();
+    // 소식이 안 오면 넘어가요 (느린 속도 · 긴 문장은 더 기다려요)
+    setTimeout(end, Math.max(12000, 3000 + (text.length * 110) / rate));
   });
 }
 
@@ -55,13 +70,13 @@ export function useListenPlayer(list: () => ListenItem[]) {
   const stop = () => {
     tok.current += 1;
     if (timer.current) clearTimeout(timer.current);
-    Tts.stop();
+    stopSpeaking();
     set({ playing: false });
   };
 
   const play = async (start: number) => {
     const t = ++tok.current;
-    Tts.stop();
+    stopSpeaking();
     set({ playing: true, i: start, reveal: false, phase: '' });
     const alive = () => st.current.playing && t === tok.current;
     while (alive()) {
@@ -112,7 +127,7 @@ export function useListenPlayer(list: () => ListenItem[]) {
     () => () => {
       tok.current += 1;
       if (timer.current) clearTimeout(timer.current);
-      Tts.stop();
+      stopSpeaking();
     },
     [],
   );

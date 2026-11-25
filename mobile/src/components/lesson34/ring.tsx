@@ -6,6 +6,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { sfx } from '@/lib/feedback';
+import { isSpeaking } from '@/lib/tts';
 
 import { fmtS } from './text';
 import { PINK_INK, SUB } from './ui';
@@ -55,7 +57,14 @@ export function Ring({ left, total, label, color = Colors.rosePink }: { left: nu
   );
 }
 
-/** 1초마다 줄어드는 시계 (프로토타입 tkCount). 문제가 바뀌면(화면이 사라지면) 저절로 멈춰요 */
+/** 마지막 이만큼 남으면 째깍 대신 '삑' (원형 시계가 분홍으로 흔들리는 때와 같아요) */
+const LAST_SEC = 3;
+
+/**
+ * 1초마다 줄어드는 시계 (프로토타입 tkCount). 문제가 바뀌면(화면이 사라지면) 저절로 멈춰요.
+ * 1초마다 작은 째깍, 마지막 3초는 '삑' (효과음 설정을 따라요).
+ * 조용히: quiet (말하는 동안 — 마이크에 안 들어가게) · 문장을 읽어 주는 중에도 소리를 덮지 않게 건너뛰어요. 끝 소리는 부르는 쪽이 내요.
+ */
 export function useCountdown() {
   const [left, setLeft] = useState<number | null>(null);
   const [total, setTotal] = useState(0);
@@ -65,7 +74,7 @@ export function useCountdown() {
     timer.current = null;
   }, []);
   const start = useCallback(
-    (sec: number, onEnd: () => void) => {
+    (sec: number, onEnd: () => void, { quiet = false }: { quiet?: boolean } = {}) => {
       stop();
       setTotal(sec);
       setLeft(sec);
@@ -76,7 +85,9 @@ export function useCountdown() {
         if (n <= 0) {
           stop();
           onEnd();
+          return;
         }
+        if (!quiet && !isSpeaking()) sfx(n <= LAST_SEC && sec > LAST_SEC ? 'tick-hi' : 'tick');
       }, 1000);
     },
     [stop],

@@ -1,6 +1,5 @@
 import { Image } from "expo-image";
 import Animated, { css, useReducedMotion } from "react-native-reanimated";
-import * as Tts from "expo-speech";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -40,6 +39,7 @@ import {
 } from "../ui";
 import { PCard, PFoot, Stats } from "./common";
 import type { PageApi } from "./study-shell";
+import { stopSpeaking } from '@/lib/tts';
 
 type Msg = {
   me?: boolean;
@@ -55,9 +55,10 @@ type Mode = "voice" | "write";
  * 눈 자리는 c-upright-yellow.png(480×306)에서 잰 비율이에요.
  */
 const blink = css.keyframes({ '0%': { transform: [{ scaleY: 0 }] }, '90%': { transform: [{ scaleY: 0 }] }, '94%': { transform: [{ scaleY: 1 }] }, '98%': { transform: [{ scaleY: 0 }] }, '100%': { transform: [{ scaleY: 0 }] } });
+// 검은 테 안쪽(흰자 + 눈동자)에 맞춰 잰 값 (원본 픽셀 → 비율)
 const EYES = [
-  { l: 0.452, w: 0.075 },
-  { l: 0.61, w: 0.072 },
+  { l: 0.4483, w: 0.0971, t: 0.0552, h: 0.2745 },
+  { l: 0.604, w: 0.0975, t: 0.0608, h: 0.2739 },
 ];
 function BlinkChar({ width }: { width: number }) {
   const still = useReducedMotion();
@@ -73,9 +74,9 @@ function BlinkChar({ width }: { width: number }) {
               style={{
                 position: "absolute",
                 left: e.l * width,
-                top: 0.06 * h,
+                top: e.t * h,
                 width: e.w * width,
-                height: 0.27 * h,
+                height: e.h * h,
                 borderRadius: 999,
                 backgroundColor: "#181B21",
                 transformOrigin: "top",
@@ -175,7 +176,7 @@ export function DailyTalk({
   // 키보드가 올라오면 아래 입력 줄을 키보드 바로 위로 올려요 (아이폰만 · 안드로이드는 화면이 줄어요)
   const kbH = useKeyboardHeight();
 
-  useEffect(() => () => void Tts.stop(), []);
+  useEffect(() => () => stopSpeaking(), []);
 
   const ai = (en: string, ko: string) => {
     setLog((l) => [...l, { en, ko }]);

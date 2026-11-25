@@ -1,4 +1,3 @@
-import * as Tts from 'expo-speech';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area';
@@ -8,6 +7,7 @@ import { CloseIcon, SpeakerIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { stopSpeaking } from '@/lib/tts';
 
 import { leave34, useSoundToggle, useStepFinish, type StepCtx } from '../finish';
 
@@ -22,7 +22,7 @@ export function StudyShell({ ctx, title, children }: { ctx: StepCtx; title: stri
   const { finish, celebrate } = useStepFinish(ctx);
   // 다 하면 읽던 소리부터 멈추고 축하 화면으로
   const finishQuiet: PageApi['finish'] = (sc) => {
-    Tts.stop();
+    stopSpeaking();
     finish(sc);
   };
   return (
