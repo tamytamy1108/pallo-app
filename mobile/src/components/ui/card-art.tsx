@@ -67,7 +67,9 @@ function Words({ design, look, words, W, down }: { design: CardDesign; look: Loo
   const txt = (size: number, room: number, pos: ViewStyle, color = look.text) => {
     const fs = fit(size, room);
     if (down && typeof pos.top === 'number') pos = { ...pos, top: pos.top + down };
-    return <PText style={[styles.w, pos, { fontFamily: font, fontSize: fs, lineHeight: fs * (anton ? 1.02 : 0.98), color }]}>{runs}</PText>;
+    // 줄 간격은 시안처럼 촘촘히. 다만 iOS 는 첫 줄 글자 윗부분이 줄 높이를 넘으면 잘라서, 위에 여백(pad)을 두고 그만큼 올려요
+    const pad = fs * 0.3;
+    return <PText style={[styles.w, pos, { fontFamily: font, fontSize: fs, lineHeight: fs * (anton ? 1.02 : 0.98), paddingTop: pad, marginTop: -pad, letterSpacing: anton ? 0 : -0.5, color }]}>{runs}</PText>;
   };
   switch (design) {
     case 'circle':
@@ -111,12 +113,7 @@ function Deco({ design, look, W, H }: { design: CardDesign; look: Look; W: numbe
       return (
         <>
           <Svg style={StyleSheet.absoluteFill} width={W} height={H}>
-            <Defs>
-              <Pattern id={`s${id}`} patternUnits="userSpaceOnUse" width={30} height={30} patternTransform="rotate(45)">
-                <Rect x={15} y={0} width={15} height={30} fill="rgba(255,255,255,0.2)" />
-              </Pattern>
-            </Defs>
-            <Rect x={0} y={0} width={W} height={H} fill={`url(#s${id})`} />
+            <Slants w={W} h={H} gap={30} width={15} color="rgba(255,255,255,0.2)" />
           </Svg>
           <View style={[styles.band, { top: H * 0.42, height: 44, backgroundColor: acc }]} />
         </>
@@ -150,13 +147,8 @@ function Deco({ design, look, W, H }: { design: CardDesign; look: Look; W: numbe
       return (
         <View style={[styles.edge, { top: 0, height: 36, borderBottomWidth: 2.5 }]}>
           <Svg style={StyleSheet.absoluteFill} width={W} height={36}>
-            <Defs>
-              <Pattern id={`d${id}`} patternUnits="userSpaceOnUse" width={20} height={20} patternTransform="rotate(-35)">
-                <Rect x={0} y={0} width={20} height={20} fill={acc} />
-                <Rect x={0} y={0} width={10} height={20} fill={INK} />
-              </Pattern>
-            </Defs>
-            <Rect x={0} y={0} width={W} height={36} fill={`url(#d${id})`} />
+            <Rect x={0} y={0} width={W} height={36} fill={acc} />
+            <Slants w={W} h={36} gap={20} width={10} color={INK} />
           </Svg>
         </View>
       );
@@ -206,8 +198,24 @@ function Deco({ design, look, W, H }: { design: CardDesign; look: Look; W: numbe
   }
 }
 
+/**
+ * 사선 줄무늬 (왼쪽 아래 → 오른쪽 위). SVG 무늬(Pattern) 를 돌리면 iOS 에서 모양이 깨져서 선을 하나씩 그어요.
+ * gap: 줄 간격(가로) · width: 줄 굵기(가로)
+ */
+function Slants({ w, h, gap, width, color }: { w: number; h: number; gap: number; width: number; color: string }) {
+  const n = Math.ceil((w + h) / gap) + 1;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => {
+        const x = i * gap - h;
+        return <Line key={i} x1={x} y1={h + 2} x2={x + h + 4} y2={-2} stroke={color} strokeWidth={width * Math.SQRT1_2} />;
+      })}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
-  w: { position: 'absolute', letterSpacing: -0.5, zIndex: 3 },
+  w: { position: 'absolute', zIndex: 3 },
   round: { position: 'absolute', borderWidth: 2, borderColor: INK },
   band: { position: 'absolute', left: -16, right: -16, borderTopWidth: 2, borderBottomWidth: 2, borderColor: INK, transform: [{ rotate: '-6deg' }] },
   edge: { position: 'absolute', left: 0, right: 0, borderColor: INK, overflow: 'hidden' },
