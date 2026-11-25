@@ -42,7 +42,7 @@ const go = (href: string) => () => {
 
 /**
  * 마이 (프로토타입 renderMy): 제목 · 톱니 → 캐릭터 룸 카드 → 숫자 4칸 → PRO'S NOTE → 내 스터디 → 지점 안내
- * → 랭킹 요약 → 배지 → 내 활동 → 설정 · 고객센터 · 이용권. 맨 아래 개발용 입구.
+ * → 랭킹 요약 → 배지 → 내 활동. 맨 아래 개발용 입구. (설정 · 고객센터 · 결제 내역은 톱니 안)
  */
 /** 비회원이 볼 수 있는 잠김 칸 위 높이 (랭킹 윗부분) */
 const MY_PEEK = 300;
@@ -173,16 +173,7 @@ export default function MyScreen() {
                 ]}
               />
             </Appear>
-            <Appear kind="rise">
-              <MyList
-                rows={[
-                  { label: '설정', onPress: openSettings },
-                  { label: '고객센터 · 자주 묻는 질문', onPress: go('/me/support') },
-                  // 이용권은 회원만 · 앱 구독자는 결제 내역만
-                  ...(member ? [{ label: '이용권 · 결제 내역', onPress: go('/me/pass') }] : me.plan === 'app' ? [{ label: '결제 내역', onPress: go('/me/payments') }] : []),
-                ]}
-              />
-            </Appear>
+            {/* 설정 · 고객센터 · 결제 내역은 위 톱니(설정) 안에 다 있어요 — 마이 아래 목록은 뺐어요 (2026-11-25) */}
           </View>
         </ScrollLock>
 
