@@ -12,9 +12,10 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, teamLabel, teamNameByNo } from '@/data/account';
+import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, PRO_SENT_NOTES, teamLabel, teamNameByNo } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
+import { useMe } from '@/state/me';
 import { MemberOnly } from '@/components/common/member-lock';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 
@@ -24,12 +25,83 @@ import { ChipScroll } from '@/components/ui/chip-scroll';
  * 맞는 API: 44 `/me/pro-notes`
  */
 function ProNotesScreen() {
-  const { view } = useLocalSearchParams<{ view?: string }>();
+  const { view, box: box0 } = useLocalSearchParams<{ view?: string; box?: string }>();
+  const me = useMe();
+  // 프로: 보낸 노트 · 받은 노트로 나눠요 (프로도 멤버로 참여하면 노트를 받아요)
+  const [box, setBox] = useState<'sent' | 'got'>(box0 === 'got' ? 'got' : 'sent');
   if (view === 'diary') return <DiaryList />;
-  return <NotesList />;
+  if (me.role !== 'leader') return <NotesList />;
+  const sw = <BoxSwitch box={box} onBox={setBox} />;
+  return box === 'sent' ? <SentList head={sw} /> : <NotesList head={sw} />;
 }
 
-function NotesList() {
+/** 프로: [보낸 노트 n] [받은 노트 n] (팔로워 목록 시트와 같은 밑줄 탭) */
+function BoxSwitch({ box, onBox }: { box: 'sent' | 'got'; onBox: (b: 'sent' | 'got') => void }) {
+  return (
+    <View style={styles.box} accessibilityRole="tablist">
+      {(
+        [
+          ['sent', '보낸 노트', PRO_SENT_NOTES.length],
+          ['got', '받은 노트', PRO_NOTES.length],
+        ] as const
+      ).map(([k, l, n]) => {
+        const on = box === k;
+        return (
+          <Pressable
+            key={k}
+            onPress={() => {
+              sfx('tab');
+              onBox(k);
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            style={[styles.boxTab, on && styles.boxTabOn]}>
+            <PText style={[styles.boxT, on && styles.boxTOn]}>
+              {l} <PText style={styles.boxN}>{n}</PText>
+            </PText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** 프로가 보낸 노트 목록: 날짜 · 팀 · 정리한 것 · n/m명 읽음 · 고마워요 */
+function SentList({ head }: { head: ReactNode }) {
+  const open = (id: string) => {
+    sfx('tap');
+    router.push({ pathname: '/me/notes/[id]', params: { id, from: 'list' } });
+  };
+  return (
+    <AccountPage title="PRO'S NOTE" bodyStyle={styles.body}>
+      {head}
+      <PText style={styles.intro}>내가 반에 보낸 노트예요. 몇 명이 읽었는지 · 고마워요를 볼 수 있어요.</PText>
+      <PText style={styles.ym}>2026년 11월</PText>
+      <Box style={styles.list}>
+        {PRO_SENT_NOTES.map((n, i) => (
+          <Pressable key={n.id} onPress={() => open(n.id)} accessibilityRole="button" accessibilityLabel={`${n.m}월 ${n.d}일 ${teamNameByNo(n.team)} 보낸 노트`} style={({ pressed }) => [styles.sRow, i > 0 && styles.sLine, pressed && styles.sPressed]}>
+            <View style={styles.sDt}>
+              <PText style={styles.sDtS}>{`${n.m}월`}</PText>
+              <PText style={styles.sDtB}>{n.d}</PText>
+              <PText style={styles.sDtS}>{n.wd}</PText>
+            </View>
+            <View style={styles.sTx}>
+              <PText style={styles.sH} numberOfLines={1}>
+                {`${teamNameByNo(n.team)} · ${n.readN}/${n.total}명 읽음 · 고마워요 ${n.thanksN}`}
+              </PText>
+              <PText style={styles.sP} numberOfLines={1}>
+                {n.items.map((x) => x[1]).join(' · ')}
+              </PText>
+            </View>
+            <PText style={styles.sChev}>›</PText>
+          </Pressable>
+        ))}
+      </Box>
+    </AccountPage>
+  );
+}
+
+function NotesList({ head }: { head?: ReactNode }) {
   const { read, diary } = useNoteState();
   const saved = savedNoteItems(useSavedExpressions());
   const [tab, setTab] = useState<string>('all');
@@ -48,6 +120,7 @@ function NotesList() {
 
   return (
     <AccountPage title="PRO'S NOTE" bodyStyle={styles.body}>
+      {head}
       <PText style={styles.intro}>수업이 끝나면 프로님이 그날 배운 표현 · 바로잡은 문장 · 질문을 정리해서 보내 줘요. 마음에 드는 건 저장해 두고 다시 봐요.</PText>
       <Box color={Colors.yellow} style={styles.wait}>
         <PText style={styles.waitB}>{`오늘 ${teamNameByNo(PN_WAIT.team)} 노트 준비 중`}</PText>
@@ -174,7 +247,7 @@ const styles = StyleSheet.create({
   tileSv: { backgroundColor: '#F3EEFB' },
   tileIc: { width: 38, height: 38, marginBottom: 6, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.cream, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   tileIcSv: { backgroundColor: Colors.yellow },
-  tileImg: { width: 44, height: 28, marginTop: 8 },
+  tileImg: { width: 30, height: 19 },
   tileB: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19 },
   tileN: { fontFamily: Font.display, fontSize: 24, lineHeight: 27 },
   tileUnit: { fontFamily: Font.body900, fontSize: 12 },
@@ -193,6 +266,24 @@ const styles = StyleSheet.create({
   itP: { fontFamily: Font.body600, fontSize: 13.5, lineHeight: 21 },
   mk: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   mkOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
+  // 프로: 보낸 · 받은 노트 탭 (팔로워 목록 시트의 밑줄 탭과 같아요)
+  box: { flexDirection: 'row', gap: 18, borderBottomWidth: 1.5, borderColor: Colors.line },
+  boxTab: { paddingTop: 6, paddingBottom: 10, marginBottom: -1.5, borderBottomWidth: 3, borderColor: 'transparent' },
+  boxTabOn: { borderColor: Colors.ink },
+  boxT: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20, color: Colors.inkSub },
+  boxTOn: { color: Colors.ink },
+  boxN: { fontFamily: Font.body800, fontSize: 12, color: Colors.inkSub },
+  // 보낸 노트 줄 (받은 노트 줄 NoteRow 와 같은 모양)
+  sRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  sLine: { borderTopWidth: 1.5, borderColor: Colors.line },
+  sPressed: { opacity: 0.6 },
+  sDt: { width: 40, alignItems: 'center' },
+  sDtS: { fontFamily: Font.body800, fontSize: 11, lineHeight: 14, color: Colors.inkSub },
+  sDtB: { fontFamily: Font.display, fontSize: 18, lineHeight: 22 },
+  sTx: { flex: 1, minWidth: 0, gap: 2 },
+  sH: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
+  sP: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
+  sChev: { fontFamily: Font.body900, fontSize: 18, lineHeight: 22, color: Colors.inkSub },
   empty: { paddingVertical: 30, paddingHorizontal: 10, textAlign: 'center', fontFamily: Font.body700, fontSize: 14, lineHeight: 21, color: Colors.inkSub },
 });
 

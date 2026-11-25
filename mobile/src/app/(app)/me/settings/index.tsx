@@ -53,11 +53,11 @@ export default function SettingsScreen() {
         <ToggleRow title="댓글 · 좋아요 · 인사" value={set.nCmt} onPress={() => updateSettings({ nCmt: !set.nCmt })} />
         <ToggleRow title="랭킹 변동" value={set.nRank} onPress={() => updateSettings({ nRank: !set.nRank })} />
         <ToggleRow
-          title="이벤트 · 혜택 정보 (광고)"
+          title="마케팅 정보 수신"
           value={set.nMkt}
           onPress={() => {
             setMarketing(!set.nMkt);
-            showToast(!set.nMkt ? '이벤트 · 혜택 정보 수신에 동의했어요' : '수신 동의를 철회했어요');
+            showToast(!set.nMkt ? '마케팅 정보 수신에 동의했어요' : '마케팅 정보 수신 동의를 철회했어요');
           }}
         />
       </Sec>

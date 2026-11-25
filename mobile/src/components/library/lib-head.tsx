@@ -26,8 +26,9 @@ function LangBadge({ i, size = 22 }: { i: number; size?: number }) {
 export function LibHead({ lang, onLang, open, setOpen }: { lang: number; onLang: (i: number) => void; open: boolean; setOpen: (o: boolean | ((x: boolean) => boolean)) => void }) {
   return (
     <View style={styles.head}>
-      <PText variant="headline" accessibilityRole="header" style={styles.title}>
-        라이브러리
+      {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
+      <PText variant="headline" accessibilityRole="header" accessibilityLabel="라이브러리" style={styles.title}>
+        Library
       </PText>
       <View style={styles.lwrap}>
         <Pressable

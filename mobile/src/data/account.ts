@@ -392,3 +392,48 @@ export function getMembership() {
 export type MembershipInfo = ReturnType<typeof getMembership>;
 /** 연기 · 변경 남은 횟수 글자 (프로토타입 ppT) */
 export const changesLeftText = (pp: number) => (pp === Infinity ? '무제한' : `${pp}번`);
+
+/* ───────── 프로 마이 (10-roles '마이' · 시안 my-pro) ───────── */
+
+/** 내가 맡은 수업 (프로) — 이번 주 · 다음 주. 맞는 API: 프로 일정 (제안) */
+export type ProClass = { id: string; team: string; lang: TeamLang; day: string; time: string; room: string; students: number; week: 'this' | 'next' };
+export const PRO_CLASSES: ProClass[] = [
+  { id: 'pc1', team: '1팀', lang: '영어', day: '11.26 (수)', time: '19:30', room: '3번 테이블', students: 8, week: 'this' },
+  { id: 'pc2', team: '8팀', lang: '일본어', day: '11.29 (토)', time: '11:00', room: '1번 테이블', students: 6, week: 'this' },
+  { id: 'pc3', team: '1팀', lang: '영어', day: '12.1 (월)', time: '19:30', room: '3번 테이블', students: 8, week: 'next' },
+  { id: 'pc4', team: '1팀', lang: '영어', day: '12.3 (수)', time: '19:30', room: '3번 테이블', students: 8, week: 'next' },
+  { id: 'pc5', team: '8팀', lang: '일본어', day: '12.6 (토)', time: '11:00', room: '1번 테이블', students: 6, week: 'next' },
+];
+
+/** 내가 보낸 노트 (프로) — 반 몇 명이 읽었는지 · 고마워요 수. pro 이름은 화면이 내 이름으로 채워요 */
+export type SentNote = ProNote & { readN: number; total: number; thanksN: number };
+export const PRO_SENT_NOTES: SentNote[] = [
+  {
+    id: 'ps3', m: 11, d: 24, wd: '월', team: '1팀', when: '월수 19:30', pro: '', readN: 7, total: 8, thanksN: 5,
+    items: [
+      ['표현', "I'm on my way", '가는 중이라고 알릴 때 가장 많이 써요.', ["I'm on my way. See you in 5!"]],
+      ['바로잡기', 'I am agree → I agree', 'agree는 동사라 be를 붙이지 않아요.', ['I agree with you.']],
+      ['뜻', 'tight schedule', '빡빡한 일정', ['I have a tight schedule this week.']],
+    ],
+    bye: '다들 바쁜 월요일에 와 줘서 고마워요. 수요일엔 주말 이야기로 시작해요!',
+  },
+  {
+    id: 'ps2', m: 11, d: 22, wd: '토', team: '8팀', when: '토 11:00', pro: '', readN: 6, total: 6, thanksN: 4,
+    items: [
+      ['표현', 'お疲れさまです', '하루 일을 마친 사람에게 하는 인사예요.', ['今日もお疲れさまです。']],
+      ['질문', 'すみません vs ごめんなさい', 'すみません이 더 넓게 써요. ごめんなさい는 가까운 사이.', []],
+    ],
+    bye: '다음 주엔 좋아하는 음식 이야기를 해 봐요!',
+  },
+  {
+    id: 'ps1', m: 11, d: 19, wd: '수', team: '1팀', when: '월수 19:30', pro: '', readN: 8, total: 8, thanksN: 6,
+    items: [
+      ['표현', 'Sounds good', '제안에 좋다고 할 때 가볍게 써요.', ['Pizza tonight? — Sounds good!']],
+      ['뜻', 'run errands', '이런저런 볼일을 보다', ['I need to run some errands after work.']],
+    ],
+    bye: '오늘 롤플레이 정말 자연스러웠어요!',
+  },
+];
+
+/** 프로 마이 숫자 칸: 이번 달 맡은 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요. 맞는 API: 마이 숫자 (제안) */
+export const PRO_STATS = { sessions: 14, checks: 13 };
