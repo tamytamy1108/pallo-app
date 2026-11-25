@@ -160,6 +160,6 @@ describe('라이브러리 지도 바꾸기', () => {
     await tick(50);
     expect(of('travel')).toHaveLength(1);
     await draw('travel');
-    expect(of('travel')[0].replays).toEqual([1]);
+    expect(of('travel')[0].replays).toEqual([]); // 안 만든 지도라 사진판부터 떠요 → 돌지 않고 이어져요
   });
 });

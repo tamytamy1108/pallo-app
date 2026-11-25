@@ -22,7 +22,7 @@ type StoreModule = typeof import('@/lib/store');
 const fresh = (): StoreModule => {
   let mod: StoreModule | undefined;
   jest.isolateModules(() => {
-    mod = jest.requireActual('@/lib/store');
+    mod = jest.requireActual<StoreModule>('@/lib/store');
   });
   if (!mod) throw new Error('store module not loaded');
   return mod;
