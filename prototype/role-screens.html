@@ -173,6 +173,38 @@ h1{font-family:var(--fd);font-size:22px;margin:0 0 6px;letter-spacing:-.5px}
 .ring{height:8px;border-radius:4px;background:#3A3348;overflow:hidden;margin:16px 6px 0}.ring i{display:block;height:100%;width:62%;background:var(--yellow)}
 .mini{font-size:10.5px;font-weight:800;color:var(--sub)}
 .note{font-size:11px;font-weight:700;color:var(--sub);line-height:1.5;margin-top:10px;display:flex;gap:6px}
+.ph.long{height:auto;min-height:620px}.ph.long .scr{overflow:visible}
+.chg{position:relative;outline:2.5px dashed var(--deep);outline-offset:4px;border-radius:18px;margin:18px 0 8px}
+.chg:before{content:attr(data-l);position:absolute;top:-15px;right:4px;z-index:3;background:var(--deep);color:#fff;font-size:9.5px;font-weight:900;padding:1px 7px;border-radius:8px;border:1.5px solid var(--ink);white-space:nowrap}
+.hero{background:#fff;border:2px solid var(--ink);border-radius:22px;box-shadow:3px 3px 0 var(--ink);padding:12px 14px}
+.hero .top{display:flex;gap:12px;align-items:center}
+.spk{display:inline-flex;align-items:center;gap:3px;height:18px;padding:0 7px 0 5px;border-radius:9px;background:var(--ink);color:var(--yellow);font:800 9.5px var(--fd)}
+.hero .nm{font-size:17px;font-weight:900;margin-top:3px}
+.hero .sub{font-size:11px;font-weight:800;color:var(--sub);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+.hero .bio{font-size:12px;font-weight:700;margin-top:9px}
+.hero .fol{display:flex;gap:14px;margin-top:5px;font-size:11px;font-weight:800;color:var(--sub)}.hero .fol b{color:var(--ink);font-family:var(--fd);font-size:11px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:2px solid var(--ink);border-radius:18px;margin-top:12px;padding:9px 0;text-align:center}
+.chg .stats,.chg .hero,.chg>.cd{margin-top:0}
+.stats div+div{border-left:1.5px solid var(--line)}
+.stats b{display:block;font:800 13.5px var(--fd);color:var(--purple)}
+.stats small{font-size:9.5px;font-weight:800;color:var(--sub);white-space:nowrap}
+.ch2{font-size:14px;font-weight:900}
+.kv{display:flex;justify-content:space-between;font-size:11.5px;font-weight:800;padding:2px 0}.kv span{color:var(--sub)}
+.team{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;margin-top:9px;background:var(--cream);border-radius:10px;padding:6px 9px}.team span{color:var(--sub)}.team .lang{color:#fff;margin:0}
+.lrow{display:flex;align-items:center;gap:6px;padding:9px 0;border-bottom:1.5px solid var(--line);font-size:12.5px;font-weight:800}.lrow:last-child{border-bottom:0}
+.lrow .v{margin-left:auto;color:var(--sub);font-size:11px}
+.bub{display:inline-block;background:#fff;border:2px solid var(--ink);border-radius:4px 14px 14px 14px;padding:7px 10px;font-size:12px;font-weight:700;line-height:1.45;max-width:200px;margin-top:3px;text-align:left}
+.bub.me{background:var(--lav);border-radius:14px 4px 14px 14px}
+.ovw{overflow-x:auto}
+table.ov{border-collapse:separate;border-spacing:0;width:100%;min-width:1000px;font-size:12.5px;background:#fff;border:2px solid var(--ink);border-radius:16px;overflow:hidden}
+.ov th,.ov td{padding:9px 11px;text-align:left;vertical-align:top;border-bottom:1.5px solid var(--line);line-height:1.5;font-weight:700}
+.ov thead th{background:var(--ink);color:#fff;font-weight:900;font-size:13px;white-space:nowrap}
+.ov thead th .avw{vertical-align:middle;margin-right:4px}
+.ov tbody th{background:var(--cream);font-weight:900;white-space:nowrap;width:130px}
+.ov td small{color:var(--sub);font-weight:700}
+.ov td.eq{color:#B3AA98;font-weight:900}
+.ov tbody tr:last-child th,.ov tbody tr:last-child td{border-bottom:0}
+.ov td b{background:#FFF3A8;padding:0 3px;border-radius:4px}
 </style></head><body>
 <div class="wrap">
 <h1>역할별 앱 시안</h1>
@@ -209,7 +241,7 @@ const TABS = {
 };
 const tabbar = (kind, active, badge) => `<div class="tb">${TABS[kind].map(([k, l]) =>
   `<span class="${k === 'ops' ? 'ops ' : ''}${l === active ? 'on' : ''}">${ic(k, 19, 2.2)}${l}${k === 'ops' && badge ? `<em>${badge}</em>` : ''}</span>`).join('')}</div>`;
-const phone = ({ demo, tab, badge, body, over = '', dark, np }) => `<div class="ph${dark ? ' dark' : ''}"><div class="sbar"><span>9:41</span><i></i></div>${demo ? '<div class="demo">보여 주기 모드</div>' : ''}<div class="scr${np || !tab ? ' np' : ''}">${body}</div>${tab ? tabbar(tab[0], tab[1], badge) : ''}${over}</div>`;
+const phone = ({ demo, tab, badge, body, over = '', dark, np, long }) => `<div class="ph${dark ? ' dark' : ''}${long ? ' long' : ''}"><div class="sbar"><span>9:41</span><i></i></div>${demo ? '<div class="demo">보여 주기 모드</div>' : ''}<div class="scr${np || !tab ? ' np' : ''}">${body}</div>${tab ? tabbar(tab[0], tab[1], badge) : ''}${over}</div>`;
 const hd = (title, right = '', back = 'back') => `<div class="hd"><span class="bk">${ic(back, 20, 2.6)}</span><b>${title}</b>${right}</div>`;
 
 /* QR 모양 */
@@ -454,33 +486,216 @@ const CO = [
     <div class="note">${av('up-pink', 22, EM.co)}<span style="align-self:center">예린${TAG.co} 이름으로 올라가요</span></div>` }) },
 ];
 
+/* ---------- 마이 ---------- */
+const chg = (html, l) => `<div class="chg" data-l="${l}">${html}</div>`;
+const myTop = () => `<div class="hd" style="margin:2px 0 8px"><b style="font-size:20px">마이</b><span class="bk">${ic('gear', 20, 2)}</span></div>`;
+const hero = (img, em, name, tag, sub, chip, bio) => `<div class="hero"><div class="top">${av(img, 58, em)}<div style="flex:1;min-width:0"><div class="spk">${ic('star', 11, 0, 'none', 'var(--yellow)')}<b>1,240</b></div><div class="nm">${name}${tag}</div><div class="sub">${sub}${chip}</div></div></div>
+  <div class="bio">${bio}</div><div class="fol"><span><b>32</b> 팔로잉</span><span><b>41</b> 팔로워</span></div></div>`;
+const stats = (cells) => `<div class="stats">${cells.map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div>`;
+const ring = (left, total) => `<svg width="66" height="66" viewBox="0 0 66 66"><circle cx="33" cy="33" r="26" fill="none" stroke="#EFE8DA" stroke-width="8"/><circle cx="33" cy="33" r="26" fill="none" stroke="#493087" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(2 * Math.PI * 26 * left / total).toFixed(1)} 999" transform="rotate(-90 33 33)"/><text x="33" y="36" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="15" fill="#1E1A2B">${left}</text><text x="33" y="48" text-anchor="middle" font-family="Noto Sans KR" font-weight="800" font-size="7.5" fill="#5A5366">남은 횟수</text></svg>`;
+const study = (demo) => `<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center"><b class="ch2">내 스터디</b>${demo ? '<span class="chip y">보여 주기 예시</span>' : ''}</div>
+  <div style="display:flex;gap:12px;align-items:center;margin-top:8px">${ring(6, 24)}<div style="flex:1"><div class="kv"><span>기간</span><b>~ 2027.2.28</b></div><div class="kv"><span>무료</span><b>2회 포함</b></div><div class="kv"><span>연기 · 변경</span><b>2회 남음</b></div></div></div>
+  <div class="team"><span class="lang en">EN</span><b>화 · 목 19:30</b><span>영어 Lv.3 · 3번 교실</span></div>
+  <div class="bt w sm2" style="margin-top:10px">연기 · 팀 · 지점 변경 ›</div></div>`;
+const lst = (rows) => `<div class="cd" style="padding:0 12px">${rows.map(([l, v = '', b = '']) => `<div class="lrow"><span>${l}</span>${b ? `<span class="cnt" style="margin-left:auto">${b}</span>` : `<span class="v">${v}</span>`}${ic('chev', 14, 2.4)}</div>`).join('')}</div>`;
+const nobox = (t) => `<div class="off" style="margin-top:0"><b>${ic('ban', 13, 2.4)}${t}</b></div>`;
+const rank = () => `<div class="cd" style="display:flex;align-items:center;gap:10px;padding:10px 12px"><b style="font:800 18px var(--fd);color:var(--purple)">3위</b><div style="flex:1"><b style="font-size:12.5px;font-weight:900">이번 주 하남점 랭킹</b><div class="mini">1위 소라 · 2위 예린 · 3위 나</div></div>${ic('chev', 14, 2.4)}</div>`;
+const sh = (t) => `<div class="sec" style="margin:14px 2px 6px"><span>${t}</span></div>`;
+const memberHero = (img, name) => hero(img, '', name, '', '하남점 · 영어 Lv.3 · 회원', '<span class="chip ok" style="height:18px;font-size:9.5px">연동됨</span>', '주말엔 영어로 수다 떨어요');
+const memberStats = (last = ['7개', '받은 배지']) => stats([['12일', '연속 학습'], ['3위', '이번 주 랭킹'], ['2개', '참여 중 모임'], last]);
+const myPhone = (o) => phone({ long: 1, demo: o.demo, tab: [o.kind || 'member', '마이'], badge: o.badge, body: myTop() + o.body });
+const MY = {
+  member: { t: '회원 마이 (기준)', d: '지금 앱 그대로예요. 다른 역할은 여기서 <b>분홍 점선 칸</b>만 달라져요.', html: myPhone({ body: `
+    ${memberHero('up-green', '민준')}${memberStats()}
+    <div style="margin-top:12px">${study()}</div>
+    ${sh('랭킹')}${rank()}
+    ${sh('내 활동')}${lst([['내 모임', '2개'], ['찜한 모임 · 챌린지', '5개'], ['내가 쓴 글'], ['내 표현함', '24개'], ['랭킹 · 퀘스트']])}
+    ${sh('기타')}${lst([['설정'], ['고객센터 · 자주 묻는 질문'], ['이용권 · 결제 내역']])}` }) },
+  pro: { t: '프로 마이', d: '얼굴 · 이름에 PRO, 숫자 칸은 <b>세션 통계</b>, 내 스터디 대신 <b>내 수업</b>(이번 주 맡은 세션). 연기 · 팀 · 지점 변경은 흐리게. <b>랭킹 · 이용권 칸이 없어요</b>.', html: myPhone({ demo: 1, kind: 'ops', badge: 1, body: `
+    ${chg(hero('up-purple-lash', EM.pro, 'Julie', TAG.pro, '하남점 · 영어 · 일본어', '', '말이 막히면 그게 오늘의 표현이에요'), '표시')}
+    ${chg(stats([['14', '이번 달 세션'], ['14/14', '출석 체크'], ['13', '보낸 노트'], ['28', '받은 고마워요']]), '세션 통계')}
+    ${chg(`<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center"><b class="ch2">내 수업 · 이번 주</b><span class="mini">내 일정 전체 ›</span></div>
+      ${[['화', '19:30', 'EN', '영어 Lv.3 · 3번'], ['화', '21:00', 'JA', '일본어 Lv.1 · 5번'], ['목', '19:30', 'EN', '영어 Lv.3 · 3번'], ['토', '14:00', 'EN', '영어 Lv.2 · 1번']].map(([d, t, l, c]) => `<div class="team" style="margin-top:7px"><b style="width:16px">${d}</b><b style="font-family:var(--fd);font-size:12px">${t}</b><span class="lang ${l.toLowerCase()}">${l}</span><span>${c}</span></div>`).join('')}
+      <div class="lrow" style="opacity:.45;border:0;margin-top:4px;padding-bottom:0"><span>연기 · 팀 · 지점 변경</span><span class="v">프로는 쓸 수 없어요</span>${ic('lock', 14, 2.2)}</div></div>`, '내 스터디 → 내 수업')}
+    ${chg(nobox('프로는 랭킹에서 빠져요 · 퀘스트 · 배지는 그대로'), '랭킹 없음')}
+    ${sh('내 활동')}${chg(lst([['보낸 프로스 노트', '13개'], ['내가 연 이벤트', '1개']]), '추가')}
+    <div style="margin-top:8px">${lst([['내 모임', '1개'], ['내가 쓴 글'], ['내 표현함', '8개'], ['퀘스트']])}</div>
+    ${sh('기타')}${chg(lst([['설정', '+ 수업 알림'], ['고객센터 · 자주 묻는 질문']]), '이용권 없음')}` }) },
+  staff: { t: '스텝 마이', d: '맨 위에 <b>내 지점</b> 카드(처리할 일 → 운영 탭). 내 스터디는 <b>보여 주기 예시</b>로 채워져 있어서 회원에게 연기 화면까지 보여 줄 수 있어요. 설정에 운영 알림 · <b>관리자 웹 열기</b>. 본사 운영자는 소속이 PALLO이고 내 지점 카드가 없어요.', html: myPhone({ demo: 1, kind: 'ops', badge: 8, body: `
+    ${chg(hero('up-sky', EM.staff, '김하남', TAG.staff, '하남점 · 지점 관리자', '', '하남점 문은 제가 열어요 🔑'), '표시')}
+    ${chg(`<div class="cd" style="background:var(--ink);color:#fff;border-color:var(--ink)"><div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:11px;background:var(--yellow);display:grid;place-items:center">${ic('home', 18, 2.4, '#1E1A2B')}</span><div style="flex:1"><b style="font-size:14px;font-weight:900">하남점</b><div style="font-size:11px;font-weight:700;color:#CFC6E6">오늘 세션 4 · 출석 21/33</div></div><span class="cnt">8</span></div><div class="bt y sm2" style="margin-top:10px">처리할 일 8개 · 운영 탭으로</div></div>`, '내 지점')}
+    ${chg(stats([['12일', '연속 학습'], ['9개', '지점 모임'], ['31', '이번 달 처리'], ['7개', '받은 배지']]), '숫자 칸')}
+    ${chg(study(true), '보여 주기 예시')}
+    ${chg(nobox('스텝은 랭킹에서 빠져요'), '랭킹 없음')}
+    ${sh('내 활동')}${lst([['내 모임', '3개'], ['내가 쓴 글'], ['내 표현함', '5개'], ['퀘스트']])}
+    ${sh('기타')}${chg(lst([['설정', '+ 운영 알림'], ['관리자 웹 열기', 'PC'], ['고객센터 · 자주 묻는 질문'], ['이용권 · 결제 내역', '예시']]), '추가')}` }) },
+  host: { t: '호스트 마이', d: '회원 마이 그대로에 <b>호스트 점수 ★</b>와 <b>내가 연 모임</b> 카드가 더해져요. 처리할 게 있으면 숫자. 얼굴 왕관 · HOST는 마이엔 안 붙어요 (그 모임 안에서만).', html: myPhone({ body: `
+    ${memberHero('up-yellow', '소라')}
+    ${chg(memberStats(['★4.8', '호스트 점수']), '호스트 점수')}
+    ${chg(`<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center"><b class="ch2">내가 연 모임</b><span class="mini">전체 ›</span></div>
+      ${[['var(--en)', '동아리', '영어 말하기 클럽', '가입 신청', '3'], ['var(--yellow)', '번개', '금요일 강남 영화 수다', '모집 중 4/6', ''], ['var(--deep)', '챌린지', '30일 쉐도잉', '숨김 요청', '1']].map(([c, k, n, s, b]) => `<div class="team" style="margin-top:8px"><i style="width:10px;height:10px;border-radius:3px;background:${c};border:1.5px solid var(--ink);flex:none"></i><span style="width:38px">${k}</span><b style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</b>${b ? `<span class="cnt">${b}</span>` : `<span>${s}</span>`}</div>`).join('')}</div>`, '내가 연 모임')}
+    <div style="margin-top:12px">${study()}</div>
+    ${sh('랭킹')}${rank()}
+    ${sh('내 활동')}${lst([['내 모임', '4개'], ['찜한 모임 · 챌린지', '2개'], ['내가 쓴 글'], ['내 표현함', '31개'], ['랭킹 · 퀘스트']])}
+    ${sh('기타')}${lst([['설정'], ['고객센터 · 자주 묻는 질문'], ['이용권 · 결제 내역']])}` }) },
+  co: { t: '코호스트 마이', d: '회원 마이 그대로에 <b>함께 운영하는 모임</b> 카드 하나가 더해져요. 가입 신청이 오면 숫자가 떠요.', html: myPhone({ body: `
+    ${memberHero('up-pink', '예린')}${memberStats()}
+    ${chg(`<div class="cd" style="display:flex;align-items:center;gap:10px"><span style="width:38px;height:38px;border-radius:12px;border:2px solid var(--ink);display:grid;place-items:center;background:var(--en)">${ic('users', 18, 2, '#fff')}</span><div style="flex:1"><div class="mini">함께 운영하는 모임 ${TAG.co}</div><b style="font-size:13.5px;font-weight:900">영어 말하기 클럽</b><div class="mini">가입 신청 3 · 다음 모임 토 14:00</div></div><span class="cnt">3</span></div>`, '함께 운영하는 모임')}
+    <div style="margin-top:12px">${study()}</div>
+    ${sh('랭킹')}${rank()}
+    ${sh('내 활동')}${lst([['내 모임', '2개'], ['찜한 모임 · 챌린지', '4개'], ['내가 쓴 글'], ['내 표현함', '17개'], ['랭킹 · 퀘스트']])}
+    ${sh('기타')}${lst([['설정'], ['고객센터 · 자주 묻는 질문'], ['이용권 · 결제 내역']])}` }) },
+};
+
+/* ---------- 그 밖에 달라지는 화면 ---------- */
+const feedPost = (img, em, name, tag, txt, meta) => `<div class="cd" style="padding:10px 12px;margin-bottom:9px;box-shadow:none"><div style="display:flex;align-items:center;gap:9px">${av(img, 32, em)}<div style="flex:1"><b style="font-size:13px;font-weight:900">${name}${tag}</b><div class="mini">${meta}</div></div><span style="font-weight:900;letter-spacing:1px">···</span></div><div style="font-size:12.5px;font-weight:700;margin-top:7px;line-height:1.5">${txt}</div></div>`;
+const notiRow = (c, i, t, s, on) => `<div class="mrow" style="align-items:flex-start${on ? ';background:#FFF8D6;margin:0 -12px;padding:10px 12px' : ''}"><span class="ri" style="background:${c}">${ic(i, 15, 2.2)}</span><div class="tx"><b style="font-size:12.5px;line-height:1.4">${t}</b><small>${s}</small></div></div>`;
+const PRO_MORE = [
+ { t: '라운지 글 메뉴 · 공지 고정 · 숨기기', d: '프로 · 스텝은 글 메뉴(···)에 <b>공지로 고정</b> · <b>글 숨기기</b>가 더 있어요. 회원은 신고 · 공유만. 스텝은 여기에 신고함 · 이용 제한까지.', html: phone({ demo: 1, tab: ['ops', '라운지'], badge: 1, body: `
+    <div class="ttl" style="margin:6px 0 10px">라운지</div>
+    ${feedPost('up-coral', '', '지우', '', '오늘 세션에서 배운 표현 써먹었어요 ㅋㅋ', '하남점 · 2시간 전')}
+    ${feedPost('up-purple-lash', EM.pro, 'Julie', TAG.pro, '이번 주 토요일 오픈 스피킹 열려요! 누구나 와요 🙌', '하남점 · 10분 전')}`,
+    over: `<div class="dim"></div><div class="sheet"><div class="grab"></div><h3>글 메뉴</h3><div class="mini">프로 · 스텝에게만 보이는 칸이 위에 있어요</div>
+    <div class="mi" style="margin-top:6px"><span class="ic" style="background:var(--yellow)">${ic('pin', 15)}</span><div class="tx">공지로 고정<small>라운지 맨 위에 7일 동안</small></div></div>
+    <div class="mi"><span class="ic" style="background:var(--lav)">${ic('ban', 15)}</span><div class="tx">글 숨기기<small>쓴 사람에게 이유를 알려요</small></div></div>
+    <div class="mi"><span class="ic">${ic('flag', 15)}</span><div class="tx">신고하기</div></div>
+    <div class="mi"><span class="ic">${ic('send', 15)}</span><div class="tx">공유하기</div></div></div>` }) },
+ { t: '이벤트 바로 열기 · 신청 설문', d: '회원은 <b>이벤트 제안</b> → 지점 관리자 검토인데, 프로 · 스텝은 <b>검토 없이 바로 열고</b> 신청 설문을 붙여요. 신청 · 입금은 운영 탭 › 이벤트 관리에서 봐요.', html: phone({ demo: 1, body: `
+    ${hd('이벤트 열기', '<span class="act ink">열기</span>', 'x')}
+    <div class="banner" style="background:var(--lav);border-color:var(--purple);color:var(--purple)">${ic('check', 15, 3)}프로라서 검토 없이 바로 올라가요</div>
+    <div class="field"><small>이름</small><p>토요일 오픈 스피킹 · 영어</p></div>
+    <div style="display:flex;gap:8px"><div class="field" style="flex:1"><small>일시</small><p>11.30 (토) 14:00</p></div><div class="field" style="flex:1"><small>정원 · 참가비</small><p>12명 · 무료</p></div></div>
+    <div class="field"><small>장소</small><p>하남점 라운지</p></div>
+    <div class="sec" style="margin-top:6px"><span>신청 설문</span><span>질문 2</span></div>
+    <div class="cd" style="padding:2px 12px;box-shadow:none">
+      <div class="lrow"><span>1. 레벨을 골라 주세요</span><span class="v">하나 고르기</span></div>
+      <div class="lrow"><span>2. 이야기하고 싶은 주제</span><span class="v">짧은 글</span></div>
+      <div class="lrow" style="color:var(--purple)">${ic('plus', 14, 2.6)}<span>질문 더하기</span></div></div>` }) },
+ { t: '알림함 · 프로', d: '프로에게만 오는 알림: <b>노트를 아직 안 보냈어요</b>, 학생의 고마워요, 교실 · 일정 변경. 회원용 알림(출석 · 모임)도 같이 와요.', html: phone({ demo: 1, body: `
+    ${hd('알림')}
+    <div class="cd" style="padding:0 12px">
+      ${notiRow('#FBE5EC', 'pen', '오늘 19:30 세션 노트를 아직 안 보냈어요', '세션 끝나고 30분 · 반에 보내기 ›', 1)}
+      ${notiRow('var(--lav)', 'heart', '민준님이 프로 노트에 고마워요를 보냈어요', '"bored 이제 안 헷갈려요!" · 1시간 전')}
+      ${notiRow('var(--mist)', 'pin', '11.28 (목) 세션 교실이 5번으로 바뀌었어요', '하남점 · 오늘 15:02')}
+      ${notiRow('#fff', 'cal', '다음 주 일정이 올라왔어요 · 세션 5개', '운영 › 내 일정 · 어제')}
+      ${notiRow('#fff', 'users', '소라님이 토요일 오픈 스피킹을 신청했어요', '이벤트 · 어제')}
+    </div>` }) },
+];
+const STAFF_MORE = [
+ { t: '라운지 신고 처리', d: '신고가 쌓인 글을 보고 <b>숨기기 · 경고 · 이용 제한 · 문제 없음</b> 중 골라요. 처리하면 신고한 사람에게도 결과가 가요.', html: phone({ demo: 1, body: `
+    ${hd('신고함', '<span class="chip">1 / 1</span>')}
+    <div style="display:flex;gap:6px;margin-bottom:8px"><span class="chip" style="background:#FBE5EC;border-color:var(--deep);color:var(--deep)">광고 2</span><span class="chip no">욕설 1</span></div>
+    ${feedPost('up-purple', '', '익명이', '', '영어 회화 1:1 과외 합니다. 카톡 아이디 abc123 으로 연락 주세요!!!', '하남점 · 어제 23:10 · 신고 3')}
+    <div class="sec" style="margin-top:4px"><span>이 사람</span></div>
+    <div class="cd" style="padding:8px 12px;box-shadow:none"><div class="mini">지난 신고 2 · 경고 1 · 가입 2주</div></div>
+    <div class="sec"><span>어떻게 할까요?</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="bt sm2">글 숨기기</div><div class="bt w sm2">경고 보내기</div>
+      <div class="bt red sm2">이용 제한</div><div class="bt w sm2">문제 없음</div></div>` }) },
+ { t: '체험 예약', d: '온보딩에서 들어온 체험 신청. 오늘 · 이번 주로 나눠 보고 <b>전화 걸기</b>, 상담 뒤 <b>확정 · 변경 · 노쇼</b>. 상담 가능 시간은 관리자 웹에서 올려요.', html: phone({ demo: 1, tab: ['ops', '운영'], badge: 8, body: `
+    ${hd('체험 예약')}
+    <div class="seg"><span class="on">오늘 1</span><span>이번 주 3</span><span>지난 예약</span></div>
+    ${[['up-coral', '박지우', '19:00 · 영어 · 처음이에요', '"직장인인데 저녁반 있나요?"', 'y'], ['up-green', '최도윤', '내일 14:00 · 일본어 · JLPT 준비', '', ''], ['up-purple', '한서윤', '목 20:00 · 영어 · 전화 상담만', '', '']].map(([a, n, s, m, on]) => `
+    <div class="cd" style="margin-bottom:9px;padding:10px 12px${on ? ';background:var(--yellow)' : ''}"><div style="display:flex;align-items:center;gap:9px">${av(a, 32)}<div style="flex:1"><b style="font-size:13.5px;font-weight:900">${n}</b><div class="mini" style="${on ? 'color:var(--ink)' : ''}">${s}</div></div><span style="width:34px;height:34px;border-radius:50%;background:var(--ink);display:grid;place-items:center">${ic('call', 15, 2.2, '#fff')}</span></div>
+      ${m ? `<div style="font-size:11.5px;font-weight:700;margin-top:6px">${m}</div>` : ''}
+      <div class="yn" style="margin-top:8px"><span class="on">확정</span><span>변경</span><span class="x">노쇼</span></div></div>`).join('')}` }) },
+ { t: '동아리 만들기 승인', d: '회원이 만든 동아리는 지점 관리자가 보고 열어 줘요. <b>승인 · 고쳐 달라고 하기 · 거절</b>. 번개는 승인 없이 바로 열려요.', html: phone({ demo: 1, body: `
+    ${hd('동아리 만들기 승인', '<span class="chip">1</span>')}
+    <div class="cd" style="padding:0;overflow:hidden"><div style="height:96px;background:var(--ja);border-bottom:2px solid var(--ink);padding:16px 14px;color:#fff"><div style="font-size:11px;font-weight:800;opacity:.9">동아리 · 하남점 · 일본어</div><b style="font-size:19px;font-weight:900">애니로 배우는 일본어</b></div>
+      <div style="padding:8px 12px">
+        <div class="info"><span class="k">만든 사람</span>${av('up-green', 24)}<b>도윤</b><span class="mini">· 회원 8개월</span></div>
+        <div class="info"><span class="k">정원</span><b>최대 15명 · 하남점 멤버만</b></div>
+        <div class="info"><span class="k">정기 모임</span><b>격주 일 16:00</b></div>
+        <div style="font-size:12px;font-weight:700;line-height:1.5;padding:8px 0">매주 애니 한 편씩 보고 대사로 말하기 연습해요. 초보 환영!</div></div></div>
+    <div style="display:flex;flex-direction:column;gap:8px;position:absolute;left:14px;right:14px;bottom:16px"><div class="bt">승인하고 열기</div><div style="display:flex;gap:8px"><div class="bt w sm2" style="flex:1.4">고쳐 달라고 하기</div><div class="bt red sm2" style="flex:1">거절</div></div></div>` }) },
+];
+const HOST_MORE = [
+ { t: '챌린지 관리', d: '챌린지 호스트는 <b>인증 기준 고치기</b>와 <b>부적절한 인증 숨기기</b>. 숨긴 인증은 그 사람의 인증 횟수에서 빠져요. (챌린지는 코호스트가 없어요)', html: phone({ body: `
+    ${hd('30일 쉐도잉 · 관리', '<span class="act">기준 고치기</span>')}
+    <div class="cd" style="background:#FBE5EC;box-shadow:none"><div class="mini">인증 기준</div><b style="font-size:13px;font-weight:900">하루 1분 이상 따라 말한 녹음</b><div class="mini" style="margin-top:2px">오늘 인증 12 / 20 · 숨김 요청 1</div></div>
+    <div class="sec"><span>오늘 인증</span></div>
+    ${[['up-green', '민준', '🎧 1:24 녹음 · Friends S1E3', 0], ['up-purple', '서윤', '📷 사진 1장 · 녹음 없음', 1], ['up-coral', '지우', '🎧 2:05 녹음 · TED 5분', 0]].map(([a, n, s, bad]) => `
+    <div class="cd" style="margin-bottom:8px;padding:9px 12px;box-shadow:none${bad ? ';border-color:var(--deep)' : ''}"><div style="display:flex;align-items:center;gap:9px">${av(a, 30)}<div style="flex:1"><b style="font-size:13px;font-weight:900">${n}</b><div class="mini">${s}</div></div>${bad ? '<span class="chip" style="background:#FBE5EC;border-color:var(--deep);color:var(--deep)">숨김 요청</span>' : '<span class="chip ok">인증</span>'}</div>
+      ${bad ? `<div style="display:flex;gap:7px;margin-top:8px"><div class="bt w sm2" style="flex:1">그대로 두기</div><div class="bt sm2" style="flex:1">숨기기</div></div>` : ''}</div>`).join('')}` }) },
+ { t: '알림함 · 호스트 · 코호스트', d: '모임을 꾸리는 사람에게만 오는 알림: <b>가입 신청</b>, <b>참석 확인 해 주세요</b>, 코호스트가 올린 공지, 모집이 다 찼어요. 코호스트는 가입 신청 · 참석 확인 · 공지 알림만.', html: phone({ tab: ['member', '홈'], body: `
+    ${hd('알림')}
+    <div class="cd" style="padding:0 12px">
+      ${notiRow('var(--yellow)', 'users', '지우님 외 2명이 영어 말하기 클럽에 가입 신청했어요', '승인하기 › · 10분 전', 1)}
+      ${notiRow('#FBE5EC', 'check', '토요일 성수 브런치 토크 참석 확인을 해 주세요', '호스트 점수 ★에 쓰여요 · 어제')}
+      ${notiRow('var(--lav)', 'mega', '예린(코호스트)님이 공지를 올렸어요', '"이번 주 토요일은 건대에서 모여요" · 어제')}
+      ${notiRow('#fff', 'pin', '금요일 강남 영화 수다 모집이 다 찼어요 6/6', '모집 닫기 · 대기자 받기 › · 2일 전')}
+      ${notiRow('#fff', 'heart', '민준님이 30일 쉐도잉 7일째 인증했어요', '챌린지 · 3일 전')}
+    </div>` }) },
+];
+const CO_MORE = [
+ { t: '동아리 채팅', d: '채팅방 맨 위에 <b>고정 공지</b>(호스트 · 코호스트가 올림). 말풍선 옆 얼굴엔 왕관, 이름 옆엔 HOST · CO-HOST. 코호스트는 채팅 공지를 바꾸거나 내릴 수 있어요.', html: phone({ body: `
+    ${hd('영어 말하기 클럽', '<span class="mini">18명</span>')}
+    <div class="cd" style="padding:8px 11px;box-shadow:none;background:var(--yellow);display:flex;gap:8px;align-items:center">${ic('pin', 15, 2.2)}<div style="flex:1"><b style="font-size:12px;font-weight:900">이번 주 토요일은 건대에서 모여요</b><div class="mini" style="color:#5B4E00">예린 · CO-HOST</div></div>${ic('chev', 14, 2.4)}</div>
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:8px">${av('up-yellow', 30, EM.host)}<div><div class="mini">소라${TAG.host}</div><div class="bub">다들 토요일에 봐요! 주제는 "최근 본 영화" 🎬</div></div></div>
+      <div style="display:flex;gap:8px">${av('up-coral', 30)}<div><div class="mini">지우</div><div class="bub">건대 어디쯤이에요?</div></div></div>
+      <div style="display:flex;gap:8px;flex-direction:row-reverse"><div style="text-align:right"><div class="mini">나 · 예린${TAG.co}</div><div class="bub me">건대입구역 2번 출구 바로 앞 '모퉁이 카페'예요!</div></div></div>
+      <div style="display:flex;gap:8px">${av('up-sky', 30, EM.co)}<div><div class="mini">하준${TAG.co}</div><div class="bub">저 조금 늦어요 🙏</div></div></div>
+    </div>
+    <div class="inbar" style="bottom:14px"><span class="ph2">메시지 보내기…</span><span class="snd">${ic('send', 14, 2.4, '#fff')}</span></div>` }) },
+];
+PRO.splice(4, 1, MY.pro, ...PRO_MORE);
+STAFF.push(MY.staff, ...STAFF_MORE);
+HOST.splice(4, 0, MY.host);
+HOST.push(...HOST_MORE);
+CO.push(MY.co, ...CO_MORE);
+
+/* ---------- 한눈에 ---------- */
+const OV = [
+ ['얼굴 · 이름 표시', '—', '보라 스파크 + PRO', '노랑 집 + STAFF<br><small>소속: 하남점 / PALLO</small>', '노랑 왕관 + HOST<br><small>그 모임 안에서만</small>', '흰 왕관 + CO-HOST<br><small>그 모임 안에서만</small>'],
+ ['맨 위 띠', '—', '보여 주기 모드', '보여 주기 모드', '=', '='],
+ ['하단 탭', '홈 · 라이브러리 · 라운지 · 이벤트 · 마이', '이벤트 → <b>운영</b>', '이벤트 → <b>운영</b> (처리할 일 숫자)', '=', '='],
+ ['홈 첫 카드', '오늘 스터디 · 출석 체크', '<b>오늘 내 세션</b> · 프로 출석 체크', '<b>오늘 지점 현황</b> · QR 띄우기 · 처리할 일', '=', '='],
+ ['출석', '사전 출석 · 테이블 QR', '테이블 QR → <b>프로스 노트 자동</b>', '보여 주기(출석 안 됨) · 지점 QR 띄우기', '=', '='],
+ ['라이브러리 · 레슨 · 맵', '전체', '= (랭킹 · 지점 통계 제외)', '= (랭킹 · 지점 통계 제외)', '=', '='],
+ ['라운지 글 · 댓글', '쓰기 · 신고', '+ 공지 고정 · 글 숨기기', '+ 신고함 · 이용 제한 · 스토리 고정', '내 모임 글에 공지', '내 모임 글에 공지'],
+ ['이벤트', '신청 · 제안', '<b>바로 열기</b> + 신청 설문 · 신청은 보여 주기', '제안 검토 · 바로 열기 · 입금 확인', '=', '='],
+ ['번개 · 동아리', '참여 · 만들기(동아리는 승인 뒤)', '= · 자기 모임 관리', '= · <b>지점 모임 전부 관리</b> · 동아리 승인', '<b>관리</b> 전부', '<b>관리</b> 4가지'],
+ ['연기 · 팀 · 지점 변경', '신청', '<b>못 열어요</b>', '보여 주기 · 요청 <b>승인</b>', '=', '='],
+ ['이용권 · 결제', '이용권 · 결제 내역', '없음', '보여 주기 예시', '=', '='],
+ ['마이', '기준', '세션 통계 · <b>내 수업</b> · 랭킹 없음', '<b>내 지점</b> · 예시 스터디 · 관리자 웹', '호스트 점수 ★ · <b>내가 연 모임</b>', '<b>함께 운영하는 모임</b>'],
+ ['알림', '출석 · 모임 · 이벤트', '+ 노트 안 보냄 · 고마워요 · 교실 변경', '+ 처리할 일 도착(연동 · 체험 · 연기 · 신고)', '+ 가입 신청 · 참석 확인 · 모집 마감', '+ 가입 신청 · 참석 확인'],
+ ['설정', '기본', '+ 수업 알림', '+ 운영 알림 · 관리자 웹 열기', '=', '='],
+];
+const overview = () => `<div class="diff" style="max-width:1240px"><h2>앱에서 달라지는 곳 한눈에</h2><div class="same" style="margin:0 0 10px">= 는 회원과 같아요. 굵은 글씨가 새로 만들 화면이에요. 각 역할 버튼에 화면 시안이 있어요.</div>
+  <div class="ovw"><table class="ov"><thead><tr><th></th><th>회원 (기준)</th><th>${av('up-purple-lash', 22, EM.pro)} 프로</th><th>${av('up-sky', 22, EM.staff)} 스텝</th><th>${av('up-yellow', 22, EM.host)} 호스트</th><th>${av('up-pink', 22, EM.co)} 코호스트</th></tr></thead>
+  <tbody>${OV.map((r) => `<tr>${r.map((c, i) => i === 0 ? `<th>${c}</th>` : `<td class="${c === '=' ? 'eq' : ''}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+
 const ROLES = [
  { k: 'pro', name: '프로', sub: '강사 · 본사 운영자가 세션 맡을 때', who: `${av('up-purple-lash', 30, EM.pro)}`, items: PRO,
    diff: ['<b>표시</b>: 얼굴에 보라 PALLO 스파크 + 이름 옆 <b>PRO</b>', '<b>첫 화면</b>: 오늘 내 세션 (보라 클래퍼보드)', '<b>탭</b>: 이벤트 → <b>운영</b> (출석 명단 · 세션 진행 · 프로스 노트 · 내 반 학생 · 반 공지 · 내 일정 · 이벤트 관리)',
      '<b>출석 체크</b>: 세션 날 언제든 · 테이블 QR · 지각 표시 없음 → <b>프로스 노트 자동 열림</b>', '<b>보여 주기 모드</b>: 회원 화면은 다 열려 있고 신청 · 제출만 막혀요', '<b>연기 · 팀 · 지점 변경</b>: 화면 자체를 못 열어요',
-     '<b>라운지</b>: 공지 고정 · 글 숨기기 · 이벤트 바로 열기', '<b>랭킹 · 지점 통계</b>에서 빠져요'], same: '회원과 같아요: 라이브러리 · 레슨 · 맵 전체, 라운지 글 · 댓글 · 번개 · 동아리(진짜로 돼요), 꾸미기 · 퀘스트' },
+     '<b>라운지</b>: 공지 고정 · 글 숨기기 · 이벤트 바로 열기', '<b>랭킹 · 지점 통계</b>에서 빠져요', '<b>마이</b>: 세션 통계 · 내 수업 · 이용권 없음', '<b>알림</b>: 노트 안 보냄 · 고마워요 · 교실 변경'], same: '회원과 같아요: 라이브러리 · 레슨 · 맵 전체, 라운지 글 · 댓글 · 번개 · 동아리(진짜로 돼요), 꾸미기 · 퀘스트' },
  { k: 'staff', name: '스텝', sub: '지점 관리자 · 본사 운영자', who: `${av('up-sky', 30, EM.staff)}`, items: STAFF,
    diff: ['<b>표시</b>: 얼굴에 노랑 집 + 이름 옆 <b>STAFF</b> · 소속은 아래 줄(하남점 / PALLO)', '<b>첫 화면</b>: 오늘 지점 현황 + <b>QR 출석 코드</b> + 처리할 일', '<b>탭</b>: 이벤트 → <b>운영</b> (처리함 · 지점 공지 · 이벤트 관리 · 라운지 관리)',
      '<b>처리</b>: 연동 요청 · 체험 예약 · <b>회원 요청(연기 · 변경 · 홀딩 · 연장)</b> · 신고 · 동아리 승인 · 이벤트 제안', '<b>보여 주기 모드</b>: 연기 화면도 고르기까지 돼요 · [신청하기]만 막힘', '<b>지점 모임</b>: 자기 지점 번개 · 동아리를 호스트처럼 관리',
-     '<b>본사 운영자</b>: 세션 맡는 날엔 프로 화면(출석 체크 · 노트), 표시는 STAFF', '<b>관리자 웹에만</b>: 시간표 · 프로 배정 · 교실 · 첫 화면 그림'], same: '역할 이름은 그대로 지점 관리자 · 본사 운영자예요. STAFF는 이름 옆 글자예요.' },
+     '<b>본사 운영자</b>: 세션 맡는 날엔 프로 화면(출석 체크 · 노트), 표시는 STAFF', '<b>관리자 웹에만</b>: 시간표 · 프로 배정 · 교실 · 첫 화면 그림', '<b>마이</b>: 내 지점 카드 · 보여 주기 예시 스터디 · 관리자 웹 열기'], same: '역할 이름은 그대로 지점 관리자 · 본사 운영자예요. STAFF는 이름 옆 글자예요.' },
  { k: 'host', name: '호스트', sub: '번개 · 동아리 · 챌린지를 연 회원', who: `${av('up-yellow', 30, EM.host)}`, items: HOST,
    diff: ['<b>표시</b>: 그 모임 화면 · 그 모임 글에서만 노랑 왕관 + <b>HOST</b>', '<b>탭</b>: 회원과 같아요', '<b>모임 화면 오른쪽 위 관리</b> + 가입 신청 알림 줄',
-     '<b>관리 전부</b>: 가입 승인 · 멤버 내보내기 · 코호스트 정하기 · 고치기 · 공지 · 정기 모임 · 참석 확인 · 모집 닫기 · 넘기기 · 닫기', '<b>참석 확인</b> → 호스트 점수 ★', '<b>마이 › 내가 연 모임</b>'], same: '나머지는 회원 앱 그대로예요.' },
+     '<b>관리 전부</b>: 가입 승인 · 멤버 내보내기 · 코호스트 정하기 · 고치기 · 공지 · 정기 모임 · 참석 확인 · 모집 닫기 · 넘기기 · 닫기', '<b>참석 확인</b> → 호스트 점수 ★', '<b>마이</b>: 호스트 점수 ★ · 내가 연 모임 카드', '<b>챌린지</b>: 인증 기준 고치기 · 인증 숨기기', '<b>알림</b>: 가입 신청 · 참석 확인 · 모집 마감'], same: '나머지는 회원 앱 그대로예요.' },
  { k: 'co', name: '코호스트', sub: '예전 서브 호스트 · 동아리 최대 3명', who: `${av('up-pink', 30, EM.co)}`, items: CO,
    diff: ['<b>표시</b>: 그 동아리에서만 흰 왕관 + <b>CO-HOST</b>', '<b>탭</b>: 회원과 같아요', '<b>관리</b>: 가입 승인 · 공지 · 정기 모임 일정 · 참석 확인 4가지',
-     '<b>못 하는 것</b>: 멤버 내보내기 · 코호스트 정하기 · 고치기 · 모집 닫기 · 넘기기 · 닫기 → 시트 아래 "호스트만 할 수 있어요"'], same: '호스트가 정하고, 호스트가 풀 수 있어요.' },
+     '<b>못 하는 것</b>: 멤버 내보내기 · 코호스트 정하기 · 고치기 · 모집 닫기 · 넘기기 · 닫기 → 시트 아래 "호스트만 할 수 있어요"', '<b>마이</b>: 함께 운영하는 모임 카드', '<b>채팅</b>: 채팅 공지 고정 · 바꾸기'], same: '호스트가 정하고, 호스트가 풀 수 있어요.' },
 ];
 
 const tabsEl = document.getElementById('rtabs'), rolesEl = document.getElementById('roles');
-ROLES.forEach((r) => {
+const phonesHtml = (items) => `<div class="phones">${items.map((it, i) => `<div class="pc">${it.html}<div class="cap"><b><span class="num">${i + 1}</span>${it.t}</b><span>${it.d}</span></div></div>`).join('')}</div>`;
+const PAGES = [
+  { k: 'all', name: '한눈에', sub: '달라지는 곳 표', who: '', html: overview() },
+  { k: 'my', name: '마이 비교', sub: '역할별 마이', who: '', html: `<div class="diff"><h2>마이 비교</h2><ul><li><b>회원 마이</b>가 기준이고, 역할마다 <b>분홍 점선 칸</b>만 달라요.</li><li>프로 · 스텝은 <b>랭킹에서 빠지고</b>, 숫자 칸이 역할에 맞게 바뀌어요.</li><li>호스트 · 코호스트는 회원 마이에 <b>모임 카드 하나</b>가 더해져요.</li><li>왕관 · HOST · CO-HOST는 마이엔 안 붙어요 (그 모임 안에서만).</li></ul></div>${phonesHtml([MY.member, MY.pro, MY.staff, MY.host, MY.co])}` },
+  ...ROLES.map((r) => ({ ...r, html: `<div class="diff"><h2>${r.who}${r.name}${r.k === 'staff' ? '이' : '가'} 회원과 다른 점</h2><ul>${r.diff.map((d) => `<li>${d}</li>`).join('')}</ul><div class="same">${r.same}</div></div>${phonesHtml(r.items)}` })),
+];
+PAGES.forEach((r) => {
   const b = document.createElement('button'); b.dataset.k = r.k; b.innerHTML = `${r.who}<span>${r.name} <small>${r.sub}</small></span>`; tabsEl.appendChild(b);
-  const s = document.createElement('section'); s.className = 'role'; s.id = 'r-' + r.k;
-  s.innerHTML = `<div class="diff"><h2>${r.who}${r.name}${r.k === 'staff' ? '이' : '가'} 회원과 다른 점</h2><ul>${r.diff.map((d) => `<li>${d}</li>`).join('')}</ul><div class="same">${r.same}</div></div>
-    <div class="phones">${r.items.map((it, i) => `<div class="pc">${it.html}<div class="cap"><b><span class="num">${i + 1}</span>${it.t}</b><span>${it.d}</span></div></div>`).join('')}</div>`;
-  rolesEl.appendChild(s);
+  const s = document.createElement('section'); s.className = 'role'; s.id = 'r-' + r.k; s.innerHTML = r.html; rolesEl.appendChild(s);
 });
 const show = (k) => { document.querySelectorAll('.rtabs button').forEach((b) => b.classList.toggle('on', b.dataset.k === k)); document.querySelectorAll('.role').forEach((s) => s.classList.toggle('on', s.id === 'r-' + k)); try { history.replaceState(null, '', '?role=' + k); } catch (e) {} };
 tabsEl.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.k); });
-show(new URLSearchParams(location.search).get('role') || 'pro');
+show(new URLSearchParams(location.search).get('role') || 'all');
 </script>
 </body></html>

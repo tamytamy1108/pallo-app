@@ -56,6 +56,8 @@ export type CommentsSheetProps = {
    * 올린 사람에게만 보이는 '답장 보내기'는 StoryReplySheet 를 따로 써요.
    */
   story?: { who: string; mine?: boolean };
+  /** 비었을 때 두 줄 (기본 '아직 댓글이 없어요' · '첫 댓글을 남겨 보세요.') — 후기 창 등 */
+  empty?: [string, string];
 };
 
 type Mode = { t: 'reply' | 'edit'; id: string } | null;
@@ -69,7 +71,7 @@ const newId = () => `c-new-${Date.now()}-${++seq}`;
  * 내 댓글 수정 · 삭제(되돌리기) · 아래 고정 입력칸. 비회원은 답글 · 보내기에서 체험 안내 시트가 떠요 (좋아요는 그대로).
  * 담당: 공통 부품. props 는 바꾸지 않아요(늘리기만).
  */
-export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글', author, placeholder, head, onChange, story }: CommentsSheetProps) {
+export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글', author, placeholder, head, onChange, story, empty = ['아직 댓글이 없어요', '첫 댓글을 남겨 보세요.'] }: CommentsSheetProps) {
   const me = useMe();
   const [own, setOwn] = useState<Comment[]>(comments);
   const [wasOpen, setWasOpen] = useState(open);
@@ -203,8 +205,8 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
           ))
         ) : head ? null : (
           <View style={styles.cs0}>
-            <PText style={styles.cs0b}>아직 댓글이 없어요</PText>
-            <PText style={styles.cs0s}>첫 댓글을 남겨 보세요.</PText>
+            <PText style={styles.cs0b}>{empty[0]}</PText>
+            <PText style={styles.cs0s}>{empty[1]}</PText>
           </View>
         )}
       </ScrollView>

@@ -96,24 +96,28 @@ export function useShowFocusedOnKeyboard(box: RefObject<ViewInstance | null>, sh
   });
   useEffect(() => {
     if (Platform.OS === 'web') return;
-    let t: ReturnType<typeof setTimeout> | undefined;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const clear = () => timers.splice(0).forEach(clearTimeout);
+    const check = () => {
+      const target = TextInput.State.currentlyFocusedInput();
+      const b = box.current;
+      if (!target || !b) return;
+      // box 안에 없는 칸이면 measureLayout 이 실패해요
+      target.measureLayout(
+        b,
+        () => showRef.current(target),
+        () => {},
+      );
+    };
     const sub = Keyboard.addListener('keyboardDidShow', () => {
-      clearTimeout(t);
-      t = setTimeout(() => {
-        const target = TextInput.State.currentlyFocusedInput();
-        const b = box.current;
-        if (!target || !b) return;
-        // box 안에 없는 칸이면 measureLayout 이 실패해요
-        target.measureLayout(
-          b,
-          () => showRef.current(target),
-          () => {},
-        );
-      }, 60);
+      clear();
+      // 안드로이드: 키보드가 다 올라온 뒤에도 시트(KeyboardAvoidingView)가 줄어드는 데 시간이 조금 걸려요.
+      // 바로 재면 아직 큰 칸 기준이라 '안 가려짐'으로 보고 그냥 지나가서, 맨 아래 칸이 버튼 뒤에 가려졌어요 → 자리 잡은 뒤 한 번 더 (이미 보이면 그대로)
+      timers.push(setTimeout(check, 60), setTimeout(check, 320));
     });
     return () => {
       sub.remove();
-      clearTimeout(t);
+      clear();
     };
   }, [box]);
 }

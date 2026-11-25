@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 
 import { LgLink, SecHead } from '@/components/meet/parts';
-import { removeProposal, useMeetStore, type Proposal } from '@/components/meet/meet-store';
+import { addProposal, removeProposal, useMeetStore, type Proposal } from '@/components/meet/meet-store';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -47,8 +47,9 @@ export function ProposalCard({ q }: { q: Proposal }) {
         size={12.5}
         label="취소"
         onPress={() => {
+          // 한 번 누르면 바로 지워져서, 잘못 눌렀을 때 되돌릴 수 있게 해요
           removeProposal(q.id);
-          showToast('제안을 취소했어요');
+          showToast('제안을 취소했어요', { label: '되돌리기', onPress: () => addProposal(q) });
         }}
       />
     </View>
