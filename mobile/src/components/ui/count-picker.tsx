@@ -74,7 +74,7 @@ function TypedNumber({ value, min, max, unit, onChange }: { value: number; min: 
         maxLength={String(max).length}
         selectionColor={Colors.purple}
         cursorColor={Colors.purple}
-        accessibilityLabel={`인원 직접 적기 · ${min}~${max}${unit}`}
+        accessibilityLabel={`${unit === '명' ? '인원' : '숫자'} 직접 적기 · ${min}~${max}${unit}`}
         // 웹은 입력 칸 기본 폭이 넓어서(약 150px) 줄이 옆으로 밀려요 → 자리 수만큼만
         style={[st.input, { width: 14 * String(max).length + 8 }]}
       />

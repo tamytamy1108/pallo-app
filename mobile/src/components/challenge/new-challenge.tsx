@@ -42,12 +42,16 @@ import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { CountStepper, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
+import { CountPicker } from '@/components/ui/count-picker';
 import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
 
 import { ChLoungePreview } from './cards';
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
 
+/** 기간: 알약(자주 쓰는 날 수) 말고도 −/+ · 직접 적기로 1~100일 */
+const DUR_MIN = 1;
+const DUR_MAX = 100;
 /** 표현 목록: 이보다 많으면 찾기 · 나온 곳 칩 · 'N개 더 보기' (CH_PAGE) */
 const PAGE = 6;
 const SRC_KEYS = Object.keys(CH_SRC) as ChSrcKind[];
@@ -181,7 +185,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
       title="챌린지 열기"
       footer={<LgBtn label={study ? '표현 챌린지 열기' : '챌린지 열기'} onPress={submit} off={study && !!dup} height={52} fontSize={15.5} wide />}>
       <View style={styles.fl}>
-        <FieldLabel>카테고리</FieldLabel>
+        <FieldLabel req>카테고리</FieldLabel>
         <Pills options={CH_CATS.map((c) => c.key)} value={cat} onChange={setCat} label={(k) => CH_CATS.find((c) => c.key === k)?.label ?? ''} />
       </View>
 
@@ -192,35 +196,35 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             <PText style={styles.xdB}>나만의 문장 완성하기</PText>를 열어요.
           </PText>
           <View style={styles.fl}>
-            <FieldLabel>아래 표현에서 불러오세요</FieldLabel>
+            <FieldLabel req>아래 표현에서 불러오세요</FieldLabel>
           </View>
           <ExprPicker cards={cards} sel={sel} onPick={pick} q={q} setQ={setQ} chip={chip} setChip={setChip} more={more} setMore={setMore} />
           {dup ? <DupBox p={dup} count={entriesOf(dup, s, hide).length} onGo={() => onGoChallenge(dup)} /> : null}
           <View style={styles.fl}>
-            <FieldLabel>기간</FieldLabel>
-            <Pills options={XDUR_OPTS} value={xdur} onChange={setXdur} label={(d) => `${d}일`} />
+            <FieldLabel req>기간</FieldLabel>
+            <CountPicker value={xdur} presets={XDUR_OPTS} min={DUR_MIN} max={DUR_MAX} unit="일" typable onChange={setXdur} />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>내가 먼저 만든 문장</FieldLabel>
+            <FieldLabel>내가 먼저 만든 문장 · 선택</FieldLabel>
             <Field multiline value={first} onChangeText={setFirst} placeholder={picked ? `예) ${picked.ex}` : '고른 표현으로 내 이야기를 한 문장 써 보세요'} accessibilityLabel="내가 먼저 만든 문장" />
           </View>
         </>
       ) : (
         <>
           <View style={styles.fl}>
-            <FieldLabel>챌린지 이름</FieldLabel>
+            <FieldLabel req>챌린지 이름</FieldLabel>
             <Field value={name} onChangeText={setName} placeholder={CH_PH[cat]} accessibilityLabel="챌린지 이름" />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>시작</FieldLabel>
+            <FieldLabel req>시작</FieldLabel>
             <Pills options={START_OPTS} value={start} onChange={setStart} />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>기간</FieldLabel>
-            <Pills options={DUR_OPTS} value={dur} onChange={setDur} label={(d) => `${d}일`} />
+            <FieldLabel req>기간</FieldLabel>
+            <CountPicker value={dur} presets={DUR_OPTS} min={DUR_MIN} max={DUR_MAX} unit="일" typable onChange={setDur} />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>인증 주기</FieldLabel>
+            <FieldLabel req>인증 주기</FieldLabel>
             <Pills options={['매일', '주 몇 회'] as const} value={weekly ? '주 몇 회' : '매일'} onChange={(v) => setWeekly(v === '주 몇 회')} />
             {weekly ? (
               <View style={styles.fx}>
@@ -255,16 +259,16 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
             )}
           </PText>
           <View style={styles.fl}>
-            <FieldLabel>인증 방법</FieldLabel>
+            <FieldLabel req>인증 방법</FieldLabel>
             <Pills options={['댓글로 인증', '사진 + 댓글'] as const} value={photo ? '사진 + 댓글' : '댓글로 인증'} onChange={(v) => setPhoto(v === '사진 + 댓글')} />
             <PText style={styles.wayd}>{photo ? '사진을 1장 이상 올려야 체크돼요. 댓글은 함께 남겨요.' : '그날 댓글 한 줄만 남기면 체크돼요.'}</PText>
           </View>
           <View style={styles.fl}>
-            <FieldLabel>챌린지 소개 · 한 줄에 하나씩</FieldLabel>
+            <FieldLabel>챌린지 소개 · 한 줄에 하나씩 · 선택</FieldLabel>
             <Field multiline value={guide} onChangeText={(t) => setGuide(bulletize(t))} placeholder={CH_GD[cat as DailyCatKey]} accessibilityLabel="챌린지 소개" />
           </View>
           <View style={styles.fl}>
-            <FieldLabel>대표 이미지 · 사진 또는 카드</FieldLabel>
+            <FieldLabel req>대표 이미지 · 사진 또는 카드</FieldLabel>
             <PosterPicker uris={covers} onChange={setCovers} emptyLabel="사진 넣기" max={1} />
             <CardMaker value={card} onChange={setCard} hasPhoto={covers.length > 0} defaultColor={chPbgOf(cat)} example={pwDef} square clean={cleanPw} maxLength={9} onNote="사진을 넣어도 네모 칸에는 카드가 보여요."
               listPreview={{

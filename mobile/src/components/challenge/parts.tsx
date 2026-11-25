@@ -191,8 +191,14 @@ export function Pills<T extends string | number>({
 }
 
 /** .lg-fl > .lb: 칸 이름 (12.5px · 900 — 번개 · 동아리 · 이벤트 만들기와 같아요) */
-export function FieldLabel({ children }: { children: string }) {
-  return <PText style={styles.lb}>{children}</PText>;
+/** 칸 이름표 · req 면 빨간 * (꼭 정해요 — 번개 · 동아리 · 이벤트 제안과 같은 모양) */
+export function FieldLabel({ children, req }: { children: string; req?: boolean }) {
+  return (
+    <PText style={styles.lb}>
+      {children}
+      {req ? <PText style={styles.req}> *</PText> : null}
+    </PText>
+  );
 }
 
 /** 시트 입력칸 (.lg-fl textarea: 흰 · 잉크 2px · 둥글기 18 · 안쪽 12 14) */
@@ -237,6 +243,7 @@ export function IconLine({ icon, text, size = 13, color = SUB, style, textStyle 
 }
 
 const styles = StyleSheet.create({
+  req: { color: '#E5484D' },
   inline: { alignSelf: 'flex-start' },
   wide: { alignSelf: 'stretch' },
   btnShadow: { position: 'absolute', right: 0, bottom: 0, backgroundColor: Colors.ink },
