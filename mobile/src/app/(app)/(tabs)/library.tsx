@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
@@ -14,10 +15,11 @@ import { CurrPanel, EmptyBlock, PanelCard, SitPanel, levelProgress } from '@/com
 import { LibraryWorld, noteLibTouch, type LibWorld } from '@/components/library/library-world';
 import { islandFor, libStore, markMapSeen, nextSceneNo, pickIsland, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
 import { ToTop } from '@/components/library/to-top';
+import { FLAT_MAPS } from '@/components/library/world/flat-maps';
 import { MAP_PRESETS } from '@/components/library/world/presets';
 import type { WorldSC } from '@/components/library/world/scenes';
 import { Raised } from '@/components/ui/raised';
-import { ErrorState, LoadingState } from '@/components/ui/state-view';
+import { ErrorState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
@@ -45,7 +47,7 @@ export default function LibraryScreen() {
   // 비회원은 맵마다 첫 챕터만 (state/access)
   const allOpen = useMe((m) => canUse(m, 'allChapters'));
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('library', () => scroll.current?.scrollTo({ y: 0, animated: true }));
+  useTabReselect('library', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const [showTop, setShowTop] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   // 지도가 화면 위로 다 올라가면 3D 그리기를 멈춰요 (폰 배터리)
@@ -135,7 +137,10 @@ export default function LibraryScreen() {
         )}
 
         {q.isPending ? (
-          <LoadingState />
+          // 맵 목록을 아직 못 받았어요 (보통은 스플래시 동안 받아 둬요): 도는 표시 대신 같은 자리 · 같은 크기의 지도 판을 먼저
+          <Raised radius={26}>
+            <View style={styles.flat}>{!st.sitMode && <Image source={FLAT_MAPS.study2.img} style={StyleSheet.absoluteFill} contentFit="fill" accessible={false} />}</View>
+          </Raised>
         ) : q.isError ? (
           <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
         ) : world ? (
