@@ -16,6 +16,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { DESC, dday, isPast, MONTHS, capFull, capText } from '@/data/meet';
+import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -29,7 +30,11 @@ export default function MeetDetail() {
   const myMeets = useMeetStore((s) => s.myMeets);
   const m = findMeet(String(id), myMeets);
   const me = useMe();
-  const joined = useMeetStore((s) => !!s.joined[String(id)]);
+  // 개발용: 마이 '개발 · 사람'의 모임 역할(lib/dev-profile devClubRole). 호스트면 모든 번개를 내가 연 것처럼, 멤버 · 코호스트면 참여한 것처럼 봐요 (번개엔 코호스트가 없어요)
+  const devHost = __DEV__ && devClubRole === 'host';
+  const devIn = __DEV__ && (devClubRole === 'member' || devClubRole === 'co');
+  const [devClosed, setDevClosed] = useState(false);
+  const joined = useMeetStore((s) => !!s.joined[String(id)]) || devIn;
   const saved = useMeetStore((s) => !!s.saved[String(id)]);
   const vac = useMeetStore((s) => !!s.vac[String(id)]);
   const myHi = useMeetStore((s) => s.mhi[String(id)] ?? '');
@@ -39,22 +44,26 @@ export default function MeetDetail() {
   const [cmts, setCmts] = useState<Comment[]>(REVIEW_SEED);
 
   if (!m) return <EmptyState title="모임을 찾을 수 없어요" />;
+  const mine = !!m.mine || devHost;
+  // 내가 연 번개가 아닌데 개발용으로 호스트처럼 볼 때는 모집 닫기를 이 화면에만 남겨요
+  const closed = m.mine ? !!m.closed : devClosed;
+  const setClosed = (v: boolean) => (m.mine ? updateMyMeet(m.id, { closed: v }) : setDevClosed(v));
   const past = isPast(m);
   const cur = m.cur + (joined ? 1 : 0);
   const full = capFull(cur, m.max) && !joined;
-  const members = membersOf(m, cur, joined || !!m.mine, myHi, { name: me.name, branch: me.branch });
+  const members = membersOf({ ...m, mine }, cur, joined || mine, myHi, { name: me.name, branch: me.branch });
   const dd = dday(m);
 
   const main = past ? (
     <MainBtn label="후기 보기" variant="wh" onPress={() => setReviews(true)} />
-  ) : m.mine ? (
+  ) : mine ? (
     <MainBtn
-      label={m.closed ? '모집 닫음' : '모집 닫기'}
-      variant={m.closed ? 'off' : 'wh'}
+      label={closed ? '모집 닫음' : '모집 닫기'}
+      variant={closed ? 'off' : 'wh'}
       grow={false}
       onPress={() => {
-        updateMyMeet(m.id, { closed: true });
-        showToast('모집을 닫았어요 · 지도에서 빠져요', { label: '되돌리기', onPress: () => updateMyMeet(m.id, { closed: false }) });
+        setClosed(true);
+        showToast('모집을 닫았어요 · 지도에서 빠져요', { label: '되돌리기', onPress: () => setClosed(false) });
       }}
     />
   ) : full ? (
@@ -114,7 +123,7 @@ export default function MeetDetail() {
           />
           <InfoRow icon="heart" main="참가비 없음 · 각자 계산" />
           <InfoRow icon="users" main={m.max > 0 ? `${capText(cur, m.max)} ${cur >= m.max ? '· 마감' : `· 남은 자리 ${m.max - cur}`}` : capText(cur, m.max)} sub={m.max > 0 ? <CapBar cur={cur} max={m.max} width={140} /> : '누구나 함께해요'} />
-          <HostRow name={m.mine ? me.name : hostName(m.host)} branch={m.mine ? me.branch : m.br === '전 지점' ? '본사' : m.br} me={!!m.mine} />
+          <HostRow name={mine ? me.name : hostName(m.host)} branch={mine ? me.branch : m.br === '전 지점' ? '본사' : m.br} me={mine} />
         </InfoRows>
         <DSec>소개</DSec>
         <Desc text={DESC[m.id] || `${m.place}에서 만나요. 영어로 먼저 인사하고, 그다음은 편하게 이야기해요. 처음 오는 분도 환영이에요.`} />

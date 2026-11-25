@@ -18,8 +18,8 @@ export type MeResponse = Me & { needsOnboarding: boolean };
 
 /** 3 GET /me — 로그인 상태(api/session.tsx)의 판정 근거 */
 export function fetchMe({ signal }: Opts = {}): Promise<MeResponse> {
-  // 가짜 서버: 가입을 끝냈는지는 이 기기에 남긴 state/onboarding 의 done 으로 (개발용 '연동된 회원' 프로필은 가입을 끝낸 것으로)
-  if (apiConfig.useMock) return mock('me', () => ({ ...readMeStore(), needsOnboarding: devProfile !== 'linked' && !getOnboarding().done }));
+  // 가짜 서버: 가입을 끝냈는지는 이 기기에 남긴 state/onboarding 의 done 으로 (개발용 사람(lib/dev-profile)은 가입을 끝낸 것으로)
+  if (apiConfig.useMock) return mock('me', () => ({ ...readMeStore(), needsOnboarding: !devProfile && !getOnboarding().done }));
   return http.get<MeResponse>('/me', { signal });
 }
 

@@ -110,8 +110,8 @@ export function hydrateTokens(): Promise<void> {
   hydrating ??= (async () => {
     const saved = native ? await readNative() : readWeb();
     if (!decided) {
-      // 개발용 '연동된 회원' 프로필(lib/dev-profile) + 가짜 서버: 로그인한 채로 시작해요 (첫 화면 · 가입을 건너뛰고 홈부터)
-      memory = saved ?? (devProfile === 'linked' && apiConfig.useMock ? { accessToken: 'mock-linked', refreshToken: 'mock-refresh' } : null);
+      // 개발용 사람(lib/dev-profile) + 가짜 서버: 로그인한 채로 시작해요 (첫 화면 · 가입을 건너뛰고 홈부터)
+      memory = saved ?? (devProfile && apiConfig.useMock ? { accessToken: `mock-${devProfile}`, refreshToken: 'mock-refresh' } : null);
       decided = true;
     }
     hydrated = true;
