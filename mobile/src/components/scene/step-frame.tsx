@@ -1,4 +1,3 @@
-import * as Tts from 'expo-speech';
 import { router, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -16,6 +15,7 @@ import { setNoListen, useLearnPrefs } from '@/state/learn-prefs';
 import { awardPoints } from '@/state/ledger';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, sceneKey } from '@/state/progress';
 import { sceneQuestTitle, shareQuest } from '@/state/quest-share';
+import { stopSpeaking } from '@/lib/tts';
 
 import { Sound, XMark } from './icons';
 import { QuitSheet } from './parts';
@@ -30,7 +30,7 @@ export const backToHub = (sceneId: string) => (router.canGoBack() ? router.back(
 export function useStepFinish(sceneId: string, stepId: SceneStepId) {
   const [cel, setCel] = useState<{ result: CelebrateResult; next: SceneStepId | null } | null>(null);
   const finish = (score?: { right: number; total: number }) => {
-    Tts.stop();
+    stopSpeaking();
     const step = SCENE_STEPS.find((s) => s.id === stepId) ?? SCENE_STEPS[0];
     const key = sceneStepKey(sceneId, stepId);
     const first = markDone(key);
@@ -95,7 +95,7 @@ export function StepShell({
   const { noListen } = useLearnPrefs();
   const [ask, setAsk] = useState(false);
   const quit = () => {
-    Tts.stop();
+    stopSpeaking();
     onQuit?.();
     backToHub(sceneId);
   };
@@ -107,7 +107,7 @@ export function StepShell({
     }
   };
   const toggleSound = () => {
-    Tts.stop();
+    stopSpeaking();
     setNoListen(!noListen);
   };
   return (
