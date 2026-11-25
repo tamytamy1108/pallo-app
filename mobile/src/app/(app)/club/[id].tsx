@@ -8,6 +8,7 @@ import { ClubBoard } from '@/components/meet/club/club-board';
 import { ClubChat } from '@/components/meet/club/club-chat';
 import { ClubHome } from '@/components/meet/club/club-home';
 import { ClubJoin } from '@/components/meet/club/club-join';
+import { ClubManage, manageCounts, type ManageRole } from '@/components/meet/club/club-manage';
 import { SessionSheet } from '@/components/meet/club/session-sheet';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
 import { MainBtn, SaveBtn } from '@/components/meet/detail/detail-parts';
@@ -15,7 +16,7 @@ import { AskSheet } from '@/components/meet/detail/sheets';
 import { guardMember } from '@/components/common/trial-guide';
 import { Icon } from '@/components/meet/icons';
 import { setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
-import { clubCat, clubSessions, clubStaff, clubX, findClub, membersOf, useAllClubs } from '@/components/meet/model';
+import { clubCat, clubHost, clubSessions, clubStaff, clubX, findClub, membersOf, useAllClubs } from '@/components/meet/model';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -40,7 +41,8 @@ const TABS: [Tab, string][] = [
  * 맞는 API: 63 `/clubs/:id` · 65 `/clubs/:id/members` · 67 `/board` · `/photos` · 68 `/chat`(실시간 — Q-T6) · 69 `/sessions`
  */
 export default function ClubDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // 개발용 ?as=host · ?as=co: 호스트 · 코호스트로 보기 (관리 버튼 · 시트 확인용)
+  const { id, as } = useLocalSearchParams<{ id: string; as?: string }>();
   const key = String(id);
   const myClubs = useMeetStore((s) => s.myClubs);
   const c = findClub(key, myClubs);
@@ -54,6 +56,7 @@ export default function ClubDetail() {
   const [join, setJoin] = useState(false);
   const [leave, setLeave] = useState(false);
   const [sid, setSid] = useState<string | null>(null);
+  const [manage, setManage] = useState(false);
 
   if (!c) return <EmptyState title="동아리를 찾을 수 없어요" />;
   const inC = st === 'in';
@@ -65,8 +68,13 @@ export default function ClubDetail() {
   const cat = clubCat(c);
   const recs = clubs.filter((q) => q.id !== c.id && q.cc === c.cc).slice(0, 3);
   const q = sid ? clubSessions(c, att, 12, 85).find((s) => s.id === sid) ?? null : null;
+  const devRole: ManageRole | null = __DEV__ && (as === 'host' || as === 'co') ? as : null;
+  const role: ManageRole | null = devRole ?? (c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
+  const counts = manageCounts();
 
-  const btn = c.wait ? (
+  const btn = role ? (
+    <MainBtn label="관리" variant="pu" onPress={() => setManage(true)} />
+  ) : c.wait ? (
     <MainBtn label="승인 대기" variant="off" />
   ) : inC ? (
     <MainBtn label="가입 완료" variant="done" onPress={() => setLeave(true)} />
@@ -122,7 +130,11 @@ export default function ClubDetail() {
         tabKey={tab}
         tabBody={body}
         ctaNote={
-          x.j30 ? (
+          role ? (
+            <PText style={styles.j30}>
+              가입 신청 <PText style={styles.j30B}>{counts.ask}명</PText> · 대기자 <PText style={styles.j30B}>{counts.wait}명</PText> · 관리에서 승인해요
+            </PText>
+          ) : x.j30 ? (
             <PText style={styles.j30}>
               최근 30일 동안 <PText style={styles.j30B}>{x.j30}명</PText>이 가입했어요
             </PText>
@@ -145,6 +157,7 @@ export default function ClubDetail() {
       </DetailFrame>
 
       <ClubJoin c={c} open={join} onClose={() => setJoin(false)} />
+      {role ? <ClubManage c={c} role={role} open={manage} onClose={() => setManage(false)} members={members} staff={staff} /> : null}
       <AskSheet
         open={leave}
         onClose={() => setLeave(false)}

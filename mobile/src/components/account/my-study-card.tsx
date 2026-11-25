@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 
+import { MemberFace } from '@/components/common/member-face';
 import { Pressable } from '@/components/ui/pressable';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
@@ -12,23 +12,24 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { changesLeftText, getMembership, LANG_COLOR, MY_TEAMS, teamLabel, type Team } from '@/data/account';
 import { sfx } from '@/lib/feedback';
+import { useMe } from '@/state/me';
 
 import { Box, Lift } from './parts';
 import { cancelChangeRequest, useChangeRequest } from './store';
 
-const RING_C = 2 * Math.PI * 44;
 const WD = '월화수목금토일';
 
 /** 팀 목록 = 시간 순 타임라인: 월요일부터 가는 순서 (프로토타입 myStudyHTML 의 first()) */
 const firstDay = (t: Team) => Math.min(...[...t.when.split(' ')[0]].map((d) => WD.indexOf(d)).filter((i) => i >= 0));
 
 /**
- * 마이 화면의 '내 스터디' 카드 (남은 횟수 고리 · 이용권 · 팀 시간표 · [연기 · 팀 · 지점 변경]) — 마이 화면이 그대로 넣어요.
+ * 마이 화면의 '내 스터디' 카드 (내 프로필 · 이용권 · 팀 시간표 · [연기 · 팀 · 지점 변경]) — 남은 횟수 고리 · 무료 줄은 뺐어요 (D안) — 마이 화면이 그대로 넣어요.
  * 프로토타입 myStudyHTML (.my-study.ms-a). 신청 중이면 '○○ 신청 · 운영진 확인 중' + [신청 취소].
  * 담당: 마이 B. props 는 바꾸지 않아요(늘리기만). title={false} 면 위 '내 스터디' 제목 없이.
  */
 export function MyStudyCard({ title = true }: { title?: boolean }) {
   const ms = getMembership();
+  const me = useMe();
   const req = useChangeRequest();
   const [askCancel, setAskCancel] = useState(false);
   const teams = MY_TEAMS.slice().sort((p, q) => firstDay(p) - firstDay(q));
@@ -43,18 +44,12 @@ export function MyStudyCard({ title = true }: { title?: boolean }) {
       ) : null}
       <Box style={styles.card}>
         <View style={styles.top}>
-          <View style={styles.ring} accessibilityLabel={`남은 횟수 ${ms.left}회`}>
-            {/* 원이 모두 같은 중심이라 그림 전체를 -90° 돌려 12시에서 시작해요 (프로토타입 rotate(-90 52 52)) */}
-            <Svg width={104} height={104} viewBox="0 0 104 104" style={styles.ringSvg}>
-              <Circle cx={52} cy={52} r={44} fill="none" stroke="#EFE9DC" strokeWidth={10} />
-              <Circle cx={52} cy={52} r={44} fill="none" stroke={Colors.yellow} strokeWidth={10} strokeLinecap="round" strokeDasharray={`${RING_C}`} strokeDashoffset={RING_C * (1 - ms.left / ms.total)} />
-              <Circle cx={52} cy={52} r={49.5} fill="none" stroke={Colors.ink} strokeWidth={1.5} />
-              <Circle cx={52} cy={52} r={38.5} fill="none" stroke={Colors.ink} strokeWidth={1.5} />
-            </Svg>
-            <View style={styles.ringIn}>
-              <PText style={styles.ringNum}>{ms.left}</PText>
-              <PText style={styles.ringLabel}>남은 횟수</PText>
-            </View>
+          {/* 왼쪽: 내 프로필 (D안, 2026-11-25) — 남은 횟수 고리 대신 내 캐릭터 · 이름 */}
+          <View style={styles.prof}>
+            <MemberFace name={me.name} me size={96} />
+            <PText style={styles.profName} numberOfLines={1}>
+              {me.name}
+            </PText>
           </View>
           <View style={styles.info}>
             <View style={styles.pl}>
@@ -63,7 +58,6 @@ export function MyStudyCard({ title = true }: { title?: boolean }) {
                 {ms.period}
               </PText>
             </View>
-            <KV k="무료" v={`${ms.freeL}회 포함`} />
             <KV k="연기 · 변경" v={changesLeftText(ms.pp)} />
             <KV k="팀" v={`${MY_TEAMS.length}팀 · 주 ${ms.wk}회`} />
           </View>
@@ -168,11 +162,8 @@ const styles = StyleSheet.create({
   secTitle: { marginTop: 6, marginHorizontal: 2, fontFamily: Font.display, fontSize: 17, lineHeight: 24 },
   card: { padding: 18 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  ring: { width: 104, height: 104 },
-  ringSvg: { transform: [{ rotate: '-90deg' }] },
-  ringIn: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  ringNum: { fontFamily: Font.display, fontSize: 24, lineHeight: 26 },
-  ringLabel: { marginTop: 4, fontFamily: Font.body800, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
+  prof: { width: 104, alignItems: 'center', gap: 8 },
+  profName: { maxWidth: 104, fontFamily: Font.body900, fontSize: 14, lineHeight: 18 },
   info: { flex: 1, minWidth: 0 },
   pl: { gap: 2, marginBottom: 8 },
   plan: { fontFamily: Font.body900, fontSize: 18, lineHeight: 26 },
