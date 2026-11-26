@@ -84,7 +84,7 @@ export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => 
  * 지점 연동 확인 중일 때 (09-onboarding · A 잠긴 출석 카드): 같은 클래퍼보드를 라벤더로 잠가요.
  * 칸: 스터디 미정 · 연동 확인 중 · DATE / STANDBY · Almost on stage. · 한 줄 안내 · 점선으로 꺼 둔 버튼.
  * 연동되면(서버 /me 가 회원 등급을 주면) 원래 카드로 돌아와요.
- * rejected: 지점이 반려했을 때 — 같은 잠긴 카드에 '반려됨' · [다시 신청하기](→ 연동 요청) · 사유 옆 [더보기 ›](→ 알림)만 열어 둬요.
+ * rejected: 지점이 반려했을 때 — 같은 잠긴 카드에 '반려됨' · [다시 신청하기](→ 연동 요청) · [사유 확인하기 ›](→ 알림)만 열어 둬요.
  */
 function PendingCard({ rejected = false, branch: requested, branchCode }: { rejected?: boolean; branch?: string; branchCode?: string }) {
   const myBranch = useMe((m) => m.branch);
@@ -192,10 +192,11 @@ function RejectedCard({ branch, branchCode, now }: { branch: string; branchCode:
               One more take.
             </PText>
             <PText style={styles.waitSub}>
-              {branch} 연동이 반려됐어요. 사유는 알림에서 볼 수 있어요.{' '}
-              {/* 더보기 → 알림 (반려 알림을 누르면 지점에서 남긴 말) */}
-              <PText style={styles.moreInline} color={Colors.inkSub} onPress={notis} accessibilityRole="link" accessibilityLabel="반려 사유 · 알림 더보기">
-                더보기 ›
+              {branch} 연동이 반려됐어요.{' '}
+              {/* 사유 확인하기 → 알림 (반려 알림을 누르면 지점에서 남긴 말) */}
+              <PText style={styles.moreInline} color={Colors.inkSub} onPress={notis} accessibilityRole="link" accessibilityLabel="반려 사유 확인하기 · 알림">
+                {/* 줄이 바뀌어도 '사유 확인하기 ›'는 한 덩어리로 (붙은 칸) */}
+                {'사유\u00A0확인하기\u00A0›'}
               </PText>
             </PText>
             <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])} onLayout={heroRoom.onActions}>
@@ -608,7 +609,7 @@ const styles = StyleSheet.create({
   btnOff: { height: 40, paddingLeft: 5, paddingRight: 16, gap: 8, borderBottomWidth: 2.5, borderStyle: 'dashed', backgroundColor: Colors.white },
   qrOff: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#CFC6B2' },
   btnTextOff: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
-  // 반려됨 (RejectedCard): 분홍 점 · 누를 수 있는 '다시 신청하기' (그림자 있음) · 안내 끝 '더보기 ›'
+  // 반려됨 (RejectedCard): 분홍 점 · 누를 수 있는 '다시 신청하기' (그림자 있음) · 안내 끝 '사유 확인하기 ›'
   failDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
   failLive: { backgroundColor: Colors.rosePink },
   btnAgain: { height: 42, paddingLeft: 5, paddingRight: 14, gap: 8, borderBottomWidth: 5, backgroundColor: Colors.white },
