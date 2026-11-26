@@ -10,7 +10,7 @@ import { clearLinkWaited, markLinkWaited, useLinkWaited } from '@/state/link-wai
 import { useMe } from '@/state/me';
 
 /*
- * 지점 연동이 승인된 뒤 처음 홈에 들어오면 뜨는 팝업 — '○○점 회원이 됐어요!' · [나의 팔로 꾸미러 가기](→ 마이) · [나중에].
+ * 지점 연동이 승인된 뒤 처음 홈에 들어오면 뜨는 팝업 — '○○점 회원이 됐어요!' · [나의 팔로로 꾸미러 가기](→ 마이) · [나중에].
  * 승인은 보통 앱이 꺼져 있을 때 와요(지점 매니저가 관리자 웹에서 처리). 그래서 '연동 대기를 본 적 있음'을 기기에 남겨 두고,
  * 다음에 /me 가 회원 등급을 주면 한 번 띄운 뒤 지워요. 처음부터 회원이던 사람에게는 안 떠요.
  * 앱을 켜 둔 채 승인되면(개발용 '지점 처리 흉내') 홈 카드가 풀리는 순간(link-unlock)이 끝난 뒤에 떠요.
@@ -64,7 +64,7 @@ export function LinkWelcomePopup() {
       image={JUMP}
       title={`${branch} 회원이 됐어요!`}
       message="이제 출석 · 스터디 · 라운지를 모두 쓸 수 있어요"
-      confirmLabel="나의 팔로 꾸미러 가기"
+      confirmLabel="나의 팔로로 꾸미러 가기"
       cancelLabel="나중에"
       onConfirm={() => {
         close();
