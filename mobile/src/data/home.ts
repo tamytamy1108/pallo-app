@@ -290,9 +290,9 @@ const ALL_NOTIS: Noti[] = [
   { id: 'n3', kind: 'lounge', icon: 'flame', text: '‘아침 7시 기상’ 오늘 인증이 남았어요', time: '3시간 전', href: '/challenge/c5', read: false },
   { id: 'n4', kind: 'learn', icon: 'pen', text: '프로님이 PRO\'S NOTE를 보냈어요', time: '어제 21:10', href: '/me/notes', read: false },
   { id: 'n5', kind: 'lounge', who: { name: 'Leo', bg: '#E8D9BF', body: 'sky' }, text: 'Leo님이 ‘say that again’에 문장을 올렸어요', time: '2일 전', href: '/challenge/c2', read: false },
-  // 참여한 번개 · 동아리 모임의 장소가 바뀌면 (서버 HANGOUT_PLACE_CHANGED · CLUB_MEETING_PLACE_CHANGED). 잠금 화면에 뜨니까 새 장소 이름만, 자세한 주소는 상세에서
-  { id: 'pc1', kind: 'lounge', icon: 'bolt', text: '‘퇴근 후 영어 맥주 번개’ 장소가 ‘영등포 브루하우스’(으)로 바뀌었어요. 자세한 주소는 앱에서 확인해 주세요', time: '1시간 전', href: '/meet/m1', read: false },
-  { id: 'pc2', kind: 'lounge', icon: 'flag', text: '원서 북클럽 ‘어린 왕자 8장’ 모임 장소가 ‘영등포 북카페’(으)로 바뀌었어요. 자세한 주소는 앱에서 확인해 주세요', time: '어제 18:20', href: '/club/cl1', read: true },
+  // 참여한 번개 · 동아리 모임의 날짜 · 시간이나 장소가 바뀌면 (서버 HANGOUT_PLAN_CHANGED · CLUB_MEETING_PLAN_CHANGED). 잠금 화면에 뜨니까 새 장소 이름만, 자세한 주소는 상세에서
+  { id: 'pc1', kind: 'lounge', icon: 'bolt', text: '번개 장소가 바뀌었어요 · ‘퇴근 후 영어 맥주 번개’ 번개가 ‘영등포 브루하우스’(으)로 바뀌었어요. 자세한 주소는 앱에서 확인해 주세요', time: '1시간 전', href: '/meet/m1', read: false },
+  { id: 'pc2', kind: 'lounge', icon: 'flag', text: '모임 시간이 바뀌었어요 · 원서 북클럽 ‘어린 왕자 8장’ 모임이 12월 2일(수) 20:30(으)로 바뀌었어요', time: '어제 18:20', href: '/club/cl1', read: true },
   { id: 'n6', kind: 'lounge', icon: 'bolt', text: '번개 참여가 확정됐어요 · 홍대 이자카야 번개', time: '3일 전', href: '/meet/m9', read: true },
   { id: 'n7', kind: 'lounge', icon: 'flag', text: '동아리 가입이 승인됐어요', time: '4일 전', href: '/club/cl1', read: true },
   { id: 'n8', kind: 'event', icon: 'cal', text: '‘제주 영어 캠프 1박 2일’ 신청 마감 D-2', time: '5일 전', href: '/events/e4', read: true },
