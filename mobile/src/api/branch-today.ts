@@ -51,7 +51,9 @@ function mockSession(s: MockBranchSession, m: number, covers: ProCover['sessions
   const me = getAttend();
   // 내가 멤버로 출석한 세션이면 첫 테이블에 +1 (가짜 서버는 테이블을 첫 칸으로 쳐요)
   const mine = me.checked && me.slot === s.slot && me.lang === s.lang;
-  const staff = covers[s.id];
+  // 내가(스텝) 대신한 것 → 없으면 예시 데이터의 스텝 대신 출석 (시작 20분 전부터)
+  const sample = s.staffCover && m >= start - 20 ? { at: atMinute(start - 20), name: s.staffCover, tableNo: s.tables[0].no } : undefined;
+  const staff = covers[s.id] ?? sample;
   const proAt = start - 25;
   const proCame = !s.proLate && m >= proAt;
   const tables = s.tables.map((t, i) => {

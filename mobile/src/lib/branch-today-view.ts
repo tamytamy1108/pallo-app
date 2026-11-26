@@ -14,7 +14,7 @@ export type SessionRow = BranchSession & {
 
 export type BranchTodayView = {
   branchName: string;
-  /** 오늘 세션 수 */
+  /** 오늘 스터디: 오늘 열리는 팀 수 — 0이면 쉬는 날 */
   sessions: number;
   /** 프로 출석: 몇 명이 했는지 (프로 + 스텝이 대신) */
   proCount: number;

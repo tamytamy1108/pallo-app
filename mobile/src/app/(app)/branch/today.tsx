@@ -56,7 +56,8 @@ function Group({ title, tone, rows }: { title: string; tone: 'open' | 'soon'; ro
   // 같은 시각끼리 묶어요
   const times = [...new Set(rows.map((r) => r.start))];
   return (
-    <View style={styles.group}>
+    // 예정은 시각 · 카드 모두 흐리게 (아직 출석이 열리지 않았어요)
+    <View style={[styles.group, tone === 'soon' && styles.groupSoon]}>
       {times.map((t) => (
         <View key={t} style={styles.slot}>
           <View style={styles.slotHead}>
@@ -83,7 +84,7 @@ function proRow(row: SessionRow) {
 }
 
 /** 인원 칸 (테이블 칸과 같은 모양: 크림 바탕 · 연한 선 · 이름 위 · 인원 아래). 0명이면 흰 바탕 · 흐린 숫자 */
-function CountBox({ tone, label, sub, count, planned }: { tone: 'pro' | 'staff' | 'member'; label: string; sub?: string | null; count: number; /** 예정 인원 (프로: 배정됐으면 1명) */ planned?: number }) {
+function CountBox({ tone, label, sub, count }: { tone: 'pro' | 'staff' | 'member'; label: string; sub?: string | null; count: number }) {
   return (
     <View style={[styles.box, count === 0 && styles.boxZero]}>
       <PText style={[styles.boxL, tone === 'pro' && styles.boxLPro, tone === 'staff' && styles.boxLStaff]} numberOfLines={1}>
@@ -95,7 +96,6 @@ function CountBox({ tone, label, sub, count, planned }: { tone: 'pro' | 'staff' 
         </PText>
       ) : null}
       <PText style={[styles.boxV, count === 0 && styles.boxVZero]}>{count}명</PText>
-      {planned !== undefined ? <PText style={styles.boxPlan}>예정 {planned}명</PText> : null}
     </View>
   );
 }
@@ -112,7 +112,7 @@ function SessionCard({ row }: { row: SessionRow }) {
       </View>
       {/* 프로 · 멤버 칸은 늘 위에 (찍기 전엔 0명, 찍으면 바로 바뀌어요) */}
       <View style={styles.boxes}>
-        <CountBox tone={pro.staff ? 'staff' : 'pro'} label={pro.label} sub={pro.sub} count={pro.count} planned={row.proName ? 1 : 0} />
+        <CountBox tone={pro.staff ? 'staff' : 'pro'} label={pro.label} sub={pro.sub} count={pro.count} />
         <CountBox tone="member" label="멤버" count={row.checkedIn} />
       </View>
     </View>
@@ -145,6 +145,7 @@ function DoneGroup({ rows }: { rows: SessionRow[] }) {
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40, gap: 14 },
   group: { gap: 14 },
+  groupSoon: { opacity: 0.45 },
   slot: { gap: 8 },
   slotHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   slotTime: { fontFamily: Font.display, fontSize: 15, lineHeight: 20 },
@@ -158,15 +159,14 @@ const styles = StyleSheet.create({
   soonT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   // 프로 · 멤버 칸: 같은 크기 두 칸
   boxes: { flexDirection: 'row', gap: 8, marginTop: 2 },
-  box: { flex: 1, minWidth: 0, paddingVertical: 8, paddingHorizontal: 8, alignItems: 'center', borderRadius: 10, backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.line },
+  box: { flex: 1, minWidth: 0, paddingVertical: 8, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.line },
   boxZero: { backgroundColor: Colors.white },
   boxL: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   boxLPro: { fontFamily: Font.body900, color: Colors.purple },
   boxLStaff: { fontFamily: Font.body900, color: Colors.ink },
   boxSub: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
-  boxV: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23 },
+  boxV: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23, textAlign: 'center' },
   boxVZero: { color: '#A39C8E' },
-  boxPlan: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
   done: { opacity: 0.5, gap: 6 },
   doneHead: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   doneRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1.5, borderColor: '#C9C0AE', borderRadius: 12, backgroundColor: Colors.white, paddingHorizontal: 10, height: 40 },

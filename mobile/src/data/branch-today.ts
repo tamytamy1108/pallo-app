@@ -57,6 +57,8 @@ export type MockBranchSession = {
   pro: string;
   tables: { no: number; full: number }[];
   proLate?: boolean;
+  /** 예시: 맡은 프로가 못 와서 스텝이 '프로로 참여'로 대신 출석 (시작 20분 전에 찍어요) */
+  staffCover?: string;
 };
 
 /** 하남점 하루 시간표 (일요일은 쉬어요) */
@@ -64,7 +66,7 @@ export const MOCK_BRANCH_SESSIONS: MockBranchSession[] = [
   { id: 'b-1100-en', slot: 0, lang: 0, team: '1-1 영어', level: 'Lv.2', pro: 'Logan', tables: [{ no: 1, full: 4 }, { no: 2, full: 4 }] },
   { id: 'b-1930-en', slot: 1, lang: 0, team: '3-2 영어', level: 'Lv.3', pro: 'Lily', tables: [{ no: 7, full: 5 }, { no: 8, full: 3 }, { no: 9, full: 2 }] },
   { id: 'b-1930-ja', slot: 1, lang: 1, team: '1-1 일본어', level: 'Lv.1', pro: 'Sora', tables: [{ no: 3, full: 5 }, { no: 4, full: 0 }], proLate: true },
-  { id: 'b-1930-es', slot: 1, lang: 3, team: '1-1 스페인어', level: 'Lv.1', pro: 'Mateo', tables: [{ no: 6, full: 3 }] },
+  { id: 'b-1930-es', slot: 1, lang: 3, team: '1-1 스페인어', level: 'Lv.1', pro: 'Mateo', tables: [{ no: 6, full: 3 }], proLate: true, staffCover: '민지' },
   { id: 'b-2100-en', slot: 2, lang: 0, team: '4-1 영어', level: 'Lv.4', pro: 'Aiden', tables: [{ no: 10, full: 4 }, { no: 11, full: 3 }] },
   { id: 'b-2100-zh', slot: 2, lang: 2, team: '1-1 중국어', level: 'Lv.1', pro: 'Wei', tables: [{ no: 12, full: 3 }] },
 ];

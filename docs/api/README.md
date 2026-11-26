@@ -21,15 +21,15 @@ cd docs/api && npx -y http-server -p 8090 .
 
 | 값 | 개수 | 뜻 |
 |---|---:|---|
-| `existing` | 85 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
-| `change` | 46 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
-| `new` | 171 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
+| `existing` | 87 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
+| `change` | 45 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
+| `new` | 170 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
 
-`existing` · `change` 131개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음). `x-backend` 에 `/app/api/v2` 가 적힌 것(27개)이 새 앱 경로에 이미 있는 것이에요.
+`existing` · `change` 132개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음). `x-backend` 에 `/app/api/v2` 가 적힌 것(30개)이 새 앱 경로에 이미 있는 것이에요.
 각 API에 붙은 다른 표시: `x-screens`(쓰는 화면 파일) · `x-app-code`(지금 가짜 데이터 위치) · `x-inventory`(예전 목록 `docs/appendix/api-inventory.md` 번호, `docs/frontend/api-additions.md` A번호).
 
 묶음별 개수는 [`screens.md` 맨 위 표](screens.md#한눈에)에 있어요. 큰 덩어리로 보면:
-- **v2 에 있음 (2026-11)**: 카카오 로그인(SDK 토큰 · authCode) · 토큰 갱신 · `/me` · 가입 단계(`GET · POST /onboarding`) · 지점 선택지 · 체험 시간표 · 체험 상담 신청 · 지점 연동 요청 · 진행 상황 요약 · 지점 안내 · 마이 집계 · 푸시 토큰 · 공지(고정) · 시작 팝업 · FAQ · 1:1 문의 · 에셋 카탈로그
+- **v2 에 있음 (2026-11)**: 카카오 로그인(SDK 토큰 · authCode) · 토큰 갱신 · `/me` · 가입 단계(`GET · POST /onboarding`) · 지점 선택지 · 고른 지점 안내(공개) · 체험 시간표 · 체험 상담 신청 · 지점 연동 요청 · 진행 상황 요약 · 지점 안내 · 마이 집계 · 푸시 토큰 · 공지(고정) · 시작 팝업 · FAQ · 1:1 문의 · 에셋 카탈로그
 - **거의 있음 (v1)**: 로그인 · `/me` · 출석(`/study`) · 커뮤니티 글 · 번개(`/hangouts`) · 동아리(`/clubs`) · 챌린지(`/challenges`) · 수강 변경 · 연기 · 지점 이동
 - **전부 새로**: 첫 화면 · 가입 마무리 · 닉네임 확인 · 사용 가이드, 학습 콘텐츠 · 진도 · 보상, 음성 · AI, 스토리, 여행 · 해외살이, 이벤트, 캐릭터 · 상점, 랭킹 · 배지, 신고 · 차단, 공지
 
@@ -40,7 +40,7 @@ cd docs/api && npx -y http-server -p 8090 .
 - `x-roles`: 그 계정 역할만 (나머지 403 forbidden) · `x-roles-note`: 모임 역할(그 모임 HOST 등)도 되는 경우
 - `x-demo-blocked: true`: 직원(manager · hq)의 **보여 주기 모드** (pro 는 2026-11-26부터 회원과 같아요) — 화면은 끝까지 열지만 신청 · 제출은 `403 demo_account`
 - 표시 없음: 로그인한 누구나 (회원 전용은 guest 면 `403 member_only`)
-- 프로 · 직원만 쓰는 새 API 15개는 '프로 · 직원' 태그 (`/staff/*` · `/manager/*`)
+- 프로 · 직원만 쓰는 새 API 14개는 '프로 · 직원' 태그 (`/staff/*` · `/manager/*`)
 
 화면별로는 [`screens.md` 프로 · 직원](screens.md#staff), 화면 · 버튼까지 전체 표는 [`docs/pages/10-roles.md`](../pages/10-roles.md).
 
