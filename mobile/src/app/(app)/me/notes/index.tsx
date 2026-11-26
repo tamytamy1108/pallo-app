@@ -3,46 +3,61 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type ScrollViewInstance, type ViewInstance } from 'react-native';
 
+import { apiErrorMessage } from '@/api/errors';
+import { useMyPage } from '@/api/use-my-page';
+import { useNoteWait, useProsNotes, type NoteRowView } from '@/api/use-pros-note';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Icon, Lift } from '@/components/account/parts';
 import { DiaryList } from '@/components/account/diary-list';
-import { NoteRow, noteExpression, savedNoteItems } from '@/components/account/pro-note-parts';
-import { markNoteRead, useNoteState } from '@/components/account/store';
+import { NoteRow, savedNoteItems } from '@/components/account/pro-note-parts';
+import { useNoteState } from '@/components/account/store';
+import { Button } from '@/components/ui/button';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors, TAB_ROW_H } from '@/constants/theme';
-import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, PRO_SENT_NOTES, teamLabel, teamNameByNo } from '@/data/account';
+import { DIARY_EXAMPLES, PN_TAG_COLOR, teamNameByNo } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
-import { isProLike, useMe } from '@/state/me';
 import { MemberOnly } from '@/components/common/member-lock';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /**
  * PRO'S NOTE 모아 보기 (프로토타입 pnListHTML): 오늘 준비 중 · 나의 스터디 일기 · 저장한 표현 · 전체 / 팀별 / 저장한 표현 탭.
  * ?view=diary 면 나의 스터디 일기 모아 보기 (프로토타입 내 활동 › 일기 diaryHTML).
- * 맞는 API: 44 `/me/pro-notes`
+ * 값: 목록 = GET /me/pros-notes (api/use-pros-note.ts useProsNotes · 받은 노트 RECEIVED · 보낸 노트 SENT · 팀 칩 = courseId),
+ * 보낸/받은 노트 수 · 프로 여부 · 팀 칩 = GET /me/mypage (proNote · study.teams). 저장한 표현 · 일기는 기기에만.
+ * '오늘 n팀 노트 준비 중' 은 서버에 아직 없어 가짜 서버일 때만.
  */
 function ProNotesScreen() {
   const { view, box: box0 } = useLocalSearchParams<{ view?: string; box?: string }>();
-  const me = useMe();
-  // 프로: 보낸 노트 · 받은 노트로 나눠요 (프로도 멤버로 참여하면 노트를 받아요)
+  const page = useMyPage();
+  const my = page.data;
   const [box, setBox] = useState<'sent' | 'got'>(box0 === 'got' ? 'got' : 'sent');
   if (view === 'diary') return <DiaryList />;
-  if (!isProLike(me.role)) return <NotesList />;
-  const sw = <BoxSwitch box={box} onBox={setBox} />;
+  // 프로: 보낸 노트 · 받은 노트로 나눠요 (프로도 멤버로 참여하면 노트를 받아요). 프로 여부는 오직 서버 값 — 마이 집계에 보낸 노트 칸(proNote.sent)이 왔는지.
+  // 받기 전엔 판정하지 않고 기다려요 (기기 역할로 미리 그리지 않음)
+  if (!my) {
+    return (
+      <AccountPage title="PRO'S NOTE">
+        {page.isError ? <ErrorState message={apiErrorMessage(page.error)} onRetry={() => page.refetch()} /> : <LoadingState />}
+      </AccountPage>
+    );
+  }
+  if (my.proNote?.sent == null) return <NotesList />;
+  const sw = <BoxSwitch box={box} onBox={setBox} sentN={my?.proNote?.sent?.total} gotN={my?.proNote?.received.total} />;
   return box === 'sent' ? <SentList head={sw} /> : <NotesList head={sw} />;
 }
 
-/** 프로: [보낸 노트 n] [받은 노트 n] — 위 줄 바로 아래 붙은 밑줄 탭 (챌린지 상세 탭 줄과 같은 높이 · 선) */
-function BoxSwitch({ box, onBox }: { box: 'sent' | 'got'; onBox: (b: 'sent' | 'got') => void }) {
+/** 프로: [보낸 노트 n] [받은 노트 n] — 위 줄 바로 아래 붙은 밑줄 탭 (챌린지 상세 탭 줄과 같은 높이 · 선). 수는 마이 집계를 받으면 */
+function BoxSwitch({ box, onBox, sentN, gotN }: { box: 'sent' | 'got'; onBox: (b: 'sent' | 'got') => void; sentN?: number; gotN?: number }) {
   return (
     <View style={styles.box} accessibilityRole="tablist">
       {(
         [
-          ['sent', '보낸 노트', PRO_SENT_NOTES.length],
-          ['got', '받은 노트', PRO_NOTES.length],
+          ['sent', '보낸 노트', sentN],
+          ['got', '받은 노트', gotN],
         ] as const
       ).map(([k, l, n]) => {
         const on = box === k;
@@ -57,7 +72,8 @@ function BoxSwitch({ box, onBox }: { box: 'sent' | 'got'; onBox: (b: 'sent' | 'g
             accessibilityState={{ selected: on }}
             style={[styles.boxTab, on && styles.boxTabOn]}>
             <PText style={[styles.boxT, on && styles.boxTOn]}>
-              {l} <PText style={styles.boxN}>{n}</PText>
+              {l}
+              {n != null ? <PText style={styles.boxN}>{` ${n}`}</PText> : null}
             </PText>
           </Pressable>
         );
@@ -66,56 +82,97 @@ function BoxSwitch({ box, onBox }: { box: 'sent' | 'got'; onBox: (b: 'sent' | 'g
   );
 }
 
-/** 프로가 보낸 노트 목록: 날짜 · 팀 · 정리한 것 · n/m명 읽음 · 고마워요 */
+/** 프로가 보낸 노트 목록: 날짜 · 수업 · 첫 질문 · n/m명 읽음 (고마워요는 서버에 아직 없어 안 그려요) */
 function SentList({ head }: { head: ReactNode }) {
+  const q = useProsNotes('SENT');
   const open = (id: string) => {
     sfx('tap');
     router.push({ pathname: '/me/notes/[id]', params: { id, from: 'list' } });
   };
   return (
     <AccountPage title="PRO'S NOTE" bodyStyle={styles.body} head={head}>
-      <PText style={styles.intro}>내가 반에 보낸 노트예요. 몇 명이 읽었는지 · 고마워요를 볼 수 있어요.</PText>
-      <PText style={styles.ym}>2026년 11월</PText>
-      <Box style={styles.list}>
-        {PRO_SENT_NOTES.map((n, i) => (
-          <Pressable key={n.id} onPress={() => open(n.id)} accessibilityRole="button" accessibilityLabel={`${n.m}월 ${n.d}일 ${teamNameByNo(n.team)} 보낸 노트`} style={({ pressed }) => [styles.sRow, i > 0 && styles.sLine, pressed && styles.sPressed]}>
-            <View style={styles.sDt}>
-              <PText style={styles.sDtS}>{`${n.m}월`}</PText>
-              <PText style={styles.sDtB}>{n.d}</PText>
-              <PText style={styles.sDtS}>{n.wd}</PText>
-            </View>
-            <View style={styles.sTx}>
-              <PText style={styles.sH} numberOfLines={1}>
-                {`${teamNameByNo(n.team)} · ${n.readN}/${n.total}명 읽음 · 고마워요 ${n.thanksN}`}
-              </PText>
-              <PText style={styles.sP} numberOfLines={1}>
-                {n.items.map((x) => x[1]).join(' · ')}
-              </PText>
-            </View>
-            <PText style={styles.sChev}>›</PText>
-          </Pressable>
-        ))}
-      </Box>
+      <PText style={styles.intro}>내가 반에 보낸 노트예요. 몇 명이 읽었는지 볼 수 있어요.</PText>
+      <NoteListBody q={q} empty={<NotesEmpty sub={'수업이 끝나고 노트를 보내면 여기 모여요.'} />}>
+        {(rows) => (
+          <Box style={styles.list}>
+            {rows.map((n, i) => (
+              <Pressable key={n.id} onPress={() => open(n.id)} accessibilityRole="button" accessibilityLabel={`${n.m}월 ${n.d}일 ${n.place} 보낸 노트`} style={({ pressed }) => [styles.sRow, i > 0 && styles.sLine, pressed && styles.sPressed]}>
+                <View style={styles.sDt}>
+                  <PText style={styles.sDtS}>{`${n.m}월`}</PText>
+                  <PText style={styles.sDtB}>{n.d}</PText>
+                  <PText style={styles.sDtS}>{n.wd}</PText>
+                </View>
+                <View style={styles.sTx}>
+                  <PText style={styles.sH} numberOfLines={1}>
+                    {`${n.place} · ${n.readN}/${n.total}명 읽음`}
+                  </PText>
+                  <PText style={styles.sP} numberOfLines={1}>
+                    {n.items.map((x) => x[1]).join(' · ')}
+                  </PText>
+                </View>
+                <PText style={styles.sChev}>›</PText>
+              </Pressable>
+            ))}
+          </Box>
+        )}
+      </NoteListBody>
     </AccountPage>
   );
 }
 
+/**
+ * 목록 몸통: 처음 받는 중 · 실패(다시 시도) · 빈 목록 · 행 + [더 보기].
+ * 머리 '2026년 11월' 은 행의 달이 바뀔 때마다 (최근 보낸 순).
+ */
+function NoteListBody({ q, empty, children }: { q: ReturnType<typeof useProsNotes>; empty: ReactNode; children: (rows: NoteRowView[]) => ReactNode }) {
+  if (q.isPending) return <LoadingState />;
+  if (q.isError) return <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />;
+  if (!q.data.length) return <>{empty}</>;
+  return (
+    <>
+      {monthGroups(q.data).map((g) => (
+        <View key={g.key} style={styles.group}>
+          <PText style={styles.ym}>{g.label}</PText>
+          {children(g.rows)}
+        </View>
+      ))}
+      {q.hasNextPage ? <Button label={q.isFetchingNextPage ? '불러오는 중…' : '더 보기'} variant="secondary" wide disabled={q.isFetchingNextPage} onPress={() => q.fetchNextPage()} /> : null}
+    </>
+  );
+}
+
+/** 같은 달끼리 묶어요 (행은 이미 최근 순) — 해는 수업 날짜의 해 */
+function monthGroups(rows: NoteRowView[]) {
+  const out: { key: string; label: string; rows: NoteRowView[] }[] = [];
+  for (const r of rows) {
+    const key = `${r.y}-${r.m}`;
+    const last = out[out.length - 1];
+    if (last?.key === key) last.rows.push(r);
+    else out.push({ key, label: `${r.y}년 ${r.m}월`, rows: [r] });
+  }
+  return out;
+}
+
 function NotesList({ head }: { head?: ReactNode }) {
-  const { read, diary } = useNoteState();
+  const { diary } = useNoteState();
   const saved = savedNoteItems(useSavedExpressions());
+  // 팀 칩 = 내 스터디에서 듣는 수업 (마이 집계 study.teams · courseId 로 서버가 걸러요)
+  const teams = useMyPage().data?.study?.teams ?? [];
+  const wait = useNoteWait();
   // 토스트 [보러가기] → /me/notes?tab=saved 로 오면 저장한 표현 탭부터
   const { tab: firstTab } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<string>(firstTab === 'saved' ? 'saved' : 'all');
-  const L = PRO_NOTES.filter((n) => tab === 'all' || n.team === tab);
-  const diaries = PRO_NOTES.filter((n) => (diary[n.id] ?? DIARY_EXAMPLES[n.id])?.at);
+  const q = useProsNotes('RECEIVED', tab === 'all' || tab === 'saved' ? null : tab);
+  // 일기는 기기에만 — 받아 온 노트 중 일기를 쓴 것 (최근 순)
+  const diaries = (q.data ?? []).filter((n) => (diary[n.id] ?? DIARY_EXAMPLES[n.id])?.at);
   const last = diaries[0];
   const lastD = last ? (diary[last.id] ?? DIARY_EXAMPLES[last.id]) : null;
   const sv = saved[saved.length - 1];
-  const tabs: [string, string][] = [['all', '전체'], ...MY_TEAMS.map((t): [string, string] => [t.no, teamLabel(t)]), ['saved', `저장한 표현 ${saved.length}`]];
+  const tabs: [string, string][] = [['all', '전체'], ...teams.map((t): [string, string] => [t.courseId, t.courseTitle]), ['saved', `저장한 표현 ${saved.length}`]];
 
+  // 열람은 상세 화면이 남겨요 (받은 노트를 열면 POST /read)
   const open = (id: string) => {
     sfx('tap');
-    markNoteRead(id);
     router.push({ pathname: '/me/notes/[id]', params: { id, from: 'list' } });
   };
 
@@ -145,10 +202,12 @@ function NotesList({ head }: { head?: ReactNode }) {
   return (
     <AccountPage title="PRO'S NOTE" bodyStyle={styles.body} head={head} scrollRef={scroll}>
       <PText style={styles.intro}>수업이 끝나면 프로님이 그날 배운 표현 · 바로잡은 문장 · 질문을 정리해서 보내 줘요. 마음에 드는 건 저장해 두고 다시 봐요.</PText>
-      <Box color={Colors.yellow} style={styles.wait}>
-        <PText style={styles.waitB}>{`오늘 ${teamNameByNo(PN_WAIT.team)} 노트 준비 중`}</PText>
-        <PText style={styles.waitS}>{`${PN_WAIT.end}에 수업이 끝나면 ${PN_WAIT.pro} 프로님이 보내 줘요 · 도착하면 알림을 드려요`}</PText>
-      </Box>
+      {wait ? (
+        <Box color={Colors.yellow} style={styles.wait}>
+          <PText style={styles.waitB}>{`오늘 ${teamNameByNo(wait.team)} 노트 준비 중`}</PText>
+          <PText style={styles.waitS}>{`${wait.end}에 수업이 끝나면 ${wait.pro} 프로님이 보내 줘요 · 도착하면 알림을 드려요`}</PText>
+        </Box>
+      ) : null}
       <View style={styles.two}>
         <Tile
           icon={<Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.tileImg} contentFit="contain" />}
@@ -167,7 +226,7 @@ function NotesList({ head }: { head?: ReactNode }) {
           title="저장한 표현"
           n={saved.length}
           unit="개"
-          preview={sv ? sv.n.items[sv.i][1].slice(0, 22) : '노트에서 책갈피를 눌러 모아요'}
+          preview={sv ? sv.title.slice(0, 22) : '노트에서 책갈피를 눌러 모아요'}
           onPress={() => {
             sfx('tap');
             setTab('saved');
@@ -198,18 +257,17 @@ function NotesList({ head }: { head?: ReactNode }) {
       </View>
       {tab === 'saved' ? (
         saved.length ? (
-          saved.map(({ n, i }) => {
-            const [tg, t, b] = n.items[i];
+          saved.map((x) => {
             return (
-              <View key={`${n.id}:${i}`} style={styles.it}>
+              <View key={x.key} style={styles.it}>
                 <View style={styles.itB}>
-                  <PText style={[styles.itTag, { color: PN_TAG_COLOR[tg] }]}>{`${tg} · ${n.m}/${n.d} ${teamNameByNo(n.team)}`}</PText>
-                  <PText style={styles.itTitle}>{t}</PText>
-                  <PText style={styles.itP}>{b}</PText>
+                  <PText style={[styles.itTag, { color: PN_TAG_COLOR[x.tag] }]}>{`${x.tag} · ${x.label}`}</PText>
+                  <PText style={styles.itTitle}>{x.title}</PText>
+                  <PText style={styles.itP}>{x.body}</PText>
                 </View>
                 <Pressable
                   onPress={() => {
-                    toggleExpression(noteExpression(n, i));
+                    toggleExpression(x.expr);
                     showToast('저장을 취소했어요');
                   }}
                   accessibilityRole="button"
@@ -224,18 +282,17 @@ function NotesList({ head }: { head?: ReactNode }) {
         ) : (
           <NotesEmpty sub="노트에서 저장 버튼을 누르면 여기 모여요." />
         )
-      ) : L.length ? (
-        <>
-          <PText style={styles.ym}>2026년 11월</PText>
-          <Box style={styles.list}>
-            {L.map((n, i) => (
-              <NoteRow key={n.id} n={n} first={i === 0} fresh={!!n.isNew && !read[n.id]} onPress={() => open(n.id)} />
-            ))}
-          </Box>
-        </>
       ) : (
         // 이 반에서 받은 노트가 아직 없을 때: 빈 흰 칸 대신 '아직 없어요' (2026-11-26)
-        <NotesEmpty sub={'이 반 수업이 끝나면 프로님이 노트를 보내 줘요.\n도착하면 알림을 드려요.'} />
+        <NoteListBody q={q} empty={<NotesEmpty sub={'이 반 수업이 끝나면 프로님이 노트를 보내 줘요.\n도착하면 알림을 드려요.'} />}>
+          {(rows) => (
+            <Box style={styles.list}>
+              {rows.map((n, i) => (
+                <NoteRow key={n.id} n={n} first={i === 0} fresh={n.fresh} onPress={() => open(n.id)} />
+              ))}
+            </Box>
+          )}
+        </NoteListBody>
       )}
     </AccountPage>
   );
@@ -296,6 +353,7 @@ const styles = StyleSheet.create({
   tab: { height: 34, paddingHorizontal: 14, borderRadius: 17, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, justifyContent: 'center' },
   tabOn: { backgroundColor: Colors.ink },
   tabText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
+  group: { gap: 12 },
   ym: { marginTop: 4, marginHorizontal: 2, marginBottom: -2, fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   list: { paddingVertical: 4, paddingHorizontal: 14 },
   it: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 14, paddingLeft: 14, paddingRight: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: 20, backgroundColor: Colors.white },

@@ -35,7 +35,46 @@ export type OnboardingInfo = {
 };
 
 /** 지점 시트 한 줄 — ACTIVE 만 체험 신청, linkStatus 가 null 인 곳만 연동 요청을 받아요 (막아서 이유를 보여 줘요) */
-export type BranchOption = { code: string; name: string; status: 'ACTIVE' | 'PAUSED'; linkStatus: 'linked' | 'pending' | null; region: string | null };
+/** 8방위 (북에서 시계 방향) */
+export type Compass = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+/** 위경도 한 점 */
+export type LatLng = { lat: number; lng: number };
+
+/**
+ * 지점 시트 한 줄. distanceMeters · direction 은 내 위치(near)를 보냈을 때만 — 내 위치에서 지점까지 거리 · 방위.
+ * 위치를 안 보냈거나 지점 좌표가 없으면 null 이고, 위치를 보내면 서버가 가까운 순으로 줘요 (좌표 없는 지점은 맨 뒤).
+ */
+export type BranchOption = {
+  code: string;
+  name: string;
+  status: 'ACTIVE' | 'PAUSED';
+  linkStatus: 'linked' | 'pending' | null;
+  region: string | null;
+  distanceMeters: number | null;
+  direction: Compass | null;
+};
+
+const COMPASS_LABEL: Record<Compass, string> = { N: '북쪽', NE: '북동쪽', E: '동쪽', SE: '남동쪽', S: '남쪽', SW: '남서쪽', W: '서쪽', NW: '북서쪽' };
+
+/** 거리 글자 — 1km 안은 10m 단위('350m'), 10km 안은 소수 한 자리('8.8km'), 그 밖은 정수('21km') */
+export function formatDistance(m: number): string {
+  if (m < 1000) return `${Math.max(10, Math.round(m / 10) * 10)}m`;
+  if (m < 10000) return `${(Math.round(m / 100) / 10).toFixed(1)}km`;
+  return `${Math.round(m / 1000)}km`;
+}
+
+/** 내 위치에서 본 지점 자리 — '남동쪽 8.8km' (방위가 없으면 거리만). 거리를 모르면 null */
+export function relativePlace(b: Pick<BranchOption, 'distanceMeters' | 'direction'>): string | null {
+  if (b.distanceMeters == null) return null;
+  const d = formatDistance(b.distanceMeters);
+  return b.direction ? `${COMPASS_LABEL[b.direction]} ${d}` : d;
+}
+
+/** 거리를 하나라도 받았으면 서버가 가까운 순으로 준 목록 그대로, 아니면 null (지역 묶음으로 보여요) */
+export const nearestBranches = (rows: BranchOption[]): BranchOption[] | null => (rows.some((b) => b.distanceMeters != null) ? rows : null);
+
+/** 서버에 보내는 위치는 소수 셋째 자리(약 100m)까지만 — 정확한 위치를 넘기지 않고, 조금 움직여도 같은 목록을 다시 써요 */
+export const roundLatLng = (p: LatLng): LatLng => ({ lat: Math.round(p.lat * 1000) / 1000, lng: Math.round(p.lng * 1000) / 1000 });
 
 /** 날짜(YYYY-MM-DD, KST)마다 상담 희망 시각(HH:mm) — 상담 시간이 없는 날은 빈 목록, 오늘은 지난 시각을 빼요 */
 export type TrialSlotDays = { days: { date: string; times: string[] }[] };
@@ -132,7 +171,42 @@ const MOCK_CONSENTS: ConsentDoc[] = [
 ].map((c, i) => ({ ...c, versionId: `mock-consent-${c.code.toLowerCase()}`, body: `${c.title} 전문 (가짜)`, version: 1, effectiveFrom: '2026-01-01', sortOrder: i + 1 }));
 
 const withJeom = (n: string) => (n.endsWith('점') ? n : `${n}점`);
-const MOCK_BRANCHES: BranchOption[] = BRANCHES.map(([n, r]) => ({ code: withJeom(n), name: withJeom(n), status: 'ACTIVE', linkStatus: null, region: r }));
+const MOCK_BRANCHES: BranchOption[] = BRANCHES.map(([n, r]) => ({ code: withJeom(n), name: withJeom(n), status: 'ACTIVE', linkStatus: null, region: r, distanceMeters: null, direction: null }));
+
+/** 가짜 서버의 지점 좌표: 이름으로 정한 수도권 안 한 점 (열 곳 중 한 곳은 좌표 없음 — 맨 뒤로 가요) */
+function mockBranchPoint(code: string): LatLng | null {
+  const h = hash(code);
+  if (h % 10 === 0) return null;
+  return { lat: 37.3 + (h % 400) / 1000, lng: 126.75 + ((h * 7) % 550) / 1000 };
+}
+
+/** 가짜 서버의 거리 · 방위 (서버 GeoPoint 와 같은 하버사인 · 8방위) */
+function mockDistance(from: LatLng, to: LatLng): { distanceMeters: number; direction: Compass | null } {
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const p1 = rad(from.lat);
+  const p2 = rad(to.lat);
+  const dl = rad(to.lng - from.lng);
+  const a = Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+  const distanceMeters = Math.round(2 * 6371000 * Math.asin(Math.min(1, Math.sqrt(a))));
+  if (from.lat === to.lat && from.lng === to.lng) return { distanceMeters, direction: null };
+  const y = Math.sin(dl) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+  const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  const order: Compass[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return { distanceMeters, direction: order[Math.round(bearing / 45) % 8] ?? null };
+}
+
+/** 가짜 GET /branches — near 를 주면 거리 · 방위를 붙여 가까운 순 (좌표 없는 지점은 맨 뒤, 그 안은 이름순) */
+export function mockBranchOptions(near?: LatLng | null): BranchOption[] {
+  const rows = MOCK_BRANCHES.map((b) => ({ ...b }));
+  if (!near) return rows;
+  return rows
+    .map((b) => {
+      const at = mockBranchPoint(b.code);
+      return at ? { ...b, ...mockDistance(near, at) } : b;
+    })
+    .sort((a, b) => (a.distanceMeters ?? Infinity) - (b.distanceMeters ?? Infinity));
+}
 
 const MOCK_PALLOLOS: Pallolo[] = [
   ['yellow', '노랑', '#E0D121'],
@@ -254,9 +328,10 @@ export function submitOnboarding(body: OnboardingBody): Promise<OnboardingResult
 }
 
 /** GET /branches — 지점 시트 */
-export function fetchBranchOptions({ signal }: Opts = {}): Promise<BranchOption[]> {
-  if (apiConfig.useMock) return mock('branchOptions', () => MOCK_BRANCHES.map((b) => ({ ...b })));
-  return http.get('/branches', { signal });
+export function fetchBranchOptions({ near, signal }: Opts & { near?: LatLng | null } = {}): Promise<BranchOption[]> {
+  const p = near ? roundLatLng(near) : null;
+  if (apiConfig.useMock) return mock('branchOptions', () => mockBranchOptions(p));
+  return http.get('/branches', { signal, ...(p ? { query: { lat: p.lat, lng: p.lng } } : {}) });
 }
 
 /** GET /branches/{code}/guide — 고른 지점 안내 (운영 중인 지점만, 아니면 404) */

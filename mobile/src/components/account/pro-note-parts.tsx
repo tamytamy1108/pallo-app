@@ -13,7 +13,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { DIARY_EXAMPLES, DIARY_QUESTIONS, DIARY_STICKERS, PRO_NOTES, teamNameByNo, type Diary, type ProNote } from '@/data/account';
+import { DIARY_EXAMPLES, DIARY_QUESTIONS, DIARY_STICKERS, PRO_NOTES, teamNameByNo, type Diary, type ProNote, type ProNoteTag } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import type { SavedExpression } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
@@ -38,19 +38,43 @@ export function noteExpression(n: NoteLike, i: number): Omit<SavedExpression, 'i
   return { en: title, ko: desc, source };
 }
 
+/** 저장한 PRO'S NOTE 항목 한 줄 — 저장한 표현 그대로 그려요(서버 노트 · 예시 노트 모두) */
+export type SavedNoteItem = {
+  key: string;
+  /** 항목 종류 — 예시 노트에서 찾으면 그 종류, 서버 노트는 '질문' */
+  tag: ProNoteTag;
+  /** 'n/d 수업 이름' (저장할 때 출처) */
+  label: string;
+  title: string;
+  body: string;
+  expr: SavedExpression;
+};
+
 /** 저장한 PRO'S NOTE 항목 (저장한 순서 — 마지막이 최근) */
-export function savedNoteItems(list: SavedExpression[]) {
-  const all = PRO_NOTES.flatMap((n) => n.items.map((_, i) => ({ n, i, en: noteExpression(n, i).en })));
+export function savedNoteItems(list: SavedExpression[]): SavedNoteItem[] {
+  const tagOf = (en: string) => {
+    for (const n of PRO_NOTES) {
+      const i = n.items.findIndex((_, k) => noteExpression(n, k).en === en);
+      if (i >= 0) return n.items[i][0];
+    }
+    return '질문' as const;
+  };
   return list
     .filter((x) => x.source.startsWith(PN_SOURCE))
     .slice()
     .sort((a, b) => a.savedAt - b.savedAt)
-    .map((x) => all.find((a) => a.en === x.en))
-    .filter((x): x is { n: ProNote; i: number; en: string } => !!x);
+    .map((x) => ({
+      key: x.id,
+      tag: tagOf(x.en),
+      label: x.source.slice(PN_SOURCE.length).replace(/^ · /, ''),
+      title: x.fixed ? `${x.en} → ${x.fixed}` : x.en,
+      body: x.ko,
+      expr: x,
+    }));
 }
 
 /** 노트 목록 한 줄 (프로토타입 .pn-row: 날짜 · 팀 · 프로 · NEW · 항목 미리 보기) */
-export function NoteRow({ n, fresh, first, onPress }: { n: ProNote; fresh: boolean; first: boolean; onPress: () => void }) {
+export function NoteRow({ n, fresh, first, onPress }: { n: NoteLike; fresh: boolean; first: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${n.m}월 ${n.d}일 ${n.pro} 프로 노트`} style={({ pressed }) => [styles.row, !first && styles.rowLine, pressed && styles.pressed]}>
       <View style={styles.dt}>
@@ -60,7 +84,7 @@ export function NoteRow({ n, fresh, first, onPress }: { n: ProNote; fresh: boole
       </View>
       <View style={styles.tx}>
         <PText style={styles.h} numberOfLines={1}>
-          {`${teamNameByNo(n.team)} · ${n.pro} 프로`}
+          {`${noteTeamName(n)} · ${n.pro} 프로`}
           {fresh ? <PText style={styles.new}>{'  NEW'}</PText> : null}
         </PText>
         <PText style={styles.p} numberOfLines={1}>

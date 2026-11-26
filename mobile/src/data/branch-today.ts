@@ -23,7 +23,9 @@ export type BranchSession = {
   sessionId: string;
   /** 오늘 시작 시각 (ISO) */
   startsAt: string;
-  /** 전산 팀 이름 그대로 (예: '1-1 영어') — 앱은 바꾸지 않고 보여요 */
+  /** 전산 스터디 이름 그대로 (예: '영어 화목 7시 30분') — 같은 스터디의 팀들을 묶어요 */
+  studyName: string;
+  /** 전산 팀 이름 그대로 (예: '2-1 영어') — 스터디 안의 팀 하나. 앱은 바꾸지 않고 보여요 */
   teamName: string;
   /** 'en' · 'ja' · 'zh' · 'es' */
   lang: string;
@@ -52,6 +54,9 @@ export type MockBranchSession = {
   id: string;
   slot: number;
   lang: number;
+  /** 전산 스터디 이름 (언어 · 요일 · 시각, 예: '영어 화목 7시 30분') — 스터디 안에 팀이 여럿 */
+  study: string;
+  /** 전산 팀 이름 (예: '2-1 영어') */
   team: string;
   level: string;
   pro: string;
@@ -63,12 +68,20 @@ export type MockBranchSession = {
 
 /** 하남점 하루 시간표 (일요일은 쉬어요) */
 export const MOCK_BRANCH_SESSIONS: MockBranchSession[] = [
-  { id: 'b-1100-en', slot: 0, lang: 0, team: '1-1 영어', level: 'Lv.2', pro: 'Logan', tables: [{ no: 1, full: 4 }, { no: 2, full: 4 }] },
-  { id: 'b-1930-en', slot: 1, lang: 0, team: '3-2 영어', level: 'Lv.3', pro: 'Lily', tables: [{ no: 7, full: 5 }, { no: 8, full: 3 }, { no: 9, full: 2 }] },
-  { id: 'b-1930-ja', slot: 1, lang: 1, team: '1-1 일본어', level: 'Lv.1', pro: 'Sora', tables: [{ no: 3, full: 5 }, { no: 4, full: 0 }], proLate: true },
-  { id: 'b-1930-es', slot: 1, lang: 3, team: '1-1 스페인어', level: 'Lv.1', pro: 'Mateo', tables: [{ no: 6, full: 3 }], proLate: true, staffCover: '민지' },
-  { id: 'b-2100-en', slot: 2, lang: 0, team: '4-1 영어', level: 'Lv.4', pro: 'Aiden', tables: [{ no: 10, full: 4 }, { no: 11, full: 3 }] },
-  { id: 'b-2100-zh', slot: 2, lang: 2, team: '1-1 중국어', level: 'Lv.1', pro: 'Wei', tables: [{ no: 12, full: 3 }] },
+  // 영어 화목 11시 (오전 스터디) — 팀 둘
+  { id: 'b-1100-en-11', slot: 0, lang: 0, study: '영어 화목 11시', team: '1-1 영어', level: 'Lv.1', pro: 'Logan', tables: [{ no: 1, full: 4 }] },
+  { id: 'b-1100-en-12', slot: 0, lang: 0, study: '영어 화목 11시', team: '1-2 영어', level: 'Lv.1', pro: 'Emma', tables: [{ no: 2, full: 4 }] },
+  // 영어 화목 7시 30분 — 팀 셋
+  { id: 'b-1930-en-21', slot: 1, lang: 0, study: '영어 화목 7시 30분', team: '2-1 영어', level: 'Lv.2', pro: 'Lily', tables: [{ no: 7, full: 5 }] },
+  { id: 'b-1930-en-22', slot: 1, lang: 0, study: '영어 화목 7시 30분', team: '2-2 영어', level: 'Lv.2', pro: 'Noah', tables: [{ no: 8, full: 4 }] },
+  { id: 'b-1930-en-31', slot: 1, lang: 0, study: '영어 화목 7시 30분', team: '3-1 영어', level: 'Lv.3', pro: 'Mia', tables: [{ no: 9, full: 3 }] },
+  // 일본어 화목 7시 30분 — 프로가 아직 안 왔어요
+  { id: 'b-1930-ja-11', slot: 1, lang: 1, study: '일본어 화목 7시 30분', team: '1-1 일본어', level: 'Lv.1', pro: 'Sora', tables: [{ no: 3, full: 5 }], proLate: true },
+  // 스페인어 화목 7시 30분 — 프로 대신 스텝이 출석한 예시
+  { id: 'b-1930-es-11', slot: 1, lang: 3, study: '스페인어 화목 7시 30분', team: '1-1 스페인어', level: 'Lv.1', pro: 'Mateo', tables: [{ no: 6, full: 3 }], proLate: true, staffCover: '민지' },
+  // 9시
+  { id: 'b-2100-en-41', slot: 2, lang: 0, study: '영어 화목 9시', team: '4-1 영어', level: 'Lv.4', pro: 'Aiden', tables: [{ no: 10, full: 4 }] },
+  { id: 'b-2100-zh-11', slot: 2, lang: 2, study: '중국어 화목 9시', team: '1-1 중국어', level: 'Lv.1', pro: 'Wei', tables: [{ no: 12, full: 3 }] },
 ];
 
 /** 쉬는 요일 (0 = 일) */

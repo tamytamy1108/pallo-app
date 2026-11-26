@@ -8,6 +8,7 @@ import { behindSheet } from '../ui/_overlay';
 /**
  * 신고 · 차단 시트 — 한 시트 안에서 메뉴 → 사유 고르기로 넘어가요. start 로 사유부터 열 수 있어요.
  * 사유를 고르기 전에는 [신고하기] · [차단하기] 가 꺼져 있어요.
+ * 신고 사유는 가짜 서버(api/reports — GET /reports/reasons), [신고하기] 는 POST /reports.
  */
 const meta = {
   title: 'Common/ReportSheet',
@@ -38,6 +39,12 @@ export const WithExtra: Story = {
 };
 /** 신고 사유 고르기 (바로 열기) */
 export const Report: Story = { args: { start: 'report' } };
+/** 신고 사유를 받는 중 */
+export const ReportLoading: Story = { args: { start: 'report' }, parameters: { api: { delayMs: 60_000 } } };
+/** 신고 사유를 못 받았어요 — [다시 불러오기] */
+export const ReportReasonsError: Story = { args: { start: 'report' }, parameters: { api: { fail: ['reportReasons'] } } };
+/** 신고 보내기 실패 — 사유를 골라 [신고하기] 를 누르면 오류 토스트 */
+export const ReportSendError: Story = { args: { start: 'report' }, parameters: { api: { fail: ['createReport'] } } };
 /** 차단 사유 고르기 (바로 열기 · 빨간 버튼) */
 export const Block: Story = { args: { start: 'block', target: { kind: 'member', name: 'Leo' } } };
 /** 긴 이름 */

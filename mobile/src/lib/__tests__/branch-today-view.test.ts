@@ -1,6 +1,6 @@
 import type { BranchSession, BranchToday } from '@/data/branch-today';
 
-import { phaseOf, toBranchTodayView } from '../branch-today-view';
+import { groupByStudy, phaseOf, toBranchTodayView } from '../branch-today-view';
 
 const at = (h: number, m: number) => {
   const d = new Date(2026, 10, 26, h, m);
@@ -10,6 +10,7 @@ const at = (h: number, m: number) => {
 const session = (id: string, h: number, m: number, lang: string, checkedIn: number, by: BranchSession['proCheckedInBy']): BranchSession => ({
   sessionId: id,
   startsAt: at(h, m),
+  studyName: `${lang} ${h}:${m}`,
   teamName: '1팀',
   lang,
   level: 'Lv.1',
@@ -59,11 +60,24 @@ describe('오늘 지점 현황', () => {
     expect(v.proPlanned).toBe(5);
     expect(v.members).toBe(30);
     expect(v.sessions).toBe(5);
+    expect(v.studies).toBe(5);
   });
 
   it('마지막 세션까지 끝나면 다음 세션이 없어요', () => {
     const v = toBranchTodayView(data, 22 * 60, 30, 20);
     expect(v.next).toBeNull();
     expect(v.done).toHaveLength(5);
+  });
+
+  it('스터디 안에 팀이 여럿 — 오늘 스터디는 스터디 수, 팀은 따로 세요', () => {
+    const study = (id: string, team: string) => ({ ...session(id, 19, 30, 'en', 3, 'PRO'), studyName: '영어 화목 7시 30분', teamName: team });
+    const v = toBranchTodayView({ ...data, sessions: [study('x', '2-1 영어'), study('y', '2-2 영어'), study('z', '3-1 영어'), session('j', 19, 30, 'ja', 2, null)] }, 19 * 60 + 12, 30, 20);
+    expect(v.studies).toBe(2);
+    expect(v.sessions).toBe(4);
+    const groups = groupByStudy(v.open);
+    expect(groups.map((g) => [g.studyName, g.rows.length])).toEqual([
+      ['영어 화목 7시 30분', 3],
+      ['ja 19:30', 1],
+    ]);
   });
 });

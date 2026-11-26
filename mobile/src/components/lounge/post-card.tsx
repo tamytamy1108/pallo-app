@@ -231,7 +231,7 @@ export function PostCard({ p }: { p: Post }) {
         </PText>
       ) : null}
       <CommentsSheet open={sheet === 'cmt'} onClose={() => setSheet(null)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t), '댓글을 달려면')} />
-      <PostMenu open={sheet === 'more'} who={p.who} onClose={() => setSheet(null)} />
+      <PostMenu open={sheet === 'more'} id={p.id} who={p.who} onClose={() => setSheet(null)} />
       <LikersSheet open={sheet === 'likers'} id={p.id} who={p.who} likes={p.likes} onClose={() => setSheet(null)} />
     </View>
   );
@@ -262,7 +262,7 @@ export function AbroadCard({ p }: { p: Abroad }) {
       </View>
       <Acts id={p.id} likes={p.likes} cmts={cmts.length} onCmt={() => setSheet('cmt')} onLikers={() => setSheet('likers')} />
       <CommentsSheet open={sheet === 'cmt'} onClose={() => setSheet(null)} comments={cmts} onSend={(t) => guardMember(() => addPostComment(p, me.name, t), '댓글을 달려면')} />
-      <PostMenu open={sheet === 'more'} who={p.who} onClose={() => setSheet(null)} />
+      <PostMenu open={sheet === 'more'} id={p.id} who={p.who} onClose={() => setSheet(null)} />
       <LikersSheet open={sheet === 'likers'} id={p.id} who={p.who} likes={p.likes} onClose={() => setSheet(null)} />
       <AskSheet open={sheet === 'ask'} who={p.who} sub={p.br} onClose={() => setSheet(null)} />
     </View>
@@ -270,7 +270,7 @@ export function AbroadCard({ p }: { p: Abroad }) {
 }
 
 /** ⋯ 글 메뉴 (프로토타입 lgMore): 링크 복사 · (매니저) 공지 고정 · 숨기기 · 신고 · 차단 — 공통 신고 · 차단 시트 */
-function PostMenu({ open, who, onClose }: { open: boolean; who: string; onClose: () => void }) {
+function PostMenu({ open, id, who, onClose }: { open: boolean; id: string; who: string; onClose: () => void }) {
   const me = useMe();
   // 공지 고정 · 글 숨기기는 직원만 — 프로는 멤버와 같아요 (2026-11-26)
   const staff = me.role === 'manager';
@@ -289,7 +289,7 @@ function PostMenu({ open, who, onClose }: { open: boolean; who: string; onClose:
         },
       ]
     : [];
-  return <ReportSheet open={open} onClose={onClose} target={{ kind: 'post', name: who }} extra={extra} />;
+  return <ReportSheet open={open} onClose={onClose} target={{ kind: 'post', id, name: who }} extra={extra} />;
 }
 
 /** 좋아요 누른 사람 (30명까지 · 내가 눌렀으면 맨 위에 나) — 프로토타입 lgLikers */

@@ -1,5 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { apiErrorMessage } from '@/api/errors';
+import { reportReasonsQuery } from '@/api/queries';
+import type { ReportTargetKind } from '@/api/reports';
+import { useCreateReport } from '@/api/use-create-report';
 import { SheetButton, SheetDesc, SheetNote, SheetOptions, type SheetOption } from '@/components/common/sheet-parts';
 import { Sheet } from '@/components/ui/sheet';
 import { showToast } from '@/components/ui/toast';
@@ -12,6 +17,10 @@ export type ReportTarget = {
   name: string;
   /** 메뉴 제목 (기본 '하나의 글') */
   title?: string;
+  /** 신고한 글 · 댓글 · 스토리 id (서버에 같이 보내요) */
+  id?: string;
+  /** 대상 사용자 코드를 알면 (라운지 피드는 아직 목업이라 이름만 알아요) */
+  userCode?: string;
 };
 
 /** 메뉴에 더 넣는 줄 — 프로 · 매니저 도구 (공지로 고정 · 이 글 숨기기 · 신고함 보기) */
@@ -19,11 +28,12 @@ export type ReportMenuItem = { key: string; label: string; sub?: string; onPress
 
 type Stage = 'menu' | 'report' | 'block';
 
-const REPORT_REASONS = ['스팸 · 광고', '불쾌하거나 무례한 말', '개인정보 노출', '모임에서 불편한 일이 있었어요', '기타'];
+// 신고 사유는 서버 마스터데이터(REPORT_REASON) — GET /reports/reasons. 본사가 app-hub '데이터 관리 › 신고 사유' 에서 고쳐요
 const BLOCK_REASONS = ['스팸 · 광고', '불쾌하거나 무례한 말', '개인정보를 물어봐요', '모임에서 불편한 일이 있었어요', '그냥 보고 싶지 않아요', '기타'];
 
 /*
- * 차단한 멤버 · 내 신고 (가짜 저장소 · 기기에 남아요). 맞는 API: 75 `POST /reports` · 77 `POST / DELETE /blocks`.
+ * 차단한 멤버 · 내 신고 (기기에 남아요). 신고 자체는 서버(`POST /reports`)로 보내고, 내 신고 내역 목록만 아직 기기에 남겨요.
+ * 차단은 아직 가짜 저장소 — 맞는 API: 77 `POST / DELETE /blocks`.
  * 라운지는 useIsBlocked(이름)로 글을 숨기고, 설정 › 차단한 멤버 · 신고 내역은 useBlockedNames · useMyReports 로 읽어요.
  */
 const blockStore = createStore<string[]>([], { persist: { key: 'blocks' } });
@@ -85,6 +95,9 @@ export function ReportSheet({
     }
   }
   const who = target.name;
+  // 사유 단계를 열 때만 받아요 (자주 안 바뀌어 10분 기억)
+  const reasons = useQuery({ ...reportReasonsQuery(), enabled: open && stage === 'report' });
+  const create = useCreateReport();
 
   const go = (s: Stage) => {
     setReason(null);
@@ -92,11 +105,26 @@ export function ReportSheet({
   };
 
   const sendReport = () => {
-    if (!reason) return;
-    reportStore.set((L) => [{ id: `r-${Date.now()}`, kind: target.kind, name: who, reason, at: '방금' }, ...L]);
-    onClose();
-    onReported?.(reason);
-    showToast('신고했어요. 매니저가 24시간 안에 확인해요');
+    const picked = reasons.data?.find((r) => r.code === reason);
+    if (!picked || create.isPending) return;
+    create.mutate(
+      {
+        reasonCode: picked.code,
+        targetKind: target.kind.toUpperCase() as ReportTargetKind,
+        targetId: target.id ?? null,
+        targetName: who,
+        targetUserCode: target.userCode ?? null,
+      },
+      {
+        onSuccess: (r) => {
+          reportStore.set((L) => [{ id: r.id, kind: target.kind, name: who, reason: r.reasonLabel, at: '방금' }, ...L]);
+          onClose();
+          onReported?.(r.reasonLabel);
+          showToast('신고했어요. 매니저가 24시간 안에 확인해요');
+        },
+        onError: (e) => showToast(apiErrorMessage(e)),
+      },
+    );
   };
 
   const sendBlock = () => {
@@ -117,9 +145,18 @@ export function ReportSheet({
     return (
       <Sheet open={open} onClose={onClose} title="무엇이 문제인가요?" label="신고하기" scrollKey={stage}>
         <SheetDesc>신고한 사람은 {who}에게 알려지지 않아요.</SheetDesc>
-        <SheetOptions radio items={REPORT_REASONS.map(asOption)} selected={reason} onPick={setReason} />
+        {reasons.isError ? (
+          <>
+            <SheetNote>신고 사유를 불러오지 못했어요.</SheetNote>
+            <SheetButton label="다시 불러오기" tone="white" size="inline" onPress={() => reasons.refetch()} />
+          </>
+        ) : reasons.isPending ? (
+          <SheetNote>신고 사유를 불러오는 중이에요…</SheetNote>
+        ) : (
+          <SheetOptions radio items={(reasons.data ?? []).map((r) => ({ key: r.code, label: r.label }))} selected={reason} onPick={setReason} />
+        )}
         <SheetNote>{LAUNCH.block ? '차단 · 신고 시' : '신고하면'} 지점에도 보고돼요.</SheetNote>
-        <SheetButton label="신고하기" size="inline" disabled={!reason} onPress={sendReport} />
+        <SheetButton label={create.isPending ? '보내는 중…' : '신고하기'} size="inline" disabled={!reason || create.isPending || !reasons.data} onPress={sendReport} />
       </Sheet>
     );
 

@@ -50,7 +50,7 @@ info:
 
     |---|---|---|
 
-    | `guest` | 지점 연동 전 모두 (가입 직후 · 연동 대기 · 못 찾음 · 체험 예약 · 앱 구독) | 둘러보기 · 첫 챕터. 회원 전용은 잠김 |
+    | `guest` | 지점 연동 전 모두 (가입 직후 · 연동 대기 · 못 찾음 · 체험 예약) | 둘러보기 · 첫 챕터. 회원 전용은 잠김 |
 
     | `member` | 지점에 연동된 회원 | 전부 |
 
@@ -3892,7 +3892,6 @@ paths:
         - app/_layout.tsx
         - components/home/session-card.tsx
         - components/home/attend-sheet.tsx
-        - components/home/goal-card.tsx
       x-app-code: data/home.ts QR_BEFORE · QR_AFTER · ATTEND_POINTS · SKIP_POINTS ·
         TODAY_GOAL · data/my.ts SPARK_ATTEND · data/auth.ts CODE_SECONDS
       security: []
@@ -6173,10 +6172,10 @@ paths:
       operationId: getMe
       summary: 나 — 신원 · 역할 · 지점 · 온보딩 필요 여부
       description: |
-        화면: app/_layout.tsx (스플래시 동안 미리 받기 · MeSync 가 state/me 에 넣음) · app/(tabs)/index.tsx (인사 'Hey {nickname}' · 앱 구독자면 오늘의 목표 카드, 스터디 회원이면 출석 카드) · 다른 모든 화면이 useMe 로 읽음
+        화면: app/_layout.tsx (스플래시 동안 미리 받기 · MeSync 가 state/me 에 넣음) · app/(tabs)/index.tsx (인사 'Hey {nickname}' · 출석 카드) · 다른 모든 화면이 useMe 로 읽음
         언제: 부팅 · 로그인 직후 · 앱 복귀
         규칙: needsOnboarding 이 true 면 가입 단계(약관 동의 → 닉네임 → 캐릭터 → 지점 회원?)로 보내요. 기준은 '닉네임 없음'이 아니라 가입 단계를 끝낸 시각 onboardedAt 이 없는지예요 (POST /me/onboarding 이 채워요).
-        권한(state/access.ts userKind): 지점이 연동해 주기 전에는 모두 비회원 권한(role guest)이에요. 앱은 role · linkStatus · trialBooking · plan 으로 홈 카드(출석 · 잠긴 라벤더 · 체험 D-n · 둘러보기)와 잠금을 정해요.
+        권한(state/access.ts userKind): 지점이 연동해 주기 전에는 모두 비회원 권한(role guest)이에요. 앱은 role · linkStatus · trialBooking 으로 홈 카드(출석 · 잠긴 라벤더 · 체험 D-n · 둘러보기)와 잠금을 정해요.
         서버도 회원 전용 API(출석 · 내 스터디 · 이용권 · 프로 노트 · 라운지 글쓰기/참여 · 이벤트 참여 등)에서 비회원이면 403 member_only 로 막아야 해요 (앱 잠금은 보여 주기일 뿐).
         스파크 · 이번 주 포인트 · 연속 학습 · 모임/글 수는 여기 말고 my · learn 도메인 요약 API 몫이에요.
         수정(닉네임 · 소개)은 my 도메인의 PATCH /me/profile 을 써요 (앱 api/me.ts patchMe 의 PATCH /me 는 버려요). 지점 변경은 지점 이동 신청(my 도메인).
@@ -6184,8 +6183,8 @@ paths:
       x-backend: 'MobileMeV2Controller GET /app/api/v2/me (MobileMeResponse: code, host, needsOnboarding, memberAccessLevel
         — v1 MobileMeController 와 같은 값, MobileMeReadService)'
       x-gap: 'nickname, role(guest|member|pro|manager|hq — 지점 연동 전 guest · STAFF 멤버십 강사면 pro(예전 leader) · 지점 관리자 manager
-        · 본사 운영자 hq), plan(study|app), primaryBranch(BranchRef), branches[], studyLang, levels[] 을 추가해 주세요. 지금 앱 Me
-        타입의 id/name/branch/role/plan/lang/level/lvs 에 해당해요. 가입 단계 뒤로 더: linkStatus(none|pending|linked|rejected —
+        · 본사 운영자 hq), primaryBranch(BranchRef), branches[], studyLang, levels[] 을 추가해 주세요. 지금 앱 Me
+        타입의 id/name/branch/role/lang/level/lvs 에 해당해요. 가입 단계 뒤로 더: linkStatus(none|pending|linked|rejected —
         가장 최근 지점 연동 요청 상태), linkRequestId, trialBooking(앱에서 한 체험 예약 · 없으면 null). needsOnboarding 은 onboardedAt 없음으로
         바꿔 주세요.'
       x-inventory: '#3'
@@ -8309,7 +8308,7 @@ paths:
         규칙(서버가):
         - onboardedAt 을 채워요 → GET /me needsOnboarding false · 로그인 응답 isNewMember false. 다음 로그인부터 가입 단계를 건너뛰어요.
         - bodyColor 를 내 캐릭터 기본 몸 색으로 저장하고 가진 목록에 더해요 (가입 때 고른 색은 스파크를 받지 않아요 · 옷 · 소품은 마이 › 꾸미기 = PUT /me/avatar).
-        - role 은 guest 그대로 (지점이 연동하면 member). plan 은 study (앱 구독은 결제한 사람만).
+        - role 은 guest 그대로 (지점이 연동하면 member).
         - langs: 앱 구경은 여러 개(고른 순서 · 맨 앞이 홈 첫 언어 · 고른 언어마다 오늘의 목표 · 레슨), 체험은 하나, 회원은 비움(지점 전산에서 읽어 옴). 실력은 묻지 않아요(첫 AI 대화에서 맞춰요).
         - reasons: 앱 구경은 첫 주제 고를 때, 체험은 상담 때 프로님 참고. 마이에서 바꿀 수 있어요.
         - 스파크 +50 환영 보상은 Q-O9 (환영 화면을 어디에 끼울지) 정해지면.
@@ -9741,69 +9740,87 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: lounge
-  /pros-notes:
+  /me/pros-notes:
     get:
       tags:
         - 프로 노트
       operationId: listMyProsNotes
-      summary: 받은 프로 노트 목록 (전체 · 팀별)
+      summary: 프로 노트 목록 (받은 노트 전체 · 팀별 / 보낸 노트)
       description: >
-        화면: app/me/notes/index.tsx (전체 · 팀 탭) · 마이 pro-note-card.tsx (최근 2개 ·
-        NEW)
+        화면: app/me/notes/index.tsx (받은 노트 전체 · 팀 탭 · 프로면 보낸 노트 탭)
 
-        지금 백엔드 노트는 '리더 질문 + AI 답' 모양이에요. 앱은 항목마다 태그(표현 · 바로잡기 · 뜻 · 질문) · 제목 · 설명 · 예문 + 프로 마무리 인사를 그려요.
-      x-status: change
-      x-backend: MobileProsNoteController GET /pros-notes?page&pageSize&keyword →
-        PageResponse<ProsNoteSummaryResponse>
-      x-gap: courseId(팀) 필터 · read(내가 읽었는지) · teamName · previewTitle 추가. 받은
-        노트만(viewerRole=PARTICIPANT) 거르기 옵션 role=participant
+        규칙: box=RECEIVED(기본)는 내가 받은 노트, SENT 는 내가 리더로 써서 보낸 노트 — 최근 보낸 순. courseId 는 받은 노트를 수업 하나로(팀 칩 = GET /me/mypage study.teams).
+        cursor 는 다음 쪽 값(앱은 뜻을 몰라도 그대로 넘겨요, 잘못된 값은 400). unread 는 받은 노트를 아직 안 열었는지(NEW).
+        줄마다 노트 머리만 — 항목 미리 보기는 첫 질문(previewQuestion) + 나머지 개수. 보낸/받은 노트 수는 GET /me/mypage proNote.
+      x-status: existing
+      x-backend: MobileProsNoteV2Controller GET /app/api/v2/me/pros-notes?box&courseId&cursor&limit →
+        ProsNotePageV2Response (items[] = note(ProsNoteSummaryResponse) · unread, nextCursor)
+      x-gap: 오늘 준비 중 노트(PN_WAIT) · 고마워요 수 — 서버에 없어 앱이 안 그려요
       x-inventory: "#44"
       x-screens:
         - app/me/notes/index.tsx
-        - components/account/pro-note-card.tsx
-      x-app-code: data/account.ts PRO_NOTES · store.ts useNoteState().read
+      x-app-code: api/pros-notes.ts fetchProsNotes · api/use-pros-note.ts useProsNotes (가짜 서버 = PRO_NOTES · PRO_SENT_NOTES)
       parameters:
-        - name: page
+        - name: box
           in: query
           required: false
-          description: 1부터 (백엔드 그대로)
-          schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 20
-        - name: keyword
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: courseId
-          in: query
-          required: false
-          description: 팀(수업) 탭 — 추가 필요
-          schema:
-            type: string
-            format: uuid
-        - name: role
-          in: query
-          required: false
-          description: participant 면 받은 노트만 — 추가 필요
           schema:
             type: string
             enum:
-              - participant
-              - leader
+              - RECEIVED
+              - SENT
+            default: RECEIVED
+        - name: courseId
+          in: query
+          required: false
+          description: 받은 노트를 수업 하나로 (SENT 에선 무시)
+          schema:
+            type: string
+            format: uuid
+        - name: cursor
+          in: query
+          required: false
+          description: 앞 쪽 응답의 nextCursor
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: 기본 20 · 최대 50
+          schema:
+            type: integer
+            default: 20
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProsNoteSummaryPage"
+                type: object
+                required:
+                  - items
+                  - nextCursor
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - note
+                        - unread
+                      properties:
+                        note:
+                          $ref: "#/components/schemas/ProsNoteSummary"
+                        unread:
+                          type: boolean
+                          description: 받은 노트를 아직 안 열었으면 true (보낸 노트는 늘 false)
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                    description: null 이면 끝
+        "400":
+          description: 잘못된 cursor
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
@@ -10143,16 +10160,18 @@ paths:
         화면: components/common/report-sheet.tsx 사유 고르기 → [신고하기] → '신고했어요. 매니저가
         24시간 안에 확인해요'
 
-        규칙: 신고한 사람은 상대에게 알려지지 않아요. 같은 대상 중복 신고는 409(duplicate_resource) 또는 조용히 성공 — 서버 정책.
+        규칙: 신고한 사람은 상대에게 알려지지 않아요. 사유는 GET /reports/reasons 의 code(REPORT_REASON 마스터데이터) —
+        숨긴 · 없는 사유면 400. 대상 사용자 코드(targetUserCode)는 알면 보내요(라운지 피드는 아직 목업이라 이름만) —
+        없는 코드면 404, 나 자신이면 400. 중복 신고는 지금은 막지 않아요.
 
-        신고 · 차단 시 지점에도 보고돼요(서버가 지점 매니저 신고함으로). 처리는 콘솔.
-      x-status: new
+        확인은 app-hub '신고 접수 관리'(GET /apphub/reports). 처리(반려 · 제재)는 다음 단계.
+      x-status: live
       x-inventory: "#75"
       x-screens:
         - components/common/report-sheet.tsx
         - components/lounge/post-card.tsx
         - app/story/[id].tsx
-      x-app-code: report-sheet.tsx reportStore · REPORT_REASONS
+      x-app-code: api/reports.ts createReport · api/use-create-report.ts
       requestBody:
         required: true
         content:
@@ -10161,23 +10180,42 @@ paths:
               $ref: "#/components/schemas/ReportCreateRequest"
       responses:
         "201":
-          description: 접수했어요
+          description: 접수했어요 (처리 대기)
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - id
-                properties:
-                  id:
-                    type: string
-                    example: rp_01J9
+                $ref: "#/components/schemas/Report"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "409":
-          $ref: "#/components/responses/Conflict"
+        "404":
+          description: targetUserCode 의 사용자가 없어요
+      x-domain: lounge
+  /reports/reasons:
+    get:
+      tags:
+        - 신고 · 차단
+      operationId: listReportReasons
+      summary: 신고 사유 선택지
+      description: >
+        화면: components/common/report-sheet.tsx 사유 고르기. 노출 중인 REPORT_REASON 마스터데이터를 순서대로 —
+        본사가 app-hub '데이터 관리 › 신고 사유' 에서 고쳐요.
+      x-status: live
+      x-screens:
+        - components/common/report-sheet.tsx
+      x-app-code: api/reports.ts fetchReportReasons · api/queries.ts reportReasonsQuery
+      responses:
+        "200":
+          description: 사유 목록 (노출 순서)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportReason"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
       x-domain: lounge
   /speech/recognize:
     post:
@@ -12606,13 +12644,6 @@ components:
           oneOf:
             - $ref: "#/components/schemas/MyTrialBooking"
             - type: "null"
-        plan:
-          type: string
-          description: (추가) study 스터디 회원(홈에 출석 카드) · app 앱 구독자(홈에 오늘의 목표)
-          enum:
-            - study
-            - app
-          example: study
         teachLangs:
           type: array
           description: (추가) 프로가 가르치는 언어. 마이 이름 아래 줄 '하남점 · 영어 · 일본어' (10-roles 8장). 프로가 아니면 빈 배열
@@ -13697,8 +13728,7 @@ components:
             - all
             - member
             - guest
-            - sub
-          description: 대상 (sub 앱 구독자)
+          description: 대상
           example: all
         shouldShow:
           type: boolean
@@ -18537,49 +18567,99 @@ components:
               type: string
     ReportTargetKind:
       type: string
-      description: 신고 대상 (report-sheet.tsx ReportTarget.kind)
+      description: 신고 대상 (report-sheet.tsx ReportTarget.kind 를 대문자로 · 백엔드 ReportTargetKind)
       enum:
-        - post
-        - comment
-        - story
-        - member
-        - meet
-        - club
-        - challenge
-        - event
-      example: post
+        - POST
+        - COMMENT
+        - STORY
+        - MEMBER
+        - MEET
+        - CLUB
+        - CHALLENGE
+        - EVENT
+      example: POST
+    ReportReason:
+      type: object
+      required:
+        - code
+        - label
+      properties:
+        code:
+          type: string
+          example: SPAM
+        label:
+          type: string
+          example: 스팸 · 광고
     ReportCreateRequest:
       type: object
       required:
+        - reasonCode
         - targetKind
-        - targetId
-        - reason
+        - targetName
       properties:
+        reasonCode:
+          type: string
+          maxLength: 50
+          description: GET /reports/reasons 의 code
         targetKind:
           $ref: "#/components/schemas/ReportTargetKind"
         targetId:
-          type: string
-          description: 대상 id (member 면 회원 코드, meet 면 hangout id)
-        memberCode:
           type:
             - string
             - "null"
-          description: 대상 작성자 · 멤버 코드 (서버가 알 수 있으면 생략)
-        reason:
+          maxLength: 64
+          description: 신고한 글 · 댓글 · 스토리 id (MEMBER 면 비워도 돼요)
+        targetName:
           type: string
-          description: 앱 사유 목록
-          enum:
-            - 스팸 · 광고
-            - 불쾌하거나 무례한 말
-            - 개인정보 노출
-            - 모임에서 불편한 일이 있었어요
-            - 기타
+          maxLength: 50
+          description: 앱에 보이던 대상 이름 (스냅샷)
+        targetUserCode:
+          type:
+            - string
+            - "null"
+          maxLength: 30
+          description: 대상 사용자 코드를 알면 (라운지 목업 피드는 모름)
         detail:
           type:
             - string
             - "null"
           maxLength: 500
-          description: 기타 상세 (지금 앱엔 칸 없음)
+          description: 덧붙인 설명 (지금 앱엔 칸 없음)
+    Report:
+      type: object
+      required:
+        - id
+        - reasonCode
+        - reasonLabel
+        - targetKind
+        - targetName
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        reasonCode:
+          type: string
+        reasonLabel:
+          type: string
+        targetKind:
+          $ref: "#/components/schemas/ReportTargetKind"
+        targetId:
+          type:
+            - string
+            - "null"
+        targetName:
+          type: string
+        status:
+          type: string
+          enum:
+            - PENDING
+            - RESOLVED
+            - REJECTED
+        createdAt:
+          type: string
+          format: date-time
     BlockCreateRequest:
       type: object
       required:
@@ -23006,7 +23086,7 @@ components:
           description: 받은 고마워요
     BranchToday:
       type: object
-      description: 오늘 지점 현황 (지점 관리자)
+      description: 오늘 지점 현황 (지점 관리자). sessions 는 팀 하나에 한 줄 — 같은 studyName 의 팀들이 한 스터디예요
       required:
         - branch
         - date
@@ -23028,10 +23108,14 @@ components:
               startsAt:
                 type: string
                 format: date-time
+              studyName:
+                type: string
+                description: 전산 스터디 이름 그대로 (언어 · 요일 · 시각, 예 '영어 화목 7시 30분'). 스터디 하나에 팀이 여럿 — 앱이 이 이름으로 팀을 묶어요 (2026-11-26)
+                example: 영어 화목 7시 30분
               teamName:
                 type: string
-                description: 전산 팀 이름 그대로 (예 '1-1 영어') — 앱은 바꾸지 않고 카드 제목으로 보여요
-                example: 1-1 영어
+                description: 전산 팀 이름 그대로 (예 '2-1 영어') — 스터디 안의 팀 하나. 앱은 바꾸지 않고 카드 제목으로 보여요
+                example: 2-1 영어
               lang:
                 type: string
               level:

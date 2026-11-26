@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { LinkPushHost } from '@/components/home/link-push';
+import { PushBannerHost } from '@/components/ui/push-banner';
 import { receiveLinkResult } from '@/state/link-events';
 import { updateMe } from '@/state/me';
 
@@ -12,10 +12,10 @@ import { homeDevice, withNote } from './_home';
  */
 const meta = {
   title: 'Home/LinkPush',
-  component: LinkPushHost,
+  component: PushBannerHost,
   decorators: [withNote('8초 뒤 저절로 올라가요 — 다시 보려면 스토리를 다시 열어요')],
   globals: { userKind: 'pending' },
-} satisfies Meta<typeof LinkPushHost>;
+} satisfies Meta<typeof PushBannerHost>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

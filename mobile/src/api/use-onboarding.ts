@@ -9,7 +9,7 @@ import { getOnboarding, updateOnboarding } from '@/state/onboarding';
 
 import { createLinkRequest } from './branch-link';
 import { apiErrorMessage } from './errors';
-import { branchGuideView, submitOnboarding, type BranchOption, type OnboardingBody, type OnboardingResult } from './onboarding';
+import { branchGuideView, nearestBranches, submitOnboarding, type BranchOption, type LatLng, type OnboardingBody, type OnboardingResult } from './onboarding';
 import { assetCatalogQuery, branchOptionsQuery, branchPublicGuideQuery, onboardingInfoQuery, queryKeys, trialSlotsQuery } from './queries';
 import { createTrialApplication, type TrialApplicationBody } from './trial-applications';
 
@@ -50,8 +50,10 @@ export function groupBranches(rows: BranchOption[]): BranchGroup[] {
     .sort((a, b) => (a.region === NO_REGION ? 1 : b.region === NO_REGION ? -1 : b.rows.length - a.rows.length || a.region.localeCompare(b.region)));
 }
 
-/** GET /branches — 지점 시트 (지역 묶음까지) */
-export const useBranchOptions = () => useQuery({ ...branchOptionsQuery(), select: (rows) => ({ rows, groups: groupBranches(rows) }) });
+const selectBranchOptions = (rows: BranchOption[]) => ({ rows, groups: groupBranches(rows), nearest: nearestBranches(rows) });
+
+/** GET /branches — 지점 시트 (지역 묶음까지). near(내 위치)를 주면 가까운 순 · 거리 · 방위도 */
+export const useBranchOptions = (near: LatLng | null = null) => useQuery({ ...branchOptionsQuery(near), select: selectBranchOptions });
 
 /** 지금 온보딩 값으로 POST /onboarding 본문을 만들어요 (고른 길의 블록 하나만) */
 export function onboardingBody(path: OnboardingBody['path']): OnboardingBody {

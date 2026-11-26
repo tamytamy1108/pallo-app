@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, type Href } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import Animated, { css, cubicBezier } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Path, Pattern, Rect } from 'react-native-svg';
@@ -35,7 +35,7 @@ import { useMe } from '@/state/me';
 import { devSeason } from './dev';
 import { ChestCelebrate } from './chest-celebrate';
 import { ARROW_PATH, CHECK_PATH, LineIcon } from './icons';
-import { OPEN_UNITS, useStopAsk } from './map-state';
+import { OPEN_UNITS } from './map-state';
 import { SeasonLayer } from './season-deco';
 import { SkipSheet } from './skip-sheet';
 import { StopPopup, type StartMode } from './stop-popup';
@@ -194,16 +194,6 @@ export function StudyMap() {
     setPopIdx(null);
   };
 
-  // 오늘의 목표 카드 [이어서 하기] → 맵으로 내려간 뒤 지금 정류장 팝업
-  const ask = useStopAsk();
-  useEffect(() => {
-    if (!ask) return;
-    const t = setTimeout(() => setPopIdx(current >= 0 ? current : null), 550);
-    return () => clearTimeout(t);
-    // 부탁이 왔을 때만
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ask]);
-
   /** 전체 보기 → 라이브러리 스터디 맵, 이 레벨 교재 섬을 골라 둔 채로 */
   const shelf = useQuery(bookShelfQuery()).data;
   const openLibrary = () => {
@@ -239,24 +229,21 @@ export function StudyMap() {
     router.push(`${M.stepHref(lesson, step.id)}${resume}` as Href);
   };
 
-  const pass = useCallback(
-    (si: number) => {
-      let gained = 0;
-      M.steps.forEach((s, i) => {
-        const key = stepKey(LV, lesson, s.id);
-        if (M.stageOf(i) <= si && markDone(key)) {
-          gained += 1;
-          awardPoints(`skip:${key}`, 'skip', SKIP_POINTS);
-        }
-      });
-      setSkipStage(null);
-      const allNow = M.steps.every((s) => isDone(stepKey(LV, lesson, s.id)));
-      sfx('fanfare');
-      // 프로토타입: '테스트 통과!' · 'STAGE n까지 건너뛰었어요' · 단계마다 +10P
-      setCele({ correct: 0, total: 0, points: gained * SKIP_POINTS, goalDone: Math.min(getTodayDone(), DAILY_GOAL), goalTotal: DAILY_GOAL, unitComplete: allNow });
-    },
-    [lesson, LV, M],
-  );
+  const pass = (si: number) => {
+    let gained = 0;
+    M.steps.forEach((s, i) => {
+      const key = stepKey(LV, lesson, s.id);
+      if (M.stageOf(i) <= si && markDone(key)) {
+        gained += 1;
+        awardPoints(`skip:${key}`, 'skip', SKIP_POINTS);
+      }
+    });
+    setSkipStage(null);
+    const allNow = M.steps.every((s) => isDone(stepKey(LV, lesson, s.id)));
+    sfx('fanfare');
+    // 프로토타입: '테스트 통과!' · 'STAGE n까지 건너뛰었어요' · 단계마다 +10P
+    setCele({ correct: 0, total: 0, points: gained * SKIP_POINTS, goalDone: Math.min(getTodayDone(), DAILY_GOAL), goalTotal: DAILY_GOAL, unitComplete: allNow });
+  };
 
   const chestTap = () => {
     if (!all) {

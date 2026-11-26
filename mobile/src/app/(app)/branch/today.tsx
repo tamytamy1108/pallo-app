@@ -10,7 +10,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { QR_BEFORE } from '@/data/home';
-import type { SessionRow } from '@/lib/branch-today-view';
+import { groupByStudy, type SessionRow } from '@/lib/branch-today-view';
 
 const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -33,7 +33,7 @@ export default function BranchTodayScreen() {
         <StatCells
           framed
           cells={[
-            { label: '오늘 스터디', value: String(view.sessions) },
+            { label: '오늘 스터디', value: String(view.studies), sub: `팀 ${view.sessions}` },
             { label: '프로 출석', value: String(view.proByPro), tone: 'pro', sub: `예정 ${view.proPlanned}` },
             { label: '스텝 출석', value: String(view.proByStaff), tone: 'staff' },
             { label: '멤버 출석', value: String(view.members), tone: 'member' },
@@ -66,11 +66,20 @@ function Group({ title, tone, rows }: { title: string; tone: 'open' | 'soon'; ro
               <PText style={styles.stateT}>{title}</PText>
             </View>
           </View>
-          {rows
-            .filter((r) => r.start === t)
-            .map((r) => (
-              <SessionCard key={r.sessionId} row={r} />
-            ))}
+          {/* 시각 안에 스터디(영어 화목 7시 30분 …), 스터디 안에 팀(2-1 영어 · 2-2 영어 …) */}
+          {groupByStudy(rows.filter((r) => r.start === t)).map((g) => (
+            <View key={g.studyName} style={styles.study}>
+              <View style={styles.studyHead}>
+                <PText style={styles.studyName} numberOfLines={1}>
+                  {g.studyName}
+                </PText>
+                <PText style={styles.studyMeta}>{tone === 'soon' ? `팀 ${g.rows.length} · ${fmtMin(t - QR_BEFORE)}부터 출석` : `팀 ${g.rows.length}`}</PText>
+              </View>
+              {g.rows.map((r) => (
+                <SessionCard key={r.sessionId} row={r} />
+              ))}
+            </View>
+          ))}
         </View>
       ))}
     </View>
@@ -108,7 +117,6 @@ function SessionCard({ row }: { row: SessionRow }) {
         <PText style={styles.team} numberOfLines={1}>
           {row.teamName}
         </PText>
-        {row.phase === 'soon' ? <PText style={styles.soonT}>{fmtMin(row.start - QR_BEFORE)}부터 출석</PText> : null}
       </View>
       {/* 프로 · 멤버 칸은 늘 위에 (찍기 전엔 0명, 찍으면 바로 바뀌어요) */}
       <View style={styles.boxes}>
@@ -156,7 +164,10 @@ const styles = StyleSheet.create({
   card: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.white, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
   team: { flex: 1, minWidth: 0, fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
-  soonT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
+  study: { gap: 6 },
+  studyHead: { flexDirection: 'row', alignItems: 'baseline', gap: 8, paddingHorizontal: 2, marginTop: 2 },
+  studyName: { flex: 1, minWidth: 0, fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
+  studyMeta: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   // 프로 · 멤버 칸: 같은 크기 두 칸
   boxes: { flexDirection: 'row', gap: 8, marginTop: 2 },
   box: { flex: 1, minWidth: 0, paddingVertical: 8, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.line },

@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { askCurrentStop } from '@/components/home/map-state';
 import { StudyMap } from '@/components/home/study-map';
 import { chestKey, markChestOpened } from '@/state/chest';
 import { markDone, savePos, setLastStep, stepKey } from '@/state/progress';
@@ -52,8 +51,6 @@ export const ChestOpened: Story = {
     markChestOpened(chestKey(1, 1));
   }),
 };
-/** 오늘의 목표 카드 [이어서 하기] — 0.55초 뒤 지금 정류장 팝업 */
-export const AskedCurrentStop: Story = { beforeEach: homeDevice({ season: 'spring' }, () => askCurrentStop()) };
 /** Lv.3 토픽형 (#101 칩) — 마지막으로 연 단계가 Lv.3 */
 export const Level3: Story = { beforeEach: homeDevice({ season: 'autumn' }, () => setLastStep(3, 101, levelStepIds(3)[0])) };
 /** Lv.4 토론형 (1회 · 2회 칩) */
