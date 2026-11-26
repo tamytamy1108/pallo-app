@@ -192,7 +192,8 @@ function RejectedCard({ branch, branchCode, now }: { branch: string; branchCode:
               One more take.
             </PText>
             <PText style={styles.waitSub}>{branch} 연동이 반려됐어요. 사유는 알림에서 볼 수 있어요.</PText>
-            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])} onLayout={heroRoom.onActions}>
+            {/* 두 버튼을 위아래로 — 옆으로 놓으면 오른쪽 캐릭터 자리가 없어요 */}
+            <View style={StyleSheet.flatten([styles.actions, styles.actionsWait, styles.actionsCol])} onLayout={heroRoom.onActions}>
               <Pressable onPress={again} accessibilityRole="button" accessibilityLabel="연동 반려됨 · 다시 신청하기">
                 {({ pressed }) => (
                   <View style={StyleSheet.flatten([styles.btn, styles.btnAgain, pressed && styles.btnAgainPressed])}>
@@ -614,6 +615,7 @@ const styles = StyleSheet.create({
   failLive: { backgroundColor: Colors.rosePink },
   btnAgain: { height: 42, paddingLeft: 5, paddingRight: 14, gap: 8, borderBottomWidth: 5, backgroundColor: Colors.white },
   btnAgainPressed: { transform: [{ translateY: 3 }], borderBottomWidth: 2.5 },
+  actionsCol: { flexDirection: 'column', alignItems: 'flex-start', gap: 10 },
   qrAgain: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.rosePink },
   pulse: { position: 'absolute', backgroundColor: Colors.purple },
   pulseDot: { backgroundColor: Colors.purple },
