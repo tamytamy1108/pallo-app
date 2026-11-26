@@ -5,7 +5,8 @@
  * - 집을 때 · 놓을 때 가벼운 진동. 움직임은 UI 스레드(Gesture Handler + Reanimated).
  * - 사진마다 키가 늘 같아서(주소) 순서가 바뀌어도 사진을 다시 불러오지 않아요 (검게 깜빡이지 않게).
  * - 스크린 리더: 사진 칸에 '앞으로 옮기기 · 뒤로 옮기기' 동작 (renderItem 의 a11y 를 사진 칸에 펼쳐 주세요).
- * 쓰는 곳: 동아리 · 번개 · 행사 만들기 포스터(event/form-parts PosterPicker) · 라운지 새 게시물 사진 줄(app/(app)/compose).
+ * - 웹(마우스)에서는 꾹 누르지 않고 바로 끌어요. 2장부터 줄 아래에 안내 한 줄.
+ * 쓰는 곳: 사진을 올리는 모든 곳 — 동아리 · 번개 · 이벤트 제안 · 챌린지 포스터(event/form-parts PosterPicker) · 라운지 새 게시물(app/(app)/compose) · 챌린지 인증 사진(challenge/check-sheet).
  */
 import { useEffect, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type AccessibilityActionEvent, type AccessibilityActionInfo, type StyleProp, type ViewStyle } from 'react-native';
@@ -26,6 +27,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { PText } from '@/components/ui/text';
+import { Font } from '@/constants/fonts';
+import { Colors } from '@/constants/theme';
 import { haptic } from '@/lib/feedback';
 
 /** 꾹 눌러야 끌기 시작 (그 전에 밀면 줄 넘기기) */
@@ -60,6 +64,8 @@ type Props<T> = {
   trailing?: ReactNode;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** 2장부터 아래에 '끌어서 순서 바꾸기' 안내 한 줄 (기본 켜짐) */
+  hint?: boolean;
 };
 
 /** 같은 주소가 또 있으면 #1 · #2 를 붙여 키를 겹치지 않게 */
@@ -80,7 +86,7 @@ const clamp = (v: number, lo: number, hi: number) => {
   return Math.min(hi, Math.max(lo, v));
 };
 
-export function PhotoReorderRow<T>({ items, keyOf, itemWidth, itemHeight, gap = 8, renderItem, onReorder, trailing, style, contentContainerStyle }: Props<T>) {
+export function PhotoReorderRow<T>({ items, keyOf, itemWidth, itemHeight, gap = 8, renderItem, onReorder, trailing, style, contentContainerStyle, hint = true }: Props<T>) {
   const still = useReducedMotion();
   const keys = keysOf(items, keyOf);
   const sig = keys.join('\n');
@@ -164,7 +170,7 @@ export function PhotoReorderRow<T>({ items, keyOf, itemWidth, itemHeight, gap = 
 
   const cellProps = { slots, dragging, dragLeft, startLeft, startTrans, startScroll, trans, scroll, follow, commit, setEdge, count, step, itemWidth, itemHeight, still };
 
-  return (
+  const row = (
     <Animated.ScrollView
       ref={scrollRef}
       horizontal
@@ -204,6 +210,14 @@ export function PhotoReorderRow<T>({ items, keyOf, itemWidth, itemHeight, gap = 
       ) : null}
       {trailing}
     </Animated.ScrollView>
+  );
+  if (!hint || count < 2) return row;
+  return (
+    <View>
+      {row}
+      {/* 끌어서 순서를 바꿀 수 있다는 걸 알게 (2장부터) */}
+      <PText style={styles.hint}>{Platform.OS === 'web' ? '사진을 끌어서 순서를 바꿔요' : '사진을 꾹 눌러 끌면 순서가 바뀌어요'}</PText>
+    </View>
   );
 }
 
@@ -245,9 +259,9 @@ function Cell({ k, index, children, slots, dragging, dragLeft, startLeft, startT
     },
   );
 
-  const pan = Gesture.Pan()
-    .enabled(count > 1)
-    .activateAfterLongPress(HOLD_MS)
+  // 폰: 꾹 누른 다음에 끌어요 (짧게 밀면 줄 넘기기). 웹: 마우스로 끄는 건 줄 넘기기가 아니라서 바로 끌어요
+  const base = Gesture.Pan().enabled(count > 1);
+  const pan = (Platform.OS === 'web' ? base.minDistance(4) : base.activateAfterLongPress(HOLD_MS))
     .onStart((e) => {
       // 두 손가락으로 두 장을 같이 집으면 먼저 집은 것만
       if (dragging.get()) return;
@@ -303,4 +317,5 @@ function Cell({ k, index, children, slots, dragging, dragLeft, startLeft, startT
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start' },
   cell: { position: 'absolute', left: 0, top: 0 },
+  hint: { marginTop: 6, fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
 });
