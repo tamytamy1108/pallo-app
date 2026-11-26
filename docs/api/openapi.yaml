@@ -5509,7 +5509,7 @@ paths:
       x-status: existing
       x-backend: MobilePopupController GET /app/api/v2/popups → List<MobilePopupResponse {id, design, kicker, title,
         sub, background, imageUrl, ctaLabel, resourceType, resourceId, publishUntil}}> (app-hub 팝업 관리 /apphub/popups
-        에서 올려요. [자세히 보기] 는 resourceType → resourceId 로 이동, 지금은 공지사항)
+        에서 올려요. [자세히 보기] 는 resourceType → resourceId 로 이동 — NOTICE → /notice/:id, EVENT → /events/:id)
       x-inventory: A1
       x-screens:
         - app/(tabs)/index.tsx
