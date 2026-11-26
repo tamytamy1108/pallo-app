@@ -46,10 +46,25 @@ type State = {
   hostLog: HostLog[];
   /** 호스트 · 코호스트가 만든 정기 모임 일정 (clubId → 일정들) */
   sched: Record<string, ClubSched[]>;
+  /** 참석 확인 (호스트 · 코호스트가 모임 뒤에 체크한 온 사람 이름들 · 모임 id → 이름들) */
+  came: Record<string, string[]>;
+  /** 내가 누른 '또 만나고 싶어요' (모임 id) */
+  again: Record<string, boolean>;
+  /** 호스트 넘기기 진행 중 (clubId → 받는 사람 · 단계: 수락 기다림 → 관리자 승인 기다림) */
+  handover: Record<string, { to: string; stage: 'ask' | 'admin'; at: number }>;
+  /** 호스트가 넘어간 예시 동아리 (clubId → 새 호스트 이름). 내 동아리는 host 칸을 바꿔요 */
+  hostTo: Record<string, string>;
+  /** 채팅방 위 고정 공지 (관리 › 공지 쓰기 · 고정) — 없으면 동아리 만들 때 적은 채팅방 공지 */
+  chatNote: Record<string, string>;
+  /** 사진첩에 올린 사진 (clubId → 사진들 · 최근 것이 먼저) */
+  photos: Record<string, ClubPhoto[]>;
 };
 
+/** 사진첩에 올린 사진 한 장 */
+export type ClubPhoto = { uri: string; w: string; at: number; cap?: string };
+
 /** 호스트 · 코호스트가 만든 일정 하나 — date 'YYYY-MM-DD' · time 'HH:MM' · cap 0 = 인원 무관 */
-export type ClubSched = { id: string; date: string; time: string; end?: string; title: string; cap: number; place?: string; memo?: string; at: number };
+export type ClubSched = { id: string; date: string; time: string; end?: string; title: string; cap: number; place?: string; memo?: string; /** 준비물 */ bring?: string; at: number };
 
 /** 호스트 · 코호스트 기록 한 줄 */
 export type HostLog = { clubId: string; name: string; role: 'host' | 'co'; from: number; to?: number; why?: string };
@@ -78,6 +93,12 @@ const MEET0: State = {
   myClubs: [],
   hostLog: [],
   sched: {},
+  came: {},
+  again: {},
+  handover: {},
+  hostTo: {},
+  chatNote: {},
+  photos: {},
 };
 const store = createStore<State>(MEET0, {
   persist: {
@@ -95,7 +116,7 @@ const store = createStore<State>(MEET0, {
 export const useMeetStore = store.useStore;
 export const getMeetStore = store.get;
 
-type Rec = 'joined' | 'saved' | 'vac' | 'att' | 'bliked';
+type Rec = 'joined' | 'saved' | 'vac' | 'att' | 'bliked' | 'again';
 /** 켜고 끄는 값 하나 */
 export const toggleIn = (key: Rec, id: string) =>
   store.set((s) => {
@@ -146,6 +167,8 @@ export const setChat = (id: string, L: ChatMsg[]) => store.set((s) => ({ ...s, c
 export const addMyMeet = (m: Meet) => store.set((s) => ({ ...s, myMeets: [{ ...m, at: m.at ?? Date.now() }, ...s.myMeets] }));
 export const updateMyMeet = (id: string, patch: Partial<Meet>) => store.set((s) => ({ ...s, myMeets: s.myMeets.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
 export const addMyClub = (c: Club) => store.set((s) => ({ ...s, myClubs: [{ ...c, at: c.at ?? Date.now() }, ...s.myClubs] }));
+/** 내 동아리 고치기 (관리 › 고치기) */
+export const updateMyClub = (id: string, patch: Partial<Club>) => store.set((s) => ({ ...s, myClubs: patchMyClub(s, id, patch) }));
 
 /** 내 동아리 하나 고치기 (myClubs 안) */
 const patchMyClub = (s: State, id: string, patch: Partial<Club>) => s.myClubs.map((c) => (c.id === id ? { ...c, ...patch } : c));
@@ -200,3 +223,50 @@ export const removeSched = (clubId: string, id: string) =>
     const att = Object.fromEntries(Object.entries(s.att).filter(([k]) => k !== id));
     return { ...s, att, sched: { ...s.sched, [clubId]: (s.sched[clubId] ?? []).filter((q) => q.id !== id) } };
   });
+
+/** 참석 확인 저장 (모임 뒤 호스트 · 코호스트가 온 사람 체크) — 호스트 소개의 '이번 달 참석'에 쓰여요 */
+export const setCame = (sessionId: string, names: string[]) => store.set((s) => ({ ...s, came: { ...s.came, [sessionId]: names } }));
+
+/**
+ * 호스트 넘기기 (수정 시트 C4 · 2026-11-26): 호스트가 멤버를 골라 요청 → 받는 사람이 수락 → 관리자가 승인 → 넘어가요.
+ * 넘어가면 나는 그 동아리의 코호스트가 되고, 기록(hostLog)에 호스트 끝 · 코호스트 시작이 남아요. 맞는 API: A35
+ */
+export const askHandover = (clubId: string, to: string) => store.set((s) => ({ ...s, handover: { ...s.handover, [clubId]: { to, stage: 'ask', at: Date.now() } } }));
+/** 받는 사람이 수락 → 관리자 승인 기다림 */
+export const acceptHandover = (clubId: string) =>
+  store.set((s) => {
+    const h = s.handover[clubId];
+    return h ? { ...s, handover: { ...s.handover, [clubId]: { ...h, stage: 'admin' } } } : s;
+  });
+/** 요청 취소 · 거절 */
+export const cancelHandover = (clubId: string) =>
+  store.set((s) => {
+    const handover = { ...s.handover };
+    delete handover[clubId];
+    return { ...s, handover };
+  });
+/** 관리자 승인 → 호스트가 넘어가요. 나는 코호스트로 (그 사람은 코호스트 목록에서 빠져요) */
+export const finishHandover = (clubId: string, myName: string, clubName: string) =>
+  store.set((s) => {
+    const h = s.handover[clubId];
+    if (!h) return s;
+    const at = Date.now();
+    const handover = { ...s.handover };
+    delete handover[clubId];
+    const mine = s.myClubs.some((c) => c.id === clubId);
+    const co = (s.cohost[clubId] ?? []).filter((n) => n !== h.to && n !== myName);
+    return {
+      ...s,
+      handover,
+      myClubs: mine ? patchMyClub(s, clubId, { host: h.to }) : s.myClubs,
+      hostTo: mine ? s.hostTo : { ...s.hostTo, [clubId]: h.to },
+      cohost: { ...s.cohost, [clubId]: [myName, ...co] },
+      hostLog: [{ clubId, name: clubName, role: 'co' as const, from: at }, ...endLog(s.hostLog, clubId, `${h.to}님에게 호스트를 넘김`, at)],
+    };
+  });
+
+/** 채팅방 위 고정 공지 바꾸기 */
+export const setChatNote = (clubId: string, t: string) => store.set((s) => ({ ...s, chatNote: { ...s.chatNote, [clubId]: t } }));
+/** 사진첩에 사진 올리기 (여러 장) · 지우기 (내가 올린 것만) */
+export const addPhotos = (clubId: string, L: ClubPhoto[]) => store.set((s) => ({ ...s, photos: { ...s.photos, [clubId]: [...L, ...(s.photos[clubId] ?? [])] } }));
+export const removePhoto = (clubId: string, uri: string) => store.set((s) => ({ ...s, photos: { ...s.photos, [clubId]: (s.photos[clubId] ?? []).filter((p) => p.uri !== uri) } }));

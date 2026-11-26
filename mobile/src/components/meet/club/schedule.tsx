@@ -12,7 +12,7 @@ import type { Session } from '../model';
 
 const LANG_TAG: Record<string, string> = { 영어: '영어', 일본어: '일본어', 중국어: '중국어', 스페인어: '스페인어' };
 
-/** 정기 모임 일정 한 줄 (프로토타입 lgSchRow): 날짜 블록 · [언어] 주제 · 시간 · 인원 · 상태 글씨 · 왕관 N회차 · 썸네일 */
+/** 정기 모임 일정 한 줄 (프로토타입 lgSchRow): 날짜 블록 · [언어] 주제 · 시간 · 인원 · 상태 글씨 · 왕관 N번째 모임 · 썸네일 */
 export function SessionRow({ c, q, i, album, mine, onPress }: { c: Club; q: Session; i: number; album: ClubContent['album']; mine: number; onPress: () => void }) {
   const full = q.cur >= q.cap;
   const art = (album[i % 6] || ['cafe'])[0];
@@ -41,7 +41,7 @@ export function SessionRow({ c, q, i, album, mine, onPress }: { c: Club; q: Sess
           <PText style={[styles.em, q.me ? { color: C.pu } : full ? { color: '#A39C8E' } : null]}>{q.me ? '참석 완료' : full ? '마감' : '모집 중'}</PText>
           <View style={styles.no}>
             <Icon name="crown" size={13} color={Colors.inkSub} />
-            <PText style={styles.noT}>{q.no}회차</PText>
+            <PText style={styles.noT}>{q.no}번째 모임</PText>
           </View>
           {mine ? (
             <View style={styles.no}>

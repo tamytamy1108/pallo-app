@@ -7,7 +7,7 @@ import { CountPicker } from '@/components/ui/count-picker';
 import { TextField } from '@/components/ui/field';
 import { Sheet } from '@/components/ui/sheet';
 import { showToast } from '@/components/ui/toast';
-import { SESSION_THEME, WEEK, type Club } from '@/data/meet';
+import { BRING, SESSION_THEME, WEEK, type Club } from '@/data/meet';
 import { haptic, sfx } from '@/lib/feedback';
 
 import { addSched } from '../meet-store';
@@ -28,7 +28,7 @@ function nextMeetDay(c: Club) {
 
 /**
  * 정기 모임 일정 만들기 (호스트 · 코호스트): 날짜(달력) · 시간 · 주제 · 인원 · 장소 · 한마디.
- * 올리면 동아리 홈 '일정'에 날짜순으로 보이고, 멤버는 회차마다 참석할 수 있어요. 멤버 모두에게 알림 (A34).
+ * 올리면 동아리 홈 '일정'에 날짜순으로 보이고, 멤버는 모임마다 참석할 수 있어요. 멤버 모두에게 알림 (A34).
  * 시간 · 인원 · 장소는 동아리에 적은 값으로 미리 채워 둬요.
  */
 export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; onClose: () => void }) {
@@ -40,6 +40,7 @@ export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; 
   const [cap, setCap] = useState(Math.min(c.max || 8, CAP_MAX));
   const [place, setPlace] = useState(() => clubSpot(c)[0]);
   const [memo, setMemo] = useState('');
+  const [bring, setBring] = useState('');
   const ex = (SESSION_THEME[c.cc] || SESSION_THEME.study)[0];
 
   const reset = () => {
@@ -48,11 +49,12 @@ export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; 
     setEnd(c.time?.[1] ?? defaultEnd(t0));
     setTitle('');
     setMemo('');
+    setBring('');
   };
   const save = () => {
     if (!date) return showToast('날짜를 골라 주세요');
     if (!title.trim()) return showToast('이번 모임 주제를 적어 주세요');
-    addSched(c.id, { id: `${c.id}@s${Date.now()}`, date, time, end, title: title.trim(), cap, place: place.trim() || undefined, memo: memo.trim() || undefined, at: Date.now() });
+    addSched(c.id, { id: `${c.id}@s${Date.now()}`, date, time, end, title: title.trim(), cap, place: place.trim() || undefined, memo: memo.trim() || undefined, bring: bring.trim() || undefined, at: Date.now() });
     sfx('save');
     haptic('success');
     onClose();
@@ -62,7 +64,7 @@ export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; 
 
   return (
     <Sheet open={open} onClose={onClose} onClosed={reset} title="일정 만들기" label="정기 모임 일정 만들기" tall footer={<SheetButton label="일정 올리기" size="foot" onPress={save} />}>
-      <SheetDesc>올리면 동아리 홈 일정에 보이고, 멤버 모두에게 알림이 가요. 멤버는 회차마다 참석을 눌러요.</SheetDesc>
+      <SheetDesc>올리면 동아리 홈 일정에 보이고, 멤버 모두에게 알림이 가요. 멤버는 모임마다 참석을 눌러요.</SheetDesc>
       <View style={styles.f}>
         <FieldLabel>날짜 *</FieldLabel>
         <MonthCalendar value={date} onChange={setDate} minDays={0} maxDays={MAX_DAYS} hint="오늘부터 3달 안에서 골라요" pick={(d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`} />
@@ -84,6 +86,7 @@ export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; 
         <CountPicker value={cap} presets={[6, 8, 10, 12]} min={CAP_MIN} max={CAP_MAX} typable onChange={setCap} />
       </View>
       <TextField label="장소" value={place} onChangeText={setPlace} placeholder="예) 하남점 라운지 · 온라인" maxLength={40} />
+      <TextField label="준비물 · 선택" value={bring} onChangeText={setBring} placeholder={`예) ${BRING[c.cc] || BRING.study}`} maxLength={60} />
       <TextField label="한마디 · 선택" multiline value={memo} onChangeText={setMemo} placeholder="예) 이번엔 2장까지 읽어 와요." maxLength={200} />
     </Sheet>
   );

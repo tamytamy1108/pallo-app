@@ -18,7 +18,7 @@ import { AskSheet } from '@/components/meet/detail/sheets';
 import { guardMember } from '@/components/common/trial-guide';
 import { Icon } from '@/components/meet/icons';
 import { removeSched, setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
-import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, joinBlock, clubLive, membersOf, useAllClubs } from '@/components/meet/model';
+import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, joinBlock, clubLive, clubPastSessions, membersOf, useAllClubs } from '@/components/meet/model';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { runAfterSheetClose } from '@/components/ui/sheet';
@@ -66,6 +66,8 @@ export default function ClubDetail() {
   const [apply, setApply] = useState(false);
   const [newSess, setNewSess] = useState(false);
   const made = useMeetStore((s) => s.sched[key]);
+  // 호스트를 넘긴 예시 동아리면 새 호스트 (내 동아리는 host 칸이 바뀌어요)
+  const hostTo = useMeetStore((s) => s.hostTo[key]);
 
   if (!c) return <EmptyState title="동아리를 찾을 수 없어요" />;
   // 가입한 멤버인지 (신청하면 바로 가입 · 개발용 동아리 역할을 골랐으면 가입한 사람으로 봐요)
@@ -78,12 +80,13 @@ export default function ClubDetail() {
   const x = clubX(c);
   const cat = clubCat(c);
   const recs = clubs.filter((q) => q.id !== c.id && q.cc === c.cc).slice(0, 3);
-  const q = sid ? clubSessions(c, att, 12, 91, made).find((s) => s.id === sid) ?? null : null;
+  // 회차 상세: 다가오는 모임 · 지난 모임 둘 다에서 찾아요 (지난 모임은 '또 만나고 싶어요')
+  const q = sid ? [...clubSessions(c, att, 12, 91, made), ...clubPastSessions(c, att, 12, made)].find((s) => s.id === sid) ?? null : null;
   const devAs = __DEV__ ? (as === 'host' || as === 'co' ? as : devClubRole) : 'auto';
   const devRole: ManageRole | null = devAs === 'host' || devAs === 'co' ? devAs : null;
   // 호스트 · 코호스트는 운영 중인 동아리에서만 (검토 중 · 거절 · 닫힘이면 관리 권한이 없어요). 호스트는 내가 만든 동아리만
   const live = clubLive(c);
-  const role: ManageRole | null = !live ? null : devRole ?? (devAs === 'member' ? null : c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
+  const role: ManageRole | null = !live ? null : devRole ?? (devAs === 'member' ? null : (hostTo ?? clubHost(c)) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
   // 잠금 없이 보기: 멤버 · 호스트 · 코호스트 · 스텝(지점 관리자). 가입 안 한 사람만 게시판 · 사진첩 · 채팅이 잠겨요
   const inC = clubOpen(joined, role, me.role);
 
@@ -120,7 +123,7 @@ export default function ClubDetail() {
     ) : tab === 'board' ? (
       <ClubBoard c={c} inC={inC} myName={me.name} staff={staff} />
     ) : tab === 'photo' ? (
-      <ClubAlbum c={c} inC={inC} />
+      <ClubAlbum c={c} inC={inC} myName={me.name} />
     ) : (
       <ClubChat c={c} inC={inC} joined={joined} myName={me.name} staff={staff} />
     );
@@ -189,6 +192,7 @@ export default function ClubDetail() {
           onClose={() => setManage(false)}
           members={members}
           staff={staff}
+          past={clubPastSessions(c, att, 12, made)}
           onNewSession={() => {
             setManage(false);
             runAfterSheetClose(() => setNewSess(true));

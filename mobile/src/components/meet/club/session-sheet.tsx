@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -12,7 +12,7 @@ import { BRING, type Club } from '@/data/meet';
 
 import { CopyBtn, HiForm, MemberRow } from '../detail/detail-parts';
 import { DoneSheet, SumCard, sumText } from '../detail/sheets';
-import { Icon } from '../icons';
+import { Icon, type IconName } from '../icons';
 import { setText, toggleIn, useMeetStore } from '../meet-store';
 import { clubSpot, sessionMembers, type Member, type Session } from '../model';
 
@@ -25,6 +25,7 @@ type Me = { name: string; branch: string };
  */
 export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub, onCancel }: { c: Club; q: Session | null; inC: boolean; all: Member[]; me: Me; onClose: () => void; onJoinClub: () => void; /** 호스트 · 코호스트가 만든 일정이면: 이 일정 취소 */ onCancel?: () => void }) {
   const vac = useMeetStore((s) => (q ? !!s.vac[q.id] : false));
+  const again = useMeetStore((s) => (q ? !!s.again[q.id] : false));
   const myHi = useMeetStore((s) => (q ? (s.shi[q.id] ?? '') : ''));
   const [edit, setEdit] = useState(false);
   const [done, setDone] = useState(false);
@@ -51,7 +52,24 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub, onCancel
     else showToast('참석을 취소했어요');
   };
 
-  const footer = !inC ? (
+  // 이미 시작했거나 지난 모임: 참석한 사람은 '또 만나고 싶어요' 한 번 누르기 (호스트 소개 숫자에 쓰여요)
+  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const started = !!q.past || (q.k === 0 && nowMin >= Number(q.tm.slice(0, 2)) * 60 + Number(q.tm.slice(3, 5)));
+  const footer = started ? (
+    q.me ? (
+      <SheetButton
+        label={again ? '또 만나고 싶어요 · 보냈어요' : '또 만나고 싶어요'}
+        tone={again ? 'white' : 'yellow'}
+        size="foot"
+        onPress={() => {
+          toggleIn('again', q.id);
+          showToast(again ? '또 만나고 싶어요를 취소했어요' : '호스트에게 또 만나고 싶어요를 보냈어요');
+        }}
+      />
+    ) : (
+      <SheetButton label="이미 지난 모임이에요" tone="white" size="foot" disabled />
+    )
+  ) : !inC ? (
     <SheetButton label="가입하고 참석하기" size="foot" onPress={onJoinClub} />
   ) : q.me ? (
     <View style={styles.attW}>
@@ -84,7 +102,7 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub, onCancel
     <>
       <Sheet open={open} onClose={onClose} label="정기 모임 상세" footer={footer} onClosed={() => setEdit(false)}>
         <PText style={styles.dk}>
-          {q.k ? 'D-' + q.k : '오늘'} · {c.name}
+          {q.k < 0 ? '지난 모임' : q.k ? 'D-' + q.k : '오늘'} · {c.name}
           {q.me ? ' · 참석 완료' : ''}
         </PText>
         <PText variant="title">{q.th}</PText>
@@ -102,7 +120,8 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub, onCancel
               </View>,
             ],
             ['users', `${q.cur} / ${q.cap}명${q.cur >= q.cap ? ' · 마감' : ` · 남은 자리 ${q.cap - q.cur}`}`],
-            ['save', <PText key="b" style={sumText.t}>{`준비물 · ${BRING[c.cc] || BRING.study}`}</PText>],
+            // 준비물: 만든 일정은 호스트가 적은 것만 (안 적었으면 줄 없음), 예시 동아리는 예시
+            ...(q.made && !q.bring ? [] : [['save', <PText key="b" style={sumText.t}>{`준비물 · ${q.made ? q.bring : BRING[c.cc] || BRING.study}`}</PText>] satisfies [IconName, ReactNode]]),
           ]}
         />
         {q.memo ? (
