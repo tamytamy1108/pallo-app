@@ -27,6 +27,11 @@ export type EventItem = {
   fee0?: number;
   /** 신청 설문 묶음 (SURVEY_SETS 의 키) */
   survey?: string;
+  /**
+   * 멤버가 제안해 열린 이벤트의 주최 멤버 (서버 Event.host — 제안한 회원). 있으면 상세 주최 줄이 지점 연락처 대신 멤버 프로필(얼굴 · 닉네임)이에요.
+   * host 에는 같은 닉네임을 넣어요 (함께하는 멤버의 HOST 줄).
+   */
+  hostMember?: { name: string; branch: string };
 };
 
 export type SurveyQuestion = { q: string; t: 'one' | 'multi' | 'text'; opts: string[]; req: boolean };
@@ -71,6 +76,8 @@ export const EVENTS: EventItem[] = [
   { id: 'e5', ev: 'class', kind: '클래스', br: '잠실점', day: '15', mon: 'NOV', wd: '일 14:00', title: '일본어 발음 교정 클래스', place: '잠실점 세미나실 · 강사 유키', host: '잠실점', cur: 9, max: 10, fee: 10000 },
   { id: 'e6', ev: 'party', kind: '파티', br: '연신내', day: '31', mon: 'OCT', wd: '금 19:00', title: '할로윈 코스튬 영어 파티', place: '연신내 라운지', host: '연신내', cur: 28, max: 30 },
   { id: 'e7', ev: 'trip', kind: '여행', br: '영등포', day: '18', mon: 'OCT', wd: '토 11:00', title: '가을 한강 영어 피크닉', place: '여의도 한강공원', host: '영등포', cur: 18, max: 20, fee: 8000 },
+  // 멤버가 제안해 지점이 승인한 이벤트 (예시) — 주최가 멤버라 상세 주최 줄이 멤버 프로필이에요
+  { id: 'e8', ev: 'trip', kind: '이벤트', br: '영등포', day: '13', mon: 'DEC', wd: '일 14:00', title: '한강 영어 피크닉', place: '여의도 한강공원 · 돗자리 존', host: '태오', hostMember: { name: '태오', branch: '영등포' }, cur: 6, max: 20 },
 ];
 
 export const EVENT_POSTER_WORDS: Record<string, PosterWords> = {
@@ -81,6 +88,7 @@ export const EVENT_POSTER_WORDS: Record<string, PosterWords> = {
   e5: [['NIHONGO', 'CLASS'], C.lpu],
   e6: [['HALLO', 'WEEN'], C.pu],
   e7: [['HANGANG', 'PICNIC'], C.y],
+  e8: [['PICNIC'], C.pk],
   e3: [['SMALL', 'TALK', 'CLASS'], C.sky],
 };
 

@@ -547,8 +547,10 @@ const FLOWER_C = [0xF28CB1, 0xFFE200, 0xE8505B, 0xFFFFFF, 0x9C7BE8, 0xFF9E5E];
 function flowerBed(G, cx, cz, t, len, wid = 1.1) { const g = new THREE.Group();
   g.add(at(std(new THREE.BoxGeometry(len + .3, .36, wid + .3), { color: 0x4D8B48, roughness: .9 }), 0, .18, 0));
   g.add(at(std(new THREE.BoxGeometry(len, .1, wid), { color: 0x6B4B33, roughness: 1 }), 0, .38, 0));
-  const fg = new THREE.SphereGeometry(.13, 8, 6), mats = FLOWER_C.map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: .6 }));
-  for (let i = 0; i < len * wid * 9; i++) { const m = new THREE.Mesh(fg, mats[(i * 7 + (i >> 2)) % mats.length]); m.position.set((rnd() - .5) * len, .46 + rnd() * .14, (rnd() - .5) * wid); m.scale.setScalar(.8 + rnd() * .6); g.add(m); }
+  // 꽃송이는 색마다 InstancedMesh 하나 (꽃밭 하나에 꽃 20~40개를 따로 그리던 것 → 색 6번만). 자리 · 크기 · rnd 순서는 그대로
+  const fg = new THREE.SphereGeometry(.13, 8, 6), byC = FLOWER_C.map(() => []), o = new THREE.Object3D();
+  for (let i = 0; i < len * wid * 9; i++) { o.position.set((rnd() - .5) * len, .46 + rnd() * .14, (rnd() - .5) * wid); o.scale.setScalar(.8 + rnd() * .6); o.updateMatrix(); byC[(i * 7 + (i >> 2)) % FLOWER_C.length].push(o.matrix.clone()); }
+  byC.forEach((ms, k) => { if (!ms.length) return; const im = new THREE.InstancedMesh(fg, new THREE.MeshStandardMaterial({ color: FLOWER_C[k], roughness: .6 }), ms.length); ms.forEach((m, j) => im.setMatrixAt(j, m)); g.add(im); });
   g.rotation.y = ROW; const [x, z] = along(cx, cz, t); G.add(at(g, x, -.25, z)); }
 function blossom(G, x, z, s = 1) { const g = new THREE.Group(); const tr = std(new THREE.CylinderGeometry(.13 * s, .22 * s, 2.2 * s, 8), { color: 0x7A5440 }); tr.position.y = 1.1 * s; g.add(tr);
   [[0, 2.6, 0, 1], [.8, 2.3, .3, .8], [-.8, 2.3, -.2, .8], [.2, 2.4, -.8, .75], [-.3, 3.2, .3, .8], [.4, 3.0, .7, .7]].forEach(([a, b, c, r], i) => g.add(at(std(new THREE.IcosahedronGeometry(r * s, 1), { color: [0xF6B7CC, 0xF9D2DF, 0xEFA0BC][i % 3], roughness: .85 }), a * s, b * s, c * s)));
@@ -565,8 +567,9 @@ function libraryGarden(S, roofF) { const sc = S.sc, G = new THREE.Group(), C = -
   G.add(at(std(new THREE.CylinderGeometry(.22, .34, 1.4, 12), stone), C, .9, C)); G.add(at(std(new THREE.CylinderGeometry(.95, .4, .3, 24), stone), C, 1.6, C)); G.add(at(std(new THREE.CylinderGeometry(.85, .85, .04, 24), water), C, 1.74, C));
   G.add(at(std(new THREE.CylinderGeometry(.12, .2, .7, 10), stone), C, 2.05, C)); G.add(at(std(new THREE.CylinderGeometry(.45, .2, .18, 18), stone), C, 2.45, C));
   const jet = new THREE.Mesh(new THREE.ConeGeometry(.12, 1.1, 10), new THREE.MeshStandardMaterial({ color: 0xDFF4FF, transparent: true, opacity: .75, emissive: 0x9FDFFF, emissiveIntensity: .3 })); jet.position.set(C, 3.05, C); G.add(jet);
-  const dg = new THREE.SphereGeometry(.06, 6, 4), dm = new THREE.MeshStandardMaterial({ color: 0xCFEFFF, emissive: 0x9FDFFF, emissiveIntensity: .4 }), drops = [];
-  for (let i = 0; i < 28; i++) { const d = new THREE.Mesh(dg, dm); G.add(d); drops.push(d); }
+  // 물방울 28개 · 꽃잎 46개는 InstancedMesh 하나씩 (한 프레임에 따로 74번 그리던 것 → 2번). 움직임 · 모양은 그대로 (2026-11-26)
+  const DROPS = 28, dg = new THREE.SphereGeometry(.06, 6, 4), dm = new THREE.MeshStandardMaterial({ color: 0xCFEFFF, emissive: 0x9FDFFF, emissiveIntensity: .4 });
+  const drops = new THREE.InstancedMesh(dg, dm, DROPS), dO = new THREE.Object3D(); drops.instanceMatrix.setUsage(THREE.DynamicDrawUsage); drops.frustumCulled = false; G.add(drops);
   // 꽃밭: 분수 양옆 · 도서관 양옆
   [-1, 1].forEach((k) => { flowerBed(G, -9.4, -9.4, k * 5.2, 3.6); flowerBed(G, -11.6, -11.6, k * 9.2, 2.6, 1.6); flowerBed(G, -7.9, -7.9, k * 9.6, 2.2); });
   // 토피어리: 계단 양끝 · 광장 입구
@@ -574,7 +577,8 @@ function libraryGarden(S, roofF) { const sc = S.sc, G = new THREE.Group(), C = -
   // 벚꽃 나무 + 꽃잎
   const BL = [[-12.4, 10.2, 1.1], [-12.4, -10.2, 1.1], [-15.6, 12.8, 1.35], [-15.6, -12.8, 1.35], [-9.2, 12.4, .95], [-9.2, -12.4, .95]].map(([c, t, s2]) => { const [x, z] = along(c, c, t); blossom(G, x, z, s2); return [x, z]; });
   const pg = new THREE.PlaneGeometry(.16, .11), pm = new THREE.MeshBasicMaterial({ color: 0xF9C4D6, side: THREE.DoubleSide }), petals = [];
-  for (let i = 0; i < 46; i++) { const p = new THREE.Mesh(pg, pm), b = BL[i % BL.length]; p.userData = { x: b[0] + (rnd() - .5) * 2, z: b[1] + (rnd() - .5) * 2, ph: rnd(), sp: .12 + rnd() * .1 }; G.add(p); petals.push(p); }
+  for (let i = 0; i < 46; i++) { const b = BL[i % BL.length]; petals.push({ x: b[0] + (rnd() - .5) * 2, z: b[1] + (rnd() - .5) * 2, ph: rnd(), sp: .12 + rnd() * .1 }); }
+  const petalIm = new THREE.InstancedMesh(pg, pm, petals.length); petalIm.instanceMatrix.setUsage(THREE.DynamicDrawUsage); petalIm.frustumCulled = false; G.add(petalIm);
   // 꽃바구니 가로등
   [-4.8, 4.8].forEach((t) => { const [x, z] = along(-7.4, -7.4, t); lamp(G, x, z, -.25, false); [[.32, 0], [-.32, 0]].forEach(([a]) => { const [bx, bz] = [x + a * .7071, z - a * .7071]; G.add(at(std(new THREE.SphereGeometry(.24, 12, 8, 0, TAU, Math.PI / 2, Math.PI / 2), { color: 0x6B4B33 }), bx, 1.75, bz)); for (let i = 0; i < 7; i++) G.add(at(std(new THREE.SphereGeometry(.09, 6, 4), { color: FLOWER_C[i % 6] }), bx + (rnd() - .5) * .34, 1.8 + rnd() * .12, bz + (rnd() - .5) * .34)); }); });
   // 가랜드: 배너 기둥 사이 삼각 깃발 줄
@@ -589,9 +593,11 @@ function libraryGarden(S, roofF) { const sc = S.sc, G = new THREE.Group(), C = -
     bb.position.set(bx + a, b - .25, bz + c); G.add(bb); balloons.push([bb, b - .25, i]); }); G.add(at(std(new THREE.BoxGeometry(.3, .2, .3), { color: 0xD9B45A }), bx, -.15, bz)); }
   sc.add(bgs(G));
   S.ticks.push((t) => {
-    drops.forEach((d, i) => { const p = (t * .7 + i / drops.length) % 1, a = i * 2.4; d.position.set(C + Math.cos(a) * p * 1.25, 3.3 + 2.2 * p * (1 - p) * 2 - p * 1.4, C + Math.sin(a) * p * 1.25); });
+    for (let i = 0; i < DROPS; i++) { const p = (t * .7 + i / DROPS) % 1, a = i * 2.4; dO.position.set(C + Math.cos(a) * p * 1.25, 3.3 + 2.2 * p * (1 - p) * 2 - p * 1.4, C + Math.sin(a) * p * 1.25); dO.updateMatrix(); drops.setMatrixAt(i, dO.matrix); }
+    drops.instanceMatrix.needsUpdate = true;
     jet.scale.y = 1 + Math.sin(t * 6) * .08;
-    petals.forEach((p) => { const u = p.userData, k = (t * u.sp + u.ph) % 1; p.position.set(u.x + Math.sin(t * .9 + u.ph * 9) * .5 + k * 1.6, 3.6 - k * 3.8, u.z + Math.cos(t * .7 + u.ph * 7) * .4 + k * .6); p.rotation.set(t * 1.3 + u.ph * 5, t * .8, u.ph * 3); });
+    petals.forEach((u, i) => { const k = (t * u.sp + u.ph) % 1; dO.position.set(u.x + Math.sin(t * .9 + u.ph * 9) * .5 + k * 1.6, 3.6 - k * 3.8, u.z + Math.cos(t * .7 + u.ph * 7) * .4 + k * .6); dO.rotation.set(t * 1.3 + u.ph * 5, t * .8, u.ph * 3); dO.updateMatrix(); petalIm.setMatrixAt(i, dO.matrix); });
+    dO.rotation.set(0, 0, 0); petalIm.instanceMatrix.needsUpdate = true;
     balloons.forEach(([b, y, i]) => { b.position.y = y + Math.sin(t * 1.2 + i) * .12; b.rotation.z = Math.sin(t * .9 + i) * .06; });
     roofF.forEach((f, i) => { f.rotation.y = Math.sin(t * 1.3 + i * 2) * .12; if (f.geometry.attributes.position.count > 4) clothWave(f, t, .1, 4.5, 6, 'x', i * 2); });
     (S.bunt || []).forEach((m) => { m.rotation.x = Math.sin(t * 2.6 + m.userData.ph) * .38; }); }); }

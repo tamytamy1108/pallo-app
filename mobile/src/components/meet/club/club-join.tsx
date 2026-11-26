@@ -5,7 +5,7 @@ import { GrowInput } from '@/components/ui/grow-input';
 import { keepAll, SheetButton, SheetDesc } from '@/components/common/sheet-parts';
 import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { Club } from '@/data/meet';
@@ -63,7 +63,7 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
         desc="가입 인사 남길래요? 게시판 '가입 인사'와 멤버 목록에 보여요."
         button="인사 남기기"
         onMain={() => {
-          if (!hi.trim()) return showToast('가입 인사를 적어 주세요');
+          if (!hi.trim()) return showWarnToast('가입 인사를 적어 주세요');
           setText('greet', c.id, hi.trim());
           setDone(false);
           setHi('');

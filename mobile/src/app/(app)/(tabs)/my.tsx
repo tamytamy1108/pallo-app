@@ -31,6 +31,7 @@ import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
 import { isMember } from '@/state/access';
+import { useLearnedStepCount } from '@/state/progress';
 import { useMe } from '@/state/me';
 import { grantReward, resetRewards } from '@/state/rewards';
 import { useTabReselect } from '@/lib/tab-reselect';
@@ -43,7 +44,7 @@ const go = (href: string) => () => {
 
 /**
  * 마이 (프로토타입 renderMy): 제목 · 톱니 → 캐릭터 룸 카드 → 숫자 4칸 → PRO'S NOTE → 내 스터디(프로는 내 수업) → 지점 안내
- * → 랭킹 요약 → 배지 → 내 활동. 맨 아래 개발용 입구. (설정 · 고객센터 · 결제 내역은 톱니 안)
+ * → 랭킹 요약 → 배지 → 내 활동 → 설정 · 상담 신청 내역(체험 전만) · 버그 보고. 맨 아래 개발용 입구.
  * 칸은 마이 BFF(GET /me/mypage)가 준 것만 그려요 — proStats · myClasses 가 오면 프로 마이, proNote · study · badges 가 null 이면 그 칸을 안 그려요.
  */
 /** 비회원이 볼 수 있는 잠김 칸 위 높이 (랭킹 윗부분) */
@@ -76,6 +77,8 @@ export default function MyScreen() {
   const member = my ? my.branchMember : isMember(me);
   // 프로 마이인지는 서버가 정해요 (프로 숫자 칸이 오면 프로)
   const proStats = my?.proStats ?? null;
+  // 앱 학습 = 앱에서 끝낸 학습 단계 수 (진도는 아직 기기에 남아요 · state/progress)
+  const learnedSteps = useLearnedStepCount();
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
   const [badges, setBadges] = useState(false);
   const [meets, setMeets] = useState<'joined' | 'saved' | null>(null);
@@ -133,10 +136,10 @@ export default function MyScreen() {
           <MyStats
             items={
               proStats
-                ? // 프로: 이번 달 맡은 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요 (10-roles '마이')
+                ? // 프로: 참여 중(동아리 · 번개) · 앱 학습 · 보낸 노트 · 받은 고마워요 (2026-11-26: 이번 달 세션 · 출석 체크 대신)
                   [
-                    { ic: 'book', v: num(proStats.sessionsThisMonth, '회'), l: '이번 달 세션', onPress: () => setClassOpen(true) },
-                    { ic: 'bolt', v: num(proStats.attendanceChecks, '회'), l: '출석 체크', onPress: () => setClassOpen(true) },
+                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여 중', onPress: () => setMyMeetsOpen(true) },
+                    { ic: 'book', v: `${learnedSteps.toLocaleString()}개`, l: '앱 학습', onPress: go('/library') },
                     { ic: 'mic', v: num(proStats.notesSent, '개'), l: '보낸 노트', onPress: go('/me/notes?box=sent') },
                     { ic: 'heart', v: num(proStats.thanksReceived, '개'), l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
                   ]
@@ -222,25 +225,24 @@ export default function MyScreen() {
                 ]}
               />
             </Appear>
-            <Appear kind="rise">
-              <MyList
-                rows={[
-                  { label: '설정', onPress: openSettings },
-                  { label: '고객센터 · 자주 묻는 질문', onPress: go('/me/support') },
-                  // 체험 상담은 회원도 다른 지점에 신청할 수 있어 누구나
-                  { label: '상담 신청 내역', onPress: go('/me/consultations') },
-                  // 이용권 · 결제 내역은 회원만
-                  ...(member ? [{ label: '이용권 · 결제 내역', onPress: go('/me/pass') }] : []),
-                ]}
-              />
-            </Appear>
           </View>
         </ScrollLock>
+
+        {/* 아래 메뉴는 잠김 칸 밖 — 비회원도 상담 신청 내역 · 버그 보고에 갈 수 있게. 자주 묻는 질문은 설정 안 · 이용권 · 결제 내역 줄은 뺐어요 (2026-11-26) */}
+        <Appear kind="rise">
+          <MyList
+            rows={[
+              { label: '설정', onPress: openSettings },
+              // 상담 신청 내역은 체험 전(지점 회원이 아닌) 사람만 — 회원에게는 줄을 안 보여요
+              ...(member ? [] : [{ label: '상담 신청 내역', onPress: go('/me/consultations') }]),
+              { label: '버그 보고', onPress: go('/me/support?view=bug') },
+            ]}
+          />
+        </Appear>
 
         {/* 개발용 입구: 개발 서버(__DEV__)에서만 보여요 — 실제 앱에는 안 나와요 */}
         {__DEV__ ? (
           <View style={styles.dev}>
-            <Button label="디자인 부품 보기" variant="secondary" onPress={() => router.push('/design')} />
             <Button label="기기에 저장한 기록 지우기" variant="secondary" onPress={() => setAskReset(true)} />
           </View>
         ) : null}

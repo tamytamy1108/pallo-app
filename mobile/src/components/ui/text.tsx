@@ -4,9 +4,19 @@ import { Platform, StyleSheet, Text, type TextProps, type TextStyle } from 'reac
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 
+/**
+ * 큰 포스터 글자처럼 줄 간격을 글자 크기보다 촘촘히(ratio < 1.25) 줄 때 쓰는 글자 크기 · 줄 높이.
+ * iOS 는 첫 줄 글자 윗부분이 줄 높이를 넘으면 잘라요 (Unbounded 는 글자 높이가 1.24em, Anton 은 1.5em).
+ * 그래서 위에 여백(paddingTop)을 두고 같은 만큼 올려서(marginTop) 자리는 그대로, 윗부분은 안 잘리게 해요.
+ */
+export const tightLines = (size: number, ratio: number): TextStyle => {
+  const pad = size * 0.3;
+  return { fontSize: size, lineHeight: size * ratio, paddingTop: pad, marginTop: -pad };
+};
+
 /** DESIGN.md 의 글자 단계 (typography). */
 const VARIANTS = {
-  poster: { fontFamily: Font.display, fontSize: 36, lineHeight: 36 * 0.95, letterSpacing: -1.2 },
+  poster: { fontFamily: Font.display, ...tightLines(36, 0.95), letterSpacing: -1.2 },
   display: { fontFamily: Font.display, fontSize: 30, lineHeight: 30 * 1.14, letterSpacing: -1 },
   headline: { fontFamily: Font.display, fontSize: 26, lineHeight: 26 * 1.15, letterSpacing: -0.6 },
   title: { fontFamily: Font.display, fontSize: 21, lineHeight: 21 * 1.25, letterSpacing: -0.5 },

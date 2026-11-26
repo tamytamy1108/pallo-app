@@ -15,6 +15,7 @@ import { TextField } from '@/components/ui/field';
 import { CountPicker } from '@/components/ui/count-picker';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
+import { JumpField, useFieldJump } from '@/components/ui/field-jump';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, MONTHS, NO_LIMIT, REGIONS, WEEK, type Meet, type Region } from '@/data/meet';
@@ -83,9 +84,11 @@ export default function NewMeet() {
     card: fillWords(usedCard(card, pics.length > 0), CARD_EX),
   });
 
+  // 빠진 칸이 있으면 그 칸으로 데려가요
+  const jump = useFieldJump();
   const open = () => {
-    if (!title.trim()) return showToast('제목을 적어 주세요');
-    if (!place) return showToast('지도에서 장소를 골라 주세요');
+    if (!title.trim()) return jump.to('title', '제목을 적어 주세요');
+    if (!place) return jump.to('place', '지도에서 장소를 골라 주세요');
     const made = draft();
     addMyMeet(made);
     sfx('save');
@@ -115,7 +118,9 @@ export default function NewMeet() {
           }}
         />
       </Field>
-      <TextField label="제목 *" value={title} onChangeText={setTitle} placeholder="예) 퇴근 후 영어 맥주 번개" />
+      <JumpField name="title" jump={jump}>
+        <TextField label="제목 *" value={title} onChangeText={setTitle} placeholder="예) 퇴근 후 영어 맥주 번개" />
+      </JumpField>
       <Field label="날짜 · 오늘부터 1주 안에서 골라요" req>
         <View style={styles.cal}>
           <View style={styles.calH}>
@@ -154,9 +159,11 @@ export default function NewMeet() {
         <TimeRange start={time} end={endTime} onChange={(s, e) => { setTime(s); setEndTime(e); }} />
       </Field>
       <PText style={styles.when}>{when}</PText>
-      <Field label="장소 · 지도에서 골라요" req>
-        <PlacePicker region={reg} value={place} onChange={setPlace} />
-      </Field>
+      <JumpField name="place" jump={jump}>
+        <Field label="장소 · 지도에서 골라요" req>
+          <PlacePicker region={reg} value={place} onChange={setPlace} />
+        </Field>
+      </JumpField>
       <TextField label="상세 주소 · 직접 적어요 (선택)" value={addr2} onChangeText={setAddr2} placeholder="예) 3층 창가 긴 테이블 · 입구에서 오른쪽" />
       <Field label="정원 · 나 포함" req>
         <CountPicker value={cap} presets={[4, 6, 8, 10]} min={CAP_MIN} max={CAP_MAX} typable anyLabel="무관" onChange={setCap} />

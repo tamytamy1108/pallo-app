@@ -89,14 +89,14 @@ export const ListWithIcons: Story = {
     />
   ),
 };
-/** 목록 카드 — 글자만 (설정 · 고객센터 · 이용권) */
+/** 목록 카드 — 글자만 (설정 · 상담 신청 내역 · 버그 보고) */
 export const ListPlain: Story = {
   render: () => (
     <MyList
       rows={[
         { label: '설정', onPress: fn() },
-        { label: '고객센터 · 자주 묻는 질문', onPress: fn() },
-        { label: '이용권 · 결제 내역', onPress: fn() },
+        { label: '상담 신청 내역', onPress: fn() },
+        { label: '버그 보고', onPress: fn() },
       ]}
     />
   ),

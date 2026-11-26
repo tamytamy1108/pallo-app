@@ -126,6 +126,7 @@ function Pic({ p }: { p: Post }) {
   const still = useReducedMotion();
   const burst = useSharedValue(0);
   const many = p.n > 1;
+  const [reach, setReach] = useState(1);
   const onTap = () => {
     const now = Date.now();
     if (now - lastTap.current < 320) {
@@ -156,6 +157,9 @@ function Pic({ p }: { p: Post }) {
   });
   const imgAt = (k: number) => p.imgs?.[k] ?? p.imgs?.[0];
   const img = imgAt(0);
+  // 사진(그림)은 본 장 + 바로 다음 장까지만 그려요. 7장짜리 글이 처음부터 7장을 다 풀어 그려서
+  // 피드 · 탭을 열 때 사진 칸이 잠깐 비고 화면이 멈췄어요 (2026-11-26). 한 번 그린 장은 그대로 둬요
+  if (i + 1 > reach) setReach(i + 1);
   if (!p.pic && !img) return null;
   return (
     <View>
@@ -181,6 +185,7 @@ function Pic({ p }: { p: Post }) {
             scrollEventThrottle={32}
             style={StyleSheet.absoluteFill}>
             {Array.from({ length: Math.max(1, p.n) }, (_, k) => {
+              if (k > reach) return <View key={k} style={[styles.page, { width: w }]} />;
               const src = imgAt(k);
               return (
                 <Pressable key={k} onPress={onTap} sound={false} style={[styles.page, { width: w }]}>

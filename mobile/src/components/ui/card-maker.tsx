@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/meet/icons';
-import { PText } from '@/components/ui/text';
+import { PText, tightLines } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
@@ -29,7 +29,7 @@ export function ColorCard({ color, words, size: max, width, center = false, styl
     );
   return (
     <View style={[styles.card, { backgroundColor: color }, center ? styles.center : styles.corner, style]}>
-      <PText style={[styles.words, { fontSize: size, lineHeight: size * 1.02, color: cardDark(color) ? Colors.yellow : Colors.ink, textAlign: center ? 'center' : 'left' }]}>{words.join('\n')}</PText>
+      <PText style={[styles.words, { ...tightLines(size, 1.02), color: cardDark(color) ? Colors.yellow : Colors.ink, textAlign: center ? 'center' : 'left' }]}>{words.join('\n')}</PText>
     </View>
   );
 }

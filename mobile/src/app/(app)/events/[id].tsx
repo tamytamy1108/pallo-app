@@ -11,7 +11,7 @@ import { accountOf, eventAddr, eventDesc, findEvent, surveyOf } from '@/componen
 import { MyApplication } from '@/components/event/my-application';
 import { surveyAnswerLines } from '@/components/event/survey';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
-import { CopyBtn, Desc, DSec, FeeBlock, InfoRow, InfoRows, infoStyles, MainBtn, MemberSection, SaveBtn } from '@/components/meet/detail/detail-parts';
+import { CopyBtn, Desc, DSec, FeeBlock, HostRow, InfoRow, InfoRows, infoStyles, MainBtn, MemberSection, SaveBtn } from '@/components/meet/detail/detail-parts';
 import { AskSheet, JoinSheet } from '@/components/meet/detail/sheets';
 import { Icon } from '@/components/meet/icons';
 import { setAnswers, setText, toggleIn, useMeetStore } from '@/components/meet/meet-store';
@@ -133,19 +133,24 @@ export default function EventDetail() {
             <InfoRow icon="users" main={`${cur} / ${e.max}명 ${cur >= e.max ? '· 마감' : `· 남은 자리 ${e.max - cur}`}`} sub={<CapBar cur={cur} max={e.max} width={140} />} />
           )}
           {Q.length && !joined && !past ? <InfoRow icon="check" main={`신청 설문 ${Q.length}개`} sub="신청할 때 주최가 준비한 질문에 답해요" /> : null}
-          <InfoRow
-            icon="crown"
-            main={`주최 ${tel[0]}`}
-            sub={`${tel[1]}\n${tel[2].replace(' ~ ', '~')}${tel[0].includes(e.host) ? '' : ' · 담당 ' + e.host}`}
-            end={
-              <View style={styles.ctbW}>
-                <View style={styles.ctbS} />
-                <Pressable onPress={() => setSms(true)} accessibilityRole="button" accessibilityLabel={`${tel[0]}에 문자로 문의하기`} style={styles.ctb}>
-                  <Icon name="sms" size={16} />
-                </Pressable>
-              </View>
-            }
-          />
+          {/* 멤버가 제안해 열린 이벤트는 주최가 멤버 — 라운지 모임 상세와 같은 호스트 줄(얼굴 · 닉네임 · HOST · 프로필). 지점 · 본사 주최만 연락처 · 운영 시간 · 문자 문의 */}
+          {e.hostMember ? (
+            <HostRow name={e.hostMember.name} branch={e.hostMember.branch} me={e.hostMember.name === me.name} />
+          ) : (
+            <InfoRow
+              icon="crown"
+              main={`주최 ${tel[0]}`}
+              sub={`${tel[1]}\n${tel[2].replace(' ~ ', '~')}${tel[0].includes(e.host) ? '' : ' · 담당 ' + e.host}`}
+              end={
+                <View style={styles.ctbW}>
+                  <View style={styles.ctbS} />
+                  <Pressable onPress={() => setSms(true)} accessibilityRole="button" accessibilityLabel={`${tel[0]}에 문자로 문의하기`} style={styles.ctb}>
+                    <Icon name="sms" size={16} />
+                  </Pressable>
+                </View>
+              }
+            />
+          )}
         </InfoRows>
         <DSec>소개</DSec>
         <Desc text={eventDesc(e)} />

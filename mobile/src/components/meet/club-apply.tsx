@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
@@ -10,12 +11,12 @@ import { LgLink, SecHead } from '@/components/meet/parts';
 import { withJeom } from '@/components/onboarding/branch-list';
 import { ColorCard } from '@/components/ui/card-maker';
 import { Pressable } from '@/components/ui/pressable';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { NO_LIMIT, WEEK, type Club } from '@/data/meet';
+import { clubStartLine, NO_LIMIT, WEEK, type Club } from '@/data/meet';
 import { cardWords } from '@/data/poster-colors';
 import { CLUB_RULE } from '@/data/host-rules';
 
@@ -26,6 +27,7 @@ const RED = '#E5484D';
  * 내가 신청한 동아리 (이벤트 탭 '내가 제안한 이벤트'와 같은 모양).
  * 동아리 만들기 → 관리자 검토 중 → 승인(호스트가 돼요) 또는 거절(이유가 보여요 · 다시 신청 · 지우기).
  * 승인된 동아리는 여기서 빠지고 목록 · 내 모임에 보여요.
+ * 검토 중이면 '수정'으로 동아리 만들기 화면을 적어 보낸 값 그대로 열어 고칠 수 있어요 (고치면 관리자에게 알림).
  * 맞는 API: `GET /me/club-applications` (A31) · 관리자 64 `/admin/clubs/:id/approve` · `/reject`
  */
 export function ClubApplyCards() {
@@ -54,6 +56,9 @@ export function ClubApplyCards() {
   );
 }
 
+/** 검토 중인 신청 고치기 — 동아리 만들기 화면을 적어 보낸 값으로 열어요 */
+export const editClubApply = (id: string) => router.push({ pathname: '/club/new', params: { edit: id } });
+
 /** 상태 한 줄 */
 export const applyLine = (c: Club) => (c.rejected ? `거절됐어요 · ${c.rejected.reason}` : c.closed ? '닫힌 동아리예요' : `관리자 검토 중 · ${CLUB_RULE.reviewDays} 안에 알려 드려요`);
 
@@ -76,15 +81,18 @@ function ApplyCard({ c, onOpen }: { c: Club; onOpen: () => void }) {
         </View>
       </Pressable>
       {bad ? null : (
-        <LgLink
-          color={Colors.inkSub}
-          size={12.5}
-          label="취소"
-          onPress={() => {
-            removeMyClub(c.id);
-            showToast('동아리 신청을 취소했어요');
-          }}
-        />
+        <View style={styles.acts}>
+          {c.wait ? <LgLink size={12.5} label="수정" onPress={() => editClubApply(c.id)} /> : null}
+          <LgLink
+            color={Colors.inkSub}
+            size={12.5}
+            label="취소"
+            onPress={() => {
+              removeMyClub(c.id);
+              showToast('동아리 신청을 취소했어요');
+            }}
+          />
+        </View>
       )}
     </View>
   );
@@ -121,9 +129,22 @@ export function ClubApplySheet({ c, open, onClose, onClosed }: { c: Club; open: 
         }}
       />
     </SheetButtons>
+  ) : wait ? (
+    <SheetButtons>
+      <SheetButton label="닫기" tone="white" style={styles.flex} onPress={onClose} />
+      <SheetButton
+        label="수정하기"
+        style={styles.flex}
+        onPress={() => {
+          onClose();
+          runAfterSheetClose(() => editClubApply(c.id));
+        }}
+      />
+    </SheetButtons>
   ) : (
     <SheetButton label="닫기" tone="white" size="foot" onPress={onClose} />
   );
+  const startLine = clubStartLine(c);
   return (
     <Sheet open={open} onClose={onClose} onClosed={onClosed} label="내가 신청한 동아리" footer={foot}>
       <PText style={[styles.dk, bad && { color: RED }]}>내가 신청한 동아리 · {bad ? '거절됨' : wait ? '관리자 검토 중' : '승인됨'}</PText>
@@ -136,7 +157,7 @@ export function ClubApplySheet({ c, open, onClose, onClosed }: { c: Club; open: 
       <SumCard
         rows={[
           ['pin', `지점 · ${withJeom(c.br)}${c.reg ? ' · ' + c.reg : ''}`],
-          ['cal', `모이는 때 · ${c.when}`],
+          ['cal', `모이는 때 · ${c.when}${startLine ? ` · ${startLine}` : ''}`],
           ['grid', `언어 · ${c.lang}`],
           ['users', `최대 인원 · ${c.max === NO_LIMIT ? '무관' : `${c.max}명`}`],
           ['check', `가입 조건 · ${c.cond}`],
@@ -154,13 +175,14 @@ export function ClubApplySheet({ c, open, onClose, onClosed }: { c: Club; open: 
         <FieldLabel>진행 상황</FieldLabel>
         <View style={[styles.status, bad && styles.statusBad]}>
           {c.at ? <Row k="보낸 날" v={dayLabel(c.at)} /> : null}
+          {c.editedAt && wait ? <Row k="고친 날" v={`${dayLabel(c.editedAt)} · 관리자에게 알렸어요`} /> : null}
           <Row k="상태" v={bad ? '거절됐어요' : wait ? '관리자 검토 중' : '승인됐어요 · 내가 호스트예요'} color={bad ? RED : Colors.purple} />
           {bad ? <Row k="이유" v={c.rejected!.reason} /> : null}
           <PText style={[styles.stNote, keepAll]}>
             {bad
               ? '이유를 확인하고 다시 신청할 수 있어요. 내용을 고치려면 지우고 새로 만들어 주세요.'
               : wait
-                ? `관리자가 확인하고 ${CLUB_RULE.reviewDays} 안에 알림으로 알려 드려요. 승인되면 지도에 보이고, 나는 이 동아리의 호스트가 돼요.`
+                ? `관리자가 확인하고 ${CLUB_RULE.reviewDays} 안에 알림으로 알려 드려요. 승인 전까지 내용을 고칠 수 있어요. 승인되면 지도에 보이고, 나는 이 동아리의 호스트가 돼요.`
                 : '이 동아리의 호스트예요. 관리에서 코호스트를 정할 수 있어요.'}
           </PText>
         </View>
@@ -220,6 +242,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.purple, borderRadius: 18, backgroundColor: '#FBF9FF' },
   cardBad: { borderColor: RED, backgroundColor: '#FFF6F5' },
+  acts: { alignItems: 'flex-end', gap: 8 },
   main: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
   th: { width: 58, height: 58, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink },
   tx: { flex: 1, minWidth: 0, gap: 2 },

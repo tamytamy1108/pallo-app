@@ -38,7 +38,7 @@ function staffLine(me: Me) {
 }
 
 /**
- * 마이 맨 위 캐릭터 룸 카드 (프로토타입 .my-hero): 무대 + 붓(누르면 캐릭터 꾸미기 · 한 줄 소개 고치기 메뉴) · 스파크 잔액 + 이름 · 지점 줄 · 한 줄 소개(글만) · 팔로잉/팔로워.
+ * 마이 맨 위 캐릭터 룸 카드 (프로토타입 .my-hero): 무대 + 붓(누르면 캐릭터 꾸미기 · 한 줄 소개 수정하기 메뉴) · 스파크 잔액 + 이름 · 지점 줄 · 한 줄 소개(글만) · 팔로잉/팔로워.
  * width = 카드 바깥 폭 (그림자 제외).
  * sparks · follow = 마이 집계(GET /me/mypage) 값 — 아직 못 받았으면(undefined) '–' 이고, 팔로우 칸은 눌리지 않아요.
  */
@@ -56,7 +56,7 @@ export function MyHero({
   const me = useMe();
   const av = useMyAvatar();
   const [bioOpen, setBioOpen] = useState(false);
-  // 붓 버튼 메뉴: 캐릭터 꾸미기 · 한 줄 소개 고치기
+  // 붓 버튼 메뉴: 캐릭터 꾸미기 · 한 줄 소개 수정하기
   const [menu, setMenu] = useState(false);
   const staff = staffKind(me.role);
   const clubRole = useMyClubRoles(me.name).badge;
@@ -77,7 +77,7 @@ export function MyHero({
               setMenu(true);
             }}
             accessibilityRole="button"
-            accessibilityLabel="꾸미기 · 한 줄 소개 고치기"
+            accessibilityLabel="꾸미기 · 한 줄 소개 수정하기"
             hitSlop={4}
             style={styles.deco}>
             {({ pressed }) => (
@@ -121,7 +121,7 @@ export function MyHero({
                 {link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={link} />}
               </View>
             )}
-            {/* 한 줄 소개: 글만 보여요. 쓰기 · 고치기는 캐릭터 방 붓 버튼 › 한 줄 소개 고치기 */}
+            {/* 한 줄 소개: 글만 보여요. 쓰기 · 수정은 캐릭터 방 붓 버튼 › 한 줄 소개 수정하기 */}
             <PText style={[styles.bio, styles.bioBtn, !me.bio && styles.bioEmpty]} numberOfLines={2}>
               {me.bio || '한 줄 소개를 남겨 보세요'}
             </PText>
@@ -136,7 +136,7 @@ export function MyHero({
         <SheetOptions
           items={[
             { key: 'char', label: '캐릭터 꾸미기', sub: '옷 · 소품 · 방 배경' },
-            { key: 'bio', label: me.bio ? '한 줄 소개 고치기' : '한 줄 소개 남기기', sub: me.bio || '프로필에 보이는 한 줄' },
+            { key: 'bio', label: me.bio ? '한 줄 소개 수정하기' : '한 줄 소개 남기기', sub: me.bio || '프로필에 보이는 한 줄' },
           ]}
           onPick={(k) => {
             setMenu(false);

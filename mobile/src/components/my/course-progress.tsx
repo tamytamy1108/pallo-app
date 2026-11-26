@@ -160,6 +160,8 @@ function monthCells(y: number, m: number) {
 }
 
 const WEEK_HEAD = ['월', '화', '수', '목', '금', '토', '일'];
+/** 달력 칸을 한 주(7칸)씩 묶어요 */
+const weeksOf = <T,>(cells: T[]): T[][] => Array.from({ length: Math.ceil(cells.length / 7) }, (_, w) => cells.slice(w * 7, w * 7 + 7));
 
 /** 한 레벨의 전체 진도: 달력에 수업 날마다 그날 나가는 과 · 내 진도 색. 날을 누르면 아래에 그날 수업 · 과 */
 function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: StudyLevel; lessons: Lesson[]; steps: number }) {
@@ -202,31 +204,38 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
             <PText style={styles.calNavT}>›</PText>
           </Pressable>
         </View>
-        <View style={styles.grid}>
-          {WEEK_HEAD.map((d, i) => (
-            <PText key={d} style={[styles.dow, i >= 5 && styles.dowEnd]}>
-              {d}
-            </PText>
+        {/* 줄마다 7칸을 flex 로 나눠요 — 칸 폭을 %로 주면 반올림 때문에 7번째 칸(일)이 다음 줄로 밀려요 */}
+        <View>
+          <View style={styles.week}>
+            {WEEK_HEAD.map((d, i) => (
+              <PText key={d} style={[styles.dow, i >= 5 && styles.dowEnd]}>
+                {d}
+              </PText>
+            ))}
+          </View>
+          {weeksOf(monthCells(month.y, month.m)).map((wk, w) => (
+            <View key={`w${w}`} style={styles.week}>
+              {wk.map((d, i) =>
+                d ? (
+                  <DayCell
+                    key={dayKey(d)}
+                    d={d}
+                    cd={cal.byDay.get(dayKey(d))}
+                    L={L}
+                    steps={steps}
+                    isToday={dayKey(d) === dayKey(today)}
+                    onPress={() => {
+                      // 날짜 아래 카드 대신: 그날 과가 있으면 바로 그 과로
+                      const ls = cal.byDay.get(dayKey(d))?.ls;
+                      if (ls) openUnit(ls.no);
+                    }}
+                  />
+                ) : (
+                  <View key={`e${i}`} style={styles.cell7} />
+                ),
+              )}
+            </View>
           ))}
-          {monthCells(month.y, month.m).map((d, i) =>
-            d ? (
-              <DayCell
-                key={dayKey(d)}
-                d={d}
-                cd={cal.byDay.get(dayKey(d))}
-                L={L}
-                steps={steps}
-                isToday={dayKey(d) === dayKey(today)}
-                onPress={() => {
-                  // 날짜 아래 카드 대신: 그날 과가 있으면 바로 그 과로
-                  const ls = cal.byDay.get(dayKey(d))?.ls;
-                  if (ls) openUnit(ls.no);
-                }}
-              />
-            ) : (
-              <View key={`e${i}`} style={styles.cell7} />
-            ),
-          )}
         </View>
         <View style={styles.legend}>
           <Legend swatch={styles.slotA} t="월 · 화 · 토 (A과)" />
@@ -292,14 +301,14 @@ const styles = StyleSheet.create({
   calNav: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.white },
   calNavOff: { opacity: 0.3 },
   calNavT: { fontFamily: Font.body900, fontSize: 18, lineHeight: 22 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dow: { width: `${100 / 7}%`, textAlign: 'center', fontFamily: Font.body900, fontSize: 11.5, lineHeight: 18, color: Colors.inkSub },
+  week: { flexDirection: 'row' },
+  dow: { flex: 1, minWidth: 0, textAlign: 'center', fontFamily: Font.body900, fontSize: 11.5, lineHeight: 18, color: Colors.inkSub },
   dowEnd: { color: Colors.rosePink },
-  cell7: { width: `${100 / 7}%`, height: 54 },
+  cell7: { flex: 1, minWidth: 0, height: 54 },
   dayCell: { alignItems: 'center', paddingTop: 4, gap: 3, borderRadius: 10 },
   dateN: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   dateT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16, fontVariant: ['tabular-nums'] },
-  lsChip: { minWidth: 34, paddingHorizontal: 4, height: 18, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  lsChip: { minWidth: 34, maxWidth: '100%', paddingHorizontal: 3, height: 18, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   lsChipT: { fontFamily: Font.body900, fontSize: 10, lineHeight: 14, fontVariant: ['tabular-nums'] },
   slotA: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
   slotB: { backgroundColor: '#F7C9D5', borderWidth: 1.5, borderColor: Colors.ink },

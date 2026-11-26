@@ -157,7 +157,7 @@ export function HiForm({ initial = '', placeholder, button, onSave, onCancel }: 
   const [v, setV] = useState(initial);
   return (
     <View style={styles.hiform}>
-      <GrowInput value={v} onChangeText={setV} placeholder={placeholder} placeholderTextColor="#9B94A6" maxLength={60} style={styles.hiIn} accessibilityLabel={placeholder ?? '인사 고치기'} />
+      <GrowInput value={v} onChangeText={setV} placeholder={placeholder} placeholderTextColor="#9B94A6" maxLength={60} style={styles.hiIn} accessibilityLabel={placeholder ?? '인사 수정하기'} />
       <LgButton
         label={button}
         height={46}

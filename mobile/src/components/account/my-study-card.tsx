@@ -35,7 +35,13 @@ const dot = (iso: string) => iso.replaceAll('-', '.');
  */
 export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title?: boolean }) {
   const me = useMe();
-  const req = useChangeRequest();
+  const saved = useChangeRequest();
+  // 운영진이 승인 · 반려하기 전(대기)에만 '확인 중' + [신청 취소] 를 보여요
+  const req = saved?.status === 'pending' ? saved : null;
+  // 연기 신청 글: 첫 줄 = 고른 수업 (· 로 나눔) · 둘째 줄 = '14일 연기 · 기간 · 복귀'. 줄이 하나면(팀 · 지점 변경 · 예전 신청) 그대로
+  const [reqHead, reqTail] = req?.txt.includes('\n') ? req.txt.split('\n') : [null, req?.txt ?? ''];
+  const reqClasses = reqHead ? reqHead.split(' · ') : [];
+  const reqInfo = reqTail ?? '';
   const [askCancel, setAskCancel] = useState(false);
   const teams = study.teams.slice().sort((p, q) => firstDay(p) - firstDay(q));
   const period = `${dot(study.startDate)} ~ ${dot(study.endDate)}`;
@@ -94,14 +100,34 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
         {req ? (
           <View style={styles.rq}>
             <PText style={styles.rqB}>{`${req.label} 신청 · 운영진 확인 중`}</PText>
-            <PText style={styles.rqT}>{req.txt}</PText>
+            {reqClasses.length ? (
+              <View style={styles.rqCls}>
+                {reqClasses.map((c) => (
+                  <View key={c} style={styles.rqCl}>
+                    <View style={[styles.rqDot, { backgroundColor: langColor(c.split(' ')[0]) }]} />
+                    <PText style={styles.rqClT} numberOfLines={1}>
+                      {c}
+                    </PText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {reqClasses.length ? (
+              <PText style={styles.rqInfo}>
+                <PText style={styles.rqDays}>{reqInfo.split(' · ')[0]}</PText>
+                {reqInfo.split(' · ').slice(1).map((p) => ` · ${p}`).join('')}
+              </PText>
+            ) : (
+              <PText style={styles.rqT}>{reqInfo}</PText>
+            )}
             <Pressable
               onPress={() => {
                 sfx('tap');
                 setAskCancel(true);
               }}
               accessibilityRole="button"
-              hitSlop={10}
+              accessibilityLabel={`${req.label} 신청 취소`}
+              hitSlop={8}
               style={styles.rqCancel}>
               <PText style={styles.rqCancelText}>신청 취소</PText>
             </Pressable>
@@ -138,7 +164,7 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
               variant="secondary"
               wide
               onPress={() => {
-                cancelChangeRequest();
+                if (req) cancelChangeRequest();
                 setAskCancel(false);
                 showToast('신청을 취소했어요');
               }}
@@ -190,10 +216,16 @@ const styles = StyleSheet.create({
   goWrap: { marginTop: 4 },
   go: { height: 46, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   goText: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
-  rq: { marginTop: 12, paddingTop: 10, gap: 2, borderTopWidth: 1.5, borderColor: Colors.line },
+  rq: { marginTop: 12, paddingTop: 12, paddingBottom: 4, gap: 6, borderTopWidth: 1.5, borderColor: Colors.line },
   rqB: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20, color: Colors.purple },
+  rqCls: { gap: 4 },
+  rqCl: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rqDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: Colors.ink },
+  rqClT: { flexShrink: 1, fontFamily: Font.body800, fontSize: 13, lineHeight: 19 },
+  rqInfo: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
+  rqDays: { fontFamily: Font.body900, color: Colors.ink },
   rqT: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19.5 },
-  rqCancel: { alignSelf: 'flex-start', marginTop: 4, minHeight: 24, justifyContent: 'center' },
-  rqCancelText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
+  rqCancel: { alignSelf: 'flex-start', marginTop: 6, height: 32, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.white, paddingHorizontal: 14, justifyContent: 'center' },
+  rqCancelText: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18 },
   ds: { fontFamily: Font.body700, fontSize: 15, lineHeight: 23, color: Colors.inkSub },
 });

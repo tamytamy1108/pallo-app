@@ -9,7 +9,7 @@ import { fresh } from '../../my/_state';
 const at = (params?: Record<string, string>) => ({ route: { pathname: '/me/support', params } });
 
 /**
- * 고객센터 (/me/support) — 찾기 · 분류 칩 · 자주 묻는 질문 · 문의 방법. ?view=faq 면 질문만, ?view=ask 면 1:1 문의(새 문의 · 내 문의).
+ * 자주 묻는 질문 (/me/support · 설정 › 자주 묻는 질문) — 질문 · 문의 방법. ?view=faq 면 질문만, ?view=ask 면 1:1 문의(새 문의 · 내 문의), ?view=bug 면 버그 보고(마이 › 버그 보고).
  * 데이터는 가짜 서버(api/support — GET /faq · GET · POST /me/inquiries). '내 지점 전화'는 GET /me/branch-guides 의 내 지점 번호. 불러오는 중 · 오류는 주소에 ?mockDelay= · ?mockFail=faq,inquiries.
  */
 const meta = {
@@ -27,12 +27,8 @@ export const Help: Story = {};
 export const HelpNoLinkedBranch: Story = { parameters: { ...at(), queries: [[branchGuidesQuery().queryKey, []]] } };
 /** 자주 묻는 질문만 (?view=faq) */
 export const FaqOnly: Story = { parameters: at({ view: 'faq' }) };
-/** 찾기 — 결과 없음 */
-export const SearchNoResult: Story = {
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.type(await canvas.findByLabelText('자주 묻는 질문 찾기'), 'zzzz');
-  },
-};
+/** 버그 보고 (?view=bug) — 1:1 문의와 같은 화면 · 분류는 '앱 오류'로 정해져 있어 고르는 칸이 없어요 */
+export const Bug: Story = { parameters: at({ view: 'bug' }) };
 /** 1:1 문의 — 새 문의 */
 export const Ask: Story = { parameters: at({ view: 'ask' }) };
 /** 1:1 문의 — 분류 미리 고름 (?type=PAYMENT · 결제 내역에서 올 때) */

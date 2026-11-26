@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
@@ -16,6 +16,8 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
+import { isMember } from '@/state/access';
+import { useMe } from '@/state/me';
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -43,12 +45,19 @@ const appliedOn = (instant: string) => {
 };
 
 /**
- * 상담 신청 내역 (/me/consultations) — 내가 보낸 체험 상담 신청 전부 (가입 때 · 앱 안에서). 회원도 다른 지점에 신청할 수 있어 누구나 봐요.
+ * 상담 신청 내역 (/me/consultations) — 내가 보낸 체험 상담 신청 전부 (가입 때 · 앱 안에서).
+ * 체험 전(지점 회원이 아닌) 사람만 봐요 — 회원은 마이에 줄이 없고, 주소로 와도 마이로 돌려보내요 (2026-11-26).
  * 다가오는 상담(가까운 순 · D-day) / 지난 신청(최근 순, 흐리게). 줄을 누르면 신청 내용 시트.
  * 바꾸기 · 취소는 앱에서 하지 않아요 — 지점에 전화 (지점 전화번호가 아직 서버에 없어 버튼 대신 안내).
  * API: GET /trial-applications (api/trial-applications) — mock 을 끄면 실제 서버. 언어 이름은 서버가 붙여 줘요.
  */
 export default function ConsultationsScreen() {
+  const member = useMe(isMember);
+  if (member) return <Redirect href="/my" />;
+  return <Consultations />;
+}
+
+function Consultations() {
   const q = useTrialApplications();
   const [open, setOpen] = useState<TrialApplication | null>(null);
 

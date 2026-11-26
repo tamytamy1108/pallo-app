@@ -9,7 +9,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { HOST_INTRO, hashId, type Club } from '@/data/meet';
+import { clubStartLine, HOST_INTRO, hashId, type Club } from '@/data/meet';
 import { useMe } from '@/state/me';
 
 import { ClubRow } from '../club-list';
@@ -43,7 +43,7 @@ export function ClubHome({ c, inC, block, members, staff, recs, myBranch, onSess
       <DSec>소개</DSec>
       <PText style={[styles.desc, keepAll]}>{clubDesc(c)}</PText>
       <InfoRows>
-        <InfoRow first icon="cal" main={c.when} sub="매주 모여요" />
+        <InfoRow first icon="cal" main={c.when} sub={clubStartLine(c) ?? '매주 모여요'} />
         <InfoRow icon="pin" main={`${c.br}${c.reg ? ' · ' + c.reg : ''}`} sub={clubLangLine(c)} />
         <InfoRow icon="users" main={`멤버 ${members.length}명`} sub={clubCapLine(c)} />
         <HostRow name={c.mine ? me.name : host} branch={c.br} me={!!c.mine} sub={c.br} />

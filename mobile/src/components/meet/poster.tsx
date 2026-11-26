@@ -4,7 +4,7 @@ import { type ReactNode } from 'react';
 import { StyleSheet, View, type DimensionValue, type ViewStyle } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 
-import { PText } from '@/components/ui/text';
+import { PText, tightLines } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { EVENT_POSTER_MORE, EVENT_POSTER_WORDS } from '@/data/events';
 import { C, hashId, POSTER_MORE, POSTER_WORDS, type PosterWords } from '@/data/meet';
@@ -100,7 +100,7 @@ export function Poster({ id, slide, wordSize = 36, wordStyle, height, aspectRati
         </>
       )}
       <View style={StyleSheet.flatten([styles.words, wordStyle])} pointerEvents="none">
-        <PText style={{ fontFamily: Font.display, fontSize: wordSize, lineHeight: wordSize * 0.95, letterSpacing: -1.2, color: wc }}>{words.join('\n')}</PText>
+        <PText style={{ fontFamily: Font.display, ...tightLines(wordSize, 0.95), letterSpacing: -1.2, color: wc }}>{words.join('\n')}</PText>
       </View>
       {children}
     </View>

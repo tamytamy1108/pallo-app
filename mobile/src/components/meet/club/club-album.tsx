@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, hashId, type Club } from '@/data/meet';
-import { LayerModal } from '@/components/ui/sheet-stack';
+import { PhotoViewer } from '@/components/ui/photo-viewer';
 
 import { AlbumThumb } from '../album-art';
 import { Icon } from '../icons';
@@ -53,36 +52,31 @@ export function ClubAlbum({ c, inC }: { c: Club; inC: boolean }) {
   );
 }
 
-/** 크게 보기: 올린 사람 · 캡션 · 옆으로 넘기기 */
+/** 크게 보기: 올린 사람 · 캡션 · 옆으로 넘기기 (공용 PhotoViewer — 바깥 어두운 곳을 누르면 닫혀요) */
 function AlbumViewer({ list, who, start, onClose }: { list: ReturnType<typeof clubContent>['album']; who: (i: number) => string; start: number | null; onClose: () => void }) {
-  const [w, setW] = useState(0);
-  const [i, setI] = useState(0);
-  const insets = useSafeAreaInsets();
   return (
-    <LayerModal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.pv} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-        <View style={[styles.pvTop, { paddingTop: insets.top + 10 }]}>
-          <PText style={styles.pvN}>{`${i + 1} / ${list.length}`}</PText>
-          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기" style={styles.pvX} hitSlop={8}>
-            <Icon name="x" size={22} color="#fff" strokeWidth={2.6} />
-          </Pressable>
-        </View>
-        {w ? (
-          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} contentOffset={{ x: (start ?? 0) * w, y: 0 }} onLayout={() => setI(start ?? 0)} onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / w))}>
-            {list.map(([k, cap], j) => (
-              <View key={j} style={{ width: w, paddingHorizontal: 20, justifyContent: 'center', gap: 12 }}>
-                <AlbumThumb k={k} size={w - 40} style={styles.big} />
-                <PText style={styles.cap}>
-                  <PText style={styles.capB}>{who(j)}</PText> {cap}
-                </PText>
-              </View>
-            ))}
-          </ScrollView>
-        ) : null}
-      </View>
-    </LayerModal>
+    <PhotoViewer
+      count={list.length}
+      start={start}
+      onClose={onClose}
+      renderPhoto={(j, box) => {
+        const [k, cap] = list[j];
+        const size = Math.max(0, Math.min(box.width, box.height - CAP_H));
+        return (
+          <View style={{ width: size, gap: 12 }}>
+            <AlbumThumb k={k} size={size} style={styles.big} />
+            <PText style={styles.cap}>
+              <PText style={styles.capB}>{who(j)}</PText> {cap}
+            </PText>
+          </View>
+        );
+      }}
+    />
   );
 }
+
+/** 사진 아래 캡션 자리 (두 줄 + 간격) */
+const CAP_H = 56;
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
@@ -90,10 +84,6 @@ const styles = StyleSheet.create({
   lk: { position: 'absolute', left: 6, bottom: 5, flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.9)' },
   lkT: { fontFamily: Font.body900, fontSize: 11, lineHeight: 14 },
   hint: { marginTop: 6, textAlign: 'center', fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.94)', justifyContent: 'center' },
-  pvTop: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingBottom: 10, zIndex: 2 },
-  pvN: { fontFamily: Font.display, fontSize: 13, lineHeight: 18, color: '#fff' },
-  pvX: { position: 'absolute', right: 14, bottom: 4, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   big: { borderRadius: 18, borderWidth: 2, borderColor: '#fff' },
   cap: { fontFamily: Font.body700, fontSize: 14, lineHeight: 20, color: '#fff' },
   capB: { fontFamily: Font.body900, fontSize: 14, color: Colors.yellow },

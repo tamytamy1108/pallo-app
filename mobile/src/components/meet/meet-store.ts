@@ -169,6 +169,17 @@ export const decideMyClub = (id: string, ok: boolean, reason = '') =>
     };
   });
 
+/**
+ * 검토 중인 신청 고치기 (승인 전까지만). 고치면 지점 관리자에게 '신청 내용이 바뀌었어요' 알림이 가요.
+ * 지금은 가짜 상태라 고친 때(editedAt)만 남겨요. 백엔드가 생기면 `PATCH /me/club-applications/:id` → 서버가 매니저 알림을 보내요.
+ */
+export const editMyClub = (id: string, patch: Partial<Club>) =>
+  store.set((s) => {
+    const c = s.myClubs.find((x) => x.id === id);
+    if (!c?.wait) return s;
+    return { ...s, myClubs: patchMyClub(s, id, { ...patch, id, wait: true, mine: true, at: c.at, editedAt: Date.now() }) };
+  });
+
 /** 거절된 신청을 같은 내용으로 다시 보내요 */
 export const resubmitMyClub = (id: string) => store.set((s) => ({ ...s, myClubs: patchMyClub(s, id, { wait: true, rejected: undefined, at: Date.now() }) }));
 /** 검토 중 · 거절된 신청 지우기 (승인된 동아리는 '닫기'로) */

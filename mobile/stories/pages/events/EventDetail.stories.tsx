@@ -45,6 +45,8 @@ export const FullWatching: Story = {
     return fillUp('e1');
   }),
 };
+/** 멤버가 제안해 열린 이벤트 — 주최 줄이 지점 연락처 대신 멤버 프로필(얼굴 · 닉네임 · HOST · 프로필 ›) */
+export const MemberHost: Story = { parameters: at('e8') };
 /** 지난 이벤트 · 긴 소개(진행 기록) — 후기 보기 */
 export const Past: Story = { parameters: at('e7') };
 /** 지난 무료 이벤트 */
