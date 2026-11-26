@@ -63,8 +63,9 @@ export default function LinkScreen() {
     // 키보드가 올라오면 아래 버튼도 같이 올라와요. 아래 안전 영역만큼은 키보드가 덮으니 빼 줘요
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? -insets.bottom : 0}>
       <OnbScreen
-        step={stepsFor('member')}
-        total={stepsFor('member')}
+        // 가입 단계일 때만 진행 바 (가입을 마친 뒤 다시 요청할 땐 안 보여요)
+        step={inOnboarding ? stepsFor('member') : undefined}
+        total={inOnboarding ? stepsFor('member') : undefined}
         title={'다니는 지점에\n연동을 요청해요'}
         desc="지점에 등록한 이름 · 번호와 같게 적어 주세요."
         form={form}
