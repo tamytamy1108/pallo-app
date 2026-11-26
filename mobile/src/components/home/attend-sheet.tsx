@@ -10,6 +10,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { ATTEND_POINTS, LANGS, SLOTS, type MyTeamToday } from '@/data/home';
 import { haptic, sfx } from '@/lib/feedback';
+import { useMe } from '@/state/me';
 
 import { firstTeam, minuteOf, myTeams, nowDate, openTeamAt, slotSelectable, summary, teamName, teamSelectable, teamSub, useAttend, type SheetMode } from './attendance';
 import { HomeSheet, SheetClose } from './home-sheet';
@@ -113,6 +114,9 @@ function FormView({
   onConfirm: () => void;
 }) {
   const checkin = mode === 'checkin';
+  // 지점 관리자는 등록된 팀 대신 지점의 오늘 세션 전부를 골라요 (attendance myTeams)
+  const staff = useMe((me) => me.role === 'manager');
+  const pickWhat = staff ? '세션' : '내 팀';
   const ready = lang !== null && !!openTeamAt(slot, lang) && slotSelectable(slot, mode, m);
   const teams = sortTeams(myTeams());
   const none = teams.length === 0;
@@ -123,8 +127,8 @@ function FormView({
     : closed
       ? '오늘 열린 수업이 없어요'
       : checkin
-      ? rsvpd && ready ? '미리 알린 팀으로 골라뒀어요 · 맞는지 확인해요' : '오늘 출석할 내 팀을 골라요'
-      : '오늘 들을 내 팀을 골라요';
+      ? rsvpd && ready ? '미리 알린 팀으로 골라뒀어요 · 맞는지 확인해요' : `오늘 출석할 ${pickWhat}을 골라요`
+      : `오늘 들을 ${pickWhat}을 골라요`;
   const btn = none ? '등록된 팀이 없어요' : closed ? '오늘 열린 수업이 없어요' : !ready ? '팀을 골라주세요' : checkin ? `${summary(slot, lang)} QR 찍고 출석` : `${summary(slot, lang)} 참석 알리기`;
 
   return (
@@ -143,8 +147,8 @@ function FormView({
 
       {!none && (
         <>
-          <PText style={styles.label}>① 내 팀</PText>
-          <View style={styles.teams} accessibilityRole="radiogroup" accessibilityLabel="내 팀">
+          <PText style={styles.label}>① {staff ? '오늘 지점 세션' : '내 팀'}</PText>
+          <View style={styles.teams} accessibilityRole="radiogroup" accessibilityLabel={staff ? '오늘 지점 세션' : '내 팀'}>
             {teams.map((t) => {
               const l = LANGS[t.lang];
               const can = teamSelectable(t, mode, m);
@@ -154,7 +158,7 @@ function FormView({
               const status = teamSub(t, mode, m);
               return (
                 <Pressable
-                  key={t.no}
+                  key={`${t.no}-${t.lang}-${t.when}`}
                   disabled={!can}
                   onPress={() => {
                     if (t.slot === null) return;

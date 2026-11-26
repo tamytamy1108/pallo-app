@@ -1013,8 +1013,10 @@ v2 에서는 `/me/inquiries` 가 1:1 문의예요 (MobileUserInquiryController).
 | 하는 일 | 누가 | 서버 | API |
 |---|---|---|---|
 | 회원 전용 (출석 · 내 스터디 · 이용권 · 프로 노트 · 글쓰기 · 참여) | guest | 403 member_only | 여러 API (GET /me 설명) |
-| 연기 · 팀 · 지점 · 레벨 변경 신청 · 지점 연동 요청 · 체험 예약 · 이벤트 신청 (보여 주기 모드) | pro · manager · hq | 403 demo_account (`x-demo-blocked`) | POST /me/deferral-requests · /me/course-change-requests · /me/branch-transfer-requests · /me/level-change-requests · /me/branch-link-requests · /candidate-inquiries · /events/{id}/applications |
-| 공지 고정 · 글 숨기기 · 이벤트 바로 열기 | pro · manager · hq | 나머지 403 (`x-roles`) | POST · DELETE /community/posts/{postId}/pin · /hide, POST /events |
+| 연기 · 팀 · 지점 · 레벨 변경 신청 · 체험 예약 (보여 주기 모드) | manager · hq (pro 는 회원처럼 돼요, 2026-11-26) | 403 demo_account (`x-demo-blocked`) | POST /me/deferral-requests · /me/course-change-requests · /me/branch-transfer-requests · /me/level-change-requests · /candidate-inquiries |
+| 이벤트 신청 (2026-11-26) | pro · manager · hq 모두 진짜로 돼요 | 막지 않아요 | POST /events/{id}/applications |
+| 지점 연동 요청 (2026-11-26) | 연동 전(guest)만 버튼이 보여요 · 이미 연동된 계정에는 안 보여요 | — | POST /me/branch-link-requests |
+| 공지 고정 · 글 숨기기 · 이벤트 바로 열기 | manager · hq (pro 는 ×, 2026-11-26) | 나머지 403 (`x-roles`) | POST · DELETE /community/posts/{postId}/pin · /hide, POST /events |
 | 스토리 고정 · 다른 사람 스토리 내리기 | manager | 나머지 403 | PUT · DELETE /stories/{storyId}/pin, POST /stories/{storyId}/takedown |
 | 이벤트 입금 확인 · 설문 결과 | manager · 그 이벤트 주최 | 나머지 403 | PATCH /events/{id}/applications/{applicationId}, GET /events/{id}/survey-results(.xlsx) |
 | 코호스트 정하기 | 그 동아리 HOST · 자기 지점 manager | 나머지 403 | PUT /clubs/{id}/staff |
@@ -1039,8 +1041,7 @@ v2 에서는 `/me/inquiries` 가 1:1 문의예요 (MobileUserInquiryController).
 ### 지점 관리자 (manager)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 오늘 지점 현황 (세션별 출석 인원 · 프로 출석 체크) | GET /manager/branch/today | new | 없음 |
-| QR 출석 코드 띄우기 | GET /manager/branch/qr | new | 없음 |
+| 홈 현황 요약 카드(오늘 세션 · 출석 · 프로 출석) → 모두 보기: 세션별 출석 인원 · 테이블(QR)마다 몇 명 · 프로 출석 체크 — 테이블 QR 출석이 바로 반영 | GET /manager/branch/today | new | 없음 |
 | 출석 명단 보기 | GET /staff/sessions/{sessionId}/roster | new | 없음 |
 | 이름 옆 `STAFF` · 소속 줄(지점 이름 · 본사는 PALLO) | AuthorRole STAFF | change | 앱은 지금 '매니저' 글자 |
 | 연동 · 체험 · 신고 · 회원 요청 처리 | 앱에 없어요 — 전산(관리자) 웹 | — | — |

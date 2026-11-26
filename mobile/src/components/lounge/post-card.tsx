@@ -269,13 +269,14 @@ export function AbroadCard({ p }: { p: Abroad }) {
   );
 }
 
-/** ⋯ 글 메뉴 (프로토타입 lgMore): 링크 복사 · (프로 · 매니저) 공지 고정 · 숨기기 · 신고 · 차단 — 공통 신고 · 차단 시트 */
+/** ⋯ 글 메뉴 (프로토타입 lgMore): 링크 복사 · (매니저) 공지 고정 · 숨기기 · 신고 · 차단 — 공통 신고 · 차단 시트 */
 function PostMenu({ open, who, onClose }: { open: boolean; who: string; onClose: () => void }) {
   const me = useMe();
-  const staff = me.role === 'leader' || me.role === 'manager';
+  // 공지 고정 · 글 숨기기는 직원만 — 프로는 멤버와 같아요 (2026-11-26)
+  const staff = me.role === 'manager';
   const extra: ReportMenuItem[] = staff
     ? [
-        { key: 'pin', label: '공지로 고정', sub: '프로 · 매니저 도구', onPress: () => (onClose(), showToast('공지로 고정했어요')) },
+        { key: 'pin', label: '공지로 고정', sub: '매니저 도구', onPress: () => (onClose(), showToast('공지로 고정했어요')) },
         {
           key: 'hide',
           label: '이 글 숨기기',

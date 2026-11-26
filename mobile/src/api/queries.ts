@@ -14,6 +14,7 @@ import { fetchLaunchPopups, fetchLoungeHighlights, fetchNotice, fetchNotices, fe
 import { fetchMe } from './me';
 import { fetchMyLinkRequests } from './branch-link';
 import { fetchBranchSummary } from './branch-summary';
+import { fetchBranchToday } from './branch-today';
 import { fetchMyPage } from './my-page';
 import { fetchBranchGuides } from './branch-guide';
 import { fetchFaq, fetchMyInquiries } from './support';
@@ -32,6 +33,7 @@ export const queryKeys = {
   trialSlots: (branchCode: string) => ['trial-slots', branchCode] as const,
   assetCatalog: ['asset-catalog'] as const,
   sessionsToday: ['sessions', 'today'] as const,
+  branchToday: ['manager', 'branch', 'today'] as const,
   notices: (params: PageParams = {}) => ['notices', 'list', params] as const,
   notice: (id: string) => ['notices', 'detail', id] as const,
   loungeHighlights: ['lounge', 'highlights'] as const,
@@ -86,6 +88,10 @@ export const branchGuidesQuery = () =>
 
 /** 8 /me/sessions/today */
 export const sessionsTodayQuery = () => queryOptions({ queryKey: queryKeys.sessionsToday, queryFn: ({ signal }) => fetchTodaySessions({ signal }) });
+
+/** GET /manager/branch/today — 지점 관리자 홈 현황 요약 · 모두 보기 (출석이 바로 보이게 30초마다 다시 받아요) */
+export const branchTodayQuery = () =>
+  queryOptions({ queryKey: queryKeys.branchToday, queryFn: ({ signal }) => fetchBranchToday({ signal }), refetchInterval: 30_000 });
 
 /** 12 /notices (첫 페이지) */
 export const noticesQuery = (params: PageParams = {}) => queryOptions({ queryKey: queryKeys.notices(params), queryFn: ({ signal }) => fetchNotices(params, { signal }) });

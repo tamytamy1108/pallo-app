@@ -16,7 +16,7 @@ import type { Member } from '../model';
 /**
  * 동아리 '관리' 시트 (docs/pages/10-roles.md 5장 · 관리 항목 자세히).
  * 지금 앱의 메뉴 시트 부품(SheetOptions · SheetButton · 토스트)만 써요. 단계별로 같은 시트 안에서 넘어가요.
- * 호스트 = 6가지, 코호스트 = 공지 · 정기 모임 · 참석 확인. 가입은 신청하면 바로 돼요 (승인 · 대기자 없음).
+ * 호스트 = 6가지, 코호스트 = 멤버 목록(보기만) · 공지 · 정기 모임 · 참석 확인 (2026-11-26). 가입은 신청하면 바로 돼요 (승인 · 대기자 없음).
  * 관리 시트는 운영 중인 동아리에서만 열려요 (관리자 승인 뒤 · 닫히기 전). 호스트는 내가 만든 동아리만.
  * 맞는 API: `/clubs/:id/members/:id` DELETE · `/clubs/:id/staff`.
  */
@@ -175,6 +175,8 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
         { ...opt('close', '동아리 닫기', '모든 멤버에게 알림이 가요', true), to: { k: 'close' } },
       ]
     : [
+        // 코호스트도 멤버 목록은 봐요 — 코호스트 정하기 · 빼기는 호스트만 (2026-11-26)
+        { ...opt('members', '멤버 목록', `멤버 ${members.length}명 · 누르면 프로필`), to: { k: 'members' } },
         { ...opt('meet', '공지 · 정기 모임 · 참석 확인', '공지는 멤버 모두에게 알림이 가요'), to: { k: 'meet' } },
       ];
   return (
@@ -187,7 +189,7 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
           else if (row) go(row.to);
         }}
       />
-      {host ? null : <SheetNote>호스트만 할 수 있어요: 멤버 목록 · 코호스트 정하기 · 소개 · 사진 · 장소 · 시간 고치기 · 호스트 넘기기 · 동아리 닫기</SheetNote>}
+      {host ? null : <SheetNote>호스트만 할 수 있어요: 코호스트 정하기 · 빼기 · 소개 · 사진 · 장소 · 시간 고치기 · 호스트 넘기기 · 동아리 닫기</SheetNote>}
       <SheetButton label="닫기" tone="white" size="inline" sound="back" onPress={onClose} />
     </Sheet>
   );

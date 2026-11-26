@@ -8,9 +8,11 @@ import { apiErrorMessage } from '@/api/errors';
 import { sendAttendance, sendRsvp } from '@/api/home';
 import { queryKeys } from '@/api/queries';
 import { queryClient } from '@/api/query-client';
+import { refreshBranchToday, useProCheckIn } from '@/api/use-branch-today';
 import { guardMember } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-sheet';
+import { BranchStatusCard } from '@/components/home/branch-status-card';
 import { getAttend, minuteOf, nowDate, openTeams, slotSelectable, summary, type SheetMode } from '@/components/home/attendance';
 import { setDecoOnScreen } from '@/components/home/deco-on-screen';
 import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/components/home/dev';
@@ -18,6 +20,7 @@ import { GoalCard } from '@/components/home/goal-card';
 import { Greeting } from '@/components/home/greeting';
 import { LineIcon } from '@/components/home/icons';
 import { InviteSheet } from '@/components/home/invite-sheet';
+import { JoinRoleSheet, type JoinRole } from '@/components/home/join-role-sheet';
 import { LaunchPopup } from '@/components/home/launch-popup';
 import { LinkAdminDev } from '@/components/home/link-admin-dev';
 import { LinkRejectedPopup } from '@/components/home/link-rejected-popup';
@@ -34,9 +37,10 @@ import { Raised } from '@/components/ui/raised';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
+import { branchSessionAt } from '@/data/branch-today';
 import { LANGS, SLOTS } from '@/data/home';
 import { shouldAskInvite } from '@/state/invite-prompt';
-import { useMe } from '@/state/me';
+import { getMe, isProLike, useMe } from '@/state/me';
 import { useTabReselect } from '@/lib/tab-reselect';
 
 const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
@@ -53,6 +57,7 @@ export default function HomeScreen() {
   // 3 /me — 로그인 상태(src/api/session.tsx)가 /me 를 받은 뒤에야 이 화면이 열리고, 받은 값은 state/me 에 들어 있어요
   const name = useMe((m) => m.name);
   const plan = useMe((m) => m.plan);
+  const role = useMe((m) => m.role);
   const unread = useUnreadCount();
   const scroll = useRef<ScrollViewInstance>(null);
   useTabReselect('home', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
@@ -67,6 +72,8 @@ export default function HomeScreen() {
   const [preset, setPreset] = useState<{ slot: number; lang: number } | null>(null);
   // 사전 출석이 끝나면 '함께 가자고 할까요?' (회원 · 팔로우한 멤버 있음 · 2주간 보지 않기 아님)
   const [invite, setInvite] = useState<{ slot: number; lang: number } | null>(null);
+  // 프로 · 스텝: 테이블 QR 을 찍으면 '프로로 / 멤버로' 고르기 (docs/pages/10-roles.md 3-1)
+  const [join, setJoin] = useState<{ slot: number; lang: number; qr: string } | null>(null);
 
   // 9 사전 출석 · 10 QR 출석 (src/api/home.ts)
   const refreshToday = () => queryClient.invalidateQueries({ queryKey: queryKeys.sessionsToday });
@@ -84,6 +91,8 @@ export default function HomeScreen() {
     onSuccess: () => {
       setSheet('done');
       refreshToday();
+      // 스텝 홈 현황 숫자(멤버 출석)도 바로
+      void refreshBranchToday();
     },
     onError: (e) => showToast(apiErrorMessage(e)),
   });
@@ -128,7 +137,28 @@ export default function HomeScreen() {
   const scanned = (qr: string) => {
     const s = scan ?? { slot: getAttend().slot, lang: getAttend().lang };
     setScan(null);
+    // 프로 · 스텝은 찍을 때 현장에서 프로로 / 멤버로 골라요 (회원은 바로 출석)
+    if (isProLike(getMe().role)) {
+      setTimeout(() => setJoin({ slot: s.slot, lang: s.lang, qr }), 220);
+      return;
+    }
     attendance.mutate({ slot: s.slot, lang: s.lang, qr });
+  };
+  const proCheckIn = useProCheckIn(
+    () => showToast('프로로 참여했어요 · 프로 출석에 들어갔어요'),
+    (e) => showToast(apiErrorMessage(e)),
+  );
+  const pickJoin = (r: JoinRole) => {
+    const j = join;
+    setJoin(null);
+    if (!j) return;
+    if (r === 'member') {
+      attendance.mutate({ slot: j.slot, lang: j.lang, qr: j.qr });
+      return;
+    }
+    // 가짜 서버: 테이블은 그 세션 첫 테이블로 쳐요 (실제는 QR 의 tableId)
+    const session = branchSessionAt(j.slot, j.lang);
+    proCheckIn.mutate({ sessionId: session?.id ?? `${SLOTS[j.slot].id}-${LANGS[j.lang].key}`, tableNo: session?.tables[0]?.no ?? 0 });
   };
 
   const continueGoal = () => {
@@ -176,6 +206,12 @@ export default function HomeScreen() {
           <NoticeStrip />
         </Appear>
         <Appear kind="rise" delay={100}>{plan === 'app' ? <GoalCard onContinue={continueGoal} /> : <HomeCard onOpen={openAttend} />}</Appear>
+        {/* 지점 관리자: 출석 카드 아래 지점 현황 요약 (숫자 세 칸 · 모두 보기) */}
+        {role === 'manager' && plan !== 'app' ? (
+          <Appear kind="rise" delay={120}>
+            <BranchStatusCard />
+          </Appear>
+        ) : null}
         <Appear
           kind="rise"
           delay={140}
@@ -200,6 +236,13 @@ export default function HomeScreen() {
         onConfirm={confirm}
       />
       <InviteSheet at={invite} onClose={() => setInvite(null)} />
+      <JoinRoleSheet
+        open={!!join}
+        context={join ? `${summary(join.slot, join.lang)} · 테이블 QR` : ''}
+        proFirst={role === 'leader'}
+        onPick={pickJoin}
+        onClose={() => setJoin(null)}
+      />
       <QrScanner
         open={!!scan}
         summaryText={scan ? summary(scan.slot, scan.lang) : ''}
