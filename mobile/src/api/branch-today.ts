@@ -64,6 +64,7 @@ function mockSession(s: MockBranchSession, m: number, covers: ProCover['sessions
   return {
     sessionId: s.id,
     startsAt: atMinute(start),
+    studyName: s.study,
     teamName: s.team,
     lang: LANGS[s.lang].key,
     level: s.level,

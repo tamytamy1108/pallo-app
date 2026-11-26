@@ -11,6 +11,7 @@ import { apiConfig } from '@/api/config';
 import { queryKeys } from '@/api/queries';
 import { getBranchProgress } from '@/api/use-branch-progress';
 import { queryClient } from '@/api/query-client';
+import { showLinkPush } from '@/components/home/link-push';
 import { addNoti } from '@/components/home/noti-state';
 import { createStore } from '@/lib/store';
 import { getMe, updateMe } from '@/state/me';
@@ -28,8 +29,6 @@ const SERVER_DELAY = 2500;
 type LinkEvents = {
   /** 관리자 처리를 흉내 내는 중 (도착 전) */
   processing: boolean;
-  /** 위에서 내려오는 푸시 배너 (key 가 바뀌면 다시 내려와요) */
-  push: { key: number; result: LinkResult; branch: string } | null;
   /** 홈 잠긴 카드가 풀리는 순간을 아직 안 봤어요 */
   homeMoment: boolean;
   /** 마이 '연동됨' 표시가 튀어나오는 순간을 아직 안 봤어요 */
@@ -38,7 +37,7 @@ type LinkEvents = {
   note: string;
 };
 
-const store = createStore<LinkEvents>({ processing: false, push: null, homeMoment: false, myMoment: false, note: REJECT_NOTE_MOCK });
+const store = createStore<LinkEvents>({ processing: false, homeMoment: false, myMoment: false, note: REJECT_NOTE_MOCK });
 
 export const useLinkEvents = store.useStore;
 export const getLinkEvents = store.get;
@@ -68,10 +67,10 @@ export function receiveLinkResult(result: LinkResult, note = REJECT_NOTE_MOCK) {
     ...s,
     processing: false,
     note,
-    push: { key, result, branch },
     homeMoment: result === 'linked',
     myMoment: result === 'linked',
   }));
+  showLinkPush(result, branch, `link-${key}`);
 }
 
 /** 개발용: 지점 매니저가 처리한 것처럼 2.5초 뒤 결과가 도착해요. 이미 처리 중이면 무시 */
@@ -81,7 +80,6 @@ export function simulateBranchResult(result: LinkResult) {
   setTimeout(() => receiveLinkResult(result), SERVER_DELAY);
 }
 
-export const dismissLinkPush = () => store.set((s) => (s.push ? { ...s, push: null } : s));
 export const finishHomeMoment = () => store.set((s) => (s.homeMoment ? { ...s, homeMoment: false } : s));
 export const finishMyMoment = () => store.set((s) => (s.myMoment ? { ...s, myMoment: false } : s));
 

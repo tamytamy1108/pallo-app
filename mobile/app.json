@@ -57,7 +57,13 @@
           "cameraPermission": "출석 QR을 찍거나 올릴 사진을 찍으려면 카메라가 필요해요."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "가까운 지점을 거리순으로 보여 드리려면 현재 위치가 필요해요. 위치는 저장하지 않아요."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

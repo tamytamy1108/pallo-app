@@ -12,7 +12,7 @@ import type { Club, Meet } from '@/data/meet';
 /** 설문 답: 질문 번호 → 고른 보기 번호(하나) · 번호들(여럿) · 글(짧은 답) */
 export type SurveyAnswers = Record<number, number | number[] | string>;
 
-export type Proposal = { id: string; title: string; br: string; date: string; cat: string; cover?: string; /** 만든 카드 (있으면 대표) */ card?: MadeCard; /** 예상 인원 (0 = 무관) */ cap?: number; /** 희망 시간 [시작, 끝] ('19:00', '21:00') */ time?: [string, string]; body?: string; /** 1인 참가비 (원 · 0 = 무료) */ fee?: number };
+export type Proposal = { id: string; title: string; br: string; date: string; cat: string; cover?: string; /** 만든 카드 (있으면 대표) */ card?: MadeCard; /** 예상 인원 (0 = 무관) */ cap?: number; /** 희망 시간 [시작, 끝] ('19:00', '21:00') */ time?: [string, string]; body?: string; /** 1인 참가비 (원 · 0 = 무료) */ fee?: number; /** 서버 처리 상태 (없으면 검토 중) */ status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED'; /** 반려 사유 */ rejectionReason?: string | null; /** 보낸 시각 (ISO) */ sentAt?: string };
 
 export type ChatMsg = { day?: string; sys?: string; n?: string; host?: boolean; x?: string; t?: string; me?: boolean };
 

@@ -16,11 +16,13 @@ import { fetchMyLinkRequests } from './branch-link';
 import { fetchBranchSummary } from './branch-summary';
 import { fetchBranchToday } from './branch-today';
 import { fetchMyPage } from './my-page';
-import { fetchProsNote } from './pros-notes';
+import { fetchProsNote, type ProsNoteBox } from './pros-notes';
 import { fetchBranchGuides } from './branch-guide';
 import { fetchFaq, fetchMyInquiries } from './support';
+import { fetchReportReasons } from './reports';
+import { fetchEventCategories, fetchMyEventProposals } from './event-proposals';
 import { fetchMyTrialApplications } from './trial-applications';
-import { fetchAssetCatalog, fetchBranchOptions, fetchBranchPublicGuide, fetchOnboardingInfo, fetchTrialSlots } from './onboarding';
+import { fetchAssetCatalog, fetchBranchOptions, fetchBranchPublicGuide, fetchOnboardingInfo, fetchTrialSlots, roundLatLng, type LatLng } from './onboarding';
 
 export const queryKeys = {
   me: ['me'] as const,
@@ -28,10 +30,15 @@ export const queryKeys = {
   branchSummary: ['me', 'branch-summary'] as const,
   myPage: ['me', 'mypage'] as const,
   prosNote: (id: string) => ['me', 'pros-notes', id] as const,
+  /** 노트 목록 — 열람 뒤 'list' 아래를 통째로 다시 받아요 (NEW 표시) */
+  prosNotesAll: ['me', 'pros-notes', 'list'] as const,
+  prosNotes: (box: ProsNoteBox, courseId: string | null) => ['me', 'pros-notes', 'list', box, courseId ?? 'all'] as const,
   branchGuides: ['me', 'branch-guides'] as const,
   trialApplications: ['me', 'trial-applications'] as const,
   onboardingInfo: ['onboarding'] as const,
+  /** 지점 시트 전체 (위치별 목록도 이 키 아래라 이걸로 다시 받으면 다 새로 받아요) */
   branchOptions: ['branches'] as const,
+  branchOptionsNear: (p: LatLng | null) => (p ? (['branches', 'near', roundLatLng(p).lat, roundLatLng(p).lng] as const) : (['branches'] as const)),
   trialSlots: (branchCode: string) => ['trial-slots', branchCode] as const,
   branchPublicGuide: (branchCode: string) => ['branch-public-guide', branchCode] as const,
   assetCatalog: ['asset-catalog'] as const,
@@ -43,6 +50,9 @@ export const queryKeys = {
   popups: ['popups'] as const,
   faq: ['faq'] as const,
   myInquiries: ['me', 'inquiries'] as const,
+  reportReasons: ['reports', 'reasons'] as const,
+  eventProposals: ['me', 'event-proposals'] as const,
+  eventCategories: ['event-proposals', 'categories'] as const,
   situationMaps: ['library', 'maps'] as const,
   bookShelf: ['library', 'books'] as const,
   lesson: (id: string) => ['lessons', id] as const,
@@ -79,8 +89,9 @@ export const trialApplicationsQuery = () => queryOptions({ queryKey: queryKeys.t
 /** GET /onboarding — 약관 · 미리 채울 값 · 닉네임 규칙 · 언어 · 이유 (가입 중엔 안 바뀌어요) */
 export const onboardingInfoQuery = () => queryOptions({ queryKey: queryKeys.onboardingInfo, queryFn: ({ signal }) => fetchOnboardingInfo({ signal }), staleTime: CONTENT_STALE_MS });
 
-/** GET /branches — 지점 시트 (연동 상태가 바뀌니 시트를 열 때마다 새로) */
-export const branchOptionsQuery = () => queryOptions({ queryKey: queryKeys.branchOptions, queryFn: ({ signal }) => fetchBranchOptions({ signal }) });
+/** GET /branches(?lat=&lng=) — 지점 시트 (연동 상태가 바뀌니 시트를 열 때마다 새로). 위치를 주면 가까운 순 · 거리 · 방위 */
+export const branchOptionsQuery = (near: LatLng | null = null) =>
+  queryOptions({ queryKey: queryKeys.branchOptionsNear(near), queryFn: ({ signal }) => fetchBranchOptions({ near, signal }) });
 
 /** GET /branches/{code}/guide — 고른 지점 안내 (지점이 콘솔에서 고칠 때만 바뀌어요) */
 export const branchPublicGuideQuery = (branchCode: string) =>
@@ -125,6 +136,19 @@ export const faqQuery = () => queryOptions({ queryKey: queryKeys.faq, queryFn: (
 
 /** 94 GET /me/inquiries — 내 1:1 문의 (최신 순) */
 export const myInquiriesQuery = () => queryOptions({ queryKey: queryKeys.myInquiries, queryFn: ({ signal }) => fetchMyInquiries({ signal }) });
+
+/* ───────── 신고 ───────── */
+
+/** GET /event-proposals — 내 이벤트 제안 전부 (이벤트 탭 '내가 제안한 이벤트') */
+export const eventProposalsQuery = () => queryOptions({ queryKey: queryKeys.eventProposals, queryFn: ({ signal }) => fetchMyEventProposals({ signal }) });
+
+/** GET /event-proposals/categories — 이벤트 분류 선택지 (자주 안 바뀌어요) */
+export const eventCategoriesQuery = () =>
+  queryOptions({ queryKey: queryKeys.eventCategories, queryFn: ({ signal }) => fetchEventCategories({ signal }), staleTime: CONTENT_STALE_MS });
+
+/** GET /reports/reasons — 신고 사유 선택지 (자주 안 바뀌어요) */
+export const reportReasonsQuery = () =>
+  queryOptions({ queryKey: queryKeys.reportReasons, queryFn: ({ signal }) => fetchReportReasons({ signal }), staleTime: CONTENT_STALE_MS });
 
 /* ───────── 학습 (16 · 17 · 18) ───────── */
 

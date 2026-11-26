@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
+import type { ProsNoteListItem } from '@/api/pros-notes';
+import { queryKeys } from '@/api/queries';
 import { noteExpression } from '@/components/account/pro-note-parts';
 import { markNoteRead } from '@/components/account/store';
 import ProNotesScreen from '@/app/(app)/me/notes/index';
@@ -43,3 +45,45 @@ export const DiaryView: Story = { parameters: { route: { pathname: '/me/notes', 
 
 export const Guest: Story = { globals: { userKind: 'guest' } };
 export const Pending: Story = { globals: { userKind: 'pending' } };
+
+/** 실서버 모양 받은 노트 줄 — 첫 질문 + 나머지 n개 · 안 연 노트 NEW · 달이 바뀌면 머리 하나 더 · 다음 쪽이 있으면 [더 보기] */
+const row = (id: string, date: string, title: string, q: string, n: number, unread: boolean): ProsNoteListItem => ({
+  note: {
+    id,
+    course: { courseId: 'c1', title, languageLabel: '영어', branchName: '하남점', date, time: '19:30', endTime: '20:50' },
+    leaderName: 'Julie',
+    questionCount: n,
+    participantCount: 6,
+    readCount: 0,
+    sentAt: `${date}T12:00:00Z`,
+    viewerRole: 'PARTICIPANT',
+    previewQuestion: q,
+  },
+  unread,
+});
+export const ServerList: Story = {
+  parameters: {
+    queries: [
+      [
+        queryKeys.prosNotes('RECEIVED', null),
+        {
+          pages: [
+            {
+              items: [
+                row('s1', '2026-11-24', '비즈니스 영어', 'How do I say hello politely?', 3, true),
+                row('s2', '2026-11-17', '비즈니스 영어', 'commute 는 명사예요 동사예요?', 1, false),
+                row('s3', '2026-10-27', '비즈니스 영어', 'What does "touch base" mean?', 2, false),
+              ],
+              nextCursor: '1',
+            },
+          ],
+          pageParams: [null],
+        },
+      ],
+    ],
+  },
+};
+/** 실서버 모양 — 받은 노트가 아직 없음 */
+export const ServerEmpty: Story = {
+  parameters: { queries: [[queryKeys.prosNotes('RECEIVED', null), { pages: [{ items: [], nextCursor: null }], pageParams: [null] }]] },
+};

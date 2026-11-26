@@ -472,7 +472,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 💬 댓글 창 · 답글 · 수정 · 삭제 · 댓글 ♡ | GET · POST /community/posts/{postId}/comments · PUT · DELETE …/comments/{commentId} · POST …/like | existing | LG_CMTS · cmts |
 | ⋯ 공지로 고정 (프로 · 지점 관리자) | POST · DELETE /community/posts/{postId}/pin | new | 토스트만 |
 | ⋯ 이 글 숨기기 [되돌리기] (프로 · 지점 관리자) | POST · DELETE /community/posts/{postId}/hide | new | hideMember (사람 단위) |
-| ⋯ 신고 · 차단 | POST /reports · POST /blocks · DELETE /blocks/{memberCode} | new | report-sheet.tsx |
+| ⋯ 신고 · 차단 | POST /reports (live) · POST /blocks · DELETE /blocks/{memberCode} | new | report-sheet.tsx |
 | 해외살이 카드 '○○에게 질문하기' | POST /members/{code}/questions | new | AskSheet (토스트만) |
 | 보내기(링크 복사) | 없음 — 앱이 공유 링크를 만들어요 | — | 토스트만 |
 
@@ -628,7 +628,8 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 신고 · 차단 시트 — `components/common/report-sheet.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 신고하기 (사유 5개) | POST /reports | new | reportStore |
+| 신고 사유 고르기 | GET /reports/reasons | live | api/reports.ts (REPORT_REASON 마스터데이터) |
+| 신고하기 | POST /reports | live | api/reports.ts · 내 신고 내역은 아직 reportStore(기기) |
 | 차단하기 (사유 6개) [되돌리기] | POST /blocks · DELETE /blocks/{memberCode} | new | blockStore |
 | 차단한 사람 글 · 스토리 숨기기 | 서버가 모든 라운지 목록에서 빼요 (앱 필터 없앰) | — | useBlockedNames · useIsBlocked |
 
@@ -892,9 +893,10 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 프로 노트 모음 — `app/me/notes/index.tsx` (+ `?view=diary` → `components/account/diary-list.tsx`)
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 전체 · 팀별 탭 | GET /pros-notes?role=participant&courseId= | change | PRO_NOTES · MY_TEAMS |
-| 팀 탭 이름 | GET /me/memberships courses | change | MY_TEAMS |
-| 오늘 준비 중 | GET /pros-notes/incoming | new | PN_WAIT |
+| 받은 노트 전체 · 팀별 탭 (NEW · 첫 질문 + 나머지 n개 · 달마다 머리 · [더 보기]) | GET /me/pros-notes?box=RECEIVED&courseId=&cursor= | existing | api/use-pros-note.ts useProsNotes (가짜 서버 = PRO_NOTES) |
+| 프로: 보낸 노트 탭 (n/m명 읽음 · 고마워요는 서버에 없어 안 그림) | GET /me/pros-notes?box=SENT | existing | useProsNotes('SENT') (가짜 서버 = PRO_SENT_NOTES) |
+| 프로 여부 · 보낸/받은 노트 수 · 팀 탭 이름 | GET /me/mypage (proNote.sent · received.total · study.teams) | existing | api/use-my-page.ts |
+| 오늘 준비 중 (서버에 없어 가짜 서버일 때만) | GET /pros-notes/incoming | new | use-pros-note.ts useNoteWait (PN_WAIT) |
 | '저장한 표현' 탭 · 저장 취소 | 학습 도메인 표현함 API | — | state/expressions |
 | 스터디 일기 모아 보기 | GET /me/study-diaries | new | store diary · DIARY_EXAMPLES |
 

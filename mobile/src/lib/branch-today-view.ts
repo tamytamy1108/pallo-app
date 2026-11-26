@@ -14,8 +14,10 @@ export type SessionRow = BranchSession & {
 
 export type BranchTodayView = {
   branchName: string;
-  /** 오늘 스터디: 오늘 열리는 팀 수 — 0이면 쉬는 날 */
+  /** 오늘 열리는 팀 수 — 0이면 쉬는 날 */
   sessions: number;
+  /** 오늘 스터디 수 (예: 영어 화목 7시 30분 · 일본어 화목 7시 30분 — 스터디 안에 팀이 여럿) */
+  studies: number;
   /** 프로 출석: 몇 명이 했는지 (프로 + 스텝이 대신) */
   proCount: number;
   proByPro: number;
@@ -64,6 +66,7 @@ export function toBranchTodayView(data: BranchToday, m: number, qrBefore: number
   return {
     branchName: data.branch.name,
     sessions: rows.length,
+    studies: new Set(rows.map((r) => r.studyName)).size,
     proCount: proByPro + proByStaff,
     proByPro,
     proByStaff,
@@ -74,4 +77,17 @@ export function toBranchTodayView(data: BranchToday, m: number, qrBefore: number
     done,
     next,
   };
+}
+
+export type StudyGroup = { studyName: string; rows: SessionRow[] };
+
+/** 같은 스터디의 팀끼리 묶어요 (순서는 들어온 순서 그대로) */
+export function groupByStudy(rows: SessionRow[]): StudyGroup[] {
+  const out: StudyGroup[] = [];
+  for (const r of rows) {
+    const g = out.find((x) => x.studyName === r.studyName);
+    if (g) g.rows.push(r);
+    else out.push({ studyName: r.studyName, rows: [r] });
+  }
+  return out;
 }

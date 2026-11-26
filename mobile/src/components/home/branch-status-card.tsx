@@ -9,7 +9,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import type { BranchTodayView } from '@/lib/branch-today-view';
+import { groupByStudy, type BranchTodayView } from '@/lib/branch-today-view';
 
 import { fmtMin } from './attendance';
 
@@ -20,7 +20,10 @@ const LINE = 2.5;
 /** 아래 한 줄: '출석 중 19:30 · 영어 3팀 · 일본어 2팀' */
 function nextLine(v: BranchTodayView) {
   if (!v.next) return v.sessions ? '오늘 스터디가 모두 끝났어요' : null;
-  const teams = v.next.rows.map((r) => r.teamName).join(' · ');
+  // 스터디마다 '영어 3팀' (스터디 이름의 첫 말 = 언어)
+  const teams = groupByStudy(v.next.rows)
+    .map((g) => `${g.studyName.split(' ')[0]} ${g.rows.length}팀`)
+    .join(' · ');
   return `${v.next.phase === 'open' ? '출석 중' : '다음 스터디'} ${fmtMin(v.next.start)} · ${teams}`;
 }
 
@@ -58,7 +61,7 @@ export function BranchStatusCard() {
   };
   const v = (n: number | undefined) => (n === undefined ? '–' : String(n));
   const cells: Cell[] = [
-    { label: '오늘 스터디', value: v(view?.sessions) },
+    { label: '오늘 스터디', value: v(view?.studies), sub: view ? `팀 ${view.sessions}` : undefined },
     { label: '프로 출석', value: v(view?.proByPro), tone: 'pro', sub: view ? `예정 ${view.proPlanned}` : undefined },
     { label: '스텝 출석', value: v(view?.proByStaff), tone: 'staff' },
     { label: '멤버 출석', value: v(view?.members), tone: 'member' },

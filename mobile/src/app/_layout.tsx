@@ -9,15 +9,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { apiErrorMessage } from '@/api/errors';
 import { ApiProvider } from '@/api/provider';
+import { ForegroundPushBanner } from '@/api/use-foreground-push';
 import { useSession } from '@/api/session';
 import { preloadAllAvatarArt, preloadMyAvatar } from '@/components/character/preload-art';
 import { FLAT_MAPS } from '@/components/library/world/flat-maps';
 import { TrialGuideHost } from '@/components/common/trial-guide';
 import { SeeSheetHost } from '@/components/common/see-sheets';
 import { DevNotch } from '@/components/dev-notch';
-import { LinkPushHost } from '@/components/home/link-push';
 import { ErrorState } from '@/components/ui/state-view';
 import { TightTopInsets } from '@/components/ui/safe-area';
+import { PushBannerHost } from '@/components/ui/push-banner';
 import { ToastHost } from '@/components/ui/toast';
 import { RewardHost } from '@/components/my/reward-sheet';
 import { FontAssets } from '@/constants/fonts';
@@ -113,8 +114,9 @@ function RootNavigator() {
         {/* 어디서든 부르는 공통 창: 토스트 · 비회원 체험 안내 */}
         <TrialGuideHost />
         <ToastHost />
-        {/* 지점 연동 결과 푸시 띠: 어느 화면에 있어도 위에서 내려와요 */}
-        <LinkPushHost />
+        {/* 푸시 배너 (지점 연동 결과 · 앱이 켜져 있을 때 온 푸시): 어느 화면에 있어도 위에서 내려와요 */}
+        <PushBannerHost />
+        <ForegroundPushBanner />
         {/* 시즌 보상을 자동으로 받았으면 한 번 뜨는 창 (로그인 · 온보딩 뒤에만) */}
         {signedIn && !onboarding ? <RewardHost /> : null}
         {/* 토스트 [보러가기] 목록 시트 (찜한 모임 · 찜한 챌린지 · 라운지 저장함 등): 보던 화면 위에 바로 떠요 (lib/see) */}

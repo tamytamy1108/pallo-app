@@ -9,9 +9,9 @@ import { defaultEnd, MonthCalendar, PlacePicker, PosterPicker, TimeRange, type P
 import { CardMaker } from '@/components/ui/card-maker';
 import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
-import { BranchListSheet, withJeom } from '@/components/onboarding/branch-list';
+import { withJeom } from '@/components/onboarding/branch-list';
+import { BranchSheet } from '@/components/onboarding/branch-sheet';
 import { Icon } from '@/components/meet/icons';
-import { addProposal } from '@/components/meet/meet-store';
 import { ProposalCard } from '@/components/event/proposal-cards';
 import { TextField } from '@/components/ui/field';
 import { CountPicker } from '@/components/ui/count-picker';
@@ -19,8 +19,12 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BRANCHES, PROPOSAL_CATS } from '@/data/events';
-import { NO_LIMIT, WEEK } from '@/data/meet';
+import { BRANCHES } from '@/data/events';
+import { WEEK } from '@/data/meet';
+import { apiErrorMessage } from '@/api/errors';
+import type { BranchOption } from '@/api/onboarding';
+import { useBranchOptions } from '@/api/use-onboarding';
+import { useEventCategories, useSubmitEventProposal } from '@/api/use-event-proposals';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
@@ -37,15 +41,23 @@ const FEE_MAX = 1000000;
  * 이벤트 제안 (docs/pages/06-event.md '이벤트 제안 (회원)' — 프로토타입 lgPropEvent).
  * 사진(1장 이상) · 진행 지점 · 장소(지도) · 상세 주소 · 희망 날짜(1주 뒤 ~ 3달 안) · 카테고리 · 제목 · 소개 · 예상 인원 · 참가비 → [제안 보내기].
  * 보내면 이벤트 탭 맨 위 '내가 제안한 이벤트' 카드. 비회원은 이벤트 탭의 [오픈하기]에서 체험 안내로 막혀요.
- * 맞는 API: 92 `/event-proposals` (+ 사진 `/uploads/images`)
+ * 서버: 사진을 `/uploads/images/event-photo` 로 한 장씩 올린 뒤 `POST /event-proposals` (api/use-event-proposals).
+ * 진행 지점은 서버 지점 목록(GET /branches — 쉬는 지점은 막혀요), 카테고리는 서버 '이벤트 분류' 선택지예요.
  */
 export default function ProposeEvent() {
   const me = useMe();
   const [pics, setPics] = useState<string[]>([]);
   // 카드: 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택
   const [card, setCard] = useState<MadeCard | null>(null);
-  const [br, setBr] = useState(BRANCHES.some((b) => b[0] === me.branch) ? me.branch : BRANCHES[0][0]);
+  // 진행 지점: 고르기 전에는 내 지점(서버 지점 목록에서 이름이 같은 곳)
+  const branches = useBranchOptions();
+  const [picked, setPicked] = useState<BranchOption | null>(null);
+  const branch = picked ?? branches.data?.rows.find((b) => withJeom(b.name) === withJeom(me.branch) && b.status === 'ACTIVE') ?? null;
+  const br = branch?.name ?? '';
   const [brOpen, setBrOpen] = useState(false);
+  const categories = useEventCategories();
+  const catLabels = (categories.data ?? []).map((c) => c.label);
+  const submit = useSubmitEventProposal();
   const [place, setPlace] = useState<Place | null>(null);
   const [addr, setAddr] = useState('');
   const [date, setDate] = useState('');
@@ -62,24 +74,55 @@ export default function ProposeEvent() {
   // 유료면 1인 금액을 직접 적어요 (숫자만 · 쉼표는 보여 줄 때만)
   const [price, setPrice] = useState('');
   const priceN = Number(price) || 0;
-  const region = (BRANCHES.find((b) => b[0] === br) || BRANCHES[0])[2];
+  // 지도 권역 — 서버 지점의 지역, 없으면 앱 지점 목록에서 이름으로
+  const region = branch?.region ?? (BRANCHES.find((b) => withJeom(b[0]) === withJeom(br)) || BRANCHES[0])[2];
 
   const send = () => {
-    // 화면 위에서부터 (대표 카드 → 날짜 → 카테고리 → 제목 → 소개) 첫 빈칸을 알려요
+    if (submit.isPending) return;
+    // 화면 위에서부터 (진행 지점 → 날짜 → 카테고리 → 제목 → 소개) 첫 빈칸을 알려요
+    if (!branch) return showToast('진행 지점을 골라 주세요');
     if (!date) return showToast('희망 날짜를 골라 주세요');
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
     if (!fee) return showToast('참가비를 골라 주세요');
     if (fee === '유료' && !priceN) return showToast('참가비 금액을 적어 주세요');
-    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: fillWords(usedCard(card, pics.length > 0), CARD_EX), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim(), fee: fee === '유료' ? priceN : 0 });
-    sfx('save');
-    router.back();
-    showToast('제안을 보냈어요 · 매니저가 2~3일 안에 연락드려요');
+    const categoryCode = categories.data?.find((c) => c.label === cat)?.code;
+    if (!categoryCode) return showToast('카테고리를 다시 골라 주세요');
+    const made = fillWords(usedCard(card, pics.length > 0), CARD_EX);
+    submit.mutate(
+      {
+        body: {
+          branchCode: branch.code,
+          categoryCode,
+          title: title.trim(),
+          description: body.trim(),
+          date,
+          startTime: time,
+          endTime,
+          placeName: place?.name ?? null,
+          placeAddress: place?.addr ?? null,
+          addressDetail: addr.trim() || null,
+          expectedAttendees: cap,
+          fee: fee === '유료' ? priceN : 0,
+          card: made ? { color: made.color, words: made.words, design: made.design ?? null } : null,
+        },
+        photoUris: pics,
+        branchName: branch.name,
+      },
+      {
+        onSuccess: () => {
+          sfx('save');
+          router.back();
+          showToast('제안을 보냈어요 · 매니저가 2~3일 안에 연락드려요');
+        },
+        onError: (e) => showToast(apiErrorMessage(e)),
+      },
+    );
   };
 
   return (
-    <SheetPage title="이벤트 제안하기" label="이벤트 제안하기" footer={<SheetButton label="제안 보내기" size="foot" onPress={send} />}>
+    <SheetPage title="이벤트 제안하기" label="이벤트 제안하기" footer={<SheetButton label={submit.isPending ? '보내는 중…' : '제안 보내기'} size="foot" disabled={submit.isPending} onPress={send} />}>
       <View style={styles.note}>
         <View style={{ marginTop: 2 }}>
           <Icon name="flag" size={18} color={Colors.purple} strokeWidth={2.6} />
@@ -107,8 +150,8 @@ export default function ProposeEvent() {
         />
       </Field>
       <Field label="진행 지점" req>
-        <Pressable onPress={() => setBrOpen(true)} accessibilityRole="button" accessibilityLabel={`진행 지점 ${br}`} style={styles.sel}>
-          <PText style={styles.selT}>{withJeom(br)}</PText>
+        <Pressable onPress={() => setBrOpen(true)} accessibilityRole="button" accessibilityLabel={`진행 지점 ${br || '고르기 전'}`} style={styles.sel}>
+          <PText style={[styles.selT, !br && styles.selEmpty]}>{br ? withJeom(br) : '지점을 골라 주세요'}</PText>
           <View style={{ transform: [{ rotate: '-90deg' }] }}>
             <Icon name="back" size={16} />
           </View>
@@ -132,7 +175,13 @@ export default function ProposeEvent() {
         />
       </Field>
       <Field label="카테고리" req>
-        <SheetPills options={PROPOSAL_CATS} value={cat} onChange={setCat} label="카테고리" />
+        {categories.isError ? (
+          <Pressable onPress={() => categories.refetch()} accessibilityRole="button" style={styles.sel}>
+            <PText style={styles.selEmpty}>카테고리를 불러오지 못했어요 · 다시 불러오기</PText>
+          </Pressable>
+        ) : (
+          <SheetPills options={catLabels} value={cat} onChange={setCat} label="카테고리" />
+        )}
       </Field>
       <TextField label="이벤트 제목 *" value={title} onChangeText={setTitle} placeholder="예) 한강 영어 피크닉" />
       <Field label="어떤 이벤트인가요?" req>
@@ -160,15 +209,15 @@ export default function ProposeEvent() {
         ) : null}
       </Field>
 
-      <BranchListSheet
+      <BranchSheet
         open={brOpen}
         onClose={() => setBrOpen(false)}
         title="진행 지점을 골라요"
-        value={br}
-        raw
-        onPick={(k) => {
-          if (k !== br) setPlace(null);
-          setBr(k);
+        value={branch?.code ?? ''}
+        purpose="trial"
+        onPick={(b) => {
+          if (b.code !== branch?.code) setPlace(null);
+          setPicked(b);
         }}
       />
     </SheetPage>
@@ -199,6 +248,7 @@ const styles = StyleSheet.create({
   hint: { fontFamily: Font.body700, fontSize: 12, lineHeight: 18, color: Colors.inkSub },
   sel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 48, paddingHorizontal: 16, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white },
   selT: { fontFamily: Font.body800, fontSize: 15, lineHeight: 20 },
+  selEmpty: { fontFamily: Font.body700, fontSize: 14, lineHeight: 20, color: Colors.inkSub },
   price: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   priceIn: { flex: 1 },
   won: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },

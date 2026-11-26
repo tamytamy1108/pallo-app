@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import type { BranchOption } from '@/api/onboarding';
+import { relativePlace, type BranchOption, type Compass, type LatLng } from '@/api/onboarding';
 import { branchBlockReason, useBranchOptions } from '@/api/use-onboarding';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
@@ -13,6 +13,10 @@ import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 
 const ALL = '전체';
+/** 내 위치를 받았을 때 전체 탭의 한 묶음 이름 */
+const NEAREST = '가까운 순';
+/** 방위 → 화살표 돌릴 각도 (위쪽 = 북) */
+const COMPASS_DEG: Record<Compass, number> = { N: 0, NE: 45, E: 90, SE: 135, S: 180, SW: 225, W: 270, NW: 315 };
 /** 지역 탭이 이보다 많으면 탭 줄을 옆으로 밀어서 봐요 */
 const FIT_TABS = 5;
 
@@ -57,19 +61,32 @@ export function BranchSheet({
  * 지점 고르기 본문 (검색 · 지역 탭 · 지역별 묶음 카드). 시트 안에 그대로 넣어 써요
  * — 가입 단계 · 앱 안 체험 예약(TrialForm) · 연동 요청의 지점 시트(BranchSheet)가 써요.
  * 지점은 GET /branches (폐점 제외 · 지역). 고를 수 없는 지점은 숨기지 않고 흐리게 막고 이유를 보여 줘요 (branchBlockReason).
+ * near(내 위치)를 주면 서버가 가까운 순으로 주고, 지점마다 내 위치에서 본 방향 화살표 · '남동쪽 8.8km' 를 붙여요.
+ * 그때 전체 탭은 지역 묶음 대신 '가까운 순' 한 묶음, 지역 탭은 그 지역 안에서 가까운 순이에요. 좌표 없는 지점은 맨 뒤 · 거리 줄 없음.
  */
-export function BranchPicker({ value, onPick, purpose }: { value: string | null; onPick: (branch: BranchOption) => void; purpose: BranchPurpose }) {
-  const list = useBranchOptions();
+export function BranchPicker({
+  value,
+  onPick,
+  purpose,
+  near = null,
+}: {
+  value: string | null;
+  onPick: (branch: BranchOption) => void;
+  purpose: BranchPurpose;
+  near?: LatLng | null;
+}) {
+  const list = useBranchOptions(near);
   const [tab, setTab] = useState(ALL);
   const [q, setQ] = useState('');
   if (list.isPending) return <LoadingState />;
   if (list.isError) return <ErrorState onRetry={() => list.refetch()} />;
-  const { rows, groups } = list.data;
+  const { rows, groups, nearest } = list.data;
   const tabs = [ALL, ...groups.map((g) => g.region)];
   const cur = tabs.includes(tab) ? tab : ALL;
   const scroll = tabs.length > FIT_TABS;
   const needle = q.trim();
-  const regions = groups
+  const shownGroups = nearest && cur === ALL ? [{ region: NEAREST, rows: nearest }] : groups;
+  const regions = shownGroups
     .filter((g) => cur === ALL || g.region === cur)
     .map((g) => ({ region: g.region, rows: g.rows.filter((b) => !needle || b.name.includes(needle)) }))
     .filter((g) => g.rows.length > 0);
@@ -110,6 +127,7 @@ export function BranchPicker({ value, onPick, purpose }: { value: string | null;
             {g.rows.map((b, i) => {
               const on = b.code === value;
               const blocked = branchBlockReason(b, purpose);
+              const place = relativePlace(b);
               return (
                 <Pressable
                   key={b.code}
@@ -120,11 +138,19 @@ export function BranchPicker({ value, onPick, purpose }: { value: string | null;
                   }}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on, disabled: !!blocked }}
-                  accessibilityLabel={blocked ? `${b.name}, ${blocked}` : b.name}
+                  accessibilityLabel={[b.name, place ? `내 위치에서 ${place}` : null, blocked].filter(Boolean).join(', ')}
                   style={({ pressed }) => [styles.row, i > 0 && styles.rowLine, on && styles.rowOn, pressed && styles.rowPressed]}>
-                  <PText style={[styles.rowName, on && styles.rowNameOn, blocked ? styles.rowNameOff : null]} numberOfLines={1}>
-                    {b.name}
-                  </PText>
+                  {nearest ? <Bearing direction={b.distanceMeters != null ? b.direction : null} known={b.distanceMeters != null} off={!!blocked} /> : null}
+                  <View style={styles.rowText}>
+                    <PText style={[styles.rowName, on && styles.rowNameOn, blocked ? styles.rowNameOff : null]} numberOfLines={1}>
+                      {b.name}
+                    </PText>
+                    {place ? (
+                      <PText style={styles.rowPlace} numberOfLines={1}>
+                        {place}
+                      </PText>
+                    ) : null}
+                  </View>
                   {blocked ? <PText style={styles.rowWhy}>{blocked}</PText> : null}
                   <View style={[styles.chk, on && styles.chkOn, blocked ? styles.chkOff : null]}>
                     {on ? (
@@ -139,6 +165,26 @@ export function BranchPicker({ value, onPick, purpose }: { value: string | null;
           </View>
         </View>
       ))}
+    </View>
+  );
+}
+
+/**
+ * 내 위치에서 본 지점 방향 — 동그라미 안 화살표(위 = 북). 바로 옆(방위 없음)이면 점, 좌표 없는 지점은 빈 동그라미.
+ */
+function Bearing({ direction, known, off }: { direction: Compass | null; known: boolean; off: boolean }) {
+  const color = off ? '#B4AC9B' : Colors.purple;
+  return (
+    <View style={styles.bearing} accessible={false} importantForAccessibility="no-hide-descendants">
+      {known && direction ? (
+        <View style={{ transform: [{ rotate: `${COMPASS_DEG[direction]}deg` }] }}>
+          <Svg width={16} height={16} viewBox="0 0 24 24">
+            <Path d="M12 3l6.5 16L12 15.5 5.5 19z" fill={color} stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+          </Svg>
+        </View>
+      ) : known ? (
+        <View style={[styles.bearingDot, { backgroundColor: color }]} />
+      ) : null}
     </View>
   );
 }
@@ -166,7 +212,11 @@ const styles = StyleSheet.create({
   rowLine: { borderTopWidth: 1.5, borderColor: Colors.line },
   rowOn: { backgroundColor: Colors.lavender },
   rowPressed: { backgroundColor: '#F6F1E4' },
-  rowName: { flex: 1, fontFamily: Font.body800, fontSize: 15.5, lineHeight: 21 },
+  rowText: { flex: 1, minWidth: 0, paddingVertical: 8 },
+  rowName: { fontFamily: Font.body800, fontSize: 15.5, lineHeight: 21 },
+  rowPlace: { fontFamily: Font.body700, fontSize: 12, lineHeight: 16, color: Colors.inkSub },
+  bearing: { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  bearingDot: { width: 8, height: 8, borderRadius: 4 },
   rowNameOn: { fontFamily: Font.body900, color: Colors.purple },
   rowNameOff: { color: '#B4AC9B' },
   rowWhy: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16, color: Colors.inkSub },

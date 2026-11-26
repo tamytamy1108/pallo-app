@@ -10,7 +10,6 @@ import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 
 import { Box, Icon, Lift } from './parts';
-import { markNoteRead } from './store';
 
 const WD = '일월화수목금토';
 /** 'YYYY-MM-DD' → '11/10(월)' */
@@ -21,7 +20,7 @@ function dayLabel(iso: string) {
 
 /**
  * 마이 화면의 PRO'S NOTE 카드 (최신 노트 · 새 노트 n · 모두 보기 ›) — 값은 마이 BFF(GET /me/mypage proNote) 그대로.
- * note.sent 가 오면(서버가 프로로 판정) 위에 [보낸 노트] [받은 노트] — 보낸 노트는 n/m명 읽음 · 고마워요, 받은 노트는 회원과 같아요.
+ * 보낸/받은 노트 탭은 오직 서버 값으로 — note.sent 가 오면(서버가 프로로 판정) 위에 [보낸 노트] [받은 노트] — 보낸 노트는 n/m명 읽음 · 고마워요, 받은 노트는 회원과 같아요.
  * 상자에 노트가 하나도 없으면(latest null) 버튼 대신 안내 문구.
  * 프로토타입 myPnHTML (.my-pnx: 보라 카드 안 크림 버튼). 새 노트 수는 상자 없이 노랑 글자로.
  */
@@ -34,7 +33,7 @@ export function ProNoteCard({ note }: { note: MyPageProNote }) {
   const open = () => {
     if (!n) return;
     sfx('tap');
-    if (!sent) markNoteRead(n.id);
+    // 열람은 상세 화면이 서버에 남겨요 (POST /me/pros-notes/{id}/read)
     router.push(`/me/notes/${n.id}`);
   };
 
