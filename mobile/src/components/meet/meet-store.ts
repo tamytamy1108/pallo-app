@@ -42,7 +42,12 @@ type State = {
   /** 내가 연 번개 · 만든 동아리 */
   myMeets: Meet[];
   myClubs: Club[];
+  /** 호스트 · 코호스트였던 기록 (동아리가 닫혀도 남아요). to 가 없으면 지금도 맡고 있어요 */
+  hostLog: HostLog[];
 };
+
+/** 호스트 · 코호스트 기록 한 줄 */
+export type HostLog = { clubId: string; name: string; role: 'host' | 'co'; from: number; to?: number; why?: string };
 
 /**
  * 가짜 서버로 볼 때의 예시 (마이 › 내 모임이 비어 보이지 않게): 다가오는 · 지난 번개, 가입한 동아리, 다가오는 · 지난 이벤트, 제안 하나.
@@ -66,6 +71,7 @@ const MEET0: State = {
   chat: {},
   myMeets: [],
   myClubs: [],
+  hostLog: [],
 };
 const store = createStore<State>(MEET0, {
   persist: {
@@ -134,3 +140,47 @@ export const setChat = (id: string, L: ChatMsg[]) => store.set((s) => ({ ...s, c
 export const addMyMeet = (m: Meet) => store.set((s) => ({ ...s, myMeets: [{ ...m, at: m.at ?? Date.now() }, ...s.myMeets] }));
 export const updateMyMeet = (id: string, patch: Partial<Meet>) => store.set((s) => ({ ...s, myMeets: s.myMeets.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
 export const addMyClub = (c: Club) => store.set((s) => ({ ...s, myClubs: [{ ...c, at: c.at ?? Date.now() }, ...s.myClubs] }));
+
+/** 내 동아리 하나 고치기 (myClubs 안) */
+const patchMyClub = (s: State, id: string, patch: Partial<Club>) => s.myClubs.map((c) => (c.id === id ? { ...c, ...patch } : c));
+/** 이 동아리에서 맡고 있던 호스트 · 코호스트 기록을 끝내요 */
+const endLog = (L: HostLog[], id: string, why: string, at: number) => L.map((h) => (h.clubId === id && !h.to ? { ...h, to: at, why } : h));
+
+/**
+ * 관리자 결정 (동아리 만들기 신청). 승인하면 만든 사람이 호스트가 되고, 거절하면 이유와 함께 내 신청 카드에 남아요.
+ * 백엔드가 생기면 관리자 웹(64 `/admin/clubs/:id/approve` · reject)이 정하고, 앱은 알림 · `/me/club-applications` 로 받아요.
+ */
+export const decideMyClub = (id: string, ok: boolean, reason = '') =>
+  store.set((s) => {
+    const c = s.myClubs.find((x) => x.id === id);
+    if (!c) return s;
+    const at = Date.now();
+    if (!ok) return { ...s, myClubs: patchMyClub(s, id, { wait: false, rejected: { reason: reason || '운영 기준에 맞지 않아요', at } }) };
+    return {
+      ...s,
+      myClubs: patchMyClub(s, id, { wait: false, rejected: undefined, okAt: at }),
+      hostLog: [{ clubId: id, name: c.name, role: 'host' as const, from: at }, ...endLog(s.hostLog, id, '다시 승인', at)],
+    };
+  });
+
+/** 거절된 신청을 같은 내용으로 다시 보내요 */
+export const resubmitMyClub = (id: string) => store.set((s) => ({ ...s, myClubs: patchMyClub(s, id, { wait: true, rejected: undefined, at: Date.now() }) }));
+/** 검토 중 · 거절된 신청 지우기 (승인된 동아리는 '닫기'로) */
+export const removeMyClub = (id: string) => store.set((s) => ({ ...s, myClubs: s.myClubs.filter((c) => c.id !== id || (!c.wait && !c.rejected)) }));
+
+/**
+ * 동아리 닫기 (호스트가 관리에서 · 관리자가 경고 뒤). 닫히면 이 동아리의 호스트 · 코호스트 권한이 같이 없어지고 기록만 남아요.
+ * 운영 중인 동아리가 0개가 되면 호스트(코호스트) 뱃지도 사라져요 (model useMyClubRoles).
+ */
+export const closeMyClub = (id: string, by: 'host' | 'admin', reason?: string) =>
+  store.set((s) => {
+    const at = Date.now();
+    const cohost = { ...s.cohost };
+    delete cohost[id];
+    return {
+      ...s,
+      myClubs: patchMyClub(s, id, { closed: { at, by, reason } }),
+      cohost,
+      hostLog: endLog(s.hostLog, id, by === 'admin' ? '관리자가 닫음' : '동아리를 닫음', at),
+    };
+  });

@@ -66,7 +66,7 @@ export type Meet = {
   at?: number;
 };
 
-/** 동아리 (매주 만나요). days: 모이는 요일 (0 = 일). wait: 매니저 승인 대기 */
+/** 동아리 (매주 만나요). days: 모이는 요일 (0 = 일). wait: 관리자 검토 중 · rejected: 거절 · closed: 닫힘 */
 export type Club = {
   id: string;
   cc: ClubCat;
@@ -84,7 +84,14 @@ export type Club = {
   host: string;
   days: number[];
   mine?: boolean;
+  /** 관리자 검토 중 (동아리 만들기 신청 뒤 · 승인 전) */
   wait?: boolean;
+  /** 관리자가 승인한 때 (ms) — 이때부터 만든 사람이 호스트예요 */
+  okAt?: number;
+  /** 관리자가 거절했어요 (이유 · 때) — 목록에는 안 보이고 내 신청 카드에만 */
+  rejected?: { reason: string; at: number };
+  /** 닫힌 동아리 (호스트가 닫음 · 관리자가 경고 뒤 닫음). 닫히면 호스트 · 코호스트 권한도 없어져요 */
+  closed?: { at: number; by: 'host' | 'admin'; reason?: string };
   /** 채팅방 공지 (가입하면 보여요) */
   memo?: string;
   posters?: string[];

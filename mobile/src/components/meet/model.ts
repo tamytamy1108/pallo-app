@@ -39,10 +39,31 @@ export const useAllMeets = () => {
   const mine = useMeetStore((s) => s.myMeets);
   return mine.length ? [...mine, ...MEETS] : MEETS;
 };
+/** 운영 중인 동아리 (승인됐고 · 거절 · 닫힘이 아니에요) */
+export const clubLive = (c: Club) => !c.wait && !c.rejected && !c.closed;
+
+/** 목록에 보이는 동아리: 내가 만든 것 중 운영 중인 것 + 예시 (검토 중 · 거절은 '내가 신청한 동아리' 카드에만) */
 export const useAllClubs = () => {
   const mine = useMeetStore((s) => s.myClubs);
-  return mine.length ? [...mine, ...CLUBS] : CLUBS;
+  const shown = mine.filter(clubLive);
+  return shown.length ? [...shown, ...CLUBS] : CLUBS;
 };
+
+/**
+ * 내 호스트 · 코호스트 자격 — 운영 중인 동아리가 있을 때만 있어요.
+ * 호스트: 내가 만든 동아리가 관리자 승인을 받았고 닫히지 않았을 때 (내가 만든 동아리만 관리해요).
+ * 코호스트: 그 동아리 호스트가 나를 코호스트로 정했고 동아리가 운영 중일 때. 동아리가 닫히면 같이 없어져요.
+ * badge: 마이 · 프로필 이름 옆 뱃지 (호스트가 먼저). 0개가 되면 null — 기록은 meet-store hostLog 에 남아요.
+ */
+export function useMyClubRoles(myName: string) {
+  const mine = useMeetStore((s) => s.myClubs);
+  const cohost = useMeetStore((s) => s.cohost);
+  const hostOf = mine.filter((c) => clubLive(c));
+  const all = [...mine, ...CLUBS];
+  const coOf = all.filter((c) => clubLive(c) && !c.mine && (cohost[c.id] ?? []).includes(myName));
+  const badge: 'host' | 'co' | null = hostOf.length ? 'host' : coOf.length ? 'co' : null;
+  return { hostOf, coOf, badge };
+}
 export const findMeet = (id: string, mine: Meet[]) => mine.find((m) => m.id === id) ?? MEETS.find((m) => m.id === id);
 export const findClub = (id: string, mine: Club[]) => mine.find((c) => c.id === id) ?? CLUBS.find((c) => c.id === id);
 

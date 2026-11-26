@@ -10,6 +10,7 @@ import { Colors } from '@/constants/theme';
 import { C, daysUntil, isPast, REGIONS, type Meet, type Region, ALL_REGIONS } from '@/data/meet';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 
+import { ClubApplyCards } from './club-apply';
 import { ClubList } from './club-list';
 import { DateStrip } from './date-strip';
 import { Bolt, Icon } from './icons';
@@ -145,6 +146,7 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
               sub={`${cs.length}개`}
               right={<LgButton label="동아리 만들기" variant={mode === 'club' ? 'y' : 'wh'} icon={<Icon name="plus" size={15} strokeWidth={2.8} />} height={34} fontSize={12.5} paddingH={12} shadow={2} onPress={mkClub} />}
             />
+            <ClubApplyCards />
             {cs.length ? <ClubList clubs={cs} /> : <PText style={[styles.emptyT, styles.empty]}>{`${pre}동아리가 아직 없어요.\n첫 동아리를 만들어 보세요!`}</PText>}
           </View>
         )}

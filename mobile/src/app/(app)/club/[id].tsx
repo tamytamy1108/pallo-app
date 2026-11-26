@@ -8,6 +8,7 @@ import { ClubBoard } from '@/components/meet/club/club-board';
 import { ClubChat } from '@/components/meet/club/club-chat';
 import { ClubHome } from '@/components/meet/club/club-home';
 import { ClubJoin } from '@/components/meet/club/club-join';
+import { ClubApplySheet } from '@/components/meet/club-apply';
 import { ClubManage, type ManageRole } from '@/components/meet/club/club-manage';
 import { SessionSheet } from '@/components/meet/club/session-sheet';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
@@ -16,7 +17,7 @@ import { AskSheet } from '@/components/meet/detail/sheets';
 import { guardMember } from '@/components/common/trial-guide';
 import { Icon } from '@/components/meet/icons';
 import { setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
-import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, joinBlock, membersOf, useAllClubs } from '@/components/meet/model';
+import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, joinBlock, clubLive, membersOf, useAllClubs } from '@/components/meet/model';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -60,6 +61,7 @@ export default function ClubDetail() {
   const [leave, setLeave] = useState(false);
   const [sid, setSid] = useState<string | null>(null);
   const [manage, setManage] = useState(false);
+  const [apply, setApply] = useState(false);
 
   if (!c) return <EmptyState title="동아리를 찾을 수 없어요" />;
   // 가입한 멤버인지 (신청하면 바로 가입 · 개발용 동아리 역할을 골랐으면 가입한 사람으로 봐요)
@@ -75,7 +77,9 @@ export default function ClubDetail() {
   const q = sid ? clubSessions(c, att, 12, 85).find((s) => s.id === sid) ?? null : null;
   const devAs = __DEV__ ? (as === 'host' || as === 'co' ? as : devClubRole) : 'auto';
   const devRole: ManageRole | null = devAs === 'host' || devAs === 'co' ? devAs : null;
-  const role: ManageRole | null = devRole ?? (devAs === 'member' ? null : c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
+  // 호스트 · 코호스트는 운영 중인 동아리에서만 (검토 중 · 거절 · 닫힘이면 관리 권한이 없어요). 호스트는 내가 만든 동아리만
+  const live = clubLive(c);
+  const role: ManageRole | null = !live ? null : devRole ?? (devAs === 'member' ? null : c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
   // 잠금 없이 보기: 멤버 · 호스트 · 코호스트 · 스텝(지점 관리자). 가입 안 한 사람만 게시판 · 사진첩 · 채팅이 잠겨요
   const inC = clubOpen(joined, role, me.role);
 
@@ -84,8 +88,10 @@ export default function ClubDetail() {
 
   const btn = role ? (
     <MainBtn label="관리" variant="pu" onPress={() => setManage(true)} />
-  ) : c.wait ? (
-    <MainBtn label="승인 대기" variant="off" />
+  ) : c.closed ? (
+    <MainBtn label="닫힌 동아리예요" variant="off" />
+  ) : c.mine && (c.wait || c.rejected) ? (
+    <MainBtn label={c.rejected ? '거절됐어요 · 이유 보기' : '관리자 검토 중 · 신청 보기'} variant="wh" onPress={() => setApply(true)} />
   ) : joined ? (
     <MainBtn label="가입 완료" variant="done" onPress={() => setLeave(true)} />
   ) : block ? (
@@ -140,7 +146,11 @@ export default function ClubDetail() {
         tabKey={tab}
         tabBody={body}
         ctaNote={
-          block ? (
+          c.closed ? (
+            <PText style={styles.j30}>{c.closed.by === 'admin' ? '활동이 없어 관리자가 닫았어요' : '호스트가 닫은 동아리예요'}</PText>
+          ) : c.mine && c.wait ? (
+            <PText style={styles.j30}>승인되면 지도에 보이고, 나는 이 동아리의 호스트가 돼요</PText>
+          ) : block ? (
             <PText style={styles.j30}>{block}</PText>
           ) : x.j30 ? (
             <PText style={styles.j30}>
@@ -166,6 +176,7 @@ export default function ClubDetail() {
       </DetailFrame>
 
       <ClubJoin c={c} open={join} onClose={() => setJoin(false)} />
+      {c.mine ? <ClubApplySheet c={c} open={apply} onClose={() => setApply(false)} /> : null}
       {role ? <ClubManage c={c} role={role} open={manage} onClose={() => setManage(false)} members={members} staff={staff} /> : null}
       <AskSheet
         open={leave}
