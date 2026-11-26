@@ -6,11 +6,13 @@
 import { useIsFocused } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { branchTeamsOn } from '@/data/branch-today';
 import { ATTEND_POINTS, LANGS, MY_LANG, MY_SLOT, myTeamsOn, QR_AFTER, QR_BEFORE, RSVP_BEFORE, SLOTS, type MyTeamToday } from '@/data/home';
 import { hourLabel } from '@/data/account';
 import { SPARK_ATTEND } from '@/data/my';
 import { createStore } from '@/lib/store';
 import { awardPoints, awardSparks } from '@/state/ledger';
+import { getMe } from '@/state/me';
 import { dayKey, weekKey } from '@/state/today-goal';
 
 /* ───────── 지금 시각 ───────── */
@@ -176,8 +178,14 @@ export function teamName(t: Pick<MyTeamToday, 'lang' | 'when'>) {
 /** 전산에서 오늘 수업을 연 내 팀 */
 export type OpenTeam = MyTeamToday & { slot: number };
 export const isOpenToday = (t: MyTeamToday): t is OpenTeam => t.slot !== null;
-/** 내 팀 · 오늘 열린 수업 (가짜 전산은 요일로 열어요 · 개발용 ?now= 기준) */
-export const myTeams = () => myTeamsOn(nowDate().getDay());
+/**
+ * 내 팀 · 오늘 열린 수업 (가짜 전산은 요일로 열어요 · 개발용 ?now= 기준).
+ * 지점 관리자는 등록된 팀이 없어서 지점의 오늘 세션 전부 — 출석 카드가 '지점의 다음 세션'을 보여 줘요 (10-roles 4장).
+ */
+export const myTeams = () => {
+  const me = getMe();
+  return me.role === 'manager' ? branchTeamsOn(nowDate().getDay(), me.branch) : myTeamsOn(nowDate().getDay());
+};
 export const openTeams = () => myTeams().filter(isOpenToday);
 export const openTeamAt = (slot: number, lang: number) => openTeams().find((t) => t.slot === slot && t.lang === lang);
 

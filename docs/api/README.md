@@ -38,7 +38,7 @@ cd docs/api && npx -y http-server -p 8090 .
 계정 역할은 GET /me `role` = `guest · member · pro · manager · hq`, 모임 역할은 `viewerRole` (HOST · SUB_HOST(코호스트) · MEMBER).
 `openapi.yaml` 맨 위 설명에 규칙을 모았고, API 마다 표시를 붙였어요:
 - `x-roles`: 그 계정 역할만 (나머지 403 forbidden) · `x-roles-note`: 모임 역할(그 모임 HOST 등)도 되는 경우
-- `x-demo-blocked: true`: 프로 · 직원(pro · manager · hq)의 **보여 주기 모드** — 화면은 끝까지 열지만 신청 · 제출은 `403 demo_account`
+- `x-demo-blocked: true`: 직원(manager · hq)의 **보여 주기 모드** (pro 는 2026-11-26부터 회원과 같아요) — 화면은 끝까지 열지만 신청 · 제출은 `403 demo_account`
 - 표시 없음: 로그인한 누구나 (회원 전용은 guest 면 `403 member_only`)
 - 프로 · 직원만 쓰는 새 API 15개는 '프로 · 직원' 태그 (`/staff/*` · `/manager/*`)
 

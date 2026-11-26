@@ -22,7 +22,8 @@ import { useMe } from '@/state/me';
  */
 export default function StoryNewScreen() {
   const me = useMe();
-  const staff = me.role === 'leader' || me.role === 'manager';
+  // 스토리 '이벤트' 카테고리는 직원만 — 프로는 멤버와 같아요 (2026-11-26)
+  const staff = me.role === 'manager';
   const cats = STORY_CATS.filter((k) => k !== 'event' || staff);
   const [cat, setCat] = useState<StoryCat>(cats[0]);
   const [text, setText] = useState('');

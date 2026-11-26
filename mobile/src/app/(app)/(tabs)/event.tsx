@@ -42,7 +42,8 @@ export default function EventScreen() {
   const { up, past } = splitEvents(all);
   const isPastTab = tab === 'past';
   const L = isPastTab ? past : up;
-  const staff = role === 'leader' || role === 'manager';
+  // 이벤트 바로 열기는 직원만 — 프로는 출석 · 수업 말고는 멤버와 같아요 (2026-11-26)
+  const staff = role === 'manager';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

@@ -56,7 +56,7 @@ info:
 
     | `pro` | 세션을 맡는 강사 (예전 이름 리더 · STAFF 멤버십) | 회원 앱 그대로 (프로도 공부해요) + 프로 일 (오늘 내 세션 · 출석 명단 · 프로스 노트 쓰기 · 반 공지) |
 
-    | `manager` | 지점 하나를 맡은 지점 관리자 (`primaryBranch` = 그 지점) | 회원 앱 그대로 + 오늘 지점 현황 · QR 출석 코드 · 라운지 관리 |
+    | `manager` | 지점 하나를 맡은 지점 관리자 (`primaryBranch` = 그 지점) | 회원 앱 그대로 + 오늘 지점 현황 · 라운지 관리 |
 
     | `hq` | 본사 운영자. 세션을 맡을 땐 프로처럼 앱을 써요 | 프로와 같아요 |
 
@@ -66,9 +66,9 @@ info:
 
     - `x-roles` 가 있는 API: 적힌 계정 역할만, 나머지는 `403 forbidden`. `x-roles-note` 에 모임 역할(그 모임 HOST 등)이 같이 적혀 있으면 둘 중 하나면 돼요
 
-    - **보여 주기 모드** `x-demo-blocked: true`: pro · manager · hq 는 처음 온 회원에게 쓰는 법을 보여 주려고 회원 화면을 끝까지 열 수 있지만, 마지막 신청 · 제출은 `403 demo_account` 로 막아요 (연기 · 팀 · 지점 · 레벨 변경 · 지점 연동 요청 · 체험 예약 · 이벤트 신청). 앱은 버튼 모양을 그대로 두고 '보여 주기용이라 신청되지 않아요' 토스트를 띄워요
+    - **보여 주기 모드** `x-demo-blocked: true`: 직원(manager · hq)은 처음 온 회원에게 쓰는 법을 보여 주려고 회원 화면을 끝까지 열 수 있지만, 마지막 신청 · 제출은 `403 demo_account` 로 막아요 (연기 · 팀 · 지점 · 레벨 변경 · 체험 예약). 이벤트 신청은 직원도 진짜로 돼요. **pro 는 출석 · 수업 말고는 member 와 같아서 막지 않아요** (2026-11-26). 지점 연동 요청은 연동 전(guest)에게만 보이는 버튼이에요. 앱은 버튼 모양을 그대로 두고 '보여 주기용이라 신청되지 않아요' 토스트를 띄워요
 
-    - pro · hq 는 연기 · 팀 · 지점 변경 화면 자체를 열지 않아요 (앱이 막아요). 서버는 위처럼 `403 demo_account`
+    - hq 는 연기 · 팀 · 지점 변경 화면 자체를 열지 않아요 (앱이 막아요). 서버는 위처럼 `403 demo_account`. pro 는 회원처럼 신청해요 (2026-11-26)
 
     - 출석은 pro · manager · hq 에게 **제약이 없어요**: 등록된 팀 · 이용권 · 지점을 따지지 않고 어느 세션이든 check-in (POST /study/sessions/{sessionId}/check-in). 보여 주기가 아니라 **진짜 기록**이에요. 랭킹 · 포인트에도 들어가요
 
@@ -1091,7 +1091,7 @@ paths:
         error: slot_full (그 사이 마감됨 · 409)
       x-status: change
       x-demo-blocked: true
-      x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드) · 로그인 토큰이 있고 그 계정이 pro · manager · hq 일 때
+      x-roles-note: manager · hq 는 403 demo_account (보여 주기 모드) · 로그인 토큰이 있고 그 계정이 manager · hq 일 때
       x-backend: PublicCandidateInquiryController POST
         /public/api/v1/candidate-inquiries (CandidateInquirySubmitRequest →
         CandidateInquirySubmitResponse)
@@ -3545,7 +3545,7 @@ paths:
       tags:
         - 라운지 피드
       operationId: hideCommunityPost
-      summary: 글 숨기기 (프로 · 지점 관리자 · 작성자에게 알림)
+      summary: 글 숨기기 (지점 관리자 · 본사 · 작성자에게 알림)
       description: >
         화면: components/lounge/post-card.tsx ⋯ 메뉴 '이 글 숨기기 · 작성자에게 알림이 가요' [되돌리기]
 
@@ -3554,7 +3554,6 @@ paths:
         되돌리기 = DELETE 같은 경로.
       x-status: new
       x-roles:
-        - pro
         - manager
         - hq
       x-inventory: "#78"
@@ -3587,7 +3586,6 @@ paths:
       description: "화면: components/lounge/post-card.tsx 숨김 토스트 [되돌리기]"
       x-status: new
       x-roles:
-        - pro
         - manager
         - hq
       x-inventory: "#78"
@@ -3684,13 +3682,12 @@ paths:
       tags:
         - 라운지 피드
       operationId: pinCommunityPost
-      summary: 글 공지로 고정 (프로 · 지점 관리자)
+      summary: 글 공지로 고정 (지점 관리자 · 본사)
       description: |
         화면: components/lounge/post-card.tsx ⋯ 메뉴 '공지로 고정 · 리더 · 매니저 도구'
         규칙: 리더 · 매니저만(아니면 403). 고정 글은 그 지점 커뮤니티 맨 위. 지점당 몇 개까지인지는 서버가 정해요.
       x-status: new
       x-roles:
-        - pro
         - manager
         - hq
       x-inventory: "#78"
@@ -3713,11 +3710,10 @@ paths:
       tags:
         - 라운지 피드
       operationId: unpinCommunityPost
-      summary: 글 공지 고정 풀기 (프로 · 지점 관리자)
+      summary: 글 공지 고정 풀기 (지점 관리자 · 본사)
       description: "화면: components/lounge/post-card.tsx ⋯ 메뉴 (고정된 글이면 '고정 풀기')"
       x-status: new
       x-roles:
-        - pro
         - manager
         - hq
       x-inventory: "#78"
@@ -4150,7 +4146,7 @@ paths:
       tags:
         - 이벤트
       operationId: createEvent
-      summary: 이벤트 열기 (프로 · 지점 관리자)
+      summary: 이벤트 열기 (지점 관리자 · 본사)
       description: >
         화면: 아직 없음 — 이벤트 탭 [오픈하기] 를 리더 · 매니저가 누르면 바로 열기 (docs/pages/06-event.md
         '이벤트 열기'). 지금 앱은 누구나 제안서로 가요.
@@ -4162,7 +4158,6 @@ paths:
         포스터는 POST /uploads/images/{purpose} 로 먼저 — 새 purpose EVENT_POSTER 필요.
       x-status: new
       x-roles:
-        - pro
         - manager
         - hq
       x-roles-note: 스토리 이벤트 카테고리 · 신청 설문 만들기도 같아요
@@ -4248,8 +4243,7 @@ paths:
 
         - 정원 참 409 event_full · 이미 신청 409 already_applied · 지난 이벤트 409 event_ended. 비회원(체험)은 앱이 먼저 막아요.
       x-status: new
-      x-demo-blocked: true
-      x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드)
+      x-roles-note: pro · manager · hq 모두 진짜로 신청돼요 (2026-11-26)
       x-inventory: "#88"
       x-screens:
         - app/events/[id].tsx
@@ -6025,35 +6019,6 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-domain: learn
-  /manager/branch/qr:
-    get:
-      tags:
-        - 프로 · 직원
-      operationId: getBranchCheckInQr
-      summary: 지점 QR 출석 코드 띄우기 (지점 관리자)
-      description: >
-        화면: '오늘 지점 현황' 카드의 [QR 출석 코드] (앱 화면 아직 없음 · 시안
-        prototype/role-screens.html ?tab=home · docs/pages/10-roles.md 4장)
-
-        규칙: 회원 · 프로가 찍는 지점 QR. 일정 시간마다 바뀌어요(refreshSeconds) — 앱은 expiresAt 이 지나면 다시 받아요.
-        찍으면 지금처럼 GET /tables/{qrCode} → POST /study/sessions/{sessionId}/check-in.
-      x-status: new
-      x-roles:
-        - manager
-      x-screens: []
-      x-app-code: 없음 — 시안 prototype/role-screens.html (home)
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BranchQr"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-      x-domain: staff
   /manager/branch/today:
     get:
       tags:
@@ -6061,10 +6026,11 @@ paths:
       operationId: getBranchToday
       summary: 오늘 지점 현황 (세션별 출석 인원 · 프로 출석 체크)
       description: >
-        화면: 지점 관리자의 '오늘 지점 현황' 카드 (앱 화면 아직 없음 · 10-roles 4장). 홈은 회원 홈 그대로예요 (직원도 공부해요) —
-        이 카드를 어디에 둘지는 화면을 만들 때 정해요. 세션 줄마다 `20:00 영어 · 7/9` · 프로 출석 체크 여부.
+        화면: 지점 관리자 홈 (앱 화면 아직 없음 · 10-roles 4장 · 2026-11-26 정함). 맨 위는 회원과 같은 출석 카드, 그 아래 현황 요약 카드
+        (오늘 세션 수 · 출석 · 프로 출석 — 이 응답에서 앱이 더해요) → '모두 보기' 현황 화면에서 세션 줄마다 `20:00 영어 · 7/9` · 프로 출석 체크 여부, 그 아래 테이블(QR)마다 몇 명 왔는지 (`7번 4명 · 8번 3명`, 2026-11-26).
 
-        규칙: 내 지점(GET /me primaryBranch) 오늘 세션만. 처리할 일(연동 · 체험 · 신고 · 회원 요청)은 앱에 두지 않아요 — 전산(관리자) 웹 (2026-11-25).
+        규칙: 내 지점(GET /me primaryBranch) 오늘 세션만. 출석은 모두 테이블 QR 이에요 (지점 QR 없음, 2026-11-26) — 회원 · 프로가 테이블 QR 을 찍어
+        POST /study/sessions/{sessionId}/check-in 하면 출석 인원 · 프로 출석 체크(role: 리더)가 바로 여기에 반영돼요. 처리할 일(연동 · 체험 · 신고 · 회원 요청)은 앱에 두지 않아요 — 전산(관리자) 웹 (2026-11-25).
       x-status: new
       x-roles:
         - manager
@@ -6716,8 +6682,7 @@ paths:
       x-backend: MobileBranchLinkRequestV2Controller POST /app/api/v2/me/branch-link-requests (BranchLinkCreateRequest
         {branchCode, realName 2~20자, phone} → BranchLinkRequestV2Response) — 가입을 마친 뒤 앱 안에서 보내는 요청 (가입 단계 안에서는 POST
         /onboarding member)
-      x-demo-blocked: true
-      x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드)
+      x-roles-note: 연동 전(guest)에게만 버튼이 보여요 · 이미 연동된 계정(member · pro · manager · hq)에는 앱이 버튼을 안 보여 줘요 (2026-11-26)
       x-inventory: '#4 · A23'
       x-screens:
         - app/onboarding/link.tsx
@@ -6922,7 +6887,7 @@ paths:
         두 지점이 각각 승인하면 effectiveDate 에 이동. 앱은 옮길 팀까지 골라요.
       x-status: change
       x-demo-blocked: true
-      x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드) · pro · hq 는 화면 자체를 열지 않아요
+      x-roles-note: manager · hq 는 403 demo_account (보여 주기 모드) · hq 는 화면 자체를 열지 않아요 · pro 는 회원처럼 돼요 (2026-11-26)
       x-backend: MobileBranchTransferController POST /me/branch-transfer-requests
         (MobileBranchTransferCreateRequest)
       x-gap: targetCourseId(옮겨 가서 들을 팀) · reason(운영진에게 남길 말) 추가
@@ -7176,7 +7141,7 @@ paths:
         error: illegal_operation (적용일 · 개수 · 같은 수업 두 번) · duplicate_resource (대기 요청 있음)
       x-status: existing
       x-demo-blocked: true
-      x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드) · pro · hq 는 화면 자체를 열지 않아요
+      x-roles-note: manager · hq 는 403 demo_account (보여 주기 모드) · hq 는 화면 자체를 열지 않아요 · pro 는 회원처럼 돼요 (2026-11-26)
       x-backend: MobileCourseChangeController POST /me/course-change-requests
         (MobileCourseChangeCreateRequest)
       x-inventory: "#39"
@@ -7255,7 +7220,7 @@ paths:
         error: illegal_operation (당일 연기 · 기간 역전 · 최소 기간 · 연기 횟수 다 씀)
       x-status: existing
       x-demo-blocked: true
-      x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드) · pro · hq 는 화면 자체를 열지 않아요
+      x-roles-note: manager · hq 는 403 demo_account (보여 주기 모드) · hq 는 화면 자체를 열지 않아요 · pro 는 회원처럼 돼요 (2026-11-26)
       x-backend: MobileDeferralRequestController POST /me/deferral-requests
         (MobileDeferralCreateRequest)
       x-inventory: "#39 · #40"
@@ -7649,7 +7614,7 @@ paths:
         error: duplicate_resource (대기 중 요청 있음)
       x-status: new
       x-demo-blocked: true
-      x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드)
+      x-roles-note: manager · hq 는 403 demo_account (보여 주기 모드) · pro 는 회원처럼 돼요 (2026-11-26)
       x-inventory: "#46"
       x-screens:
         - app/me/settings/langlv.tsx
@@ -22963,27 +22928,54 @@ components:
                   - "null"
                 format: date-time
                 description: 프로 출석 체크 시각 (아직이면 null)
+              proCheckedInBy:
+                type:
+                  - string
+                  - "null"
+                enum: [PRO, STAFF, null]
+                description: 누가 프로로 출석했는지 (2026-11-26). STAFF = 스텝(manager · hq)이 '프로로 참여'로 대신 — 프로 출석으로 셈하고 앱은 '프로 3 · 스텝 1'처럼 나눠 보여요
+              proCheckedInName:
+                type:
+                  - string
+                  - "null"
+                description: 실제로 프로 출석한 사람 이름 (STAFF 면 스텝 이름, proName 은 원래 맡은 프로)
               expected:
                 type: integer
                 example: 9
               checkedIn:
                 type: integer
                 example: 7
-    BranchQr:
-      type: object
-      required:
-        - code
-        - expiresAt
-      properties:
-        code:
-          type: string
-          description: QR 에 담을 값 (GET /tables/{qrCode} 로 읽혀요)
-        expiresAt:
-          type: string
-          format: date-time
-        refreshSeconds:
-          type: integer
-          example: 60
+              tables:
+                type: array
+                description: 테이블(QR)마다 몇 명이 왔는지 (2026-11-26). 회원이 그 테이블 QR 을 찍어 check-in 하면 바로 +1. 아무도 안 찍은 테이블도 0 으로 내려요
+                items:
+                  type: object
+                  required:
+                    - tableId
+                    - tableNo
+                    - checkedIn
+                  properties:
+                    tableId:
+                      type: integer
+                      format: int64
+                      description: GET /tables/{qrCode} (TableScan) 의 tableId
+                      example: 42
+                    tableNo:
+                      type: integer
+                      example: 7
+                    tableName:
+                      type:
+                        - string
+                        - "null"
+                      description: 없으면 앱이 '7번 테이블'로 보여요
+                      example: 창가 7번
+                    checkedIn:
+                      type: integer
+                      description: 이 테이블 QR 로 출석한 멤버 수 (프로로 참여는 빼요)
+                      example: 4
+                    proCheckedIn:
+                      type: boolean
+                      description: 이 테이블에서 프로가 '프로로 참여'로 찍었는지
   responses:
     NoContent:
       description: 성공 (본문 없음)
