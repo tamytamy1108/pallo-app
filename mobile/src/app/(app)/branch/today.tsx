@@ -3,10 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { useBranchToday } from '@/api/use-branch-today';
 import { AccountPage } from '@/components/account/parts';
-import { RoleTag } from '@/components/common/role-tag';
 import { fmtMin } from '@/components/home/attendance';
 import { Num } from '@/components/home/branch-status-card';
-import { MemberTag } from '@/components/home/join-role-sheet';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -41,14 +39,6 @@ export default function BranchTodayScreen() {
           <Num value={String(view.sessions)} label="오늘 세션" />
           <Num value={String(view.proCount)} label="프로 출석" sub={view.proByStaff > 0 ? `프로 ${view.proByPro} · 스텝 ${view.proByStaff}` : undefined} tone="pro" />
           <Num value={String(view.members)} label="멤버 출석" tone="member" />
-        </View>
-        <View style={styles.legend}>
-          <MemberTag />
-          <PText style={styles.legendT}>멤버</PText>
-          <RoleTag kind="pro" />
-          <PText style={styles.legendT}>프로</PText>
-          <RoleTag kind="staff" />
-          <PText style={styles.legendT}>스텝이 프로 대신</PText>
         </View>
         {view.open.length ? <Group title="출석 중" tone="open" rows={view.open} /> : null}
         {view.soon.length ? <Group title="예정" tone="soon" rows={view.soon} /> : null}
@@ -99,36 +89,18 @@ function LangChip({ code }: { code: string }) {
   );
 }
 
-function ProLine({ row }: { row: SessionRow }) {
-  if (row.proCheckedInBy === 'STAFF')
-    return (
-      <View style={styles.who}>
-        <RoleTag kind="staff" />
-        <PText style={styles.whoT} numberOfLines={1}>
-          {row.proCheckedInName}
-          {row.proName ? ` · ${row.proName} 대신` : ''}
-        </PText>
-      </View>
-    );
-  return (
-    <View style={styles.who}>
-      <RoleTag kind="pro" />
-      <PText style={styles.whoT} numberOfLines={1}>
-        {row.proName ?? '프로 미정'}
-      </PText>
-    </View>
-  );
+/** 누가 프로로 출석했는지 · 언제: 글자만 (프로 = 보라, 아직 = 빨강) */
+function proLine(row: SessionRow) {
+  const who = row.proCheckedInBy === 'STAFF' ? `스텝 ${row.proCheckedInName ?? ''}${row.proName ? ` (${row.proName} 대신)` : ''}` : `프로 ${row.proName ?? '미정'}`;
+  if (row.phase === 'soon') return { who, state: `${fmtMin(row.start - QR_BEFORE)}부터 출석`, color: Colors.inkSub };
+  if (row.proCheckedInAt) return { who, state: `출석 ✓ ${clock(row.proCheckedInAt)}`, color: Colors.purple };
+  return { who, state: '아직 안 왔어요', color: '#B23A5A' };
 }
 
 function SessionCard({ row }: { row: SessionRow }) {
-  const proState =
-    row.phase === 'soon'
-      ? { t: `${fmtMin(row.start - QR_BEFORE)}부터 출석`, c: Colors.inkSub }
-      : row.proCheckedInAt
-        ? { t: `프로 출석 ✓ ${clock(row.proCheckedInAt)}`, c: Colors.purple }
-        : { t: '프로 아직', c: '#B23A5A' };
+  const pro = proLine(row);
   return (
-    <View style={styles.card} accessible accessibilityLabel={`${lang(row.lang).ko} ${row.teamName} ${row.level}, 멤버 ${row.checkedIn}명, ${proState.t}`}>
+    <View style={styles.card} accessible accessibilityLabel={`${lang(row.lang).ko} ${row.teamName} ${row.level}, 멤버 ${row.checkedIn}명, ${pro.who} ${pro.state}`}>
       <View style={styles.row1}>
         <LangChip code={row.lang} />
         <PText style={styles.team} numberOfLines={1}>
@@ -137,20 +109,22 @@ function SessionCard({ row }: { row: SessionRow }) {
         <PText style={styles.count}>{row.checkedIn}명</PText>
       </View>
       <View style={styles.row2}>
-        <ProLine row={row} />
-        <PText style={styles.proState} color={proState.c}>
-          {proState.t}
+        <PText style={styles.who} numberOfLines={1}>
+          {pro.who}
+        </PText>
+        <PText style={styles.proState} color={pro.color}>
+          {pro.state}
         </PText>
       </View>
       {row.phase === 'open' ? (
         <View style={styles.tables}>
           {row.tables.map((t) => (
-            <View key={t.tableId} style={[styles.tb, t.checkedIn === 0 && !t.proCheckedIn && styles.tbZero]}>
-              <PText style={styles.tbNo}>{t.tableName ?? `${t.tableNo}번`}</PText>
-              <View style={[styles.tbCount, t.checkedIn === 0 && styles.tbCountZero]}>
-                <PText style={styles.tbCountT}>{t.checkedIn}명</PText>
-              </View>
-              {t.proCheckedIn ? <RoleTag kind={row.proCheckedInBy === 'STAFF' ? 'staff' : 'pro'} /> : null}
+            <View key={t.tableId} style={[styles.tb, t.checkedIn === 0 && styles.tbZero]}>
+              <PText style={[styles.tbNo, t.proCheckedIn && styles.tbNoPro]} numberOfLines={1}>
+                {t.tableName ?? `${t.tableNo}번`}
+                {t.proCheckedIn ? (row.proCheckedInBy === 'STAFF' ? ' · 스텝' : ' · 프로') : ''}
+              </PText>
+              <PText style={[styles.tbCount, t.checkedIn === 0 && styles.tbCountZero]}>{t.checkedIn}명</PText>
             </View>
           ))}
         </View>
@@ -172,7 +146,7 @@ function DoneGroup({ rows }: { rows: SessionRow[] }) {
             {r.teamName} · {r.level}
           </PText>
           <PText style={styles.doneCount}>{r.checkedIn}명</PText>
-          {r.proCheckedInBy ? <RoleTag kind={r.proCheckedInBy === 'STAFF' ? 'staff' : 'pro'} /> : <PText style={styles.doneNoPro}>프로 없음</PText>}
+          <PText style={styles.doneNoPro}>{r.proCheckedInBy === 'STAFF' ? '스텝 ✓' : r.proCheckedInBy ? '프로 ✓' : '프로 없음'}</PText>
         </View>
       ))}
     </View>
@@ -182,8 +156,6 @@ function DoneGroup({ rows }: { rows: SessionRow[] }) {
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40, gap: 14 },
   nums: { flexDirection: 'row', gap: 8 },
-  legend: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', rowGap: 4, marginTop: -4 },
-  legendT: { fontFamily: Font.body700, fontSize: 11, lineHeight: 16, color: Colors.inkSub, marginLeft: 4, marginRight: 6 },
   group: { gap: 14 },
   slot: { gap: 8 },
   slotHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -199,16 +171,16 @@ const styles = StyleSheet.create({
   team: { flex: 1, minWidth: 0, fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
   count: { fontFamily: Font.display, fontSize: 15, lineHeight: 20 },
   row2: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  who: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, marginLeft: -5 },
-  whoT: { flexShrink: 1, fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub, marginLeft: 5 },
-  proState: { fontFamily: Font.body900, fontSize: 12, lineHeight: 17 },
-  tables: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
-  tb: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 26, paddingLeft: 8, paddingRight: 6, borderWidth: 1.5, borderColor: Colors.ink, borderRadius: 8, backgroundColor: Colors.cream },
-  tbZero: { borderColor: '#C9C0AE', backgroundColor: Colors.white },
-  tbNo: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16 },
-  tbCount: { paddingHorizontal: 5, borderRadius: 4, backgroundColor: Colors.yellow },
-  tbCountZero: { backgroundColor: 'transparent' },
-  tbCountT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
+  who: { flex: 1, minWidth: 0, fontFamily: Font.body700, fontSize: 13, lineHeight: 18, color: Colors.inkSub },
+  proState: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
+  // 테이블: 같은 크기 칸 · 번호 위 · 인원 아래 (칸 안에 알약을 겹치지 않아요)
+  tables: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  tb: { width: 70, paddingVertical: 6, alignItems: 'center', borderRadius: 10, backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.line },
+  tbZero: { backgroundColor: Colors.white },
+  tbNo: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
+  tbNoPro: { color: Colors.purple, fontFamily: Font.body900 },
+  tbCount: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
+  tbCountZero: { color: '#A39C8E' },
   done: { opacity: 0.5, gap: 6 },
   doneHead: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   doneRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1.5, borderColor: '#C9C0AE', borderRadius: 12, backgroundColor: Colors.white, paddingHorizontal: 10, height: 40 },
