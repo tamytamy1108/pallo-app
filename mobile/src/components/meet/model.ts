@@ -272,7 +272,9 @@ export function sessionMembers(all: Member[], q: Session, me: MeArg, myHi: strin
   const host = L[0];
   const rest = L.slice(1);
   const out: Member[] = host ? [host] : [];
-  for (let i = 0; out.length < q.cur - (q.me ? 1 : 0) && i < rest.length; i++) out.push(rest[(i + q.k) % rest.length]);
+  // 지난 모임은 k 가 음수라 나머지가 음수가 되지 않게 (+ length) 해요
+  const n = rest.length;
+  for (let i = 0; out.length < q.cur - (q.me ? 1 : 0) && i < n; i++) out.push(rest[(((i + q.k) % n) + n) % n]);
   if (q.me) out.unshift({ n: me.name, c: C.y, b: me.branch, t: '나', hi: myHi, me: true });
   return out;
 }

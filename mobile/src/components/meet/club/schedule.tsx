@@ -38,7 +38,7 @@ export function SessionRow({ c, q, i, album, mine, onPress }: { c: Club; q: Sess
           </PText>
         </View>
         <View style={styles.st}>
-          <PText style={[styles.em, q.me ? { color: C.pu } : full ? { color: '#A39C8E' } : null]}>{q.me ? '참석 완료' : full ? '마감' : '모집 중'}</PText>
+          <PText style={[styles.em, q.me ? { color: C.pu } : full || q.past ? { color: '#A39C8E' } : null]}>{q.past ? (q.me ? '참석했어요' : '끝난 모임') : q.me ? '참석 완료' : full ? '마감' : '모집 중'}</PText>
           <View style={styles.no}>
             <Icon name="crown" size={13} color={Colors.inkSub} />
             <PText style={styles.noT}>{q.no}번째 모임</PText>
