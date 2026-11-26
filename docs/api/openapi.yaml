@@ -23139,12 +23139,17 @@ components:
                   - string
                   - "null"
                 enum: [PRO, STAFF, null]
-                description: 누가 프로로 출석했는지 (2026-11-26). STAFF = 스텝(manager · hq)이 '프로로 참여'로 대신 — 프로 출석으로 셈하고 앱은 '프로 3 · 스텝 1'처럼 나눠 보여요
+                description: 누가 프로로 출석했는지 (2026-11-26). STAFF = 맡은 프로가 없어서 스텝(manager · hq)이 '프로로 참여'로 대타 — 프로 출석으로 셈하고 앱은 '프로 3 · 스텝 1'처럼 나눠 보여요
               proCheckedInName:
                 type:
                   - string
                   - "null"
                 description: 실제로 프로 출석한 사람 이름 (STAFF 면 스텝 이름, proName 은 원래 맡은 프로)
+              staffJoinedName:
+                type:
+                  - string
+                  - "null"
+                description: 프로가 출석했는데 스텝도 '프로로 참여'로 찍었으면 그 스텝 이름 — 대타가 아니라 그냥 참석 (2026-11-26). 대타는 proCheckedInBy STAFF
               expected:
                 type: integer
                 example: 9

@@ -18,10 +18,12 @@ export type BranchTodayView = {
   sessions: number;
   /** 오늘 스터디 수 (예: 영어 화목 7시 30분 · 일본어 화목 7시 30분 — 스터디 안에 팀이 여럿) */
   studies: number;
-  /** 프로 출석: 몇 명이 했는지 (프로 + 스텝이 대신) */
+  /** 프로 출석: 몇 명이 했는지 (프로 + 스텝 대타) */
   proCount: number;
   proByPro: number;
   proByStaff: number;
+  /** 스텝 출석: 대타 + 그냥 참석 (스텝이 몇 명 왔는지) */
+  staffCount: number;
   /** 프로 출석 예정: 프로가 배정된 스터디 수 (전산 시간표) */
   proPlanned: number;
   /** 오늘 온 멤버 수 */
@@ -70,6 +72,7 @@ export function toBranchTodayView(data: BranchToday, m: number, qrBefore: number
     proCount: proByPro + proByStaff,
     proByPro,
     proByStaff,
+    staffCount: proByStaff + rows.filter((r) => r.staffJoinedName).length,
     proPlanned: rows.filter((r) => r.proName).length,
     members: rows.reduce((n, r) => n + r.checkedIn, 0),
     open,

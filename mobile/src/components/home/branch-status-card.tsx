@@ -47,7 +47,7 @@ type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /
 
 /**
  * 지점 관리자 홈: 출석 카드 아래 '하남점 현황' (docs/pages/10-roles.md 4장 · 카드 시안 A 슬레이트).
- * 칸 넷 — 오늘 스터디 · 프로 출석 · 스텝 출석(스텝이 프로 대신) · 멤버 출석. 모두 몇 명인지만. 자세한 건 모두 보기(/branch/today).
+ * 칸 넷 — 오늘 스터디 · 프로 출석 · 스텝 출석(대타 + 그냥 참석) · 멤버 출석. 모두 몇 명인지만. 자세한 건 모두 보기(/branch/today).
  */
 export function BranchStatusCard() {
   const { view, isError, refetch } = useBranchToday();
@@ -63,7 +63,7 @@ export function BranchStatusCard() {
   const cells: Cell[] = [
     { label: '오늘 스터디', value: v(view?.studies), sub: view ? `팀 ${view.sessions}` : undefined },
     { label: '프로 출석', value: v(view?.proByPro), tone: 'pro', sub: view ? `예정 ${view.proPlanned}` : undefined },
-    { label: '스텝 출석', value: v(view?.proByStaff), tone: 'staff' },
+    { label: '스텝 출석', value: v(view?.staffCount), tone: 'staff' },
     { label: '멤버 출석', value: v(view?.members), tone: 'member' },
   ];
   const line = isError ? '현황을 못 불러왔어요 · 누르면 다시 받아요' : empty ? `오늘은 ${name} 스터디가 없어요` : view ? nextLine(view) : '현황을 받는 중이에요';
@@ -71,7 +71,7 @@ export function BranchStatusCard() {
     <Pressable
       onPress={open}
       accessibilityRole="button"
-      accessibilityLabel={`${name} 현황${view ? ` · 프로 출석 ${view.proByPro}명 (예정 ${view.proPlanned}명) · 스텝 출석 ${view.proByStaff}명 · 멤버 출석 ${view.members}명` : ''}`}>
+      accessibilityLabel={`${name} 현황${view ? ` · 프로 출석 ${view.proByPro}명 (예정 ${view.proPlanned}명) · 스텝 출석 ${view.staffCount}명 · 멤버 출석 ${view.members}명` : ''}`}>
       {({ pressed }) => (
         <Raised radius={RADIUS} pressed={pressed}>
           <View style={styles.card}>

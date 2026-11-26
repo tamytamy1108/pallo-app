@@ -19,6 +19,7 @@ const session = (id: string, h: number, m: number, lang: string, checkedIn: numb
   proCheckedInAt: by ? at(h, m - 20) : null,
   proCheckedInBy: by,
   proCheckedInName: by === 'STAFF' ? '김하남' : by ? 'Lily' : null,
+  staffJoinedName: null,
   checkedIn,
   tables: [],
 });
@@ -57,6 +58,7 @@ describe('오늘 지점 현황', () => {
     expect(v.proCount).toBe(4);
     expect(v.proByPro).toBe(3);
     expect(v.proByStaff).toBe(1);
+    expect(v.staffCount).toBe(1);
     expect(v.proPlanned).toBe(5);
     expect(v.members).toBe(30);
     expect(v.sessions).toBe(5);

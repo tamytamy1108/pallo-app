@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useBranchToday } from '@/api/use-branch-today';
@@ -17,7 +18,7 @@ const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 /**
  * 오늘 지점 현황 · 모두 보기 (지점 관리자 · docs/pages/10-roles.md 4장). 보기만 해요 — 손 출석 · 지각은 출석 명단에서.
  * 지금 QR 이 열린 세션이 맨 위, 그다음 예정, 끝난 수업은 맨 아래 연하게 한 줄씩.
- * 카드마다 전산 팀 이름 그대로 + 프로(또는 프로 대신 스텝) n명 · 멤버 n명 — 아무도 안 찍었어도 0명으로 늘 보여요.
+ * 카드마다 전산 팀 이름 그대로 + 프로(스텝 대타 · 스텝 참석 포함) n명 · 멤버 n명 — 아무도 안 찍었어도 0명으로 늘 보여요.
  */
 export default function BranchTodayScreen() {
   const { view, isPending, isError, refetch } = useBranchToday();
@@ -35,7 +36,7 @@ export default function BranchTodayScreen() {
           cells={[
             { label: '오늘 스터디', value: String(view.studies), sub: `팀 ${view.sessions}` },
             { label: '프로 출석', value: String(view.proByPro), tone: 'pro', sub: `예정 ${view.proPlanned}` },
-            { label: '스텝 출석', value: String(view.proByStaff), tone: 'staff' },
+            { label: '스텝 출석', value: String(view.staffCount), tone: 'staff' },
             { label: '멤버 출석', value: String(view.members), tone: 'member' },
           ]}
         />
@@ -86,26 +87,59 @@ function Group({ title, tone, rows }: { title: string; tone: 'open' | 'soon'; ro
   );
 }
 
-/** 프로 줄: 스텝이 '프로로 참여'로 대신했으면 스텝 이름, 아니면 맡은 프로 이름. 찍기 전엔 0명 */
+/** 프로 쪽 인원: 프로(또는 대타 스텝) + 그냥 참석한 스텝. 찍기 전엔 0명 */
 function proRow(row: SessionRow) {
-  if (row.proCheckedInBy === 'STAFF') return { label: `스텝 ${row.proCheckedInName ?? ''}`, sub: row.proName ? `${row.proName} 대신` : null, count: 1, staff: true };
-  return { label: `프로 ${row.proName ?? '미정'}`, sub: null, count: row.proCheckedInBy ? 1 : 0, staff: false };
+  const cover = row.proCheckedInBy === 'STAFF';
+  const count = (row.proCheckedInBy ? 1 : 0) + (row.staffJoinedName ? 1 : 0);
+  const label = cover
+    ? `스텝 ${row.proCheckedInName ?? ''}${row.proName ? ` ${row.proName} 대타` : ''}`
+    : `프로 ${row.proName ?? '미정'}${row.staffJoinedName ? ` · 스텝 ${row.staffJoinedName} 참석` : ''}`;
+  return { cover, count, label };
 }
 
-/** 인원 칸 (테이블 칸과 같은 모양: 크림 바탕 · 연한 선 · 이름 위 · 인원 아래). 0명이면 흰 바탕 · 흐린 숫자 */
-function CountBox({ tone, label, sub, count }: { tone: 'pro' | 'staff' | 'member'; label: string; sub?: string | null; count: number }) {
+/** 스텝 이름: 노랑 바탕 (앱 노랑) */
+function StaffName({ name }: { name: string }) {
+  return (
+    <View style={styles.staffTag}>
+      <PText style={styles.staffTagT} numberOfLines={1}>
+        스텝 {name}
+      </PText>
+    </View>
+  );
+}
+
+/** 인원 칸 (크림 바탕 · 연한 선 · 이름 위 · 인원 아래). 0명이면 흰 바탕 · 흐린 숫자 */
+function CountBox({ children, count }: { children: ReactNode; count: number }) {
   return (
     <View style={[styles.box, count === 0 && styles.boxZero]}>
-      <PText style={[styles.boxL, tone === 'pro' && styles.boxLPro, tone === 'staff' && styles.boxLStaff]} numberOfLines={1}>
-        {label}
-      </PText>
-      {sub ? (
-        <PText style={styles.boxSub} numberOfLines={1}>
-          {sub}
-        </PText>
-      ) : null}
+      {children}
       <PText style={[styles.boxV, count === 0 && styles.boxVZero]}>{count}명</PText>
     </View>
+  );
+}
+
+/** 프로 칸: 대타면 [스텝 민지] Mateo 대타 · 프로가 있고 스텝도 왔으면 아래 줄 [스텝 수빈] 참석 */
+function ProBox({ row }: { row: SessionRow }) {
+  const pro = proRow(row);
+  return (
+    <CountBox count={pro.count}>
+      {pro.cover ? (
+        <View style={styles.nameRow}>
+          <StaffName name={row.proCheckedInName ?? ''} />
+          {row.proName ? <PText style={styles.nameNote}>{row.proName} 대타</PText> : null}
+        </View>
+      ) : (
+        <PText style={[styles.boxL, styles.boxLPro]} numberOfLines={1}>
+          프로 {row.proName ?? '미정'}
+        </PText>
+      )}
+      {row.staffJoinedName ? (
+        <View style={styles.nameRow}>
+          <StaffName name={row.staffJoinedName} />
+          <PText style={styles.nameNote}>참석</PText>
+        </View>
+      ) : null}
+    </CountBox>
   );
 }
 
@@ -120,8 +154,10 @@ function SessionCard({ row }: { row: SessionRow }) {
       </View>
       {/* 프로 · 멤버 칸은 늘 위에 (찍기 전엔 0명, 찍으면 바로 바뀌어요) */}
       <View style={styles.boxes}>
-        <CountBox tone={pro.staff ? 'staff' : 'pro'} label={pro.label} sub={pro.sub} count={pro.count} />
-        <CountBox tone="member" label="멤버" count={row.checkedIn} />
+        <ProBox row={row} />
+        <CountBox count={row.checkedIn}>
+          <PText style={styles.boxL}>멤버</PText>
+        </CountBox>
       </View>
     </View>
   );
@@ -141,7 +177,7 @@ function DoneGroup({ rows }: { rows: SessionRow[] }) {
               {r.teamName}
             </PText>
             <PText style={styles.doneCount}>
-              {pro.staff ? '스텝' : '프로'} {pro.count} · 멤버 {r.checkedIn}
+              {pro.cover ? '스텝 대타' : '프로'} {pro.count} · 멤버 {r.checkedIn}
             </PText>
           </View>
         );
@@ -174,8 +210,10 @@ const styles = StyleSheet.create({
   boxZero: { backgroundColor: Colors.white },
   boxL: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   boxLPro: { fontFamily: Font.body900, color: Colors.purple },
-  boxLStaff: { fontFamily: Font.body900, color: Colors.ink },
-  boxSub: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
+  nameRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  nameNote: { fontFamily: Font.body800, fontSize: 11, lineHeight: 16, color: Colors.inkSub },
+  staffTag: { paddingHorizontal: 6, borderRadius: 5, backgroundColor: Colors.yellow },
+  staffTagT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: Colors.ink },
   boxV: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23, textAlign: 'center' },
   boxVZero: { color: '#A39C8E' },
   done: { opacity: 0.5, gap: 6 },
