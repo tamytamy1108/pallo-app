@@ -5,7 +5,7 @@
  */
 import { SLOTS, type MyTeamToday } from './home';
 
-/** 그 세션을 누가 프로로 출석했는지: 맡은 프로 · 스텝이 '프로로 참여'로 대신 */
+/** 그 세션을 누가 프로로 출석했는지: 맡은 프로 · 스텝 대타('프로로 참여') */
 export type ProCheckedInBy = 'PRO' | 'STAFF';
 
 export type BranchTable = {
@@ -35,8 +35,10 @@ export type BranchSession = {
   proName: string | null;
   proCheckedInAt: string | null;
   proCheckedInBy: ProCheckedInBy | null;
-  /** 실제로 프로 출석한 사람 (STAFF 면 스텝 이름) */
+  /** 실제로 프로 출석한 사람 (STAFF 면 스텝 이름 = 대타) */
   proCheckedInName: string | null;
+  /** 프로가 있는데 스텝도 그냥 참석했으면 그 스텝 이름 (대타 아님) */
+  staffJoinedName: string | null;
   /** 오늘 온 멤버 수 (테이블 합) */
   checkedIn: number;
   tables: BranchTable[];
@@ -62,8 +64,10 @@ export type MockBranchSession = {
   pro: string;
   tables: { no: number; full: number }[];
   proLate?: boolean;
-  /** 예시: 맡은 프로가 못 와서 스텝이 '프로로 참여'로 대신 출석 (시작 20분 전에 찍어요) */
+  /** 예시: 맡은 프로가 못 와서 스텝이 '프로로 참여'로 대타 (시작 20분 전에 찍어요) */
   staffCover?: string;
+  /** 예시: 프로도 왔고 스텝도 그냥 참석 (시작 15분 전에 찍어요) */
+  staffJoin?: string;
 };
 
 /** 하남점 하루 시간표 (일요일은 쉬어요) */
@@ -72,12 +76,12 @@ export const MOCK_BRANCH_SESSIONS: MockBranchSession[] = [
   { id: 'b-1100-en-11', slot: 0, lang: 0, study: '영어 화목 11시', team: '1-1 영어', level: 'Lv.1', pro: 'Logan', tables: [{ no: 1, full: 4 }] },
   { id: 'b-1100-en-12', slot: 0, lang: 0, study: '영어 화목 11시', team: '1-2 영어', level: 'Lv.1', pro: 'Emma', tables: [{ no: 2, full: 4 }] },
   // 영어 화목 7시 30분 — 팀 셋
-  { id: 'b-1930-en-21', slot: 1, lang: 0, study: '영어 화목 7시 30분', team: '2-1 영어', level: 'Lv.2', pro: 'Lily', tables: [{ no: 7, full: 5 }] },
+  { id: 'b-1930-en-21', slot: 1, lang: 0, study: '영어 화목 7시 30분', team: '2-1 영어', level: 'Lv.2', pro: 'Lily', tables: [{ no: 7, full: 5 }], staffJoin: '수빈' },
   { id: 'b-1930-en-22', slot: 1, lang: 0, study: '영어 화목 7시 30분', team: '2-2 영어', level: 'Lv.2', pro: 'Noah', tables: [{ no: 8, full: 4 }] },
   { id: 'b-1930-en-31', slot: 1, lang: 0, study: '영어 화목 7시 30분', team: '3-1 영어', level: 'Lv.3', pro: 'Mia', tables: [{ no: 9, full: 3 }] },
   // 일본어 화목 7시 30분 — 프로가 아직 안 왔어요
   { id: 'b-1930-ja-11', slot: 1, lang: 1, study: '일본어 화목 7시 30분', team: '1-1 일본어', level: 'Lv.1', pro: 'Sora', tables: [{ no: 3, full: 5 }], proLate: true },
-  // 스페인어 화목 7시 30분 — 프로 대신 스텝이 출석한 예시
+  // 스페인어 화목 7시 30분 — 프로가 못 와서 스텝이 대타로 출석한 예시
   { id: 'b-1930-es-11', slot: 1, lang: 3, study: '스페인어 화목 7시 30분', team: '1-1 스페인어', level: 'Lv.1', pro: 'Mateo', tables: [{ no: 6, full: 3 }], proLate: true, staffCover: '민지' },
   // 9시
   { id: 'b-2100-en-41', slot: 2, lang: 0, study: '영어 화목 9시', team: '4-1 영어', level: 'Lv.4', pro: 'Aiden', tables: [{ no: 10, full: 4 }] },
