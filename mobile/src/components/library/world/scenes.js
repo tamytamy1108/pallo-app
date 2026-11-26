@@ -671,8 +671,8 @@ function travelBeach(S) { const sc = S.sc;
   [-10, -6, -2, 2, 6, 10].forEach((t, i) => { const [x, z] = along(-10.6, -10.6, t); sc.add(umb(x, z, ['#E9536A', '#3F5BA9', '#FFC93C'][i % 3])); });
   // 감성 해변 상점가: 파스텔 · 원목 · 아치 창 · 따뜻한 실내 불빛 · 꽃상자 · 칠판 입간판 · 전구 줄
   const SHOPS = [['Salt & Sun', 'coffee · brunch', '#EFE3CF', '#6B8F7A', 'cafe'], ['Little Gelato', 'handmade', '#F3D3CF', '#B8655A', 'gelato'], ['Sea Glass', 'vintage boutique', '#D6E4E0', '#3F6E74', 'boutique'],
-    ['Bloom', 'flowers', '#F1E1D8', '#A85F6E', 'flower'], ['Paper Moon', 'books & coffee', '#E7DCC8', '#4E5A7A', 'books'], ['Driftwood', 'bakery', '#EADCC4', '#8C6239', 'bakery'],
-    ['Wave Records', 'vinyl', '#DCD6E6', '#5E4E7A', 'records'], ['Linen House', 'slow living', '#EEE8DE', '#7A7466', 'linen'], ['Golden Hour', 'wine bar', '#EAD7B8', '#9C6B2E', 'bar']];
+    ['Bondi Beach', 'Brunch Café', '#F1E1D8', '#A85F6E', 'flower'], ['The Bubble', 'by master', '#E7DCC8', '#4E5A7A', 'books'], ["Tammy's", 'bakery', '#EADCC4', '#8C6239', 'bakery'],
+    ['Xoal Records', 'vinyl', '#DCD6E6', '#5E4E7A', 'records'], ['Linen House', 'slow living', '#EEE8DE', '#7A7466', 'linen'], ['Golden Hour', 'wine bar', '#EAD7B8', '#9C6B2E', 'bar']];
   const SERIF = '"DM Serif Display", Georgia, serif', shopTexs = [];
   const drawShop = (g, W, H, [name, sub, wall, acc, kind]) => { g.clearRect(0, 0, W, H); g.fillStyle = wall; g.fillRect(0, 0, W, H);
     g.fillStyle = 'rgba(120,90,60,.06)'; for (let i = 0; i < 120; i++) g.fillRect((i * 53) % W, (i * 97) % H, 18, 2);
