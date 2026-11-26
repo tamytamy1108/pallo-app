@@ -153,7 +153,7 @@ export function todayTeam(a: Attend, m: number): OpenTeam | null {
 /** 위 칸: 오늘 스터디 이름 · 시작까지(진행 중) 남은 시간 */
 export function countOf(a: Attend, d: Date) {
   const team = todayTeam(a, minuteOf(d));
-  if (!team) return { name: '오늘 수업 없어요', label: '시작까지', value: '--:--' };
+  if (!team) return { name: '스터디 쉬는 날', label: '시작까지', value: '--:--' };
   const name = teamName(team);
   const diff = SLOTS[team.slot].start * 60 - secondOf(d);
   if (diff <= 0) {
@@ -193,7 +193,7 @@ export const openTeamAt = (slot: number, lang: number) => openTeams().find((t) =
 /** 이 팀을 지금 누를 수 있나: 오늘 열린 수업 + 시트 모드의 시간 창 */
 export const teamSelectable = (t: MyTeamToday, mode: SheetMode, m: number) => isOpenToday(t) && slotSelectable(t.slot, mode, m);
 export function teamSub(t: MyTeamToday, mode: SheetMode, m: number) {
-  return isOpenToday(t) ? slotSub(t.slot, mode, m) : '오늘 수업 없어요';
+  return isOpenToday(t) ? slotSub(t.slot, mode, m) : '스터디 쉬는 날';
 }
 
 /** 시트를 열 때 처음 골라 둘 팀: 지금 고른 것 → 누를 수 있는 첫 팀. 없으면 null */

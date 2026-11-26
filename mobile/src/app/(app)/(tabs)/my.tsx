@@ -87,8 +87,12 @@ export default function MyScreen() {
   // 토스트 [보러가기] → /my?open=saved-meets · joined-meets · saved-challenges 로 오면 그 목록 시트를 바로 열어요
   // (렌더 중에 이전 값과 비교해 한 번만 열고, 주소의 open 은 지워요)
   const [seenOpen, setSeenOpen] = useState<string | undefined>(undefined);
+  // /my?open=study (연기 · 변경 신청 뒤 확인) → 내 스터디 칸까지 내려가요 (칸 자리를 재면 그때 내려가요)
+  const studyY = useRef<number | null>(null);
+  const [toStudy, setToStudy] = useState(false);
   if (dev.open !== seenOpen) {
     setSeenOpen(dev.open);
+    if (dev.open === 'study') setToStudy(true);
     if (dev.open === 'saved-meets') setMeets('saved');
     else if (dev.open === 'joined-meets') setMyMeetsOpen(true);
     else if (dev.open === 'saved-challenges') setChals(true);
@@ -96,6 +100,13 @@ export default function MyScreen() {
   useEffect(() => {
     if (dev.open) router.setParams({ open: undefined });
   }, [dev.open]);
+  // 이미 내 스터디 칸 자리를 쟀으면 (마이가 열려 있던 채로 돌아오면) 바로 내려가요
+  useEffect(() => {
+    if (!toStudy || studyY.current == null) return;
+    setToStudy(false);
+    const y = studyY.current;
+    requestAnimationFrame(() => scroll.current?.scrollTo({ y: Math.max(0, y - 12), animated: true }));
+  }, [toStudy]);
 
   // 카드 폭 = 놓인 자리 폭 - 그림자 4 (재기 전에는 화면 - 양쪽 16 - 그림자 4).
   // 화면 폭으로만 셈하면 넓은 화면에서 카드보다 자리가 넓어져 오른쪽에 그림자 판이 드러나요.
@@ -172,9 +183,18 @@ export default function MyScreen() {
           </Appear>
         ) : my?.study ? (
           <Appear kind="rise" delay={100}>
-            {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
-            <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
-            <MyStudyCard study={my.study} title={false} />
+            <View
+              onLayout={(e) => {
+                studyY.current = e.nativeEvent.layout.y;
+                if (toStudy) {
+                  setToStudy(false);
+                  scroll.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 12), animated: true });
+                }
+              }}>
+              {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
+              <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
+              <MyStudyCard study={my.study} title={false} />
+            </View>
           </Appear>
         ) : null}
         {member && (
