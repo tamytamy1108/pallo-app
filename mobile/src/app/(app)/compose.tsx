@@ -102,6 +102,10 @@ export default function ComposeScreen() {
 
   const post = () => {
     const t = text.trim();
+    if (!drafts.length) {
+      setStep(1);
+      return showToast('사진을 1장 이상 골라 주세요');
+    }
     if (!t) return showToast('내용을 적어 주세요');
     const pc = LG_PCAT.find((x) => x[1] === cat) ?? LG_PCAT[0];
     const imgs = drafts.map((d) => d.uri);
@@ -143,7 +147,8 @@ export default function ComposeScreen() {
         scrollKey={step}
         footer={
           step === 1 ? (
-            <LgButton label={drafts.length ? '다음' : '사진 없이 다음'} wide height={52} fontSize={15.5} onPress={() => setStep(2)} />
+            // 사진이 꼭 있어야 올려요 — 고르기 전엔 아래 버튼이 없고, 고르면 '다음'이 나와요
+            drafts.length ? <LgButton label="다음" wide height={52} fontSize={15.5} onPress={() => setStep(2)} /> : undefined
           ) : (
             <LgButton label="올리기" wide height={52} fontSize={15.5} onPress={post} />
           )
