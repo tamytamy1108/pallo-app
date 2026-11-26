@@ -23,11 +23,14 @@ import { RewardHost } from '@/components/my/reward-sheet';
 import { FontAssets } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { SCREEN, STACK_OPTIONS } from '@/lib/transitions';
+import { blockWebImageDrag } from '@/lib/web-no-image-drag';
 import { getMyAvatar } from '@/state/avatar';
 
 SplashScreen.preventAutoHideAsync();
 // 아이폰 무음 모드(옆 스위치)에서도 표현 듣기 · 효과음이 나와요 (게임 · 학습 앱처럼). 다른 앱 음악은 끊지 않아요
 setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
+// 웹: 사진을 마우스로 끌 때 브라우저 '사진 끌어다 놓기'가 사진 순서 바꾸기 · 위치 맞추기를 끊지 않게
+blockWebImageDrag();
 
 
 /**

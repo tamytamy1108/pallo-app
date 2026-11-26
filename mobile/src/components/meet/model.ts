@@ -31,6 +31,7 @@ import {
   CLUB_MEMBERS,
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
+import { devClubRole } from '@/lib/dev-profile';
 import type { Me, Role, StudyLang } from '@/state/me';
 
 import { useMeetStore } from './meet-store';
@@ -55,12 +56,19 @@ export const useAllClubs = () => {
  * 코호스트: 그 동아리 호스트가 나를 코호스트로 정했고 동아리가 운영 중일 때. 동아리가 닫히면 같이 없어져요.
  * badge: 마이 · 프로필 이름 옆 뱃지 (호스트가 먼저). 0개가 되면 null — 기록은 meet-store hostLog 에 남아요.
  */
+/** 개발용 '운영 중인 동아리' (모임 역할을 호스트 · 코호스트로 골랐을 때) */
+const DEV_RUN_CLUB = 'cl4';
+
 export function useMyClubRoles(myName: string) {
   const mine = useMeetStore((s) => s.myClubs);
   const cohost = useMeetStore((s) => s.cohost);
-  const hostOf = mine.filter((c) => clubLive(c));
+  const real = mine.filter((c) => clubLive(c));
   const all = [...mine, ...CLUBS];
-  const coOf = all.filter((c) => clubLive(c) && !c.mine && (cohost[c.id] ?? []).includes(myName));
+  const realCo = all.filter((c) => clubLive(c) && !c.mine && (cohost[c.id] ?? []).includes(myName));
+  // 개발용: 마이 '개발 · 사람'에서 모임 역할을 호스트 · 코호스트로 고르면, 예시 동아리 하나를 운영 중인 것으로 봐요 (뱃지 · 내 모임 확인용)
+  const devClub = __DEV__ && (devClubRole === 'host' || devClubRole === 'co') ? CLUBS.find((c) => c.id === DEV_RUN_CLUB) : undefined;
+  const hostOf = devClub && devClubRole === 'host' ? [...real, devClub] : real;
+  const coOf = devClub && devClubRole === 'co' ? [...realCo, devClub] : realCo;
   const badge: 'host' | 'co' | null = hostOf.length ? 'host' : coOf.length ? 'co' : null;
   return { hostOf, coOf, badge };
 }
