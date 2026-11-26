@@ -7,6 +7,8 @@ import { defaultEnd, MultiPills, PosterPicker, TimeRange } from '@/components/ev
 import { ClubRow } from '@/components/meet/club-list';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
+import { HostRulesBox } from '@/components/common/host-rules-box';
+import { clubRuleLines } from '@/data/host-rules';
 import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyClub } from '@/components/meet/meet-store';
@@ -59,6 +61,8 @@ export default function NewClub() {
   const conds = [CLUB_MEMBERS, branchOnly(me.branch)];
   const [cond, setCond] = useState<string>(CLUB_MEMBERS);
   const [memo, setMemo] = useState('');
+  // 운영 규칙 확인 (경고 · 닫기 규칙을 알고 만들어요)
+  const [rules, setRules] = useState(false);
   const [pics, setPics] = useState<string[]>([]);
   // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
   const [card, setCard] = useState<MadeCard | null>(null);
@@ -98,15 +102,16 @@ export default function NewClub() {
     if (!name.trim()) return showToast('동아리 이름을 적어 주세요');
     if (!langs.length) return showToast('언어를 골라 주세요');
     if (!days.length) return showToast('모이는 요일을 골라 주세요');
+    if (!rules) return showToast('운영 규칙을 확인해 주세요');
     addMyClub(draft());
     sfx('save');
     router.back();
-    showToast('승인을 요청했어요 · 매니저가 확인하면 알려 드려요');
+    showToast('승인을 요청했어요 · 관리자가 확인하면 알려 드려요');
   };
 
   return (
     <SheetPage title="동아리 만들기" label="동아리 만들기" footer={<SheetButton label="승인 요청하기" size="foot" onPress={ask} />}>
-      <SheetDesc>지점 매니저가 승인하면 지도에 보이고 가입을 받을 수 있어요.</SheetDesc>
+      <SheetDesc>관리자가 승인하면 지도에 보이고 가입을 받을 수 있어요. 승인되면 나는 이 동아리의 호스트가 돼요.</SheetDesc>
       <View ref={nameBox} collapsable={false}>
         <TextField label="동아리 이름 *" value={name} onChangeText={setName} onFocus={() => reveal(nameBox.current)} placeholder="예) 미드 쉐도잉 모임" />
       </View>
@@ -172,6 +177,7 @@ export default function NewClub() {
           }}
         />
       </Field>
+      <HostRulesBox title="동아리 운영 규칙" lines={clubRuleLines()} checked={rules} onChange={setRules} />
     </SheetPage>
   );
 }

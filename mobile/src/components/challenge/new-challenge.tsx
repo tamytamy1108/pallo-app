@@ -44,6 +44,8 @@ import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { CountStepper, MonthCalendar, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
+import { HostRulesBox } from '@/components/common/host-rules-box';
+import { challengeRuleLines } from '@/data/host-rules';
 import { CountPicker } from '@/components/ui/count-picker';
 import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { seeAt } from '@/lib/see';
@@ -103,6 +105,8 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
   // 시작: 빠른 고르기 셋 + '날짜 고르기'(달력에서 아무 날이나)
   const [start, setStart] = useState<StartOpt | typeof PICK_DATE>('오늘');
   const [startDay, setStartDay] = useState('');
+  // 운영 규칙 확인 (인증이 없으면 경고 뒤 지워질 수 있어요)
+  const [rules, setRules] = useState(false);
   const [dur, setDur] = useState(7);
   const [weekly, setWeekly] = useState(false);
   const [n, setN] = useState(3);
@@ -154,6 +158,10 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
 
   const submit = () =>
     guardMember(() => {
+      if (!rules) {
+        showToast('운영 규칙을 확인해 주세요');
+        return;
+      }
       if (!study) {
         if (start === PICK_DATE && !startDay) {
           showToast('시작 날짜를 골라 주세요');
@@ -311,6 +319,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           </View>
         </>
       )}
+      <HostRulesBox title="챌린지 운영 규칙" lines={challengeRuleLines()} checked={rules} onChange={setRules} />
     </Sheet>
   );
 }

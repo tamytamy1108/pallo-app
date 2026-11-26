@@ -46,6 +46,9 @@
 | A28 | GET · POST | `/me/rewards` · `/me/rewards/:id/seen` | **시즌 보상 자동 지급**: 규칙마다 진행(n/need) · 받았는지 · 안 본 보상. 받은 창을 닫으면 seen. 아래 '시즌 보상 — 자동 지급 규칙' | `data/rewards.ts` · `state/rewards.ts` · `components/my/reward-sheet.tsx` |
 | A29 | (기존 63에 추가) | `GET /clubs` 항목에 `lastChatAt` · `?sort=recommended` | **동아리 [추천] 정렬**: 동아리별 마지막 대화 시각을 주면, 그 시각이 최근인 순서로 정렬해요. 아래 '동아리 [추천] 정렬 기준' | `components/meet/club-list.tsx` |
 | A30 | (기존 65 바뀜) | `POST /clubs/:id/members` | **신청하면 바로 가입** (승인 대기 · 신청자 목록 없음). 가입 인사는 가입 뒤 선택. 단 **가입 조건**(`○○점 멤버만` · `Lv.N 이상` · `○○어 수강생`)이 안 맞으면 `{ code: CLUB_COND_NOT_MET, message: '잠실점 멤버만 가입할 수 있어요' }` 로 거절 (앱 `joinBlock` 과 같은 규칙) | `components/meet/club/club-join.tsx` |
+| A31 | GET · DELETE · POST | `/me/club-applications` · `/me/club-applications/:id` · `/:id/resubmit` | **내가 신청한 동아리**: `{ id, club, status: review \| approved \| rejected, reason, sentAt, decidedAt }`. 검토 중이면 취소, 거절이면 지우기 · 다시 신청. 결정되면 알림(`club_approved` · `club_rejected`) | `components/meet/club-apply.tsx` |
+| A32 | GET | `/me/roles` (또는 `/me` 에 추가) | **호스트 · 코호스트 자격**: `{ hostOf: clubId[], cohostOf: clubId[], badge: host \| cohost \| null, history: [{ clubId, role, from, to, why }] }`. 운영 중인 동아리만 셈 — 0개면 badge null. 관리자가 뱃지를 뗄 수 있음(`/admin/members/:id/role`) | `components/meet/model.ts` `useMyClubRoles` · meet-store `hostLog` |
+| A33 | (관리자) POST · DELETE | `/admin/clubs/:id/warnings` · `/admin/clubs/:id` · `/admin/challenges/:id/warnings` · `/admin/challenges/:id` | **활동 없음 · 저조 경고 · 닫기**. 서버가 활동을 세서 관리자 웹에 후보를 보여 주고, 관리자가 경고 알림(`club_warning` · `challenge_warning`, n/최대)을 보내요. 닫으면 `club_closed` 알림 + 호스트 · 코호스트 자격 끝. 아래 '활동 없음 · 저조 규칙' | `data/host-rules.ts` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 
@@ -71,6 +74,17 @@
 - 카테고리 · 지점은 정렬 전에 목록을 거르기만 해요
 
 **백엔드에서 동아리별 '마지막 대화 시각'(`lastChatAt`, UTC ISO 8601)을 주면, 그 시각이 최근인 순서로 바꾸면 돼요.** 대화가 한 번도 없는 동아리는 `null` 로 주고 맨 뒤에 둬요.
+
+### 활동 없음 · 저조 규칙 (A33 · 2026-11-26 제안)
+
+숫자는 `data/host-rules.ts` 와 같아요. 바꾸면 둘 다 고쳐요.
+
+- **동아리 · 활동 없음**: 30일 동안 정기 모임 · 게시글 · 채팅이 하나도 없음
+- **동아리 · 활동 저조**: 30일 동안 정기 모임이 한 번도 안 열림 (글 · 채팅만 있음)
+- **챌린지 · 활동 없음**: 7일 동안 인증이 하나도 없음 (참여자 모두 합쳐서)
+- **경고**: 동아리 7일 간격 최대 3번 (호스트 · 코호스트에게) · 챌린지 3일 간격 최대 2번 (연 사람에게). 알림 본문에 몇 번째 경고인지 · 언제까지 활동하면 되는지
+- **닫기 · 지우기**: 마지막 경고 뒤 동아리 7일 · 챌린지 3일 안에도 그대로면 관리자가 닫거나 지울 수 있어요 (자동이 아니라 관리자가 눌러요). 사이에 활동이 생기면 경고 횟수가 0으로
+- 닫힌 동아리의 호스트 · 코호스트 자격은 끝나고 기록만 남아요 (A32 `history`)
 
 ### 시즌 보상 — 자동 지급 규칙 (A28 · 2026-11-25)
 

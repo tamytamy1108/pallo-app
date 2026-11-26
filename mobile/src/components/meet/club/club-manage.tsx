@@ -10,13 +10,14 @@ import { Colors } from '@/constants/theme';
 import { Font } from '@/constants/fonts';
 import type { Club } from '@/data/meet';
 
-import { setCohosts } from '../meet-store';
+import { closeMyClub, setCohosts } from '../meet-store';
 import type { Member } from '../model';
 
 /**
  * 동아리 '관리' 시트 (docs/pages/10-roles.md 5장 · 관리 항목 자세히).
  * 지금 앱의 메뉴 시트 부품(SheetOptions · SheetButton · 토스트)만 써요. 단계별로 같은 시트 안에서 넘어가요.
  * 호스트 = 6가지, 코호스트 = 공지 · 정기 모임 · 참석 확인. 가입은 신청하면 바로 돼요 (승인 · 대기자 없음).
+ * 관리 시트는 운영 중인 동아리에서만 열려요 (관리자 승인 뒤 · 닫히기 전). 호스트는 내가 만든 동아리만.
  * 맞는 API: `/clubs/:id/members/:id` DELETE · `/clubs/:id/staff`.
  */
 export type ManageRole = 'host' | 'co';
@@ -145,7 +146,7 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
   if (stage.k === 'close') {
     return (
       <Sheet open={open} onClose={onClose} title={`${c.name}을 닫을까요?`} label="동아리 닫기" scrollKey="close">
-        <SheetDesc>멤버 {members.length}명에게 알림이 가고, 다가오는 정기 모임이 모두 취소돼요. 게시판 · 사진은 30일 동안 볼 수 있어요.</SheetDesc>
+        <SheetDesc>멤버 {members.length}명에게 알림이 가고, 다가오는 정기 모임이 모두 취소돼요. 게시판 · 사진은 30일 동안 볼 수 있어요. 이 동아리의 호스트 · 코호스트 권한도 같이 없어져요.</SheetDesc>
         <SheetButtons>
           <SheetButton label="취소" tone="white" size="pair" style={styles.flex} sound="back" onPress={() => go({ k: 'menu' })} />
           <SheetButton
@@ -154,6 +155,8 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
             size="pair" style={styles.flex}
             onPress={() => {
               onClose();
+              // 내가 만든 동아리면 정말 닫혀요 → 호스트 · 코호스트 권한이 같이 없어지고 기록만 남아요
+              if (c.mine) closeMyClub(c.id, 'host');
               showToast('동아리를 닫았어요 · 멤버 모두에게 알림을 보냈어요');
             }}
           />
