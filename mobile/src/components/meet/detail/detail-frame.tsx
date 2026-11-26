@@ -222,16 +222,15 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
 
 /**
  * 화면 맨 아래 입력 줄 (동아리 채팅). 키보드가 없으면 안전 영역(홈 바) 바로 위, 오면 키보드 바로 위 —
- * 아이폰은 키보드 움직임과 같은 프레임에 따라가요 (UI 스레드 · lib/keyboard useKeyboardLiftStyle 과 같은 방식).
- * 안드로이드는 키보드만큼 창이 줄어서 안전 영역만 둬요.
+ * 키보드 움직임과 같은 프레임에 따라가요 (UI 스레드 · useAnimatedKeyboard).
+ * 안드로이드도 화면 끝까지 그리는(edge-to-edge) 앱이라 창이 줄지 않아요 → 아이폰과 똑같이 키보드 높이만큼 올려요 (2026-11-26 에뮬레이터에서 가려짐 확인).
  */
 const DOCK_GAP = 8;
 function DockBar({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const kb = useAnimatedKeyboard();
-  const ios = Platform.OS === 'ios';
   const bottom = insets.bottom;
-  const lift = useAnimatedStyle(() => ({ paddingBottom: DOCK_GAP + Math.max(bottom, ios ? kb.height.value : 0) }));
+  const lift = useAnimatedStyle(() => ({ paddingBottom: DOCK_GAP + Math.max(bottom, kb.height.value) }));
   return <Animated.View style={[styles.dock, lift]}>{children}</Animated.View>;
 }
 
