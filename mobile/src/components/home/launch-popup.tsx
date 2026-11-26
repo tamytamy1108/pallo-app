@@ -19,6 +19,7 @@ import { LayerModal } from '@/components/ui/sheet-stack';
 import { nowDate } from './attendance';
 import { LineIcon } from './icons';
 import { useRejectionPopupOpen } from './link-rejected-popup';
+import { useWelcomePopupOpen } from './link-welcome-popup';
 
 /** 포스터 양옆 넘김 화살표 — 글자(‹ ›)는 글꼴에 따라 끝이 뭉툭해서 선으로 그려요 (끝 · 꺾임 둥글게) */
 const CHEVRON_L = 'M15 5l-7 7 7 7';
@@ -84,18 +85,19 @@ function PopupHost({ popups }: { popups: Popup[] }) {
   /** 공지 카드 전체 높이 (포스터 · 버튼 · 아래 줄) — 넘김 화살표를 카드 한가운데 높이에 둬요 */
   const [cardH, setCardH] = useState(0);
   const fade = useSharedValue(0);
-  // 연동 반려 팝업이 떠 있으면 닫힐 때까지 기다렸다가 떠요 (두 장이 겹치지 않게)
+  // 연동 반려 · 승인 팝업이 떠 있으면 닫힐 때까지 기다렸다가 떠요 (두 장이 겹치지 않게)
   const rejectionOpen = useRejectionPopupOpen();
+  const welcomeOpen = useWelcomePopupOpen();
 
   useEffect(() => {
-    if (shownOnce || !list.length || rejectionOpen) return;
+    if (shownOnce || !list.length || rejectionOpen || welcomeOpen) return;
     const t = setTimeout(() => {
       shownOnce = true;
       setOpen(true);
       fade.set(withTiming(1, { duration: still ? 0 : 200 }));
     }, 900);
     return () => clearTimeout(t);
-  }, [list.length, still, fade, rejectionOpen]);
+  }, [list.length, still, fade, rejectionOpen, welcomeOpen]);
 
   const close = () => {
     fade.set(withTiming(0, { duration: still ? 0 : 180 }));

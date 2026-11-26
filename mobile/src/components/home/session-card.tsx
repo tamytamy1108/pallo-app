@@ -18,6 +18,7 @@ import { createStore } from '@/lib/store';
 import { finishHomeMoment, useLinkEvents } from '@/state/link-events';
 import { isMember } from '@/state/access';
 import { useMe } from '@/state/me';
+import { updateOnboarding } from '@/state/onboarding';
 
 import { countOf, fmtMin, heroOf, minuteOf, rsvpOpen, todayTeam, useAttend, useClock, type Hero } from './attendance';
 import { ARROW_PATH, CHECK_PATH, LineIcon, QR_PATH } from './icons';
@@ -74,7 +75,7 @@ export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => 
   const moment = useLinkEvents((s) => s.homeMoment);
   return (
     <UnlockStage play={member && moment} branch={branch} front={<PendingCard />} onDone={finishHomeMoment}>
-      {member ? <StudyCard onOpen={onOpen} /> : pending ? <PendingCard branch={pending.branchName} /> : rejected ? <PendingCard rejected branch={rejected.branchName} /> : <StudyCard onOpen={onOpen} />}
+      {member ? <StudyCard onOpen={onOpen} /> : pending ? <PendingCard branch={pending.branchName} /> : rejected ? <PendingCard rejected branch={rejected.branchName} branchCode={rejected.branchCode} /> : <StudyCard onOpen={onOpen} />}
     </UnlockStage>
   );
 }
@@ -83,15 +84,15 @@ export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => 
  * 지점 연동 확인 중일 때 (09-onboarding · A 잠긴 출석 카드): 같은 클래퍼보드를 라벤더로 잠가요.
  * 칸: 스터디 미정 · 연동 확인 중 · DATE / STANDBY · Almost on stage. · 한 줄 안내 · 점선으로 꺼 둔 버튼.
  * 연동되면(서버 /me 가 회원 등급을 주면) 원래 카드로 돌아와요.
- * rejected: 지점이 못 찾았을 때 — 같은 잠긴 카드에 '연동 안 됨'과 [다시 요청하기](→ 연동 안 됨 화면)만 열어 둬요.
+ * rejected: 지점이 반려했을 때 — 같은 잠긴 카드에 '반려됨' · [다시 신청하기](→ 연동 요청) · [알림 확인하기](사유는 알림에서)만 열어 둬요.
  */
-function PendingCard({ rejected = false, branch: requested }: { rejected?: boolean; branch?: string }) {
+function PendingCard({ rejected = false, branch: requested, branchCode }: { rejected?: boolean; branch?: string; branchCode?: string }) {
   const myBranch = useMe((m) => m.branch);
   // 요청한 지점 (서버 요약) — 풀리는 순간의 앞면처럼 지점을 모를 땐 내 지점
   const branch = requested ?? myBranch;
   const now = useClock();
   const heroRoom = useHeroRoom();
-  if (rejected) return <RejectedCard branch={branch} now={now} />;
+  if (rejected) return <RejectedCard branch={branch} branchCode={branchCode ?? branch} now={now} />;
   const off = '연동되면 출석이 열려요';
   return (
     <View style={styles.wrap}>
@@ -144,12 +145,21 @@ function PendingCard({ rejected = false, branch: requested }: { rejected?: boole
   );
 }
 
-/** 연동 안 됨 (rejected): 권한은 비회원과 같아요. 출석은 잠긴 채, 다시 요청하는 길만 홈에 남겨요 */
-function RejectedCard({ branch, now }: { branch: string; now: Date }) {
+/**
+ * 반려됨 (rejected): 권한은 비회원과 같아요. 출석은 잠긴 채, 다시 신청하는 길만 홈에 남겨요.
+ * 반려 사유는 카드에 쓰지 않고 알림에서 봐요 (알림 → 연동 안 됨 화면의 '지점에서 남긴 말').
+ */
+function RejectedCard({ branch, branchCode, now }: { branch: string; branchCode: string; now: Date }) {
   const heroRoom = useHeroRoom();
   const again = () => {
     sfx('tap');
-    router.push('/link-rejected');
+    // 연동 요청 화면이 보내면 서버 요약에 대기 한 건 → 카드가 '승인 대기'로 바뀌어요 (useCreateLinkRequest)
+    updateOnboarding({ path: 'member', branch, branchCode });
+    router.push('/onboarding/link');
+  };
+  const notis = () => {
+    sfx('tap');
+    router.push('/notifications');
   };
   return (
     <View style={styles.wrap}>
@@ -166,7 +176,7 @@ function RejectedCard({ branch, now }: { branch: string; now: Date }) {
               <View style={styles.waitRow}>
                 <View style={styles.failDot} />
                 <PText style={styles.fieldValue} color={FAIL_INK}>
-                  안 됨
+                  반려됨
                 </PText>
               </View>
             </View>
@@ -181,16 +191,23 @@ function RejectedCard({ branch, now }: { branch: string; now: Date }) {
             <PText variant="title" style={styles.heroTitle}>
               One more take.
             </PText>
-            <PText style={styles.waitSub}>{branch}에서 회원 정보를 찾지 못했어요.</PText>
+            <PText style={styles.waitSub}>{branch} 연동이 반려됐어요. 사유는 알림에서 볼 수 있어요.</PText>
             <View style={StyleSheet.flatten([styles.actions, styles.actionsWait])} onLayout={heroRoom.onActions}>
-              <Pressable onPress={again} accessibilityRole="button" accessibilityLabel="연동 안 됨 · 다시 요청하기">
+              <Pressable onPress={again} accessibilityRole="button" accessibilityLabel="연동 반려됨 · 다시 신청하기">
                 {({ pressed }) => (
                   <View style={StyleSheet.flatten([styles.btn, styles.btnAgain, pressed && styles.btnAgainPressed])}>
                     <View style={StyleSheet.flatten([styles.qr, styles.qrAgain])}>
                       <LineIcon d={RETRY_PATH} size={16} width={2.4} color={Colors.white} />
                     </View>
-                    <PText style={styles.btnTextOff}>다시 요청하기</PText>
+                    <PText style={styles.btnTextOff}>다시 신청하기</PText>
                     <LineIcon d={ARROW_PATH} size={17} width={2.4} />
+                  </View>
+                )}
+              </Pressable>
+              <Pressable onPress={notis} accessibilityRole="button" accessibilityLabel="반려 사유 · 알림 확인하기" hitSlop={4}>
+                {({ pressed }) => (
+                  <View style={StyleSheet.flatten([styles.link, pressed && styles.linkPressed])}>
+                    <PText style={styles.linkText}>알림 확인하기</PText>
                   </View>
                 )}
               </Pressable>
@@ -592,7 +609,7 @@ const styles = StyleSheet.create({
   btnOff: { height: 40, paddingLeft: 5, paddingRight: 16, gap: 8, borderBottomWidth: 2.5, borderStyle: 'dashed', backgroundColor: Colors.white },
   qrOff: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#CFC6B2' },
   btnTextOff: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
-  // 연동 안 됨 (RejectedCard): 분홍 점 · 누를 수 있는 '다시 요청하기' (그림자 있음)
+  // 반려됨 (RejectedCard): 분홍 점 · 누를 수 있는 '다시 신청하기' (그림자 있음) · 옆에 '알림 확인하기'
   failDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
   failLive: { backgroundColor: Colors.rosePink },
   btnAgain: { height: 42, paddingLeft: 5, paddingRight: 14, gap: 8, borderBottomWidth: 5, backgroundColor: Colors.white },
