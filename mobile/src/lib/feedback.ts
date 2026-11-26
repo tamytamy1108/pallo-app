@@ -58,11 +58,14 @@ export const useSfxOn = () => useSoundStore((s) => s.on);
 export const setSfxOn = (on: boolean) => soundStore.set({ on });
 
 // 소리마다 플레이어 하나 (처음 울릴 때 만들어 두고 계속 다시 써요)
+// keepAudioSessionActive: 효과음이 끝나도 앱 소리 창구(아이폰 AVAudioSession)를 닫지 않아요.
+// 기본값(false)이면 '톡'이 끝나고 0.1초 뒤 expo-audio 가 창구를 닫는데, 기기 음성 읽기(expo-speech)도 같은 창구를 써서
+// 읽던 문장이 중간에 끊겨요 (듣기 버튼: 두 번째부터 반만 읽힘). 다른 앱 소리와 섞는 모드라 열어 둬도 음악을 끊지 않아요.
 const players = new Map<SfxFile, AudioPlayer>();
 function player(file: SfxFile) {
   let p = players.get(file);
   if (!p) {
-    p = createAudioPlayer(FILES[file]);
+    p = createAudioPlayer(FILES[file], { keepAudioSessionActive: true });
     players.set(file, p);
   }
   return p;

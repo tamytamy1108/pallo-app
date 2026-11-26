@@ -8,27 +8,22 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { joinFree, type Club } from '@/data/meet';
-import { useMe } from '@/state/me';
+import type { Club } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 
 import { ConfirmCheck, DoneSheet } from '../detail/sheets';
 import { Icon } from '../icons';
 import { setClubState, setText } from '../meet-store';
-import { clubHost } from '../model';
 
 /**
  * 동아리 가입 (프로토타입 lgClubJoinSheet → lgClubJoinDone → lgGreetAsk):
  * '동아리 안내를 확인했어요' 체크 → 가입 → '가입했어요! 가입 인사 남길래요?' [인사 남기기 / 다음에 할게요].
- * 승인이 필요하면 '가입 신청을 보냈어요 · 미리 남길래요?'.
+ * 신청하면 바로 가입돼요 (호스트 승인 · 대기자 없음). 가입 인사는 선택이라 가입을 막지 않아요.
  */
 export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose: () => void }) {
   const [ok, setOk] = useState(false);
   const [done, setDone] = useState(false);
   const [hi, setHi] = useState('');
-  const me = useMe();
-  const free = joinFree(c.cond, c.br, me.branch);
-  const host = clubHost(c);
   return (
     <>
       <Sheet
@@ -39,11 +34,11 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
         onClosed={() => setOk(false)}
         footer={
           <SheetButton
-            label={free ? '가입하기' : '가입 신청하기'}
+            label="가입하기"
             size="foot"
             disabled={!ok}
             onPress={() => {
-              setClubState(c.id, free ? 'in' : 'ask');
+              setClubState(c.id, 'in');
               sfx('save');
               onClose();
               // 가입 시트가 다 내려간 뒤에 열어요 (아이폰은 내려가는 중에 다른 시트를 못 띄워요)
@@ -51,7 +46,7 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
             }}
           />
         }>
-        <SheetDesc>{free ? '가입하면 정기 모임 참석, 게시판, 사진첩을 함께 써요.' : `가입 조건은 '${c.cond}'이에요. ${c.br} 멤버가 아니라서 호스트 ${host}가 확인하면 가입돼요.`}</SheetDesc>
+        <SheetDesc>가입하면 바로 정기 모임 참석, 게시판, 사진첩, 채팅을 함께 써요.</SheetDesc>
         <View style={styles.note}>
           <View style={{ marginTop: 2 }}>
             <Icon name="shield" size={15} color={Colors.inkSub} />
@@ -64,8 +59,8 @@ export function ClubJoin({ c, open, onClose }: { c: Club; open: boolean; onClose
         open={done}
         onClose={() => setDone(false)}
         label="가입 인사"
-        title={free ? `${c.name}에 가입했어요!` : '가입 신청을 보냈어요'}
-        desc={free ? "가입 인사 남길래요? 게시판 '가입 인사'와 멤버 목록에 보여요." : `호스트 ${host}가 확인하면 알려 드려요. 그동안 가입 인사를 미리 남길래요?`}
+        title={`${c.name}에 가입했어요!`}
+        desc="가입 인사 남길래요? 게시판 '가입 인사'와 멤버 목록에 보여요."
         button="인사 남기기"
         onMain={() => {
           if (!hi.trim()) return showToast('가입 인사를 적어 주세요');

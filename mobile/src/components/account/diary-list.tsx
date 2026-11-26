@@ -116,8 +116,9 @@ const styles = StyleSheet.create({
   hero: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.purple },
   heroTx: { flex: 1, minWidth: 0 },
   heroS: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: '#E3DBF7' },
-  heroB: { fontFamily: Font.display, fontSize: 26, lineHeight: 29, color: Colors.white },
-  heroTop: { marginTop: 6, fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.yellow },
+  // '3편' 이 위 날짜 줄에 붙어 보여서 띄워요 (2026-11-26)
+  heroB: { marginTop: 8, fontFamily: Font.display, fontSize: 26, lineHeight: 30, color: Colors.white },
+  heroTop: { marginTop: 8, fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.yellow },
   heroImg: { width: 62, height: 40, marginTop: -10, marginBottom: -14 },
   cal: { paddingTop: 10, paddingHorizontal: 12, paddingBottom: 12, borderRadius: 18, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.white },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },

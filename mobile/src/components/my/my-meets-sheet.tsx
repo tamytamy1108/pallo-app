@@ -38,7 +38,7 @@ export function useMyMeetCounts() {
 }
 
 /**
- * 마이 › 내 활동 › 내 모임: [번개] 다가오는 · 지난 · [동아리] 가입한 · 가입 신청 중 · [이벤트] 다가오는 · 지난 · 제안한 이벤트.
+ * 마이 › 내 활동 › 내 모임: [번개] 다가오는 · 지난 · [동아리] 가입한 · [이벤트] 다가오는 · 지난 · 제안한 이벤트.
  * 누르면 시트를 닫고 그 상세로. 제안은 이벤트 탭 위 '내가 제안한 이벤트'와 같은 카드 (취소 · 되돌리기).
  * 맞는 API: 내 번개 · 동아리 · 이벤트 신청 목록 (지금은 기기에 남긴 가짜 상태 · components/meet/meet-store)
  */
@@ -50,14 +50,13 @@ export function MyMeetsSheet({ open, onClose, start = 'meet' }: { open: boolean;
   const meets = splitEvents(MEETS.filter((m) => joined[m.id]).map(asRow));
   const events = splitEvents(EVENTS.filter((e) => joined[e.id]));
   const clubsIn = CLUBS.filter((c) => clubState[c.id] === 'in');
-  const clubsAsk = CLUBS.filter((c) => clubState[c.id] === 'ask');
   const n = { meet: meets.up.length + meets.past.length, club: clubsIn.length, event: events.up.length + events.past.length };
   // 열 때마다 고른 탭부터 (비었으면 뭔가 있는 탭으로)
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (open) {
-      const has = (t: MyMeetTab) => n[t] > 0 || (t === 'event' && props.length > 0) || (t === 'club' && clubsAsk.length > 0);
+      const has = (t: MyMeetTab) => n[t] > 0 || (t === 'event' && props.length > 0);
       setTab(has(start) ? start : ((['meet', 'club', 'event'] as const).find(has) ?? start));
     }
   }
@@ -86,21 +85,12 @@ export function MyMeetsSheet({ open, onClose, start = 'meet' }: { open: boolean;
       ) : null}
 
       {tab === 'club' ? (
-        n.club || clubsAsk.length ? (
+        n.club ? (
           <>
             {clubsIn.length ? (
               <Section title={`가입한 동아리 ${clubsIn.length}`}>
                 <View style={styles.box}>
                   {clubsIn.map((c, i) => (
-                    <ClubRow key={c.id} c={c} first={i === 0} onOpen={() => go(`/club/${c.id}`)} />
-                  ))}
-                </View>
-              </Section>
-            ) : null}
-            {clubsAsk.length ? (
-              <Section title={`가입 신청 중 ${clubsAsk.length}`} sub="동아리 운영진이 확인하면 알려 드려요.">
-                <View style={styles.box}>
-                  {clubsAsk.map((c, i) => (
                     <ClubRow key={c.id} c={c} first={i === 0} onOpen={() => go(`/club/${c.id}`)} />
                   ))}
                 </View>

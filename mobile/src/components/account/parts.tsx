@@ -60,16 +60,19 @@ type PageProps = {
   scrollRef?: RefObject<ScrollViewInstance | null>;
   /** 스크롤 없이 (탭 화면처럼 안에서 따로 스크롤) */
   plain?: boolean;
+  /** 위 줄 바로 아래 붙어 있는 칸 (밑줄 탭 줄 등) — 스크롤해도 그 자리에 있어요 */
+  head?: ReactNode;
 };
 
 /** 마이 B 하위 화면 틀: 크림 바탕 · 위 줄 · 스크롤 · 아래 고정 바 */
-export function AccountPage({ title, onBack, right, children, footer, bottom, bodyStyle, scrollRef, plain }: PageProps) {
+export function AccountPage({ title, onBack, right, children, footer, bottom, bodyStyle, scrollRef, plain, head }: PageProps) {
   // 글 칸을 눌러 키보드가 올라오면 그 칸이 키보드 · 아래 바 위로 다 보이게 (시트와 같은 방식 · ui/form-scroll)
   const [formScroll, formBox, onFormScroll, , keepCaret, showFocused] = useFormScroll(undefined, scrollRef);
   useShowFocusedOnKeyboard(formBox, showFocused);
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar title={title} onBack={onBack} right={right} fallback="/my" />
+      {head}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {plain ? (
           <View style={[styles.flex, bodyStyle]}>{children}</View>

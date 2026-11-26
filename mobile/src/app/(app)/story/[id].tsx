@@ -228,8 +228,8 @@ export default function StoryScreen() {
   // 사진 위 글 스티커로 올린 스토리는 글을 사진 위 그 자리에 보여요 (아래 큰 글씨는 안 써요)
   const lbl = st.img && st.big ? st.lbl : undefined;
   const sticker = !!lbl;
-  // 예전에 올린 내 스토리에 남은 '24시간 동안 …' 안내 글은 보이지 않아요
-  const ds = st.mine && st.ds.startsWith('24시간') ? '' : st.ds;
+  // 예전에 올린 내 스토리에 남은 안내 글('24시간 동안 …' · '커뮤니티 피드에도 올렸어요')은 보이지 않아요
+  const ds = st.mine && (st.ds.startsWith('24시간') || st.ds.includes('피드에도 올렸어요')) ? '' : st.ds;
   // 노란 · 밝은 배경에서는 노란 글씨가 안 보여요 → 흰 글씨로
   const accent = { color: isDarkBg(st.art[0]) ? Colors.yellow : '#fff' };
   return (

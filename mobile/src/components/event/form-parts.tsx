@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { ScrollView, StyleSheet, View, type ViewInstance } from 'react-native';
 import Svg, { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
+import { PhotoReorderRow } from '@/components/ui/photo-reorder-row';
 import { Pressable } from '@/components/ui/pressable';
 import { Icon, type IconName } from '@/components/meet/icons';
 import { LgLink } from '@/components/meet/parts';
@@ -21,7 +22,7 @@ import { Wheel } from '@/components/ui/time-wheel';
  * 만들기 · 제안 폼 조각 (프로토타입 .lg-pup · .lg-plc · .lg-mpk · lgMapSvg · .lg-mcal).
  */
 
-/** 포스터 여러 장 (최대 max장 · 첫 장이 대표 · 누르면 대표로 · × 빼기). max=1 이면 사진 한 장 */
+/** 포스터 여러 장 (최대 max장 · 첫 장이 대표 · 꾹 눌러 끌면 순서 바꾸기 · × 빼기). max=1 이면 사진 한 장 */
 /** coverTaken: 만든 카드가 대표라서 사진은 2번째부터 (대표 표시 없이) */
 export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기', max = 10, coverTaken = false }: { uris: string[]; onChange: (u: string[]) => void; emptyLabel?: string; max?: number; coverTaken?: boolean }) {
   const add = async () => {
@@ -30,31 +31,46 @@ export function PosterPicker({ uris, onChange, emptyLabel = '포스터 넣기', 
     onChange([...uris, ...r.assets.map((a) => a.uri)].slice(0, max));
   };
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pup} contentContainerStyle={styles.pupIn}>
-      {uris.map((u, i) => (
-        <View key={u + i} style={styles.pt}>
-          <Pressable
-            onPress={() => i && onChange([u, ...uris.filter((_, k) => k !== i)])}
-            accessibilityRole="button"
-            accessibilityLabel={coverTaken ? `${i + 2}번째 포스터` : `${i + 1}번째 포스터${i ? ' · 대표로 정하기' : ' · 대표'}`}
+    <PhotoReorderRow
+      items={uris}
+      keyOf={(u) => u}
+      itemWidth={PT_W}
+      itemHeight={max > 1 ? PT_H + PT_GAP + PT_LABEL : PT_H}
+      onReorder={onChange}
+      style={styles.pup}
+      contentContainerStyle={styles.pupIn}
+      renderItem={(u, i, a11y) => (
+        <View style={styles.pt}>
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={coverTaken ? `${i + 2}번째 포스터` : `${i + 1}번째 포스터${i ? '' : ' · 대표'}`}
+            {...a11y}
             style={[styles.ptImg, !i && !coverTaken && styles.ptCov]}>
-            <Image source={{ uri: u }} style={StyleSheet.absoluteFill} contentFit="cover" />
-          </Pressable>
-          <Pressable onPress={() => onChange(uris.filter((_, k) => k !== i))} accessibilityRole="button" accessibilityLabel={`${i + 1}번째 포스터 빼기`} style={styles.rm} hitSlop={8}>
+            {/* 한 번 본 사진은 메모리에 — 순서를 바꿔도 다시 불러오며 검게 깜빡이지 않게 */}
+            <Image source={u} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+          </View>
+          <Pressable onPress={() => onChange(uris.filter((_, k) => k !== i))} accessibilityRole="button" accessibilityLabel={`${coverTaken ? i + 2 : i + 1}번째 포스터 빼기`} style={styles.rm} hitSlop={8}>
             <Icon name="x" size={12} color="#fff" strokeWidth={3} />
           </Pressable>
           {max > 1 ? <PText style={[styles.ptS, !i && !coverTaken && styles.ptSCov]}>{coverTaken ? String(i + 2) : i ? String(i + 1) : '대표'}</PText> : null}
         </View>
-      ))}
-      {uris.length < max ? (
-        <Pressable onPress={add} accessibilityRole="button" accessibilityLabel="포스터 넣기" style={styles.add}>
-          <Icon name="plus" size={22} strokeWidth={2.6} />
-          <PText style={styles.addS}>{uris.length ? `${uris.length}/${max}` : emptyLabel}</PText>
-        </Pressable>
-      ) : null}
-    </ScrollView>
+      )}
+      trailing={
+        uris.length < max ? (
+          <Pressable onPress={add} accessibilityRole="button" accessibilityLabel="포스터 넣기" style={styles.add}>
+            <Icon name="plus" size={22} strokeWidth={2.6} />
+            <PText style={styles.addS}>{uris.length ? `${uris.length}/${max}` : emptyLabel}</PText>
+          </Pressable>
+        ) : null
+      }
+    />
   );
 }
+const PT_W = 76;
+const PT_H = 95;
+const PT_GAP = 4;
+const PT_LABEL = 15;
 
 export type Place = { name: string; addr: string };
 
@@ -194,11 +210,11 @@ export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }:
 const styles = StyleSheet.create({
   pup: { marginHorizontal: -18, flexGrow: 0 },
   pupIn: { gap: 8, paddingHorizontal: 18, paddingTop: 4, paddingBottom: 2 },
-  pt: { width: 76, alignItems: 'center', gap: 4 },
-  ptImg: { width: 76, height: 95, borderRadius: 12, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.ink, overflow: 'hidden' },
+  pt: { width: PT_W, alignItems: 'center', gap: PT_GAP },
+  ptImg: { width: PT_W, height: PT_H, borderRadius: 12, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.ink, overflow: 'hidden' },
   ptCov: { borderColor: Colors.ink },
   rm: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(30,26,43,0.7)', alignItems: 'center', justifyContent: 'center' },
-  ptS: { fontFamily: Font.body800, fontSize: 11, color: Colors.inkSub },
+  ptS: { fontFamily: Font.body800, fontSize: 11, lineHeight: PT_LABEL, color: Colors.inkSub },
   ptSCov: { fontFamily: Font.body900, color: C.pu },
   add: { width: 76, height: 95, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.ink, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', gap: 4 },
   addS: { fontFamily: Font.body800, fontSize: 10.5, lineHeight: 14 },

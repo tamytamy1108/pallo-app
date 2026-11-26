@@ -1,9 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { FramedImage, PhotoFrame } from '@/components/ui/photo-frame';
+import { PhotoReorderRow } from '@/components/ui/photo-reorder-row';
 import { Pressable } from '@/components/ui/pressable';
 import { LgIcon } from '@/components/lounge/icons';
 import { LgButton } from '@/components/lounge/lg-button';
@@ -22,7 +23,7 @@ import { useMe } from '@/state/me';
 /*
  * 글쓰기 2단계 (프로토타입 lgPostNew · lgPostStep1 · lgPostStep2).
  * ① 새 게시물: 앨범(한 번에 최대 10장) · 사진 찍기 → 원본 비율로 미리 보기 (4:6 ~ 1.91:1 안으로 맞춤),
- *    두 손가락 확대(최대 4배) · 한 손가락 이동, ⤢ = 원본 비율 ↔ 1:1 (모든 사진 같은 비율), 아래 줄에서 사진 바꾸기 · + · 사진 빼기.
+ *    두 손가락 확대(최대 4배) · 한 손가락 이동, ⤢ = 원본 비율 ↔ 1:1 (모든 사진 같은 비율), 아래 줄에서 사진 바꾸기 · 꾹 눌러 끌어 순서 바꾸기 · + · 사진 빼기.
  * ② 글쓰기: 글 칸 → '어떤 글인가요?'. ‹ 로 돌아가도 사진 · 카테고리 · 글이 남아요.
  * 사진 올리기(긴 변 1080px로 줄여 업로드)는 백엔드 Q-T7 — 지금은 기기 안 주소 그대로 가짜 글에 붙여요.
  */
@@ -91,6 +92,12 @@ export default function ComposeScreen() {
     const alt = Math.abs(rOrig - 1) < 0.01 ? R_MIN : rOrig;
     setR(Math.abs(r - 1) < 0.01 ? alt : 1);
   };
+  // 순서를 바꿔도 지금 맞추던 사진은 그대로 골라져 있어요
+  const reorder = (next: Draft[]) => {
+    const now = drafts[di];
+    setDrafts(next);
+    if (now) setDi(Math.max(0, next.indexOf(now)));
+  };
   const reframe = (i: number, framing: PhotoFraming) => setDrafts((L) => L.map((d, k) => (k === i ? { ...d, framing } : d)));
 
   const post = () => {
@@ -144,29 +151,41 @@ export default function ComposeScreen() {
         {step === 1 ? (
           cur ? (
             <View>
-              <CropFrame key={`${di}-${cur.uri}`} d={cur} r={r} onChange={(f) => reframe(di, f)} onToggleRatio={toggleRatio} onRemove={removeCur} />
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-                {drafts.map((d, i) => (
+              {/* 사진(주소)이 같으면 같은 틀 — 순서를 바꿔 번호만 바뀌어도 다시 불러오지 않아요 */}
+              <CropFrame key={cur.uri} d={cur} r={r} onChange={(f) => reframe(di, f)} onToggleRatio={toggleRatio} onRemove={removeCur} />
+              {/* 아래 사진 줄: 누르면 그 사진 맞추기 · 꾹 눌러 끌면 순서 바꾸기 (첫 장이 게시물 첫 사진) */}
+              <PhotoReorderRow
+                items={drafts}
+                keyOf={(d) => d.uri}
+                itemWidth={58 * r}
+                itemHeight={58}
+                onReorder={reorder}
+                contentContainerStyle={styles.strip}
+                renderItem={(d, i, a11y) => (
                   <Pressable
-                    key={d.uri + i}
                     onPress={() => setDi(i)}
                     accessibilityRole="button"
                     accessibilityLabel={`${i + 1}번째 사진 맞추기`}
                     accessibilityState={{ selected: i === di }}
+                    {...a11y}
                     style={[styles.sth, { width: 58 * r }, i === di && styles.sthOn]}>
                     <FramedImage uri={d.uri} framing={d.framing} />
                     <PText style={styles.sthNo}>{i + 1}</PText>
                   </Pressable>
-                ))}
-                {drafts.length < MAX_N ? (
-                  <Pressable onPress={pickAlbum} accessibilityRole="button" accessibilityLabel="사진 더 넣기" style={[styles.sth, styles.sthAdd, { width: 58 * r }]}>
-                    <LgIcon name="plus" size={20} sw={2.8} />
-                  </Pressable>
-                ) : null}
-                <PText style={styles.stn}>
-                  {drafts.length}/{MAX_N}
-                </PText>
-              </ScrollView>
+                )}
+                trailing={
+                  <>
+                    {drafts.length < MAX_N ? (
+                      <Pressable onPress={pickAlbum} accessibilityRole="button" accessibilityLabel="사진 더 넣기" style={[styles.sth, styles.sthAdd, { width: 58 * r }]}>
+                        <LgIcon name="plus" size={20} sw={2.8} />
+                      </Pressable>
+                    ) : null}
+                    <PText style={styles.stn}>
+                      {drafts.length}/{MAX_N}
+                    </PText>
+                  </>
+                }
+              />
             </View>
           ) : (
             <View style={styles.photos}>

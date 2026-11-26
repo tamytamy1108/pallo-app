@@ -13,6 +13,7 @@ import { useSession } from '@/api/session';
 import { preloadAllAvatarArt, preloadMyAvatar } from '@/components/character/preload-art';
 import { FLAT_MAPS } from '@/components/library/world/flat-maps';
 import { TrialGuideHost } from '@/components/common/trial-guide';
+import { SeeSheetHost } from '@/components/common/see-sheets';
 import { DevNotch } from '@/components/dev-notch';
 import { LinkPushHost } from '@/components/home/link-push';
 import { ErrorState } from '@/components/ui/state-view';
@@ -113,6 +114,8 @@ function RootNavigator() {
         <LinkPushHost />
         {/* 시즌 보상을 자동으로 받았으면 한 번 뜨는 창 (로그인 · 온보딩 뒤에만) */}
         {signedIn && !onboarding ? <RewardHost /> : null}
+        {/* 토스트 [보러가기] 목록 시트 (찜한 모임 · 찜한 챌린지 · 라운지 저장함 등): 보던 화면 위에 바로 떠요 (lib/see) */}
+        {signedIn && !onboarding ? <SeeSheetHost /> : null}
         </TightTopInsets>
       </DevNotch>
     </GestureHandlerRootView>

@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useRef, useState, type ReactNode } from 'react';
+import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { C, isPast, REGIONS, type Meet, type Region, ALL_REGIONS } from '@/data/meet';
+import { C, daysUntil, isPast, REGIONS, type Meet, type Region, ALL_REGIONS } from '@/data/meet';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 
 import { ClubList } from './club-list';
@@ -19,6 +19,10 @@ import { branchOk, isOpenMeet, meetN, regionCounts, useAllClubs, useAllMeets } f
 import { LgButton, LgLink, SecHead } from './parts';
 
 type Mode = 'all' | 'meet' | 'club';
+
+/** 지난 번개는 끝난 지 2주(14일) 안의 것만 보여요 (2026-11-26) */
+const PAST_DAYS = 14;
+const isRecentPast = (m: Meet) => isPast(m) && daysUntil(m) >= -PAST_DAYS;
 
 /**
  * 라운지 '번개 · 동아리' 탭 본문 (docs/pages/04-lounge.md '번개 · 동아리'). 라운지 화면이 이 컴포넌트를 그대로 넣어요.
@@ -51,7 +55,7 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
   const inReg = (x: { reg: string }) => !reg || x.reg === reg || x.reg === ALL_REGIONS;
   const allM = mode === 'club' ? [] : meets.filter(inReg);
   const ms = allM.filter((m) => !isPast(m)).sort((a, b) => Number(!!a.closed) - Number(!!b.closed) || meetN(a) - meetN(b));
-  const past = allM.filter(isPast).sort((a, b) => meetN(b) - meetN(a));
+  const past = allM.filter(isRecentPast).sort((a, b) => meetN(b) - meetN(a));
   const cs = mode === 'meet' ? [] : clubs.filter(inReg);
   const msD = day == null ? ms : ms.filter((m) => meetN(m) === day);
   const openN = ms.filter((m) => !m.closed).length;
@@ -110,34 +114,21 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
             />
             {ms.length ? <DateStrip meets={ms} day={day} onDay={setDay} region={reg} /> : <View style={{ height: 4 }} />}
             {msD.length ? (
-              <CardRow meets={msD} width={cardW} end={past.length && !showPast ? <PastMore n={past.length} onPress={() => setShowPast(true)} /> : null} />
+              // 지난 번개는 같은 카드 줄 끝에 이어 붙여요 — 점선 카드를 누른 그 자리에서 바로 보이게
+              <CardRow meets={msD} past={day == null ? past : []} open={showPast} onOpen={() => setShowPast(true)} onClose={() => setShowPast(false)} width={cardW} />
             ) : ms.length ? (
               <View style={styles.empty}>
                 <PText style={styles.emptyT}>이날은 번개가 없어요.</PText>
                 <LgLink label="이날 번개 열기 ›" onPress={mkMeet} />
               </View>
+            ) : showPast && past.length > 0 ? (
+              <CardRow meets={[]} past={past} open onClose={() => setShowPast(false)} width={cardW} />
             ) : (
               <View style={styles.empty}>
                 <PText style={styles.emptyT}>{`${pre}다가오는 번개가 없어요.\n첫 번개를 열어 보세요!`}</PText>
-                {past.length && !showPast ? <LgLink label={`지난 번개 ${past.length}개 보기 ›`} onPress={() => setShowPast(true)} /> : null}
+                {past.length > 0 ? <LgLink label={`지난 번개 ${past.length}개 보기 ›`} onPress={() => setShowPast(true)} /> : null}
               </View>
             )}
-            {past.length && showPast ? (
-              <>
-                <SecHead
-                  style={[styles.sec, { marginTop: 22 }]}
-                  title={
-                    <>
-                      <Icon name="clock" size={16} />
-                      <PText style={styles.secT}>지난 번개</PText>
-                    </>
-                  }
-                  sub={`${past.length}개`}
-                  right={<LgLink label="접기" onPress={() => setShowPast(false)} />}
-                />
-                <CardRow meets={past} width={cardW} dim />
-              </>
-            ) : null}
           </View>
         )}
 
@@ -164,28 +155,86 @@ export function MeetTab({ branch, header, region }: { branch: string; header?: R
 
 const toRegion = (r?: string) => (REGIONS.some(([n]) => n === r) ? (r as Region) : null);
 
-/** 옆으로 넘기는 카드 줄 (한 장씩 딱딱 멈춤) */
-function CardRow({ meets, width, end, dim }: { meets: Meet[]; width: number; end?: ReactNode; dim?: boolean }) {
+const GAP = 12;
+const LABEL_W = 56;
+
+/**
+ * 옆으로 넘기는 카드 줄 (한 장씩 딱딱 멈춤).
+ * past 가 있으면 맨 끝에 '지난 번개 n개 보기' 점선 카드 → 누르면 그 자리에 지난 번개 카드가 이어 붙고, 첫 지난 번개 쪽으로 넘겨 줘요.
+ */
+function CardRow({ meets, past = [], open = false, onOpen, onClose, width }: { meets: Meet[]; past?: Meet[]; open?: boolean; onOpen?: () => void; onClose?: () => void; width: number }) {
+  const ref = useRef<ScrollViewInstance>(null);
+  // 펼친 뒤 카드 줄 길이가 바뀌면 (onContentSizeChange) 지난 번개 쪽으로 넘겨요
+  const jump = useRef(false);
   if (!width) return null;
+  const step = width + GAP;
+  const showPast = open && past.length > 0;
+  const base = meets.length * step;
+  // 카드 · '지난 번개' 표시 · 지난 카드마다 멈출 자리 (폭이 서로 달라서 snapToInterval 대신)
+  const offsets = meets.map((_, i) => i * step);
+  if (showPast) {
+    offsets.push(base);
+    past.forEach((_, j) => offsets.push(base + LABEL_W + GAP + j * step));
+  }
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={width + 12} snapToAlignment="start" decelerationRate="fast" style={styles.hs} contentContainerStyle={styles.hsIn} accessibilityRole="list">
+    <ScrollView
+      ref={ref}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      snapToOffsets={offsets}
+      decelerationRate="fast"
+      style={styles.hs}
+      contentContainerStyle={styles.hsIn}
+      accessibilityRole="list"
+      onContentSizeChange={() => {
+        if (!jump.current) return;
+        jump.current = false;
+        ref.current?.scrollTo({ x: base, animated: true });
+      }}>
       {meets.map((m) => (
-        <View key={m.id} style={dim ? styles.dim : undefined} accessibilityRole="none">
-          <MeetCard m={m} width={width} />
-        </View>
+        <MeetCard key={m.id} m={m} width={width} />
       ))}
-      {end}
+      {showPast ? (
+        <>
+          <View style={styles.pastLabel} accessibilityRole="header">
+            <Icon name="clock" size={18} color={Colors.inkSub} />
+            <PText style={styles.pastLabelT}>{'지난\n번개'}</PText>
+            <PText style={styles.pastLabelN}>{past.length}개</PText>
+          </View>
+          {past.map((m) => (
+            <View key={m.id} style={styles.dim} accessibilityRole="none">
+              <MeetCard m={m} width={width} />
+            </View>
+          ))}
+          {onClose ? <EndCard title="지난 번개" sub="접기 ‹" expanded onPress={onClose} /> : null}
+        </>
+      ) : past.length > 0 && onOpen ? (
+        <EndCard
+          title="지난 번개"
+          sub={`${past.length}개 보기 ›`}
+          expanded={false}
+          onPress={() => {
+            jump.current = true;
+            onOpen();
+          }}
+        />
+      ) : null}
     </ScrollView>
   );
 }
 
-/** 카드 줄 맨 끝 점선 카드 → 지난 번개 */
-function PastMore({ n, onPress }: { n: number; onPress: () => void }) {
+/** 카드 줄 맨 끝 점선 카드 → 지난 번개 펼치기 · 접기 */
+function EndCard({ title, sub, expanded, onPress }: { title: string; sub: string; expanded: boolean; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ expanded: false }} style={({ pressed }) => [styles.more, pressed && { transform: [{ scale: 0.97 }] }]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={expanded ? '지난 번개 접기' : `${title} ${sub.replace(' ›', '')}`}
+      accessibilityState={{ expanded }}
+      style={({ pressed }) => [styles.more, pressed && { transform: [{ scale: 0.97 }] }]}>
       <Icon name="clock" size={22} />
-      <PText style={styles.moreB}>지난 번개</PText>
-      <PText style={styles.moreS}>{n}개 보기 ›</PText>
+      <PText style={styles.moreB}>{title}</PText>
+      <PText style={styles.moreS}>{sub}</PText>
     </Pressable>
   );
 }
@@ -204,7 +253,11 @@ const styles = StyleSheet.create({
   clubs: { gap: 22 },
   hs: { marginHorizontal: -16, marginTop: 8, flexGrow: 0 },
   hsIn: { gap: 12, paddingTop: 6, paddingBottom: 14, paddingHorizontal: 16 },
-  dim: { opacity: 0.78, filter: 'grayscale(0.9)' },
+  // 지난 카드는 흐리게 (grayscale 필터는 iOS 에서 안 먹어서 투명도만)
+  dim: { opacity: 0.85 },
+  pastLabel: { width: LABEL_W, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  pastLabelT: { textAlign: 'center', fontFamily: Font.body900, fontSize: 12.5, lineHeight: 17, color: Colors.inkSub },
+  pastLabelN: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   more: { width: 104, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.ink, borderRadius: 20, paddingHorizontal: 8 },
   moreB: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
   moreS: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },

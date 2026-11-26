@@ -30,6 +30,7 @@ import {
   ALL_REGIONS,
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
+import type { Role } from '@/state/me';
 
 import { useMeetStore } from './meet-store';
 
@@ -103,7 +104,13 @@ export function membersOf(it: { id: string; host: string; br: string; mine?: boo
   });
   return L.slice(0, cur);
 }
-/** 동아리 코호스트 (예시: 첫 멤버 한 명, 프로토타입 lgStaffOf) */
+/**
+ * 잠금 없이 동아리를 다 보는 사람 (게시판 · 사진첩 · 채팅 · 정기 모임 참석): 멤버 · 호스트 · 코호스트(호스트가 정한 뒤) · 스텝(지점 관리자).
+ * 가입 안 한 사람만 흐린 미리보기 + 잠금 칸이에요. 호스트 권한이 있는 곳엔 잠금이 없어요.
+ */
+export const clubOpen = (joined: boolean, role: 'host' | 'co' | null, meRole: Role) => joined || !!role || meRole === 'manager';
+
+/** 동아리 코호스트 (예시: 첫 멤버 한 명, 프로토타입 lgStaffOf) — 호스트가 관리에서 정하면 그 이름들(meet-store cohost)로 바뀌어요 */
 export function clubStaff(c: Club, cur: number, me: MeArg) {
   if (c.mine) return [];
   const L = membersOf(c, cur, false, '', me, [], true);

@@ -240,10 +240,21 @@ export default function WelcomeScreen() {
   );
 }
 
+/**
+ * 포스터 글자(Anton) 세로 치수 (글자 크기 1 기준 · unitsPerEm 2048).
+ * iOS 는 lineHeight 가 글꼴 원래 높이(ascent + descent ≈ 1.5)보다 작으면 글자 위 · 아래를 잘라요.
+ * 그래서 글자 줄은 글꼴 원래 높이로 그리고, 단어가 올라오는 창(overflow hidden)만 글자에 딱 맞게 좁혀요.
+ */
+const ANTON = { ascent: 2409 / 2048, descent: 674 / 2048, top: 1776 / 2048, bottom: 235 / 2048 };
+const POSTER_PAD = 0.03; // 창 위 · 아래 숨 쉴 틈
+const POSTER_LINE = ANTON.ascent + ANTON.descent; // 글꼴 원래 줄 높이 (잘리지 않아요)
+const POSTER_ROW = POSTER_PAD + ANTON.top + ANTON.bottom + POSTER_PAD * 1.6; // 창 높이 ≈ 1.06 (쉼표 꼬리까지)
+const POSTER_SHIFT = POSTER_PAD + ANTON.top - ANTON.ascent; // 글자 꼭대기가 창 맨 위 + PAD 에 오도록 올려요
+
 /** 포스터 한 줄: 단어마다 0.07초씩 늦게 아래에서 올라와요 (rise .55s) */
 function Line({ words, color, size, t, from }: { words: string[]; color: string; size: number; t: SharedValue<number>; from: number }) {
   return (
-    <View style={[styles.line, { height: size * 0.98 + size * 0.04 }]}>
+    <View style={[styles.line, { height: size * POSTER_ROW }]}>
       {words.map((w, i) => (
         <Word key={i} text={w} color={color} size={size} t={t} delay={from + i * 0.07} />
       ))}
@@ -256,11 +267,16 @@ function Word({ text, color, size, t, delay }: { text: string; color: string; si
   const style = useAnimatedStyle(() => {
     const p = Math.min(1, Math.max(0, (t.get() * 0.93 - delay) / 0.55));
     const e = 1 - Math.pow(1 - p, 3);
-    return { transform: [{ translateY: (1 - e) * size * 1.05 }] };
+    return { transform: [{ translateY: (1 - e) * size * POSTER_ROW }] };
   });
   return (
-    <Animated.View style={style}>
-      <PText style={{ fontFamily: Font.poster, fontSize: size, lineHeight: size * 0.98 + size * 0.04, color, letterSpacing: -0.1 }}>{text} </PText>
+    <Animated.View style={[{ marginTop: size * POSTER_SHIFT, height: size * POSTER_LINE }, style]}>
+      {/* 크기는 화면 폭에 맞춰 정해요 — 글자 크기 설정으로 커지면 창 밖으로 잘려서 막아 둬요 */}
+      <PText
+        allowFontScaling={false}
+        style={{ fontFamily: Font.poster, fontSize: size, lineHeight: size * POSTER_LINE, color, letterSpacing: -0.1, includeFontPadding: false }}>
+        {text}{' '}
+      </PText>
     </Animated.View>
   );
 }

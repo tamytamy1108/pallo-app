@@ -14,7 +14,7 @@ import { Icon } from '../icons';
 import { clubContent } from '../model';
 import { Peek } from './club-parts';
 
-/** 사진첩 탭 (3칸 격자 · 누르면 크게). 가입 전엔 6장만 흐리게 (프로토타입 .lg-album · lgAlbumView) */
+/** 사진첩 탭 (3칸 격자 · 누르면 크게). 가입 안 한 사람만 6장 흐리게 (inC = 잠금 없이 보기 · model clubOpen, 프로토타입 .lg-album · lgAlbumView) */
 export function ClubAlbum({ c, inC }: { c: Club; inC: boolean }) {
   const [w, setW] = useState(0);
   const [view, setView] = useState<number | null>(null);
