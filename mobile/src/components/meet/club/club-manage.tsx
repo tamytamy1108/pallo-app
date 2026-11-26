@@ -1,17 +1,22 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { openProfileFromSheet } from '@/components/common/profile-tap';
 import { SheetButton, SheetButtons, SheetDesc, SheetNote, SheetOptions, type SheetOption } from '@/components/common/sheet-parts';
+import { Checkbox } from '@/components/ui/field';
 import { GrowInput } from '@/components/ui/grow-input';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { showToast } from '@/components/ui/toast';
 import { Colors } from '@/constants/theme';
+import { apiConfig } from '@/api/config';
+import { useMe } from '@/state/me';
 import { Font } from '@/constants/fonts';
 import type { Club } from '@/data/meet';
 
-import { closeMyClub, setCohosts } from '../meet-store';
-import type { Member } from '../model';
+import { acceptHandover, askHandover, cancelHandover, closeMyClub, finishHandover, setCame, setChatNote, setCohosts, useMeetStore } from '../meet-store';
+import { postToBoard } from './club-board';
+import type { Member, Session } from '../model';
 
 /**
  * 동아리 '관리' 시트 (docs/pages/10-roles.md 5장 · 관리 항목 자세히).
@@ -22,11 +27,15 @@ import type { Member } from '../model';
  */
 export type ManageRole = 'host' | 'co';
 
-type Stage = { k: 'menu' } | { k: 'members' } | { k: 'cohost' } | { k: 'meet' } | { k: 'notice' } | { k: 'handover' } | { k: 'close' };
+type Stage = { k: 'menu' } | { k: 'members' } | { k: 'cohost' } | { k: 'meet' } | { k: 'notice' } | { k: 'handover' } | { k: 'close' } | { k: 'check' } | { k: 'checkOne'; q: Session };
 
 const opt = (key: string, label: string, sub?: string, bad?: boolean): SheetOption => ({ key, label, sub, bad });
 
-export function ClubManage({ c, role, open, onClose, members, staff, onNewSession }: { c: Club; role: ManageRole; open: boolean; onClose: () => void; members: Member[]; staff: string[]; /** 정기 모임 일정 → 일정 만들기 시트 */ onNewSession: () => void }) {
+export function ClubManage({ c, role, open, onClose, members, staff, onNewSession, past }: { c: Club; role: ManageRole; open: boolean; onClose: () => void; members: Member[]; staff: string[]; /** 정기 모임 일정 → 일정 만들기 시트 */ onNewSession: () => void; /** 지난 모임 (참석 확인) */ past: Session[] }) {
+  const came = useMeetStore((s) => s.came);
+  const ho = useMeetStore((s) => s.handover[c.id]);
+  const myName = useMe().name;
+  const [picked, setPicked] = useState<string[]>([]);
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   const [wasOpen, setWasOpen] = useState(open);
   const [pick, setPick] = useState<string | null>(null);
@@ -94,10 +103,63 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
     return (
       <Sheet open={open} onClose={onClose} title="공지 · 정기 모임 · 참석 확인" label="모임 운영" scrollKey="meet">
         <SheetOptions
-          items={[opt('notice', '공지 쓰기', '게시판 공지 + 채팅방 위 고정 · 멤버 모두에게 알림'), opt('when', '정기 모임 일정 만들기', '날짜 · 시간 · 주제 · 인원 · 장소 · 멤버 모두에게 알림'), opt('check', '참석 확인', '지난 회차에 누가 왔는지 · 호스트 점수 ★에 쓰여요')]}
-          onPick={(k) => (k === 'notice' ? go({ k: 'notice' }) : k === 'when' ? onNewSession() : showToast('참석 확인 화면은 다음에 붙여요'))}
+          items={[opt('notice', '공지 쓰기', '게시판 공지 + 채팅방 위 고정 · 멤버 모두에게 알림'), opt('when', '정기 모임 일정 만들기', '날짜 · 시간 · 주제 · 인원 · 장소 · 멤버 모두에게 알림'), opt('check', '참석 확인', '지난 모임에 누가 왔는지 체크해요 · 호스트 소개의 이번 달 참석에 쓰여요')]}
+          onPick={(k) => (k === 'notice' ? go({ k: 'notice' }) : k === 'when' ? onNewSession() : go({ k: 'check' }))}
         />
         {back()}
+      </Sheet>
+    );
+  }
+
+  if (stage.k === 'check') {
+    return (
+      <Sheet open={open} onClose={onClose} title="참석 확인" label="참석 확인 · 모임 고르기" scrollKey="check">
+        <SheetDesc>지난 모임을 고르고 온 사람을 체크해요. 호스트 소개의 &apos;이번 달 참석&apos;에 쓰여요.</SheetDesc>
+        {past.length ? (
+          <SheetOptions
+            items={past.map((q) => opt(q.id, `${q.label} · ${q.th}`, came[q.id] ? `확인함 · ${came[q.id].length}명 왔어요` : '아직 확인 안 했어요'))}
+            onPick={(id) => {
+              const q = past.find((x) => x.id === id);
+              if (!q) return;
+              setPicked(came[q.id] ?? []);
+              setStage({ k: 'checkOne', q });
+            }}
+          />
+        ) : (
+          <SheetNote>아직 지난 모임이 없어요. 모임이 끝나면 여기서 체크해요.</SheetNote>
+        )}
+        {back({ k: 'meet' })}
+      </Sheet>
+    );
+  }
+
+  if (stage.k === 'checkOne') {
+    const q = stage.q;
+    return (
+      <Sheet open={open} onClose={onClose} title={`${q.label} · 누가 왔나요?`} label="참석 확인 · 온 사람 체크" scrollKey="checkOne">
+        <SheetDesc>{q.th} · 온 사람을 눌러 체크해요. 체크한 사람은 프로필의 &apos;함께한 모임&apos;에도 남아요.</SheetDesc>
+        <View style={styles.checks}>
+          {members.map((m) => (
+            <Checkbox
+              key={m.n}
+              checked={picked.includes(m.n)}
+              onChange={(on) => setPicked((L) => (on ? [...L, m.n] : L.filter((x) => x !== m.n)))}
+              label={m.me ? `${m.n} (나)` : m.n}
+              sub={isHost(m) ? '호스트' : co.includes(m.n) ? '코호스트' : m.b}
+            />
+          ))}
+        </View>
+        <SheetButton
+          label={`저장 · ${picked.length}명 왔어요`}
+          tone="purple"
+          size="inline"
+          onPress={() => {
+            setCame(q.id, picked);
+            setStage({ k: 'check' });
+            showToast(`참석 확인을 저장했어요 · ${picked.length}명`);
+          }}
+        />
+        {back({ k: 'check' })}
       </Sheet>
     );
   }
@@ -106,16 +168,20 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
     return (
       <Sheet open={open} onClose={onClose} title="공지 쓰기" label="공지 쓰기" scrollKey="notice">
         <GrowInput value={note} onChangeText={setNote} placeholder="멤버들에게 알릴 내용을 적어요" placeholderTextColor="#9B94A6" maxLength={300} style={styles.input} accessibilityLabel="공지 내용" />
-        <SheetOptions radio items={[opt('pin', '채팅방 위에 고정', pin ? '켜짐' : '꺼짐')]} selected={pin ? 'pin' : null} onPick={() => setPin((p) => !p)} />
+        <SheetOptions radio items={[opt('pin', '필독 · 채팅방 위에 고정', pin ? '켜짐 · 게시판 맨 위 필독 + 채팅방 위 공지' : '꺼짐 · 게시판 공지로만')]} selected={pin ? 'pin' : null} onPick={() => setPin((p) => !p)} />
         <SheetButton
           label="올리기"
           tone="purple"
           size="inline"
           disabled={!note.trim()}
           onPress={() => {
+            const t = note.trim();
+            // 게시판에 공지로 올려요 (고정이면 필독 + 채팅방 위 공지도 바꿔요)
+            postToBoard(c, { id: c.id + 'n' + Date.now(), k: 'note', w: myName, mine: true, pin: pin || undefined, ti: t.split('\n')[0].slice(0, 40), bd: t, t: pin ? '고정' : '방금', lk: 0, cm: [] });
+            if (pin) setChatNote(c.id, t);
             setNote('');
             go({ k: 'menu' });
-            showToast('공지를 올렸어요 · 멤버 모두에게 알림을 보냈어요');
+            showToast(pin ? '필독 공지를 올렸어요 · 채팅방 위에도 고정 · 멤버 모두에게 알렸어요' : '공지를 올렸어요 · 멤버 모두에게 알림을 보냈어요');
           }}
         />
         {back({ k: 'meet' })}
@@ -124,9 +190,58 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
   }
 
   if (stage.k === 'handover') {
+    // 진행 중이면: 지금 단계 + (가짜 서버일 때) 다음 단계 미리 해 보기 · 요청 취소
+    if (ho) {
+      return (
+        <Sheet open={open} onClose={onClose} title="호스트 넘기기" label="호스트 넘기기 · 진행 중" scrollKey="handover">
+          <SheetDesc>
+            {ho.to}님에게 호스트를 넘기는 중이에요. {ho.stage === 'ask' ? `${ho.to}님이 수락하면 관리자 승인으로 넘어가요.` : '관리자가 승인하면 호스트가 넘어가고, 나는 코호스트가 돼요.'}
+          </SheetDesc>
+          <SheetOptions
+            items={[
+              opt('s1', '1. 넘기기 요청', '보냈어요'),
+              opt('s2', `2. ${ho.to}님 수락`, ho.stage === 'ask' ? '기다리는 중' : '수락했어요'),
+              opt('s3', '3. 관리자 승인', ho.stage === 'admin' ? '기다리는 중' : '수락 뒤에'),
+            ]}
+            onPick={() => {}}
+          />
+          {apiConfig.useMock ? (
+            <>
+              <SheetNote>가짜 서버 시험용 · 다음 단계 미리 보기</SheetNote>
+              <SheetButton
+                label={ho.stage === 'ask' ? `${ho.to}님이 수락해 보기` : '관리자 승인해 보기'}
+                tone="purple"
+                size="inline"
+                onPress={() => {
+                  if (ho.stage === 'ask') {
+                    acceptHandover(c.id);
+                    showToast(`${ho.to}님이 수락했어요 · 관리자 승인을 기다려요`);
+                  } else {
+                    finishHandover(c.id, myName, c.name);
+                    onClose();
+                    showToast(`${ho.to}님이 새 호스트예요 · 나는 코호스트가 됐어요`);
+                  }
+                }}
+              />
+            </>
+          ) : null}
+          <SheetButton
+            label="요청 취소"
+            tone="white"
+            size="inline"
+            onPress={() => {
+              cancelHandover(c.id);
+              showToast('호스트 넘기기를 취소했어요');
+              go({ k: 'menu' });
+            }}
+          />
+          {back()}
+        </Sheet>
+      );
+    }
     return (
       <Sheet open={open} onClose={onClose} title="누구에게 넘길까요?" label="호스트 넘기기" scrollKey="handover">
-        <SheetDesc>받는 사람이 수락해야 넘어가요. 넘기면 나는 코호스트가 돼요.</SheetDesc>
+        <SheetDesc>받는 사람이 수락하고 관리자가 승인하면 넘어가요. 넘기면 나는 코호스트가 돼요.</SheetDesc>
         {others.length ? <SheetOptions radio items={others.map((m) => opt(m.n, m.n, m.b))} selected={pick} onPick={setPick} /> : noOthers}
         <SheetButton
           label="넘기기 요청 보내기"
@@ -134,8 +249,9 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
           size="inline"
           disabled={!pick}
           onPress={() => {
-            onClose();
-            showToast(`${pick}님에게 호스트 요청을 보냈어요 · 수락하면 넘어가요`);
+            if (!pick) return;
+            askHandover(c.id, pick);
+            showToast(`${pick}님에게 호스트 요청을 보냈어요 · 수락하고 관리자가 승인하면 넘어가요`);
           }}
         />
         {back()}
@@ -169,9 +285,9 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
     ? [
         { ...opt('members', '멤버 목록', `멤버 ${members.length}명 · 누르면 프로필`), to: { k: 'members' } },
         { ...opt('cohost', '코호스트 정하기', `${co.length}명${co.length ? ' · ' + co.join(' · ') : ''} · 지점 관리자에게도 알림`), to: { k: 'cohost' } },
-        { ...opt('edit', '소개 · 사진 · 장소 · 시간 고치기', '시간 · 장소가 바뀌면 멤버에게 알림이 가요'), to: { k: 'menu' } },
-        { ...opt('meet', '공지 · 정기 모임 · 참석 확인', '참석 확인은 호스트 점수 ★에 쓰여요'), to: { k: 'meet' } },
-        { ...opt('handover', '호스트 넘기기', '멤버 중 한 명에게 넘겨요', true), to: { k: 'handover' } },
+        { ...opt('edit', '고치기 · 소개 · 호스트 소개 · 사진 · 시간 · 장소', '시간 · 요일 · 지역이 바뀌면 멤버에게 알림이 가요'), to: { k: 'menu' } },
+        { ...opt('meet', '공지 · 정기 모임 · 참석 확인', '일정 만들기 · 지난 모임에 누가 왔는지 체크'), to: { k: 'meet' } },
+        { ...opt('handover', '호스트 넘기기', ho ? `${ho.to}님에게 넘기는 중 · ${ho.stage === 'ask' ? '수락 기다리는 중' : '관리자 승인 기다리는 중'}` : '멤버가 수락하고 관리자가 승인하면 넘어가요', true), to: { k: 'handover' } },
         { ...opt('close', '동아리 닫기', '모든 멤버에게 알림이 가요', true), to: { k: 'close' } },
       ]
     : [
@@ -183,7 +299,12 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
         items={menu}
         onPick={(k) => {
           const row = menu.find((r) => r.key === k);
-          if (k === 'edit') showToast('고치기는 동아리 만들기 화면을 채운 채로 열어요 · 다음에 붙여요');
+          if (k === 'edit') {
+            // 내가 만든 동아리: 만들기 화면을 내 값으로 채워 열어요. 예시 동아리(개발용 호스트로 보기)는 고칠 데이터가 없어요
+            if (!c.mine) return showToast('예시 동아리는 고칠 수 없어요 · 내가 만든 동아리에서 해 보세요');
+            onClose();
+            runAfterSheetClose(() => router.push({ pathname: '/club/new', params: { edit: c.id } }));
+          }
           else if (row) go(row.to);
         }}
       />
@@ -194,6 +315,7 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
 }
 
 const styles = StyleSheet.create({
+  checks: { gap: 12, paddingVertical: 4 },
   flex: { flex: 1 },
   input: { minHeight: 96, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Font.body700, fontSize: 14, lineHeight: 21, color: Colors.ink },
 });

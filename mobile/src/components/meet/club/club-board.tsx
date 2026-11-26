@@ -7,7 +7,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { ProfileTap } from '@/components/common/profile-tap';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { FieldLabel, keepAll, SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-parts';
-import { TextField } from '@/components/ui/field';
+import { Checkbox, TextField } from '@/components/ui/field';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -19,7 +19,7 @@ import { HeartPop } from '@/components/ui/heart-pop';
 
 import { Icon } from '../icons';
 import { CrownFace } from '../member-face';
-import { setBoard, toggleIn, useMeetStore, type BoardPost } from '../meet-store';
+import { getMeetStore, setBoard, toggleIn, useMeetStore, type BoardPost } from '../meet-store';
 import { clubContent, clubHost } from '../model';
 import { chipStyles, Peek } from './club-parts';
 
@@ -34,6 +34,8 @@ const FILTERS: [Filter, string][] = [
 
 /** 동아리 게시판 처음 글 (필독 공지 2개 + 예시 글, 프로토타입 lgClubBoard) */
 function seedBoard(c: Club): BoardPost[] {
+  // 내가 만든 동아리는 빈 게시판에서 시작해요 (필독 · 공지는 호스트가 써요)
+  if (c.mine) return [];
   const { posts, name } = clubContent(c);
   const h = hashId(c.id);
   return [
@@ -41,6 +43,15 @@ function seedBoard(c: Club): BoardPost[] {
     { id: c.id + 'n2', k: 'note', w: name('H'), pin: true, ti: '가입 인사 양식', bd: '이름(닉네임) · 공부하는 언어 · 요즘 말해 보고 싶은 주제 한 가지', t: '고정', lk: 0, cm: [] },
     ...posts.map(([k, w, ti, bd, t, lk, cm], i): BoardPost => ({ id: c.id + 'b' + i, k, w: name(w), ti, bd, t, lk: lk + (h % 4), cm: cm.map(([cw, ct]): [string, string] => [name(cw), ct]) })),
   ];
+}
+
+/**
+ * 게시판에 글 올리기 (관리 › 공지 쓰기도 써요). pin 이면 '필독'으로 맨 위에 고정, 아니면 필독 아래 맨 앞.
+ */
+export function postToBoard(c: Club, q: BoardPost) {
+  const all = getMeetStore().board[c.id] ?? seedBoard(c);
+  const pins = all.filter((x) => x.pin).length;
+  setBoard(c.id, q.pin ? [q, ...all] : [...all.slice(0, pins), q, ...all.slice(pins)]);
 }
 
 export function useBoard(c: Club, inC: boolean, myName: string) {
@@ -62,15 +73,38 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
   const L = all.filter((q) => f === 'all' || q.k === f);
   const host = clubHost(c);
   const roleOf = (w: string) => (w === host ? '호스트' : staff.includes(w) ? '코호스트' : '');
+  // 호스트 · 코호스트: 필독 고정 · 풀기
+  const canPin = host === myName || staff.includes(myName) || !!c.mine;
+  const [openPin, setOpenPin] = useState<string | null>(null);
+  const setPin = (q: BoardPost, pin: boolean) => {
+    const rest = all.filter((x) => x.id !== q.id);
+    const pins = rest.filter((x) => x.pin).length;
+    const next = { ...q, pin, t: pin ? '고정' : q.t === '고정' ? '방금' : q.t };
+    setBoard(c.id, pin ? [next, ...rest] : [...rest.slice(0, pins), next, ...rest.slice(pins)]);
+    showToast(pin ? '필독으로 맨 위에 고정했어요' : '필독 고정을 풀었어요');
+  };
 
   const post = (q: BoardPost, i: number) => {
     if (q.pin)
       return (
         <View key={q.id} style={[styles.bp, styles.pin, i > 0 && styles.line]}>
-          <PText style={styles.pinT}>
-            <PText style={styles.pk}>필독 </PText>
-            {q.ti}
-          </PText>
+          {/* 필독: 누르면 내용이 펼쳐져요 */}
+          <Pressable onPress={() => setOpenPin(openPin === q.id ? null : q.id)} accessibilityRole="button" accessibilityState={{ expanded: openPin === q.id }}>
+            <PText style={styles.pinT}>
+              <PText style={styles.pk}>필독 </PText>
+              {q.ti}
+            </PText>
+          </Pressable>
+          {openPin === q.id ? (
+            <>
+              <PText style={[styles.bd, keepAll]}>{q.bd}</PText>
+              {inC && canPin ? (
+                <Pressable onPress={() => setPin(q, false)} accessibilityRole="button" hitSlop={6} style={{ alignSelf: 'flex-start', marginTop: 6 }}>
+                  <PText style={styles.ftT}>필독 고정 풀기</PText>
+                </Pressable>
+              ) : null}
+            </>
+          ) : null}
         </View>
       );
     const on = !!liked[q.id];
@@ -109,6 +143,12 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
             <Icon name="cmt" size={17} color={Colors.inkSub} />
             <PText style={styles.ftT}>{q.cm.length || '댓글'}</PText>
           </Pressable>
+          {inC && canPin && q.k === 'note' ? (
+            <Pressable onPress={() => setPin(q, true)} accessibilityRole="button" style={styles.ftB} hitSlop={6}>
+              <Icon name="tack" size={15} color={Colors.inkSub} strokeWidth={2.4} />
+              <PText style={styles.ftT}>필독으로 고정</PText>
+            </Pressable>
+          ) : null}
           {q.mine ? (
             <>
               <View style={{ flex: 1 }} />
@@ -147,7 +187,7 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
             <Icon name="plus" size={16} strokeWidth={2.8} />
             <PText style={styles.writeT}>글쓰기</PText>
           </Pressable>
-          <View style={{ marginTop: 14 }}>{L.length ? L.map(post) : <PText style={styles.empty}>아직 글이 없어요.</PText>}</View>
+          <View style={{ marginTop: 14 }}>{L.length ? L.map(post) : <PText style={styles.empty}>{canPin ? '아직 글이 없어요. 글쓰기 › 공지로 첫 필독(모임 안내 · 가입 인사 양식)을 올려 보세요.' : '아직 글이 없어요.'}</PText>}</View>
         </>
       ) : (
         <Peek icon="shield" title={`글 ${Math.max(0, L.length - 2)}개 더 있어요`} desc="가입하면 공지 · 모임 후기 · 가입 인사를 모두 보고, 좋아요 · 댓글도 남길 수 있어요.">
@@ -159,12 +199,13 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
         onClose={() => setWrite(false)}
         c={c}
         host={host === myName || staff.includes(myName)}
-        onPost={(k, ti, bd) => {
+        onPost={(k, ti, bd, pin) => {
           const pins = all.filter((x) => x.pin).length;
-          setBoard(c.id, [...all.slice(0, pins), { id: c.id + 'u' + Date.now(), k, w: myName, mine: true, ti, bd, t: '방금', lk: 0, cm: [] }, ...all.slice(pins)]);
+          const q: BoardPost = { id: c.id + 'u' + Date.now(), k, w: myName, mine: true, pin: pin || undefined, ti, bd, t: pin ? '고정' : '방금', lk: 0, cm: [] };
+          setBoard(c.id, pin ? [q, ...all] : [...all.slice(0, pins), q, ...all.slice(pins)]);
           setWrite(false);
           setF('all');
-          showToast('게시판에 올렸어요');
+          showToast(pin ? '필독으로 올렸어요 · 게시판 맨 위에 고정돼요' : '게시판에 올렸어요');
         }}
       />
       <CommentsSheet
@@ -185,9 +226,11 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
 }
 
 /** 게시판 글쓰기 (호스트 · 코호스트는 공지도) */
-function BoardWrite({ open, onClose, c, host, onPost }: { open: boolean; onClose: () => void; c: Club; host: boolean; onPost: (k: BoardPost['k'], ti: string, bd: string) => void }) {
+function BoardWrite({ open, onClose, c, host, onPost }: { open: boolean; onClose: () => void; c: Club; host: boolean; onPost: (k: BoardPost['k'], ti: string, bd: string, pin: boolean) => void }) {
   const kinds: string[] = [...(host ? ['공지'] : []), '모임 후기', '가입 인사'];
-  const [k, setK] = useState<string>('모임 후기');
+  const [k, setK] = useState<string>(host ? '공지' : '모임 후기');
+  // 공지는 '필독'으로 맨 위에 고정할 수 있어요 (호스트 · 코호스트)
+  const [pin, setPin] = useState(true);
   const [ti, setTi] = useState('');
   const [bd, setBd] = useState('');
   return (
@@ -206,7 +249,7 @@ function BoardWrite({ open, onClose, c, host, onPost }: { open: boolean; onClose
           onPress={() => {
             if (!ti.trim()) return showToast('제목을 적어 주세요');
             if (!bd.trim()) return showToast('내용을 적어 주세요');
-            onPost(k === '공지' ? 'note' : k === '가입 인사' ? 'hi' : 'rev', ti.trim(), bd.trim());
+            onPost(k === '공지' ? 'note' : k === '가입 인사' ? 'hi' : 'rev', ti.trim(), bd.trim(), k === '공지' && pin);
           }}
         />
       }>
@@ -215,7 +258,8 @@ function BoardWrite({ open, onClose, c, host, onPost }: { open: boolean; onClose
         <FieldLabel>어떤 글인가요?</FieldLabel>
         <SheetPills options={kinds} value={k} onChange={setK} />
       </View>
-      <TextField label="제목" value={ti} onChangeText={setTi} placeholder="예) 토요일 러닝 후기" />
+      {k === '공지' ? <Checkbox checked={pin} onChange={setPin} label="필독으로 맨 위에 고정" sub="처음 온 멤버가 먼저 읽어야 할 글 (모임 안내 · 가입 인사 양식 등)" size={20} /> : null}
+      <TextField label="제목" value={ti} onChangeText={setTi} placeholder={k === '공지' ? '예) 처음 오셨나요? 모임 안내' : '예) 토요일 러닝 후기'} />
       <GrowInput value={bd} onChangeText={setBd} multiline placeholder="예) 오늘은 5km를 뛰고 카페에서 영어로 20분 이야기했어요!" placeholderTextColor="#8C8597" style={styles.ta} accessibilityLabel="글 내용" />
     </Sheet>
   );

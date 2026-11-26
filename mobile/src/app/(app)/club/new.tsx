@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState, type ReactNode } from 'react';
 import { View, type ViewInstance } from 'react-native';
 
@@ -11,7 +11,7 @@ import { HostRulesBox } from '@/components/common/host-rules-box';
 import { clubRuleLines } from '@/data/host-rules';
 import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
-import { addMyClub } from '@/components/meet/meet-store';
+import { addMyClub, getMeetStore, updateMyClub } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
 import { CountPicker } from '@/components/ui/count-picker';
 import { useRevealOnFocus } from '@/components/ui/reveal-on-focus';
@@ -44,28 +44,37 @@ const pickLangs = (prev: string[], next: string[]) => {
  * 동아리 만들기 (docs/pages/04-lounge.md '동아리 만들기' — 프로토타입 lgMkClub).
  * 이름 · 소개 · 카테고리 · 언어(여러 개 · 무관) · 지역 · 요일(여러 개) · 시간(몇 시부터 몇 시까지) · 최대 인원(무관 가능) · 가입 조건 · 채팅방 공지 · 포스터 → [승인 요청하기].
  * 올리면 매니저 승인 대기 (목록에 NEW · 가입 버튼은 '승인 대기'). 맞는 API: 63 POST `/clubs` (+ `/uploads/images`)
+ * `?edit=<동아리 id>` 로 열면 관리 › 고치기: 내 동아리 값으로 채워 열고, [고친 내용 저장]. 시간 · 요일 · 지역이 바뀌면 멤버에게 알림 (PATCH `/clubs/:id`).
  */
 export default function NewClub() {
   const me = useMe();
-  const [name, setName] = useState('');
-  const [intro, setIntro] = useState('');
-  const [cat, setCat] = useState<string>(CLUB_CATS[0][1]);
-  const [langs, setLangs] = useState<string[]>(['영어']);
-  const [reg, setReg] = useState<Region | typeof ALL_REGIONS>('서울');
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  // 고치기: 처음 열 때 한 번만 내 동아리 값을 읽어 칸을 채워요
+  const [was] = useState<Club | undefined>(() => (edit ? getMeetStore().myClubs.find((c) => c.id === edit) : undefined));
+  const [name, setName] = useState(was?.name ?? '');
+  const [intro, setIntro] = useState(was?.intro ?? '');
+  const [hostIntro, setHostIntro] = useState(was?.hostIntro ?? '');
+  const [cat, setCat] = useState<string>(() => (was ? (CLUB_CATS.find((c) => c[0] === was.cc) ?? CLUB_CATS[0])[1] : CLUB_CATS[0][1]));
+  const [langs, setLangs] = useState<string[]>(was?.langs ?? (was ? [was.lang] : ['영어']));
+  const [reg, setReg] = useState<Region | typeof ALL_REGIONS>(was?.reg ?? '서울');
   // 모이는 시간: 시작 ~ 끝
-  const [time, setTime] = useState('20:00');
-  const [end, setEnd] = useState(() => defaultEnd('20:00'));
-  const [max, setMax] = useState<number | null>(12);
-  const [days, setDays] = useState<string[]>(['수']);
+  const [time, setTime] = useState(was?.time?.[0] ?? '20:00');
+  const [end, setEnd] = useState(() => was?.time?.[1] ?? defaultEnd('20:00'));
+  const [max, setMax] = useState<number | null>(was ? (was.max === NO_LIMIT ? null : was.max) : 12);
+  const [days, setDays] = useState<string[]>(was ? was.days.map((d) => '일월화수목금토'[d]) : ['수']);
   // 가입 조건: 멤버만 · (내 지점) 멤버만
   const conds = [CLUB_MEMBERS, branchOnly(me.branch)];
-  const [cond, setCond] = useState<string>(CLUB_MEMBERS);
-  const [memo, setMemo] = useState('');
-  // 운영 규칙 확인 (경고 · 닫기 규칙을 알고 만들어요)
-  const [rules, setRules] = useState(false);
-  const [pics, setPics] = useState<string[]>([]);
+  const [cond, setCond] = useState<string>(was?.cond ?? CLUB_MEMBERS);
+  const [memo, setMemo] = useState(was?.memo ?? '');
+  // 모이는 장소 (정기 모임 상세 · 동아리 홈에 보여요)
+  const [place, setPlace] = useState(was?.place ?? '');
+  const [addr, setAddr] = useState(was?.addr ?? '');
+  // 운영 규칙 확인 (경고 · 닫기 규칙을 알고 만들어요) — 고치기는 이미 확인했어요
+  const [rules, setRules] = useState(!!was);
+  const [pics, setPics] = useState<string[]>(was?.posters ?? []);
   // 카드: 포스터 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택. 카드가 있으면 대표, 사진은 그 뒤에
-  const [card, setCard] = useState<MadeCard | null>(null);
+  const [card, setCard] = useState<MadeCard | null>(was?.card ?? null);
+  const hostBox = useRef<ViewInstance>(null);
   // 글 칸을 누르면 키보드 위로 보이게 (ui/reveal-on-focus)
   const reveal = useRevealOnFocus();
   const nameBox = useRef<ViewInstance>(null);
@@ -93,6 +102,9 @@ export default function NewClub() {
     wait: true,
     mine: true,
     intro: intro.trim() || undefined,
+    hostIntro: hostIntro.trim() || undefined,
+    place: place.trim() || undefined,
+    addr: addr.trim() || undefined,
     memo: memo.trim() || undefined,
     posters: pics.length ? pics : undefined,
     card: fillWords(usedCard(card, pics.length > 0), CARD_EX),
@@ -100,9 +112,22 @@ export default function NewClub() {
 
   const ask = () => {
     if (!name.trim()) return showToast('동아리 이름을 적어 주세요');
+    if (!intro.trim()) return showToast('동아리 소개를 적어 주세요');
+    if (!hostIntro.trim()) return showToast('호스트 소개를 적어 주세요');
     if (!langs.length) return showToast('언어를 골라 주세요');
     if (!days.length) return showToast('모이는 요일을 골라 주세요');
+    if (!place.trim()) return showToast('모이는 장소를 적어 주세요');
     if (!rules) return showToast('운영 규칙을 확인해 주세요');
+    if (was) {
+      // 고치기: 그대로 둘 것(아이디 · 승인 상태 · 멤버 수 · 만든 때)은 빼고 덮어요
+      const d = draft();
+      const moved = d.when !== was.when || d.reg !== was.reg || d.place !== was.place || d.addr !== was.addr;
+      updateMyClub(was.id, { ...d, id: was.id, wait: was.wait, mine: true, n: was.n, at: was.at });
+      sfx('save');
+      router.back();
+      showToast(moved ? '고쳤어요 · 바뀐 시간 · 장소를 멤버에게 알렸어요' : '고쳤어요');
+      return;
+    }
     addMyClub(draft());
     sfx('save');
     router.back();
@@ -110,20 +135,31 @@ export default function NewClub() {
   };
 
   return (
-    <SheetPage title="동아리 만들기" label="동아리 만들기" footer={<SheetButton label="승인 요청하기" size="foot" onPress={ask} />}>
-      <SheetDesc>관리자가 승인하면 지도에 보이고 가입을 받을 수 있어요. 승인되면 나는 이 동아리의 호스트가 돼요.</SheetDesc>
+    <SheetPage title={was ? '동아리 고치기' : '동아리 만들기'} label={was ? '동아리 고치기' : '동아리 만들기'} footer={<SheetButton label={was ? '고친 내용 저장' : '승인 요청하기'} size="foot" onPress={ask} />}>
+      <SheetDesc>{was ? '소개 · 사진 · 시간 · 장소를 고쳐요. 시간 · 요일 · 장소가 바뀌면 멤버 모두에게 알림이 가요.' : '관리자가 승인하면 지도에 보이고 가입을 받을 수 있어요. 승인되면 나는 이 동아리의 호스트가 돼요.'}</SheetDesc>
       <View ref={nameBox} collapsable={false}>
         <TextField label="동아리 이름 *" value={name} onChangeText={setName} onFocus={() => reveal(nameBox.current)} placeholder="예) 미드 쉐도잉 모임" />
       </View>
       <View ref={introBox} collapsable={false}>
         <TextField
-          label="동아리 소개 · 선택"
+          label="동아리 소개 *"
           multiline
           value={intro}
           onChangeText={setIntro}
           onFocus={() => reveal(introBox.current)}
           maxLength={500}
           placeholder="예) 매주 미드 한 장면을 같이 따라 말해요. 처음이어도 괜찮아요."
+        />
+      </View>
+      <View ref={hostBox} collapsable={false}>
+        <TextField
+          label="호스트 소개 *"
+          multiline
+          value={hostIntro}
+          onChangeText={setHostIntro}
+          onFocus={() => reveal(hostBox.current)}
+          maxLength={200}
+          placeholder="예) 미드로 일본어를 3년째 공부 중이에요. 편하게 와서 편하게 말해요!"
         />
       </View>
       <Field label="어떤 동아리인가요?" req>
@@ -141,6 +177,8 @@ export default function NewClub() {
       <Field label="몇 시부터 몇 시까지 모여요?" req>
         <TimeRange start={time} end={end} onChange={(s, e) => { setTime(s); setEnd(e); }} />
       </Field>
+      <TextField label="모이는 장소 *" value={place} onChangeText={setPlace} placeholder="예) 하남점 라운지 · 석촌호수 동호 입구 · 온라인(줌)" maxLength={40} />
+      <TextField label="자세한 주소 · 선택" value={addr} onChangeText={setAddr} placeholder="예) 서울 송파구 잠실동 · 3층 창가 긴 테이블" maxLength={80} />
       <Field label="최대 인원 · 나 포함" req>
         <CountPicker value={max} presets={[6, 8, 10, 12]} min={MAX_MIN} max={MAX_MAX} typable anyLabel="무관" onChange={setMax} />
       </Field>
@@ -177,7 +215,7 @@ export default function NewClub() {
           }}
         />
       </Field>
-      <HostRulesBox title="동아리 운영 규칙" lines={clubRuleLines()} checked={rules} onChange={setRules} />
+      {was ? null : <HostRulesBox title="동아리 운영 규칙" lines={clubRuleLines()} checked={rules} onChange={setRules} />}
     </SheetPage>
   );
 }

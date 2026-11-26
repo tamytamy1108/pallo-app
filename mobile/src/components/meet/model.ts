@@ -62,9 +62,10 @@ const DEV_RUN_CLUB = 'cl4';
 export function useMyClubRoles(myName: string) {
   const mine = useMeetStore((s) => s.myClubs);
   const cohost = useMeetStore((s) => s.cohost);
-  const real = mine.filter((c) => clubLive(c));
+  // 내가 만든 동아리라도 호스트를 넘겼으면 호스트가 아니에요 (host 칸이 나일 때만)
+  const real = mine.filter((c) => clubLive(c) && clubHost(c) === myName);
   const all = [...mine, ...CLUBS];
-  const realCo = all.filter((c) => clubLive(c) && !c.mine && (cohost[c.id] ?? []).includes(myName));
+  const realCo = all.filter((c) => clubLive(c) && !real.includes(c) && (cohost[c.id] ?? []).includes(myName));
   // 개발용: 마이 '개발 · 사람'에서 모임 역할을 호스트 · 코호스트로 고르면, 예시 동아리 하나를 운영 중인 것으로 봐요 (뱃지 · 내 모임 확인용)
   const devClub = __DEV__ && (devClubRole === 'host' || devClubRole === 'co') ? CLUBS.find((c) => c.id === DEV_RUN_CLUB) : undefined;
   const hostOf = devClub && devClubRole === 'host' ? [...real, devClub] : real;
@@ -107,7 +108,9 @@ export const clubLangLine = (c: Club) => (c.lang === '무관' || c.lang === '언
 export const clubCapLine = (c: Club) => (c.max > 0 ? `최대 ${c.max}명` : '인원 무관');
 export const clubDesc = (c: Club) => c.intro || c.memo || DESC[c.id] || `${c.when}에 모여 ${clubLangLine(c)}. 처음 와도 편하게 섞일 수 있어요.`;
 export const clubHost = (c: Club) => c.host.split(' ')[0];
-export const clubSpot = (c: Club): [string, string] => CLUB_SPOT[c.id] ?? [c.when.split(' · ')[1] || `${c.br} 근처`, '자세한 주소는 호스트가 정하면 보여요'];
+/** 모이는 장소 [이름, 자세한 주소] — 호스트가 적은 장소가 먼저 (동아리 만들기 · 고치기) */
+export const clubSpot = (c: Club): [string, string] =>
+  c.place ? [c.place, c.addr || '자세한 주소는 호스트에게 물어봐 주세요'] : CLUB_SPOT[c.id] ?? [c.when.split(' · ')[1] || `${c.br} 근처`, '자세한 주소는 호스트가 정하면 보여요'];
 export const dayNames = (c: Club) => c.days.map((d) => WEEK[d]).join('·');
 
 export type Member = { n: string; c: string; b: string; t: string; hi: string; me?: boolean };
@@ -189,7 +192,7 @@ export function clubStaff(c: Club, cur: number, me: MeArg) {
 }
 
 /** made: 호스트 · 코호스트가 만든 일정 (장소 · 메모 · 끝 시간이 있을 수 있어요) */
-export type Session = { id: string; k: number; label: string; cap: number; cur: number; me: boolean; day: number; mon: number; no: number; wd: string; tm: string; th: string; made?: boolean; place?: string; memo?: string; end?: string };
+export type Session = { id: string; k: number; label: string; cap: number; cur: number; me: boolean; day: number; mon: number; no: number; wd: string; tm: string; th: string; made?: boolean; place?: string; memo?: string; end?: string; /** 준비물 (만든 일정) */ bring?: string; /** 지난 모임 (이미 시작했거나 끝남) */ past?: boolean };
 /**
  * 다가오는 정기 모임 (기본 4주 안 4회).
  * - 호스트 · 코호스트가 만든 일정(made)이 있으면 그걸 날짜순으로 보여 줘요.
@@ -203,7 +206,7 @@ export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, spa
       const d = new Date(m.date + 'T00:00');
       const k = Math.round((d.getTime() - t0.getTime()) / 864e5);
       const me = !!att[m.id];
-      return { id: m.id, k, label: `${d.getMonth() + 1}.${d.getDate()}(${WEEK[d.getDay()]}) ${m.time}${m.end ? '~' + m.end : ''}`, cap: m.cap, cur: 1 + (me ? 1 : 0), me, day: d.getDate(), mon: d.getMonth() + 1, no: i + 1, wd: WEEK[d.getDay()], tm: m.time, th: m.title, made: true, place: m.place, memo: m.memo, end: m.end };
+      return { id: m.id, k, label: `${d.getMonth() + 1}.${d.getDate()}(${WEEK[d.getDay()]}) ${m.time}${m.end ? '~' + m.end : ''}`, cap: m.cap, cur: 1 + (me ? 1 : 0), me, day: d.getDate(), mon: d.getMonth() + 1, no: i + 1, wd: WEEK[d.getDay()], tm: m.time, th: m.title, made: true, place: m.place, memo: m.memo, end: m.end, bring: m.bring };
     })
     .filter((q) => q.k >= 0 && q.k < span);
   if (c.mine) return own.slice(0, max);
@@ -225,13 +228,53 @@ export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, spa
   return [...out, ...own].sort((a, b) => a.k - b.k || a.tm.localeCompare(b.tm)).slice(0, max);
 }
 
+/**
+ * 지난 정기 모임 (최근 n회 · 최근 것이 먼저) — 참석 확인 · 또 만나고 싶어요 · 호스트 소개 숫자에 써요.
+ * 내가 만든 동아리는 만든 일정 중 지난 것만, 예시 동아리는 모이는 요일 기준 예시 + 만든 일정 중 지난 것.
+ */
+export function clubPastSessions(c: Club, att: Record<string, boolean>, n = 4, made: ClubSched[] = []): Session[] {
+  const t0 = new Date();
+  t0.setHours(0, 0, 0, 0);
+  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const own: Session[] = made
+    .map((m, i) => {
+      const d = new Date(m.date + 'T00:00');
+      const k = Math.round((d.getTime() - t0.getTime()) / 864e5);
+      const me = !!att[m.id];
+      return { id: m.id, k, label: `${d.getMonth() + 1}.${d.getDate()}(${WEEK[d.getDay()]}) ${m.time}${m.end ? '~' + m.end : ''}`, cap: m.cap, cur: 1 + (me ? 1 : 0), me, day: d.getDate(), mon: d.getMonth() + 1, no: i + 1, wd: WEEK[d.getDay()], tm: m.time, th: m.title, made: true, place: m.place, memo: m.memo, end: m.end, bring: m.bring, past: true };
+    })
+    // 지난 날이거나 오늘 이미 시작한 모임
+    .filter((q) => q.k < 0 || (q.k === 0 && nowMin >= toMin(q.tm)));
+  const out: Session[] = [...own];
+  if (!c.mine) {
+    const h = hashId(c.id);
+    const tm = (c.when.match(/\d{1,2}:\d{2}/) || ['20:00'])[0];
+    let m = 0;
+    for (let k = -1; k > -60 && m < n; k--) {
+      const d = new Date(t0);
+      d.setDate(d.getDate() + k);
+      if (!c.days.includes(d.getDay())) continue;
+      const cap = Math.min(c.max || 8, 8);
+      const id = `${c.id}@${d.getMonth() + 1}-${d.getDate()}`;
+      const me = !!att[id];
+      const th = (SESSION_THEME[c.cc] || SESSION_THEME.study)[(4 - (m % 4)) % 4];
+      out.push({ id, k, label: `${d.getMonth() + 1}.${d.getDate()}(${WEEK[d.getDay()]}) ${tm}`, cap, cur: 3 + ((h + m) % (cap - 3)) + (me ? 1 : 0), me, day: d.getDate(), mon: d.getMonth() + 1, no: 12 + (h % 40) - m, wd: WEEK[d.getDay()], tm, th, past: true });
+      m++;
+    }
+  }
+  return out.sort((a, b) => b.k - a.k || b.tm.localeCompare(a.tm)).slice(0, n);
+}
+
 /** 정기 모임 날짜마다 참석 멤버 (호스트 + 날짜별로 다른 멤버, 내가 참석하면 나 — 프로토타입 lgSessMem) */
 export function sessionMembers(all: Member[], q: Session, me: MeArg, myHi: string) {
   const L = all.filter((m) => !m.me);
   const host = L[0];
   const rest = L.slice(1);
   const out: Member[] = host ? [host] : [];
-  for (let i = 0; out.length < q.cur - (q.me ? 1 : 0) && i < rest.length; i++) out.push(rest[(i + q.k) % rest.length]);
+  // 지난 모임은 k 가 음수라 나머지가 음수가 되지 않게 (+ length) 해요
+  const n = rest.length;
+  for (let i = 0; out.length < q.cur - (q.me ? 1 : 0) && i < n; i++) out.push(rest[(((i + q.k) % n) + n) % n]);
   if (q.me) out.unshift({ n: me.name, c: C.y, b: me.branch, t: '나', hi: myHi, me: true });
   return out;
 }
@@ -250,6 +293,8 @@ export function clubContent(c: Club) {
   const R = CLUB_CONTENT[c.cc] || CLUB_CONTENT.study;
   const posts = R.posts.map(([k, w, ti, bd, t, lk, cm]): ClubPost => [k, w, fill(ti), fill(bd), t, lk, cm.map(([cw, ct]) => [cw, fill(ct)])]);
   const album = R.album.map(([k, cap]): [AlbumArt, string] => [k, fill(cap)]);
+  // 내가 만든 동아리는 예시 글 · 사진 · 채팅을 지어내지 않아요 (호스트 · 멤버가 올린 것만)
+  if (c.mine) return { posts: [] as ClubPost[], album: [] as [AlbumArt, string][], chat: [] as typeof R.chat, name: (k: string) => who[k][0], color: (k: string) => who[k][1], fill };
   return { posts, album, chat: R.chat, name: (k: string) => who[k][0], color: (k: string) => who[k][1], fill };
 }
 

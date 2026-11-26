@@ -49,6 +49,11 @@
 | A31 | GET · DELETE · POST | `/me/club-applications` · `/me/club-applications/:id` · `/:id/resubmit` | **내가 신청한 동아리**: `{ id, club, status: review \| approved \| rejected, reason, sentAt, decidedAt }`. 검토 중이면 취소, 거절이면 지우기 · 다시 신청. 결정되면 알림(`club_approved` · `club_rejected`) | `components/meet/club-apply.tsx` |
 | A32 | GET | `/me/roles` (또는 `/me` 에 추가) | **호스트 · 코호스트 자격**: `{ hostOf: clubId[], cohostOf: clubId[], badge: host \| cohost \| null, history: [{ clubId, role, from, to, why }] }`. 운영 중인 동아리만 셈 — 0개면 badge null. 관리자가 뱃지를 뗄 수 있음(`/admin/members/:id/role`) | `components/meet/model.ts` `useMyClubRoles` · meet-store `hostLog` |
 | A33 | (관리자) POST · DELETE | `/admin/clubs/:id/warnings` · `/admin/clubs/:id` · `/admin/challenges/:id/warnings` · `/admin/challenges/:id` | **활동 없음 · 저조 경고 · 닫기**. 서버가 활동을 세서 관리자 웹에 후보를 보여 주고, 관리자가 경고 알림(`club_warning` · `challenge_warning`, n/최대)을 보내요. 닫으면 `club_closed` 알림 + 호스트 · 코호스트 자격 끝. 아래 '활동 없음 · 저조 규칙' | `data/host-rules.ts` |
+| A34 | POST · DELETE | `/clubs/:id/sessions` · `/club-sessions/:sid` (기존 69에 추가) | **일정 만들기 · 취소** (호스트 · 코호스트) `{ date, time, end, title, cap, place, bring, memo }` → 멤버 모두에게 알림 · 취소하면 참석한 멤버에게 알림 | `components/meet/club/session-new.tsx` |
+| A35 | POST · PUT | `/clubs/:id/host-transfer` · `/host-transfers/:id/accept` · `/admin/host-transfers/:id/approve` | **호스트 넘기기**: 요청 → 받는 사람 수락 → 관리자 승인 → 호스트 변경 · 이전 호스트는 코호스트 | `meet-store` `askHandover` · `finishHandover` |
+| A36 | PUT · POST | `/club-sessions/:sid/attendance` · `/club-sessions/:sid/again` | **참석 확인** (온 사람 id 목록) · **또 만나고 싶어요** (참석한 멤버 한 번). 동아리 응답에 `stats: { sessions, monthAttend, again3m }` | `club-manage.tsx` · `session-sheet.tsx` |
+| A37 | PATCH | `/clubs/:id` | **고치기**: 소개 · 호스트 소개 · 장소 · 주소 · 시간 등. 시간 · 요일 · 장소가 바뀌면 멤버에게 알림 | `app/(app)/club/new.tsx` (`?edit=`) |
+| A38 | (기존 67에 추가) | `/clubs/:id/board` 글에 `pinned` · `PUT /board/:postId/pin` · `/clubs/:id/photos` POST · DELETE | **필독 고정 · 풀기**(호스트 · 코호스트) · 사진첩 올리기 · 내 사진 지우기. 채팅방 위 공지 `PUT /clubs/:id/chat-notice` | `club-board.tsx` · `club-album.tsx` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 

@@ -47,6 +47,9 @@ export function useClubChat(c: Club, joinedOnce: boolean, myName: string) {
  */
 export function ClubChat({ c, inC, joined = inC, myName, staff }: { c: Club; inC: boolean; joined?: boolean; myName: string; staff: string[] }) {
   const M = useClubChat(c, joined, myName);
+  // 채팅방 위 공지: 호스트가 고정한 공지 → 만들 때 적은 공지 → (예시 동아리만) 예시 공지. 내 동아리에 공지가 없으면 줄을 안 보여요
+  const chatNote = useMeetStore((s) => s.chatNote[c.id]);
+  const note = chatNote || c.memo || (c.mine ? '' : NOTE[c.id] || '처음엔 듣기만 해도 괜찮아요. 모임 시간 10분 전에 와 주세요.');
   const [v, setV] = useState('');
   const role = (n?: string, h?: boolean) => (h ? '호스트' : n && staff.includes(n) ? '코호스트' : '');
   const msg = (m: ChatMsg, i: number, peek = false) => {
@@ -97,15 +100,17 @@ export function ClubChat({ c, inC, joined = inC, myName, staff }: { c: Club; inC
   return (
     <View style={{ marginTop: 14 }}>
       <View style={styles.chat}>
+        {note ? (
         <View style={styles.pinned}>
           <View style={{ marginTop: 2 }}>
             <Icon name="tack" size={14} color={Colors.purple} strokeWidth={2.6} />
           </View>
           <PText style={styles.pinT}>
             <PText style={styles.pinB}>공지 </PText>
-            {c.memo || NOTE[c.id] || '처음엔 듣기만 해도 괜찮아요. 모임 시간 10분 전에 와 주세요.'}
+            {note}
           </PText>
         </View>
+        ) : null}
         {M.map((m, i) => msg(m, i))}
       </View>
       <View style={styles.in}>
