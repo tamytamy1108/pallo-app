@@ -445,10 +445,10 @@ function ChangeScreen() {
             </>
           ) : null}
           <PText style={styles.q}>{longRest ? '언제부터 언제까지 쉴까요?' : '언제부터 쉴까요?'}</PText>
-          {/* 고른 기간을 달력 위에 크게 — 끝나는 날을 찾으려고 달력을 넘기지 않아도 돼요 */}
+          {/* 고른 기간을 달력 위에 한 줄로 — 끝나는 날을 찾으려고 달력을 넘기지 않아도 돼요 */}
           {restSt && restEn ? (
             <Box color="#F6F1FF" style={styles.res}>
-              <View style={styles.range}>
+              <View style={[styles.range, longRest && styles.rangeLong]}>
                 <RangeEnd
                   title="시작"
                   day={fmtDay(restSt)}
@@ -561,6 +561,8 @@ function Tag({ icon, label }: { icon: IconName; label: string }) {
 
 /** 쉬는 기간 한쪽 끝 (시작 · 끝). 1달 넘게면 눌러서 달력이 고를 날을 바꿔요 */
 function RangeEnd({ title, day, on, onPress }: { title: string; day: string; on: boolean; onPress?: () => void }) {
+  // 짧게 쉬면 날짜만 — '시작 · 끝' 이름표는 직접 골라야 하는 1달 넘게 쉬기에서만 보여요
+  if (!onPress) return <PText style={styles.rangeD} accessibilityLabel={`${title} ${day}`}>{day}</PText>;
   const body = (
     <View style={[styles.rangeEnd, on && styles.rangeEndOn]}>
       <PText style={styles.rangeT}>{title}</PText>
@@ -611,15 +613,16 @@ const styles = StyleSheet.create({
   rule: { paddingHorizontal: 2, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 20.6, color: Colors.inkSub },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center' },
   note: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  res: { paddingVertical: 12, paddingHorizontal: 14, gap: 3 },
+  res: { paddingVertical: 10, paddingHorizontal: 14, gap: 2 },
   req: { fontFamily: Font.body800, fontSize: 12, color: Colors.rosePink },
-  range: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  rangeArrow: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22, color: Colors.purple },
+  range: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rangeLong: { marginHorizontal: -8 },
+  rangeArrow: { fontFamily: Font.body900, fontSize: 14, lineHeight: 21, color: Colors.purple },
   rangeBtn: { flex: 1 },
-  rangeEnd: { flex: 1, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: 'transparent' },
+  rangeEnd: { flex: 1, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 12, borderWidth: 2, borderColor: 'transparent' },
   rangeEndOn: { borderColor: Colors.purple, backgroundColor: Colors.white },
   rangeT: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
-  rangeD: { fontFamily: Font.body900, fontSize: 17, lineHeight: 24 },
+  rangeD: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   resS: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   sel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 52, paddingHorizontal: 16, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white },
   selPressed: { backgroundColor: '#F6F1E4' },
