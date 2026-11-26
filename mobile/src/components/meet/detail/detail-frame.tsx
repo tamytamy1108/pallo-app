@@ -20,6 +20,7 @@ import { KeepVisibleContext, useShowFocusedOnKeyboard } from '@/components/ui/fo
 import type { MadeCard } from '@/data/poster-colors';
 
 import { Poster, posterFg, posterSlides, type Slide } from '../poster';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /*
  * 상세 화면 공통 틀 (번개 · 동아리 · 이벤트 — 프로토타입 lgDetail · #lgDet · .dtop · .dbd · .lg-dcta).
@@ -66,6 +67,7 @@ const DetailScrollContext = createContext<ScrollToTarget | null>(null);
 export const useDetailScrollTo = (): ScrollToTarget => useContext(DetailScrollContext) ?? (() => {});
 
 export function DetailFrame({ id, club, posters, card, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey, dock }: Props) {
+  const pullRefresh = usePullRefresh();
   const insets = useSafeAreaInsets();
   const kbShown = useKeyboardShown();
   const slides = posterSlides(id, club, posters, card);
@@ -149,6 +151,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
     <View ref={root} collapsable={false} style={styles.root} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Stack.Screen options={SCREEN.push} />
       <ScrollView
+        refreshControl={pullRefresh}
         ref={scroll}
         onScroll={onScroll}
         scrollEventThrottle={16}

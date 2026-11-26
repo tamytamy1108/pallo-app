@@ -18,6 +18,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { NOTICE_TAG, noticeDate, type NoticeDetail } from '@/data/mock';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /**
  * 공지 · 이벤트 · 새 소식 상세. 위 오른쪽 압정으로 내 공지 목록 맨 위에 고정해요 (사람마다 따로).
@@ -74,9 +75,10 @@ function PinButton({ notice }: { notice: NoticeDetail }) {
 }
 
 function Detail({ notice }: { notice: NoticeDetail }) {
+  const pullRefresh = usePullRefresh();
   const paragraphs = notice.content.split(/\n+/).filter((p) => p.trim());
   return (
-    <ScrollView contentContainerStyle={styles.body}>
+    <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
       <PText variant="label" color={Colors.purple}>
         {NOTICE_TAG[notice.type]} · {notice.audience}
       </PText>

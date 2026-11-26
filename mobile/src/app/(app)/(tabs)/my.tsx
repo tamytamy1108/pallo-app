@@ -35,6 +35,7 @@ import { useLearnedStepCount } from '@/state/progress';
 import { useMe } from '@/state/me';
 import { grantReward, resetRewards } from '@/state/rewards';
 import { useTabReselect } from '@/lib/tab-reselect';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 // 마이 B 화면(설정 · 고객센터 · 이용권)은 아직 없을 수 있어서 주소 타입을 넓혀 둬요
 const go = (href: string) => () => {
@@ -54,6 +55,7 @@ const MY_PEEK = 300;
 const num = (v: number | null | undefined, unit: string) => (v == null ? '–' : `${v.toLocaleString()}${unit}`);
 
 export default function MyScreen() {
+  const pullRefresh = usePullRefresh();
   const scroll = useRef<ScrollViewInstance>(null);
   useTabReselect('my', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const { width } = useWindowDimensions();
@@ -105,7 +107,7 @@ export default function MyScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView ref={scroll} contentContainerStyle={styles.body} onScroll={() => checkScrollLock('my')} scrollEventThrottle={64}>
+      <ScrollView refreshControl={pullRefresh} ref={scroll} contentContainerStyle={styles.body} onScroll={() => checkScrollLock('my')} scrollEventThrottle={64}>
         <Appear kind="rise" style={styles.head}>
           {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
           <PText variant="headline" accessibilityRole="header" accessibilityLabel="마이">

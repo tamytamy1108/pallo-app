@@ -24,6 +24,7 @@ import { STAGES, STAGE_COLOR, STAGE_KO, STUDY_STEPS, findLevel, listenItemsOf, p
 import { sfx } from '@/lib/feedback';
 import { isDone, stepKey, useDoneCount, useIsDone, useSavedPos } from '@/state/progress';
 import { ChapterGate } from '@/components/common/member-lock';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 const NOTE: Record<StageKey, string> = {
   pre: '스터디 전에 해요. 수업에서 바로 말할 수 있게 표현과 내 답을 미리 준비해요.',
@@ -63,6 +64,7 @@ function UnitScreen() {
 }
 
 function UnitBody({ L, ls }: { L: StudyLevel; ls: Lesson }) {
+  const pullRefresh = usePullRefresh();
   useDoneCount(`${L.lv}:${ls.no}:`);
   const steps = STUDY_STEPS[L.kind];
   const doneIn = (k: StageKey) => steps[k].filter((s) => isDone(stepKey(L.lv, ls.no, s.id))).length;
@@ -80,7 +82,7 @@ function UnitBody({ L, ls }: { L: StudyLevel; ls: Lesson }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Stack.Screen options={SCREEN.push} />
       <TopBar title={`LV.${L.lv} ${L.series}`} onList={() => setSheet(true)} />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
         <UnitHero L={L} ls={ls} />
         <UnitSummary L={L} ls={ls} />
         <ListenCard sub={`이 ${unit} 문장 ${items.length}개 · 영어→뜻 · 따라 말하기`} onPress={() => router.push(`/listening?unit=${unitId(L.lv, ls.no)}` as Href)} />

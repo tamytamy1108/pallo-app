@@ -40,11 +40,13 @@ import { LANGS, SLOTS } from '@/data/home';
 import { shouldAskInvite } from '@/state/invite-prompt';
 import { getMe, isProLike, useMe } from '@/state/me';
 import { useTabReselect } from '@/lib/tab-reselect';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
 
 /** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드 → 스터디 맵 → 라운지 미리보기. */
 export default function HomeScreen() {
+  const pullRefresh = usePullRefresh();
   // 개발용 주소 값 (?now= · ?season= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
   const dev = useLocalSearchParams<{ now?: string; season?: string; link?: string; name?: string; admin?: string; trial?: string; follow?: string; attend?: string; slot?: string; lang?: string }>();
   useState(() => applyDevParams(dev));
@@ -160,6 +162,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
+        refreshControl={pullRefresh}
         ref={scroll}
         contentContainerStyle={styles.body}
         onLayout={(e) => (viewH.current = e.nativeEvent.layout.height)}

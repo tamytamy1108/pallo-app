@@ -22,6 +22,7 @@ import { RANK_COLORS, rankPeople, type RankRow } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
 import { useMe } from '@/state/me';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 const INK = Colors.ink;
 /** --spring: cubic-bezier(.2,.9,.3,1.3) · --ease: cubic-bezier(.16,1,.3,1) (CSS 애니메이션용) */
@@ -86,6 +87,7 @@ const POD = [
  * 프로토타입은 탭 화면이라 아래 탭 바가 보여요 — 앱은 마이 위로 쌓이는 화면이에요.
  */
 export default function RankingScreen() {
+  const pullRefresh = usePullRefresh();
   // 움직임 줄이기면 시상대 · 막대 · 순위 줄이 바로 다 보여요
   const still = useReducedMotion();
   const insets = useSafeAreaInsets();
@@ -138,7 +140,7 @@ export default function RankingScreen() {
     <View style={styles.screen}>
       <Stack.Screen options={SCREEN.push} />
       <TopBar title="랭킹 · 퀘스트" fallback="/my" backLabel="마이로 돌아가기" safeTop />
-      <ScrollView contentContainerStyle={[styles.body, { paddingTop: 16, paddingBottom: insets.bottom + 60 }]}>
+      <ScrollView refreshControl={pullRefresh} contentContainerStyle={[styles.body, { paddingTop: 16, paddingBottom: insets.bottom + 60 }]}>
 
         <Appear kind="rise">
           <Raised radius={Radius.card}>
