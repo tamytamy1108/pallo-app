@@ -16,7 +16,7 @@ const sent = (patch: Partial<Onboarding>, me: { branch?: string } = {}) =>
 
 /**
  * 지점 연동 안 됨 (/link-rejected) — '○○점에서 연동 승인이 반려되었습니다.' · 지점에서 남긴 말
- * → [고쳐서 다시 요청하기] [○○점에 전화하기] · '지금은 둘러볼게요'.
+ * → [다시 요청하기] · '지금은 둘러볼게요'.
  * 지점이 남긴 말은 지점 처리 결과가 도착할 때 들어와요 (state/link-events) — 스토리는 기본 문구.
  */
 const meta = {
