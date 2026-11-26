@@ -62,10 +62,10 @@ export function SparkSheet({ open, onClose }: { open: boolean; onClose: () => vo
 }
 
 /** 내 모임 · 찜한 모임 (모임 목록은 라운지에서 — 지금은 빈 상태 문구) */
-/** 찜하거나 참여한 것 하나 (번개 · 이벤트 · 동아리) */
+/** 찜하거나 참여한 것 하나 (동아리 · 번개 · 이벤트) */
 type MeetItem = { id: string; tag: string; title: string; sub: string; href: Href };
 
-/** 찜한 모임 · 내 모임: 기기에 남은 찜 · 참여 기록을 번개 · 이벤트 · 동아리로 찾아 보여 줘요 */
+/** 찜한 모임 · 내 모임: 기기에 남은 찜 · 참여 기록을 동아리 · 번개 · 이벤트 순으로 찾아 보여 줘요 */
 export function useMeetItems(kind: 'joined' | 'saved') {
   const st = useMeetStore();
   const ids = Object.keys(kind === 'saved' ? st.saved : st.joined);
@@ -85,7 +85,9 @@ export function useMeetItems(kind: 'joined' | 'saved') {
     const c = findClub(id, st.myClubs);
     if (c) items.push({ id, tag: '동아리', title: c.name, sub: `${c.when} · ${c.br}`, href: { pathname: '/club/[id]', params: { id } } });
   }
-  return items;
+  // 내 모임 순서: 동아리 → 번개 → 챌린지 → 이벤트 (같은 종류 안에서는 찜 · 참여한 순서 그대로)
+  const rank = (t: string) => (t === '동아리' ? 0 : t === '번개' ? 1 : t.startsWith('챌린지') ? 2 : 3);
+  return items.map((x, i) => ({ x, i })).sort((a, b) => rank(a.x.tag) - rank(b.x.tag) || a.i - b.i).map(({ x }) => x);
 }
 
 export function MeetsSheet({ kind, onClose }: { kind: 'joined' | 'saved' | null; onClose: () => void }) {
@@ -98,7 +100,7 @@ export function MeetsSheet({ kind, onClose }: { kind: 'joined' | 'saved' | null;
   };
   return (
     <Sheet open={!!kind} onClose={onClose} title={kind === 'saved' ? `찜한 모임 ${n}개` : `내 모임 ${n}개`} label={kind === 'saved' ? '찜한 모임' : '내 모임'}>
-      {kind === 'joined' && <Ds>참여한 번개 · 이벤트 · 가입한 동아리</Ds>}
+      {kind === 'joined' && <Ds>가입한 동아리 · 참여한 번개 · 이벤트</Ds>}
       {n === 0 ? (
         <PText style={styles.empty}>{kind === 'saved' ? '상세 화면의 하트를 누르면 여기 모여요.' : '아직 참여한 모임이 없어요.\n라운지에서 번개나 동아리를 찾아보세요!'}</PText>
       ) : (

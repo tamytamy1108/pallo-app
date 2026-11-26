@@ -111,6 +111,25 @@ type MeArg = { name: string; branch: string };
 /** 호스트 이름만 ('하나 프로' · '매니저 Jay' → '하나' · 'Jay') — 프로필 주소 · 멤버 줄에 써요 */
 export const hostName = (host: string) => host.replace(/^매니저 /, '').replace(/ 프로$/, '').trim() || host;
 
+/** 예시 프로 · 직원 이름 (라운지 예시 글의 역할 글자와 같아요). 백엔드가 생기면 멤버 프로필의 role 로 바꿔요 */
+const PRO_NAMES = ['하나', 'Leo'];
+const STAFF_NAMES = ['Jay'];
+
+/**
+ * 다른 멤버 프로필 이름 옆 글자 (10-roles 8장 · 2026-11-26).
+ * 계정 역할(PRO · STAFF)이 먼저, 그다음 모임 역할(HOST · CO-HOST)은 운영 중인 동아리가 1개 이상일 때만 (0개면 없어요).
+ * 호스트: 그 사람이 호스트인 동아리 · 코호스트: 호스트가 그 사람을 코호스트로 정한 동아리 (닫히면 같이 없어져요).
+ */
+export function useMemberRoleTags(name: string): { account: 'pro' | 'staff' | null; meet: 'host' | 'co' | null; hostN: number; coN: number } {
+  const cohost = useMeetStore((s) => s.cohost);
+  const mine = useMeetStore((s) => s.myClubs);
+  const live = [...mine, ...CLUBS].filter(clubLive);
+  const hostN = live.filter((c) => !c.mine && hostName(c.host) === name).length;
+  const coN = live.filter((c) => (cohost[c.id] ?? []).includes(name)).length;
+  const account = PRO_NAMES.includes(name) ? 'pro' : STAFF_NAMES.includes(name) ? 'staff' : null;
+  return { account, meet: hostN ? 'host' : coN ? 'co' : null, hostN, coN };
+}
+
 export function membersOf(it: { id: string; host: string; br: string; mine?: boolean }, cur: number, inMe: boolean, myHi: string, me: MeArg, staff: string[] = [], club = false) {
   const h = hashId(it.id);
   const hn = hostName(it.host);

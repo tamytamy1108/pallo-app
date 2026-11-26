@@ -22,6 +22,8 @@ import { profileMeetCount, ProfileMeetsSheet } from './profile-meets';
 import { Lift } from './lift';
 import { BadgeGrid } from './my-blocks';
 import { FollowSheet, MemberRow } from './my-sheets';
+import { RoleTag } from '@/components/common/role-tag';
+import { useMemberRoleTags } from '@/components/meet/model';
 
 const SUB_LV = ['EVERYDAY ENGLISH', 'REAL ENGLISH', 'TOPIC TALK'];
 
@@ -91,6 +93,7 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
   const [report, setReport] = useState<'report' | 'block' | null>(null);
   const [meets, setMeets] = useState(false);
   const meetN = profileMeetCount(name);
+  const tags = useMemberRoleTags(name);
 
   const W = Math.min(winW, 520) - 36;
   const h = nameHash(name);
@@ -129,7 +132,13 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
       <Sheet open={open} onClose={onClose} tall label={`${name} 프로필`} gap={10}>
         <AvatarStage av={memberAvatar(name)} width={W} border big />
         <View style={styles.id}>
-          <PText style={styles.name}>{name}</PText>
+          {/* 이름 옆: PRO · STAFF(계정 역할) → HOST · CO-HOST(운영 중인 동아리가 있을 때만) */}
+          <View style={styles.nameRow}>
+            <PText style={styles.name}>{name}</PText>
+            {tags.account ? <RoleTag kind={tags.account} big /> : null}
+            {tags.meet ? <RoleTag kind={tags.meet} big /> : null}
+          </View>
+          {tags.meet ? <PText style={styles.runS}>{tags.meet === 'host' ? `동아리 ${tags.hostN}개 운영 중 · 호스트` : `동아리 ${tags.coN}개 함께 운영 중 · 코호스트`}</PText> : null}
           <PText style={styles.idS}>
             {[...langs, br, '2026년 가입'].filter(Boolean).join(' · ')}
           </PText>
@@ -316,6 +325,8 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
 const styles = StyleSheet.create({
   id: { gap: 8, marginTop: 6, marginBottom: 8 },
   name: { fontFamily: Font.display, fontSize: 22, lineHeight: 26 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', rowGap: 4 },
+  runS: { marginTop: -4, fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
   idS: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   cnt: { flexDirection: 'row', paddingVertical: 6 },
   cntC: { flex: 1, alignItems: 'center' },
