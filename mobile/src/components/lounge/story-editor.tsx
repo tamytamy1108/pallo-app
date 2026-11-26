@@ -93,7 +93,7 @@ export function StoryEditor({ img, onFraming, cat, branch, text, onText, spot, o
           <Pressable onPress={onRetake} accessibilityRole="button" accessibilityLabel="뒤로 · 다시 찍기" hitSlop={6} style={styles.round}>
             <LgIcon name="back" size={22} color={Colors.white} sw={2.6} />
           </Pressable>
-          <Pressable onPress={openTyping} accessibilityRole="button" accessibilityLabel={text ? '사진 위 글 고치기' : '사진 위에 글 적기 (선택)'} hitSlop={6} style={styles.round}>
+          <Pressable onPress={openTyping} accessibilityRole="button" accessibilityLabel={text ? '사진 위 글 수정하기' : '사진 위에 글 적기 (선택)'} hitSlop={6} style={styles.round}>
             <PText style={styles.aa}>Aa</PText>
           </Pressable>
         </View>

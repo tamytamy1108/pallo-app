@@ -12,7 +12,7 @@ import { RouteSheetScreen, useRouteSheet } from '@/components/lounge/route-sheet
 import { Pills } from '@/components/lounge/trip';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LG_C, LG_PCAT } from '@/data/lounge';
@@ -104,9 +104,9 @@ export default function ComposeScreen() {
     const t = text.trim();
     if (!drafts.length) {
       setStep(1);
-      return showToast('사진을 1장 이상 골라 주세요');
+      return showWarnToast('사진을 1장 이상 골라 주세요');
     }
-    if (!t) return showToast('내용을 적어 주세요');
+    if (!t) return showWarnToast('내용을 적어 주세요');
     const pc = LG_PCAT.find((x) => x[1] === cat) ?? LG_PCAT[0];
     const imgs = drafts.map((d) => d.uri);
     addPost({

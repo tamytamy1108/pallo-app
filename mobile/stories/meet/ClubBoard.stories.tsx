@@ -6,7 +6,7 @@ import { setBoard, setText, toggleIn } from '@/components/meet/meet-store';
 import { padded } from '../_support/padded';
 import { CLUB_FREE, meetState } from './_fixtures';
 
-/** 동아리 게시판 탭 — 필터 칩 · 필독 공지 · 글(좋아요 · 댓글 · 내 글 삭제). 가입 전엔 글 2개 흐리게 + '글 n개 더'. */
+/** 동아리 게시판 탭 — 필터 칩 + 오른쪽 끝 글쓰기 · 필독 공지(누르면 글 전체) · 글(좋아요 · 댓글 · 내 글 삭제). 가입 전엔 글 2개 흐리게 + '글 n개 더'. */
 const meta = {
   title: 'Meet/ClubBoard',
   component: ClubBoard,
@@ -20,6 +20,8 @@ type Story = StoryObj<typeof meta>;
 
 /** 멤버 — 글쓰기 + 전체 글 */
 export const Member: Story = {};
+/** 호스트 — 글 아래 '필독으로' · 필독 글을 누르면 '필독 풀기' · 글쓰기에 '필독으로 올리기' */
+export const Host: Story = { args: { isHost: true } };
 /** 비멤버 — 흐린 미리보기 */
 export const NotMember: Story = { args: { inC: false } };
 /** 가입 인사를 남김 — '가입 인사' 글이 내 글로 올라감(삭제 가능) · 좋아요 누른 글 */

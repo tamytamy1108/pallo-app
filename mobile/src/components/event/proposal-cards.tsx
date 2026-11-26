@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
@@ -16,10 +17,10 @@ import { ColorCard } from '@/components/ui/card-maker';
 import { withJeom } from '@/components/onboarding/branch-list';
 import { cardWords, type CardDesign } from '@/data/poster-colors';
 import { WEEK, won } from '@/data/meet';
-import { FieldLabel, keepAll, SheetButton } from '@/components/common/sheet-parts';
+import { FieldLabel, keepAll, SheetButton, SheetButtons } from '@/components/common/sheet-parts';
 import { SumCard } from '@/components/meet/detail/sheets';
 import { Pressable } from '@/components/ui/pressable';
-import { Sheet } from '@/components/ui/sheet';
+import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 
 /** 서버 제안 → 카드 모양 (지점 · 분류는 서버가 붙인 이름, 대표 사진 = 0번) */
 export function toProposal(r: EventProposal): Proposal {
@@ -119,15 +120,34 @@ function statusNote(q: Proposal) {
     case 'REJECTED':
       return q.rejectionReason ? `매니저 메모 · ${q.rejectionReason}` : '이번에는 열기 어려워요. 다른 날짜나 내용으로 다시 제안해 주세요.';
     default:
-      return '지점 매니저가 확인하고 2~3일 안에 문자로 연락드려요. 확정되면 이벤트 탭에 올라가요.';
+      return '지점 매니저가 확인하고 있어요. 확정되면 이벤트 탭에 올라가요.';
   }
 }
 
-/** 내가 보낸 제안 보기 (읽기만) — 적어 보낸 칸 전부 · 보낸 날 · 지금 상태 */
+/**
+ * 내가 보낸 제안 보기 — 적어 보낸 칸 전부 · 보낸 날 · 지금 상태.
+ * 매니저 검토 중이면 [수정하기] → 제안서가 보낸 값 그대로 열려요 (/events/propose?edit=id). 확정 · 반려된 뒤에는 닫기만 (동아리 신청 시트와 같은 모양).
+ */
 function ProposalSheet({ q, open, onClose, onClosed }: { q: Proposal; open: boolean; onClose: () => void; onClosed: () => void }) {
   const sent = sentAt(q);
+  const footer =
+    statusOf(q) === 'PENDING' ? (
+      <SheetButtons>
+        <SheetButton label="닫기" tone="white" style={styles.flex} onPress={onClose} />
+        <SheetButton
+          label="수정하기"
+          style={styles.flex}
+          onPress={() => {
+            onClose();
+            runAfterSheetClose(() => router.push({ pathname: '/events/propose', params: { edit: q.id } }));
+          }}
+        />
+      </SheetButtons>
+    ) : (
+      <SheetButton label="닫기" tone="white" size="foot" onPress={onClose} />
+    );
   return (
-    <Sheet open={open} onClose={onClose} onClosed={onClosed} label="내가 제안한 이벤트" footer={<SheetButton label="닫기" tone="white" size="foot" onPress={onClose} />}>
+    <Sheet open={open} onClose={onClose} onClosed={onClosed} label="내가 제안한 이벤트" footer={footer}>
       <PText style={styles.dk}>내가 제안한 이벤트 · {STATUS_TEXT[statusOf(q)]}</PText>
       <View style={styles.head}>
         <Cover q={q} size={72} />
@@ -199,7 +219,7 @@ export function ProposalCard({ q, onOpen, onCancel }: { q: Proposal; onOpen?: ()
           {withJeom(q.br)} · {when} · {q.cat}
         </PText>
         <PText style={[styles.st, statusOf(q) === 'REJECTED' && { color: Colors.inkSub }]}>
-          {statusOf(q) === 'PENDING' ? '매니저 검토 중 · 2~3일 안에 문자로 연락드려요' : statusOf(q) === 'APPROVED' ? '확정됐어요 · 이벤트 탭에 올라가요' : '이번엔 어려워요 · 눌러서 매니저 메모 보기'}
+          {statusOf(q) === 'PENDING' ? '매니저 검토 중' : statusOf(q) === 'APPROVED' ? '확정됐어요 · 이벤트 탭에 올라가요' : '이번엔 어려워요 · 눌러서 매니저 메모 보기'}
         </PText>
       </View>
     </>
@@ -221,6 +241,7 @@ export function ProposalCard({ q, onOpen, onCancel }: { q: Proposal; onOpen?: ()
 
 const styles = StyleSheet.create({
   wrap: { gap: 10 },
+  flex: { flex: 1 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.purple, borderRadius: 18, backgroundColor: '#FBF9FF' },
   th: { width: 58, height: 58, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink },
   main: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },

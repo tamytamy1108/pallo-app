@@ -79,6 +79,7 @@ export type MyPage = {
   };
 };
 
+/** 마이 화면은 지금 보낸 노트 · 받은 고마워요만 그려요 — 앞 두 칸은 참여 중(stats.joinedMeetCount) · 앱 학습(기기 진도)으로 바꿨어요 (2026-11-26) */
 export type MyPageProStats = {
   /** 이번 달(KST) 리더로 출석한 세션 */
   sessionsThisMonth: number;

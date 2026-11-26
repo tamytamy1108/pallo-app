@@ -76,7 +76,7 @@ function TypedNumber({ value, min, max, unit, onChange }: { value: number; min: 
         cursorColor={Colors.purple}
         accessibilityLabel={`${unit === '명' ? '인원' : '숫자'} 직접 적기 · ${min}~${max}${unit}`}
         // 웹은 입력 칸 기본 폭이 넓어서(약 150px) 줄이 옆으로 밀려요 → 자리 수만큼만
-        style={[st.input, { width: 14 * String(max).length + 8 }]}
+        style={[st.input, { width: 18 * String(max).length + 8 }]}
       />
       <PText style={st.unit}>{unit}</PText>
     </View>
@@ -154,7 +154,8 @@ const st = StyleSheet.create({
   v: { minWidth: 56, textAlign: 'center', fontFamily: Font.display, fontSize: 18, lineHeight: 24 },
   // 눌러서 적는 칸: 밑줄로 '적을 수 있어요' 를 보여 줘요
   typed: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minWidth: 64, height: 40, paddingHorizontal: 6, borderBottomWidth: 2, borderColor: Colors.ink },
-  input: { minWidth: 30, padding: 0, textAlign: 'center', fontFamily: Font.display, fontSize: 18, lineHeight: 24, color: Colors.ink, includeFontPadding: false },
+  // 숫자(Unbounded)는 같은 크기의 한글 '명'(Noto)보다 키가 작아 보여서(숫자 0.75em · 한글 ≈ 0.92em) 22 로 키워 '명'과 높이를 맞춰요
+  input: { minWidth: 30, padding: 0, textAlign: 'center', fontFamily: Font.display, fontSize: 22, lineHeight: 28, color: Colors.ink, includeFontPadding: false },
   unit: { fontFamily: Font.display, fontSize: 18, lineHeight: 24 },
   off: { opacity: 0.35 },
   on: { transform: [{ scale: 0.94 }] },

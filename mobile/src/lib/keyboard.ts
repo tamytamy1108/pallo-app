@@ -6,10 +6,15 @@ import { useEffect, useState } from 'react';
 import { Keyboard, Platform } from 'react-native';
 import { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 
-export function useKeyboardShown() {
+export function useKeyboardShown(active = true) {
   // 키보드가 이미 떠 있을 때 그려지는 칸(시트 등)도 처음부터 맞는 값으로
-  const [shown, setShown] = useState(() => Keyboard.isVisible());
+  const [shown, setShown] = useState(() => active && Keyboard.isVisible());
   useEffect(() => {
+    // 안 쓰는 동안(닫힌 시트)은 듣지 않아요 — 피드 카드마다 닫힌 시트가 여러 개라, 키보드가 오르내릴 때마다
+    // 수십 개가 한꺼번에 다시 그려져서 키보드가 내려가는 순간 화면이 멈칫했어요 (2026-11-26)
+    if (!active) return;
+    // 듣기 시작할 때 지금 상태로 한 번 맞춰요 (다음 프레임에)
+    const sync = requestAnimationFrame(() => setShown(Keyboard.isVisible()));
     // iOS 는 올라오기 시작할 때(Will), 안드로이드는 다 올라온 뒤(Did)만 알려 줘요.
     // iOS 도 Did 를 한 번 더 들어요: Keyboard.isVisible() 은 Did 알림에서야 바뀌어서, 키보드가 내려가는 중(Will ~ Did)에 그려진 칸은
     // '떠 있음'으로 시작한 채 Will 알림을 놓쳐요 → 키보드가 없는데도 아래 버튼 칸이 홈 바 여백을 빼서 화면 끝에 잘렸어요 (2026-11-26)
@@ -19,9 +24,12 @@ export function useKeyboardShown() {
       Platform.OS === 'ios'
         ? [Keyboard.addListener('keyboardWillShow', on), Keyboard.addListener('keyboardDidShow', on), Keyboard.addListener('keyboardWillHide', off), Keyboard.addListener('keyboardDidHide', off)]
         : [Keyboard.addListener('keyboardDidShow', on), Keyboard.addListener('keyboardDidHide', off)];
-    return () => subs.forEach((s) => s.remove());
-  }, []);
-  return shown;
+    return () => {
+      cancelAnimationFrame(sync);
+      subs.forEach((s) => s.remove());
+    };
+  }, [active]);
+  return active && shown;
 }
 
 /**

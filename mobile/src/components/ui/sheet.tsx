@@ -1,5 +1,5 @@
-import { Children, createContext, Fragment, isValidElement, useCallback, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Children, createContext, Fragment, isValidElement, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type NativeScrollEvent, type NativeSyntheticEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { Colors, Radius } from '@/constants/theme';
 import { dismissKeyboardBehind, useKeyboardFillStyle, useKeyboardLiftStyle, useKeyboardShown } from '@/lib/keyboard';
 import { EASE } from '@/lib/motion';
 
+import { ScrollHostContext } from './field-jump';
 import { FormScrollContext, KeepVisibleContext, useFormScroll, useShowFocusedOnKeyboard } from './form-scroll';
 import { NestedSheets, useSheetLayer } from './sheet-stack';
 import { PText } from './text';
@@ -65,7 +66,6 @@ function flushAfterClose() {
 
 export function Sheet({ open, onClose, title, children, footer, tall = false, scroll = true, gap = 12, onClosed, label, dismissible = true, contentStyle, scrollKey }: SheetProps) {
   const insets = useSafeAreaInsets();
-  const kb = useKeyboardShown();
   const { height: winH } = useWindowDimensions();
   const still = useReducedMotion();
   // 닫히는 움직임 동안에도 Modal 을 남겨 둬요 (열릴 땐 그리는 중에 바로 켜요).
@@ -79,6 +79,8 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   }, [ready]);
   const [mounted, setMounted] = useState(open && ready);
   if (open && ready && !mounted) setMounted(true);
+  // 떠 있는 동안만 키보드를 지켜봐요 (닫힌 시트는 키보드가 오르내려도 다시 그리지 않게)
+  const kb = useKeyboardShown(mounted);
   const showToastHere = useToastLayer(mounted);
   const layerId = useId();
 
@@ -145,6 +147,9 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
       return () => clearTimeout(t);
     } else if (wasOpen.current) {
       wasOpen.current = false;
+      // 키보드도 지금 같이 내려요 — 전에는 시트가 다 내려가 Modal 이 사라진 뒤에야 입력칸이 없어져 키보드가 따로 내려갔어요.
+      // 시트를 키보드 위로 올려 둔 여백(KeyboardLift)은 키보드와 같은 프레임에 줄어서, 시트 · 키보드가 함께 내려가요 (2026-11-26)
+      if (Keyboard.isVisible()) Keyboard.dismiss();
       dim.set(withTiming(0, { duration: still ? 0 : 220 }));
       shown.set(
         withTiming(0, { duration: still ? 0 : 280, easing: EASE }, (done) => {
@@ -157,6 +162,13 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   // 하나 고르면 다음 칸이 보이게 올려 줘요 (ui/form-scroll)
   // 길게 쓰는 칸이 늘어나면 쓰는 줄이 아래 버튼 · 키보드에 가리지 않게 따라 내려가요 (keepCaret)
   const [scrollRef, formBox, onFormScroll, revealNext, keepCaret, showFocused] = useFormScroll();
+  // 빠진 칸으로 데려가기 (ui/field-jump)
+  const scrollY = useRef(0);
+  const host = useMemo(() => ({ scroll: scrollRef, box: formBox, y: scrollY }), [scrollRef, formBox]);
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onFormScroll(e);
+    scrollY.current = e.nativeEvent.contentOffset.y;
+  };
   // 칸을 눌러 키보드가 올라오면 그 칸이 키보드 · 아래 버튼 위로 보이게
   useShowFocusedOnKeyboard(formBox, showFocused);
   useEffect(() => {
@@ -230,16 +242,18 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
                       <View ref={formBox} collapsable={false} style={tall ? styles.fill : styles.shrink}>
                         <ScrollView
                           ref={scrollRef}
-                          onScroll={onFormScroll}
+                          onScroll={onScroll}
                           scrollEventThrottle={32}
                           bounces={false}
                           keyboardShouldPersistTaps="handled"
                           showsVerticalScrollIndicator={false}
                           style={tall ? styles.fill : styles.shrink}
                           contentContainerStyle={[{ gap, paddingHorizontal: 18, paddingBottom: scrollPadBottom }, contentStyle]}>
-                          <FormScrollContext.Provider value={revealNext}>
-                            <KeepVisibleContext.Provider value={keepCaret}>{body}</KeepVisibleContext.Provider>
-                          </FormScrollContext.Provider>
+                          <ScrollHostContext.Provider value={host}>
+                            <FormScrollContext.Provider value={revealNext}>
+                              <KeepVisibleContext.Provider value={keepCaret}>{body}</KeepVisibleContext.Provider>
+                            </FormScrollContext.Provider>
+                          </ScrollHostContext.Provider>
                         </ScrollView>
                       </View>
                     ) : (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { meetRoleKind, RoleTag } from '@/components/common/role-tag';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
@@ -44,10 +44,10 @@ export function useClubChat(c: Club, joinedOnce: boolean, myName: string) {
  * 채팅 탭 (위 호스트 안내 고정 · 날짜 구분 · 입장 알림 · 내 말 노랑 말풍선). 가입 안 한 사람만 최근 4줄 흐리게 + 잠금
  * (inC = 잠금 없이 보기 · model clubOpen). joined: 멤버로 가입했을 때만 '○○님이 들어왔어요' (호스트 · 스텝은 안 붙어요).
  * 실시간 연결은 백엔드와 정해요 (Q-T6) — 지금은 이 기기 안에서만 쌓여요.
+ * docked: 입력 줄을 여기 말고 화면 맨 아래(동아리 상세 틀의 dock)에 ClubChatInput 으로 따로 붙여요 — 키보드를 바로 위로 따라가요.
  */
-export function ClubChat({ c, inC, joined = inC, myName, staff }: { c: Club; inC: boolean; joined?: boolean; myName: string; staff: string[] }) {
+export function ClubChat({ c, inC, joined = inC, myName, staff, docked = false }: { c: Club; inC: boolean; joined?: boolean; myName: string; staff: string[]; docked?: boolean }) {
   const M = useClubChat(c, joined, myName);
-  const [v, setV] = useState('');
   const role = (n?: string, h?: boolean) => (h ? '호스트' : n && staff.includes(n) ? '코호스트' : '');
   const msg = (m: ChatMsg, i: number, peek = false) => {
     if (m.day) return <PText key={i} style={styles.day}>{m.day}</PText>;
@@ -87,13 +87,6 @@ export function ClubChat({ c, inC, joined = inC, myName, staff }: { c: Club; inC
         <View style={[styles.chat, { paddingTop: 6 }]}>{M.filter((m) => !m.day && !m.sys && !m.me).slice(-4).map((m, i) => msg(m, i, true))}</View>
       </Peek>
     );
-  const send = () => {
-    const t = v.trim();
-    if (!t) return;
-    const d = new Date();
-    setChat(c.id, [...M, { n: myName, me: true, x: t, t: `${d.getHours() < 12 ? '오전' : '오후'} ${d.getHours() % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}` }]);
-    setV('');
-  };
   return (
     <View style={{ marginTop: 14 }}>
       <View style={styles.chat}>
@@ -108,12 +101,29 @@ export function ClubChat({ c, inC, joined = inC, myName, staff }: { c: Club; inC
         </View>
         {M.map((m, i) => msg(m, i))}
       </View>
-      <View style={styles.in}>
-        <GrowInput value={v} onChangeText={setV} onSubmitEditing={send} submitBehavior="submit" maxLines={6} placeholder="멤버들에게 메시지 보내기" placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel="채팅 메시지" returnKeyType="send" />
-        <Pressable onPress={send} accessibilityRole="button" accessibilityLabel="보내기" style={styles.send}>
-          <Icon name="send" size={18} />
-        </Pressable>
-      </View>
+      {docked ? null : <ClubChatInput c={c} joined={joined} myName={myName} style={{ marginTop: 14 }} />}
+    </View>
+  );
+}
+
+/** 채팅 입력 줄 (글 칸 + 보내기). 동아리 상세에서는 화면 맨 아래에 붙어 키보드 바로 위로 따라 올라가요 */
+export function ClubChatInput({ c, joined, myName, onSent, style }: { c: Club; joined: boolean; myName: string; onSent?: () => void; style?: StyleProp<ViewStyle> }) {
+  const M = useClubChat(c, joined, myName);
+  const [v, setV] = useState('');
+  const send = () => {
+    const t = v.trim();
+    if (!t) return;
+    const d = new Date();
+    setChat(c.id, [...M, { n: myName, me: true, x: t, t: `${d.getHours() < 12 ? '오전' : '오후'} ${d.getHours() % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}` }]);
+    setV('');
+    onSent?.();
+  };
+  return (
+    <View style={[styles.in, style]}>
+      <GrowInput value={v} onChangeText={setV} onSubmitEditing={send} submitBehavior="submit" maxLines={6} placeholder="멤버들에게 메시지 보내기" placeholderTextColor="#8C8597" style={styles.input} accessibilityLabel="채팅 메시지" returnKeyType="send" />
+      <Pressable onPress={send} accessibilityRole="button" accessibilityLabel="보내기" style={styles.send}>
+        <Icon name="send" size={18} />
+      </Pressable>
     </View>
   );
 }
@@ -134,7 +144,7 @@ const styles = StyleSheet.create({
   pMe: { backgroundColor: Colors.yellow, borderColor: Colors.ink, borderTopLeftRadius: 16, borderTopRightRadius: 4 },
   time: { flexShrink: 0, fontFamily: Font.body700, fontSize: 10.5, lineHeight: 15, color: Colors.inkSub },
   // 길게 쓰면 칸이 위로 늘고 보내기는 아래 줄에 맞춰요 · 안드로이드 글자 잘림 없게 includeFontPadding 끔
-  in: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 14 },
+  in: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   input: { flex: 1, minWidth: 0, minHeight: 46, borderWidth: 1.5, borderColor: Colors.line, borderRadius: 23, paddingHorizontal: 16, paddingVertical: 11, includeFontPadding: false, fontFamily: Font.body700, fontSize: 14, lineHeight: 20, backgroundColor: Colors.white, color: Colors.ink },
   send: { width: 46, height: 46, borderRadius: 23, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
 });

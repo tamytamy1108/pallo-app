@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackButton } from '@/components/ui/back-button';
@@ -14,7 +14,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors, TAB_ROW_H } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
-import { LayerModal } from '@/components/ui/sheet-stack';
+import { PhotoViewer } from '@/components/ui/photo-viewer';
 import { KeepVisibleContext, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
 
 import type { MadeCard } from '@/data/poster-colors';
@@ -50,6 +50,8 @@ type Props = {
   tabBody?: ReactNode;
   /** 고른 탭 — 바뀌면 탭 줄이 위 막대 바로 아래로 올라가 붙고(이미 붙어 있으면 그대로) 새 탭을 처음부터 보여 줘요 */
   tabKey?: string;
+  /** 아래 고정 바 대신 화면 맨 아래에 붙는 입력 줄 (동아리 채팅) — 키보드가 오면 바로 위로 따라 올라가요 */
+  dock?: ReactNode;
 };
 
 const BAR = 44; // .dtop 안 높이 (아래 8) — 줄 가운데가 탭 화면 머리줄과 같게 위 여백은 없어요
@@ -63,7 +65,7 @@ const DetailScrollContext = createContext<ScrollToTarget | null>(null);
 /** 상세 본문 안의 칸을 위 막대 바로 아래로 올려 보여 줘요 (신청 직후 '내 신청' 카드 등). 상세 틀 밖이면 아무것도 안 해요 */
 export const useDetailScrollTo = (): ScrollToTarget => useContext(DetailScrollContext) ?? (() => {});
 
-export function DetailFrame({ id, club, posters, card, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey }: Props) {
+export function DetailFrame({ id, club, posters, card, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey, dock }: Props) {
   const insets = useSafeAreaInsets();
   const kbShown = useKeyboardShown();
   const slides = posterSlides(id, club, posters, card);
@@ -93,6 +95,8 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
   const scroll = useRef<ScrollViewInstance>(null);
   const root = useRef<ViewInstance>(null);
   const yNow = useRef(0);
+  const contentH = useRef(0);
+  const dockKey = useRef<string | undefined>(undefined);
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     yNow.current = e.nativeEvent.contentOffset.y;
     setY(e.nativeEvent.contentOffset.y);
@@ -113,7 +117,8 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
       });
     });
   };
-  useShowFocusedOnKeyboard(root, (target) => keepAboveKeyboard(target, true));
+  // 아래 입력 줄(dock)이면: 줄은 키보드를 따라 올라가고, 본문은 맨 아래(새 메시지)를 보여 줘요
+  useShowFocusedOnKeyboard(root, (target) => (dock ? scroll.current?.scrollToEnd({ animated: true }) : keepAboveKeyboard(target, true)));
   // 인사 칸이 길어져 한 줄 늘면 그 줄도 키보드 위로 (GrowInput 이 불러요)
   const keepGrowing = (target: ViewInstance | null) => {
     if (Keyboard.isVisible()) keepAboveKeyboard(target, false);
@@ -148,9 +153,19 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
         onScroll={onScroll}
         scrollEventThrottle={16}
         onLayout={(e) => setScrollH(e.nativeEvent.layout.height)}
+        // 아래 입력 줄(dock)로 새 메시지를 보내 본문이 길어지면: 맨 아래를 보고 있었으면 새 줄까지 따라 내려가요
+        onContentSizeChange={(_w, h) => {
+          const was = contentH.current;
+          // 탭을 바꿔 길이가 바뀐 건 빼요 (같은 채팅 탭 안에서 늘어날 때만)
+          const sameDock = dockKey.current === tabKey && !!dock;
+          contentH.current = h;
+          dockKey.current = dock ? tabKey : undefined;
+          if (sameDock && h > was && yNow.current + (scrollH || winH) >= was - 80) scroll.current?.scrollToEnd({ animated: true });
+        }}
         contentContainerStyle={{ paddingBottom: 24 }}
         // 인사 · 댓글 입력칸을 누르면 키보드 위로 올려 보여요 (iOS) · 끌어내리면 키보드가 내려가요
-        automaticallyAdjustKeyboardInsets
+        // 아래 입력 줄(dock)이 있으면 그 줄이 키보드만큼 올라가며 본문 칸을 줄여요 (자동 여백까지 더하면 두 번 올라가요)
+        automaticallyAdjustKeyboardInsets={!dock}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive">
         <PosterStack id={id} slides={slides} height={posterH} onOpen={(i) => setView(i)} />
@@ -187,18 +202,37 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
       {tabs && pinned ? <View style={[styles.pinTabs, { top: dockH }]}>{tabs}</View> : null}
 
       {/* 인사 · 댓글을 쓰는 동안(키보드가 떠 있는 동안)은 아래 신청 바를 숨겨 입력칸 자리를 넓혀요 */}
-      {!kbShown && (
-        <BottomBar>
-          <View>
-            {ctaNote}
-            <View style={styles.cta}>{cta}</View>
-          </View>
-        </BottomBar>
+      {dock ? (
+        <DockBar>{dock}</DockBar>
+      ) : (
+        !kbShown && (
+          <BottomBar>
+            <View>
+              {ctaNote}
+              <View style={styles.cta}>{cta}</View>
+            </View>
+          </BottomBar>
+        )
       )}
 
       <PosterViewer id={id} slides={slides} start={view} onClose={() => setView(null)} />
     </View>
   );
+}
+
+/**
+ * 화면 맨 아래 입력 줄 (동아리 채팅). 키보드가 없으면 안전 영역(홈 바) 바로 위, 오면 키보드 바로 위 —
+ * 아이폰은 키보드 움직임과 같은 프레임에 따라가요 (UI 스레드 · lib/keyboard useKeyboardLiftStyle 과 같은 방식).
+ * 안드로이드는 키보드만큼 창이 줄어서 안전 영역만 둬요.
+ */
+const DOCK_GAP = 8;
+function DockBar({ children }: { children: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const kb = useAnimatedKeyboard();
+  const ios = Platform.OS === 'ios';
+  const bottom = insets.bottom;
+  const lift = useAnimatedStyle(() => ({ paddingBottom: DOCK_GAP + Math.max(bottom, ios ? kb.height.value : 0) }));
+  return <Animated.View style={[styles.dock, lift]}>{children}</Animated.View>;
 }
 
 function FadeTitle({ show, text }: { show: boolean; text: string }) {
@@ -250,59 +284,22 @@ function FadeIn({ children }: { children: ReactNode }) {
 
 /**
  * 포스터 크게 보기 (프로토타입 lgPview): 위 ‹ · '1 / 2' · 옆으로 넘기는 포스터 · 아래 점.
- * 손가락으로 넘기면 숫자 · 점이 바로 따라와요. 점을 눌러도 그 장으로 가요.
+ * 공용 PhotoViewer — 포스터 바깥 어두운 곳을 누르면 닫히고, 점을 누르면 그 장으로 가요.
  */
 function PosterViewer({ id, slides, start, onClose }: { id: string; slides: Slide[]; start: number | null; onClose: () => void }) {
-  const [w, setW] = useState(0);
-  const [i, setI] = useState(0);
-  const insets = useSafeAreaInsets();
-  const track = useRef<ScrollViewInstance>(null);
-  const goTo = (n: number, animated = true) => {
-    setI(n);
-    track.current?.scrollTo({ x: n * w, animated });
-  };
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const n = Math.round(e.nativeEvent.contentOffset.x / (w || 1));
-    if (n !== i && n >= 0 && n < slides.length) setI(n);
-  };
   return (
-    <LayerModal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.pv}>
-        <View style={[styles.pvTop, { paddingTop: insets.top + 4 }]}>
-          <BackButton onPress={onClose} color="#fff" label="닫기" />
-          <PText style={styles.pvN}>{`${i + 1} / ${slides.length}`}</PText>
+    <PhotoViewer
+      count={slides.length}
+      start={start}
+      onClose={onClose}
+      close="back"
+      dots
+      renderPhoto={(j, box) => (
+        <View style={[styles.pvArt, { width: Math.min(box.width, box.height * 0.8) }]}>
+          <Poster id={id} slide={slides[j]} aspectRatio={4 / 5} wordSize={54} wordStyle={styles.pw} />
         </View>
-        <View style={styles.pvBody} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-          {w ? (
-            <ScrollView
-              ref={track}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={onScroll}
-              scrollEventThrottle={16}
-              onLayout={() => goTo(start ?? 0, false)}>
-              {slides.map((s) => (
-                <View key={s.v} style={[styles.pvSlide, { width: w }]}>
-                  <View style={styles.pvArt}>
-                    <Poster id={id} slide={s} aspectRatio={4 / 5} wordSize={54} wordStyle={styles.pw} />
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-          ) : null}
-        </View>
-        {slides.length > 1 ? (
-          <View style={[styles.pvDots, { paddingBottom: 22 + insets.bottom }]}>
-            {slides.map((s, k) => (
-              <Pressable key={s.v} onPress={() => goTo(k)} sound="pick" accessibilityRole="button" accessibilityLabel={`${k + 1}번째 포스터`} hitSlop={8}>
-                <View style={[styles.pvDot, k === i && styles.pvDotOn]} />
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-      </View>
-    </LayerModal>
+      )}
+    />
   );
 }
 
@@ -323,13 +320,6 @@ const styles = StyleSheet.create({
   tabsIn: { marginTop: 16, marginHorizontal: -18 },
   pinTabs: { position: 'absolute', left: 0, right: 0, backgroundColor: Colors.cream, zIndex: 2 },
   cta: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
-  pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.96)' },
-  pvTop: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 6 },
-  pvN: { fontFamily: Font.display, fontSize: 14, lineHeight: 20, color: '#fff' },
-  pvBody: { flex: 1 },
-  pvSlide: { flex: 1, justifyContent: 'center', paddingHorizontal: 14, paddingBottom: 20 },
+  dock: { paddingTop: 8, paddingHorizontal: 16, backgroundColor: Colors.cream, borderTopWidth: 1.5, borderColor: Colors.line },
   pvArt: { borderWidth: 2, borderColor: '#fff', borderRadius: 18, overflow: 'hidden' },
-  pvDots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  pvDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.35)' },
-  pvDotOn: { width: 18, backgroundColor: '#fff' },
 });

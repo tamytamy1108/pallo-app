@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { isDarkBg } from '@/components/lounge/pics';
 import { CardArt } from '@/components/ui/card-art';
-import { PText } from '@/components/ui/text';
+import { PText, tightLines } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { CH_C, posterBg, posterFontSize, posterWords, type Challenge } from '@/data/challenge';
@@ -36,7 +36,7 @@ export function ChCover({ p, size, style, words = true }: { p: Challenge; size: 
   return (
     <View style={[styles.box, style, { backgroundColor: bg }]}>
       {words ? (
-        <PText style={[styles.w, { fontSize: fs, lineHeight: fs * 1.05, color: isDarkBg(bg) ? CH_C.y : Colors.ink }]} numberOfLines={2}>
+        <PText style={[styles.w, { ...tightLines(fs, 1.05), color: isDarkBg(bg) ? CH_C.y : Colors.ink }]} numberOfLines={2}>
           {w}
         </PText>
       ) : null}

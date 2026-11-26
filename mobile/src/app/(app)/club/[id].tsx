@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/pressable';
 import { ClubAlbum } from '@/components/meet/club/club-album';
 import { ClubBoard } from '@/components/meet/club/club-board';
-import { ClubChat } from '@/components/meet/club/club-chat';
+import { ClubChat, ClubChatInput } from '@/components/meet/club/club-chat';
 import { ClubHome } from '@/components/meet/club/club-home';
 import { ClubJoin } from '@/components/meet/club/club-join';
 import { ClubApplySheet } from '@/components/meet/club-apply';
@@ -42,7 +42,7 @@ const TABS: [Tab, string][] = [
 /**
  * 동아리 상세 (docs/pages/04-lounge.md '동아리 상세 탭' · '정기 모임' — 프로토타입 lgClubDetail).
  * 탭: 홈(누구나) · 게시판 · 사진첩 · 채팅(멤버 — 가입 전엔 흐린 미리보기). 탭은 위에 닿으면 위 막대 바로 아래에 붙고, 탭을 누르면 그 자리로 올라가요.
- * 아래 고정: '최근 30일 동안 N명이 가입했어요' + 찜 + 가입하기.
+ * 아래 고정: '최근 30일 동안 N명이 가입했어요' + 찜 + 가입하기 (가입했으면 '모임 멤버'). 채팅 탭에서는 그 자리에 메시지 입력 줄.
  * 맞는 API: 63 `/clubs/:id` · 65 `/clubs/:id/members` · 67 `/board` · `/photos` · 68 `/chat`(실시간 — Q-T6) · 69 `/sessions`
  */
 export default function ClubDetail() {
@@ -97,7 +97,7 @@ export default function ClubDetail() {
   ) : c.mine && (c.wait || c.rejected) ? (
     <MainBtn label={c.rejected ? '거절됐어요 · 이유 보기' : '관리자 검토 중 · 신청 보기'} variant="wh" onPress={() => setApply(true)} />
   ) : joined ? (
-    <MainBtn label="가입 완료" variant="done" onPress={() => setLeave(true)} />
+    <MainBtn label="모임 멤버" variant="done" onPress={() => setLeave(true)} />
   ) : block ? (
     <MainBtn label="가입 조건이 안 맞아요" variant="off" />
   ) : (
@@ -118,12 +118,14 @@ export default function ClubDetail() {
     tab === 'home' ? (
       <ClubHome c={c} inC={inC} block={block} onNewSession={role ? () => setNewSess(true) : undefined} members={members} staff={staff} recs={recs} myBranch={me.branch} onSession={(s) => setSid(s.id)} />
     ) : tab === 'board' ? (
-      <ClubBoard c={c} inC={inC} myName={me.name} staff={staff} />
+      <ClubBoard c={c} inC={inC} myName={me.name} staff={staff} isHost={role === 'host'} />
     ) : tab === 'photo' ? (
       <ClubAlbum c={c} inC={inC} />
     ) : (
-      <ClubChat c={c} inC={inC} joined={joined} myName={me.name} staff={staff} />
+      <ClubChat c={c} inC={inC} joined={joined} myName={me.name} staff={staff} docked />
     );
+  // 채팅 탭(잠금 없이 볼 때): 아래 가입 바 대신 입력 줄을 화면 맨 아래에 붙여요 (키보드가 오면 바로 위로)
+  const dock = tab === 'chat' && inC ? <ClubChatInput c={c} joined={joined} myName={me.name} /> : undefined;
 
   return (
     <>
@@ -149,6 +151,7 @@ export default function ClubDetail() {
         tabs={tabs}
         tabKey={tab}
         tabBody={body}
+        dock={dock}
         ctaNote={
           c.closed ? (
             <PText style={styles.j30}>{c.closed.by === 'admin' ? '활동이 없어 관리자가 닫았어요' : '호스트가 닫은 동아리예요'}</PText>

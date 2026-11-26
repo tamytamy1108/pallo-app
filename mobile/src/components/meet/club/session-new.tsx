@@ -7,6 +7,7 @@ import { CountPicker } from '@/components/ui/count-picker';
 import { TextField } from '@/components/ui/field';
 import { Sheet } from '@/components/ui/sheet';
 import { showToast } from '@/components/ui/toast';
+import { JumpField, useFieldJump } from '@/components/ui/field-jump';
 import { SESSION_THEME, WEEK, type Club } from '@/data/meet';
 import { haptic, sfx } from '@/lib/feedback';
 
@@ -49,9 +50,11 @@ export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; 
     setTitle('');
     setMemo('');
   };
+  // 빠진 칸이 있으면 그 칸으로 데려가요
+  const jump = useFieldJump();
   const save = () => {
-    if (!date) return showToast('날짜를 골라 주세요');
-    if (!title.trim()) return showToast('이번 모임 주제를 적어 주세요');
+    if (!date) return jump.to('date', '날짜를 골라 주세요');
+    if (!title.trim()) return jump.to('title', '이번 모임 주제를 적어 주세요');
     addSched(c.id, { id: `${c.id}@s${Date.now()}`, date, time, end, title: title.trim(), cap, place: place.trim() || undefined, memo: memo.trim() || undefined, at: Date.now() });
     sfx('save');
     haptic('success');
@@ -63,10 +66,10 @@ export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; 
   return (
     <Sheet open={open} onClose={onClose} onClosed={reset} title="일정 만들기" label="정기 모임 일정 만들기" tall footer={<SheetButton label="일정 올리기" size="foot" onPress={save} />}>
       <SheetDesc>올리면 동아리 홈 일정에 보이고, 멤버 모두에게 알림이 가요. 멤버는 회차마다 참석을 눌러요.</SheetDesc>
-      <View style={styles.f}>
+      <JumpField name="date" jump={jump} style={styles.f}>
         <FieldLabel>날짜 *</FieldLabel>
         <MonthCalendar value={date} onChange={setDate} minDays={0} maxDays={MAX_DAYS} hint="오늘부터 3달 안에서 골라요" pick={(d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`} />
-      </View>
+      </JumpField>
       <View style={styles.f}>
         <FieldLabel>시간 *</FieldLabel>
         <TimeRange
@@ -78,7 +81,9 @@ export function SessionNewSheet({ c, open, onClose }: { c: Club; open: boolean; 
           }}
         />
       </View>
-      <TextField label="이번 모임 주제 *" value={title} onChangeText={setTitle} placeholder={`예) ${ex}`} maxLength={30} />
+      <JumpField name="title" jump={jump}>
+        <TextField label="이번 모임 주제 *" value={title} onChangeText={setTitle} placeholder={`예) ${ex}`} maxLength={30} />
+      </JumpField>
       <View style={styles.f}>
         <FieldLabel>최대 인원 · 나 포함 *</FieldLabel>
         <CountPicker value={cap} presets={[6, 8, 10, 12]} min={CAP_MIN} max={CAP_MAX} typable onChange={setCap} />

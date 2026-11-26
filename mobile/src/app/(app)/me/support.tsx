@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { apiErrorMessage } from '@/api/errors';
 import { faqQuery, myInquiriesQuery } from '@/api/queries';
-import { FAQ_ALL, filterFaqItems, INQUIRY_MAX, INQUIRY_STATUS_LABEL, inquiryChoices, inquiryContentOk, inquiryDate } from '@/api/support';
+import { INQUIRY_MAX, INQUIRY_STATUS_LABEL, inquiryChoices, inquiryContentOk, inquiryDate } from '@/api/support';
 import { useMyBranchContact } from '@/api/use-branch-guide';
 import { useCreateInquiry } from '@/api/use-create-inquiry';
 import { GrowInput } from '@/components/ui/grow-input';
@@ -18,20 +18,25 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { ChipScroll } from '@/components/ui/chip-scroll';
 import { openTel } from '@/lib/open-out';
 
 /**
- * 고객센터 (프로토타입 helpHTML · askHTML).
- * - 기본: 자주 묻는 질문(찾기 · 분류 칩 · 펼치는 답 · 도움이 됐어요 / 문의하기) + 1:1 문의 · 카카오톡 상담 · 내 지점 전화
+ * 자주 묻는 질문 (프로토타입 helpHTML · askHTML). 설정 › 자주 묻는 질문으로 들어와요.
+ * - 기본: 자주 묻는 질문(펼치는 답 · 도움이 됐어요 / 문의하기) + 1:1 문의 · 카카오톡 상담 · 내 지점 전화
+ *   (2026-11-26: 질문이 몇 개뿐이라 찾기 · 분류 칩은 뺐어요. 질문 내용은 app-hub FAQ 관리에서 본사가 정해요)
  *   (내 지점 전화는 연동된 지점이 콘솔 지점 안내에 적은 번호 — GET /me/branch-guides. 연동 전이거나 번호가 없으면 줄을 빼요)
  * - ?view=faq: 자주 묻는 질문만 · ?view=ask(&type=분류 코드): 1:1 문의 (문의하기 · 내 문의)
  * - ?view=ask&tab=list: 내 문의 탭부터 — 답변 알림(USER_INQUIRY)을 누르면 여기로 와요
+ * - ?view=bug: 버그 보고 (마이 › 버그 보고) — 1:1 문의와 같은 화면, 분류는 '앱 오류'로 정해져 있어요
  * 데이터: 93 GET `/faq` · 94 GET · POST `/me/inquiries` (api/support — FAQ 내용 · 분류는 app-hub FAQ 관리에서 본사가 정해요)
  */
+/** 버그 보고가 보내는 문의 분류 (app-hub FAQ 분류 '앱 오류') */
+const BUG_CATEGORY = 'APP_ERROR';
+
 export default function SupportScreen() {
   const { view, type, tab } = useLocalSearchParams<{ view?: string; type?: string; tab?: string }>();
   if (view === 'ask') return <AskView type={type} startOnList={tab === 'list'} />;
+  if (view === 'bug') return <AskView type={BUG_CATEGORY} startOnList={false} bug />;
   return <HelpView faqOnly={view === 'faq'} />;
 }
 
@@ -40,12 +45,8 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
   const faq = useQuery(faqQuery());
   // 문의 건수는 '더 도움이 필요하면' 칸에만 보여요
   const inquiries = useQuery({ ...myInquiriesQuery(), enabled: !faqOnly });
-  const [cat, setCat] = useState(FAQ_ALL);
-  const [q, setQ] = useState('');
   const [openQ, setOpenQ] = useState<string | null>(null);
-  const qy = q.trim();
-  const chips = [{ code: FAQ_ALL, label: '전체' }, ...(faq.data?.categories ?? [])];
-  const L = faq.data ? filterFaqItems(faq.data.items, cat, q) : [];
+  const L = faq.data?.items ?? [];
   const ask = () => {
     sfx('tap');
     router.push({ pathname: '/me/support', params: { view: 'ask' } });
@@ -58,31 +59,7 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
   ];
 
   return (
-    <AccountPage title={faqOnly ? '자주 묻는 질문' : '고객센터'} bodyStyle={styles.body}>
-      <View style={styles.find}>
-        <Icon name="search" size={16} />
-        <TextInput value={q} onChangeText={setQ} placeholder="궁금한 걸 찾아요 · 예) 환불, 연기" placeholderTextColor="#9B94A6" autoComplete="off" accessibilityLabel="자주 묻는 질문 찾기" style={styles.findIn} />
-      </View>
-      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.chipsWrap} contentContainerStyle={styles.chips}>
-        {chips.map(({ code, label }) => {
-          const on = cat === code;
-          return (
-            <Pressable
-              key={code}
-              onPress={() => {
-                sfx('tap');
-                setCat(code);
-              }}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              style={[styles.chip, on && styles.chipOn]}>
-              <PText style={styles.chipText} color={on ? Colors.white : Colors.ink}>
-                {label}
-              </PText>
-            </Pressable>
-          );
-        })}
-      </ChipScroll>
+    <AccountPage title="자주 묻는 질문" bodyStyle={styles.body}>
       {faq.isPending ? (
         <LoadingState />
       ) : faq.isError ? (
@@ -99,7 +76,6 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: on }}>
-                <PText style={styles.tg}>{x.categoryLabel}</PText>
                 <PText style={styles.qB}>{x.question}</PText>
               </Pressable>
               {on ? (
@@ -115,7 +91,7 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
           );
         })
       ) : (
-        <PText style={styles.empty}>{qy ? `‘${qy}’에 맞는 답이 없어요.\n1:1 문의로 물어봐 주세요.` : '아직 올라온 질문이 없어요.\n1:1 문의로 물어봐 주세요.'}</PText>
+        <PText style={styles.empty}>{'아직 올라온 질문이 없어요.\n1:1 문의로 물어봐 주세요.'}</PText>
       )}
       {faqOnly ? null : (
         <>
@@ -138,8 +114,11 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
   );
 }
 
-/** 1:1 문의 (프로토타입 askHTML): 문의하기(분류 · 내용) / 내 문의(답변 대기 · 답변 완료, 펼쳐서 내용 · 답 보기) */
-function AskView({ type, startOnList }: { type?: string; startOnList: boolean }) {
+/**
+ * 1:1 문의 (프로토타입 askHTML): 문의하기(분류 · 내용) / 내 문의(답변 대기 · 답변 완료, 펼쳐서 내용 · 답 보기).
+ * bug: 버그 보고 — 제목 · 탭 이름만 바꾸고 분류 고르기는 숨겨요 (type 의 '앱 오류'로 보내요)
+ */
+function AskView({ type, startOnList, bug = false }: { type?: string; startOnList: boolean; bug?: boolean }) {
   const faq = useQuery(faqQuery());
   const inquiries = useQuery(myInquiriesQuery());
   const create = useCreateInquiry();
@@ -149,7 +128,8 @@ function AskView({ type, startOnList }: { type?: string; startOnList: boolean })
   const [text, setText] = useState('');
   const [openA, setOpenA] = useState<string | null>(null);
   const choices = inquiryChoices(faq.data?.categories ?? []);
-  const aty = picked !== undefined ? picked : (choices.find((c) => c.code === type) ?? choices[0]).code;
+  // 버그 보고는 '앱 오류' 분류가 없으면 기타(null)로
+  const aty = picked !== undefined ? picked : (choices.find((c) => c.code === type) ?? (bug ? { code: null } : choices[0])).code;
   const send = () => {
     if (create.isPending) return;
     if (!inquiryContentOk(text)) {
@@ -163,7 +143,7 @@ function AskView({ type, startOnList }: { type?: string; startOnList: boolean })
           setText('');
           setTab('list');
           sfx('save');
-          showToast('문의를 보냈어요 · 답이 오면 알림으로 알려 드려요');
+          showToast(bug ? '알려 줘서 고마워요 · 고치면 알림으로 알려 드려요' : '문의를 보냈어요 · 답이 오면 알림으로 알려 드려요');
         },
         onError: (e) => showToast(apiErrorMessage(e)),
       },
@@ -172,11 +152,11 @@ function AskView({ type, startOnList }: { type?: string; startOnList: boolean })
   const count = inquiries.data?.length;
 
   return (
-    <AccountPage title="1:1 문의" bodyStyle={styles.askBody} footer={tab === 'new' ? <Button label={create.isPending ? '보내는 중…' : '보내기'} wide disabled={create.isPending} onPress={send} /> : undefined}>
+    <AccountPage title={bug ? '버그 보고' : '1:1 문의'} bodyStyle={styles.askBody} footer={tab === 'new' ? <Button label={create.isPending ? '보내는 중…' : '보내기'} wide disabled={create.isPending} onPress={send} /> : undefined}>
       <View style={styles.tabsBleed}>
         <UnderTabs
           tabs={[
-            ['new', '문의하기'],
+            ['new', bug ? '보고하기' : '문의하기'],
             ['list', count === undefined ? '내 문의' : `내 문의 ${count}`],
           ]}
           value={tab}
@@ -185,13 +165,17 @@ function AskView({ type, startOnList }: { type?: string; startOnList: boolean })
       </View>
       {tab === 'new' ? (
         <>
-          <PText style={styles.lb}>어떤 문의인가요?</PText>
-          <View style={styles.pills}>
-            {choices.map((c) => (
-              <ChoiceChip key={c.code ?? 'etc'} label={c.label} on={aty === c.code} onPress={() => setPicked(c.code)} />
-            ))}
-          </View>
-          <PText style={[styles.lb, styles.lb2]}>내용</PText>
+          {bug ? null : (
+            <>
+              <PText style={styles.lb}>어떤 문의인가요?</PText>
+              <View style={styles.pills}>
+                {choices.map((c) => (
+                  <ChoiceChip key={c.code ?? 'etc'} label={c.label} on={aty === c.code} onPress={() => setPicked(c.code)} />
+                ))}
+              </View>
+            </>
+          )}
+          <PText style={[styles.lb, !bug && styles.lb2]}>{bug ? '어떤 문제가 있었나요?' : '내용'}</PText>
           <GrowInput value={text} onChangeText={setText} multiline maxLength={INQUIRY_MAX} placeholder="언제, 어떤 화면에서, 무엇이 문제였는지 적어 주세요" placeholderTextColor="#9B94A6" accessibilityLabel="내용" style={styles.ta} />
         </>
       ) : inquiries.isPending ? (
@@ -234,13 +218,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   pressed: { opacity: 0.7 },
   body: { paddingTop: 14, paddingBottom: 40 },
-  find: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, paddingHorizontal: 16, borderRadius: 24, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
-  findIn: { flex: 1, height: 44, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
-  chipsWrap: { marginTop: 8, flexGrow: 0 },
-  chips: { gap: 6 },
-  chip: { height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, justifyContent: 'center' },
-  chipOn: { backgroundColor: Colors.ink, borderColor: Colors.ink },
-  chipText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
   q: { paddingVertical: 16, borderBottomWidth: 1.5, borderColor: Colors.line },
   tg: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
   qB: { marginTop: 3, fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22 },

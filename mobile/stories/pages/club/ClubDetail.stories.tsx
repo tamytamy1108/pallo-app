@@ -15,7 +15,7 @@ const openTab = (name: string) => async ({ canvasElement }: { canvasElement: HTM
 };
 
 /**
- * 동아리 상세 (/club/[id]) — 아래 버튼: 가입하기(누구나) · 가입 신청(조건 있음) · 신청 중 · 취소 · 가입 완료(나가기) · 승인 대기(내가 만든 · 승인 전).
+ * 동아리 상세 (/club/[id]) — 아래 버튼: 가입하기(누구나) · 가입 신청(조건 있음) · 신청 중 · 취소 · 모임 멤버(나가기) · 승인 대기(내가 만든 · 승인 전).
  * 탭: 홈 · 게시판 · 사진첩 · 채팅(가입 전엔 흐린 미리보기). 내 역할: 비멤버 · 신청 중 · 멤버 · 호스트(내가 만듦).
  * 서브 호스트(admin)는 예시 멤버 한 명에게만 붙어 내가 될 수 없다. 서버를 부르지 않아 불러오는 중 · 오류 상태가 없다.
  */
@@ -35,7 +35,7 @@ export const Default: Story = {};
 export const Conditional: Story = { parameters: route(CLUB_COND.id) };
 /** 가입 신청 중 — [신청 중 · 취소] */
 export const Applied: Story = { parameters: route(CLUB_COND.id), beforeEach: meetState(() => setClubState(CLUB_COND.id, 'ask')) };
-/** 멤버 — [가입 완료] · 멤버 수 +1 */
+/** 멤버 — [모임 멤버] · 멤버 수 +1 · 채팅 탭은 아래에 입력 줄 */
 export const Member: Story = { beforeEach: meetState(() => setClubState(FREE, 'in')) };
 /** 멤버 · 가입 인사 남김 · 찜함 */
 export const MemberGreetedSaved: Story = {

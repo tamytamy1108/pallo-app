@@ -210,7 +210,7 @@ export function DiaryCard({ n }: { n: NoteLike }) {
                 accessibilityRole="button"
                 hitSlop={8}
                 style={styles.edit}>
-                <PText style={[styles.ch, styles.chOn]}>고치기</PText>
+                <PText style={[styles.ch, styles.chOn]}>수정하기</PText>
               </Pressable>
             </View>
           </>

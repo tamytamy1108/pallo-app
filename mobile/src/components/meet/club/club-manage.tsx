@@ -169,7 +169,7 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
     ? [
         { ...opt('members', '멤버 목록', `멤버 ${members.length}명 · 누르면 프로필`), to: { k: 'members' } },
         { ...opt('cohost', '코호스트 정하기', `${co.length}명${co.length ? ' · ' + co.join(' · ') : ''} · 지점 관리자에게도 알림`), to: { k: 'cohost' } },
-        { ...opt('edit', '소개 · 사진 · 장소 · 시간 고치기', '시간 · 장소가 바뀌면 멤버에게 알림이 가요'), to: { k: 'menu' } },
+        { ...opt('edit', '소개 · 사진 · 장소 · 시간 수정하기', '시간 · 장소가 바뀌면 멤버에게 알림이 가요'), to: { k: 'menu' } },
         { ...opt('meet', '공지 · 정기 모임 · 참석 확인', '참석 확인은 호스트 점수 ★에 쓰여요'), to: { k: 'meet' } },
         { ...opt('handover', '호스트 넘기기', '멤버 중 한 명에게 넘겨요', true), to: { k: 'handover' } },
         { ...opt('close', '동아리 닫기', '모든 멤버에게 알림이 가요', true), to: { k: 'close' } },
@@ -185,11 +185,11 @@ export function ClubManage({ c, role, open, onClose, members, staff, onNewSessio
         items={menu}
         onPick={(k) => {
           const row = menu.find((r) => r.key === k);
-          if (k === 'edit') showToast('고치기는 동아리 만들기 화면을 채운 채로 열어요 · 다음에 붙여요');
+          if (k === 'edit') showToast('수정은 동아리 만들기 화면을 채운 채로 열어요 · 다음에 붙여요');
           else if (row) go(row.to);
         }}
       />
-      {host ? null : <SheetNote>호스트만 할 수 있어요: 코호스트 정하기 · 빼기 · 소개 · 사진 · 장소 · 시간 고치기 · 호스트 넘기기 · 동아리 닫기</SheetNote>}
+      {host ? null : <SheetNote>호스트만 할 수 있어요: 코호스트 정하기 · 빼기 · 소개 · 사진 · 장소 · 시간 수정하기 · 호스트 넘기기 · 동아리 닫기</SheetNote>}
       <SheetButton label="닫기" tone="white" size="inline" sound="back" onPress={onClose} />
     </Sheet>
   );

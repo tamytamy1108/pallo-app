@@ -19,9 +19,10 @@ import { isMember } from '@/state/access';
 import { updateMe, useMe } from '@/state/me';
 
 /**
- * 설정 — 꼭 필요한 것만 (2026-11-25 줄임): 계정(닉네임 · 로그인) · 알림 7개 · 효과음 · 안전(퀘스트 공유 · 차단) · 로그아웃.
+ * 설정 — 꼭 필요한 것만 (2026-11-25 줄임): 계정(닉네임 · 로그인) · 알림 7개 · 효과음 · 안전(퀘스트 공유 · 차단) · 도움(자주 묻는 질문) · 로그아웃.
+ * 자주 묻는 질문은 마이 아래 메뉴에서 빠져서(2026-11-26) 여기서 들어가요.
  * 누구나 열어요 (비회원도 로그아웃 · 알림 · 차단). 회원 전용 줄은 비회원에게 안 보여요: 스터디 세션 알림.
- * 뺀 것: 내 지점 · 학습 언어 · 레벨(전산 웹 · 프로가 정해요) · 도움(고객센터 · 약관) · 회원 탈퇴 · 말하기 어려움 · 소리 끄기(레슨 안에 있어요) · 하루 목표 · 공개 범위 · 신고 내역 · 이용권 · 결제 내역 · 공지사항 · 앱 버전.
+ * 뺀 것: 내 지점 · 학습 언어 · 레벨(전산 웹 · 프로가 정해요) · 약관 · 회원 탈퇴 · 말하기 어려움 · 소리 끄기(레슨 안에 있어요) · 하루 목표 · 공개 범위 · 신고 내역 · 이용권 · 결제 내역 · 공지사항 · 앱 버전.
  * 뺀 설정 값은 기본값 그대로 서버에 남아요. 효과음은 @/lib/feedback 이 가져요.
  * 맞는 API: 30 `GET / PUT /me/settings`
  */
@@ -77,6 +78,9 @@ export default function SettingsScreen() {
           onPress={() => updateSettings({ shareProgress: set.shareProgress === false })}
         />
         {LAUNCH.block ? <GoRow title="차단한 멤버" value="0명" onPress={() => setSheet('block')} /> : null}
+      </Sec>
+      <Sec title="도움">
+        <GoRow title="자주 묻는 질문" onPress={() => go('/me/support')} />
       </Sec>
       <View style={styles.out}>
         <Pressable onPress={() => setSheet('logout')} accessibilityRole="button" hitSlop={8}>
@@ -159,10 +163,15 @@ function ToggleRow({ title, sub, value, onPress }: { title: string; sub?: string
       accessibilityState={{ checked: value }}
       accessibilityLabel={title}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <View style={styles.rowTx}>
+      {/* 설명이 없는 줄(알림)은 이동 줄(GoRow)과 같은 모양 — 글자를 감싸지 않아야 토글과 같은 높이 가운데에 와요 (2026-11-26) */}
+      {sub ? (
+        <View style={styles.rowTx}>
+          <PText style={styles.rowT}>{title}</PText>
+          <PText style={styles.rowS}>{sub}</PText>
+        </View>
+      ) : (
         <PText style={styles.rowB}>{title}</PText>
-        {sub ? <PText style={styles.rowS}>{sub}</PText> : null}
-      </View>
+      )}
       <Toggle value={value} />
     </Pressable>
   );
@@ -223,7 +232,9 @@ const styles = StyleSheet.create({
   line: { borderTopWidth: 1.5, borderColor: Colors.line },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingVertical: 8 },
   pressed: { opacity: 0.7 },
-  rowTx: { flex: 1, minWidth: 0 },
+  // 설명이 있는 줄: 제목 · 설명 묶음을 줄 가운데에 (제목에 flex 를 주면 세로 칸 안에서 위로 치우쳐요)
+  rowTx: { flex: 1, minWidth: 0, justifyContent: 'center' },
+  rowT: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 21 },
   rowB: { flex: 1, fontFamily: Font.body800, fontSize: 14.5, lineHeight: 21 },
   rowS: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   rowV: { maxWidth: '50%', fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },

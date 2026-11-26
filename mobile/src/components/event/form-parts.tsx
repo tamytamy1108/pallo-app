@@ -157,9 +157,13 @@ export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }:
   t0.setHours(0, 0, 0, 0);
   const min = new Date(t0);
   min.setDate(t0.getDate() + minDays);
-  // 고를 수 있는 첫 달부터 열어요 (오늘이 25일이고 1주 뒤부터면 다음 달). 그보다 앞 달로는 못 가요
-  const first = (min.getFullYear() - t0.getFullYear()) * 12 + min.getMonth() - t0.getMonth();
-  const [cm, setCm] = useState(first);
+  // 오늘이 있는 달부터 열어요 — 다른 달력처럼 오늘이 늘 보이게 (고를 수 없는 날이어도 오늘 표시). 그보다 앞 달로는 못 가요.
+  // 이미 고른 날이 있으면(제안 고치기) 그 달부터 열어요
+  const [cm, setCm] = useState(() => {
+    if (!value) return 0;
+    const v = new Date(value + 'T00:00');
+    return Math.max(0, (v.getFullYear() - t0.getFullYear()) * 12 + v.getMonth() - t0.getMonth());
+  });
   const max = new Date(t0);
   max.setDate(t0.getDate() + maxDays);
   const m0 = new Date(t0.getFullYear(), t0.getMonth() + cm, 1);
@@ -171,7 +175,7 @@ export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }:
   return (
     <View style={styles.cal}>
       <View style={styles.calH}>
-        <Pressable disabled={cm <= first} onPress={() => setCm(cm - 1)} accessibilityRole="button" accessibilityLabel="이전 달" style={[styles.calNav, cm <= first && { opacity: 0.35 }]}>
+        <Pressable disabled={cm <= 0} onPress={() => setCm(cm - 1)} accessibilityRole="button" accessibilityLabel="이전 달" style={[styles.calNav, cm <= 0 && { opacity: 0.35 }]}>
           <PText style={styles.calNavT}>‹</PText>
         </Pressable>
         <PText style={styles.calT}>

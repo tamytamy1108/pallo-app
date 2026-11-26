@@ -152,7 +152,8 @@ function ChangeScreen() {
     if (f.kind === 'rest') {
       if (!st) return { ok: false, txt: '언제부터 쉴지 골라 주세요' };
       const en = restEnd(st, f.dur, f.endT);
-      const txt = `${cls.map(teamLabel).join(' · ')} · ${restDays(st, en)}일 연기 · ${fmtDay(st)}~${fmtDay(en)} · ${fmtDay(addDays(en, 1))} 복귀`;
+      // 첫 줄 = 고른 수업 · 둘째 줄 = 며칠 · 기간 · 복귀 (내 스터디 카드가 줄을 나눠 따로 보여요)
+      const txt = `${cls.map(teamLabel).join(' · ')}\n${restDays(st, en)}일 연기 · ${fmtDay(st)}~${fmtDay(en)} · ${fmtDay(addDays(en, 1))} 복귀`;
       if (f.dur === REST_LONG) {
         // 1달 넘게는 특별한 경우만: 사유를 고르고 자세히 적어야 다음으로 가요
         if (!f.reason) return { ok: false, txt: '1달 넘게 쉬는 사유를 골라 주세요' };

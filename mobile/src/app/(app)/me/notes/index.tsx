@@ -205,7 +205,7 @@ function NotesList({ head }: { head?: ReactNode }) {
       {wait ? (
         <Box color={Colors.yellow} style={styles.wait}>
           <PText style={styles.waitB}>{`오늘 ${teamNameByNo(wait.team)} 노트 준비 중`}</PText>
-          <PText style={styles.waitS}>{`${wait.end}에 수업이 끝나면 ${wait.pro} 프로님이 보내 줘요 · 도착하면 알림을 드려요`}</PText>
+          <PText style={styles.waitS}>{`${wait.end}에 ${wait.pro} 프로님이 보내 줘요`}</PText>
         </Box>
       ) : null}
       <View style={styles.two}>

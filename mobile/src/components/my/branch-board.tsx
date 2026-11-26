@@ -1,8 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
-import { useRef, useState, type ReactNode } from 'react';
-import { Linking, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState, type ReactNode } from 'react';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { SheetButton } from '@/components/common/sheet-parts';
@@ -22,7 +21,7 @@ import { ErrorState } from '@/components/ui/state-view';
 import { toBranchBoard, type BranchBoard as Board, type BranchItem, type Partner, type PartnerLink, type PartnerLinkKind, type PartnerPoster } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { openMap, openTel } from '@/lib/open-out';
-import { LayerModal } from '@/components/ui/sheet-stack';
+import { fitPhoto, PhotoViewer, type PhotoBox } from '@/components/ui/photo-viewer';
 
 import { CourseProgressSheet } from './course-progress';
 import { Lift } from './lift';
@@ -545,63 +544,15 @@ function PosterFull({ src, onPress }: { src: PartnerPoster; onPress: () => void 
   );
 }
 
-/** 포스터 크게 보기: 화면 가득 · 옆으로 넘기기 · 몇 번째인지 (동아리 사진첩 AlbumViewer 와 같은 모양) */
+/** 포스터 크게 보기: 화면 가득 · 옆으로 넘기기 · 몇 번째인지 (공용 PhotoViewer — 포스터 바깥 어두운 곳을 누르면 닫혀요) */
 function PosterViewer({ list, start, name, onClose }: { list: PartnerPoster[]; start: number | null; name: string; onClose: () => void }) {
-  const [w, setW] = useState(0);
-  const [i, setI] = useState(0);
-  const ref = useRef<ScrollViewInstance>(null);
-  const insets = useSafeAreaInsets();
-  const go = (k: number) => {
-    const n = Math.max(0, Math.min(list.length - 1, k));
-    ref.current?.scrollTo({ x: n * w, animated: true });
-    setI(n);
-  };
-  return (
-    <LayerModal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.pv} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-        {/* 위 이름 줄의 빈 곳을 눌러도 닫혀요 (X 만 따로 받아요) */}
-        <View pointerEvents="box-none" style={[styles.pvTop, { paddingTop: insets.top + 10 }]}>
-          <PText style={styles.pvN}>{name}</PText>
-          {list.length > 1 && <PText style={styles.pvC}>{`${i + 1} / ${list.length}`}</PText>}
-          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기" style={styles.pvX} hitSlop={8}>
-            <BrIc k="x" size={22} color={Colors.white} />
-          </Pressable>
-        </View>
-        {w ? (
-          <ScrollView
-            ref={ref}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            contentOffset={{ x: (start ?? 0) * w, y: 0 }}
-            onLayout={() => {
-              setI(start ?? 0);
-              ref.current?.scrollTo({ x: (start ?? 0) * w, animated: false });
-            }}
-            onScroll={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / w))}
-            scrollEventThrottle={64}>
-            {list.map((src, j) => (
-              // 사진이나 빈 곳을 한 번 누르면 닫혀요
-              <Pressable key={j} onPress={onClose} accessibilityLabel="닫기" style={[styles.pvPage, { width: w, paddingTop: insets.top + 64, paddingBottom: insets.bottom + 40 }]}>
-                <Image source={posterSrc(src)} style={styles.pvImg} contentFit="contain" accessibilityLabel={`${name} 포스터 ${j + 1}`} />
-              </Pressable>
-            ))}
-          </ScrollView>
-        ) : null}
-        {/* 손가락으로 밀기 어려운 컴퓨터 화면을 위해 양옆 화살표도 둬요 */}
-        {list.length > 1 && i > 0 && (
-          <Pressable onPress={() => go(i - 1)} accessibilityRole="button" accessibilityLabel="이전 사진" style={[styles.pvArrow, styles.pvPrev]}>
-            <BrIc k="prev" size={22} color={Colors.white} />
-          </Pressable>
-        )}
-        {list.length > 1 && i < list.length - 1 && (
-          <Pressable onPress={() => go(i + 1)} accessibilityRole="button" accessibilityLabel="다음 사진" style={[styles.pvArrow, styles.pvNext]}>
-            <BrIc k="next" size={22} color={Colors.white} />
-          </Pressable>
-        )}
-      </View>
-    </LayerModal>
-  );
+  return <PhotoViewer count={list.length} start={start} onClose={onClose} title={name} arrows renderPhoto={(j, box) => <PosterBig src={list[j]} box={box} label={`${name} 포스터 ${j + 1}`} />} />;
+}
+
+/** 크게 본 포스터 한 장: 원래 비율 그대로 칸 안에 (빈 곳은 바깥이라 누르면 닫혀요) */
+function PosterBig({ src, box, label }: { src: PartnerPoster; box: PhotoBox; label: string }) {
+  const [ratio, setRatio] = useState(0.75);
+  return <Image source={posterSrc(src)} style={fitPhoto(ratio, box)} contentFit="contain" accessibilityLabel={label} onLoad={(e) => e.source.width && e.source.height && setRatio(e.source.width / e.source.height)} />;
 }
 
 const styles = StyleSheet.create({
@@ -645,16 +596,6 @@ const styles = StyleSheet.create({
   liGoT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
   pdHd: { height: 150, overflow: 'hidden', justifyContent: 'flex-end', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink },
   pdW: { position: 'absolute', right: 14, top: 10, fontFamily: Font.display, fontSize: 30, lineHeight: 36, color: Colors.white, opacity: 0.25 },
-  pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.97)', justifyContent: 'center' },
-  pvTop: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingBottom: 10, zIndex: 2 },
-  pvN: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20, color: Colors.white },
-  pvC: { fontFamily: Font.display, fontSize: 12, lineHeight: 16, color: Colors.yellow },
-  pvX: { position: 'absolute', right: 14, bottom: 4, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  pvPage: { height: '100%', paddingHorizontal: 16 },
-  pvImg: { flex: 1 },
-  pvArrow: { position: 'absolute', top: '50%', marginTop: -22, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' },
-  pvPrev: { left: 10 },
-  pvNext: { right: 10 },
   pdTitle: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pdDot: { width: 12, height: 40, borderRadius: 6, borderWidth: 2, borderColor: Colors.ink },
   pdK2: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.purple },

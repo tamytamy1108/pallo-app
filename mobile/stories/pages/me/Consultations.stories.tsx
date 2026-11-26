@@ -8,6 +8,8 @@ import { LOADING_FOREVER } from '../../_support/api';
 import { fresh } from '../../my/_state';
 
 const KEY = trialApplicationsQuery().queryKey;
+/** 상담 신청 내역은 체험 전(지점 회원이 아닌) 사람만 — 회원은 마이로 돌려보내요 */
+const GUEST = { role: 'guest', memberAccessLevel: 'UNREGISTERED' } as const;
 
 /** 오늘에서 n일 뒤 'YYYY-MM-DD' (스토리를 언제 열어도 다가오는 · 지난 칸이 그대로 보이게) */
 const inDays = (n: number) => {
@@ -40,14 +42,14 @@ const SAMPLE: TrialApplication[] = [
 
 const withRows = (rows: TrialApplication[]): Pick<Story, 'parameters' | 'beforeEach'> => ({
   parameters: { queries: [[KEY, rows]] },
-  beforeEach: fresh({}, () => {
+  beforeEach: fresh(GUEST, () => {
     setMockTrialApplications(rows);
     return () => setMockTrialApplications([]);
   }),
 });
 
 /**
- * 상담 신청 내역 (/me/consultations) — 마이 > 상담 신청 내역. 다가오는 상담(가까운 순 · 오늘/내일/D-n) · 지난 신청(최근 순, 흐리게).
+ * 상담 신청 내역 (/me/consultations) — 마이 > 상담 신청 내역 (체험 전 사람만 · 회원은 마이로). 다가오는 상담(가까운 순 · 오늘/내일/D-n) · 지난 신청(최근 순, 흐리게).
  * 줄을 누르면 신청 내용 시트. 데이터는 GET /trial-applications (지금은 가짜 서버) — 다가오는/지난 구분은 기기 시각 기준.
  */
 const meta = {
@@ -82,5 +84,5 @@ export const WithBranchPhone: Story = {
     await userEvent.click(await canvas.findByRole('button', { name: /상담 신청 내용/ }));
   },
 };
-export const Loading: Story = { beforeEach: fresh(), parameters: { api: { delayMs: LOADING_FOREVER } } };
-export const Error: Story = { beforeEach: fresh(), parameters: { api: { fail: ['trialApplications'] } } };
+export const Loading: Story = { beforeEach: fresh(GUEST), parameters: { api: { delayMs: LOADING_FOREVER } } };
+export const Error: Story = { beforeEach: fresh(GUEST), parameters: { api: { fail: ['trialApplications'] } } };

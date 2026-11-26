@@ -32,6 +32,8 @@ export const useIsDone = (key: string) => store.useStore((s) => key in s.done);
 /** 키 앞부분이 같은 것 중 끝낸 개수 (예: '1:1:' → 1과에서 끝낸 단계 수) */
 export const useDoneCount = (prefix: string) => store.useStore((s) => Object.keys(s.done).filter((k) => k.startsWith(prefix)).length);
 export const isDone = (key: string) => key in store.get().done;
+/** 앱에서 끝낸 학습 단계 수 (장면 도장은 빼요 — 오늘 목표와 같은 셈) → 마이 숫자 칸 '앱 학습' */
+export const useLearnedStepCount = () => store.useStore((s) => Object.keys(s.done).filter((k) => !k.startsWith('scene:')).length);
 
 /** 끝냈다고 기록해요. 처음 끝낸 거면 true (포인트 · 오늘 목표는 처음일 때만 · 오늘 목표는 state/today-goal) */
 export function markDone(key: string) {

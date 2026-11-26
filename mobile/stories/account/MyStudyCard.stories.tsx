@@ -29,7 +29,7 @@ export const LimitedNoLeader: Story = {
 };
 /** 연기 신청 중 — [신청 취소] */
 export const RequestPending: Story = {
-  beforeEach: fresh({}, () => submitChangeRequest({ label: '연기', txt: '영어 월수 21:00 · 14일 연기 · 11/25(수)~12/8(화) · 12/9(수) 복귀', msg: '' })),
+  beforeEach: fresh({}, () => submitChangeRequest({ label: '연기', txt: '영어 월수 9시 · 영어 화목 7시 30분 · 일본어 토 오전 11시\n14일 연기 · 11/25(수)~12/8(화) · 12/9(수) 복귀', msg: '' })),
 };
 /** 지점 변경 신청 중 — 긴 안내 */
 export const BranchChangePending: Story = {

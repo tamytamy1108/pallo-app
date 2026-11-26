@@ -186,7 +186,7 @@ export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean;
             <Group title="다가오는 이벤트" rows={events.up} render={(e) => <EventRow key={e.id} e={e} onOpen={() => go(`/events/${e.id}`)} />} />
             <Group title="지난 이벤트" rows={events.past} render={(e) => <EventRow key={e.id} e={e} onOpen={() => go(`/events/${e.id}`)} />} />
             {props.length ? (
-              <Section title={`제안한 이벤트 ${props.length}`} sub="매니저가 확인하고 2~3일 안에 문자로 연락드려요. 확정되면 이벤트 탭에 올라가요.">
+              <Section title={`제안한 이벤트 ${props.length}`} sub="매니저가 확인하고 있어요. 확정되면 이벤트 탭에 올라가요.">
                 {props.map((q) => (
                   <ProposalCard key={q.id} q={q} />
                 ))}

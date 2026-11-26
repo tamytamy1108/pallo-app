@@ -41,6 +41,8 @@ export default function MeetDetail() {
   const myHi = useMeetStore((s) => s.mhi[String(id)] ?? '');
   const [join, setJoin] = useState(false);
   const [cancel, setCancel] = useState(false);
+  // 모집 닫기 확인 (닫으면 되돌릴 수 없어요)
+  const [closeAsk, setCloseAsk] = useState(false);
   const [reviews, setReviews] = useState(false);
   const [cmts, setCmts] = useState<Comment[]>(REVIEW_SEED);
 
@@ -63,8 +65,7 @@ export default function MeetDetail() {
       variant={closed ? 'off' : 'wh'}
       grow={false}
       onPress={() => {
-        setClosed(true);
-        showToast('모집을 닫았어요 · 지도에서 빠져요', { label: '되돌리기', onPress: () => setClosed(false) });
+        if (!closed) setCloseAsk(true);
       }}
     />
   ) : full ? (
@@ -166,6 +167,18 @@ export default function MeetDetail() {
           setCancel(false);
           toggleIn('joined', m.id);
           showToast('참여를 취소했어요');
+        }}
+      />
+      <AskSheet
+        open={closeAsk}
+        onClose={() => setCloseAsk(false)}
+        title="모집을 닫을까요?"
+        desc="더는 참여 신청을 받지 않아요. 닫으면 되돌릴 수 없어요"
+        button="모집 닫기"
+        onConfirm={() => {
+          setCloseAsk(false);
+          setClosed(true);
+          showToast('모집을 닫았어요 · 지도에서 빠져요');
         }}
       />
       <CommentsSheet

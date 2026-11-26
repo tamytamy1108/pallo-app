@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { type ReactNode, useCallback, useEffect, useRef, useState, useDeferredValue } from 'react';
+import { memo, type ReactNode, startTransition, useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from '@/components/ui/safe-area';
@@ -85,7 +85,8 @@ export default function LoungeScreen() {
     if (k === 'trip' || k === 'abroad') setKept(k);
   }, []);
   const branch = branchValue(brs);
-  const branchBtn = <BranchSelect value={branch} onChange={(v) => setBranches(branchList(v))} />;
+  const onMakeTrip = useCallback(() => guardMember(() => setSheet('trip'), '동행을 구하려면'), [setSheet]);
+  const onRegAbroad = useCallback(() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면'), [setSheet]);
 
   // 그려 둔 탭: 지금 탭 + 한 번 연 탭. 라운지가 뜬 뒤 나머지 탭도 하나씩 미리 그려 둬요 (처음 누를 때도 바로 바뀌게)
   const [mountedTabs, setMountedTabs] = useState<LoungeTab[]>(() => [tab]);
@@ -93,7 +94,8 @@ export default function LoungeScreen() {
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
     LG_TABS.forEach(([k], i) => {
-      timers.push(setTimeout(() => setMountedTabs((m) => (m.includes(k) ? m : [...m, k])), PREWARM_MS + i * PREWARM_STEP_MS));
+      // 미리 그리기는 급하지 않은 일로 — 그리는 중에 탭을 누르면 누른 쪽이 먼저예요
+      timers.push(setTimeout(() => startTransition(() => setMountedTabs((m) => (m.includes(k) ? m : [...m, k]))), PREWARM_MS + i * PREWARM_STEP_MS));
     });
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -145,23 +147,16 @@ export default function LoungeScreen() {
         {/* 비회원은 모든 탭에서 위쪽(카드 1~2개)까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
         {/* 한 번 연 탭은 그려 둔 채로 숨겨만 둬요 — 탭을 바꿀 때마다 피드 · 챌린지 · 동아리를 처음부터 다시 그려서 느렸어요 (2026-11-26) */}
         <ScrollLock screen="lounge" peek={LOUNGE_PEEK} inset={16}>
+          {/* 숨은 탭이 이 칸 맨 위에 겹쳐 있어요 */}
+          <View>
           {LG_TABS.map(([k]) =>
             mountedTabs.includes(k) ? (
               <TabSwap key={k} dir={slideDir} active={k === shownTab}>
-                {LAUNCH.story && (k === 'all' || k === 'com') ? <StoryRow /> : null}
-                {k === 'chal' ? (
-                  <ChallengeTab branch={branch} header={branchBtn} />
-                ) : k === 'meet' ? (
-                  <MeetTab branch={branch} header={branchBtn} region={region} />
-                ) : (
-                  <>
-                    <SubRow tab={k} branchBtn={branchBtn} />
-                    <Feed tab={k} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
-                  </>
-                )}
+                <TabBody tab={k} branch={branch} brs={brs} region={region} onMakeTrip={onMakeTrip} onRegAbroad={onRegAbroad} />
               </TabSwap>
             ) : null,
           )}
+          </View>
         </ScrollLock>
       </ScrollView>
 
@@ -282,6 +277,30 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
   );
 }
 
+/**
+ * 한 탭의 본문. memo 로 감싸서 탭을 바꿀 때 다른 탭(피드 카드 · 챌린지 · 번개 지도)은 다시 그리지 않아요.
+ * 전에는 탭을 누를 때마다 그려 둔 다섯 탭 본문이 전부 (두 번씩) 다시 그려져서 탭 이동이 끊겼어요 (2026-11-26).
+ * 지점 버튼도 여기서 만들어요 — 부모에서 만든 요소를 넘기면 매번 새 요소라 memo 가 소용없어요.
+ */
+const TabBody = memo(function TabBody({ tab, branch, brs, region, onMakeTrip, onRegAbroad }: { tab: LoungeTab; branch: string; brs: string[]; region: string | undefined; onMakeTrip: () => void; onRegAbroad: () => void }) {
+  const branchBtn = useMemo(() => <BranchSelect value={branch} onChange={(v) => setBranches(branchList(v))} />, [branch]);
+  return (
+    <>
+      {LAUNCH.story && (tab === 'all' || tab === 'com') ? <StoryRow /> : null}
+      {tab === 'chal' ? (
+        <ChallengeTab branch={branch} header={branchBtn} />
+      ) : tab === 'meet' ? (
+        <MeetTab branch={branch} header={branchBtn} region={region} />
+      ) : (
+        <>
+          <SubRow tab={tab} branchBtn={branchBtn} />
+          <Feed tab={tab} brs={brs} onMakeTrip={onMakeTrip} onRegAbroad={onRegAbroad} />
+        </>
+      )}
+    </>
+  );
+});
+
 /** 탭 내용이 바뀔 때: 고른 쪽에서 살짝 밀려 들어오며 서서히 (0.3초) — 딱 끊겨 바뀌지 않게 */
 function TabSwap({ dir, active, children }: { dir: number; active: boolean; children: ReactNode }) {
   const still = useReducedMotion();
@@ -296,8 +315,14 @@ function TabSwap({ dir, active, children }: { dir: number; active: boolean; chil
     was.current = active;
   }, [active, still, dir, p]);
   const st = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ translateX: (1 - p.get()) * 20 * dir }] }));
-  // 숨은 탭은 자리도 차지하지 않아요 (그려 둔 채로)
-  return <Animated.View style={[st, !active && styles.hiddenTab]}>{children}</Animated.View>;
+  // 숨은 탭은 겹쳐서 투명하게만 둬요 (자리 차지 X · 누름 X · 화면 읽기 X).
+  // display: none 으로 숨기면 새 구조(Fabric)는 숨긴 탭의 화면 조각을 통째로 내렸다가 보일 때 다시 만들어요 —
+  // 탭을 바꿀 때마다 카드 · 사진 · 지도를 처음부터 다시 띄우고, 너비 0 → 진짜 너비로 onLayout 이 다시 돌아서 버퍼링처럼 멈췄어요 (2026-11-26)
+  return (
+    <View style={!active && styles.hiddenTab} pointerEvents={active ? 'auto' : 'none'} accessibilityElementsHidden={!active} importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}>
+      <Animated.View style={st}>{children}</Animated.View>
+    </View>
+  );
 }
 
 /** 지점 선택(해외 동행 탭은 빼요) + 탭별 세부 칩 (프로토타입 #lgSub) */
@@ -448,7 +473,7 @@ function ToTop({ show, bottom, onPress }: { show: boolean; bottom: number; onPre
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  hiddenTab: { display: 'none' },
+  hiddenTab: { position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 },
   page: { paddingTop: TabHeadTop, paddingBottom: 190 },
   // 첫 줄(제목) · 둘째 줄(탭) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (홈 · 라이브러리 · 마이와 같게)
   hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center', marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },

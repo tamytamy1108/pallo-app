@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
-import { useEffect, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,6 +13,7 @@ import { Colors, Radius } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { useKeyboardShown } from '@/lib/keyboard';
 import { FormScrollContext, KeepVisibleContext, useFormScroll, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
+import { ScrollHostContext } from '@/components/ui/field-jump';
 
 /**
  * 시트 모양 화면 (프로토타입 #lgSheet.tall — 이벤트 제안 · 번개 열기 · 동아리 만들기 같은 긴 폼).
@@ -25,6 +26,13 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
   const [formScroll, formBox, onFormScroll, revealNext, keepCaret, showFocused] = useFormScroll();
   // 칸(상세 주소 등)을 눌러 키보드가 올라오면 그 칸이 키보드 · 아래 버튼 위로 다 보이게
   useShowFocusedOnKeyboard(formBox, showFocused);
+  // 빠진 칸으로 데려가기 (ui/field-jump)
+  const scrollY = useRef(0);
+  const host = useMemo(() => ({ scroll: formScroll, box: formBox, y: scrollY }), [formScroll, formBox]);
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onFormScroll(e);
+    scrollY.current = e.nativeEvent.contentOffset.y;
+  };
   const still = useReducedMotion();
   const y = useSharedValue(still ? 0 : 1);
   useEffect(() => {
@@ -52,15 +60,17 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
           <View style={styles.grab} />
           {/* 하나 고르면 다음 칸이 보이게 올려 줘요 (ui/form-scroll) */}
           <View ref={formBox} collapsable={false} style={styles.scrollBox}>
-            <ScrollView ref={formScroll} onScroll={onFormScroll} scrollEventThrottle={32} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <FormScrollContext.Provider value={revealNext}>
-                <KeepVisibleContext.Provider value={keepCaret}>
-                  <PText variant="title" accessibilityRole="header">
-                    {title}
-                  </PText>
-                  {children}
-                </KeepVisibleContext.Provider>
-              </FormScrollContext.Provider>
+            <ScrollView ref={formScroll} onScroll={onScroll} scrollEventThrottle={32} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+              <ScrollHostContext.Provider value={host}>
+                <FormScrollContext.Provider value={revealNext}>
+                  <KeepVisibleContext.Provider value={keepCaret}>
+                    <PText variant="title" accessibilityRole="header">
+                      {title}
+                    </PText>
+                    {children}
+                  </KeepVisibleContext.Provider>
+                </FormScrollContext.Provider>
+              </ScrollHostContext.Provider>
             </ScrollView>
           </View>
           <SheetFooterContext.Provider value>

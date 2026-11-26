@@ -53,6 +53,10 @@ export const Full: Story = { beforeEach: withMeet({ cur: 8, max: 8 }) };
 export const FullWaitlist: Story = { beforeEach: withMeet({ cur: 8, max: 8 }, 3, () => toggleIn('vac', 'p-meet')) };
 /** 내가 연 번개 — '모집 닫기' · 멤버에 '호스트 · 나' */
 export const Host: Story = { beforeEach: withMeet({ mine: true, host: '태미', cur: 1, max: 6, addr: '서울 영등포구 영등포로 10', addr2: '3층 창가 긴 테이블' }) };
+/** 내가 만든 카드가 대표 (물결 · 한글) — 상세 큰 포스터에서도 글자 · 선이 또렷해야 해요 */
+export const MadeCardWave: Story = { beforeEach: withMeet({ card: { design: 'wave', color: '#FFE200', words: ['ㅎㅎ', 'ㅎㅎㅎ'] } }) };
+/** 내가 만든 카드 (큰 원 · 영문 두 줄) — 첫 줄 글자 윗부분이 안 잘려야 해요 */
+export const MadeCardCircle: Story = { beforeEach: withMeet({ card: { design: 'circle', color: '#D0798E', words: ['TAPAS', '& HOLA'] } }) };
 /** 내가 연 번개 · 모집 닫음 */
 export const HostClosed: Story = { beforeEach: withMeet({ mine: true, closed: true, host: '태미', cur: 4, max: 6 }) };
 /** 올린 포스터 사진 2장 */

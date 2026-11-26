@@ -105,6 +105,21 @@ export type Club = {
   time?: [string, string];
   /** 올린 때 (ms). 이 탭을 마지막으로 본 뒤면 '새 글' — data/seed-time.ts */
   at?: number;
+  /** 모이기 시작하는 날 'YYYY-MM-DD' (내가 만든 동아리). 없으면 승인된 날부터 */
+  start?: string;
+  /** 승인 전에 신청 내용을 고친 때 (ms) — 고치면 관리자에게 알림이 가요 */
+  editedAt?: number;
+};
+
+/** 동아리가 모이기 시작하는 날 한 줄 ('12월 3일부터 모여요'). 날을 안 정했으면 승인된 날 · 승인 전이면 '승인된 날부터' */
+export const clubStartLine = (c: Pick<Club, 'start' | 'okAt' | 'wait' | 'rejected'>) => {
+  const ok = c.okAt ? new Date(c.okAt) : null;
+  ok?.setHours(0, 0, 0, 0);
+  const picked = c.start ? new Date(c.start + 'T00:00') : null;
+  // 고른 날보다 승인이 늦으면 승인된 날부터
+  const d = picked && ok ? (picked < ok ? ok : picked) : (picked ?? ok);
+  if (d) return `${d.getMonth() + 1}월 ${d.getDate()}일부터 모여요`;
+  return c.wait || c.rejected ? '승인된 날부터 모여요' : null;
 };
 
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];

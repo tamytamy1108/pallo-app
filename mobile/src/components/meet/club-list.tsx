@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
-import { PText } from '@/components/ui/text';
+import { PText, tightLines } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { C, CLUB_ACT, CLUB_CATS, type Club, type ClubCat } from '@/data/meet';
@@ -31,7 +31,7 @@ export function ClubThumb({ words, bg, uri, design }: { words: string[]; bg: str
   return (
     <View style={[styles.th, { backgroundColor: bg }]}>
       {uri ? <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
-      <PText style={{ width: 200, fontFamily: Font.display, fontSize: fs, lineHeight: fs, color: isDarkBg(bg) ? C.y : C.ink }}>{uri ? '' : w0}</PText>
+      <PText style={{ width: 200, fontFamily: Font.display, ...tightLines(fs, 1), color: isDarkBg(bg) ? C.y : C.ink }}>{uri ? '' : w0}</PText>
     </View>
   );
 }

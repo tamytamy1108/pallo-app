@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 
-import { PText } from '@/components/ui/text';
+import { PText, tightLines } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LG_C, type PicKey } from '@/data/lounge';
@@ -175,7 +175,7 @@ export function PosterArt({ id, word, bg, past = false, wordSize = 36 }: { id: s
           <Image source={require('@/assets/characters/c-upright-yellow.png')} style={[styles.abs, { right: 6, bottom: -14, width: '38%', maxWidth: 150, aspectRatio: 1.57 }, past ? { opacity: 0.55 } : null]} contentFit="contain" />
         </>
       )}
-      <PText style={[styles.pw, { color: wc, fontSize: wordSize, lineHeight: wordSize * 0.95 }]}>{word}</PText>
+      <PText style={[styles.pw, { color: wc, ...tightLines(wordSize, 0.95) }]}>{word}</PText>
     </View>
   );
 }
