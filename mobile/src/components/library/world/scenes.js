@@ -670,7 +670,7 @@ function travelBeach(S) { const sc = S.sc;
   const umb = (x, z, c) => { const g = new THREE.Group(); g.add(at(std(new THREE.CylinderGeometry(.04, .04, 1.8, 6), { color: 0xF7F7F8 }), 0, .9, 0)); const tx = canvasTex(128, 32, (gg, W, H) => { for (let i = 0; i < 8; i++) { gg.fillStyle = i % 2 ? c : '#FFFFFF'; gg.fillRect(i * 16, 0, 16, H); } }); g.add(at(std(new THREE.ConeGeometry(1.1, .45, 16), { map: tx }), 0, 1.9, 0)); g.add(at(std(new THREE.BoxGeometry(1.4, .12, .55), { color: 0xFFFFFF }), .6, .2, .6)); return at(g, x, .2, z); };
   [-10, -6, -2, 2, 6, 10].forEach((t, i) => { const [x, z] = along(-10.6, -10.6, t); sc.add(umb(x, z, ['#E9536A', '#3F5BA9', '#FFC93C'][i % 3])); });
   // 감성 해변 상점가: 파스텔 · 원목 · 아치 창 · 따뜻한 실내 불빛 · 꽃상자 · 칠판 입간판 · 전구 줄
-  const SHOPS = [['Salt & Sun', 'coffee · brunch', '#EFE3CF', '#6B8F7A', 'cafe'], ['Little Gelato', 'handmade', '#F3D3CF', '#B8655A', 'gelato'], ['Sea Glass', 'vintage boutique', '#D6E4E0', '#3F6E74', 'boutique'],
+  const SHOPS = [['Salt & Sun', 'coffee · brunch', '#EFE3CF', '#6B8F7A', 'cafe'], ['Little Gelato', 'handmade', '#F3D3CF', '#B8655A', 'gelato'], ['HY Sea Glass', 'vintage boutique', '#D6E4E0', '#3F6E74', 'boutique'],
     ['Bondi Beach', 'Brunch Café', '#F1E1D8', '#A85F6E', 'flower'], ['The Bubble', 'by master', '#E7DCC8', '#4E5A7A', 'books'], ["Tammy's", 'bakery', '#EADCC4', '#8C6239', 'bakery'],
     ['Xoal Records', 'vinyl', '#DCD6E6', '#5E4E7A', 'records'], ['Linen House', 'slow living', '#EEE8DE', '#7A7466', 'linen'], ['Golden Hour', 'wine bar', '#EAD7B8', '#9C6B2E', 'bar']];
   const SERIF = '"DM Serif Display", Georgia, serif', shopTexs = [];
