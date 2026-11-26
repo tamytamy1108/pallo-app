@@ -960,6 +960,119 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
       x-domain: core
+  "/branches/{branchCode}/guide":
+    get:
+      tags:
+        - 가입 · 온보딩
+      operationId: getBranchPublicGuide
+      summary: 고른 지점 안내 (연동 전에도 보는 공개 칸 — 사진 · 소개 · 주소 · 운영 시간 · 수업 언어 · 전화)
+      description: |-
+        화면: app/onboarding/branch.tsx (가입 › 앱 구경 › 고른 지점 안내) — 지점 이름 → 넘겨 보는 사진 → 소개 → 주소 · 운영 시간 · 스터디 줄 · 연락처 → [앱 둘러보기]
+        언제: 앱 구경에서 지점을 고른 뒤 이 화면에 들어올 때 (가입 단계 state/onboarding 의 branchCode)
+        규칙: 운영 중(ACTIVE) 지점만, 아니면 404. 연동 안 된 사람도 보는 공개 칸만 — 입금 계좌 · 와이파이 · 매니저 주의사항은 연동 회원용 GET /me/branch-guides 에만 있어요.
+        지점이 적지 않은 칸은 null, 사진 · 언어는 없으면 빈 목록 — 앱은 null 인 줄을 그리지 않아요. 스터디 줄은 앱이 languages 로 만들어요 ('영어 · 일본어 · 7팀', 수업이 없으면 줄 없음).
+        안내를 못 받아도 [앱 둘러보기](POST /onboarding APP)는 그대로 눌러요 (가입을 막지 않아요).
+        소개 · 사진은 지점 관리자 웹 설정 '지점 안내'(BranchGuideController · intro · photoPaths, 2026-11)에서 적어요.
+      x-status: existing
+      x-backend: MobileBranchOptionController GET /app/api/v2/branches/{branchCode}/guide → BranchPublicGuideResponse (로그인 필요)
+      x-screens:
+        - app/onboarding/branch.tsx
+      x-app-code: api/onboarding.ts fetchBranchPublicGuide · branchGuideView · mockBranchPublicGuide · api/use-onboarding.ts useBranchPublicGuide
+      parameters:
+        - name: branchCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - branchCode
+                  - branchName
+                  - photoPaths
+                  - languages
+                properties:
+                  branchCode:
+                    type: string
+                  branchName:
+                    type: string
+                    example: 하남점
+                  address:
+                    type:
+                      - string
+                      - "null"
+                  addressDetail:
+                    type:
+                      - string
+                      - "null"
+                    description: 층 · 호
+                    example: 3층
+                  latitude:
+                    type:
+                      - number
+                      - "null"
+                  longitude:
+                    type:
+                      - number
+                      - "null"
+                  intro:
+                    type:
+                      - string
+                      - "null"
+                    description: 지점 소개 글 (줄바꿈 그대로)
+                  photoPaths:
+                    type: array
+                    description: 지점 사진 주소 — 순서 = 넘겨 보는 순서
+                    items:
+                      type: string
+                  phone:
+                    type:
+                      - string
+                      - "null"
+                    description: 지점 문의 전화 (숫자 · 하이픈) — 앱이 전화 걸기에 그대로 써요
+                    example: 0507-0000-0000
+                  phoneHours:
+                    type:
+                      - string
+                      - "null"
+                  openHours:
+                    type:
+                      - string
+                      - "null"
+                    example: 평일 10~23시 · 주말 10~18시
+                  parking:
+                    type:
+                      - string
+                      - "null"
+                  languages:
+                    type: array
+                    description: 이 지점에 열린 수업의 언어 (언어 정렬 순) · 그 언어 수업 수
+                    items:
+                      type: object
+                      required:
+                        - code
+                        - label
+                        - courseCount
+                      properties:
+                        code:
+                          type: string
+                          example: en
+                        label:
+                          type: string
+                          example: 영어
+                        courseCount:
+                          type: integer
+                          example: 5
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-domain: core
   /me/branch-guides:
     get:
       tags:
@@ -971,12 +1084,14 @@ paths:
         내 앱 계정과 연동된 지점마다 한 줄 (지점 이름 순). 연동된 지점이 없으면 빈 배열.
         편집은 지점 관리자 웹 설정 '지점 안내' (BranchGuideController).
         협업 업체 · 별표 항목은 아직 없어요 (앱 목 데이터만).
+        고객센터(app/me/support.tsx) '내 지점 전화'도 이 응답의 phone 을 써요 — 내 지점(이름이 같은 곳)을 먼저, 없으면 전화번호를 적은 첫 지점. 번호가 없으면 줄을 그리지 않아요.
       x-status: existing
       x-backend: MobileBranchGuideController GET /app/api/v2/me/branch-guides → List<BranchGuideResponse>
       x-inventory: A8
       x-screens:
         - components/my/branch-board.tsx
-      x-app-code: api/branch-guide.ts fetchBranchGuides · MOCK_BRANCH_GUIDES
+        - app/me/support.tsx
+      x-app-code: api/branch-guide.ts fetchBranchGuides · myBranchContact · MOCK_BRANCH_GUIDES · api/use-branch-guide.ts useMyBranchContact
       responses:
         '200':
           description: OK
@@ -6026,16 +6141,19 @@ paths:
       operationId: getBranchToday
       summary: 오늘 지점 현황 (세션별 출석 인원 · 프로 출석 체크)
       description: >
-        화면: 지점 관리자 홈 (앱 화면 아직 없음 · 10-roles 4장 · 2026-11-26 정함). 맨 위는 회원과 같은 출석 카드, 그 아래 현황 요약 카드
-        (오늘 세션 수 · 출석 · 프로 출석 — 이 응답에서 앱이 더해요) → '모두 보기' 현황 화면에서 세션 줄마다 `20:00 영어 · 7/9` · 프로 출석 체크 여부, 그 아래 테이블(QR)마다 몇 명 왔는지 (`7번 4명 · 8번 3명`, 2026-11-26).
+        화면: 지점 관리자(스텝) 홈 components/home/branch-status-card.tsx · 모두 보기 app/branch/today.tsx (10-roles 4장 · 2026-11-26). 맨 위는 회원과 같은 출석 카드, 그 아래 현황 요약 카드
+        (제목 옆 '스텝에게만 보여요' · 오늘 스터디 수 · 프로/스텝 · 멤버 인원 · 프로 출석 예정(proName 있는 세션 수)과 실제 출석 — 이 응답에서 앱이 더해요, lib/branch-today-view.ts) → '모두 보기' 현황 화면에서 세션 줄마다 `20:00 영어 · 7/9` · 프로 출석 체크 여부, 그 아래 테이블(QR)마다 몇 명 왔는지 (`7번 4명 · 8번 3명`, 2026-11-26).
 
         규칙: 내 지점(GET /me primaryBranch) 오늘 세션만. 출석은 모두 테이블 QR 이에요 (지점 QR 없음, 2026-11-26) — 회원 · 프로가 테이블 QR 을 찍어
         POST /study/sessions/{sessionId}/check-in 하면 출석 인원 · 프로 출석 체크(role: 리더)가 바로 여기에 반영돼요. 처리할 일(연동 · 체험 · 신고 · 회원 요청)은 앱에 두지 않아요 — 전산(관리자) 웹 (2026-11-25).
       x-status: new
       x-roles:
         - manager
-      x-screens: []
-      x-app-code: 없음 — 시안 prototype/role-screens.html (home)
+      x-screens:
+        - app/(tabs)/index.tsx
+        - components/home/branch-status-card.tsx
+        - app/branch/today.tsx
+      x-app-code: api/branch-today.ts fetchBranchToday (가짜 서버 data/branch-today.ts) · api/use-branch-today.ts useBranchToday · lib/branch-today-view.ts
       responses:
         "200":
           description: OK

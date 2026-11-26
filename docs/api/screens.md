@@ -11,7 +11,7 @@
 | 홈 | 6 | 2 | 3 | 11 |
 | 알림 · 공지 | 5 | 1 | 1 | 7 |
 | 공통 · 설정값 | 7 | 1 | 1 | 9 |
-| 가입 · 온보딩 | 4 | 0 | 4 | 8 |
+| 가입 · 온보딩 | 5 | 0 | 4 | 9 |
 | 라이브러리 | 1 | 0 | 3 | 4 |
 | 학습 · 레슨 | 0 | 0 | 3 | 3 |
 | 진도 · 보상 | 0 | 0 | 7 | 7 |
@@ -30,10 +30,10 @@
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
 | 캐릭터 · 상점 | 0 | 0 | 6 | 6 |
 | 수강 · 결제 | 10 | 5 | 6 | 21 |
-| 프로 노트 | 1 | 2 | 7 | 10 |
+| 프로 노트 | 2 | 1 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
-| 프로 · 직원 | 0 | 0 | 15 | 15 |
-| **합계** | **85** | **46** | **171** | **302** |
+| 프로 · 직원 | 0 | 0 | 14 | 14 |
+| **합계** | **87** | **45** | **170** | **302** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -281,6 +281,13 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 |---|---|---|---|
 | 이유 여러 개 (안 골라도 돼요) | (보내기에 같이) | — | WHY_REASONS · state/onboarding.ts why |
 | [앱 둘러보기] → 가입 끝 → 홈 | POST /me/onboarding {path: app, bodyColor, langs, reasons} | new | finishOnboarding (role guest) |
+
+### 고른 지점 안내 (앱 구경) — `app/onboarding/branch.tsx`
+| 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 지점 이름 · 넘겨 보는 사진 · 소개 · 주소 · 운영 시간 · 스터디 줄('영어 · 일본어 · 7팀') · 연락처 — 지점이 안 적은 줄은 안 그려요 | GET /branches/{branchCode}/guide | existing | api/onboarding.ts fetchBranchPublicGuide (가짜: mockBranchPublicGuide) |
+| [전화] | (위 응답 phone) | — | lib/open-out openTel |
+| [앱 둘러보기] → 가입 끝 → 홈 (안내를 못 받아도 눌러요) | POST /onboarding (APP) | existing | api/use-onboarding.ts useSubmitOnboarding |
 
 ### 사용 가이드 5장 — (앱 화면 아직 없음)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -978,7 +985,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 자주 묻는 질문 (찾기 · 칩 · 펼침) | GET /faq {categories, items} | existing | api/support.ts fetchFaq |
-| 내 지점 전화 | GET /me/branch-guides (phone) | existing | BRANCH_PHONE |
+| 내 지점 전화 (내 지점 먼저, 없으면 번호 적은 첫 지점 · 번호가 없으면 줄 없음) | GET /me/branch-guides (phone) | existing | api/use-branch-guide.ts useMyBranchContact |
 | 1:1 문의하기 (분류 · 내용 5~2000자) | POST /me/inquiries | existing | api/support.ts createInquiry |
 | 내 문의 (답변 대기 · 완료) | GET /me/inquiries | existing | api/support.ts fetchMyInquiries |
 
@@ -1041,7 +1048,7 @@ v2 에서는 `/me/inquiries` 가 1:1 문의예요 (MobileUserInquiryController).
 ### 지점 관리자 (manager)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 홈 현황 요약 카드(오늘 세션 · 출석 · 프로 출석) → 모두 보기: 세션별 출석 인원 · 테이블(QR)마다 몇 명 · 프로 출석 체크 — 테이블 QR 출석이 바로 반영 | GET /manager/branch/today | new | 없음 |
+| 홈 현황 요약 카드('스텝에게만 보여요' · 오늘 스터디 · 프로/스텝 · 멤버 인원 · 프로 출석 예정과 실제) → 모두 보기(`app/branch/today.tsx`): 세션별 출석 인원 · 테이블(QR)마다 몇 명 · 프로 출석 체크 — 테이블 QR 출석이 바로 반영 | GET /manager/branch/today | new | api/branch-today.ts (가짜: data/branch-today.ts) · components/home/branch-status-card.tsx |
 | 출석 명단 보기 | GET /staff/sessions/{sessionId}/roster | new | 없음 |
 | 이름 옆 `STAFF` · 소속 줄(지점 이름 · 본사는 PALLO) | AuthorRole STAFF | change | 앱은 지금 '매니저' 글자 |
 | 연동 · 체험 · 신고 · 회원 요청 처리 | 앱에 없어요 — 전산(관리자) 웹 | — | — |
