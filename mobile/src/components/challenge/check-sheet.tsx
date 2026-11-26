@@ -150,14 +150,17 @@ export function CheckSheet({ challenge, onClose, onPosted }: { challenge: Challe
         <PText style={styles.ds}>{`${p.name}\n${p.guide || ''}`}</PText>
         {d ? (
           <View>
-            <PhotoFrame key={d.uri} uri={d.uri} framing={d.framing} onChange={(f) => reframe(cur, f)} style={[styles.prev, { aspectRatio: ratio }]} accessibilityLabel="올릴 사진 맞추기">
-              <Pressable onPress={() => setSquare((v) => !v)} accessibilityRole="button" accessibilityLabel="비율 바꾸기 · 원본 비율 ↔ 1:1 정사각형" style={styles.ratioTg}>
-                <ChIcon name="ratio" size={16} color={Colors.white} width={2.6} />
-              </Pressable>
-              <View style={styles.unPick}>
-                <LgBtn label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={unPick} />
-              </View>
-            </PhotoFrame>
+            {/* 사진 칸은 늘 같은 크기 — 사진 비율 · 비율 바꾸기에 따라 틀만 칸 가운데서 바뀌고 아래 줄 · 시트 높이는 그대로예요 */}
+            <View style={styles.stage}>
+              <PhotoFrame key={d.uri} uri={d.uri} framing={d.framing} onChange={(f) => reframe(cur, f)} style={[styles.prev, frameSize(ratio)]} accessibilityLabel="올릴 사진 맞추기">
+                <Pressable onPress={() => setSquare((v) => !v)} accessibilityRole="button" accessibilityLabel="비율 바꾸기 · 원본 비율 ↔ 1:1 정사각형" style={styles.ratioTg}>
+                  <ChIcon name="ratio" size={16} color={Colors.white} width={2.6} />
+                </Pressable>
+                <View style={styles.unPick}>
+                  <LgBtn label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={unPick} />
+                </View>
+              </PhotoFrame>
+            </View>
             {/* 고른 사진 줄: 눌러서 맞출 사진 고르기 · 끌어서 순서 바꾸기 (첫 장이 인증 목록에 먼저 보여요) */}
             <PhotoReorderRow
               items={drafts}
@@ -223,6 +226,14 @@ export function CheckSheet({ challenge, onClose, onPosted }: { challenge: Challe
   );
 }
 
+/** 인증 사진 칸 (테두리 포함) — 세로 사진은 높이 340, 정사각 · 가로 사진은 폭 260 에 맞춰요 */
+const STAGE_W = 260;
+const STAGE_H = 340;
+const frameSize = (ratio: number) => {
+  const w = Math.min(STAGE_W, STAGE_H * ratio);
+  return { width: w, height: w / ratio };
+};
+
 const styles = StyleSheet.create({
   ds: { fontFamily: Font.body600, fontSize: 14, lineHeight: 22.4, color: SUB },
   dsB: { fontFamily: Font.body800, fontSize: 14, color: SUB },
@@ -231,7 +242,8 @@ const styles = StyleSheet.create({
   photo: { flex: 1, height: 100, borderRadius: 18, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', gap: 6 },
   photoOn: { transform: [{ scale: 0.97 }] },
   photoT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },
-  prev: { width: '100%', maxWidth: 260, alignSelf: 'center', borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.ink, overflow: 'hidden' },
+  stage: { width: STAGE_W, height: STAGE_H, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
+  prev: { borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.ink, overflow: 'hidden' },
   ratioTg: { position: 'absolute', left: 10, bottom: 10, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(30,26,43,0.72)', alignItems: 'center', justifyContent: 'center' },
   unPick: { position: 'absolute', right: 7, bottom: 7 },
   strip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingHorizontal: 2, paddingBottom: 4 },

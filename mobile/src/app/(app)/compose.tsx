@@ -254,16 +254,25 @@ export default function ComposeScreen() {
   );
 }
 
-/** 사진 맞추기 틀 (원본 비율 4:6 ~ 1.91:1 · 최대 폭 300): 두 손가락 확대(최대 4배) · 한 손가락 이동 · 두 번 눌러 처음대로 */
+/** 사진 칸 크기 (틀 테두리 2 포함 전 안쪽) — 세로 4:6 이 340 높이, 정사각 · 가로가 300 폭에 꼭 맞아요 */
+const STAGE_W = 300;
+const STAGE_H = 340;
+
+/**
+ * 사진 맞추기 틀 (원본 비율 4:6 ~ 1.91:1): 두 손가락 확대(최대 4배) · 한 손가락 이동 · 두 번 눌러 처음대로.
+ * 사진 칸은 늘 같은 크기 — 사진 비율 · 비율 바꾸기에 따라 틀만 칸 가운데서 바뀌고, 아래 사진 줄 · 시트 높이는 그대로예요.
+ */
 function CropFrame({ d, r, onChange, onToggleRatio, onRemove }: { d: Draft; r: number; onChange: (f: PhotoFraming) => void; onToggleRatio: () => void; onRemove: () => void }) {
-  const FW = Math.min(300, 340 * r);
+  const FW = Math.min(STAGE_W, STAGE_H * r);
   return (
-    <PhotoFrame uri={d.uri} framing={d.framing} onChange={onChange} style={[styles.prev, { width: FW + 4, height: FW / r + 4 }]} accessibilityLabel="올릴 사진 미리 보기 · 끌어서 위치 맞추기">
-      <Pressable onPress={onToggleRatio} accessibilityRole="button" accessibilityLabel="비율 바꾸기 · 원본 비율 ↔ 1:1 정사각형" style={styles.ratio}>
-        <LgIcon name="ratio" size={16} color="#fff" sw={2.6} />
-      </Pressable>
-      <LgButton label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={onRemove} style={styles.unimg} />
-    </PhotoFrame>
+    <View style={styles.stage}>
+      <PhotoFrame uri={d.uri} framing={d.framing} onChange={onChange} style={[styles.prev, { width: FW + 4, height: FW / r + 4 }]} accessibilityLabel="올릴 사진 미리 보기 · 끌어서 위치 맞추기">
+        <Pressable onPress={onToggleRatio} accessibilityRole="button" accessibilityLabel="비율 바꾸기 · 원본 비율 ↔ 1:1 정사각형" style={styles.ratio}>
+          <LgIcon name="ratio" size={16} color="#fff" sw={2.6} />
+        </Pressable>
+        <LgButton label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={onRemove} style={styles.unimg} />
+      </PhotoFrame>
+    </View>
   );
 }
 
@@ -282,8 +291,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   photoText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
-  prev: {
+  stage: {
+    width: STAGE_W + 4,
+    height: STAGE_H + 4,
     alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prev: {
     borderWidth: 2,
     borderColor: Colors.ink,
     borderRadius: 18,
