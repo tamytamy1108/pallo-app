@@ -19,6 +19,7 @@ import { followLists, MY_BADGES, rankPeople } from '@/data/my';
 import { isMember } from '@/state/access';
 import { getSavedExpressions } from '@/state/expressions';
 import { getMe, isProLike } from '@/state/me';
+import { getStudyStreak } from '@/state/progress';
 
 import { http } from './client';
 import { apiConfig } from './config';
@@ -87,6 +88,8 @@ export type MyPageProStats = {
   attendanceChecks: number;
   /** 출석률(%) — 이번 달 맡은 세션 중 '프로로 참여'로 출석한 비율 (0~100). 서버에 아직 없으면 null → '–' (2026-11-26) */
   attendanceRate?: number | null;
+  /** 참여한 세션(누적) — 테이블 QR 에서 '프로로 참여'로 출석 체크한 세션 수, 전체 기간. 스텝 마이에 보여요 (2026-11-26) */
+  sessionsTotal?: number | null;
   /** 보낸 노트 (전체 기간) */
   notesSent: number;
   /** 받은 고마워요 — 도메인 전까지 0 */
@@ -277,9 +280,9 @@ export function mockMyPage(): MyPage {
     avatar: null,
     sparks: me.sparks,
     follow: { following: lists.fing.length, followers: lists.fer.length },
-    stats: { streakDays: me.streak, weekRank: myRank, joinedMeetCount: me.joinedMeets, badgeCount: MY_BADGES.filter((b) => b.on).length },
+    stats: { streakDays: getStudyStreak(), weekRank: myRank, joinedMeetCount: me.joinedMeets, badgeCount: MY_BADGES.filter((b) => b.on).length },
     proStats: pro
-      ? { sessionsThisMonth: PRO_STATS.sessions, attendanceChecks: PRO_STATS.checks, attendanceRate: PRO_STATS.sessions ? Math.round((PRO_STATS.checks / PRO_STATS.sessions) * 100) : null, notesSent: PRO_SENT_NOTES.length, thanksReceived: PRO_SENT_NOTES.reduce((a, n) => a + n.thanksN, 0) }
+      ? { sessionsThisMonth: PRO_STATS.sessions, attendanceChecks: PRO_STATS.checks, attendanceRate: PRO_STATS.sessions ? Math.round((PRO_STATS.checks / PRO_STATS.sessions) * 100) : null, sessionsTotal: PRO_STATS.total, notesSent: PRO_SENT_NOTES.length, thanksReceived: PRO_SENT_NOTES.reduce((a, n) => a + n.thanksN, 0) }
       : null,
     proNote: member || pro ? mockProNote(pro, me.name) : null,
     myClasses: pro ? mockMyClasses(monday) : null,

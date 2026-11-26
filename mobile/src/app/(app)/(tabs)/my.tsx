@@ -138,14 +138,17 @@ export default function MyScreen() {
                 ? // 프로: 연속 학습(앱 학습 코너) · 출석률(맡은 세션 중 프로로 참여) · 보낸 노트 · 받은 고마워요 (2026-11-26)
                   [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
-                    { ic: 'bolt', v: num(proStats.attendanceRate, '%'), l: '출석률', onPress: () => setClassOpen(true) },
+                    // 프로 = 출석률(맡은 세션 중) · 스텝 = 참여한 세션(프로로 출석 체크한 누적 수 — 맡은 세션이 없어서)
+                    me.role === 'manager'
+                      ? { ic: 'bolt', v: num(proStats.sessionsTotal, '회'), l: '참여한 세션', onPress: () => setClassOpen(true) }
+                      : { ic: 'bolt', v: num(proStats.attendanceRate, '%'), l: '출석률', onPress: () => setClassOpen(true) },
                     { ic: 'mic', v: num(proStats.notesSent, '개'), l: '보낸 노트', onPress: go('/me/notes?box=sent') },
                     { ic: 'heart', v: num(proStats.thanksReceived, '개'), l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
                   ]
                 : [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
                     { ic: 'crown', v: num(my?.stats.weekRank, '위'), l: '이번 주 랭킹', onPress: go('/me/ranking') },
-                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여 중인 모임', onPress: () => setMyMeetsOpen(true) },
+                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: () => setMyMeetsOpen(true) },
                     { ic: 'heart', v: num(my?.stats.badgeCount, '개'), l: '받은 배지', onPress: () => setBadges(true) },
                   ]
             }

@@ -7,7 +7,7 @@
 import { packValue, unpackValue } from '@/lib/device-storage';
 import { createStore } from '@/lib/store';
 
-import { recordToday } from './today-goal';
+import { dayKey, recordToday } from './today-goal';
 
 export { DAILY_GOAL, getTodayDone, useTodayDone } from './today-goal';
 
@@ -121,3 +121,20 @@ function omit(o: Record<string, number>, k: string) {
   const { [k]: _drop, ...rest } = o;
   return rest;
 }
+
+/**
+ * 연속 학습: 라이브러리 공부 코너(스터디 맵 · 상황 맵)에서 학습 단계를 하루 1개 이상 끝낸 날이 며칠째 이어지는지.
+ * 오늘 아직 안 했으면 어제까지 이어진 날을 세요 (오늘 하면 +1). 지점 스터디 출석과는 따로예요 (2026-11-26).
+ */
+export function studyStreak(done: Record<string, number>, now: number = Date.now()): number {
+  const days = new Set(Object.values(done).map((t) => dayKey(t)));
+  const d = new Date(now);
+  if (!days.has(dayKey(d.getTime()))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (days.has(dayKey(d.getTime()))) {
+    n += 1;
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+export const getStudyStreak = () => studyStreak(store.get().done);
