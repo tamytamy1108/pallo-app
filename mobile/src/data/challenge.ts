@@ -457,9 +457,9 @@ export const CH_GD: Record<DailyCatKey, string> = {
   morning: '• 7시 전에 일어나기\n• 댓글로 Good morning!',
   free: '• 오늘 찍은 사진 한 장\n• 한 줄 소감',
 };
-export const START_OPTS = ['오늘', '내일', '다음 주 월요일'] as const;
+export const START_OPTS = ['오늘', '내일'] as const;
 export type StartOpt = (typeof START_OPTS)[number];
-/** 시작: 빠른 고르기(오늘 · 내일 · 다음 주 월요일) 또는 달력에서 고른 날 'YYYY-MM-DD' */
+/** 시작: 빠른 고르기(오늘 · 내일) 또는 달력에서 고른 날 'YYYY-MM-DD' */
 export type StartPick = StartOpt | string;
 /** 달력으로 시작 날을 고를 수 있는 범위 (오늘부터 며칠 뒤까지) */
 export const START_MAX_DAYS = 90;
@@ -473,7 +473,7 @@ export type ChPlan = { off: number; md: string; D: number; total: number; freqT:
 export function planOf(start: StartPick, D: number, weekly: boolean, n: number, days: string[]): ChPlan {
   const t0 = new Date(new Date().toDateString());
   const picked = /^\d{4}-\d{2}-\d{2}$/.test(start) ? new Date(start + 'T00:00') : null;
-  const off = picked ? Math.max(0, Math.round((picked.getTime() - t0.getTime()) / 864e5)) : start === '오늘' ? 0 : start === '내일' ? 1 : (8 - t0.getDay()) % 7 || 7;
+  const off = picked ? Math.max(0, Math.round((picked.getTime() - t0.getTime()) / 864e5)) : start === '내일' ? 1 : 0;
   const sd = new Date(t0.getTime() + off * 864e5);
   const md = `${sd.getMonth() + 1}.${String(sd.getDate()).padStart(2, '0')} ${WEEKDAYS[sd.getDay()]}`;
   if (!weekly) return { off, md, D, total: D, freqT: '매일', unit: '' };
