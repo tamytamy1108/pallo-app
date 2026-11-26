@@ -26,7 +26,7 @@ type Stage = { k: 'menu' } | { k: 'members' } | { k: 'cohost' } | { k: 'meet' } 
 
 const opt = (key: string, label: string, sub?: string, bad?: boolean): SheetOption => ({ key, label, sub, bad });
 
-export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club; role: ManageRole; open: boolean; onClose: () => void; members: Member[]; staff: string[] }) {
+export function ClubManage({ c, role, open, onClose, members, staff, onNewSession }: { c: Club; role: ManageRole; open: boolean; onClose: () => void; members: Member[]; staff: string[]; /** 정기 모임 일정 → 일정 만들기 시트 */ onNewSession: () => void }) {
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   const [wasOpen, setWasOpen] = useState(open);
   const [pick, setPick] = useState<string | null>(null);
@@ -94,8 +94,8 @@ export function ClubManage({ c, role, open, onClose, members, staff }: { c: Club
     return (
       <Sheet open={open} onClose={onClose} title="공지 · 정기 모임 · 참석 확인" label="모임 운영" scrollKey="meet">
         <SheetOptions
-          items={[opt('notice', '공지 쓰기', '게시판 공지 + 채팅방 위 고정 · 멤버 모두에게 알림'), opt('when', '정기 모임 일정', `${c.when} · 이번 회차 쉬기`), opt('check', '참석 확인', '지난 회차에 누가 왔는지 · 호스트 점수 ★에 쓰여요')]}
-          onPick={(k) => (k === 'notice' ? go({ k: 'notice' }) : showToast(k === 'when' ? '정기 모임 일정 바꾸기는 다음에 붙여요' : '참석 확인 화면은 다음에 붙여요'))}
+          items={[opt('notice', '공지 쓰기', '게시판 공지 + 채팅방 위 고정 · 멤버 모두에게 알림'), opt('when', '정기 모임 일정 만들기', '날짜 · 시간 · 주제 · 인원 · 장소 · 멤버 모두에게 알림'), opt('check', '참석 확인', '지난 회차에 누가 왔는지 · 호스트 점수 ★에 쓰여요')]}
+          onPick={(k) => (k === 'notice' ? go({ k: 'notice' }) : k === 'when' ? onNewSession() : showToast('참석 확인 화면은 다음에 붙여요'))}
         />
         {back()}
       </Sheet>

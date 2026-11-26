@@ -34,7 +34,7 @@ import { branchMatches } from '@/components/lounge/branch-select';
 import { devClubRole } from '@/lib/dev-profile';
 import type { Me, Role, StudyLang } from '@/state/me';
 
-import { useMeetStore } from './meet-store';
+import { useMeetStore, type ClubSched } from './meet-store';
 
 export const useAllMeets = () => {
   const mine = useMeetStore((s) => s.myMeets);
@@ -188,11 +188,25 @@ export function clubStaff(c: Club, cur: number, me: MeArg) {
   return L.filter((m) => m.t !== '호스트').slice(0, 1).map((m) => m.n);
 }
 
-export type Session = { id: string; k: number; label: string; cap: number; cur: number; me: boolean; day: number; mon: number; no: number; wd: string; tm: string; th: string };
-/** 다가오는 정기 모임 (모이는 요일 기준 · 기본 4주 안 4회, 프로토타입 lgClubSess) */
-export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, span = 29): Session[] {
+/** made: 호스트 · 코호스트가 만든 일정 (장소 · 메모 · 끝 시간이 있을 수 있어요) */
+export type Session = { id: string; k: number; label: string; cap: number; cur: number; me: boolean; day: number; mon: number; no: number; wd: string; tm: string; th: string; made?: boolean; place?: string; memo?: string; end?: string };
+/**
+ * 다가오는 정기 모임 (기본 4주 안 4회).
+ * - 호스트 · 코호스트가 만든 일정(made)이 있으면 그걸 날짜순으로 보여 줘요.
+ * - 내가 만든 동아리는 만든 일정만 (예시 일정을 지어내지 않아요). 예시 동아리는 모이는 요일 기준 예시 일정(프로토타입 lgClubSess) + 만든 일정.
+ */
+export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, span = 29, made: ClubSched[] = []): Session[] {
   const t0 = new Date();
   t0.setHours(0, 0, 0, 0);
+  const own: Session[] = made
+    .map((m, i) => {
+      const d = new Date(m.date + 'T00:00');
+      const k = Math.round((d.getTime() - t0.getTime()) / 864e5);
+      const me = !!att[m.id];
+      return { id: m.id, k, label: `${d.getMonth() + 1}.${d.getDate()}(${WEEK[d.getDay()]}) ${m.time}${m.end ? '~' + m.end : ''}`, cap: m.cap, cur: 1 + (me ? 1 : 0), me, day: d.getDate(), mon: d.getMonth() + 1, no: i + 1, wd: WEEK[d.getDay()], tm: m.time, th: m.title, made: true, place: m.place, memo: m.memo, end: m.end };
+    })
+    .filter((q) => q.k >= 0 && q.k < span);
+  if (c.mine) return own.slice(0, max);
   const out: Session[] = [];
   const h = hashId(c.id);
   const tm = (c.when.match(/\d{1,2}:\d{2}/) || ['20:00'])[0];
@@ -207,7 +221,8 @@ export function clubSessions(c: Club, att: Record<string, boolean>, max = 4, spa
     const me = !!att[id];
     out.push({ id, k, label: `${d.getMonth() + 1}.${d.getDate()}(${WEEK[d.getDay()]}) ${tm}`, cap, cur: base + (me ? 1 : 0), me, day: d.getDate(), mon: d.getMonth() + 1, no: 13 + (h % 40) + out.length, wd: WEEK[d.getDay()], tm, th });
   }
-  return out;
+  if (!own.length) return out;
+  return [...out, ...own].sort((a, b) => a.k - b.k || a.tm.localeCompare(b.tm)).slice(0, max);
 }
 
 /** 정기 모임 날짜마다 참석 멤버 (호스트 + 날짜별로 다른 멤버, 내가 참석하면 나 — 프로토타입 lgSessMem) */

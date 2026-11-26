@@ -23,7 +23,7 @@ type Me = { name: string; branch: string };
  * 아래 버튼: 가입하고 참석하기 / 참석하기 · 남은 자리 / 참석 완료(취소) / 빈자리 알림.
  * 참석하면 '참석 완료!' 창 → [인사말 남기기](내 줄 입력칸 열림) / [다음에 할게요].
  */
-export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub }: { c: Club; q: Session | null; inC: boolean; all: Member[]; me: Me; onClose: () => void; onJoinClub: () => void }) {
+export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub, onCancel }: { c: Club; q: Session | null; inC: boolean; all: Member[]; me: Me; onClose: () => void; onJoinClub: () => void; /** 호스트 · 코호스트가 만든 일정이면: 이 일정 취소 */ onCancel?: () => void }) {
   const vac = useMeetStore((s) => (q ? !!s.vac[q.id] : false));
   const myHi = useMeetStore((s) => (q ? (s.shi[q.id] ?? '') : ''));
   const [edit, setEdit] = useState(false);
@@ -42,7 +42,8 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub }: { c: C
   if (!q) return null;
   const full = q.cur >= q.cap && !q.me;
   const at = sessionMembers(all, q, me, myHi);
-  const spot = clubSpot(c);
+  // 만든 일정은 호스트가 적은 장소 (없으면 동아리 장소)
+  const spot: [string, string] = q.made ? [q.place || clubSpot(c)[0], q.place ? '호스트가 정한 장소예요' : clubSpot(c)[1]] : clubSpot(c);
 
   const attend = () => {
     toggleIn('att', q.id);
@@ -97,13 +98,24 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub }: { c: C
                   <PText style={styles.addrB}>{spot[0]}</PText>
                   <PText style={[styles.addrS, keepAll]}>{spot[1]}</PText>
                 </View>
-                <CopyBtn text={spot[1]} />
+                <CopyBtn text={q.made ? spot[0] : spot[1]} />
               </View>,
             ],
             ['users', `${q.cur} / ${q.cap}명${q.cur >= q.cap ? ' · 마감' : ` · 남은 자리 ${q.cap - q.cur}`}`],
             ['save', <PText key="b" style={sumText.t}>{`준비물 · ${BRING[c.cc] || BRING.study}`}</PText>],
           ]}
         />
+        {q.memo ? (
+          <View style={styles.memo}>
+            <PText style={styles.memoK}>호스트 한마디</PText>
+            <PText style={[styles.memoT, keepAll]}>{q.memo}</PText>
+          </View>
+        ) : null}
+        {onCancel ? (
+          <Pressable onPress={onCancel} accessibilityRole="button" hitSlop={8} style={styles.cancel}>
+            <PText style={styles.cancelT}>이 일정 취소하기</PText>
+          </Pressable>
+        ) : null}
         <View style={{ gap: 6 }}>
           <FieldLabel>참석 멤버 {q.cur}명</FieldLabel>
           <View>
@@ -168,6 +180,11 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub }: { c: C
 }
 
 const styles = StyleSheet.create({
+  memo: { borderWidth: 1.5, borderColor: Colors.line, borderRadius: 14, backgroundColor: Colors.white, paddingHorizontal: 14, paddingVertical: 10, gap: 2 },
+  memoK: { fontFamily: Font.body900, fontSize: 12, lineHeight: 17, color: Colors.purple },
+  memoT: { fontFamily: Font.body700, fontSize: 13.5, lineHeight: 20 },
+  cancel: { alignSelf: 'flex-start' },
+  cancelT: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: '#B23A5A', textDecorationLine: 'underline' },
   dk: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.purple, marginBottom: -8 },
   addr: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   addrB: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 19.6 },
