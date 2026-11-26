@@ -14,6 +14,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { NOTICE_TAG, noticeDate } from '@/data/mock';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /**
  * 공지사항 목록 (프로토타입 noticeHTML · .nc-row).
@@ -21,11 +22,12 @@ import { NOTICE_TAG, noticeDate } from '@/data/mock';
  * 데이터: 12 GET /notices (첫 20개 · 더 받기는 공지가 많아지면 useInfiniteQuery 로)
  */
 export default function NoticeListScreen() {
+  const pullRefresh = usePullRefresh();
   const { data, isPending, isError, error, refetch } = useQuery(noticesQuery());
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar title="공지사항" />
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
         {isPending ? (
           <LoadingState />
         ) : isError ? (

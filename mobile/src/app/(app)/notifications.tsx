@@ -20,6 +20,7 @@ import { canUse, type Feature } from '@/state/access';
 import { memberGate } from '@/components/common/trial-guide';
 import { getMe } from '@/state/me';
 import { getLastStep } from '@/state/progress';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /**
  * 알림함 (프로토타입 notiHTML · .nt-tabs · .nt-row).
@@ -41,6 +42,7 @@ function myLastHref() {
 }
 
 export default function NotificationsScreen() {
+  const pullRefresh = usePullRefresh();
   const [tab, setTab] = useState<'all' | NotiKind>('all');
   const read = useNotiRead();
   const unread = useUnreadCount();
@@ -99,7 +101,7 @@ export default function NotificationsScreen() {
         })}
       </View>
 
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
         {list.length ? (
           list.map((n) => <Row key={n.id} n={n} unread={!read[n.id]} onPress={() => open(n)} />)
         ) : (

@@ -21,6 +21,7 @@ import { EVENT_FILTERS, EVENTS, type EventKind } from '@/data/events';
 import { useMe } from '@/state/me';
 import { useTabReselect } from '@/lib/tab-reselect';
 import { ChipScroll } from '@/components/ui/chip-scroll';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /**
  * 이벤트 탭 (docs/pages/06-event.md): 지점 · 본사가 여는 파티 · 클래스 · 여행.
@@ -31,6 +32,7 @@ import { ChipScroll } from '@/components/ui/chip-scroll';
 const EVENT_PEEK = 640;
 
 export default function EventScreen() {
+  const pullRefresh = usePullRefresh();
   const scroll = useRef<ScrollViewInstance>(null);
   useTabReselect('event', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const role = useMe((m) => m.role);
@@ -47,7 +49,7 @@ export default function EventScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView ref={scroll} contentContainerStyle={styles.page} onScroll={() => checkScrollLock('event')} scrollEventThrottle={64}>
+      <ScrollView refreshControl={pullRefresh} ref={scroll} contentContainerStyle={styles.page} onScroll={() => checkScrollLock('event')} scrollEventThrottle={64}>
         <View style={styles.hd}>
           {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
           <PText variant="headline" accessibilityRole="header" accessibilityLabel="이벤트">

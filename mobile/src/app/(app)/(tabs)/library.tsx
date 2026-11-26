@@ -27,6 +27,7 @@ import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
 import { useLastStep } from '@/state/progress';
 import { useTabReselect } from '@/lib/tab-reselect';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
 const NO_BOOKS: Book[] = [];
@@ -38,6 +39,7 @@ const NO_MAPS: SituationMap[] = [];
  * 책장은 17 `/library/books`, 상황 맵은 16 `/library/maps` 로 받아요 (스플래시 동안 미리 받아 둬요).
  */
 export default function LibraryScreen() {
+  const pullRefresh = usePullRefresh();
   const st = libStore.useStore();
   const myLang = useMe((m) => m.lang);
   useProgressVersion();
@@ -122,7 +124,7 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* 만지거나 스크롤하는 동안은 지도 미리 만들기(화면이 잠깐 멈춤)를 미뤄요 */}
-      <ScrollView ref={scroll} contentContainerStyle={styles.body} onTouchStart={noteLibTouch} onScroll={(e) => {
+      <ScrollView refreshControl={pullRefresh} ref={scroll} contentContainerStyle={styles.body} onTouchStart={noteLibTouch} onScroll={(e) => {
           noteLibTouch();
           const y = e.nativeEvent.contentOffset.y;
           setShowTop(y > 360);

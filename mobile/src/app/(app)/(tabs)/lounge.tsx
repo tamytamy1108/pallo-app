@@ -33,6 +33,7 @@ import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge
 import { EASE } from '@/lib/motion';
 import { useTabReselect } from '@/lib/tab-reselect';
 import { useCenterChip } from '@/lib/center-chip';
+import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /**
  * 라운지 (docs/pages/04-lounge.md · 프로토타입 renderLounge · bindLounge, 탭 id azit).
@@ -46,6 +47,7 @@ const PREWARM_MS = 900;
 const PREWARM_STEP_MS = 350;
 
 export default function LoungeScreen() {
+  const pullRefresh = usePullRefresh();
   const tab = useLounge((s) => s.tab);
   // 탭 줄(밑줄 · 굵은 글자)은 누르자마자 바뀌고, 무거운 본문(피드 · 챌린지 · 동아리)은 그다음에 그려요 —
   // 본문을 한꺼번에 그리느라 누른 순간 화면이 멈춰서 탭 이동이 느리고 딱딱해 보였어요
@@ -134,7 +136,7 @@ export default function LoungeScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* 카드 안 댓글 창(Modal)도 이 스크롤 안에 그려져요 — 'handled' 가 없으면 키보드가 떠 있을 때 보내기 버튼을 처음 누르면 키보드만 내려가요 */}
-      <ScrollView ref={scroll} onScroll={onScroll} scrollEventThrottle={64} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
+      <ScrollView refreshControl={pullRefresh} ref={scroll} onScroll={onScroll} scrollEventThrottle={64} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
         <View style={styles.hd}>
           {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
           <PText variant="headline" accessibilityRole="header" accessibilityLabel="라운지">
