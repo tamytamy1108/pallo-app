@@ -13,13 +13,22 @@ import { mock } from './mock';
 
 type Opts = { signal?: AbortSignal };
 
-/** /me 응답 = 내 정보 + 가입 과정을 아직 안 끝냈는지 (우리 백엔드 v1 MobileMeResponse.needsOnboarding 과 같은 이름) */
-export type MeResponse = Me & { needsOnboarding: boolean };
+/**
+ * /me 응답 — 백엔드 MobileMeResponse 그대로 (v1 · v2 같은 DTO).
+ * - code: 계정명 · host: 호스트 여부 · needsOnboarding: 가입 과정을 아직 안 끝냈는지
+ * - memberAccessLevel: 지점 회원 등급 → state/me 에 넣어 회원 · 비회원(state/access)을 가려요
+ * 이름 · 지점 · 레벨 등 나머지 Me 값은 아직 서버에서 안 와요 (기기 값 그대로).
+ */
+export type MeResponse = { code: string; host: boolean; needsOnboarding: boolean; memberAccessLevel: Me['memberAccessLevel'] };
 
 /** 3 GET /me — 로그인 상태(api/session.tsx)의 판정 근거 */
 export function fetchMe({ signal }: Opts = {}): Promise<MeResponse> {
   // 가짜 서버: 가입을 끝냈는지는 이 기기에 남긴 state/onboarding 의 done 으로 (개발용 사람(lib/dev-profile)은 가입을 끝낸 것으로)
-  if (apiConfig.useMock) return mock('me', () => ({ ...readMeStore(), needsOnboarding: !devProfile && !getOnboarding().done }));
+  if (apiConfig.useMock)
+    return mock('me', () => {
+      const me = readMeStore();
+      return { code: me.id, host: false, needsOnboarding: !devProfile && !getOnboarding().done, memberAccessLevel: me.memberAccessLevel };
+    });
   return http.get<MeResponse>('/me', { signal });
 }
 

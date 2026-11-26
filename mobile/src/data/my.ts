@@ -290,46 +290,6 @@ export const BR_PARTNERS: Record<string, Partner[]> = {
   ],
 };
 
-/** 앱 구경(비회원 · onboarding/branch)이 보여 주는 지점 안내 예시 — 지점 소개 글 · 사진(intro · photos) 포함.
- *  회원 마이 보드는 서버 값(toBranchBoard)이에요. 비회원용 지점 안내 API 가 생기면 이것도 바꿔요 */
-export const BR_BOARDS: Record<string, BranchBoard> = {
-  하남점: {
-    code: '',
-    name: '하남점',
-    addr: '하남시 [주소] 3층',
-    hrs: '평일 10~23시 · 주말 10~18시',
-    intro: '미사역 바로 앞, 통창 라운지가 있는 지점이에요. 평일 저녁 스터디가 가장 많고, 스터디 끝나고 라운지에서 프리토킹을 이어 가는 분이 많아요.',
-    pin: { t: '11/22(토) 건물 점검으로 주차장 이용이 어려워요', by: '매니저 Jay', at: '11.18' },
-    items: [
-      { ic: 'park', bg: '#FFE200', t: '주차 · 입금 계좌', s: '주차 · 계좌', d: '건물 지하 2층 · 스터디 시간 2시간 무료 · 데스크에 차량 번호를 말해 주세요', cp: [['입금 계좌 · 예금주 [이름] · 주차 추가 · 이벤트 참가비', '[은행] [계좌번호]']], star: true },
-      { ic: 'wifi', bg: '#BFE4EC', t: '와이파이', d: '', cp: [['이름', 'PALLO_HANAM'], ['비밀번호', 'pallo2026!']], star: true },
-      { ic: 'loc', bg: '#F6C9D4', t: '오시는 길 · 운영 시간', d: '하남시 [주소] 3층 · 평일 10~23시 · 주말 10~18시', act: ['map', '하남시 [주소]'], star: true },
-      { ic: 'lock', bg: '#CDEBD0', t: '사물함', d: '3층 복도 · 비밀번호는 데스크에서 받아요' },
-      { ic: 'tel', bg: '#FFE7D1', t: '지점 문의', d: '0507-0000-0000 · 평일 10~19시', act: ['tel', '0507-0000-0000'], star: true },
-    ],
-    partners: [
-      { n: 'Cafe Tammy', b: '음료 10% 할인', c: '#8A4B3A', w: 'CAFE', addr: '하남시 [주소] 1층 · 지점에서 도보 2분', tel: '031-000-0000', hrs: '매일 8~22시', info: '지점에서 걸어서 2분, 스터디 전후로 들르기 좋은 조용한 카페예요. 2층에 4인 테이블이 있어서 번개 모임이나 복습 자리로도 많이 써요. 영어로 주문하면 쿠키 하나를 더 주세요.', how: '주문할 때 PALLO 앱 멤버 화면을 보여 주세요', links: [{ kind: 'naver', url: 'https://map.naver.com' }, { kind: 'insta', url: 'https://instagram.com/cafe_tammy' }], posters: [require('@/assets/images/partners/cafe-poster.webp'), require('@/assets/images/partners/cafe-room.webp')] },
-      { n: '북스 미사', b: '원서 15% 할인', c: '#493087', w: 'BOOKS', addr: '하남시 미사 [주소] 2층', hrs: '10~21시 · 월요일 휴무', info: '원서 · 그래픽노블 코너가 따로 있는 동네 서점이에요. PALLO 교재 원서도 주문해 줘요.', how: '계산할 때 멤버 화면을 보여 주세요', links: [{ kind: 'insta', url: 'https://instagram.com/books_misa' }, { kind: 'web', url: 'https://example.com' }], posters: [require('@/assets/images/partners/books-poster.webp')] },
-      { n: '스터디카페 온', b: '2시간 이용권 20% 할인', c: '#138A9E', w: 'STUDY', posters: [require('@/assets/images/partners/study-poster.webp')] },
-    ],
-  },
-  잠실점: {
-    code: '',
-    name: '잠실점',
-    addr: '서울 송파구 [주소] 5층 · 잠실역 8번 출구 도보 3분',
-    hrs: '평일 10~22시 · 주말 10~18시',
-    intro: '잠실역 8번 출구에서 3분, 스터디룸 6개가 있는 지점이에요. 직장인 저녁 스터디와 주말 오전 스터디가 많아요.',
-    pin: null,
-    items: [
-      { ic: 'park', bg: '#FFE200', t: '주차 · 입금 계좌', s: '주차 · 계좌', d: '롯데월드몰 주차장 · 데스크에서 3시간 할인 도장', cp: [['입금 계좌 · 예금주 [이름] · 이벤트 참가비', '[은행] [계좌번호]']], star: true },
-      { ic: 'wifi', bg: '#BFE4EC', t: '와이파이', d: '', cp: [['이름', 'PALLO_JAMSIL'], ['비밀번호', 'jamsil2026!']], star: true },
-      { ic: 'loc', bg: '#F6C9D4', t: '오시는 길 · 운영 시간', d: '서울 송파구 [주소] 5층 · 잠실역 8번 출구 도보 3분', act: ['map', '서울 송파구 [주소]'], star: true },
-      { ic: 'tel', bg: '#FFE7D1', t: '지점 문의', d: '0507-1111-1111 · 평일 10~19시', act: ['tel', '0507-1111-1111'], star: true },
-    ],
-    partners: [{ n: '잠실 북카페', b: '음료 15% 할인', c: '#6B4E9B', w: 'BOOK CAFE', addr: '서울 송파구 [주소] 2층', info: '원서가 300권 넘게 있는 북카페예요. 스터디 끝나고 복습하기 좋아요.' }],
-  },
-};
-
 /** 'MM.DD' (한국 시각) — 주의사항 쓴 날 */
 function kstMonthDay(iso: string): string {
   const d = new Date(Date.parse(iso) + 9 * 3_600_000);

@@ -9,10 +9,8 @@ import { applyDevMe } from '@/components/home/dev';
 import { Pressable } from '@/components/ui/pressable';
 import { MyStudyCard } from '@/components/account/my-study-card';
 import { MyClassCard } from '@/components/account/my-class-card';
-import { PRO_SENT_NOTES, PRO_STATS } from '@/data/account';
-import { SavedChallengesSheet, useSavedChallengeCount } from '@/components/challenge/saved-sheet';
+import { SavedChallengesSheet } from '@/components/challenge/saved-sheet';
 import { MemberLock } from '@/components/common/member-lock';
-import { memberGate } from '@/components/common/trial-guide';
 import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { ProNoteCard } from '@/components/account/pro-note-card';
 import { BranchBoard } from '@/components/my/branch-board';
@@ -27,13 +25,13 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { Raised, SHADOW_OFFSET } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
-import { ErrorState, LoadingState } from '@/components/ui/state-view';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
-import { canUse, isMember } from '@/state/access';
-import { isProLike, useMe } from '@/state/me';
+import { isMember } from '@/state/access';
+import { useMe } from '@/state/me';
 import { grantReward, resetRewards } from '@/state/rewards';
 import { useTabReselect } from '@/lib/tab-reselect';
 
@@ -44,13 +42,14 @@ const go = (href: string) => () => {
 };
 
 /**
- * 마이 (프로토타입 renderMy): 제목 · 톱니 → 캐릭터 룸 카드 → 숫자 4칸 → PRO'S NOTE → 내 스터디 → 지점 안내
+ * 마이 (프로토타입 renderMy): 제목 · 톱니 → 캐릭터 룸 카드 → 숫자 4칸 → PRO'S NOTE → 내 스터디(프로는 내 수업) → 지점 안내
  * → 랭킹 요약 → 배지 → 내 활동. 맨 아래 개발용 입구. (설정 · 고객센터 · 결제 내역은 톱니 안)
+ * 칸은 마이 BFF(GET /me/mypage)가 준 것만 그려요 — proStats · myClasses 가 오면 프로 마이, proNote · study · badges 가 null 이면 그 칸을 안 그려요.
  */
 /** 비회원이 볼 수 있는 잠김 칸 위 높이 (랭킹 윗부분) */
 const MY_PEEK = 300;
 
-/** 숫자 칸 · 개수 표시: 아직 못 받았거나 서버가 집계하지 않는 값(null)은 '–' */
+/** 숫자 칸 · 개수 표시: 아직 못 받았거나 순위가 없으면(null) '–' */
 const num = (v: number | null | undefined, unit: string) => (v == null ? '–' : `${v.toLocaleString()}${unit}`);
 
 export default function MyScreen() {
@@ -67,18 +66,19 @@ export default function MyScreen() {
     else grantReward(dev.reward);
   }, [dev.reward]);
   const me = useMe();
-  const member = isMember(me);
-  const pro = isProLike(me.role);
   const [classOpen, setClassOpen] = useState(false);
-  const canSettings = canUse(me, 'settings');
-  const openSettings = canSettings ? go('/me/settings') : () => memberGate('설정을 쓰려면');
-  // 숫자 4칸 · 랭킹 요약 · 배지 · 내 활동 개수 = GET /me/mypage (api/use-my-page.ts)
+  // 설정은 누구나 (비회원도 로그아웃 · 알림 · 차단). 회원 전용 줄은 설정 안에서 숨겨요
+  const openSettings = go('/me/settings');
+  // 숫자 4칸 · PRO'S NOTE · 내 수업 · 내 스터디 · 랭킹 요약 · 배지 · 내 활동 개수 = GET /me/mypage (api/use-my-page.ts)
   const page = useMyPage();
   const my = page.data;
+  // 지점 회원인지 = 마이 BFF branchMember (받기 전엔 GET /me 판정으로 — 회원에게 잠김 칸이 잠깐 비치지 않게)
+  const member = my ? my.branchMember : isMember(me);
+  // 프로 마이인지는 서버가 정해요 (프로 숫자 칸이 오면 프로)
+  const proStats = my?.proStats ?? null;
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
   const [badges, setBadges] = useState(false);
   const [meets, setMeets] = useState<'joined' | 'saved' | null>(null);
-  const savedChal = useSavedChallengeCount();
   const [chals, setChals] = useState(false);
   const [askReset, setAskReset] = useState(false);
   const [myMeetsOpen, setMyMeetsOpen] = useState(false);
@@ -111,10 +111,9 @@ export default function MyScreen() {
           <View style={styles.headR}>
             {/* 개발용 사람 바꾸기 (개발 서버에서만) */}
             <DevPersonaPill />
-            {/* 설정은 회원만: 비회원은 흐리게 · 누르면 잠김 1번 */}
-            <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="설정" accessibilityHint={canSettings ? undefined : '지점 회원이 되면 쓸 수 있어요'} style={!canSettings && styles.off}>
+            <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="설정">
               {({ pressed }) => (
-                <Raised radius={14} pressed={pressed && canSettings} flat={!canSettings}>
+                <Raised radius={14} pressed={pressed}>
                   <View style={styles.iconBtn}>
                     <GearIcon />
                   </View>
@@ -126,20 +125,20 @@ export default function MyScreen() {
 
         <Appear kind="rise" delay={40}>
           <View onLayout={(e) => setHeroSlotW(Math.round(e.nativeEvent.layout.width))}>
-            <MyHero width={cardW} onFollow={setFollow} />
+            <MyHero width={cardW} sparks={my?.sparks} follow={my?.follow} onFollow={setFollow} />
           </View>
         </Appear>
 
         <Appear kind="rise" delay={60}>
           <MyStats
             items={
-              pro
+              proStats
                 ? // 프로: 이번 달 맡은 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요 (10-roles '마이')
                   [
-                    { ic: 'book', v: `${PRO_STATS.sessions}회`, l: '이번 달 세션', onPress: () => setClassOpen(true) },
-                    { ic: 'bolt', v: `${PRO_STATS.checks}회`, l: '출석 체크', onPress: () => setClassOpen(true) },
-                    { ic: 'mic', v: `${PRO_SENT_NOTES.length}개`, l: '보낸 노트', onPress: go('/me/notes?box=sent') },
-                    { ic: 'heart', v: `${PRO_SENT_NOTES.reduce((a, n) => a + n.thanksN, 0)}개`, l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
+                    { ic: 'book', v: num(proStats.sessionsThisMonth, '회'), l: '이번 달 세션', onPress: () => setClassOpen(true) },
+                    { ic: 'bolt', v: num(proStats.attendanceChecks, '회'), l: '출석 체크', onPress: () => setClassOpen(true) },
+                    { ic: 'mic', v: num(proStats.notesSent, '개'), l: '보낸 노트', onPress: go('/me/notes?box=sent') },
+                    { ic: 'heart', v: num(proStats.thanksReceived, '개'), l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
                   ]
                 : [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
@@ -151,36 +150,36 @@ export default function MyScreen() {
           />
         </Appear>
 
-        {/* 회원만: PRO'S NOTE · 내 스터디 · 지점 안내 */}
+        {/* PRO'S NOTE · 내 수업(프로) / 내 스터디 = 서버가 준 칸만 · 지점 안내 = 회원만 */}
+        {my?.proNote ? (
+          <Appear kind="rise" delay={80}>
+            <ProNoteCard note={my.proNote} />
+          </Appear>
+        ) : null}
+        {my?.myClasses ? (
+          // 프로: 이용권 · 팀 대신 이번 주 맡은 세션 (내 일정 전체 보기)
+          // 제목과 카드 사이는 다른 칸(랭킹 · 배지)과 같은 간격
+          <Appear kind="rise" delay={100}>
+            <View style={styles.stack}>
+              <SecHead title="내 수업" />
+              <MyClassCard classes={my.myClasses.thisWeek} open={classOpen} onOpen={setClassOpen} />
+            </View>
+          </Appear>
+        ) : my?.study ? (
+          <Appear kind="rise" delay={100}>
+            {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
+            <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
+            <MyStudyCard study={my.study} title={false} />
+          </Appear>
+        ) : null}
         {member && (
-          <>
-            <Appear kind="rise" delay={80}>
-              <ProNoteCard />
-            </Appear>
-            <Appear kind="rise" delay={100}>
-              {pro ? (
-                // 프로: 이용권 · 팀 대신 이번 주 맡은 세션 (내 일정 전체 보기)
-                // 제목과 카드 사이는 다른 칸(랭킹 · 배지)과 같은 간격
-                <View style={styles.stack}>
-                  <SecHead title="내 수업" />
-                  <MyClassCard open={classOpen} onOpen={setClassOpen} />
-                </View>
-              ) : (
-                <>
-                  {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
-                  <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
-                  <MyStudyCard title={false} />
-                </>
-              )}
-            </Appear>
-            <Appear kind="rise" delay={120}>
-              <BranchBoard />
-            </Appear>
-          </>
+          <Appear kind="rise" delay={120}>
+            <BranchBoard />
+          </Appear>
         )}
 
         {/* 비회원: 랭킹 윗부분까지만 보이고 아래는 '지점 회원이 되면 열려요' 칸 (스크롤 잠김 · components/common/scroll-lock) */}
-        <ScrollLock screen="my" peek={MY_PEEK} panel={<MemberLock />}>
+        <ScrollLock screen="my" peek={MY_PEEK} panel={<MemberLock />} locked={!member}>
           <View style={styles.stack}>
             <SecHead title="랭킹" more="전체 보기 ›" onMore={go('/me/ranking')} />
             <Appear kind="rise">
@@ -193,13 +192,11 @@ export default function MyScreen() {
               )}
             </Appear>
 
-            {/* 배지: 서버가 아직 집계하지 않으면(null) 칸째 숨겨요 */}
+            {/* 배지: 서버가 칸을 안 주면(null) 안 그려요 · 받은 게 하나도 없으면(빈 목록) 칸은 두고 빈 상태 문구 */}
             {my?.badges && (
               <>
                 <SecHead title="배지" more="모두 보기 ›" onMore={() => setBadges(true)} />
-                <Appear kind="rise">
-                  <BadgeGrid list={my.badges} />
-                </Appear>
+                <Appear kind="rise">{my.badges.length ? <BadgeGrid list={my.badges} /> : <EmptyState title="아직 받은 배지가 없어요" compact />}</Appear>
               </>
             )}
 
@@ -209,7 +206,7 @@ export default function MyScreen() {
                 rows={[
                   { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: num(my?.activity.joinedMeetCount, '개'), onPress: () => setMyMeetsOpen(true) },
                   { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: num(my?.activity.savedMeetCount, '개'), onPress: () => setMeets('saved') },
-                  { label: '찜한 챌린지', icon: <LgIcon name="heart" size={18} />, value: `${savedChal}개`, onPress: () => setChals(true) },
+                  { label: '찜한 챌린지', icon: <LgIcon name="heart" size={18} />, value: num(my?.activity.savedChallengeCount, '개'), onPress: () => setChals(true) },
                   {
                     label: '내가 쓴 글',
                     icon: <LgIcon name="image" size={18} />,
@@ -232,8 +229,8 @@ export default function MyScreen() {
                   { label: '고객센터 · 자주 묻는 질문', onPress: go('/me/support') },
                   // 체험 상담은 회원도 다른 지점에 신청할 수 있어 누구나
                   { label: '상담 신청 내역', onPress: go('/me/consultations') },
-                  // 이용권은 회원만 · 앱 구독자는 결제 내역만
-                  ...(member ? [{ label: '이용권 · 결제 내역', onPress: go('/me/pass') }] : me.plan === 'app' ? [{ label: '결제 내역', onPress: go('/me/payments') }] : []),
+                  // 이용권 · 결제 내역은 회원만
+                  ...(member ? [{ label: '이용권 · 결제 내역', onPress: go('/me/pass') }] : []),
                 ]}
               />
             </Appear>
@@ -279,5 +276,4 @@ const styles = StyleSheet.create({
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   dev: { marginTop: 10, gap: 10 },
   stack: { gap: Spacing.stack },
-  off: { opacity: 0.4 },
 });

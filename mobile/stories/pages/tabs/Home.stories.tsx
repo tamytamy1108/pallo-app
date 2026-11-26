@@ -18,7 +18,7 @@ import { homeDevice, NO_POPUPS, unitStepKeys } from '../../home/_home';
 
 /**
  * 홈 탭 (/) — 로고 · 알림 종 → 인사 → 공지 띠 → 오늘 스터디 카드 → 스터디 맵 → 라운지 미리보기.
- * 오늘 스터디 카드 자리는 회원 유형에 따라 다르고(회원 · 연동 대기 · 연동 안 됨 = 출석 카드, 체험 = 체험 카드, 비회원 = 둘러보기, 앱 구독 = 오늘의 목표),
+ * 오늘 스터디 카드 자리는 회원 유형에 따라 다르고(회원 · 연동 대기 · 연동 안 됨 = 출석 카드, 체험 = 체험 카드, 비회원 = 둘러보기),
  * 회원 출석 카드는 시각 · 출석 상태에 따라 다르다. 시작 팝업은 LaunchPopup 스토리에서만 띄운다.
  */
 const meta = {
@@ -74,10 +74,6 @@ export const TrialBefore: Story = { globals: { userKind: 'trial' }, parameters: 
 export const TrialToday: Story = { globals: { userKind: 'trial' }, parameters: { queries: [trialSummaryIn(0)] }, beforeEach: homeDevice({}, () => applyDevMe({ trial: 'today' })) };
 /** 체험이 지난 뒤 */
 export const TrialAfter: Story = { globals: { userKind: 'trial' }, parameters: { queries: [trialSummaryIn(-2)] }, beforeEach: homeDevice({}, () => applyDevMe({ trial: 'past' })) };
-/** 앱 구독만 — 출석 카드 대신 오늘의 목표 카드 (챕터는 비회원과 같이 첫 챕터만) */
-export const AppOnly: Story = { globals: { userKind: 'app' } };
-/** 앱 구독 · 오늘 목표 일부 */
-export const AppOnlyInProgress: Story = { globals: { userKind: 'app' }, beforeEach: homeDevice({}, () => void recordToday('story:0')) };
 /** 둘러보는 비회원 — 둘러보기 카드 · 맵 둘째 챕터부터 잠김 */
 export const Guest: Story = { globals: { userKind: 'guest' } };
 

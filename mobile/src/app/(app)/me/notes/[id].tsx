@@ -1,6 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+
+import { apiErrorMessage, isNotFound } from '@/api/errors';
+import { useProsNote, type NoteView } from '@/api/use-pros-note';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
@@ -8,14 +11,15 @@ import { ProfileTap } from '@/components/common/profile-tap';
 import { MemberFace } from '@/components/account/member-face';
 import { AccountPage, Bar, Box, Icon, Lift, TextLink } from '@/components/account/parts';
 import { DiaryCard, noteExpression } from '@/components/account/pro-note-parts';
-import { markNoteRead, sendNoteMessage, toggleNoteThanks, useNoteState } from '@/components/account/store';
+import { sendNoteMessage, toggleNoteThanks, useNoteState } from '@/components/account/store';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { noteReactions, PN_TAG_COLOR, PN_THANKS, PRO_NOTES, PRO_SENT_NOTES, teamNameByNo, type ProNote, type SentNote } from '@/data/account';
+import { noteReactions, PN_TAG_COLOR, PN_THANKS, type ProNote } from '@/data/account';
 import { haptic, sfx } from '@/lib/feedback';
 import { toggleExpression, useIsSaved } from '@/state/expressions';
 import { useMe } from '@/state/me';
@@ -24,30 +28,39 @@ import { HeartPop } from '@/components/ui/heart-pop';
 import { seeAt } from '@/lib/see';
 
 /**
- * PRO'S NOTE 한 장 (프로토타입 pnDetHTML): 표현 · 바로잡기 · 뜻 · 질문 항목(항목별 저장 → 내 표현함) · 스터디 일기 · 프로님께 보낸 마음.
- * 아래 고정: [고마워요] · [감사 인사 보내기]. 알림 · 마이 카드에서 바로 열면 위에 '전체 보기'.
- * 맞는 API: 44 `/pro-notes/:id` · 45 `/pro-notes/:id/thanks`
+ * PRO'S NOTE 한 장 (프로토타입 pnDetHTML): 항목(항목별 저장 → 내 표현함) · 스터디 일기 · 프로님께 보낸 마음.
+ * 값은 GET /me/pros-notes/{id} (api/use-pros-note.ts) — 받은 노트면 열 때 열람을 남겨요(마이 '새 노트 n' · 리더의 읽음 수).
+ * 서버 노트 항목 = 리더가 정리한 질문 + AI 답변(종류는 '질문'). 서버에 아직 없는 칸(예문 · 반에 남긴 인사 · 고마워요 · 친구들 반응)은 안 그려요 —
+ * 가짜 서버는 예시 노트로 다 채워요. 스터디 일기는 기기에만 저장.
+ * 아래 고정(반응이 있을 때만): [고마워요] · [감사 인사 보내기]. 알림 · 마이 카드에서 바로 열면 위에 '전체 보기'.
  */
 function ProNoteScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
-  const n = PRO_NOTES.find((x) => x.id === id);
-  // 프로가 보낸 노트 (마이 › PRO'S NOTE › 보낸 노트)
-  const s = PRO_SENT_NOTES.find((x) => x.id === id);
-  useEffect(() => {
-    if (n) markNoteRead(n.id);
-  }, [n]);
-  if (s) return <SentNoteView n={s} />;
-  if (!n) {
+  const q = useProsNote(id);
+  if (q.isPending) {
     return (
       <AccountPage title="PRO'S NOTE">
-        <PText style={styles.missing}>노트를 찾을 수 없어요.</PText>
+        <LoadingState />
       </AccountPage>
     );
   }
-  return <Note n={n} fromList={from === 'list' || from === 'diary'} />;
+  if (q.isError) {
+    return (
+      <AccountPage title="PRO'S NOTE">
+        {isNotFound(q.error) ? (
+          <PText style={styles.missing}>노트를 찾을 수 없어요.</PText>
+        ) : (
+          <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
+        )}
+      </AccountPage>
+    );
+  }
+  // 프로가 보낸 노트 (마이 › PRO'S NOTE › 보낸 노트)
+  if (q.data.sent) return <SentNoteView n={q.data} />;
+  return <Note n={q.data} fromList={from === 'list' || from === 'diary'} />;
 }
 
-function Note({ n, fromList }: { n: ProNote; fromList: boolean }) {
+function Note({ n, fromList }: { n: NoteView; fromList: boolean }) {
   const { thanks, msgs } = useNoteState();
   const me = useMe();
   const [sheet, setSheet] = useState(false);
@@ -73,6 +86,8 @@ function Note({ n, fromList }: { n: ProNote; fromList: boolean }) {
       }
       bodyStyle={styles.body}
       bottom={
+        // 고마워요 · 감사 인사는 서버에 아직 없어 반응이 올 때만 (가짜 서버)
+        n.reactions ? (
         <Bar>
           <Pressable
             onPress={() => {
@@ -102,15 +117,17 @@ function Note({ n, fromList }: { n: ProNote; fromList: boolean }) {
             <Button label="감사 인사 보내기" wide onPress={() => setSheet(true)} />
           </View>
         </Bar>
+        ) : undefined
       }>
       <View style={styles.dh}>
         <PText style={styles.dhB}>{`${n.m}월 ${n.d}일 ${n.wd}요일`}</PText>
-        <PText style={styles.dhS}>{`${teamNameByNo(n.team)} · ${n.pro} 프로 · 정리 ${n.items.length}개`}</PText>
+        <PText style={styles.dhS}>{`${n.place} · ${n.pro} 프로 · 정리 ${n.items.length}개`}</PText>
       </View>
       {n.items.map((_, i) => (
         <NoteItem key={i} n={n} i={i} />
       ))}
       <DiaryCard n={n} />
+      {n.reactions ? (
       <View style={styles.sent}>
         <PText style={styles.sentH}>{`${n.pro} 프로님께 보낸 마음`}</PText>
         <View style={styles.hearts}>
@@ -136,41 +153,45 @@ function Note({ n, fromList }: { n: ProNote; fromList: boolean }) {
           <Msg key={`me${i}`} who={me.name} color={Colors.yellow} text={m.text} time="방금" me />
         ))}
       </View>
-      <ThanksSheet n={n} open={sheet} onClose={() => setSheet(false)} />
+      ) : null}
+      {n.reactions ? <ThanksSheet n={n} open={sheet} onClose={() => setSheet(false)} /> : null}
     </AccountPage>
   );
 }
 
 /**
- * 내가 보낸 노트 (프로): 같은 노트 모양 · 아래는 고마워요 버튼 대신 반에서 몇 명 읽었는지 · 받은 고마워요 · 반에 남긴 인사.
- * 맞는 API: 프로가 보낸 노트 · 읽음 수 (제안)
+ * 내가 보낸 노트 (프로): 같은 노트 모양 · 아래는 고마워요 버튼 대신 반에서 몇 명 읽었는지(서버 값).
+ * 반에 남긴 인사 · 받은 고마워요 · 친구들 인사는 서버에 아직 없어 가짜 서버일 때만.
  */
-function SentNoteView({ n }: { n: SentNote }) {
-  const me = useMe();
+function SentNoteView({ n }: { n: NoteView }) {
   const R = noteReactions(n.id);
   return (
     <AccountPage title={`${n.m}/${n.d}(${n.wd}) PRO'S NOTE`} bodyStyle={styles.body}>
       <View style={styles.dh}>
         <PText style={styles.dhB}>{`${n.m}월 ${n.d}일 ${n.wd}요일`}</PText>
-        <PText style={styles.dhS}>{`${teamNameByNo(n.team)} · 보낸 노트 · 정리 ${n.items.length}개`}</PText>
+        <PText style={styles.dhS}>{`${n.place} · 보낸 노트 · 정리 ${n.items.length}개`}</PText>
       </View>
       {n.items.map((_, i) => (
-        <NoteItem key={i} n={{ ...n, pro: me.name }} i={i} />
+        <NoteItem key={i} n={n} i={i} />
       ))}
       <View style={styles.sent}>
-        <PText style={styles.sentH}>반에 남긴 인사</PText>
-        <PText style={styles.byeT}>{n.bye}</PText>
-        <PText style={styles.sentH}>{`${n.readN}/${n.total}명 읽음 · 고마워요 ${n.thanksN}`}</PText>
-        {R.msgs.map((m) => (
-          <Msg key={m.who} who={m.who} color={m.color} text={m.text} time={m.time} />
-        ))}
+        {n.bye ? (
+          <>
+            <PText style={styles.sentH}>반에 남긴 인사</PText>
+            <PText style={styles.byeT}>{n.bye}</PText>
+          </>
+        ) : null}
+        <PText style={styles.sentH}>{`${n.readN}/${n.total}명 읽음${n.thanksN != null ? ` · 고마워요 ${n.thanksN}` : ''}`}</PText>
+        {n.reactions
+          ? R.msgs.map((m) => <Msg key={m.who} who={m.who} color={m.color} text={m.text} time={m.time} />)
+          : null}
       </View>
     </AccountPage>
   );
 }
 
 /** 노트 항목 하나 (프로토타입 .pn-it: 번호 · 태그 · 제목 · 설명 · 예문 · 책갈피) */
-function NoteItem({ n, i }: { n: ProNote; i: number }) {
+function NoteItem({ n, i }: { n: NoteView; i: number }) {
   const [tg, t, b, ex] = n.items[i];
   const expr = noteExpression(n, i);
   const on = useIsSaved(expr.en);

@@ -72,3 +72,10 @@ export function fetchBranchGuides({ signal }: Opts = {}): Promise<BranchGuide[]>
   if (apiConfig.useMock) return mock('branchGuides', () => MOCK_BRANCH_GUIDES);
   return http.get('/me/branch-guides', { signal });
 }
+
+/** 고객센터 '내 지점 전화' — 연동된 지점 중 내 지점(이름이 같은 곳)을 먼저, 없으면 전화번호를 적은 첫 지점. 전화번호가 없으면 null */
+export function myBranchContact(rows: BranchGuide[], myBranchName: string): { branchName: string; phone: string } | null {
+  const withPhone = rows.filter((r): r is BranchGuide & { phone: string } => !!r.phone);
+  const row = withPhone.find((r) => r.branchName === myBranchName) ?? withPhone[0];
+  return row ? { branchName: row.branchName, phone: row.phone } : null;
+}

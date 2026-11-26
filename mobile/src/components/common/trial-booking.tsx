@@ -8,10 +8,11 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { BRANCH_TEL_MOCK } from '@/state/link-events';
-import type { Me } from '@/state/me';
+import type { StudyLang } from '@/state/me';
 import { useOnboarding } from '@/state/onboarding';
 
-export type TrialBooking = NonNullable<Me['trial']>;
+/** 체험 예약 한 건 (서버 요약 upcomingTrials 를 카드 · 시트 모양으로 — api/use-branch-progress). day 'YYYY-MM-DD' · time 'HH:MM' */
+export type TrialBooking = { branch: string; day: string; time: string; lang: StudyLang };
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 const LANG_KO = { en: '영어', ja: '일본어', zh: '중국어', es: '스페인어' } as const;

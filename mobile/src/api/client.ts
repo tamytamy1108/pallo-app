@@ -31,7 +31,7 @@ export type PageParams = { cursor?: string | null; limit?: number };
  * 화면이 떠나 끊는 signal(TanStack Query) 도 같이 따라요. 실패는 공용 클라이언트가 ApiError 로 바꿔요.
  */
 const fetchWithTimeout: typeof fetch = (input, init) => {
-  if (!apiConfig.baseUrl) return Promise.reject(new Error('서버 주소가 아직 없어요 (app.json extra.api.baseUrls)'));
+  if (!apiConfig.baseUrl) return Promise.reject(new Error('서버 주소가 아직 없어요 (EXPO_PUBLIC_API_BASE_URL · app.json extra.api.baseUrls)'));
   const controller = new AbortController();
   const outer = init?.signal;
   const onAbort = () => controller.abort();

@@ -25,7 +25,7 @@ function Host({ why }: { why: string }) {
 
 /**
  * 비회원 막힘 → 체험 안내 시트 (TrialGuideHost — 앱 맨 바깥에 하나). why 가 제목 첫 줄 '…하려면' 이 돼요.
- * 비회원 · 앱 구독에서 떠요 (연동 대기 · 연동 안 됨은 토스트, 체험 예약은 '예약한 체험' 시트 — Common/UpsellSheet).
+ * 비회원에서 떠요 (연동 대기 · 연동 안 됨은 토스트, 체험 예약은 '예약한 체험' 시트 — Common/UpsellSheet).
  */
 const meta = {
   title: 'Common/TrialGuide',
@@ -46,6 +46,4 @@ export const Comment: Story = {};
 export const JoinMeet: Story = { args: { why: '번개에 참여하려면' } };
 /** 잠긴 챕터 */
 export const Chapter: Story = { args: { why: '2과를 하려면' } };
-/** 앱 구독자도 같은 시트 (회원 전용 행동) */
-export const AppOnly: Story = { globals: { userKind: 'app' }, args: { why: '동아리에 가입하려면' } };
 export const LongWhy: Story = { args: { why: '다른 지점 회원들과 함께 주말 정기 모임에 참여하려면' } };

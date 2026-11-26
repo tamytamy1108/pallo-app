@@ -15,8 +15,7 @@ import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-shee
 import { BranchStatusCard } from '@/components/home/branch-status-card';
 import { getAttend, minuteOf, nowDate, openTeams, slotSelectable, summary, type SheetMode } from '@/components/home/attendance';
 import { setDecoOnScreen } from '@/components/home/deco-on-screen';
-import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/components/home/dev';
-import { GoalCard } from '@/components/home/goal-card';
+import { applyDevAdmin, applyDevMe, applyDevParams } from '@/components/home/dev';
 import { Greeting } from '@/components/home/greeting';
 import { LineIcon } from '@/components/home/icons';
 import { InviteSheet } from '@/components/home/invite-sheet';
@@ -25,7 +24,6 @@ import { LaunchPopup } from '@/components/home/launch-popup';
 import { LinkAdminDev } from '@/components/home/link-admin-dev';
 import { LinkRejectedPopup } from '@/components/home/link-rejected-popup';
 import { LoungePreview } from '@/components/home/lounge-preview';
-import { askCurrentStop } from '@/components/home/map-state';
 import { useUnreadCount } from '@/components/home/noti-state';
 import { NoticeStrip } from '@/components/home/notice-strip';
 import { QrScanner } from '@/components/home/qr-scanner';
@@ -45,18 +43,16 @@ import { useTabReselect } from '@/lib/tab-reselect';
 
 const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
 
-/** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드(앱 구독자는 오늘의 목표) → 스터디 맵 → 라운지 미리보기. */
+/** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드 → 스터디 맵 → 라운지 미리보기. */
 export default function HomeScreen() {
-  // 개발용 주소 값 (?now= · ?season= · ?plan= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
-  const dev = useLocalSearchParams<{ now?: string; season?: string; plan?: string; link?: string; name?: string; admin?: string; trial?: string; follow?: string; attend?: string; slot?: string; lang?: string }>();
+  // 개발용 주소 값 (?now= · ?season= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
+  const dev = useLocalSearchParams<{ now?: string; season?: string; link?: string; name?: string; admin?: string; trial?: string; follow?: string; attend?: string; slot?: string; lang?: string }>();
   useState(() => applyDevParams(dev));
-  useEffect(() => applyDevPlan(dev.plan), [dev.plan]);
   useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial, follow: dev.follow }), [dev.link, dev.name, dev.trial, dev.follow]);
   useEffect(() => applyDevAdmin(dev.admin), [dev.admin]);
 
   // 3 /me — 로그인 상태(src/api/session.tsx)가 /me 를 받은 뒤에야 이 화면이 열리고, 받은 값은 state/me 에 들어 있어요
   const name = useMe((m) => m.name);
-  const plan = useMe((m) => m.plan);
   const role = useMe((m) => m.role);
   const unread = useUnreadCount();
   const scroll = useRef<ScrollViewInstance>(null);
@@ -161,11 +157,6 @@ export default function HomeScreen() {
     proCheckIn.mutate({ sessionId: session?.id ?? `${SLOTS[j.slot].id}-${LANGS[j.lang].key}`, tableNo: session?.tables[0]?.no ?? 0 });
   };
 
-  const continueGoal = () => {
-    scroll.current?.scrollTo({ y: Math.max(0, mapY.current - 20), animated: true });
-    askCurrentStop();
-  };
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
@@ -205,9 +196,11 @@ export default function HomeScreen() {
         <Appear kind="rise" delay={60}>
           <NoticeStrip />
         </Appear>
-        <Appear kind="rise" delay={100}>{plan === 'app' ? <GoalCard onContinue={continueGoal} /> : <HomeCard onOpen={openAttend} />}</Appear>
-        {/* 지점 관리자: 출석 카드 아래 지점 현황 요약 (숫자 세 칸 · 모두 보기) */}
-        {role === 'manager' && plan !== 'app' ? (
+        <Appear kind="rise" delay={100}>
+          <HomeCard onOpen={openAttend} />
+        </Appear>
+        {/* 지점 관리자: 출석 카드 아래 지점 현황 요약 (칸 넷 · 모두 보기) */}
+        {role === 'manager' ? (
           <Appear kind="rise" delay={120}>
             <BranchStatusCard />
           </Appear>

@@ -28,7 +28,7 @@ npm run storybook          # http://localhost:6006 (frontend 루트에서는 npm
 
 - 로그인 · 서버 없이 부품 하나를 상태별로 봐요. 웹 미리보기와 같은 react-native-web 으로 그려요.
 - 스토리는 `stories/<영역>/X.stories.tsx` 에만 둬요 (`src/app/` 에 두면 화면이 돼요).
-- 툴바 **회원 유형**(회원 · 연동 대기 · 연동 안 됨 · 체험 예약 · 앱 구독만 · 비회원)이 나(state/me)를 바꿔요. 스토리 하나를 고정하려면 `globals: { userKind: 'pending' }`.
+- 툴바 **회원 유형**(회원 · 연동 대기 · 연동 안 됨 · 체험 예약 · 비회원)이 나(state/me)를 바꿔요. 스토리 하나를 고정하려면 `globals: { userKind: 'pending' }`.
 - 스토어로 정해지는 상태(오늘 목표 등)는 스토리의 `beforeEach` 에서 스토어를 채워요 (`stories/home/GoalCard.stories.tsx` 참고).
 - 데이터 훅을 쓰는 부품은 `parameters.queries: [[쿼리키, 응답], ...]` 로 캐시를 미리 채워요.
 - 화면(src/app) 스토리는 `stories/pages/` 에 둬요. expo-router 는 대역이라 이동하지 않고 Actions 패널에 기록만 남아요.

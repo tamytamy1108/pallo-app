@@ -7818,7 +7818,8 @@ paths:
       description: |
         화면: app/(tabs)/my.tsx (MyHero · MyStats · BadgeGrid · 내 활동 개수)
         언제: 마이 탭 진입 · 꾸미기 · 랭킹 · 표현함에서 돌아올 때
-        규칙: 숫자는 모두 서버가 계산 — 연속 학습(오늘 퀘스트 1개 이상이면 이어짐) · 이번 주 랭킹(월요일 0시 KST 기준) · 참여 중인 모임(번개 + 동아리) · 받은 배지 수.
+        규칙: branchMember 가 false 면 앱이 랭킹 윗부분 아래를 '지점 회원이 되면 열려요' 칸으로 가려요 (GET /me memberAccessLevel 과 같은 판정 — UNREGISTERED 만 비회원).
+        숫자는 모두 서버가 계산 — 연속 학습(오늘 퀘스트 1개 이상이면 이어짐) · 이번 주 랭킹(월요일 0시 KST 기준) · 참여 중인 모임(번개 + 동아리) · 받은 배지 수.
       x-status: existing
       x-backend: MobileMyPageV2Controller GET /app/api/v2/me/mypage → MyPageV2Response {avatar, sparks, follow, stats,
         ranking, badges, activity} (서버 집계)
@@ -9688,7 +9689,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
-  "/pros-notes/{noteId}":
+  "/me/pros-notes/{noteId}":
     get:
       tags:
         - 프로 노트
@@ -9698,17 +9699,19 @@ paths:
         화면: app/me/notes/[id].tsx (항목 · 예문 · 항목별 [저장] → 내 표현함 · 프로 마무리 인사 · 같은
         팀이 보낸 마음 · 고마워요 · 감사 인사)
 
-        알림 '프로님이 프로 노트를 보냈어요'로도 열려요. 항목 저장은 학습 도메인의 표현함 API.
-      x-status: change
-      x-backend: MobileProsNoteController GET /pros-notes/{noteId} →
-        ProsNoteDetailResponse {note, questions}
-      x-gap: items[](tag · title · description · examples) · closingMessage ·
-        thanked(내가 고마워요 눌렀는지) · reactions(고마워요 누른 멤버 · 감사 인사) · myMessages 추가 —
-        지금은 questions(질문 · AI 답 · status)뿐
+        알림 '프로님이 프로 노트를 보냈어요' · 마이 PRO'S NOTE 카드(GET /me/mypage proNote)로도 열려요. 항목 저장은 학습 도메인의 표현함 API.
+
+        규칙: 쓴 리더나 받은 사람만(아니면 404). note.viewerRole 이 LEADER 면 보낸 노트(readCount = 연 사람 수), PARTICIPANT 면 받은 노트.
+        앱은 questions 를 항목 종류 '질문'(제목 = 질문, 설명 = AI 답)으로 그려요. 서버에 없는 칸(예문 · 마무리 인사 · 고마워요 · 반응)은 안 그려요.
+      x-status: existing
+      x-backend: MobileProsNoteV2Controller GET /app/api/v2/me/pros-notes/{noteId} →
+        ProsNoteDetailResponse {note, questions} (옛 앱 v1 /pros-notes/{noteId} 와 같은 서비스)
+      x-gap: items[](tag · examples) · closingMessage · thanked(내가 고마워요 눌렀는지) ·
+        reactions(고마워요 누른 멤버 · 감사 인사) · myMessages — 지금은 questions(질문 · AI 답 · status)뿐
       x-inventory: "#44"
       x-screens:
         - app/me/notes/[id].tsx
-      x-app-code: data/account.ts PRO_NOTES · noteReactions · store.ts useNoteState
+      x-app-code: api/pros-notes.ts fetchProsNote · api/use-pros-note.ts useProsNote (가짜 서버는 PRO_NOTES 에 extras 를 채워요)
       parameters:
         - name: noteId
           in: path
@@ -9842,7 +9845,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
-  "/pros-notes/{noteId}/read":
+  "/me/pros-notes/{noteId}/read":
     post:
       tags:
         - 프로 노트
@@ -9850,12 +9853,11 @@ paths:
       summary: 받은 노트 읽음 (멱등)
       description: "화면: notes/[id].tsx 열 때 · 목록 · 마이 카드에서 누를 때 (NEW 지우기)"
       x-status: existing
-      x-backend: MobileProsNoteController POST /pros-notes/{noteId}/read → 204
+      x-backend: MobileProsNoteV2Controller POST /app/api/v2/me/pros-notes/{noteId}/read → 204
+        (받은 사람만 남고 쓴 리더는 아무것도 안 바뀜 · 마이 proNote.unreadCount · 리더 readCount 에 반영)
       x-screens:
         - app/me/notes/[id].tsx
-        - app/me/notes/index.tsx
-        - components/account/pro-note-card.tsx
-      x-app-code: store.ts markNoteRead
+      x-app-code: api/pros-notes.ts markProsNoteRead · api/use-pros-note.ts useMarkProsNoteRead (마이 집계 무효화)
       parameters:
         - name: noteId
           in: path

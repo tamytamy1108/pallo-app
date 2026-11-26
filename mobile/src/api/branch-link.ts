@@ -43,6 +43,15 @@ export function mockRejectLinkRequest(branchName: string, reason: string | null)
   ];
 }
 
+/** 개발용: 지점이 연동해 준 것처럼 승인 한 건을 맨 앞에 쌓아요 — 지점마다 가장 최근 요청만 보므로 대기가 요약에서 빠져요 (state/link-events) */
+export function mockApproveLinkRequest(branchName: string) {
+  const now = new Date().toISOString();
+  mockRequests = [
+    { id: `mock-link-${++mockSeq}`, branchCode: branchName, branchName, status: 'APPROVED', realName: null, phone: null, rejectionReason: null, createdAt: now, decidedAt: now, acknowledgedAt: null },
+    ...mockRequests,
+  ];
+}
+
 /** 가짜 서버: 대기 중인 요청 한 건을 맨 앞에 쌓아요 (가입 단계 · 가입 뒤 요청이 같이 써요) */
 export function mockAddPendingLinkRequest(branchCode: string, branchName: string, realName: string, phone: string): LinkRequest {
   const row: LinkRequest = { id: `mock-link-${++mockSeq}`, branchCode, branchName, status: 'PENDING', realName, phone, rejectionReason: null, createdAt: new Date().toISOString(), decidedAt: null, acknowledgedAt: null };

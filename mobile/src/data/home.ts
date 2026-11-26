@@ -300,6 +300,6 @@ const ALL_NOTIS: Noti[] = [
 ];
 export const NOTIS = ALL_NOTIS.filter((n) => launchedHref(n.href));
 
-/* ───────── 앱 구독자 · 오늘의 목표 (프로토타입 .sub-hero) ───────── */
+/* ───────── 오늘의 목표 (하루 퀘스트 수 · state/today-goal) ───────── */
 
 export const TODAY_GOAL = { title: '퀘스트 2개 깨기', total: 2 };

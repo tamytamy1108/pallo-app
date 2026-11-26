@@ -5,7 +5,7 @@ import PaymentsScreen from '@/app/(app)/me/payments';
 import { fresh } from '../../my/_state';
 
 /**
- * 결제 내역 (/me/payments) — 회원 · 앱 구독자 모두 같은 화면 (잠금 없음). 줄을 누르면 영수증 시트.
+ * 결제 내역 (/me/payments) — 회원이 이용권 화면에서 들어와요 (잠금 없음). 줄을 누르면 영수증 시트.
  * 결제 내역은 가짜 데이터(data/account PAYMENTS) 고정이라 '결제 내역 없음' 모양은 만들 수 없다.
  */
 const meta = {
@@ -19,7 +19,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
-export const AppOnly: Story = { globals: { userKind: 'app' } };
 /** 첫 줄 영수증 시트 열림 */
 export const Receipt: Story = {
   play: async ({ canvas, userEvent }) => {

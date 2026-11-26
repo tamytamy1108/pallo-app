@@ -1,35 +1,46 @@
 import { StyleSheet, View } from 'react-native';
 
+import { langColor, type MyPageProClass } from '@/api/my-page';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { LANG_COLOR, PRO_CLASSES, type ProClass } from '@/data/account';
 
 import { Box } from './parts';
 
+const WD = '일월화수목금토';
+/** 'YYYY-MM-DD' → '11.26 (수)' */
+function dayLabel(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${m}.${d} (${WD[new Date(y, m - 1, d).getDay()]})`;
+}
+
 /**
  * 프로 · 지점 관리자 마이의 '내 수업' 카드 (회원 '내 스터디' 자리 · 10-roles '마이'): 이번 주 맡은 세션 (버튼 없이).
- * 이용권 · 남은 횟수 · 연기 · 팀 변경은 없어요 (프로는 쓰지 않아요). 맞는 API: 프로 일정 (제안)
+ * 값은 마이 BFF(GET /me/mypage myClasses.thisWeek) 그대로 — 서버가 리더 배정 요일 + 실제 리딩 회차로 만들어요.
+ * 테이블을 아직 모르는 회차(안 열림)는 지점 이름을 보여 줘요.
  */
 /** open · onOpen: 마이 숫자 칸(이번 달 세션 · 출석 체크)을 누르면 '담당팀' 시트 (이번 주) */
-export function MyClassCard({ open: all, onOpen: setAll }: { open: boolean; onOpen: (v: boolean) => void }) {
-  const week = PRO_CLASSES.filter((c) => c.week === 'this');
+export function MyClassCard({ classes, open: all, onOpen: setAll }: { classes: MyPageProClass[]; open: boolean; onOpen: (v: boolean) => void }) {
   return (
     <>
       <Box style={styles.card}>
-        <PText style={styles.sum}>{`이번 주 맡은 세션 ${week.length}개`}</PText>
-        <View>
-          {week.map((c, i) => (
-            <ClassRow key={c.id} c={c} first={i === 0} />
-          ))}
-        </View>
+        <PText style={styles.sum}>{`이번 주 맡은 세션 ${classes.length}개`}</PText>
+        {classes.length ? (
+          <View>
+            {classes.map((c, i) => (
+              <ClassRow key={c.courseId + c.date} c={c} first={i === 0} />
+            ))}
+          </View>
+        ) : (
+          <PText style={styles.s}>이번 주에 맡은 세션이 없어요</PText>
+        )}
       </Box>
       {/* 숫자 칸(이번 달 세션 · 출석 체크)을 누르면: 담당팀 — 이번 주 맡은 세션 */}
       <Sheet open={all} onClose={() => setAll(false)} title="담당팀" label="담당팀">
         <View style={styles.wk}>
-          {week.map((c, i) => (
-            <ClassRow key={c.id} c={c} first={i === 0} />
+          {classes.map((c, i) => (
+            <ClassRow key={c.courseId + c.date} c={c} first={i === 0} />
           ))}
         </View>
       </Sheet>
@@ -37,15 +48,19 @@ export function MyClassCard({ open: all, onOpen: setAll }: { open: boolean; onOp
   );
 }
 
-function ClassRow({ c, first }: { c: ProClass; first: boolean }) {
+function ClassRow({ c, first }: { c: MyPageProClass; first: boolean }) {
+  const place = c.tableName ?? c.branchName;
   return (
-    <View style={[styles.row, !first && styles.line]} accessible accessibilityLabel={`${c.day} ${c.time} ${c.team} ${c.lang} ${c.room} 학생 ${c.students}명`}>
-      <View style={[styles.dot, { backgroundColor: LANG_COLOR[c.lang] }]} />
+    <View
+      style={[styles.row, !first && styles.line]}
+      accessible
+      accessibilityLabel={`${dayLabel(c.date)} ${c.time} ${c.courseTitle} ${c.languageLabel} ${place} 학생 ${c.studentCount}명`}>
+      <View style={[styles.dot, { backgroundColor: langColor(c.languageLabel) }]} />
       <View style={styles.tx}>
-        <PText style={styles.h}>{`${c.day} ${c.time}`}</PText>
-        <PText style={styles.s}>{`${c.team} · ${c.lang} · ${c.room}`}</PText>
+        <PText style={styles.h}>{`${dayLabel(c.date)} ${c.time}`}</PText>
+        <PText style={styles.s}>{`${c.courseTitle} · ${c.languageLabel} · ${place}`}</PText>
       </View>
-      <PText style={styles.n}>{`${c.students}명`}</PText>
+      <PText style={styles.n}>{`${c.studentCount}명`}</PText>
     </View>
   );
 }

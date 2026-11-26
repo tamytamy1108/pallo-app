@@ -2,7 +2,8 @@
  * API 설정: 어느 서버(개발 · 테스트 · 실제)에 붙을지, 아직 가짜 데이터(mock)를 쓸지.
  *
  * 정하는 곳 (위가 이겨요)
- * 1. `.env` 파일의 `EXPO_PUBLIC_API_ENV=dev|staging|prod` · `EXPO_PUBLIC_API_MOCK=0|1`
+ * 1. `.env` 파일의 `EXPO_PUBLIC_API_ENV=dev|staging|prod` · `EXPO_PUBLIC_API_MOCK=0|1` · `EXPO_PUBLIC_API_BASE_URL`
+ *    (`EXPO_PUBLIC_API_BASE_URL` 이 있으면 `baseUrls[env]` 대신 그 주소로 가요 — 웹 배포는 SSM 값을 이걸로 넣어요)
  *    (Expo SDK 58 은 `.env` · `.env.local` · `.env.development` · `.env.production` 만 읽어요. `.env.staging` 은 안 읽어요)
  * 2. `app.json` › `expo.extra.api` — `env` · `baseUrls` · `mock` · `mockDelayMs`
  *
@@ -47,7 +48,7 @@ function resolve() {
   const useMock = mockFromFile === '0' ? false : mockFromFile === '1' ? true : (extra.mock ?? true);
   return {
     env,
-    baseUrl: (extra.baseUrls[env] ?? '').replace(/\/+$/, ''),
+    baseUrl: (process.env.EXPO_PUBLIC_API_BASE_URL || extra.baseUrls[env] || '').replace(/\/+$/, ''),
     useMock,
     /** 가짜 응답을 몇 ms 늦출지 (불러오는 중 화면 확인용) */
     mockDelayMs: extra.mockDelayMs ?? 0,

@@ -15,11 +15,11 @@ import * as ReactNative from 'react-native';
 
 const { Platform } = ReactNative;
 
-export type DevPersona = 'guest' | 'trial' | 'pending' | 'rejected' | 'app' | 'linked' | 'pro' | 'manager';
+export type DevPersona = 'guest' | 'trial' | 'pending' | 'rejected' | 'linked' | 'pro' | 'manager';
 /** 모임(동아리 · 번개) 안에서 나: 화면 그대로(내가 연 모임만 호스트) · 늘 멤버처럼 · 늘 호스트 · 늘 코호스트 */
 export type DevClubRole = 'auto' | 'member' | 'host' | 'co';
 
-/** 고르는 순서 = 화면에 보이는 순서. desc 는 그 사람의 role · link · trial · plan (state/me) */
+/** 고르는 순서 = 화면에 보이는 순서. desc 는 그 사람의 role · link · trial (state/me) */
 export const DEV_PERSONAS: {
   k: DevPersona;
   label: string;
@@ -50,7 +50,6 @@ export const DEV_PERSONAS: {
     desc: '지점이 못 찾았어요',
     group: '멤버',
   },
-  // '앱 구독'(지점 없이 앱만 결제)은 고르기 목록에서 뺐어요 (2026-11-25)
   {
     k: 'linked',
     label: '회원',

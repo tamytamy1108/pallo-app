@@ -9,8 +9,8 @@ import { getOnboarding, updateOnboarding } from '@/state/onboarding';
 
 import { createLinkRequest } from './branch-link';
 import { apiErrorMessage } from './errors';
-import { submitOnboarding, type BranchOption, type OnboardingBody, type OnboardingResult } from './onboarding';
-import { assetCatalogQuery, branchOptionsQuery, onboardingInfoQuery, queryKeys, trialSlotsQuery } from './queries';
+import { branchGuideView, submitOnboarding, type BranchOption, type OnboardingBody, type OnboardingResult } from './onboarding';
+import { assetCatalogQuery, branchOptionsQuery, branchPublicGuideQuery, onboardingInfoQuery, queryKeys, trialSlotsQuery } from './queries';
 import { createTrialApplication, type TrialApplicationBody } from './trial-applications';
 
 /** GET /onboarding — 약관 · 미리 채울 값 · 닉네임 규칙 · 언어 · 이유 */
@@ -18,6 +18,10 @@ export const useOnboardingInfo = () => useQuery(onboardingInfoQuery());
 
 /** GET /asset-catalog — 고를 수 있는 팔로로 */
 export const useAssetCatalog = () => useQuery(assetCatalogQuery());
+
+/** GET /branches/{code}/guide — 고른 지점 안내. 지점을 고르기 전엔 부르지 않아요 */
+export const useBranchPublicGuide = (branchCode: string) =>
+  useQuery({ ...branchPublicGuideQuery(branchCode), enabled: !!branchCode, select: branchGuideView });
 
 /** GET /trial-slots — 지점을 고르기 전엔 부르지 않아요 */
 export const useTrialSlots = (branchCode: string) => useQuery({ ...trialSlotsQuery(branchCode), enabled: !!branchCode });

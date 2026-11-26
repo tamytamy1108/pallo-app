@@ -34,5 +34,3 @@ export const LangKoreanName: Story = { parameters: at({ lang: '스페인어' }) 
 export const UnknownLang: Story = { parameters: at({ lang: 'fr' }), beforeEach: () => void updateMe({ lang: 'zh' }) };
 /** 이미 체험을 예약한 사람 — 그 지점이 골라져 있어요 */
 export const AlreadyBooked: Story = { globals: { userKind: 'trial' } };
-/** 앱 구독자 */
-export const AppOnly: Story = { globals: { userKind: 'app' } };

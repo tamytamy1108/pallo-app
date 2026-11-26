@@ -15,16 +15,19 @@ import { Font } from '@/constants/fonts';
 import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import { setSfxOn, sfx, useSfxOn } from '@/lib/feedback';
+import { isMember } from '@/state/access';
 import { updateMe, useMe } from '@/state/me';
 
 /**
  * 설정 — 꼭 필요한 것만 (2026-11-25 줄임): 계정(닉네임 · 로그인) · 알림 7개 · 효과음 · 안전(퀘스트 공유 · 차단) · 로그아웃.
+ * 누구나 열어요 (비회원도 로그아웃 · 알림 · 차단). 회원 전용 줄은 비회원에게 안 보여요: 스터디 세션 알림.
  * 뺀 것: 내 지점 · 학습 언어 · 레벨(전산 웹 · 프로가 정해요) · 도움(고객센터 · 약관) · 회원 탈퇴 · 말하기 어려움 · 소리 끄기(레슨 안에 있어요) · 하루 목표 · 공개 범위 · 신고 내역 · 이용권 · 결제 내역 · 공지사항 · 앱 버전.
  * 뺀 설정 값은 기본값 그대로 서버에 남아요. 효과음은 @/lib/feedback 이 가져요.
  * 맞는 API: 30 `GET / PUT /me/settings`
  */
 export default function SettingsScreen() {
   const me = useMe();
+  const member = isMember(me);
   const set = useSettings();
   const logins = useLogins();
   const sound = useSfxOn();
@@ -45,7 +48,8 @@ export default function SettingsScreen() {
       </Sec>
       <Sec title="알림" onLayout={onNotiLayout}>
         {/* 알림은 이름만 (설명 없이 · 2026-11-25) */}
-        <ToggleRow title="스터디 세션 알림" value={set.nSession} onPress={() => updateSettings({ nSession: !set.nSession })} />
+        {/* 스터디 세션(출석)은 회원만 — 비회원에게는 줄을 안 보여요 */}
+        {member && <ToggleRow title="스터디 세션 알림" value={set.nSession} onPress={() => updateSettings({ nSession: !set.nSession })} />}
         <ToggleRow title="번개 · 이벤트 소식" value={set.nMeet} onPress={() => updateSettings({ nMeet: !set.nMeet })} />
         {/* 라운지 알림: 예전 '동아리 채팅' 값(nClubChat)을 그대로 써요 — 동아리 채팅 · 라운지 새 소식 */}
         <ToggleRow title="라운지 알림" value={set.nClubChat} onPress={() => updateSettings({ nClubChat: !set.nClubChat })} />

@@ -110,12 +110,8 @@ export function finishOnboarding() {
     name: s.nickname,
     ...(s.branch ? { branch: s.branch } : {}),
     ...(lang ? { lang } : {}),
-    // '앱 구경할래요'(path app)는 구독자가 아니에요 — 앱 구독(plan 'app')은 결제한 사람만. 가입 단계에서는 늘 study 로 두고 비회원으로 둘러봐요
-    plan: 'study',
-    // 지점이 연동해 주기 전까지는 회원 기능이 안 열려요 (비회원과 같아요). 연동되면 member 로 바뀌어요 (state/link-events)
+    // 회원 · 비회원은 서버 /me 의 회원 등급으로, 연동 대기 · 체험 예약은 서버 요약으로 봐요 (POST /onboarding 이 이미 만들어 뒀어요)
     role: 'guest',
-    link: s.path === 'member' ? 'pending' : 'none',
-    trial: s.path === 'trial' && s.trialDay && s.trialTime ? { branch: s.branch, day: s.trialDay, time: s.trialTime, lang: lang ?? 'en' } : null,
   });
   // 캐릭터 고르기에서 고른 몸 색이 홈 · 마이의 내 팔로로가 돼요
   setAvatarBody(s.color);

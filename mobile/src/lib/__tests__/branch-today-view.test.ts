@@ -56,6 +56,7 @@ describe('오늘 지점 현황', () => {
     expect(v.proCount).toBe(4);
     expect(v.proByPro).toBe(3);
     expect(v.proByStaff).toBe(1);
+    expect(v.proPlanned).toBe(5);
     expect(v.members).toBe(30);
     expect(v.sessions).toBe(5);
   });

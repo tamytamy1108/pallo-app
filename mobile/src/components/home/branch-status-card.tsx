@@ -40,7 +40,7 @@ function Stripes() {
   );
 }
 
-type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member' };
+type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /** 숫자 옆 작은 글씨 (예정 6) */ sub?: string };
 
 /**
  * 지점 관리자 홈: 출석 카드 아래 '하남점 현황' (docs/pages/10-roles.md 4장 · 카드 시안 A 슬레이트).
@@ -59,7 +59,7 @@ export function BranchStatusCard() {
   const v = (n: number | undefined) => (n === undefined ? '–' : String(n));
   const cells: Cell[] = [
     { label: '오늘 스터디', value: v(view?.sessions) },
-    { label: '프로 출석', value: v(view?.proByPro), tone: 'pro' },
+    { label: '프로 출석', value: v(view?.proByPro), tone: 'pro', sub: view ? `예정 ${view.proPlanned}` : undefined },
     { label: '스텝 출석', value: v(view?.proByStaff), tone: 'staff' },
     { label: '멤버 출석', value: v(view?.members), tone: 'member' },
   ];
@@ -68,13 +68,19 @@ export function BranchStatusCard() {
     <Pressable
       onPress={open}
       accessibilityRole="button"
-      accessibilityLabel={`${name} 현황${view ? ` · 프로 출석 ${view.proByPro}명 · 스텝 출석 ${view.proByStaff}명 · 멤버 출석 ${view.members}명` : ''}`}>
+      accessibilityLabel={`${name} 현황${view ? ` · 프로 출석 ${view.proByPro}명 (예정 ${view.proPlanned}명) · 스텝 출석 ${view.proByStaff}명 · 멤버 출석 ${view.members}명` : ''}`}>
       {({ pressed }) => (
         <Raised radius={RADIUS} pressed={pressed}>
           <View style={styles.card}>
             <Stripes />
             <View style={styles.head}>
-              <PText style={styles.title}>{name} 현황</PText>
+              <View style={styles.titleWrap}>
+                <PText style={styles.title}>{name} 현황</PText>
+                {/* 지점 관리자만 보는 카드라는 표시 (회원에게 보여 줄 때 헷갈리지 않게) */}
+                <PText style={styles.only} numberOfLines={1}>
+                  스텝에게만 보여요
+                </PText>
+              </View>
               {!empty && !isError ? <PText style={styles.more}>모두 보기 ›</PText> : null}
             </View>
             {!empty && !isError ? <StatCells cells={cells} /> : null}
@@ -102,9 +108,16 @@ export function StatCells({ cells, framed = false }: { cells: Cell[]; framed?: b
           <PText style={styles.cellL} color={c.tone === 'pro' ? Colors.purple : c.tone === 'staff' ? Colors.yellow : Colors.inkSub} numberOfLines={1}>
             {c.label}
           </PText>
-          <PText style={styles.cellV} color={c.tone === 'pro' ? Colors.purple : c.tone === 'staff' ? Colors.yellow : Colors.ink}>
-            {c.value}
-          </PText>
+          <View style={styles.cellVRow}>
+            <PText style={styles.cellV} color={c.tone === 'pro' ? Colors.purple : c.tone === 'staff' ? Colors.yellow : Colors.ink}>
+              {c.value}
+            </PText>
+            {c.sub ? (
+              <PText style={styles.cellSub} numberOfLines={1}>
+                {c.sub}
+              </PText>
+            ) : null}
+          </View>
         </View>
       ))}
     </View>
@@ -116,7 +129,9 @@ const styles = StyleSheet.create({
   stripes: { height: STRIPE_H, overflow: 'hidden', borderBottomWidth: LINE, borderColor: Colors.ink, backgroundColor: Colors.cream },
   bar: { position: 'absolute', top: -4, height: STRIPE_H + 8, width: BAR_W, backgroundColor: Colors.ink, transform: [{ skewX: '-35deg' }] },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: Colors.white, borderBottomWidth: LINE, borderColor: Colors.ink },
+  titleWrap: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flexShrink: 1, minWidth: 0 },
   title: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
+  only: { flexShrink: 1, fontFamily: Font.body700, fontSize: 11, lineHeight: 16, color: Colors.inkSub },
   more: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   cells: { flexDirection: 'row', borderBottomWidth: LINE, borderColor: Colors.ink },
   cellsFramed: { borderWidth: LINE, borderRadius: 14, overflow: 'hidden', backgroundColor: Colors.cream },
@@ -125,7 +140,9 @@ const styles = StyleSheet.create({
   cellMember: { backgroundColor: Colors.yellow },
   cellStaff: { backgroundColor: Colors.ink },
   cellL: { fontFamily: Font.body800, fontSize: 11, lineHeight: 16 },
+  cellVRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   cellV: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
+  cellSub: { flexShrink: 1, fontFamily: Font.body800, fontSize: 10, lineHeight: 14, color: Colors.inkSub },
   foot: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: Colors.lavender },
   live: { width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
   footT: { flex: 1, minWidth: 0, fontFamily: Font.body800, fontSize: 12, lineHeight: 17 },

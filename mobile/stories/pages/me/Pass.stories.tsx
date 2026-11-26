@@ -30,4 +30,3 @@ export const Guest: Story = { globals: { userKind: 'guest' } };
 export const Pending: Story = { globals: { userKind: 'pending' } };
 export const Rejected: Story = { globals: { userKind: 'rejected' } };
 export const Trial: Story = { globals: { userKind: 'trial' } };
-export const AppOnly: Story = { globals: { userKind: 'app' } };

@@ -61,4 +61,3 @@ export const BranchForm: Story = { play: ({ canvas, userEvent }) => pickKind(can
 
 export const Guest: Story = { globals: { userKind: 'guest' } };
 export const Pending: Story = { globals: { userKind: 'pending' } };
-export const AppOnly: Story = { globals: { userKind: 'app' } };

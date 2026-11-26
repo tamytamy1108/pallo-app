@@ -61,5 +61,3 @@ export const Level4: Story = { beforeEach: homeDevice({ season: 'winter' }, () =
 
 /** 비회원 — 둘째 챕터부터 자물쇠 */
 export const Guest: Story = { globals: { userKind: 'guest' }, beforeEach: homeDevice({ season: 'spring' }) };
-/** 앱 구독 — 비회원과 같이 첫 챕터만 */
-export const AppOnly: Story = { globals: { userKind: 'app' }, beforeEach: homeDevice({ season: 'spring' }) };

@@ -35,7 +35,7 @@ const OPENS = [
  * 마이의 PRO'S NOTE · 내 스터디 · 지점 안내 자리를 이 칸 하나로 바꿔요. 회원 전용 화면을 비회원이 열었을 때도 이 칸을 보여 줘요.
  * 아래 행동은 비회원이 무엇을 기다리는지(api/use-branch-progress · 서버 요약)에 따라:
  * 연동 대기 → 안내만 · 확인 안 한 반려 → [다시 요청하기] · 다가오는 체험 → [체험 예약 보기]
- * · 그 밖(둘러보기 · 앱 구독) → [체험 신청하기] + '이미 회원이에요 · 연동 요청'.
+ * · 그 밖(둘러보기) → [체험 신청하기] + '이미 회원이에요 · 연동 요청'.
  */
 export function MemberLock({ title = '지점 회원이 되면 열려요', sub = '지점에서 연동하면 출석부터 프로 노트까지 여기서 봐요.' }: { title?: string; sub?: string }) {
   const { pending, rejected, trial } = useBranchProgress();

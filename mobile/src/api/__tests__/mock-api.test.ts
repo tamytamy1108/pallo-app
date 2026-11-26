@@ -37,8 +37,8 @@ describe('가짜 API', () => {
     await expect(fetchNotice('nope')).rejects.toMatchObject({ code: 'not_found', status: 404 });
   });
 
-  it('/me 는 state/me 값을 돌려줘요', async () => {
-    await expect(fetchMe()).resolves.toMatchObject({ name: 'Tammy', role: 'member' });
+  it('/me 는 서버 모양(MobileMeResponse)으로 state/me 의 회원 등급을 돌려줘요', async () => {
+    await expect(fetchMe()).resolves.toEqual({ code: 'me', host: false, needsOnboarding: expect.any(Boolean), memberAccessLevel: 'ACTIVE_MEMBER' });
   });
 
   it('?mockFail 처럼 실패시킬 수 있어요', async () => {

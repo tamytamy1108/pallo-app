@@ -1,15 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
-import { userEvent, within } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 
 import OnboardingWhy from '@/app/(onboarding)/onboarding/why';
 import { WHY_REASONS } from '@/components/onboarding/app-parts';
+import { getOnboarding } from '@/state/onboarding';
 
 import { LOADING_FOREVER } from '../../_support/api';
-import { withOnboarding, withToast } from '../../onboarding/_onb';
+import { withOnboarding } from '../../onboarding/_onb';
 
 /**
- * 가입 › 앱 구경 › 배우고 싶은 이유 (/onboarding/why · 5/5) — 여러 개 · 안 골라도 돼요.
- * '앱 둘러보기'가 가입을 끝내요 (useCompleteOnboarding · 가짜 API 'completeOnboarding').
+ * 가입 › 앱 구경 › 배우고 싶은 이유 (/onboarding/why · 5/6) — 여러 개 · 안 골라도 돼요. 이유 목록은 GET /onboarding (가짜 API 'onboardingInfo').
+ * '다음' → 가까운 지점(/onboarding/near). 가입을 끝내는 '앱 둘러보기'는 그 뒤 지점 안내(Pages/Onboarding/Branch)에 있어요.
  */
 const meta = {
   title: 'Pages/Onboarding/Why',
@@ -25,18 +26,14 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 export const SomeSelected: Story = { beforeEach: withOnboarding({ path: 'app', why: ['여행 가서 말하기', '외국인 친구'] }) };
 export const AllSelected: Story = { beforeEach: withOnboarding({ path: 'app', why: [...WHY_REASONS] }) };
-/** 가입 끝내는 중 — 서버가 늦어도 화면은 그대로 (버튼에 따로 '보내는 중' 표시가 없어요) */
-export const Completing: Story = {
-  parameters: { api: { delayMs: LOADING_FOREVER } },
+export const Loading: Story = { parameters: { api: { delayMs: LOADING_FOREVER } } };
+/** 이유 목록을 못 받음 */
+export const LoadError: Story = { parameters: { api: { fail: ['onboardingInfo'] } } };
+/** '다음' → 앱 구경 길로 표시하고 가까운 지점으로 (이동은 Actions 패널의 router.push) */
+export const GoNext: Story = {
+  beforeEach: withOnboarding({ path: null }),
   play: async ({ canvasElement }) => {
-    await userEvent.click(await within(canvasElement).findByRole('button', { name: '앱 둘러보기' }));
-  },
-};
-/** 가입 끝내기 실패 → 오류 토스트 */
-export const CompleteError: Story = {
-  decorators: [withToast],
-  parameters: { api: { fail: ['completeOnboarding'] } },
-  play: async ({ canvasElement }) => {
-    await userEvent.click(await within(canvasElement).findByRole('button', { name: '앱 둘러보기' }));
+    await userEvent.click(await within(canvasElement).findByRole('button', { name: '다음' }));
+    await expect(getOnboarding().path).toBe('app');
   },
 };

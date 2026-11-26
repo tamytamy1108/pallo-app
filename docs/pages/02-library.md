@@ -75,7 +75,7 @@
 | Lv.3 토픽형 | DAILY TOPIC(질문 6 · 키워드 12) + TOPIC 지문 + USEFUL EXPRESSIONS + IMPROVEMENT | KEYWORDS 즉답 스프린트 · DAILY TOPIC 답변 준비 · TOPIC 지문 · USEFUL EXPRESSIONS | DAILY TOPIC 토론(AI 리더 Lily + 멤버 Mina · Jun) · IMPROVEMENT(회차마다 4유형 중 하나) · ACTIVITY(회차마다 형식) | VOCABULARY REVIEW · IMPROVEMENT 리라이트 · JOURNAL 말하는 일기 (+15P) · Before / After |
 | Lv.4 디베이트형 | FREE TALK 5 + SAY IT BETTER + TWO SIDES 토론 + KEY EXPRESSIONS | FREE TALK 준비 · KEY EXPRESSIONS · 내 입장 정하기 | FREE TALK 1:1 · DEBATE(AI Logan, 3라운드) · FOLLOW-UP 질문 만들기 | SAY IT BETTER · 편 바꾸기 · FINAL POSITION + 즉흥 룰렛 |
 
-- **본학습** = 세션 시간에 하는 활동을 앱에서 AI와 하는 버전이에요. 오프라인에 못 온 날이나 앱 구독자가 써요. 프로토타입은 대본이 정해진 대화이고, 실제 앱은 같은 자리에 AI 응답을 붙여요.
+- **본학습** = 세션 시간에 하는 활동을 앱에서 AI와 하는 버전이에요. 오프라인에 못 온 날 써요. 프로토타입은 대본이 정해진 대화이고, 실제 앱은 같은 자리에 AI 응답을 붙여요.
 - **회차마다 바뀌는 양식 (Lv.3):** 회차 데이터의 `session` 한 칸만 바꿔요. `session.improvement.type` = `natural` · `grammar` · `pron` · `confuse`, `session.activity.format` = `guess` · `present` · `duo`.
 - 교재에 뜻 · 해석이 없는 부분(Lv.3 키워드 뜻 · 지문 해석, Lv.4 KEY EXPRESSIONS 뜻 · 예문, Lv.2 Speaking Bank 빈칸 정답, 1분 챌린지 모범 답)은 프로토타입 예시예요 → Q-C2.
 

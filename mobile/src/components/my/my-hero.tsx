@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Mask, Rect } from 'react-native-svg';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
+import { useBranchProgress, type BranchProgress } from '@/api/use-branch-progress';
 import { RoleTag, type RoleKind } from '@/components/common/role-tag';
 import { useMyClubRoles } from '@/components/meet/model';
 import { Pressable } from '@/components/ui/pressable';
@@ -14,11 +15,11 @@ import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
-import { followLists } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { EASE, SPRING } from '@/lib/motion';
 import { finishMyMoment, useLinkEvents } from '@/state/link-events';
 import { useMyAvatar } from '@/state/avatar';
+import { isMember } from '@/state/access';
 import { useMe, type Me } from '@/state/me';
 
 import { BioSheet } from './bio-sheet';
@@ -39,16 +40,30 @@ function staffLine(me: Me) {
 /**
  * 마이 맨 위 캐릭터 룸 카드 (프로토타입 .my-hero): 무대 + 붓(누르면 캐릭터 꾸미기 · 한 줄 소개 고치기 메뉴) · 스파크 잔액 + 이름 · 지점 줄 · 한 줄 소개(글만) · 팔로잉/팔로워.
  * width = 카드 바깥 폭 (그림자 제외).
+ * sparks · follow = 마이 집계(GET /me/mypage) 값 — 아직 못 받았으면(undefined) '–' 이고, 팔로우 칸은 눌리지 않아요.
  */
-export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing' | 'fer') => void }) {
+export function MyHero({
+  width,
+  sparks,
+  follow,
+  onFollow,
+}: {
+  width: number;
+  sparks: number | undefined;
+  follow: { following: number; followers: number } | undefined;
+  onFollow: (t: 'fing' | 'fer') => void;
+}) {
   const me = useMe();
   const av = useMyAvatar();
   const [bioOpen, setBioOpen] = useState(false);
   // 붓 버튼 메뉴: 캐릭터 꾸미기 · 한 줄 소개 고치기
   const [menu, setMenu] = useState(false);
-  const lists = followLists(me.name, me, me.following);
   const staff = staffKind(me.role);
   const clubRole = useMyClubRoles(me.name).badge;
+  const member = isMember(me);
+  const progress = useBranchProgress();
+  const link = branchStatus(member, progress);
+  const branch = branchOf(link, me.branch, progress);
   // 카드 테두리 2 · 안쪽 여백 10
   const stageW = width - 4 - 20;
   return (
@@ -76,9 +91,9 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
               </View>
             )}
           </Pressable>
-          <View style={styles.spark} accessibilityLabel={`스파크 ${me.sparks}개`}>
+          <View style={styles.spark} accessibilityLabel={sparks == null ? '스파크 불러오는 중' : `스파크 ${sparks}개`}>
             <SparkIcon />
-            <PText style={styles.sparkN}>{me.sparks.toLocaleString()}</PText>
+            <PText style={styles.sparkN}>{sparks == null ? '–' : sparks.toLocaleString()}</PText>
           </View>
           <View style={styles.id}>
             <View style={styles.nameRow}>
@@ -95,15 +110,15 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
               <View style={styles.subRow}>
                 {/* 지점: 연동했거나 요청한 지점 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어서 언어 · 레벨만 */}
                 <PText style={styles.sub}>
-                  {me.link !== 'none' ? `${me.branch} · ` : me.trial ? `${me.trial.branch} · ` : ''}
+                  {branch ? `${branch} · ` : ''}
                   {LANG_NAME[me.lang]}
                   {/* 레벨은 지점 회원(연동 요청 · 연동됨)만 — 비회원은 아직 레벨 테스트 전이에요 */}
-                  {me.link !== 'none' ? ` ${me.level}` : ''}
-                  {me.link === 'linked' ? ' · 회원' : ''}
+                  {link === 'linked' || link === 'pending' || link === 'rejected' ? ` ${me.level}` : ''}
+                  {link === 'linked' ? ' · 회원' : ''}
                 </PText>
                 {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
                     비회원은 '체험 예약' · '비회원' 표시만 */}
-                {me.link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={me.link !== 'none' ? me.link : me.trial ? 'trial' : 'guest'} />}
+                {link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={link} />}
               </View>
             )}
             {/* 한 줄 소개: 글만 보여요. 쓰기 · 고치기는 캐릭터 방 붓 버튼 › 한 줄 소개 고치기 */}
@@ -111,14 +126,8 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
               {me.bio || '한 줄 소개를 남겨 보세요'}
             </PText>
             <View style={styles.fol}>
-              <Pressable onPress={() => onFollow('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${lists.fing.length}명`} hitSlop={10} style={styles.folBtn}>
-                <PText style={styles.folN}>{lists.fing.length}</PText>
-                <PText style={styles.folT}>팔로잉</PText>
-              </Pressable>
-              <Pressable onPress={() => onFollow('fer')} accessibilityRole="button" accessibilityLabel={`팔로워 ${lists.fer.length}명`} hitSlop={10} style={styles.folBtn}>
-                <PText style={styles.folN}>{lists.fer.length}</PText>
-                <PText style={styles.folT}>팔로워</PText>
-              </Pressable>
+              <FollowCount label="팔로잉" n={follow?.following} onPress={follow ? () => onFollow('fing') : undefined} />
+              <FollowCount label="팔로워" n={follow?.followers} onPress={follow ? () => onFollow('fer') : undefined} />
             </View>
           </View>
         </View>
@@ -141,7 +150,43 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
   );
 }
 
+/** 팔로잉 · 팔로워 한 칸: 숫자를 아직 못 받았으면 '–' 이고 눌리지 않아요 */
+function FollowCount({ label, n, onPress }: { label: string; n: number | undefined; onPress: (() => void) | undefined }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole="button"
+      accessibilityLabel={n == null ? `${label} 불러오는 중` : `${label} ${n}명`}
+      accessibilityState={{ disabled: !onPress }}
+      hitSlop={10}
+      style={styles.folBtn}>
+      <PText style={styles.folN}>{n == null ? '–' : n.toLocaleString()}</PText>
+      <PText style={styles.folT}>{label}</PText>
+    </Pressable>
+  );
+}
+
 const TAG_LABEL = { pending: '연동 승인 대기중', linked: '연동됨', trial: '체험 예약', guest: '비회원' } as const;
+
+type BranchStatus = keyof typeof TAG_LABEL | 'rejected';
+
+/** 마이 지점 줄 표시: 회원(서버 /me 회원 등급)이면 연동됨, 아니면 서버 요약에서 연동 대기 → 확인 안 한 반려 → 체험 예약 순 */
+function branchStatus(member: boolean, p: BranchProgress): BranchStatus {
+  if (member) return 'linked';
+  if (p.pending) return 'pending';
+  if (p.rejected) return 'rejected';
+  return p.trial ? 'trial' : 'guest';
+}
+
+/** 지점 줄의 지점: 회원은 내 지점 · 나머지는 요청 · 반려 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어요 */
+function branchOf(link: BranchStatus, myBranch: string, p: BranchProgress): string | null {
+  if (link === 'linked') return myBranch;
+  if (link === 'pending') return p.pending?.branchName ?? null;
+  if (link === 'rejected') return p.rejected?.branchName ?? null;
+  if (link === 'trial') return p.trial?.branch ?? null;
+  return null;
+}
 
 /**
  * 지점 연동 표시 (본인 마이에만): 흰 알약 + 잉크 테두리 + 색 점. 점 색으로 상태를 구분해요

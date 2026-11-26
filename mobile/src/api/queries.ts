@@ -16,21 +16,24 @@ import { fetchMyLinkRequests } from './branch-link';
 import { fetchBranchSummary } from './branch-summary';
 import { fetchBranchToday } from './branch-today';
 import { fetchMyPage } from './my-page';
+import { fetchProsNote } from './pros-notes';
 import { fetchBranchGuides } from './branch-guide';
 import { fetchFaq, fetchMyInquiries } from './support';
 import { fetchMyTrialApplications } from './trial-applications';
-import { fetchAssetCatalog, fetchBranchOptions, fetchOnboardingInfo, fetchTrialSlots } from './onboarding';
+import { fetchAssetCatalog, fetchBranchOptions, fetchBranchPublicGuide, fetchOnboardingInfo, fetchTrialSlots } from './onboarding';
 
 export const queryKeys = {
   me: ['me'] as const,
   linkRequests: ['me', 'branch-link-requests'] as const,
   branchSummary: ['me', 'branch-summary'] as const,
   myPage: ['me', 'mypage'] as const,
+  prosNote: (id: string) => ['me', 'pros-notes', id] as const,
   branchGuides: ['me', 'branch-guides'] as const,
   trialApplications: ['me', 'trial-applications'] as const,
   onboardingInfo: ['onboarding'] as const,
   branchOptions: ['branches'] as const,
   trialSlots: (branchCode: string) => ['trial-slots', branchCode] as const,
+  branchPublicGuide: (branchCode: string) => ['branch-public-guide', branchCode] as const,
   assetCatalog: ['asset-catalog'] as const,
   sessionsToday: ['sessions', 'today'] as const,
   branchToday: ['manager', 'branch', 'today'] as const,
@@ -65,6 +68,9 @@ export const branchSummaryQuery = () => queryOptions({ queryKey: queryKeys.branc
 /** GET /me/mypage — 마이 탭 숫자 · 랭킹 요약 · 배지 · 내 활동 개수 (api/my-page.ts) */
 export const myPageQuery = () => queryOptions({ queryKey: queryKeys.myPage, queryFn: ({ signal }) => fetchMyPage({ signal }) });
 
+/** GET /me/pros-notes/{id} — PRO'S NOTE 한 장 (api/pros-notes.ts) */
+export const prosNoteQuery = (id: string) => queryOptions({ queryKey: queryKeys.prosNote(id), queryFn: ({ signal }) => fetchProsNote(id, { signal }) });
+
 /** GET /trial-applications — 내 체험 상담 신청 전부 (상담 신청 내역) */
 export const trialApplicationsQuery = () => queryOptions({ queryKey: queryKeys.trialApplications, queryFn: ({ signal }) => fetchMyTrialApplications({ signal }) });
 
@@ -75,6 +81,10 @@ export const onboardingInfoQuery = () => queryOptions({ queryKey: queryKeys.onbo
 
 /** GET /branches — 지점 시트 (연동 상태가 바뀌니 시트를 열 때마다 새로) */
 export const branchOptionsQuery = () => queryOptions({ queryKey: queryKeys.branchOptions, queryFn: ({ signal }) => fetchBranchOptions({ signal }) });
+
+/** GET /branches/{code}/guide — 고른 지점 안내 (지점이 콘솔에서 고칠 때만 바뀌어요) */
+export const branchPublicGuideQuery = (branchCode: string) =>
+  queryOptions({ queryKey: queryKeys.branchPublicGuide(branchCode), queryFn: ({ signal }) => fetchBranchPublicGuide(branchCode, { signal }), staleTime: CONTENT_STALE_MS });
 
 /** GET /trial-slots?branchCode= — 체험 상담 희망 시간표 */
 export const trialSlotsQuery = (branchCode: string) => queryOptions({ queryKey: queryKeys.trialSlots(branchCode), queryFn: ({ signal }) => fetchTrialSlots(branchCode, { signal }) });

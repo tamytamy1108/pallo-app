@@ -3,11 +3,13 @@
  * 실제로는 지점 매니저가 관리자 웹에서 [연동하기] · [못 찾음으로 보내기]를 누르면 서버가 푸시를 보내요.
  * 앱에는 관리자 웹이 없어서, 개발용 '지점 처리 흉내'(components/home/link-admin-dev)가 simulateBranchResult 로 불러요.
  *
- * 도착하면: 나(state/me) 연동 상태 바꾸기 → 알림함 맨 위 알림 → 위에서 내려오는 푸시 배너
+ * 도착하면: /me(회원 등급) · 서버 요약(연동 대기 · 반려) 다시 받기 → 알림함 맨 위 알림 → 위에서 내려오는 푸시 배너
  * → 홈 출석 카드가 풀리는 순간 · 마이 '연동됨' 표시가 톡 튀어나오는 순간을 한 번씩 보여 줘요.
  */
-import { mockRejectLinkRequest } from '@/api/branch-link';
+import { mockApproveLinkRequest, mockRejectLinkRequest } from '@/api/branch-link';
+import { apiConfig } from '@/api/config';
 import { queryKeys } from '@/api/queries';
+import { getBranchProgress } from '@/api/use-branch-progress';
 import { queryClient } from '@/api/query-client';
 import { addNoti } from '@/components/home/noti-state';
 import { createStore } from '@/lib/store';
@@ -45,20 +47,23 @@ let seq = 0;
 
 /** 지점 처리 결과 받기 (실제 앱: 푸시 · 알림 API 가 부르는 자리) */
 export function receiveLinkResult(result: LinkResult, note = REJECT_NOTE_MOCK) {
-  const { branch } = getMe();
+  // 처리된 지점: 대기 중인 요청의 지점 (요약을 아직 안 받았으면 내 지점)
+  const branch = getBranchProgress().pending?.branchName ?? getMe().branch;
   const key = ++seq;
   if (result === 'linked') {
-    updateMe({ link: 'linked', role: 'member' });
+    // 가짜 서버: 승인 한 건 + 지점 회원이 돼요 (실서버는 지점이 처리하면 /me · 요약이 이미 바뀌어 있어요)
+    if (apiConfig.useMock) {
+      mockApproveLinkRequest(branch);
+      updateMe({ memberAccessLevel: 'ACTIVE_MEMBER', role: 'member' });
+    }
     addNoti({ id: `link-${key}`, kind: 'notice', badge: 'ok', text: `${branch} 연동이 끝났어요. 이제 회원 기능을 쓸 수 있어요`, time: '방금', href: '/my', read: false });
   } else {
-    // 못 찾음: 권한은 비회원과 같아요 (state/access)
-    updateMe({ link: 'rejected', role: 'guest' });
+    // 못 찾음: 권한은 비회원 그대로 (state/access). 가짜 서버의 내 연동 요청에 반려 한 건 → 홈 반려 팝업 (components/home/link-rejected-popup)
+    if (apiConfig.useMock) mockRejectLinkRequest(branch, note);
     addNoti({ id: `link-${key}`, kind: 'notice', badge: 'fail', text: `${branch}에서 회원 정보를 찾지 못했어요`, time: '방금', href: '/link-rejected', read: false });
-    // 가짜 서버의 내 연동 요청에도 반려 한 건 → 홈 반려 팝업 (components/home/link-rejected-popup)
-    mockRejectLinkRequest(branch, note);
-    void queryClient.invalidateQueries({ queryKey: queryKeys.branchSummary });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.linkRequests });
   }
+  // ['me'] 아래 전부: /me(회원 등급) · 요약(연동 대기 · 반려) · 내 연동 요청
+  void queryClient.invalidateQueries({ queryKey: queryKeys.me });
   store.set((s) => ({
     ...s,
     processing: false,
@@ -80,10 +85,3 @@ export const dismissLinkPush = () => store.set((s) => (s.push ? { ...s, push: nu
 export const finishHomeMoment = () => store.set((s) => (s.homeMoment ? { ...s, homeMoment: false } : s));
 export const finishMyMoment = () => store.set((s) => (s.myMoment ? { ...s, myMoment: false } : s));
 
-/**
- * 못 찾음 → 고쳐서 다시 요청: 연동 요청 화면(onboarding/link)으로 가기 전에 '확인 중'으로 되돌려요.
- * TODO: 연동 요청 화면이 보내기 성공 때 직접 'pending' 으로 바꾸게 되면 이 줄은 빼요 (지금은 그 화면을 다른 사람이 고치는 중)
- */
-export function restartLinkRequest() {
-  updateMe({ link: 'pending', role: 'guest' });
-}

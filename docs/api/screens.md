@@ -56,7 +56,7 @@
 | 백오피스 문구 캐시 (필요 화면만) | GET /contents · GET /contents/{key} | existing | 앱은 하드코딩 |
 
 기기에만 저장 (API 없음): access · refresh 토큰 (SecureStore · 웹은 localStorage)
-가입 단계 화면(약관 → 닉네임 → 캐릭터 → 지점 회원?)은 이제 앱에 있어요 → onboarding-screens.md. GET /me 에 linkStatus · trialBooking · role guest 가 더 필요해요 (권한 · 홈 카드).
+가입 단계 화면(약관 → 닉네임 → 캐릭터 → 지점 회원?)은 이제 앱에 있어요 → onboarding-screens.md. 회원 · 비회원은 GET /me memberAccessLevel, 연동 대기 · 반려 · 체험 예약은 GET /me/branch-summary 로 봐요 (권한 · 홈 카드).
 
 ### 탭 틀 — `app/(tabs)/_layout.tsx`
 서버 호출 없음. 기기에 토큰이 없고 가입 단계를 안 끝냈으면 첫 화면(/welcome)으로 보내요 (api/token.ts getTokens · state/onboarding.ts done). 토큰이 있으면 needsOnboarding 은 GET /me 로.
@@ -104,19 +104,18 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 열린 질문: 체험 동의 약관 — 앱 체험 화면엔 동의 칸이 없어요. 가입 때 동의(app-onboarding)로 갈음할지, 체험용 배치를 따로 둘지. 이미 다가오는 체험이 있는데 또 예약하면 막을지 · 바꿀지(예약 변경은 지금 '지점에 전화'). 체험 시간표 · 정원 · 언어별 프로 일정은 어디서 읽을지(Q-O10).
 
 ### 체험 예약 확정 (앱 안) — `app/trial/done.tsx`
-서버 호출 없음 — 방금 보낸 값(state/trial-booking.ts useLastTrial)으로 '첫 무대 입장권'을 그려요 (가입 때 `app/onboarding/trial-done.tsx` 와 같은 TrialDoneView). 다시 열면 GET /me trialBooking.
+서버 호출 없음 — 방금 보낸 값(state/trial-booking.ts useLastTrial)으로 '첫 무대 입장권'을 그려요 (가입 때 `app/onboarding/trial-done.tsx` 와 같은 TrialDoneView). 다시 열면 GET /me/branch-summary upcomingTrials.
 
 ### 홈 — `app/(tabs)/index.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 인사 Hey {이름} · 구독자/스터디 회원 분기 | GET /me (nickname · plan) | change | state/me.ts name · plan |
+| 인사 Hey {이름} | GET /me (nickname) | change | state/me.ts name |
 | 종 분홍 점 | GET /me/notifications?pageSize=1 → unreadCount | change | noti-state.ts useUnreadCount |
 | Notice board 띠 (3개 순환) | GET /notices?limit=3 | existing | data/mock.ts BOARD_NOTICES |
 | 오늘 스터디 카드 (스터디 회원) | GET /study/courses?date=오늘 | change (qrOpensAt · qrClosesAt · regular) | data/home.ts SLOTS · MY_SLOT · MY_LANG · attendance.ts |
-| 오늘 스터디 자리를 누구냐에 따라 (components/home/home-card.tsx): 회원 출석 카드 · 연동 대기 잠긴 라벤더 · 못 찾음 '다시 요청하기' · 체험 D-n · 둘러보기 카드 | GET /me (role · linkStatus · trialBooking) | change | state/me.ts link · trial · state/access.ts userKind |
+| 오늘 스터디 자리를 누구냐에 따라 (components/home/home-card.tsx): 회원 출석 카드 · 연동 대기 잠긴 라벤더 · 못 찾음 '다시 요청하기' · 체험 D-n · 둘러보기 카드 | GET /me (memberAccessLevel) · GET /me/branch-summary | existing | state/access.ts userKind · api/use-branch-progress.ts |
 | 지점 연동 결과 푸시 배너 · 잠긴 카드가 풀리는 순간 | 푸시 + GET /me/notifications (BRANCH_LINK_*) → GET /me 다시 | change | state/link-events.ts · components/home/link-push.tsx · link-unlock.tsx · link-admin-dev.tsx(개발용 '지점 처리 흉내') |
 | 출석 · 사전 출석 막기 (비회원) | 없음 (앱 guardMember) — 서버도 403 member_only | — | components/common/trial-guide.tsx |
-| 오늘의 목표 카드 (앱 구독자) | learn 도메인 (/me/progress) + GET /config rules.dailyGoal | — | state/today-goal.ts · TODAY_GOAL |
 | 스터디 맵 진도 · 마지막 단계 · 건너뛰기 | learn 도메인 | — | state/progress.ts · map-state.ts · skip-sheet.tsx |
 | 맵의 이번 주 과 | GET /me/week-lessons | new | data/mock.ts MY_BOOK.weekLessons · weekByLevel |
 | 맵 보상 상자 열기 | POST /me/progress/chests/{chestKey}/open | new (A4 · learn 과 겹치면 그쪽) | state/chest.ts · chestReward() |
@@ -124,7 +123,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 | 라운지 미리보기 슬라이드 | GET /home/lounge-highlights | new | data/home.ts LOUNGE_HIGHLIGHTS |
 | 앱 시작 팝업 | GET /popups | existing | data/home.ts LAUNCH_POPUPS |
 
-기기에만 저장 (API 없음): 카드 제목 차례(stage-line) · 팝업 '오늘은 그만 보기'(popup-hidden) · 개발용 ?now= · ?season= · ?plan= (components/home/dev.ts)
+기기에만 저장 (API 없음): 카드 제목 차례(stage-line) · 팝업 '오늘은 그만 보기'(popup-hidden) · 개발용 ?now= · ?season= (components/home/dev.ts)
 참고: 백엔드 GET /home/recommendations (챌린지 · 동아리 · 행아웃 캐러셀)와 GET /study/courses/footprint ("내 언어 발자국"), GET /study/courses/nearest 는 있지만 지금 앱 홈은 그리지 않아요.
 
 ### 출석 시트 · QR — `components/home/session-card.tsx` · `attend-sheet.tsx` · `qr-scanner.tsx` · `attendance.ts`
@@ -175,7 +174,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 서버 호출 없음 (개발용 화면).
 
 ### 공통 컴포넌트 — `components/common/**`
-- `trial-guide.tsx` (guardMember · memberGate · openTrial) · `trial-booking.tsx` (체험 예약 내용 시트 — GET /me trialBooking) · `upsell-sheet.tsx` · `member-lock.tsx` · `scroll-lock.tsx`: 서버 호출 없음 (권한은 GET /me, 잠김 본 수는 기기에만 — onboarding-screens.md 참고). `trial-sheet.tsx` 는 없어졌어요 → 위 체험 예약.
+- `trial-guide.tsx` (guardMember · memberGate · openTrial) · `trial-booking.tsx` (체험 예약 내용 시트 — GET /me/branch-summary upcomingTrials) · `upsell-sheet.tsx` · `member-lock.tsx` · `scroll-lock.tsx`: 서버 호출 없음 (권한은 GET /me memberAccessLevel · 비회원이 기다리는 것은 GET /me/branch-summary, 잠김 본 수는 기기에만 — onboarding-screens.md 참고). `trial-sheet.tsx` 는 없어졌어요 → 위 체험 예약.
 - `comments-sheet.tsx` · `report-sheet.tsx`: 지금 서버 호출 없음 (state/me 만 읽음). 댓글 · 신고 API 는 그 시트를 여는 도메인(lounge 등)이 정의해요.
 - `member-face.tsx` · `sheet-parts.tsx` · `icons.tsx`: 서버 호출 없음.
 
@@ -246,7 +245,7 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 | '○○점에 연동을 요청했어요!' · 진행 표시(요청 보냄 시각 → 확인 중 → 연동 완료) | POST 응답 (createdAt · branchName) · 다시 열면 GET /me/branch-link-requests | new | nowHHMM() · state/onboarding.ts branch |
 | [시작하기] (안드로이드 뒤로도) → 가입 끝 → 홈 | POST /onboarding {path: MEMBER, member{branchCode, realName, phone}, palloloCode} | existing | state/onboarding.ts finishOnboarding (link 'pending' · role 'guest') |
 
-지점이 처리하면: 푸시 + 알림함 맨 위 알림(BRANCH_LINK_APPROVED → /my · BRANCH_LINK_REJECTED → /link-rejected) → GET /me linkStatus 다시 (core listMyNotifications · getMe). 앱 흉내: state/link-events.ts receiveLinkResult · components/home/link-admin-dev.tsx(개발용).
+지점이 처리하면: 푸시 + 알림함 맨 위 알림(BRANCH_LINK_APPROVED → /my · BRANCH_LINK_REJECTED → /link-rejected) → GET /me · GET /me/branch-summary 다시 (core listMyNotifications · getMe). 앱 흉내: state/link-events.ts receiveLinkResult · components/home/link-admin-dev.tsx(개발용).
 열린 질문: 24시간 넘게 안 되면 '조금 늦어지고 있어요' 문구로 바꾸려면 서버가 늦음 여부를 줘야 해요(createdAt 으로 앱이 계산해도 됨) · 주말 · 휴무일 기준 (Q-O8).
 
 ### 연동 안 됨 — `app/link-rejected.tsx`
@@ -281,7 +280,7 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 이유 여러 개 (안 골라도 돼요) | (보내기에 같이) | — | WHY_REASONS · state/onboarding.ts why |
-| [앱 둘러보기] → 가입 끝 → 홈 | POST /onboarding {path: APP, app{languageCodes, reasons}} | existing | finishOnboarding (plan study · role guest) |
+| [앱 둘러보기] → 가입 끝 → 홈 | POST /me/onboarding {path: app, bodyColor, langs, reasons} | new | finishOnboarding (role guest) |
 
 ### 사용 가이드 5장 — (앱 화면 아직 없음)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -294,9 +293,9 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 ### 회원 · 비회원 권한 (여러 화면) — `state/access.ts` · `state/lock-hits.ts` · `components/common/trial-guide.tsx` · `member-lock.tsx` · `scroll-lock.tsx` · `upsell-sheet.tsx` · `trial-booking.tsx`
 | 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 누구인지(회원 · 연동 대기 · 못 찾음 · 체험 예약 · 앱 구독 · 비회원) | GET /me (role · linkStatus · trialBooking · plan) (core getMe) | change | state/access.ts userKind · canUse |
+| 누구인지(회원 · 연동 대기 · 못 찾음 · 체험 예약 · 비회원) | GET /me (memberAccessLevel) · GET /me/branch-summary (core getMe) | existing | state/access.ts userKind · canUse · api/use-branch-progress.ts |
 | 회원 전용을 누르면 체험 안내 시트 · 토스트 | 없음 (앱) — 서버도 회원 전용 API 에서 403 member_only | — | trial-guide.tsx guardMember · memberGate |
-| 체험 예약 내용 시트 (지점 · 날짜 · 시간 · 언어 · 전달 사항 · 지점 전화) | GET /me trialBooking (MyTrialBooking) | change | Me.trial · state/onboarding.ts note · BRANCH_TEL_MOCK |
+| 체험 예약 내용 시트 (지점 · 날짜 · 시간 · 언어 · 전달 사항 · 지점 전화) | GET /me/branch-summary upcomingTrials (전달 사항은 아직 없음 · 지점 전화는 늘 null) | change | api/use-branch-progress.ts trial · state/onboarding.ts note · BRANCH_TEL_MOCK |
 
 기기에만 저장 (API 없음): 스크롤로 잠김 칸을 본 수(3 · 6 · 9 … 번째면 '체험해 보시겠어요?' 권유 시트 · 앱을 켠 동안만) · 시트 한 번에 하나(state/lock-hits.ts) · 가입 중 고른 값(state/onboarding.ts — 끝나면 서버로) · 방금 한 체험 예약(state/trial-booking.ts — 확정 화면용) · 연동 결과 '톡 튀어나오는 순간'을 봤는지(state/link-events.ts homeMoment · myMoment).
 열린 질문: 비회원(role guest)에게 로그아웃 · 탈퇴 입구를 어디에 둘지 (설정이 잠겨 있어요). 체험 예약 변경 · 취소 API — 지금은 '지점에 전화'뿐. 요청 취소(A23 DELETE /me/branch-link-requests/{id}) 는 앱 버튼이 없어 넣지 않았어요.
@@ -761,14 +760,15 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 내 이름 · 지점 · 역할 · 레벨 (앱 전체 useMe) | GET /me | change | state/me.ts ME0 |
-| 캐릭터 카드 · 숫자 4칸(연속 학습 · 이번 주 랭킹 · 참여 중인 모임 · 받은 배지) · 팔로잉/팔로워 수 · 스파크 · 배지 미리보기 · 내 활동 개수 | GET /me/mypage (서버 집계 · v2) | existing | state/me.ts · data/my.ts MY_BADGES · rankPeople |
-| 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /me/mypage ranking (podium · me) — 전체 랭킹 화면은 GET /ranking | existing | data/my.ts rankPeople |
+| 캐릭터 카드 · 숫자 4칸(회원: 연속 학습 · 이번 주 랭킹 · 참여 중인 모임 · 받은 배지 / 프로: 이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요) · 팔로잉/팔로워 수 · 스파크 · 배지 미리보기 · 내 활동 개수(찜한 챌린지 포함) — 칸이 null 이면 안 그려요 | GET /me/mypage (v2 MyPageV2Response) | existing | api/my-page.ts · api/use-my-page.ts (가짜 서버 mockMyPage) |
+| 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /ranking?scope=member&period=week | new | data/my.ts rankPeople |
 | 내 모임 시트 | GET /me/activities | existing | state/me.ts joinedMeets |
 | 찜한 모임 시트 | (라운지 찜 API 몫) | — | state/me.ts savedMeets |
 | 내가 쓴 글 → 라운지로 | (라운지 몫) | — | state/me.ts postCount |
-| 내 표현함 개수 | GET /me/mypage (activity.savedExpressionCount) · 목록은 학습 도메인 표현함 API | existing | state/expressions useSavedCount |
-| PRO'S NOTE 카드 · 내 스터디 카드 · 지점 안내 (회원만 보여요) | 아래 각 컴포넌트 | | |
-| 비회원: 랭킹 윗부분 아래 '지점 회원이 되면 열려요' 칸 · 톱니 흐리게 · 메뉴 '이용권 · 결제 내역'은 회원만(앱 구독자는 '결제 내역') | GET /me (role · linkStatus · trialBooking · plan) | change | state/access.ts isMember · canUse · components/common/member-lock.tsx · scroll-lock.tsx |
+| 내 표현함 개수 | GET /me/mypage (summary.savedExpressionCount) · 목록은 학습 도메인 표현함 API | change | state/expressions useSavedCount |
+| PRO'S NOTE 카드(새 노트 n · 최근 받은/보낸 노트 · n/m명 읽음) · 내 수업(프로, 이번 주 맡은 세션) · 내 스터디(이용권 · 듣는 팀 · 리더) — 서버가 준 칸만 | GET /me/mypage (proNote · myClasses · study) | existing | components/account/pro-note-card.tsx · my-class-card.tsx · my-study-card.tsx |
+| 지점 안내 (회원만 보여요) | 아래 컴포넌트 | | |
+| 비회원: 랭킹 윗부분 아래 '지점 회원이 되면 열려요' 칸 · 메뉴 '이용권 · 결제 내역' · 지점 안내는 회원만 | GET /me/mypage (branchMember · 받기 전엔 GET /me memberAccessLevel) · GET /me/branch-summary | existing | state/access.ts isMember · canUse · components/common/member-lock.tsx · scroll-lock.tsx |
 | 잠김 칸 아래 버튼: 연동 대기 '연동 확인 중이에요' · 못 찾음 '다시 요청하기'(→ /link-rejected) · 체험 예약 '체험 예약 보기' · 그 밖 '체험 신청하기' + '이미 회원이에요 · 연동 요청'(→ /onboarding/link) | GET /me | change | components/common/member-lock.tsx |
 
 기기에만 저장 (API 없음): '기기에 저장한 기록 지우기' · '디자인 부품 보기' (개발용 입구, 출시 전 삭제). 스크롤로 잠김 칸을 본 수(3 · 6 · 9 번째 권유 시트 · state/lock-hits.ts).
@@ -781,7 +781,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 목록에서 팔로우 · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
 | 배지 모두 보기 | GET /me/badges | new | data/my.ts MY_BADGES |
 | 스파크 모으는 방법 | GET /me/sparks (earnRules) | new | data/my.ts SPARK_EARN |
-| 프로필 카드 이름 아래 줄 '○○점 · 언어 Lv.n · 회원' + 작은 표시 ● 연동 확인 중 · ✓ 연동됨(처음 한 번 톡 튀어나옴) · 연동 안 됨 | GET /me (linkStatus) | change | state/me.ts link · state/link-events.ts myMoment |
+| 프로필 카드 이름 아래 줄 '○○점 · 언어 Lv.n · 회원' + 작은 표시 ● 연동 확인 중 · ✓ 연동됨(처음 한 번 톡 튀어나옴) · 연동 안 됨 | GET /me (memberAccessLevel) · GET /me/branch-summary | existing | components/my/my-hero.tsx · state/link-events.ts myMoment |
 
 ### 멤버 프로필 — `app/me/profile/[id].tsx` · `components/my/profile-sheet.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
@@ -894,15 +894,15 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 프로 노트 한 장 — `app/me/notes/[id].tsx` · `components/account/pro-note-parts.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 항목(표현 · 바로잡기 · 뜻 · 질문) · 예문 · 마무리 인사 · 같은 팀이 보낸 마음 | GET /pros-notes/{noteId} | change | PRO_NOTES · noteReactions |
-| 열면 읽음 | POST /pros-notes/{noteId}/read | existing | markNoteRead |
+| 항목(서버: 질문 + AI 답 → 종류 '질문') · 보낸 노트면 n/m명 읽음. 예문 · 마무리 인사 · 같은 팀이 보낸 마음 · 고마워요 바는 서버에 없어 안 그려요 | GET /me/pros-notes/{noteId} | existing | api/use-pros-note.ts (가짜 서버 = PRO_NOTES · noteReactions) |
+| 열면 읽음 (받은 노트만 · 마이 '새 노트 n' 다시 받기) | POST /me/pros-notes/{noteId}/read | existing | api/use-pros-note.ts useMarkProsNoteRead |
 | [고마워요] 켜기 · 끄기 | PUT · DELETE /pros-notes/{noteId}/thanks | new | toggleNoteThanks |
 | 감사 인사 보내기 | POST /pros-notes/{noteId}/messages | new | sendNoteMessage · PN_THANKS |
 | 오늘의 스터디 일기 보기 · 저장 | GET · PUT /pros-notes/{noteId}/diary | new | saveDiary · DIARY_EXAMPLES |
 | 항목 [저장] → 내 표현함 | 학습 도메인 표현함 API | — | toggleExpression |
 
 열린 질문:
-- 백엔드 노트는 '리더가 질문 → AI 답'(questions) 모양이고, 앱은 프로가 쓴 태그 항목(items) + 마무리 인사예요. items 를 새로 저장할지, questions 를 tag=질문 항목으로 바꿔 보여 줄지.
+- 백엔드 노트는 '리더가 질문 → AI 답'(questions) 모양이고, 앱은 프로가 쓴 태그 항목(items) + 마무리 인사예요. 지금은 questions 를 종류 '질문' 항목으로 바꿔 보여 줘요(2026-11-26). items · 마무리 인사를 새로 저장할지는 미정.
 - 프로 = 리더로 정했어요 (2026-11-25). 앱 문구는 '프로님'.
 - 같은 팀 멤버가 보낸 감사 인사를 서로 보여 줄지 (지금 예시는 보여 줘요).
 
