@@ -5,7 +5,7 @@
 
 | 파일 | 내용 |
 |---|---|
-| [`openapi.yaml`](openapi.yaml) | API 304개: 요청 · 응답 모양, 쓰는 화면, 규칙 · 누가 부를 수 있나(역할) |
+| [`openapi.yaml`](openapi.yaml) | API 305개: 요청 · 응답 모양, 쓰는 화면, 규칙 · 누가 부를 수 있나(역할) |
 | [`screens.md`](screens.md) | 화면 67개마다 무슨 API를 부르는지 · 지금 가짜 데이터가 어디 있는지 · 열린 질문 |
 | [`index.html`](index.html) | Swagger UI로 보기 |
 
@@ -21,17 +21,17 @@ cd docs/api && npx -y http-server -p 8090 .
 
 | 값 | 개수 | 뜻 |
 |---|---:|---|
-| `existing` | 94 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
-| `change` | 44 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
-| `new` | 166 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
+| `existing` | 95 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
+| `change` | 46 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
+| `new` | 164 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
 
-`existing` · `change` 138개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음). `x-backend` 에 `/app/api/v2` 가 적힌 것(38개)이 새 앱 경로에 이미 있는 것이에요.
+`existing` · `change` 141개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음). `x-backend` 에 `/app/api/v2` 가 적힌 것(41개)이 새 앱 경로에 이미 있는 것이에요.
 각 API에 붙은 다른 표시: `x-screens`(쓰는 화면 파일) · `x-app-code`(지금 가짜 데이터 위치) · `x-inventory`(예전 목록 `docs/appendix/api-inventory.md` 번호, `docs/frontend/api-additions.md` A번호).
 
 묶음별 개수는 [`screens.md` 맨 위 표](screens.md#한눈에)에 있어요. 큰 덩어리로 보면:
-- **v2 에 있음 (2026-11)**: 카카오 로그인(SDK 토큰 · authCode) · 토큰 갱신 · `/me` · 가입 단계(`GET · POST /onboarding`) · 지점 선택지 · 고른 지점 안내(공개) · 체험 시간표 · 체험 상담 신청 · 지점 연동 요청 · 진행 상황 요약 · 지점 안내 · 마이 집계 · 푸시 토큰 · 공지(고정) · 시작 팝업 · FAQ · 1:1 문의 · 에셋 카탈로그 · 이벤트 제안(보내기 · 내 제안 · 취소 · 분류) · 신고하기 · 신고 사유 · 이미지 업로드 · 프로 노트 목록 · 지점 시트 가까운 순(lat · lng)
+- **v2 에 있음 (2026-11)**: 카카오 로그인(SDK 토큰 · authCode) · 토큰 갱신 · `/me` · 가입 단계(`GET · POST /onboarding`) · 지점 선택지 · 고른 지점 안내(공개) · 체험 시간표 · 체험 상담 신청 · 지점 연동 요청 · 진행 상황 요약 · 지점 안내 · 마이 집계 · 푸시 토큰 · 공지(고정) · 시작 팝업 · FAQ · 1:1 문의 · 에셋 카탈로그 · 이벤트 제안(보내기 · 내 제안 · 취소 · 목록에서 지우기 · 분류 · 승인 · 반려 알림) · 이벤트 목록 · 상세(다가오는 것만 · 신청은 아직) · 신고하기 · 신고 사유 · 이미지 업로드 · 프로 노트 목록 · 지점 시트 가까운 순(lat · lng)
 - **거의 있음 (v1)**: 로그인 · `/me` · 출석(`/study`) · 커뮤니티 글 · 번개(`/hangouts`) · 동아리(`/clubs`) · 챌린지(`/challenges`) · 수강 변경 · 연기 · 지점 이동
-- **전부 새로**: 첫 화면 · 가입 마무리 · 닉네임 확인 · 사용 가이드, 학습 콘텐츠 · 진도 · 보상, 음성 · AI, 스토리, 여행 · 해외살이, 이벤트(목록 · 상세 · 신청 — 제안은 있음), 캐릭터 · 상점, 랭킹 · 배지, 차단, 공지
+- **전부 새로**: 첫 화면 · 가입 마무리 · 닉네임 확인 · 사용 가이드, 학습 콘텐츠 · 진도 · 보상, 음성 · AI, 스토리, 여행 · 해외살이, 이벤트 신청 · 지난 이벤트 · 찜 · 후기 (목록 · 상세 기본 · 제안은 있음), 캐릭터 · 상점, 랭킹 · 배지, 차단, 공지
 
 ## 역할 — 누가 부를 수 있나
 
@@ -43,6 +43,16 @@ cd docs/api && npx -y http-server -p 8090 .
 - 프로 · 직원만 쓰는 새 API 14개는 '프로 · 직원' 태그 (`/staff/*` · `/manager/*`)
 
 화면별로는 [`screens.md` 프로 · 직원](screens.md#staff), 화면 · 버튼까지 전체 표는 [`docs/pages/10-roles.md`](../pages/10-roles.md).
+
+## 배포 전에 DB 에 적용할 것
+
+운영 DB 는 `ddl-auto=validate` 라 아래 DDL 을 **배포 전에** 적용해야 서버가 떠요.
+
+| 날짜 | 파일 (`backend/src/main/resources/db/`) | 내용 | 관련 API |
+|---|---|---|---|
+| 2026-11-26 | `migration-event-proposal-notify-hide.sql` | `event_proposals.hidden_at` 추가 · `member_notifications.type` 에 `EVENT_PROPOSAL_APPROVED` · `EVENT_PROPOSAL_REJECTED` | `POST /event-proposals/{id}/hide` · 제안 승인 · 반려 알림 · `GET /events` |
+
+enum `MODIFY` 는 `schema.sql` 기준 전체 값 목록이에요. 그사이 다른 작업이 값을 늘렸으면 `SHOW CREATE TABLE` 로 확인해 같이 넣어 주세요.
 
 ## 공통 약속 (지금 백엔드 방식 그대로)
 

@@ -24,7 +24,7 @@
 | 여행 · 해외살이 | 0 | 0 | 14 | 14 |
 | 신고 · 차단 | 2 | 0 | 2 | 4 |
 | 챌린지 | 11 | 5 | 9 | 25 |
-| 이벤트 | 4 | 0 | 17 | 21 |
+| 이벤트 | 5 | 2 | 15 | 22 |
 | 마이 | 2 | 1 | 7 | 10 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
@@ -33,7 +33,7 @@
 | 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **94** | **44** | **166** | **304** |
+| **합계** | **95** | **46** | **164** | **305** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -709,8 +709,11 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 이벤트 탭 — `app/(tabs)/event.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 배너(다가오는 5개) · 다가오는/지난 목록 · 지점 · 종류 칩 | GET /events?status=&kind=&branch= | new | data/events.ts EVENTS · splitEvents |
+| 배너(다가오는 5개) · 다가오는/지난 목록 · 지점 · 종류 칩 | GET /events?status=&kind=&branch= | change (v2 에 다가오는 것 목록만 — 2026-11-26) | api/events.ts fetchEvents + 예시 data/events.ts EVENTS · fromServer · splitEvents |
 | 내가 제안한 이벤트 카드 (검토 중 · 승인 · 반려 사유 · 취소) | GET /event-proposals | existing | api/event-proposals.ts fetchMyEventProposals |
+| 확정 카드 [이벤트 보기] → 상세 | GET /event-proposals 의 eventId → GET /events/{id} | existing (2026-11-26) | proposal-cards.tsx |
+| 확정 · 반려 카드 [지우기] · 반려 [다시 제안하기] 뒤 예전 카드 지우기 | POST /event-proposals/{id}/hide | existing (2026-11-26) | hideEventProposal |
+| 승인 · 반려 알림 → 누르면 이벤트 탭 | 서버가 보냄 (알림 type EVENT_PROPOSAL_APPROVED · REJECTED, 푸시 data.type EVENT_PROPOSAL) | existing (2026-11-26) | api/push-to-banner.ts |
 | 제안 [취소] (대기 중만) | DELETE /event-proposals/{id} | existing | cancelEventProposal |
 | [오픈하기] — 회원: 제안서 / 프로 · 지점 관리자: 바로 열기 | POST /events (프로 · 지점 관리자) | new | (지금은 누구나 제안서로) |
 | 지점 선택 목록 | GET /events/form-options (branches) 또는 공통 지점 API | new | components/lounge/branch-select.tsx |
@@ -718,7 +721,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 이벤트 상세 — `app/events/[id].tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 정보 줄 · 소개 · 함께하는 멤버 · 내 신청 카드 · 문자 문의 시트 | GET /events/{id} | new | findEvent · eventContact · EVENT_ADDR · EVENT_DESC · membersOf |
+| 정보 줄 · 소개 · 함께하는 멤버 · 내 신청 카드 · 문자 문의 시트 · 멤버 주최면 HOST 줄 | GET /events/{id} | change (v2 에 기본 정보 · host · mine — 신청 · 멤버는 아직) | api/events.ts fetchEvent · findEvent(예시) · eventContact · membersOf |
 | [참여하기] → 확인 시트(설문 · 입금 계좌 · 확인 체크) | POST /events/{id}/applications | new | toggleIn('joined') · setAnswers |
 | '참여 완료' → 참여 취소 | DELETE /events/{id}/applications/me | new | toggleIn('joined') |
 | 정원 참 [빈자리 알림 받기] (A12) | POST · DELETE /events/{id}/waitlist | new | toggleIn('vac') |

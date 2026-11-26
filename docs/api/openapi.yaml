@@ -4161,10 +4161,17 @@ paths:
         화면: app/(tabs)/event.tsx 맨 위 components/event/proposal-cards.tsx '내가 제안한 이벤트' (보낸 제안이
         있을 때만).
 
-        규칙: 상태와 상관없이 내 제안 전부, 최근 보낸 순. 상태 PENDING(매니저 검토 중) · APPROVED(지점이 승인해 이벤트로
-        열림) · REJECTED(반려 — rejectionReason) · CANCELED(내가 취소). 승인 · 반려는 지점 관리자 웹
+        규칙: 상태와 상관없이 내 제안 전부, 최근 보낸 순 — 단 내가 목록에서 지운 것(POST /event-proposals/{id}/hide)은 빠져요.
+        상태 PENDING(매니저 검토 중) · APPROVED(지점이 승인해 이벤트로
+        열림 — eventId) · REJECTED(반려 — rejectionReason) · CANCELED(내가 취소, 앱은 안 보여요). 승인 · 반려는 지점 관리자 웹
         (EventProposalRequestController PUT /{branchCode}/admin/event-proposals/{id}/approve · reject) 몫이에요 —
         승인하면 서버가 매니저가 고친 내용으로 이벤트(Event)를 열어요.
+
+        승인 · 반려하면 서버가 제안한 회원에게 알림(알림함 + 앱 푸시)을 보내요 — 알림 type EVENT_PROPOSAL_APPROVED ·
+        EVENT_PROPOSAL_REJECTED, 푸시 data.type EVENT_PROPOSAL · referenceId = 제안 id. 앱은 누르면 이벤트 탭(/event)으로 가요.
+
+        앱 카드가 사라지는 때: 검토 중 [취소] · 확정 [지우기] 또는 그 이벤트가 끝나 GET /events 에서 빠지면 ·
+        반려 [지우기] 또는 [다시 제안하기](보낸 값이 채워진 새 제안서 — 보내면 반려 건을 hide).
       x-status: existing
       x-backend: MobileEventProposalController GET /app/api/v2/event-proposals → List<EventProposalResponse>
       x-inventory: "#92"
@@ -4288,6 +4295,44 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
       x-domain: community2
+  "/event-proposals/{id}/hide":
+    post:
+      tags:
+        - 이벤트
+      operationId: hideEventProposal
+      summary: 확정 · 반려된 내 제안을 목록에서 지우기
+      description: >
+        화면: 이벤트 탭 '내가 제안한 이벤트' 카드 옆 [지우기] · 제안 시트 [목록에서 지우기] → '목록에서 지웠어요'.
+        반려 건은 [다시 제안하기]로 새 제안을 보낸 뒤에도 앱이 이걸 불러 예전 카드를 지워요.
+
+        규칙: 본인 것만(남의 것이면 404), APPROVED · REJECTED 만 — 대기 중(PENDING)이면 409(취소로 거둬요).
+        두 번 불러도 204. 행은 남고 hidden_at 만 찍혀요 — 지점 요청관리 목록에는 그대로 보여요. GET /event-proposals 에서 빠져요.
+
+        배포 전 DDL: backend/src/main/resources/db/migration-event-proposal-notify-hide.sql (event_proposals.hidden_at ·
+        member_notifications.type 값 2개).
+      x-status: existing
+      x-backend: MobileEventProposalController POST /app/api/v2/event-proposals/{proposalId}/hide → 204 (2026-11-26)
+      x-screens:
+        - components/event/proposal-cards.tsx
+        - app/events/propose.tsx
+      x-app-code: api/event-proposals.ts hideEventProposal · api/use-event-proposals.ts useHideEventProposal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+      x-domain: community2
   /events:
     get:
       tags:
@@ -4309,13 +4354,23 @@ paths:
         - branch: 그 지점 + 전 지점(본사) 이벤트. 비우면 전체.
 
         - upcomingCount: 탭 '다가오는 이벤트 n' (지난 쪽 개수는 안 보여요).
-      x-status: new
+
+        지금 서버(2026-11-26): MobileEventController GET /app/api/v2/events 가 있어요 — 열린(OPEN) 이벤트 중 오늘(KST) 이후
+        것을 날짜 · 시작 시각 순으로 배열 하나(List<EventResponse>, 아래 스키마 EventResponse)로 내려요. 지금 열린 이벤트는
+        회원 제안이 승인돼 생긴 것뿐이고, host(주최 회원 code · nickname) · mine(내가 주최) 이 실려요.
+        앱은 이 목록을 예시 이벤트(data/events.ts)와 섞어 보여요.
+      x-status: change
+      x-backend: MobileEventController GET /app/api/v2/events → List<EventResponse> (2026-11-26)
+      x-gap: >
+        아래 제안 모양과 다른 점 — status=past(지난 이벤트) · kind · branch 필터 · cursor 페이지 · upcomingCount ·
+        신청 인원(cur) · 남은 자리 정렬이 없어요. 지점 · 본사가 직접 여는 이벤트(POST /events)가 생기면 같은 목록에 나와야 해요.
       x-inventory: "#86"
       x-screens:
         - app/(tabs)/event.tsx
         - components/event/event-banner.tsx
         - components/event/event-row.tsx
-      x-app-code: data/events.ts EVENTS · components/event/event-model.ts splitEvents
+      x-app-code: api/events.ts fetchEvents · api/use-events.ts useServerEvents · components/event/event-model.ts
+        fromServer · splitEvents · data/events.ts EVENTS (예시)
       parameters:
         - name: status
           in: query
@@ -4409,13 +4464,18 @@ paths:
         아래 버튼: 지난 이벤트 [후기 보기] / 마감(정원 참) [빈자리 알림 받기 · 알림 받는 중] / [참여하기 · 남은 자리 n] / '참여 완료'(누르면 취소 확인).
 
         입금 계좌는 신청한 뒤에만 내려요 (myApplication.account).
-      x-status: new
+
+        지금 서버(2026-11-26): GET /app/api/v2/events/{id} → EventResponse (없거나 닫혔으면 404). 앱은 host 가 있으면
+        주최 줄을 지점 연락처 대신 멤버 얼굴 · 닉네임 · HOST 로, mine 이면 아래 버튼을 '내가 주최하는 이벤트'로 그려요.
+      x-status: change
+      x-backend: MobileEventController GET /app/api/v2/events/{eventId} → EventResponse (2026-11-26)
+      x-gap: 신청 인원 · 함께하는 멤버 · myApplication · 입금 계좌 · 찜 · 설문이 없어요 (신청 기능과 함께).
       x-inventory: "#86"
       x-screens:
         - app/events/[id].tsx
         - components/event/my-application.tsx
         - components/event/account-card.tsx
-      x-app-code: components/event/event-model.ts findEvent · eventAddr · eventDesc ·
+      x-app-code: api/events.ts fetchEvent · api/use-events.ts useServerEvent · components/event/event-model.ts findEvent · eventAddr · eventDesc ·
         surveyOf · accountOf · data/events.ts eventContact · EVENT_ADDR ·
         EVENT_DESC · components/meet/model.ts membersOf
       parameters:
@@ -13462,6 +13522,8 @@ components:
         - COMMENT_HIDDEN
         - COMMENT_DELETED
         - PROS_NOTE_RECEIVED
+        - EVENT_PROPOSAL_APPROVED
+        - EVENT_PROPOSAL_REJECTED
         - SYSTEM
       example: PROS_NOTE_RECEIVED
     Notification:
@@ -20220,6 +20282,41 @@ components:
         label:
           type: string
           example: 파티
+    EventResponse:
+      type: object
+      description: >
+        지금 서버 GET /app/api/v2/events · /events/{id} 한 건 (backend api/appv2/event/EventResponse). 날짜 KST, 시각 'HH:mm'
+        (끝 '24:00' = 밤 12시). capacity null = 정원 무관, fee 0 = 무료. photos 0번이 대표, 없으면 card 가 대표.
+      required: [id, branchCode, branchName, categoryCode, categoryLabel, title, description, date, startTime, endTime, fee, photos, mine, status]
+      properties:
+        id: { type: string, format: uuid }
+        branchCode: { type: string }
+        branchName: { type: string }
+        categoryCode: { type: string, example: TRIP }
+        categoryLabel: { type: string, example: 여행 }
+        title: { type: string }
+        description: { type: string }
+        date: { type: string, format: date }
+        startTime: { type: string, example: "14:00" }
+        endTime: { type: string, example: "17:00" }
+        placeName: { type: [string, "null"] }
+        placeAddress: { type: [string, "null"] }
+        addressDetail: { type: [string, "null"] }
+        capacity: { type: [integer, "null"] }
+        fee: { type: integer }
+        photos: { type: array, items: { type: string } }
+        card:
+          oneOf:
+            - $ref: "#/components/schemas/EventCard"
+            - type: "null"
+        host:
+          description: 회원 제안으로 열린 이벤트의 주최 회원 (지점이 직접 연 이벤트면 null)
+          type: [object, "null"]
+          properties:
+            code: { type: string }
+            nickname: { type: string }
+        mine: { type: boolean, description: 내가 주최한 이벤트인지 }
+        status: { type: string, enum: [OPEN] }
     EventProposal:
       type: object
       description: 백엔드 EventProposalResponse — 보낸 내용 그대로 + 처리 상태. date 는 KST, 시각은 'HH:mm'(끝 '24:00' = 밤 12시)
@@ -20304,6 +20401,12 @@ components:
             - string
             - "null"
           description: 반려 사유 (REJECTED 만)
+        eventId:
+          type:
+            - string
+            - "null"
+          format: uuid
+          description: 승인으로 열린 이벤트 (APPROVED 만) — 앱 [이벤트 보기]가 GET /events/{id} 로 열어요
         decidedAt:
           type:
             - string
