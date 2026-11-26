@@ -8,7 +8,6 @@ import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { LANGS } from '@/data/home';
 import { sfx } from '@/lib/feedback';
 import type { BranchTodayView } from '@/lib/branch-today-view';
 
@@ -18,13 +17,11 @@ const BRANCH_TODAY = '/branch/today' as Href;
 const RADIUS = 18;
 const LINE = 2.5;
 
-const langKo = (key: string) => LANGS.find((l) => l.key === key)?.ko ?? key;
-
 /** 아래 한 줄: '출석 중 19:30 · 영어 3팀 · 일본어 2팀' */
 function nextLine(v: BranchTodayView) {
-  if (!v.next) return v.sessions ? '오늘 세션이 모두 끝났어요' : null;
-  const teams = v.next.rows.map((r) => `${langKo(r.lang)} ${r.teamName}`).join(' · ');
-  return `${v.next.phase === 'open' ? '출석 중' : '다음 세션'} ${fmtMin(v.next.start)} · ${teams}`;
+  if (!v.next) return v.sessions ? '오늘 스터디가 모두 끝났어요' : null;
+  const teams = v.next.rows.map((r) => r.teamName).join(' · ');
+  return `${v.next.phase === 'open' ? '출석 중' : '다음 스터디'} ${fmtMin(v.next.start)} · ${teams}`;
 }
 
 /** 위 출석 카드(클래퍼보드)와 같은 줄무늬 — 얇게 (session-card ClapperArm 과 같은 방식: 기울인 막대) */
@@ -47,7 +44,7 @@ type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member' };
 
 /**
  * 지점 관리자 홈: 출석 카드 아래 '하남점 현황' (docs/pages/10-roles.md 4장 · 카드 시안 A 슬레이트).
- * 칸 넷 — 오늘 세션 · 프로 출석 · 스텝 출석(스텝이 프로 대신) · 멤버 출석. 모두 몇 명인지만. 자세한 건 모두 보기(/branch/today).
+ * 칸 넷 — 오늘 스터디 · 프로 출석 · 스텝 출석(스텝이 프로 대신) · 멤버 출석. 모두 몇 명인지만. 자세한 건 모두 보기(/branch/today).
  */
 export function BranchStatusCard() {
   const { view, isError, refetch } = useBranchToday();
@@ -61,12 +58,12 @@ export function BranchStatusCard() {
   };
   const v = (n: number | undefined) => (n === undefined ? '–' : String(n));
   const cells: Cell[] = [
-    { label: '오늘 세션', value: v(view?.sessions) },
+    { label: '오늘 스터디', value: v(view?.sessions) },
     { label: '프로 출석', value: v(view?.proByPro), tone: 'pro' },
     { label: '스텝 출석', value: v(view?.proByStaff), tone: 'staff' },
     { label: '멤버 출석', value: v(view?.members), tone: 'member' },
   ];
-  const line = isError ? '현황을 못 불러왔어요 · 누르면 다시 받아요' : empty ? `오늘은 ${name} 세션이 없어요` : view ? nextLine(view) : '현황을 받는 중이에요';
+  const line = isError ? '현황을 못 불러왔어요 · 누르면 다시 받아요' : empty ? `오늘은 ${name} 스터디가 없어요` : view ? nextLine(view) : '현황을 받는 중이에요';
   return (
     <Pressable
       onPress={open}
