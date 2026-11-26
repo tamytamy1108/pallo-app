@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
+import { todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { DIARY_EXAMPLES, DIARY_STICKERS, PRO_NOTES, teamNameByNo } from '@/data/account';
@@ -72,11 +73,13 @@ export function DiaryList() {
             return (
               <View key={d} style={styles.cell}>
                 {id ? (
-                  <Pressable onPress={() => open(id)} accessibilityRole="button" accessibilityLabel={`${M}월 ${d}일 일기`} style={styles.dayOn}>
+                  <Pressable onPress={() => open(id)} accessibilityRole="button" accessibilityLabel={`${M}월 ${d}일${d === today ? ' · 오늘' : ''} 일기`} style={[styles.dayOn, d === today && styles.dayOnToday]}>
                     <PText style={styles.dayOnText}>{d}</PText>
                   </Pressable>
                 ) : (
-                  <PText style={[styles.day, d === today && styles.today]}>{d}</PText>
+                  <View style={[styles.dayBox, d === today && todayMark.cell]} accessibilityLabel={d === today ? `${M}월 ${d}일 · 오늘` : undefined}>
+                    <PText style={[styles.day, d === today && todayMark.text]}>{d}</PText>
+                  </View>
                 )}
               </View>
             );
@@ -125,7 +128,8 @@ const styles = StyleSheet.create({
   cell: { width: `${100 / 7}%`, height: 31, alignItems: 'center', justifyContent: 'center' },
   wk: { fontFamily: Font.body900, fontSize: 10.5, lineHeight: 15, color: Colors.inkSub },
   day: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: '#A39C8E' },
-  today: { color: Colors.ink, textDecorationLine: 'underline' },
+  dayBox: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  dayOnToday: { borderColor: Colors.purple },
   dayOn: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   dayOnText: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16 },
   ym: { marginTop: 4, marginHorizontal: 2, marginBottom: -2, fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },

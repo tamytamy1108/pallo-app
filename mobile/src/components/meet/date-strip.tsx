@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
+import { todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { WEEK, type Meet } from '@/data/meet';
@@ -29,7 +30,7 @@ export function DateStrip({ meets, day, onDay, region }: { meets: Meet[]; day: n
           const d = new Date(t0);
           d.setDate(d.getDate() + k);
           const c = count(k);
-          return <DayBtn key={k} on={day === k} no={!c} onPress={() => onDay(k)} label={String(d.getDate())} small={k ? WEEK[d.getDay()] : '오늘'} a11y={`${d.getMonth() + 1}월 ${d.getDate()}일 번개 ${c}개`} />;
+          return <DayBtn key={k} on={day === k} no={!c} today={k === 0} onPress={() => onDay(k)} label={String(d.getDate())} small={k ? WEEK[d.getDay()] : '오늘'} a11y={`${d.getMonth() + 1}월 ${d.getDate()}일${k ? '' : ' · 오늘'} 번개 ${c}개`} />;
         })}
         <Pressable onPress={() => setCal(true)} accessibilityRole="button" accessibilityLabel="더 많은 날짜 보기" style={[styles.btn, styles.more]}>
           <Icon name="cal" size={18} />
@@ -51,11 +52,12 @@ export function DateStrip({ meets, day, onDay, region }: { meets: Meet[]; day: n
   );
 }
 
-function DayBtn({ on, no, first, label, small, onPress, a11y }: { on: boolean; no?: boolean; first?: boolean; label: string; small: string; onPress: () => void; a11y: string }) {
+function DayBtn({ on, no, first, today, label, small, onPress, a11y }: { on: boolean; no?: boolean; first?: boolean; today?: boolean; label: string; small: string; onPress: () => void; a11y: string }) {
+  const mark = today && !on;
   return (
-    <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={a11y} style={[styles.btn, no && !on && styles.no, on && styles.on]}>
-      <PText style={[first ? styles.bFirst : styles.b, no && !on && { color: '#A39C8E' }, on && { color: '#fff' }]}>{label}</PText>
-      <PText style={[styles.small, on && { color: '#E3DCCB' }]}>{small}</PText>
+    <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={a11y} style={[styles.btn, no && !on && styles.no, mark && todayMark.cell, on && styles.on]}>
+      <PText style={[first ? styles.bFirst : styles.b, no && !on && { color: '#A39C8E' }, mark && todayMark.text, on && { color: '#fff' }]}>{label}</PText>
+      <PText style={[styles.small, mark && todayMark.text, on && { color: '#E3DCCB' }]}>{small}</PText>
     </Pressable>
   );
 }
@@ -95,10 +97,10 @@ function MeetCalendar({ open, onClose, meets, region, day, onDay }: { open: bool
               onPress={() => onDay(k)}
               accessibilityRole="button"
               accessibilityState={{ selected: on, disabled: k < 0 }}
-              accessibilityLabel={`${d.getMonth() + 1}월 ${d.getDate()}일${n ? ` 번개 ${n}개` : ''}`}
-              style={[styles.cell, n > 0 && styles.cellHas, on && styles.cellOn, k < 0 && { opacity: 0.35 }]}>
+              accessibilityLabel={`${d.getMonth() + 1}월 ${d.getDate()}일${k === 0 ? ' · 오늘' : ''}${n ? ` 번개 ${n}개` : ''}`}
+              style={[styles.cell, n > 0 && styles.cellHas, k === 0 && !on && todayMark.cell, on && styles.cellOn, k < 0 && { opacity: 0.35 }]}>
               {d.getDate() === 1 || i === 0 ? <PText style={styles.cm}>{d.getMonth() + 1}월</PText> : null}
-              <PText style={[styles.cb, on && { color: '#fff' }]}>{d.getDate()}</PText>
+              <PText style={[styles.cb, k === 0 && !on && todayMark.text, on && { color: '#fff' }]}>{d.getDate()}</PText>
               {n ? (
                 <View style={styles.cn}>
                   <PText style={styles.cnT}>{n}</PText>
