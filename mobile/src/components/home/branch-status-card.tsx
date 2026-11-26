@@ -43,7 +43,7 @@ function Stripes() {
   );
 }
 
-type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /** 숫자 옆 작은 글씨 (예정 6) */ sub?: string };
+type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /** 숫자 옆 작은 글씨 (예정 6) */ sub?: string; /** 그 옆 빨간 작은 글씨 (불참 1) */ warn?: string };
 
 /**
  * 지점 관리자 홈: 출석 카드 아래 '하남점 현황' (docs/pages/10-roles.md 4장 · 카드 시안 A 슬레이트).
@@ -62,7 +62,7 @@ export function BranchStatusCard() {
   const v = (n: number | undefined) => (n === undefined ? '–' : String(n));
   const cells: Cell[] = [
     { label: '오늘 스터디', value: v(view?.studies), sub: view ? `팀 ${view.sessions}` : undefined },
-    { label: '프로 출석', value: v(view?.proByPro), tone: 'pro', sub: view ? `예정 ${view.proPlanned}` : undefined },
+    { label: '프로 출석', value: v(view?.proByPro), tone: 'pro', sub: view ? `예정 ${view.proPlanned}` : undefined, warn: view && view.proAbsent > 0 ? `불참 ${view.proAbsent}` : undefined },
     { label: '스텝 출석', value: v(view?.staffCount), tone: 'staff' },
     { label: '멤버 출석', value: v(view?.members), tone: 'member' },
   ];
@@ -71,7 +71,7 @@ export function BranchStatusCard() {
     <Pressable
       onPress={open}
       accessibilityRole="button"
-      accessibilityLabel={`${name} 현황${view ? ` · 프로 출석 ${view.proByPro}명 (예정 ${view.proPlanned}명) · 스텝 출석 ${view.staffCount}명 · 멤버 출석 ${view.members}명` : ''}`}>
+      accessibilityLabel={`${name} 현황${view ? ` · 프로 출석 ${view.proByPro}명 (예정 ${view.proPlanned}명 · 불참 ${view.proAbsent}명) · 스텝 출석 ${view.staffCount}명 · 멤버 출석 ${view.members}명` : ''}`}>
       {({ pressed }) => (
         <Raised radius={RADIUS} pressed={pressed}>
           <View style={styles.card}>
@@ -120,6 +120,12 @@ export function StatCells({ cells, framed = false }: { cells: Cell[]; framed?: b
                 {c.sub}
               </PText>
             ) : null}
+            {/* 예정 옆 빨간 불참 — 따로 떼어 간격을 둬요 */}
+            {c.warn ? (
+              <PText style={styles.cellWarn} numberOfLines={1}>
+                {c.warn}
+              </PText>
+            ) : null}
           </View>
         </View>
       ))}
@@ -146,6 +152,8 @@ const styles = StyleSheet.create({
   cellVRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   cellV: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
   cellSub: { flexShrink: 1, fontFamily: Font.body800, fontSize: 10, lineHeight: 14, color: Colors.inkSub },
+  // 불참: 연한 빨강 (눈에 띄되 숫자보다 앞서지 않게)
+  cellWarn: { flexShrink: 1, marginLeft: 4, fontFamily: Font.body800, fontSize: 10, lineHeight: 14, color: '#E07A7A' },
   foot: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: Colors.lavender },
   live: { width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
   footT: { flex: 1, minWidth: 0, fontFamily: Font.body800, fontSize: 12, lineHeight: 17 },

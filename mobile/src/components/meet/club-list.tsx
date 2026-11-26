@@ -18,6 +18,9 @@ import { clubCat, clubDesc, clubX } from './model';
 import { isDarkBg, posterSlides } from './poster';
 import { RoleTag } from '@/components/common/role-tag';
 
+/** 썸네일 안 글자 칸 폭: 64 − 테두리 2×2 − 왼쪽 여백 7 − 오른쪽 숨 쉴 틈 5 */
+const THUMB_TEXT_W = 48;
+
 /** 동아리 목록 썸네일 (64 · 포스터 첫 줄만 · 사진이면 사진) — 카드 만들기 미리보기도 이걸 써요 */
 export function ClubThumb({ words, bg, uri, design }: { words: string[]; bg: string; uri?: string; /** 만든 카드면 그 디자인 */ design?: CardDesign }) {
   const w0 = words[0] ?? '';
@@ -31,7 +34,10 @@ export function ClubThumb({ words, bg, uri, design }: { words: string[]; bg: str
   return (
     <View style={[styles.th, { backgroundColor: bg }]}>
       {uri ? <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
-      <PText style={{ width: 200, fontFamily: Font.display, ...tightLines(fs, 1), color: isDarkBg(bg) ? C.y : C.ink }}>{uri ? '' : w0}</PText>
+      {/* 긴 단어도 칸 안에서 줄여 다 보이게 (오른쪽 테두리에 잘리지 않게) */}
+      <PText numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ width: THUMB_TEXT_W, fontFamily: Font.display, ...tightLines(fs, 1), color: isDarkBg(bg) ? C.y : C.ink }}>
+        {uri ? '' : w0}
+      </PText>
     </View>
   );
 }
