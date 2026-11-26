@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
+import { isSameDay, todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { DOW } from '@/data/account';
@@ -28,6 +29,7 @@ type Props = {
 /** 새 일정 날짜 고르기 달력 (프로토타입 cgCalHTML · .cg-cal): min ~ max 만 고를 수 있어요 (그 밖 · 지난 날은 흐리게) */
 export function ChangeCalendar({ mon, minMon, maxMon, min, max, start, end, onMonth, onPick, months = 1 }: Props) {
   const st = start ? new Date(start) : null;
+  const now = new Date();
   const shown = Array.from({ length: Math.max(1, months) }, (_, i) => mon + i);
   const last = shown[shown.length - 1];
 
@@ -61,6 +63,7 @@ export function ChangeCalendar({ mon, minMon, maxMon, min, max, start, end, onMo
                 const on = !!st && d.getTime() === st.getTime();
                 const isEnd = !!end && d.getTime() === end.getTime();
                 const inR = !!end && !!st && d > st && d <= end;
+                const today = isSameDay(d, now);
                 return (
                   <View key={d.getTime()} style={styles.cell}>
                     <Pressable
@@ -70,10 +73,10 @@ export function ChangeCalendar({ mon, minMon, maxMon, min, max, start, end, onMo
                         onPick(d.getTime());
                       }}
                       accessibilityRole="button"
-                      accessibilityLabel={`${m + 1}월 ${d.getDate()}일${on ? ' · 시작' : isEnd ? ' · 끝' : ''}`}
+                      accessibilityLabel={`${m + 1}월 ${d.getDate()}일${today ? ' · 오늘' : ''}${on ? ' · 시작' : isEnd ? ' · 끝' : ''}`}
                       accessibilityState={{ disabled: off, selected: on || isEnd }}
-                      style={[styles.dd, inR && styles.in, (on || isEnd) && styles.on]}>
-                      <PText style={styles.ddText} color={on || isEnd ? Colors.white : off ? '#C9C2B4' : Colors.ink}>
+                      style={[styles.dd, today && todayMark.cell, inR && styles.in, (on || isEnd) && styles.on]}>
+                      <PText style={[styles.ddText, today && todayMark.text]} color={on || isEnd ? Colors.white : today ? Colors.purple : off ? '#C9C2B4' : Colors.ink}>
                         {d.getDate()}
                       </PText>
                     </Pressable>

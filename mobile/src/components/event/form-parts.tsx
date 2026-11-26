@@ -9,6 +9,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Icon, type IconName } from '@/components/meet/icons';
 import { LgLink } from '@/components/meet/parts';
 import { PText } from '@/components/ui/text';
+import { todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { PLACE_SPOTS } from '@/data/events';
@@ -193,10 +194,11 @@ export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }:
           const ok = d >= min && d <= max;
           const on = iso(d) === value;
           const wd = d.getDay();
+          const today = d.getTime() === t0.getTime();
           return (
             <View key={i} style={styles.cell}>
-              <Pressable disabled={!ok} onPress={() => onChange(iso(d))} accessibilityRole="button" accessibilityState={{ selected: on, disabled: !ok }} accessibilityLabel={`${m + 1}월 ${d.getDate()}일`} style={[styles.cd, !ok && styles.cdOff, on && styles.cdOn]}>
-                <PText style={[styles.cdB, ok && wd === 0 && styles.sun, ok && wd === 6 && styles.sat, !ok && styles.cdBOff, on && { color: '#fff' }]}>{d.getDate()}</PText>
+              <Pressable disabled={!ok} onPress={() => onChange(iso(d))} accessibilityRole="button" accessibilityState={{ selected: on, disabled: !ok }} accessibilityLabel={`${m + 1}월 ${d.getDate()}일${today ? ' · 오늘' : ''}`} style={[styles.cd, !ok && styles.cdOff, today && todayMark.cell, on && styles.cdOn]}>
+                <PText style={[styles.cdB, ok && wd === 0 && styles.sun, ok && wd === 6 && styles.sat, !ok && styles.cdBOff, today && todayMark.text, on && { color: '#fff' }]}>{d.getDate()}</PText>
               </Pressable>
             </View>
           );

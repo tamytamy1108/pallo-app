@@ -23,7 +23,7 @@ export const Default: Story = {};
 export const NoTitle: Story = { args: { title: false } };
 /** 연기 신청 중 — [신청 취소] */
 export const RequestPending: Story = {
-  beforeEach: fresh({}, () => submitChangeRequest({ label: '연기', txt: '영어 월수 21:00 수업을 11/25(수)부터 12/8(화)까지 쉬고 12/9(수)부터 다시 들어요', msg: '' })),
+  beforeEach: fresh({}, () => submitChangeRequest({ label: '연기', txt: '영어 월수 21:00 · 14일 연기 · 11/25(수)~12/8(화) · 12/9(수) 복귀', msg: '' })),
 };
 /** 지점 변경 신청 중 — 긴 안내 */
 export const BranchChangePending: Story = {

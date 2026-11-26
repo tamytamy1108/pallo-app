@@ -7,6 +7,7 @@ import { bookShelfQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
 import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
+import { todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { MY_TEAMS, teamWeekdays, type Team } from '@/data/account';
@@ -247,12 +248,12 @@ function DayCell({ d, cd, L, steps, isToday, onPress }: { d: Date; cd?: ClassDay
   const ls = cd?.ls;
   const done = useDoneCount(ls ? `${L.lv}:${ls.no}:` : 'none:');
   const state = !ls ? null : done >= steps ? 'done' : done > 0 ? 'half' : 'todo';
-  const date = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const date = `${d.getMonth() + 1}월 ${d.getDate()}일${isToday ? ' · 오늘' : ''}`;
   const label = ls ? `${date} · ${lessonName(L, ls)} · ${steps}단계 중 ${done}단계` : cd?.off ? `${date} · ${cd.off} 휴무` : date;
   return (
     <Pressable onPress={onPress} disabled={!ls} accessibilityRole="button" accessibilityLabel={label} style={[styles.cell7, styles.dayCell]}>
-      <View style={[styles.dateN, isToday && styles.today]}>
-        <PText style={[styles.dateT, isToday && styles.todayT]}>{d.getDate()}</PText>
+      <View style={[styles.dateN, isToday && todayMark.cell]}>
+        <PText style={[styles.dateT, isToday && todayMark.text]}>{d.getDate()}</PText>
       </View>
       {ls && (
         <View style={[styles.lsChip, cd?.slot === 1 ? styles.slotB : styles.slotA]}>
@@ -296,10 +297,8 @@ const styles = StyleSheet.create({
   dowEnd: { color: Colors.rosePink },
   cell7: { width: `${100 / 7}%`, height: 54 },
   dayCell: { alignItems: 'center', paddingTop: 4, gap: 3, borderRadius: 10 },
-  dateN: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  today: { backgroundColor: Colors.ink },
+  dateN: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   dateT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16, fontVariant: ['tabular-nums'] },
-  todayT: { color: Colors.white },
   lsChip: { minWidth: 34, paddingHorizontal: 4, height: 18, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   lsChipT: { fontFamily: Font.body900, fontSize: 10, lineHeight: 14, fontVariant: ['tabular-nums'] },
   slotA: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },

@@ -107,6 +107,8 @@ function restEnd(st: Date, dur: RestLength, endT: number | null = null) {
   const weeks: Partial<Record<RestLength, number>> = { '1주': 7, '2주': 14, '3주': 21 };
   return addDays(st, (weeks[dur] ?? 7) - 1);
 }
+/** 쉬는 날 수 (시작 · 끝 날 포함) */
+const restDays = (st: Date, en: Date) => Math.round((en.getTime() - st.getTime()) / 864e5) + 1;
 /** 쉬는 동안 빠지는 수업 수 (프로토타입 cgRestN) */
 function restCount(T: Team[], st: Date, en: Date) {
   let n = 0;
@@ -150,7 +152,7 @@ function ChangeScreen() {
     if (f.kind === 'rest') {
       if (!st) return { ok: false, txt: '언제부터 쉴지 골라 주세요' };
       const en = restEnd(st, f.dur, f.endT);
-      const txt = `${cls.map(teamLabel).join(' · ')} 수업을 ${fmtDay(st)}부터 ${fmtDay(en)}까지 쉬고 ${fmtDay(addDays(en, 1))}부터 다시 들어요`;
+      const txt = `${cls.map(teamLabel).join(' · ')} · ${restDays(st, en)}일 연기 · ${fmtDay(st)}~${fmtDay(en)} · ${fmtDay(addDays(en, 1))} 복귀`;
       if (f.dur === REST_LONG) {
         // 1달 넘게는 특별한 경우만: 사유를 고르고 자세히 적어야 다음으로 가요
         if (!f.reason) return { ok: false, txt: '1달 넘게 쉬는 사유를 골라 주세요' };
@@ -302,8 +304,8 @@ function ChangeScreen() {
             <>
               <PText style={styles.baS}>{`${fmtDay(sum.st)} ~ ${fmtDay(sum.en)}`}</PText>
               <PText style={styles.baB}>{cls.map(teamLabel).join('\n')}</PText>
-              <Tag icon="clock" label={`쉬어요 · 수업 ${restCount(cls, sum.st, sum.en)}회`} />
-              <PText style={styles.baS}>{`${fmtDay(addDays(sum.en, 1))}부터 다시 들어요`}</PText>
+              <Tag icon="clock" label={`${restDays(sum.st, sum.en)}일 연기 · 수업 ${restCount(cls, sum.st, sum.en)}회`} />
+              <PText style={styles.baS}>{`${fmtDay(addDays(sum.en, 1))} 복귀`}</PText>
             </>
           ) : f.kind === 'add' && f.to ? (
             <>
@@ -461,7 +463,7 @@ function ChangeScreen() {
                   onPress={longRest ? () => set({ edit: 'end', mon: Math.max(monIdx(restSt), monIdx(restEn) - 1) }) : undefined}
                 />
               </View>
-              <PText style={styles.resS}>{`수업 ${restCount(cls, restSt, restEn)}회를 쉬고 ${fmtDay(addDays(restEn, 1))}부터 다시 들어요`}</PText>
+              <PText style={styles.resS}>{`${restDays(restSt, restEn)}일 연기 · 수업 ${restCount(cls, restSt, restEn)}회 · ${fmtDay(addDays(restEn, 1))} 복귀`}</PText>
               {longRest ? <PText style={styles.resS}>{f.edit === 'end' ? '달력에서 끝나는 날을 골라 주세요 · 1달 넘게 ~ 최대 2년' : '달력에서 시작일을 골라 주세요 · 내일부터'}</PText> : null}
             </Box>
           ) : null}
