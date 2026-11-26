@@ -147,8 +147,8 @@ export default function ComposeScreen() {
         scrollKey={step}
         footer={
           step === 1 ? (
-            // 사진이 꼭 있어야 올려요 — 고르기 전엔 버튼이 꺼져 있어요
-            <LgButton label={drafts.length ? '다음' : '사진을 1장 이상 골라 주세요'} disabled={!drafts.length} wide height={52} fontSize={15.5} onPress={() => setStep(2)} />
+            // 사진이 꼭 있어야 올려요 — 고르기 전엔 아래 버튼이 없고, 고르면 '다음'이 나와요
+            drafts.length ? <LgButton label="다음" wide height={52} fontSize={15.5} onPress={() => setStep(2)} /> : undefined
           ) : (
             <LgButton label="올리기" wide height={52} fontSize={15.5} onPress={post} />
           )
