@@ -11,7 +11,7 @@ import { markNoteRead, useNoteState } from '@/components/account/store';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
 import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, PRO_SENT_NOTES, teamLabel, teamNameByNo } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
@@ -305,9 +305,9 @@ const styles = StyleSheet.create({
   itP: { fontFamily: Font.body600, fontSize: 13.5, lineHeight: 21 },
   mk: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   mkOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
-  // 프로: 보낸 · 받은 노트 탭 — 위 줄 바로 아래 붙어요 (챌린지 상세 .lg-dtabs 와 같은 44 높이 · 좌우 끝까지 아래 선 1.5)
+  // 프로: 보낸 · 받은 노트 탭 — 위 줄 바로 아래 붙어요 (챌린지 상세 .lg-dtabs 와 같은 TAB_ROW_H 높이 · 좌우 끝까지 아래 선 1.5)
   box: { flexDirection: 'row', paddingHorizontal: 18, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: Colors.line },
-  boxTab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', marginBottom: -1.5, borderBottomWidth: 3, borderColor: 'transparent' },
+  boxTab: { flex: 1, height: TAB_ROW_H, alignItems: 'center', justifyContent: 'center', marginBottom: -1.5, borderBottomWidth: 3, borderColor: 'transparent' },
   boxTabOn: { borderColor: Colors.ink },
   boxT: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20, color: Colors.inkSub },
   boxTOn: { color: Colors.ink },

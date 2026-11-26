@@ -15,7 +15,7 @@ import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
 import {
   addCheckinReply,
   CH_BG,
@@ -60,8 +60,8 @@ const TABS: [Tab, string][] = [
   ['rank', '순위'],
 ];
 const TOP_H = 44;
-/** 탭 줄 높이 (44 + 아래 선 1.5) */
-const TABS_H = 45.5;
+/** 탭 줄 높이 (탭 + 아래 선 1.5) */
+const TABS_H = TAB_ROW_H + 1.5;
 
 /**
  * 일상 챌린지 상세 (프로토타입 lgChalDetail): 진행 카드 → 카테고리 · 이름 · 지점 · 멤버 → 홈 | 인증 | 순위 탭 → 아래 고정 [찜] [참여하기 / 오늘 인증하기].
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   dmetaEm: { fontFamily: Font.body900, fontSize: 13, color: Colors.rosePink },
   tabsSticky: { backgroundColor: Colors.cream },
   tabs: { flexDirection: 'row', paddingHorizontal: 18, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: LINE },
-  tab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
+  tab: { flex: 1, height: TAB_ROW_H, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
   tabOn: { borderColor: Colors.ink },
   tabT: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 20, color: SUB },
   tabTOn: { fontFamily: Font.body900, color: Colors.ink },

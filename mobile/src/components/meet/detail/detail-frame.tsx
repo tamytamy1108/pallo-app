@@ -12,7 +12,7 @@ import { BottomBar } from '@/components/bottom-bar';
 import { useKeyboardShown } from '@/lib/keyboard';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { LayerModal } from '@/components/ui/sheet-stack';
 import { KeepVisibleContext, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
@@ -53,8 +53,8 @@ type Props = {
 };
 
 const BAR = 44; // .dtop 안 높이 (아래 8) — 줄 가운데가 탭 화면 머리줄과 같게 위 여백은 없어요
-/** 탭 줄 높이 (재기 전 어림값 — 44 + 아래 선 1.5) */
-const TAB_H = 45.5;
+/** 탭 줄 높이 (재기 전 어림값 — 탭 + 아래 선 1.5) */
+const TAB_H = TAB_ROW_H + 1.5;
 /** 칸을 눌러 키보드가 올라오면 칸 아래로 이만큼 띄워 보여요 */
 const KB_ROOM = 28;
 

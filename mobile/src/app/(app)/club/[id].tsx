@@ -21,7 +21,7 @@ import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
 import { C } from '@/data/meet';
 import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   metaEm: { fontFamily: Font.body900, fontSize: 13, color: C.pk },
   // 챌린지 상세 탭 줄과 같아요 (좌우 끝까지 · 아래 선 1.5). 위 여백은 상세 틀이 줘요 — 탭에 margin 을 주면 위에 붙을 때 띠가 생겨요
   tabs: { flexDirection: 'row', paddingHorizontal: 18, borderBottomWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
-  tab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
+  tab: { flex: 1, height: TAB_ROW_H, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
   tabOn: { borderColor: Colors.ink },
   tabT: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 20, color: Colors.inkSub },
   tabTOn: { fontFamily: Font.body900, color: Colors.ink },
