@@ -23,7 +23,8 @@ const DAY_KO = '월화수목금토일';
 /** 팀 목록 = 시간 순 타임라인: 월요일부터 가는 순서 (프로토타입 myStudyHTML 의 first()) */
 const firstDay = (t: MyPageStudyTeam) => Math.min(7, ...t.days.map((d) => DAY_ORDER.indexOf(d)));
 /** 남은 횟수 글자 (null = 제한 없음) */
-const leftText = (n: number | null) => (n == null ? '무제한' : `${n}번`);
+/** 남은 변경 횟수 — 연기 · 팀 변경 · 지점 이동이 한 횟수를 같이 써요 (null = 무제한) */
+const leftText = (n: number | null) => (n == null ? '무제한' : `${n}회`);
 /** 'YYYY-MM-DD' → 'YYYY.MM.DD' */
 const dot = (iso: string) => iso.replaceAll('-', '.');
 
@@ -70,7 +71,8 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
                 {period}
               </PText>
             </View>
-            <KV k="연기 · 변경" v={`연기 ${leftText(study.remainingHoldingCount)} · 변경 ${leftText(study.remainingCourseChangeCount)}`} />
+            {/* 연기 · 변경은 한 횟수를 같이 써요 — 둘로 나눠 보이지 않고 남은 횟수 하나만 (BFF 는 아직 두 칸이라 연기 칸 값을 써요) */}
+            <KV k="연기 · 변경" v={leftText(study.remainingHoldingCount)} />
             <KV k="팀" v={`${study.teams.length}팀 · 주 ${weekly}회`} />
           </View>
         </View>

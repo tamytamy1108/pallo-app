@@ -282,7 +282,7 @@ function HeroActions({ hero, slot, m, onOpen, onLayout }: { hero: Hero; slot: nu
     );
   }
   // 오늘 수업이 없어요 (전산에서 연 내 팀 수업 없음)
-  if (slot === null && hero.kind !== 'action') return <WaitPill label="오늘 수업 없어요" />;
+  if (slot === null && hero.kind !== 'action') return <WaitPill label="스터디 쉬는 날" />;
   // 사전 출석은 24시간 전까지라 오늘 수업은 기다렸다가 QR 출석만 (사전 출석 마감 · 아직 QR 전)
   if (slot !== null && (hero.kind === 'ready' || hero.kind === 'off') && !rsvpOpen(slot, m))
     return <WaitPill label={m > SLOTS[slot].start + QR_AFTER ? '오늘 출석 마감' : `${fmtMin(SLOTS[slot].start - QR_BEFORE)}부터 출석`} />;

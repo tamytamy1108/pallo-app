@@ -130,6 +130,15 @@ export function teamLabel(t: Pick<Team, 'lang' | 'when'>) {
 /** '화목 19:30' → [2, 4] (요일 번호) */
 export const teamWeekdays = (t: Pick<Team, 'when'>) =>
   [...t.when.split(' ')[0]].map((c) => (DOW as readonly string[]).indexOf(c)).filter((i) => i >= 0);
+/** 레벨 짧은 이름 · 'Intermediate 2' → 'Lv.2' (숫자가 없으면 그대로) */
+export const levelShort = (level: string) => {
+  const n = level.match(/(\d+)\s*$/);
+  return n ? `Lv.${n[1]}` : level;
+};
+/** 같은 지점 · 같은 언어 · 같은 레벨 스터디가 있는 다른 팀 (연기 뒤 옮겨 돌아갈 곳 · 자리 수는 보지 않아요 · 이미 듣는 팀은 빼요) */
+export function sameLevelTeams(t: Team, mine: Team[]): Team[] {
+  return teamsOf(t.branch).filter((x) => x.lang === t.lang && x.level === t.level && !mine.some((m) => m.branch === x.branch && m.no === x.no));
+}
 /** 팀 번호 → 이름 (내 팀 · 내 지점 팀) */
 export function teamNameByNo(no: string) {
   const t = MY_TEAMS.find((x) => x.no === no) ?? teamsOf(MY_BRANCH).find((x) => x.no === no);
@@ -146,12 +155,14 @@ export const CHANGE_KIND: Record<ChangeKind, [string, string]> = {
   branch: ['지점 옮기기', '지점 이동'],
   add: ['팀 하나 더하기', '팀 추가'],
 };
-/** '1달 넘게'는 임신 · 군 입대 같은 특별한 경우만 — 사유를 꼭 적고, 운영진이 확인해요 */
-export const REST_LENGTHS = ['1주', '2주', '3주', '1달', '1달 넘게'] as const;
-export type RestLength = (typeof REST_LENGTHS)[number];
-export const REST_LONG: RestLength = '1달 넘게';
-/** 1달 넘게 쉬는 사유 (고른 뒤 자세한 내용을 꼭 적어요) */
-export const REST_LONG_REASONS = ['임신 · 출산', '군 입대', '그 밖의 사유'] as const;
+/** 연기는 시작일 ~ 복귀일로 골라요 · 최소 2주 (14일 · 16일 · 19일 다 돼요) */
+export const REST_MIN_DAYS = 14;
+/** 금요일은 휴무라 시작 · 복귀로 고를 수 없어요 */
+export const CLOSED_WEEKDAY = 5;
+/** 연기 사유 (2주 ~ 1달 · 고른 뒤 자세한 내용을 꼭 적어요) */
+export const REST_REASONS = ['출장', '여행', '바쁜 일정', '건강', '그 밖의 사유'] as const;
+/** 1달 넘게 쉬는 사유 (출산 · 군 입대 같은 특별한 경우만 · 고른 뒤 자세한 내용을 꼭 적고, 운영진이 확인해요) */
+export const REST_LONG_REASONS = ['출산', '군 입대', '그 밖의 사유'] as const;
 export type RestLongReason = (typeof REST_LONG_REASONS)[number];
 /** 1달 넘게 쉴 때 적는 사유의 최소 글자 수 */
 export const REST_REASON_MIN = 5;
