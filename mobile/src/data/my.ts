@@ -200,6 +200,21 @@ export function memberLangs(name: string): LangName[] {
 const HANDLE: Record<string, string> = { 하나: 'hana', 소라: 'sora', 민준: 'minjun', 유키: 'yuki', 지우: 'jiwoo', 서연: 'seoyeon', 도윤: 'doyoon' };
 export const memberHandle = (name: string) => `@${HANDLE[name] || (/^[A-Za-z]/.test(name) ? name.toLowerCase() : 'pallo')}_${nameHash(name) % 97}`;
 
+/**
+ * 멤버 한 줄 소개 (예시). 서버에선 GET /me/mypage/{code} 의 profile.bio — 내가 마이에서 남긴 소개(me.bio)가 남에게 이렇게 보여요.
+ * 안 남긴 사람은 '' (프로필 시트에서 그 줄을 숨겨요).
+ */
+const BIO: Record<string, string> = {
+  지우: '주말엔 번개, 평일엔 스터디! 영어로 수다 떨어요',
+  Leo: 'Coffee lover ☕ 한국어 배우는 중이에요',
+  유키: '日本語でも韓国語でも話しかけてね',
+  하람: '부산에서 스페인어 공부해요. 같이 연습해요!',
+  하나: '하루 한 문장씩 꾸준히',
+  Jay: '여행 가서 현지인처럼 주문하는 게 목표예요',
+  서준: '퇴근 후 30분, 영어 일기 쓰는 중',
+};
+export const memberBio = (name: string) => BIO[name] ?? '';
+
 /** 팔로잉 · 팔로워 목록 (프로토타입 pfLists — 예시) */
 export function followLists(name: string, me: { name: string; branch: string }, following: Record<string, boolean>) {
   const isMe = name === me.name;
