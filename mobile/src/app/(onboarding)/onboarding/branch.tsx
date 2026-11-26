@@ -5,6 +5,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { apiErrorMessage } from '@/api/errors';
 import { useCompleteOnboarding } from '@/api/session';
+import { useSubmitOnboarding } from '@/api/use-onboarding';
 import { NextButton, OnbScreen } from '@/components/onboarding/parts';
 import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
@@ -33,11 +34,13 @@ const IC = {
  * 가입 › 앱 구경 › 고른 지점 안내 (전체 화면 · 진행 바 칸 없음) — 디자인 캔버스 시안 B.
  * 위에서부터: 지점 이름 → 넘겨 보는 지점 사진 → 지점 소개 → 주소 · 운영 시간 · 스터디 · 연락처 → '앱 둘러보기'.
  * 사진 · 소개는 지점이 전산에서 직접 올려요 (BR_BOARDS photos · intro). 없으면 빈 사진 칸 · 소개 줄 없음.
- * '앱 둘러보기' → 가입이 끝나고 홈 (홈 시작 공지는 그다음에 떠요). 뒤로 가면 지점을 다시 골라요.
+ * '앱 둘러보기' → POST /onboarding (APP) 뒤 가입이 끝나고 홈 (홈 시작 공지는 그다음에 떠요). 뒤로 가면 지점을 다시 골라요.
  */
 export default function OnboardingBranch() {
   const branch = useOnboarding((s) => s.branch);
   const complete = useCompleteOnboarding();
+  const submit = useSubmitOnboarding();
+  const busy = submit.isPending || complete.isPending;
   const board = BR_BOARDS[branch];
   const teams = teamsOf(branch);
   const langs = TEAM_LANGS.filter((l) => teams.some((t) => t.lang === l));
@@ -46,11 +49,13 @@ export default function OnboardingBranch() {
 
   const browse = () => {
     updateOnboarding({ path: 'app' });
-    complete.mutate(undefined, { onError: (e) => showToast(apiErrorMessage(e)) });
+    if (busy) return;
+    // 가입 전체를 POST /onboarding (APP: 언어 · 이유) 으로 보내고, 되면 세션이 가입을 끝내 홈으로
+    submit.mutate('APP', { onSuccess: () => complete.mutate(undefined, { onError: (e) => showToast(apiErrorMessage(e)) }) });
   };
 
   return (
-    <OnbScreen footer={<NextButton label="앱 둘러보기" disabled={complete.isPending} onPress={browse} />}>
+    <OnbScreen footer={<NextButton label={busy ? '보내는 중…' : '앱 둘러보기'} disabled={busy} onPress={browse} />}>
       <PText style={styles.title} accessibilityRole="header">
         팔로 {branch}입니다!
       </PText>

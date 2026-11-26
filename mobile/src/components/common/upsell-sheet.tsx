@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { useBranchProgress } from '@/api/use-branch-progress';
 import { TrialBookingSheet, trialShortDate } from '@/components/common/trial-booking';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
@@ -9,7 +10,6 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { closeUpsell, useUpsell, useUpsellWhy, type Upsell } from '@/state/lock-hits';
-import { useMe } from '@/state/me';
 
 const PALLO = require('@/assets/characters/c-upright-yellow.png');
 
@@ -35,7 +35,7 @@ const COPY: Record<Exclude<Upsell, 'trial'>, { kicker: string; title: string; bo
 export function UpsellHost({ onBook }: { onBook: () => void }) {
   const upsell = useUpsell();
   const why = useUpsellWhy();
-  const trial = useMe((m) => m.trial);
+  const { trial } = useBranchProgress();
   // 닫힌 뒤 열 것 (시트 두 개가 겹치지 않게 닫히는 움직임이 끝난 뒤)
   const [after, setAfter] = useState<null | 'book' | 'trial'>(null);
   const [trialOpen, setTrialOpen] = useState(false);

@@ -85,32 +85,36 @@ export const LANGS = [
   { key: 'es', ko: '스페인어', g: 'ES', color: Colors.langEs, ink: Colors.ink },
 ] as const;
 
-/* ───────── 앱을 열 때 팝업 공지 (프로토타입 POPS) ───────── */
+/* ───────── 앱을 열 때 팝업 (프로토타입 POPS · 서버 GET /popups) ───────── */
 
+/** 템플릿 배경 프리셋 — 서버는 키만 주고 색은 앱이 정해요 (components/home/launch-popup.tsx) */
+export type PopupBackground = 'PURPLE' | 'BLUE' | 'PINK' | 'SLATE';
+
+/** 버튼을 누르면 갈 리소스 종류 — 지금은 공지만 */
+export type PopupResourceType = 'NOTICE';
+
+/** 백엔드 MobilePopupResponse 와 1:1. 지금 띄울 것만 내려와요 (숨김 · 기간 밖 · 연결 공지 비공개는 서버가 뺌) */
 export type LaunchPopup = {
   id: string;
+  /** TEMPLATE = 문구 + 배경 프리셋, IMAGE = 배너 이미지 한 장 */
+  design: 'TEMPLATE' | 'IMAGE';
   kicker: string;
   /** 줄바꿈은 \n */
   title: string;
   sub: string;
-  /** 배경 그라데이션 (160도 · 위 → 아래) */
-  bg: [string, string];
-  cta: string;
-  /** 자세히 보기 → 갈 곳 */
-  href: string;
-  /** 이 날까지 보여요 (YYYY-MM-DD) */
-  until: string;
-  /** 한 지점 이벤트면 그 지점 (예: '하남점') — 그 지점 멤버에게만, 맨 앞에 떠요. 없으면 전 지점 */
-  branch?: string;
-  /** 이벤트 날짜 (YYYY-MM-DD) — 지점 이벤트끼리는 가까운 날부터 */
-  date?: string;
+  background: PopupBackground;
+  /** IMAGE 일 때 배너 이미지 주소 */
+  imageUrl: string | null;
+  ctaLabel: string;
+  resourceType: PopupResourceType;
+  resourceId: string;
+  /** 노출 종료 (UTC ISO) */
+  publishUntil: string;
 };
 
 export const LAUNCH_POPUPS: LaunchPopup[] = [
-  { id: 'pop-hn-xmas', kicker: 'HANAM X-MAS', title: '하남점\n크리스마스 프리토킹', sub: '12.20 토 19:00 · 하남점 라운지 · 선착순 30명', bg: ['#D9849C', '#493087'], cta: '자세히 보기', href: '/events/m2', until: '2026-12-20', branch: '하남점', date: '2026-12-20' },
-  { id: 'pop-js-quiz', kicker: 'JAMSIL QUIZ NIGHT', title: '잠실점\n영어 퀴즈 나이트', sub: '12.6 토 18:00 · 잠실점', bg: ['#5C8FD6', '#1E1A2B'], cta: '자세히 보기', href: '/events/m2', until: '2026-12-06', branch: '잠실점', date: '2026-12-06' },
-  { id: 'pop-party', kicker: 'YEAR END PARTY', title: 'PALLO\n연말 랭귀지 파티', sub: '11.29 토 19:00 · 전 지점', bg: ['#493087', '#1E1A2B'], cta: '자세히 보기', href: '/events/m2', until: '2026-11-29' },
-  { id: 'pop-dec', kicker: 'DECEMBER', title: '12월\n스터디 일정', sub: '25일 · 31일 휴무 · 27일 보충', bg: ['#8FA6DC', '#493087'], cta: '공지 보기', href: '/notice/n1', until: '2026-12-31' },
+  { id: 'pop-party', design: 'TEMPLATE', kicker: 'YEAR END PARTY', title: 'PALLO\n연말 랭귀지 파티', sub: '11.29 토 19:00 · 전 지점', background: 'PURPLE', imageUrl: null, ctaLabel: '자세히 보기', resourceType: 'NOTICE', resourceId: 'n2', publishUntil: '2026-11-29T14:59:00Z' },
+  { id: 'pop-dec', design: 'TEMPLATE', kicker: 'DECEMBER', title: '12월\n스터디 일정', sub: '25일 · 31일 휴무 · 27일 보충', background: 'BLUE', imageUrl: null, ctaLabel: '공지 보기', resourceType: 'NOTICE', resourceId: 'n1', publishUntil: '2026-12-31T14:59:00Z' },
 ];
 
 /* ───────── 멤버 얼굴 · 라운지 미리보기 (프로토타입 AF_IDS · afItems · LG_FEED p1 · c1 · m1 · p2 · a1) ───────── */

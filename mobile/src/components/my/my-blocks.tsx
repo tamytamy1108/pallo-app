@@ -63,16 +63,20 @@ export function MyStats({ items }: { items: { ic: BadgeIcon; v: string; l: strin
 const POD_H = [44, 32, 24];
 const POD_BG = [Colors.yellow, Colors.rosePink, Colors.sky];
 
-/** 랭킹 요약 카드 (프로토타입 .my-rank: 시상대 2 · 1 · 3 + 내 순위 줄 + 한 줄) */
-export function RankSummary({ people, myRank, branch, onPress }: { people: RankRow[]; myRank: number; branch: string; onPress: () => void }) {
-  const me = people[myRank - 1];
+/**
+ * 랭킹 요약 카드 (프로토타입 .my-rank: 시상대 2 · 1 · 3 + 내 순위 줄 + 한 줄).
+ * podium = 1~3위 (3명보다 적으면 빈 자리), myRank = 내 순위 (이번 주 포인트가 없으면 null → '–').
+ */
+export function RankSummary({ podium, myRank, myPoints, branch, onPress }: { podium: RankRow[]; myRank: number | null; myPoints: number; branch: string; onPress: () => void }) {
+  const rankText = myRank ? `${myRank}위` : '–';
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`랭킹 · 내 순위 ${myRank}위`}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={myRank ? `랭킹 · 내 순위 ${myRank}위` : '랭킹 · 아직 이번 주 순위가 없어요'}>
       <Raised radius={Radius.card}>
         <View style={styles.rankCard}>
           <View style={styles.pods}>
             {[1, 0, 2].map((i) => {
-              const p = people[i];
+              const p = podium[i];
+              if (!p) return <View key={i} style={styles.pd} />;
               return (
                 <View key={i} style={styles.pd}>
                   <MemberFace name={p.n} size={40} bg={p.c} />
@@ -88,9 +92,9 @@ export function RankSummary({ people, myRank, branch, onPress }: { people: RankR
           </View>
           <View style={styles.meRow}>
             <PText style={styles.meT}>내 순위</PText>
-            <PText style={styles.meB}>{myRank}위</PText>
+            <PText style={styles.meB}>{rankText}</PText>
             <PText style={styles.meT}>
-              {me.pt.toLocaleString()}P · {branch}
+              {myPoints.toLocaleString()}P{branch ? ` · ${branch}` : ''}
             </PText>
           </View>
           <PText style={styles.hint}>퀘스트를 하면 포인트가 쌓여요 · 지점 대항전도 여기서</PText>

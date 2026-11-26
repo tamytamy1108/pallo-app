@@ -7,7 +7,7 @@ import { FieldLabel, keepAll, SheetButton, SheetButtons, SheetNote } from '@/com
 import { SumCard } from '@/components/meet/detail/sheets';
 import { decideMyClub, removeMyClub, resubmitMyClub, useMeetStore } from '@/components/meet/meet-store';
 import { LgLink, SecHead } from '@/components/meet/parts';
-import { withJeom } from '@/components/onboarding/branch-sheet';
+import { withJeom } from '@/components/onboarding/branch-list';
 import { ColorCard } from '@/components/ui/card-maker';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';

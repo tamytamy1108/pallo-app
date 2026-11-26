@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useNeedsOnboarding } from '@/api/session';
+import { useCreateLinkRequest, useSubmitOnboarding } from '@/api/use-onboarding';
 import { BranchSheet } from '@/components/onboarding/branch-sheet';
 import { LinkConsent } from '@/components/onboarding/link-consent';
 import { Field, FieldLabel, NextButton, OnbInput, OnbScreen, PickField, useRequired } from '@/components/onboarding/parts';
@@ -17,11 +19,18 @@ const isRealName = (v: string) => v.trim().length >= 2 && v.trim().length <= 20;
  * 가입 4/4 · 지점 회원: 다니는 지점에 연동을 요청해요 (프로토타입 onboarding-options.html #dest-link · #m-sheet).
  * 칸: 지점(시트로 고르기) · 이름(지점에 등록한 이름) · 휴대폰 번호 — 모두 필수. 배우는 언어 · '확인됨' 표시는 두지 않아요.
  * 아래: 조용한 동의 한 줄(처음부터 켜짐) + `연동 요청 보내기`(늘 켜짐 · 빠진 칸이 있으면 그 칸으로 스크롤해 알려 줌) → 확인 중 화면.
- * 맞는 API: A23 지점 연동 요청 (보내는 건 finishOnboarding 이 아니라 여기서 — 지금은 가짜라 값만 쌓아요).
+ * 보내기: 가입 중이면 POST /onboarding (MEMBER · 약관 · 닉네임 · 팔로로까지 한 번에), 가입을 마친 뒤면 POST /me/branch-link-requests.
+ * 지점 시트는 이미 연동된 · 확인 중인 지점을 막아요. 실패하면 토스트만 띄우고 이 화면에 남아요.
  */
 export default function LinkScreen() {
   const insets = useSafeAreaInsets();
   const branch = useOnboarding((s) => s.branch);
+  const branchCode = useOnboarding((s) => s.branchCode);
+  // 가입 중이면 가입 전체를 POST /onboarding (MEMBER) 으로, 가입을 마친 뒤(못 찾음 뒤 고쳐서 다시 등)면 연동 요청만 POST /me/branch-link-requests
+  const inOnboarding = useNeedsOnboarding();
+  const submitOnboarding = useSubmitOnboarding();
+  const createLink = useCreateLinkRequest();
+  const busy = submitOnboarding.isPending || createLink.isPending;
   const realName = useOnboarding((s) => s.realName);
   const phone = useOnboarding((s) => s.phone);
   const [sheet, setSheet] = useState(false);
@@ -33,17 +42,22 @@ export default function LinkScreen() {
   const phoneOk = isPhone(phone);
   // 버튼은 늘 켜 두고, 누를 때 빠진 칸이 있으면 그 칸으로 데려가요 (useRequired)
   const form = useRequired([
-    { name: 'branch', ok: !!branch, message: '지점을 골라 주세요' },
+    { name: 'branch', ok: !!branchCode, message: '지점을 골라 주세요' },
     { name: 'name', ok: nameOk, message: realName.trim() ? '이름은 2~20자로 적어 주세요' : '이름을 적어 주세요' },
     { name: 'phone', ok: phoneOk, message: '휴대폰 번호를 확인해 주세요' },
     { name: 'agree', ok: agree, message: '정보 보내기에 동의해 주세요' },
   ]);
 
-  const send = () =>
+  const send = () => {
+    if (busy) return;
     form.submit(() => {
-      updateOnboarding({ branch, realName: realName.trim(), phone: formatPhone(phone) });
-      router.replace('/onboarding/link-wait');
+      const sent = { realName: realName.trim(), phone: formatPhone(phone) };
+      updateOnboarding(sent);
+      const onSuccess = () => router.replace('/onboarding/link-wait');
+      if (inOnboarding) submitOnboarding.mutate('MEMBER', { onSuccess });
+      else createLink.mutate({ branchCode, branchName: branch, ...sent }, { onSuccess });
     });
+  };
 
   return (
     // 키보드가 올라오면 아래 버튼도 같이 올라와요. 아래 안전 영역만큼은 키보드가 덮으니 빼 줘요
@@ -59,7 +73,7 @@ export default function LinkScreen() {
             <Field name="agree" fixed style={styles.consent}>
               <LinkConsent on={agree} onChange={setAgree} branch={branch} />
             </Field>
-            <NextButton label="연동 요청 보내기" onPress={send} ready={form.ready} />
+            <NextButton label={busy ? '보내는 중…' : '연동 요청 보내기'} onPress={send} ready={form.ready && !busy} />
           </>
         }>
         <Field name="branch">
@@ -105,9 +119,10 @@ export default function LinkScreen() {
         open={sheet}
         onClose={() => setSheet(false)}
         title="다니는 지점을 골라요"
-        value={branch}
-        onPick={(name) => {
-          updateOnboarding({ branch: name });
+        value={branchCode}
+        purpose="link"
+        onPick={(b) => {
+          updateOnboarding({ branchCode: b.code, branch: b.name });
           form.reveal('name', 'phone');
         }}
       />

@@ -1,17 +1,17 @@
 # 화면별 API 지도
 
 앱 `mobile/src/app/` 의 화면 67개를 하나씩 열어 **서버가 필요한 곳**을 적었어요. API 자세한 모양은 [`openapi.yaml`](openapi.yaml) (Swagger)에 있어요.
-상태: `existing` 이미 있음 · `change` 있는 것에 필드 · 동작 추가 · `new` 새로 필요. 경로는 `/app/api/v1` 뒤에 붙어요 (공개 API는 `/public/api/v1`).
+상태: `existing` 이미 있음 · `change` 있는 것에 필드 · 동작 추가 · `new` 새로 필요. 경로는 `/app/api/v2` 뒤에 붙어요 (새 앱 · 2026-11. 아직 v2 로 안 옮긴 예전 API 는 `/app/api/v1`, 공개 API는 `/public/api/v1`).
 
 ## 한눈에
 
 | 묶음 (Swagger 태그) | existing | change | new | 합계 |
 |---|---:|---:|---:|---:|
-| 인증 · 시작 | 7 | 4 | 4 | 15 |
-| 홈 | 5 | 2 | 4 | 11 |
-| 알림 · 공지 | 1 | 1 | 3 | 5 |
-| 공통 · 설정값 | 5 | 1 | 3 | 9 |
-| 가입 · 온보딩 | 0 | 0 | 6 | 6 |
+| 인증 · 시작 | 11 | 4 | 3 | 18 |
+| 홈 | 6 | 2 | 3 | 11 |
+| 알림 · 공지 | 5 | 1 | 1 | 7 |
+| 공통 · 설정값 | 7 | 1 | 1 | 9 |
+| 가입 · 온보딩 | 4 | 0 | 4 | 8 |
 | 라이브러리 | 1 | 0 | 3 | 4 |
 | 학습 · 레슨 | 0 | 0 | 3 | 3 |
 | 진도 · 보상 | 0 | 0 | 7 | 7 |
@@ -20,20 +20,20 @@
 | 라운지 피드 | 7 | 5 | 7 | 19 |
 | 스토리 | 0 | 0 | 15 | 15 |
 | 번개 | 7 | 3 | 8 | 18 |
-| 동아리 | 7 | 10 | 11 | 28 |
+| 동아리 | 7 | 13 | 12 | 32 |
 | 여행 · 해외살이 | 0 | 0 | 14 | 14 |
 | 신고 · 차단 | 0 | 0 | 3 | 3 |
 | 챌린지 | 11 | 5 | 9 | 25 |
 | 이벤트 | 0 | 0 | 20 | 20 |
-| 마이 | 1 | 2 | 7 | 10 |
+| 마이 | 2 | 1 | 7 | 10 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
 | 캐릭터 · 상점 | 0 | 0 | 6 | 6 |
-| 수강 · 결제 | 7 | 6 | 7 | 20 |
+| 수강 · 결제 | 10 | 5 | 6 | 21 |
 | 프로 노트 | 1 | 2 | 7 | 10 |
-| 설정 · 지원 | 1 | 1 | 10 | 12 |
+| 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 15 | 15 |
-| **합계** | **63** | **45** | **182** | **290** |
+| **합계** | **85** | **46** | **171** | **302** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -46,12 +46,13 @@
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 스플래시 동안 내 정보 받기 · state/me 에 넣기 (MeSync) | GET /me | change | api/me.ts fetchMe · state/me.ts ME0 |
+| 연동 대기 카드 · 반려 팝업 · 다가오는 체험 (회원 · 비회원 두 가지만, 나머지는 이 요약으로) | GET /me/branch-summary · 반려 확인 POST /me/branch-link-requests/{id}/acknowledge | existing | api/branch-summary.ts · use-branch-progress.ts |
 | 부팅 설정값 (카카오 키 · 운영 규칙 숫자) | GET /config | change | data/home.ts QR_BEFORE · QR_AFTER · ATTEND_POINTS · TODAY_GOAL 상수 |
 | 앱 버전 확인 (강제/권장 업데이트) | GET /config/app-version | new | 없음 |
-| 푸시 토큰 등록 (로그인 · 권한 허용 뒤) | POST /me/push-tokens | new | 없음 (expo-notifications 미설치) |
-| 푸시 끔 감지 → 해제 | DELETE /me/push-tokens/{token} | new | 없음 |
+| 푸시 토큰 등록 (로그인 뒤 · Firebase FCM) | PUT /me/push-tokens | existing | api/push-registration.ts · push-tokens.ts |
+| 로그아웃 · 푸시 끔 → 해제 | DELETE /me/push-tokens?token= | existing | api/push-tokens.ts unregisterPushToken |
 | 401 → 토큰 갱신 한 번 | POST /auth/refresh | existing | api/auth.ts refreshTokens |
-| 홈 첫 화면 미리 받기 | 홈 섹션의 GET 들 (/study/courses · /notices?board · /home/lounge-highlights · /home/popups) | — | api/query-client.ts prefetchStartData |
+| 홈 첫 화면 미리 받기 | 홈 섹션의 GET 들 (/study/courses · /notices?board · /home/lounge-highlights · /popups) | — | api/query-client.ts prefetchStartData |
 | 백오피스 문구 캐시 (필요 화면만) | GET /contents · GET /contents/{key} | existing | 앱은 하드코딩 |
 
 기기에만 저장 (API 없음): access · refresh 토큰 (SecureStore · 웹은 localStorage)
@@ -96,9 +97,9 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 |---|---|---|---|
 | 지점 선택하기 → 지점 목록 시트 (검색 · 권역 칩 · 전체 n) | GET /public/api/v1/branches | change (region · phone) | data/account.ts BRANCHES · BRANCH_REGIONS |
 | 희망 언어 (하나) | GET /public/api/v1/candidate-inquiries/options | existing | app-parts.tsx ONB_LANGS |
-| 상담 시간 (날짜 5일 → 시간 칸 · 마감 흐리게) — 지점 · 언어를 바꾸면 다시 | GET /trial-slots?branchCode=&lang=&days=5 | new | trial-slots.tsx TIMES · trialSlots (가짜 마감) |
+| 상담 시간 (날짜 5일 → 시간 칸 · 마감 흐리게) — 지점 · 언어를 바꾸면 다시 | GET /trial-slots?branchCode= (오늘부터 5일) | existing | trial-slots.tsx TIMES · trialSlots (가짜 마감) |
 | 배우고 싶은 이유 (여러 개 · 선택) · 전달 사항 (200자 · 선택) | (예약 보내기에 같이) | — | app-parts.tsx WHY_REASONS |
-| [체험 예약하기] → 예약 확정(/trial/done) | POST /public/api/v1/candidate-inquiries (+ Bearer) | change (reasons · note · 마감 확인 · 계정 연결) | state/trial-booking.ts setLastTrial · updateMe({trial}) |
+| [체험 예약하기] → 예약 확정(/trial/done) | POST /trial-applications (가입 뒤 앱 안) · 가입 단계 안에서는 POST /onboarding trial | existing | state/trial-booking.ts setLastTrial · updateMe({trial}) |
 
 열린 질문: 체험 동의 약관 — 앱 체험 화면엔 동의 칸이 없어요. 가입 때 동의(app-onboarding)로 갈음할지, 체험용 배치를 따로 둘지. 이미 다가오는 체험이 있는데 또 예약하면 막을지 · 바꿀지(예약 변경은 지금 '지점에 전화'). 체험 시간표 · 정원 · 언어별 프로 일정은 어디서 읽을지(Q-O10).
 
@@ -110,7 +111,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 |---|---|---|---|
 | 인사 Hey {이름} · 구독자/스터디 회원 분기 | GET /me (nickname · plan) | change | state/me.ts name · plan |
 | 종 분홍 점 | GET /me/notifications?pageSize=1 → unreadCount | change | noti-state.ts useUnreadCount |
-| Notice board 띠 (3개 순환) | GET /notices?board=true&size=3 | new | data/mock.ts BOARD_NOTICES |
+| Notice board 띠 (3개 순환) | GET /notices?limit=3 | existing | data/mock.ts BOARD_NOTICES |
 | 오늘 스터디 카드 (스터디 회원) | GET /study/courses?date=오늘 | change (qrOpensAt · qrClosesAt · regular) | data/home.ts SLOTS · MY_SLOT · MY_LANG · attendance.ts |
 | 오늘 스터디 자리를 누구냐에 따라 (components/home/home-card.tsx): 회원 출석 카드 · 연동 대기 잠긴 라벤더 · 못 찾음 '다시 요청하기' · 체험 D-n · 둘러보기 카드 | GET /me (role · linkStatus · trialBooking) | change | state/me.ts link · trial · state/access.ts userKind |
 | 지점 연동 결과 푸시 배너 · 잠긴 카드가 풀리는 순간 | 푸시 + GET /me/notifications (BRANCH_LINK_*) → GET /me 다시 | change | state/link-events.ts · components/home/link-push.tsx · link-unlock.tsx · link-admin-dev.tsx(개발용 '지점 처리 흉내') |
@@ -121,7 +122,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 | 맵 보상 상자 열기 | POST /me/progress/chests/{chestKey}/open | new (A4 · learn 과 겹치면 그쪽) | state/chest.ts · chestReward() |
 | 맵 계절 · 크리스마스 색 | GET /home/theme | new | constants/season.ts seasonOf · XMAS |
 | 라운지 미리보기 슬라이드 | GET /home/lounge-highlights | new | data/home.ts LOUNGE_HIGHLIGHTS |
-| 앱 시작 팝업 | GET /home/popups | new | data/home.ts LAUNCH_POPUPS |
+| 앱 시작 팝업 | GET /popups | existing | data/home.ts LAUNCH_POPUPS |
 
 기기에만 저장 (API 없음): 카드 제목 차례(stage-line) · 팝업 '오늘은 그만 보기'(popup-hidden) · 개발용 ?now= · ?season= · ?plan= (components/home/dev.ts)
 참고: 백엔드 GET /home/recommendations (챌린지 · 동아리 · 행아웃 캐러셀)와 GET /study/courses/footprint ("내 언어 발자국"), GET /study/courses/nearest 는 있지만 지금 앱 홈은 그리지 않아요.
@@ -159,7 +160,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 ### 공지 목록 — `app/notice/index.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 목록 (고정 먼저 · 최신 순) | GET /notices?cursor=&size= | new | data/mock.ts NOTICES |
+| 목록 (고정 먼저 · 최신 순) | GET /notices?cursor=&limit= | existing | data/mock.ts NOTICES |
 
 기기에만 저장 (API 없음): 공지 새 글 점(notice-dot · 상세를 열면 읽음)
 열린 질문: 공지 읽음을 계정 단위로 서버에 둘지 (기기 바꾸면 점이 다시 생겨요).
@@ -167,7 +168,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 ### 공지 상세 — `app/notice/[id].tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 상세 (본문 문단 · 행동 버튼) | GET /notices/{id} | new | api/home.ts fetchNotice |
+| 상세 (본문 문단 · 행동 버튼) | GET /notices/{id} · 고정 PUT · DELETE /notices/{id}/pin | existing | api/home.ts fetchNotice |
 | 공유 | 없음 (링크 복사 토스트만) | — | — |
 
 ### 디자인 확인 — `app/design.tsx`
@@ -193,7 +194,7 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 ## onboarding — 화면별 API (가입 · 온보딩)
 
 기준: docs/pages/09-onboarding.md · api-additions A19 ~ A23. 다른 태그에 있는 API 는 그대로 가리켜요 (core: 인증 · 시작 / my: 마이 · 수강 · 결제).
-흐름: 첫 화면 → 카카오 로그인 → (처음이면) 약관 → 닉네임 → 캐릭터 → 지점 회원이에요? → 회원 · 체험 · 앱 구경 → POST /me/onboarding → 홈.
+흐름: 첫 화면 → 카카오 로그인 → (처음이면) 약관 → 닉네임 → 캐릭터 → 지점 회원이에요? → 회원 · 체험 · 앱 구경 → GET /onboarding (약관 · 미리 채울 값) … POST /onboarding → 홈.
 
 ### 첫 화면 — `app/welcome.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -223,12 +224,12 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 ### 캐릭터 고르기 — `app/onboarding/character.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 몸 색 7가지 중 하나 → 마이 캐릭터 기본 몸 색 | POST /me/onboarding bodyColor (가입 끝에) | new | state/onboarding.ts color · state/avatar.ts setAvatarBody |
+| 몸 색 7가지 중 하나 → 마이 캐릭터 기본 몸 색 | POST /onboarding palloloCode (가입 끝에 · 목록은 GET /asset-catalog) | existing | state/onboarding.ts color · state/avatar.ts setAvatarBody |
 
 몸 그림 7장은 앱 번들 (서버 없음). PUT /me/avatar(my saveMyAvatar) 는 쓰지 않아요 — 가입 때 고른 색은 무료로 가진 목록에 더해야 해서 completeOnboarding 이 같이 해요.
 
 ### 지점 회원이에요? — `app/onboarding/member.tsx`
-서버 호출 없음. 고른 길(member · trial · app)은 POST /me/onboarding path 로 가입 끝에 보내요 (state/onboarding.ts path).
+서버 호출 없음. 고른 길(member · trial · app)은 POST /onboarding path(MEMBER · TRIAL · APP) 로 가입 끝에 보내요 (state/onboarding.ts path).
 
 ### 지점 연동 요청 (회원) — `app/onboarding/link.tsx` (+ `components/onboarding/branch-sheet.tsx` · `link-consent.tsx` · `parts.tsx`)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -243,7 +244,7 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | '○○점에 연동을 요청했어요!' · 진행 표시(요청 보냄 시각 → 확인 중 → 연동 완료) | POST 응답 (createdAt · branchName) · 다시 열면 GET /me/branch-link-requests | new | nowHHMM() · state/onboarding.ts branch |
-| [시작하기] (안드로이드 뒤로도) → 가입 끝 → 홈 | POST /me/onboarding {path: member, bodyColor} | new | state/onboarding.ts finishOnboarding (link 'pending' · role 'guest') |
+| [시작하기] (안드로이드 뒤로도) → 가입 끝 → 홈 | POST /onboarding {path: MEMBER, member{branchCode, realName, phone}, palloloCode} | existing | state/onboarding.ts finishOnboarding (link 'pending' · role 'guest') |
 
 지점이 처리하면: 푸시 + 알림함 맨 위 알림(BRANCH_LINK_APPROVED → /my · BRANCH_LINK_REJECTED → /link-rejected) → GET /me linkStatus 다시 (core listMyNotifications · getMe). 앱 흉내: state/link-events.ts receiveLinkResult · components/home/link-admin-dev.tsx(개발용).
 열린 질문: 24시간 넘게 안 되면 '조금 늦어지고 있어요' 문구로 바꾸려면 서버가 늦음 여부를 줘야 해요(createdAt 으로 앱이 계산해도 됨) · 주말 · 휴무일 기준 (Q-O8).
@@ -263,24 +264,24 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 | 지점 선택하기 → 지점 목록 시트 (전체 n · 권역 칩) | GET /public/api/v1/branches (core listPublicBranches) | change (region · phone) | data/account.ts BRANCHES |
 | 이름 · 휴대폰 (카카오 값 미리 채움) | (보내기에 같이) | — | state/onboarding.ts realName · phone |
 | 희망 언어 (하나) — 바꾸면 시간표가 바뀌어요 | GET /public/api/v1/candidate-inquiries/options (core getTrialInquiryOptions) | existing | app-parts.tsx ONB_LANGS |
-| 상담 시간: 날짜 5일 → 시간 칸 (지점 · 언어 프로님 일정 · 마감 흐리게) | GET /trial-slots?branchCode=&lang=&days=5 (core listTrialSlots) | new | trial-slots.tsx TIMES · trialSlots (가짜) |
+| 상담 시간: 날짜 5일 → 시간 칸 (지점 · 언어 프로님 일정 · 마감 흐리게) | GET /trial-slots?branchCode= (core listTrialSlots) | existing | trial-slots.tsx TIMES · trialSlots (가짜) |
 | 배우고 싶은 이유(여러 개 · 선택) · 전달 사항(200자 · 선택) | (보내기에 같이) | — | WHY_REASONS · note |
-| [체험 예약하기] → 예약 확정 | POST /public/api/v1/candidate-inquiries + Bearer (core submitTrialBooking) | change (reasons · note · 계정 연결 · 마감 확인) | updateOnboarding({...b, path: trial}) |
+| [체험 예약하기] → 예약 확정 | POST /onboarding {path: TRIAL, trial} (core completeOnboarding) | existing | updateOnboarding({...b, path: trial}) |
 
 ### 체험 예약 확정 (가입) — `app/onboarding/trial-done.tsx` (+ `components/onboarding/trial-done-view.tsx` · `done-ticket.tsx` · `done-stage.tsx` · `done-notice.tsx`)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | '첫 무대 입장권' (지점 · 날짜 · 시간 · 상담 언어 · 예약자 · 전달 사항) | 서버 호출 없음 — 방금 보낸 값 | — | state/onboarding.ts |
-| [앱 둘러보기] (안드로이드 뒤로도) → 가입 끝 → 홈 (홈 맨 위 D-n 체험 카드) | POST /me/onboarding {path: trial, bodyColor, langs[1], reasons} → GET /me trialBooking | new | finishOnboarding → updateMe({trial}) |
+| [앱 둘러보기] (안드로이드 뒤로도) → 가입 끝 → 홈 (홈 맨 위 D-n 체험 카드) | POST /onboarding {path: TRIAL, trial{…}} → GET /me/branch-summary upcomingTrials | new | finishOnboarding → updateMe({trial}) |
 
 ### 희망 언어 (앱 구경) — `app/onboarding/langs.tsx` (+ `components/onboarding/app-langs.tsx` · `app-parts.tsx`)
-서버 호출 없음 — 여러 개 고른 순서(맨 앞 = 홈 첫 언어)를 가입 끝에 POST /me/onboarding langs 로 보내요. 언어 4개는 앱 고정 (Lang enum).
+서버 호출 없음 — 여러 개 고른 순서(맨 앞 = 홈 첫 언어)를 가입 끝에 POST /onboarding app.languageCodes 로 보내요. 언어 4개는 앱 고정 (Lang enum).
 
 ### 배우고 싶은 이유 (앱 구경) — `app/onboarding/why.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 이유 여러 개 (안 골라도 돼요) | (보내기에 같이) | — | WHY_REASONS · state/onboarding.ts why |
-| [앱 둘러보기] → 가입 끝 → 홈 | POST /me/onboarding {path: app, bodyColor, langs, reasons} | new | finishOnboarding (plan study · role guest) |
+| [앱 둘러보기] → 가입 끝 → 홈 | POST /onboarding {path: APP, app{languageCodes, reasons}} | existing | finishOnboarding (plan study · role guest) |
 
 ### 사용 가이드 5장 — (앱 화면 아직 없음)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -557,6 +558,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 홈 · 멤버(인사말 · NEW · 코호스트) | GET /clubs/{id}/members | change | membersOf · clubStaff |
 | 홈 · 다가오는 정기 모임 4회 | GET /clubs/{id}/meetings?upcoming=true&limit=4 | change | clubSessions |
 | 홈 · 일정 목록 12주 (schedule.tsx) | GET /clubs/{id}/meetings?upcoming=true&limit=12 | change | clubSessions(12) |
+| [일정 만들기] (호스트 · 코호스트 · 운영 중일 때만) — 제목 · 날짜 · 시작/끝 · 정원(무관 가능) · 장소 · 메모 → 멤버 모두 알림 | POST /clubs/{id}/meetings | change (endTime · 장소 선택 · 인원 무관 · 코호스트) | meet-store.ts addSched · session-new.tsx |
 | 홈 · 같은 카테고리 추천 | GET /clubs?category= | change | CLUBS |
 | 가입하기 / 가입 신청 (club-join.tsx) | POST /clubs/{id}/members | change | setClubState |
 | 가입 인사 남기기 · 고치기 · 지우기 | PUT · DELETE /clubs/{id}/members/me/greeting | new | greet |
@@ -578,6 +580,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 회차 상세 · 참석 멤버 한마디 | GET /clubs/{id}/meetings/{meetingId} | change | clubSessions · sessionMembers |
+| 만든 일정 고치기 · 취소 (참석 멤버 알림) | PUT · DELETE /clubs/{id}/meetings/{meetingId} | change | meet-store.ts removeSched |
 | 참석하기 | POST /clubs/{id}/meetings/{meetingId}/participants | existing | att |
 | 참석 취소 | DELETE /clubs/{id}/meetings/{meetingId}/participants/me | existing | att |
 | 한마디 남기기 · 지우기 | PUT · DELETE /clubs/{id}/meetings/{meetingId}/participants/me/one-liner | new | shi |
@@ -591,6 +594,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 |---|---|---|---|
 | 포스터 올리기 | POST /uploads/images/club-photo (공통) | existing | 기기 uri |
 | [승인 요청하기] → 승인 대기 카드 (요일 · 시간 칩 meetTime · 최대 인원 스테퍼 3~40 maxMembers) | POST /clubs | change | addMyClub · TIMES · Stepper |
+| 내 신청 카드 (검토 중 1~3일 · 거절 이유 · 다시 보내기 · 지우기) · 호스트 기록 · 운영 규칙 상자 | GET /me/club-applications | new | meet-store.ts myClubs · hostLog · data/host-rules.ts |
 
 열린 질문: 동아리를 지점 · 지역에 묶을지(지금 백엔드는 전역 — 앱은 지점 · 지역 필터와 지도 숫자에 써요). 앱 폼에 '소개(description)' 칸이 없어요. 가입 조건 'Lv.2 이상 · 수강생만'을 서버가 검증할지, 표시 + 승인제로만 둘지. 매니저 승인은 콘솔(apphub) 몫 — 앱에는 승인 화면이 없어요.
 
@@ -757,12 +761,12 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 내 이름 · 지점 · 역할 · 레벨 (앱 전체 useMe) | GET /me | change | state/me.ts ME0 |
-| 캐릭터 카드 · 숫자 4칸(연속 학습 · 이번 주 랭킹 · 참여 중인 모임 · 받은 배지) · 팔로잉/팔로워 수 · 스파크 · 배지 미리보기 · 내 활동 개수 | GET /me/mypage | change | state/me.ts · data/my.ts MY_BADGES · rankPeople |
-| 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /ranking?scope=member&period=week | new | data/my.ts rankPeople |
+| 캐릭터 카드 · 숫자 4칸(연속 학습 · 이번 주 랭킹 · 참여 중인 모임 · 받은 배지) · 팔로잉/팔로워 수 · 스파크 · 배지 미리보기 · 내 활동 개수 | GET /me/mypage (서버 집계 · v2) | existing | state/me.ts · data/my.ts MY_BADGES · rankPeople |
+| 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /me/mypage ranking (podium · me) — 전체 랭킹 화면은 GET /ranking | existing | data/my.ts rankPeople |
 | 내 모임 시트 | GET /me/activities | existing | state/me.ts joinedMeets |
 | 찜한 모임 시트 | (라운지 찜 API 몫) | — | state/me.ts savedMeets |
 | 내가 쓴 글 → 라운지로 | (라운지 몫) | — | state/me.ts postCount |
-| 내 표현함 개수 | GET /me/mypage (summary.savedExpressionCount) · 목록은 학습 도메인 표현함 API | change | state/expressions useSavedCount |
+| 내 표현함 개수 | GET /me/mypage (activity.savedExpressionCount) · 목록은 학습 도메인 표현함 API | existing | state/expressions useSavedCount |
 | PRO'S NOTE 카드 · 내 스터디 카드 · 지점 안내 (회원만 보여요) | 아래 각 컴포넌트 | | |
 | 비회원: 랭킹 윗부분 아래 '지점 회원이 되면 열려요' 칸 · 톱니 흐리게 · 메뉴 '이용권 · 결제 내역'은 회원만(앱 구독자는 '결제 내역') | GET /me (role · linkStatus · trialBooking · plan) | change | state/access.ts isMember · canUse · components/common/member-lock.tsx · scroll-lock.tsx |
 | 잠김 칸 아래 버튼: 연동 대기 '연동 확인 중이에요' · 못 찾음 '다시 요청하기'(→ /link-rejected) · 체험 예약 '체험 예약 보기' · 그 밖 '체험 신청하기' + '이미 회원이에요 · 연동 요청'(→ /onboarding/link) | GET /me | change | components/common/member-lock.tsx |
@@ -834,7 +838,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 멤버십 이름 · 기간 · 남은 횟수 링 · 무료 포함 · 연기 · 변경 남은 횟수 · 팀 수 · 주 n회 · 팀 목록 | GET /me/memberships (ACTIVE) | change | getMembership · MY_TEAMS |
-| '○○ 신청 · 운영진 확인 중' | GET /me/course-change (pendingRequest · pendingDeferral · pendingBranchTransfer) 또는 GET /me/inquiries | change / existing | store.ts useChangeRequest |
+| '○○ 신청 · 운영진 확인 중' | GET /me/course-change (pendingRequest · pendingDeferral · pendingBranchTransfer) | change | store.ts useChangeRequest |
 | [신청 취소] | PUT /me/course-change-requests/{id}/cancel · /me/deferral-requests/{id}/cancel · /me/branch-transfer-requests/{id}/cancel | existing | cancelChangeRequest |
 
 `app/me/study.tsx`: 같은 카드만 보여 줘요 (추가 API 없음).
@@ -846,7 +850,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 지점 탭 (내 팀 지점들) | GET /me/branches | existing | data/my.ts MY_BRANCHES |
-| 주소 · 시간 · 고정 공지 · 주차/계좌 · 와이파이 · 사물함 · 문의 · 협업 업체(포스터 · 링크) | GET /branches/{id}/board | new | data/my.ts BR_BOARDS |
+| 주소 · 시간 · 고정 공지 · 주차/계좌 · 와이파이 · 사물함 · 문의 · 협업 업체(포스터 · 링크) | GET /me/branch-guides (협업 업체 · 사물함은 아직 없음) | existing | api/branch-guide.ts |
 
 기기에만 저장 (API 없음): 복사 · 지도 · 전화 열기 (기기 기능).
 
@@ -864,7 +868,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 |---|---|---|---|
 | 결제 목록 (이용권은 금액 숨김 · 환불은 분홍) | GET /me/payments | new | PAYMENTS |
 | 영수증 [이메일로 받기] | POST /me/payments/{id}/receipt-email | new | 토스트만 |
-| [환불 문의] → 1:1 문의 (유형 결제 · 환불) | POST /me/support-inquiries (type=payment, paymentId) | new | support ?type= |
+| [환불 문의] → 1:1 문의 (유형 결제 · 환불) | POST /me/inquiries (categoryCode · content) | existing | support ?type= |
 
 열린 질문: 멤버십 밖 결제(캠프 · 레벨 테스트)를 백엔드가 어디에 두는지 — 지금은 멤버십 PaymentLine 만 있어요.
 
@@ -906,9 +910,9 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 닉네임 · 한 줄 소개 저장 | PATCH /me/profile | change | updateMe · updateSettings({bio}) |
-| 내 지점 (최대 2곳 · 매니저 확인) 선택지 | GET /me/branch-link-requests/branches | change (region) | BRANCHES |
+| 내 지점 (매니저 확인) 선택지 | GET /me/branch-link-requests/branches | change (region) | BRANCHES |
 | 내 지점 저장 → 요청 | POST /me/branch-link-requests | change | updateSettings({branches}) |
-| 내 지점 요청 상태 | GET /me/inquiries (BRANCH_LINK) | existing | settings.branches |
+| 내 지점 요청 상태 | GET /me/branch-link-requests · GET /me/branch-summary | existing | settings.branches |
 | 학습 언어 · 레벨 값 | GET /me/study-level (또는 /me) | new | set.lang · me.level |
 | 로그인 계정 값 | GET /me/auth-providers | new | useLogins |
 | 알림 7개 · 광고 동의(날짜 기록) · 프로필 공개 · 랭킹 이름 · 지점 보이기 · 하루 목표 | GET · PATCH /me/settings | new | SETTINGS_DEFAULT · updateSettings · setMarketing |
@@ -973,13 +977,13 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 고객센터 — `app/me/support.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 자주 묻는 질문 (찾기 · 칩 · 펼침) | GET /faq | new | FAQ · FAQ_CATS |
-| 내 지점 전화 | GET /branches/{id}/board (phone) | new | BRANCH_PHONE |
-| 1:1 문의하기 (유형 · 내용) | POST /me/support-inquiries | new | addAsk · ASK_TYPES |
-| 내 문의 (답변 대기 · 완료) | GET /me/support-inquiries | new | useAsks |
+| 자주 묻는 질문 (찾기 · 칩 · 펼침) | GET /faq {categories, items} | existing | api/support.ts fetchFaq |
+| 내 지점 전화 | GET /me/branch-guides (phone) | existing | BRANCH_PHONE |
+| 1:1 문의하기 (분류 · 내용 5~2000자) | POST /me/inquiries | existing | api/support.ts createInquiry |
+| 내 문의 (답변 대기 · 완료) | GET /me/inquiries | existing | api/support.ts fetchMyInquiries |
 
 기기에만 저장 (API 없음): [도움이 됐어요] (지금 토스트만) · 카카오톡 상담(채널 링크).
-주의: 백엔드 `/me/inquiries` 는 '신청 내역'(연기 · 지점 연동 · 수업 변경 · 지점 이동)이라 1:1 문의는 `/me/support-inquiries` 로 따로 제안했어요.
+v2 에서는 `/me/inquiries` 가 1:1 문의예요 (MobileUserInquiryController). 예전 v1 `/me/inquiries`(신청 내역)는 지점 연동은 `/me/branch-link-requests` · `/me/branch-summary`, 연기 · 수업 변경은 GET /me/course-change 로 봐요.
 
 ### 회원 탈퇴 — `app/me/delete.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |

@@ -1,12 +1,20 @@
 /**
  * 처음 가입 과정(온보딩)에서 고른 값 — docs/pages/09-onboarding.md.
- * 화면마다 여기에 쌓고, 마지막에 finishOnboarding() 이 나(state/me)에 옮기고 끝났다고 표시해요 (홈으로는 로그인 상태가 보내요).
- * 맞는 API: 4 `PATCH /me` (닉네임 · 캐릭터 · 언어 · 이유) · A23 지점 연동 요청 · 체험 예약.
+ * 화면마다 여기에 쌓고, 길의 마지막 칸(연동 요청 보내기 · 체험 예약하기 · 앱 둘러보기)에서 한 번에 `POST /onboarding` (api/use-onboarding).
+ * 그 응답은 result 에 두고 연동 대기 · 체험 확인 화면이 그려요. 그 화면의 [시작하기] · [앱 둘러보기] 에서 finishOnboarding() 이
+ * 나(state/me)에 옮기고 끝났다고 표시해요 (홈으로는 로그인 상태가 보내요).
+ * 값은 서버 code 로 들고 있어요: 약관 = 버전 id, 지점 = branchCode(+ 보여 줄 이름 branch), 언어 · 이유 = 마스터데이터 code, 팔로로 = palloloCode.
  */
+import type { OnboardingResult } from '@/api/onboarding';
 
 import { createStore } from '@/lib/store';
 import { setAvatarBody } from '@/state/avatar';
 import { updateMe, type StudyLang } from '@/state/me';
+
+/** 앱 안 4개 언어 키 — 서버 언어 code 가 이 중 하나와 같으면(대소문자 무시) 그 언어 색 · 인사말을 써요 */
+const STUDY_LANGS: StudyLang[] = ['en', 'ja', 'zh', 'es'];
+/** 서버 언어 code → 앱 안 언어 키 (모르는 언어면 undefined) */
+export const toStudyLang = (code: string | undefined): StudyLang | undefined => STUDY_LANGS.find((l) => l === code?.toLowerCase());
 
 /** 지점 회원 · 체험 · 앱으로만 · 일단 구경만 */
 export type OnbPath = 'member' | 'trial' | 'app' | 'browse';
@@ -17,40 +25,56 @@ export type BodyColor = 'yellow' | 'purple' | 'purple-lash' | 'pink' | 'sky' | '
 export type Onboarding = {
   /** 가입 과정을 끝냈는지. 안 끝냈으면 앱을 열 때 첫 화면부터 */
   done: boolean;
-  agreed: { terms: boolean; privacy: boolean; age: boolean; marketing: boolean };
+  /** 약관 답변 — 현행 버전 id 마다 동의했는지 (GET /onboarding 의 consents 순서) */
+  consents: { versionId: string; agreed: boolean }[];
+  /** 카카오 값(GET /onboarding prefill)으로 미리 채웠는지 — 한 번만 채우고 고친 값은 덮지 않아요 */
+  prefilled: boolean;
   nickname: string;
+  /** 고른 팔로로 (에셋 카탈로그 code) */
+  palloloCode: string;
+  /** 그 팔로로의 앱 안 몸 그림 (code 가 앱에 있는 몸 색이면 같은 값, 아니면 앞에 고른 값 그대로) */
   color: BodyColor;
   path: OnbPath | null;
-  /** 연동할 지점 · 체험할 지점 (예: 하남점) */
+  /** 연동할 지점 · 체험할 지점 — 보낼 code 와 보여 줄 이름 (예: 하남점) */
+  branchCode: string;
   branch: string;
   /** 지점에 등록한 이름 · 휴대폰 번호 (연동 요청 · 체험 예약) */
   realName: string;
   phone: string;
-  /** 앱으로만: 여러 개 · 체험: 하나 */
-  langs: StudyLang[];
+  /** 언어 code — 앱으로만: 여러 개(고른 순서) · 체험: 하나. langLabel 은 체험 상담 언어 이름 (확인 화면용) */
+  langs: string[];
+  langLabel: string;
+  /** 배우고 싶은 이유 code */
   why: string[];
   /** 체험 상담 날짜 · 시간 */
   trialDay: string;
   trialTime: string;
   /** 체험 예약 전달 사항 (선택 · 직접 입력, 최대 200자) */
   note: string;
+  /** POST /onboarding 응답 (보내기 전엔 null) */
+  result: OnboardingResult | null;
 };
 
 const INITIAL: Onboarding = {
   done: false,
-  agreed: { terms: false, privacy: false, age: false, marketing: false },
-  // 카카오에서 받은 값으로 미리 채워요 (가짜)
-  nickname: '서현',
+  consents: [],
+  prefilled: false,
+  // 카카오에서 받은 값은 약관 화면에서 GET /onboarding prefill 로 채워요
+  nickname: '',
+  palloloCode: '',
   color: 'purple-lash',
   path: null,
+  branchCode: '',
   branch: '',
-  realName: '김서현',
-  phone: '010-1234-5678',
-  langs: ['en'],
+  realName: '',
+  phone: '',
+  langs: [],
+  langLabel: '',
   why: [],
   trialDay: '',
   trialTime: '',
   note: '',
+  result: null,
 };
 
 // 가입을 끝냈는지(done)만 기기에 남겨요 — 가짜 서버의 /me needsOnboarding 판정 (api/me.ts). 고르던 값은 남기지 않아요
@@ -75,21 +99,23 @@ export function stepsFor(path: OnbPath | null) {
 
 /**
  * 가입 끝: 고른 값을 나에게 옮기고 끝났다고 표시해요. 회원은 연동 확인 중으로 시작해요.
- * 화면은 이걸 직접 부르지 않고 useCompleteOnboarding() (api/session.tsx) 을 불러요 — 가짜 서버가 이걸 불러요 (api/me.ts).
+ * 서버에는 이미 POST /onboarding 으로 보냈어요 — 이건 앱 안 값(가짜 서버의 나 · 내 팔로로)만 맞춰요.
+ * 화면은 이걸 직접 부르지 않고 useCompleteOnboarding() (api/session.tsx) 을 불러요 (api/me.ts completeOnboarding).
  * 홈으로 가는 건 로그인 상태(needsOnboarding=false)를 보고 app/_layout.tsx 가 해요.
  */
 export function finishOnboarding() {
   const s = store.get();
+  const lang = toStudyLang(s.langs[0]);
   updateMe({
     name: s.nickname,
     ...(s.branch ? { branch: s.branch } : {}),
-    ...(s.langs[0] ? { lang: s.langs[0] } : {}),
+    ...(lang ? { lang } : {}),
     // '앱 구경할래요'(path app)는 구독자가 아니에요 — 앱 구독(plan 'app')은 결제한 사람만. 가입 단계에서는 늘 study 로 두고 비회원으로 둘러봐요
     plan: 'study',
     // 지점이 연동해 주기 전까지는 회원 기능이 안 열려요 (비회원과 같아요). 연동되면 member 로 바뀌어요 (state/link-events)
     role: 'guest',
     link: s.path === 'member' ? 'pending' : 'none',
-    trial: s.path === 'trial' && s.trialDay && s.trialTime ? { branch: s.branch, day: s.trialDay, time: s.trialTime, lang: s.langs[0] ?? 'en' } : null,
+    trial: s.path === 'trial' && s.trialDay && s.trialTime ? { branch: s.branch, day: s.trialDay, time: s.trialTime, lang: lang ?? 'en' } : null,
   });
   // 캐릭터 고르기에서 고른 몸 색이 홈 · 마이의 내 팔로로가 돼요
   setAvatarBody(s.color);

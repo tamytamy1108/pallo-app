@@ -280,7 +280,7 @@ export const SETTINGS_DEFAULT = {
   bio: '',
   /** 광고 수신 동의 날짜 (켜면 기록) */
   mktAt: '',
-  /** 내 지점 변경 요청 (매니저가 확인하면 바뀌어요 · 최대 2곳). 비어 있으면 지금 지점 */
+  /** 내 지점 변경 요청 (매니저가 확인하면 바뀌어요). 비어 있으면 지금 지점 */
   branches: [] as string[],
 };
 export type Settings = typeof SETTINGS_DEFAULT;
@@ -321,8 +321,24 @@ export const PAYMENTS = [
 
 // ---------- 고객센터 ----------
 
-/** [분류, 질문, 답] (프로토타입 FAQ) */
-export const FAQ: [string, string, string][] = [
+/**
+ * 가짜 서버의 FAQ 분류 (api/support · GET /faq). 실제 분류는 app-hub FAQ 관리에서 본사가 정해요 — 1:1 문의 분류도 이 목록을 같이 써요.
+ * 결제 내역 화면의 '문의하기'는 PAYMENT 를 미리 골라요 (app-hub 에 같은 코드가 있어야 맞게 골라져요).
+ */
+export const MOCK_FAQ_CATEGORIES = [
+  { code: 'CLASS', label: '수업 · 예약' },
+  { code: 'PAYMENT', label: '이용권 · 결제' },
+  { code: 'LEVEL', label: '레벨 · 교재' },
+  { code: 'LOUNGE', label: '라운지' },
+  { code: 'ACCOUNT', label: '계정' },
+  { code: 'APP_ERROR', label: '앱 오류' },
+] as const;
+
+/** 결제 내역 '문의하기'가 미리 고르는 문의 분류 코드 */
+export const PAYMENT_INQUIRY_CATEGORY = 'PAYMENT';
+
+/** 가짜 서버의 FAQ [분류 라벨, 질문, 답] (프로토타입 FAQ) */
+export const MOCK_FAQ: [string, string, string][] = [
   ['수업 · 예약', '세션을 빠지면 어떻게 돼요?', '하루 전 22시까지 연기하면 회차가 차감되지 않아요. 그 뒤에 빠지면 1회 차감돼요. 마이 > 연기 · 팀 · 지점 변경에서 신청해요.'],
   ['수업 · 예약', '연기 · 변경은 몇 번까지 돼요?', '연기 · 팀 변경 · 지점 이동을 합쳐서 플러스 3번, 프로 6번, 프로맥스 · 프리미엄은 무제한이에요.'],
   ['수업 · 예약', '다른 지점 수업도 들을 수 있어요?', '같은 레벨이면 다른 지점 세션도 예약할 수 있어요. 지점 변경에서 “이번 한 번만”을 골라요.'],
@@ -334,11 +350,6 @@ export const FAQ: [string, string, string][] = [
   ['라운지', '번개는 누구나 열 수 있어요?', '정회원이면 누구나 열 수 있어요. 체험 회원은 구경만 할 수 있어요.'],
   ['계정', '휴대폰 번호가 바뀌었어요', '설정 > 로그인 계정에서 새 번호로 인증하면 바뀌어요.'],
 ];
-export const FAQ_CATS = ['전체', '수업 · 예약', '이용권 · 결제', '레벨 · 교재', '라운지', '계정'];
-
-export const ASK_TYPES = ['수업 · 예약', '결제 · 환불', '앱 오류', '기타'];
-export type Ask = { t: string; q: string; d: string; st: '답변 대기' | '답변 완료'; a?: string };
-export const ASKS_DEFAULT: Ask[] = [{ t: '앱 오류', q: '출석체크 버튼이 안 눌려요', d: '11.02', st: '답변 완료', a: '불편을 드려 죄송해요. 앱을 최신 버전으로 업데이트하면 해결돼요.' }];
 
 /** 내 지점 전화 (예시) */
 export const BRANCH_PHONE = '02-000-0000';

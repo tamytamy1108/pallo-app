@@ -2,48 +2,48 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { logout } from '@/api/auth';
+import type { ConsentDoc } from '@/api/onboarding';
+import { useOnboardingInfo } from '@/api/use-onboarding';
 import { Bob } from '@/components/onboarding/fx-motion';
 import { NextButton } from '@/components/onboarding/parts';
 import { TermsRow, TermsCheck } from '@/components/onboarding/start-terms';
 import { Pressable } from '@/components/ui/pressable';
+import { Sheet } from '@/components/ui/sheet';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { SCREEN } from '@/lib/transitions';
-import { getOnboarding, updateOnboarding, type Onboarding } from '@/state/onboarding';
+import { getOnboarding, updateOnboarding } from '@/state/onboarding';
 
-type Agreed = Onboarding['agreed'];
-type Key = keyof Agreed;
-
-/** 순서 · 이름은 시안(onboarding-options.html 3장 약관 동의 시트) · docs/pages/09-onboarding.md 그대로 */
-const ITEMS: { key: Key; label: string; required: boolean; doc: boolean }[] = [
-  { key: 'age', label: '만 14세 이상이에요', required: true, doc: false },
-  { key: 'terms', label: '서비스 이용약관', required: true, doc: true },
-  { key: 'privacy', label: '개인정보 수집 · 이용', required: true, doc: true },
-  { key: 'marketing', label: '이벤트 · 번개 소식 받기', required: false, doc: true },
-];
+/** 버전 id → 동의했는지 */
+type Agreed = Record<string, boolean>;
 
 const JUMP = require('@/assets/characters/c-purple-jump-3d.png');
 
 /**
  * 약관 동의 (가입 단계 맨 앞 · 진행 바 칸에 넣지 않아요).
  * 카카오 동의 창에서 돌아오면 바로 올라오는 시트예요 (시안: 노란 바탕 위). '전체 동의' 한 번이면 끝,
- * 필수 세 개를 다 체크해야 '동의하고 시작하기'가 켜져요. 바깥을 누르면 첫 화면으로 돌아가요.
+ * 필수 약관을 다 체크해야 '동의하고 시작하기'가 켜져요. 바깥을 누르면 첫 화면으로 돌아가요.
+ * 약관은 서버 현행 버전 (GET /onboarding consents · 순서 그대로) — 답은 버전 id 로 담아 가입 완료(POST /onboarding)에 보내요.
+ * 같은 응답의 카카오 값(prefill)으로 닉네임 · 이름 · 번호를 여기서 한 번만 미리 채워요. 전문이 있는 약관은 '보기'로 시트를 열어요.
  */
 export default function TermsScreen() {
   const insets = useSafeAreaInsets();
   const still = useReducedMotion();
-  const [agreed, setAgreed] = useState<Agreed>(() => getOnboarding().agreed);
+  const info = useOnboardingInfo();
+  const docs = info.data?.consents ?? [];
+  const [agreed, setAgreed] = useState<Agreed>(() => Object.fromEntries(getOnboarding().consents.map((c) => [c.versionId, c.agreed])));
+  const [reading, setReading] = useState<ConsentDoc | null>(null);
 
-  const allOn = ITEMS.every((it) => agreed[it.key]);
-  const ready = ITEMS.every((it) => !it.required || agreed[it.key]);
+  const allOn = docs.length > 0 && docs.every((d) => agreed[d.versionId]);
+  const ready = docs.length > 0 && docs.every((d) => !d.required || agreed[d.versionId]);
 
   // 바탕이 .3초 어두워지고 시트가 .55초 올라와요 (ui/sheet 와 같은 움직임)
   const shown = useSharedValue(still ? 1 : 0);
@@ -60,11 +60,16 @@ export default function TermsScreen() {
     shown.set(withTiming(0, { duration: 300, easing: EASE }, (done) => done && runOnJS(leave)()));
   };
 
-  const toggle = (key: Key) => setAgreed((a) => ({ ...a, [key]: !a[key] }));
-  const toggleAll = () => setAgreed({ age: !allOn, terms: !allOn, privacy: !allOn, marketing: !allOn });
+  const toggle = (id: string) => setAgreed((a) => ({ ...a, [id]: !a[id] }));
+  const toggleAll = () => setAgreed(Object.fromEntries(docs.map((d) => [d.versionId, !allOn])));
 
   const start = () => {
-    updateOnboarding({ agreed });
+    if (!info.data) return;
+    const consents = docs.map((d) => ({ versionId: d.versionId, agreed: !!agreed[d.versionId] }));
+    const o = getOnboarding();
+    const p = info.data.prefill;
+    // 카카오 값은 처음 한 번만 (뒤로 와서 다시 동의해도 고친 값을 덮지 않아요)
+    updateOnboarding(o.prefilled ? { consents } : { consents, prefilled: true, nickname: p.nickname ?? '', realName: p.realName ?? '', phone: p.phone ?? '' });
     router.push('/onboarding/nickname');
   };
 
@@ -88,32 +93,46 @@ export default function TermsScreen() {
           PALLO를 쓰려면{'\n'}동의가 필요해요
         </PText>
 
-        <Pressable onPress={toggleAll} accessibilityRole="checkbox" accessibilityLabel="전체 동의하기" accessibilityState={{ checked: allOn }}>
-          {({ pressed }) => (
-            <View style={[styles.all, allOn && styles.allOn, pressed && styles.pressed]}>
-              <TermsCheck on={allOn} />
-              <PText style={styles.allText}>전체 동의하기</PText>
-            </View>
-          )}
-        </Pressable>
+        {info.isPending ? (
+          <LoadingState />
+        ) : info.isError ? (
+          <ErrorState onRetry={() => info.refetch()} />
+        ) : (
+          <>
+            <Pressable onPress={toggleAll} accessibilityRole="checkbox" accessibilityLabel="전체 동의하기" accessibilityState={{ checked: allOn }}>
+              {({ pressed }) => (
+                <View style={[styles.all, allOn && styles.allOn, pressed && styles.pressed]}>
+                  <TermsCheck on={allOn} />
+                  <PText style={styles.allText}>전체 동의하기</PText>
+                </View>
+              )}
+            </Pressable>
 
-        <View style={styles.list}>
-          {ITEMS.map((it) => (
-            <TermsRow
-              key={it.key}
-              label={it.label}
-              required={it.required}
-              on={agreed[it.key]}
-              onToggle={() => toggle(it.key)}
-              onOpen={it.doc ? () => showToast(`${it.label} 전문은 준비 중이에요`) : undefined}
-            />
-          ))}
-        </View>
+            <View style={styles.list}>
+              {docs.map((d) => (
+                <TermsRow
+                  key={d.versionId}
+                  label={d.title}
+                  required={d.required}
+                  on={!!agreed[d.versionId]}
+                  onToggle={() => toggle(d.versionId)}
+                  onOpen={d.body.trim() ? () => setReading(d) : undefined}
+                />
+              ))}
+            </View>
+          </>
+        )}
 
         <View style={styles.cta}>
           <NextButton label="동의하고 시작하기" onPress={start} disabled={!ready} />
         </View>
       </Animated.View>
+
+      <Sheet open={!!reading} onClose={() => setReading(null)} title={reading?.title ?? ''} tall>
+        <ScrollView>
+          <PText style={styles.docBody}>{reading?.body ?? ''}</PText>
+        </ScrollView>
+      </Sheet>
     </View>
   );
 }
@@ -143,4 +162,5 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85 },
   list: { paddingTop: 6, paddingHorizontal: 4 },
   cta: { marginTop: 14 },
+  docBody: { fontFamily: Font.body600, fontSize: 14, lineHeight: 22, color: Colors.ink },
 });

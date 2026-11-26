@@ -10,7 +10,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { PAYMENTS } from '@/data/account';
+import { PAYMENT_INQUIRY_CATEGORY, PAYMENTS } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 
 type Pay = (typeof PAYMENTS)[number];
@@ -66,7 +66,7 @@ export default function PaymentsScreen() {
               wide
               onPress={() => {
                 setOpen(null);
-                runAfterSheetClose(() => router.push({ pathname: '/me/support', params: { view: 'ask', type: '결제 · 환불' } }));
+                runAfterSheetClose(() => router.push({ pathname: '/me/support', params: { view: 'ask', type: PAYMENT_INQUIRY_CATEGORY } }));
               }}
             />
           </View>,

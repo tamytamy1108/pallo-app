@@ -1,38 +1,51 @@
-import { useState, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import type { BranchOption } from '@/api/onboarding';
+import { branchBlockReason, useBranchOptions } from '@/api/use-onboarding';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BRANCH_REGIONS, BRANCHES } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 
-/** 지점 이름은 늘 '…점'으로 보여요 (데이터에 '가산' · '대구동성로'처럼 섞여 있어요) */
-export const withJeom = (n: string) => (n.endsWith('점') ? n : `${n}점`);
-/** 지점 한 곳: key 는 데이터 이름 그대로(거르기 · 저장용), name 은 보이는 이름 */
-const LIST = BRANCHES.map(([key, region]) => ({ key, name: withJeom(key), region }));
-const ALL_KEYS = LIST.map((b) => b.key);
-const TABS = ['전체', ...BRANCH_REGIONS] as const;
-type Tab = (typeof TABS)[number];
-type Branch = (typeof LIST)[number];
+const ALL = '전체';
+/** 지역 탭이 이보다 많으면 탭 줄을 옆으로 밀어서 봐요 */
+const FIT_TABS = 5;
 
-/** 같은 지점인지 ('가산' = '가산점') */
-const same = (a: string, b: string) => withJeom(a) === withJeom(b);
+/** link: 연동 요청 (이미 연동 · 확인 중인 지점은 막아요) · trial: 체험 신청 (쉬는 지점은 막아요) */
+export type BranchPurpose = 'link' | 'trial';
+
 
 /**
- * 지점 목록 시트 (프로토타입 .bs · 가입 단계의 '다니는 지점'): 제목 · 검색 · 권역 탭 · 권역별 묶음 카드. 하나 고르면 닫혀요.
- * raw: 데이터 이름 그대로('가산') 돌려줘요 — 기본은 보이는 이름('가산점', 가입 · 체험 예약이 저장하는 값).
+ * 지점 목록 시트 (프로토타입 .bs): 제목 · 검색 · 지역 탭 · 지역별 묶음 카드. 고르면 닫혀요.
+ * 전체 탭 옆에 지점이 모두 몇 곳인지 보여 줘요. value 는 고른 지점 code.
  */
-export function BranchSheet({ open, onClose, title, value, onPick, raw = false }: { open: boolean; onClose: () => void; title: string; value: string; onPick: (name: string) => void; trial?: boolean; raw?: boolean }) {
+export function BranchSheet({
+  open,
+  onClose,
+  title,
+  value,
+  onPick,
+  purpose,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  value: string;
+  onPick: (branch: BranchOption) => void;
+  purpose: BranchPurpose;
+}) {
   return (
     <Sheet open={open} onClose={onClose} title={title} tall>
       <BranchPicker
         value={value}
+        purpose={purpose}
         onPick={(b) => {
-          onPick(raw ? b.key : b.name);
+          onPick(b);
           onClose();
         }}
       />
@@ -41,121 +54,33 @@ export function BranchSheet({ open, onClose, title, value, onPick, raw = false }
 }
 
 /**
- * 지점 하나 고르기 본문 (검색 · 권역 탭 · 권역별 묶음 카드).
- * 가입 단계 · 체험 예약 · 이벤트 제안(진행 지점) · 연기 · 팀 · 지점 변경이 같은 모양을 써요.
+ * 지점 고르기 본문 (검색 · 지역 탭 · 지역별 묶음 카드). 시트 안에 그대로 넣어 써요
+ * — 가입 단계 · 앱 안 체험 예약(TrialForm) · 연동 요청의 지점 시트(BranchSheet)가 써요.
+ * 지점은 GET /branches (폐점 제외 · 지역). 고를 수 없는 지점은 숨기지 않고 흐리게 막고 이유를 보여 줘요 (branchBlockReason).
  */
-export function BranchPicker({ value, onPick }: { value: string | null; onPick: (b: Branch) => void }) {
-  return (
-    <PickerFrame
-      // 고른 지점이 있는 권역 · 고른 지점을 먼저 (바꾸러 들어왔을 때 지금 값이 바로 보이게)
-      sortKey={(b) => (value && same(b.key, value) ? 0 : 1)}
-      row={(b, first) => {
-        const on = !!value && same(b.key, value);
-        return (
-          <BranchRow
-            key={b.key}
-            b={b}
-            first={first}
-            on={on}
-            role="radio"
-            onPress={() => {
-              sfx('tap');
-              onPick(b);
-            }}
-          />
-        );
-      }}
-    />
-  );
-}
-
-type MultiProps = {
-  /** 고른 지점 (데이터 이름 · '가산' 또는 '가산점' 둘 다 돼요) */
-  selected: string[];
-  onChange: (next: string[]) => void;
-  /** 최대 몇 곳 (넘으면 먼저 고른 곳이 빠져요) · 없으면 제한 없음 */
-  max?: number;
-  /** 맨 위 '전체 지점' 칸 · 권역마다 '모두 선택' (라운지 · 이벤트 지점 거르기) */
-  allOption?: boolean;
-  /** '내 지점' 표시할 곳 */
-  mine?: string[];
-};
-
-/**
- * 지점 여러 곳 고르기 본문 — BranchPicker 와 같은 모양에 체크만 여러 개.
- * 라운지 · 이벤트 '어느 지점을 볼까요?'(allOption) · 설정 '내 지점'(max 2)이 써요. 돌려주는 이름은 데이터 이름 그대로.
- */
-export function BranchMultiPicker({ selected, onChange, max, allOption = false, mine = [] }: MultiProps) {
-  const keys = new Set(ALL_KEYS.filter((k) => selected.some((s) => same(k, s))));
-  const has = (k: string) => keys.has(k);
-  const emit = (next: Set<string>) => onChange(ALL_KEYS.filter((k) => next.has(k)));
-  const setMany = (ks: string[], v: boolean) => {
-    sfx('toggle');
-    const next = new Set(keys);
-    ks.forEach((k) => (v ? next.add(k) : next.delete(k)));
-    emit(next);
-  };
-  const toggle = (k: string) => {
-    sfx('tap');
-    if (has(k)) {
-      const next = new Set(keys);
-      next.delete(k);
-      return emit(next);
-    }
-    // 최대 수를 넘으면 먼저 고른 곳이 빠져요 (두 지점까지)
-    const order = selected.filter((s) => ALL_KEYS.some((a) => same(a, s))).map((s) => ALL_KEYS.find((a) => same(a, s)) ?? s);
-    const kept = max ? (max > 1 ? order.slice(-(max - 1)) : []) : order;
-    onChange(ALL_KEYS.filter((a) => a === k || kept.includes(a)));
-  };
-  const allOn = ALL_KEYS.every(has);
-  const isMine = (k: string) => mine.some((m) => same(k, m));
-  return (
-    <PickerFrame
-      head={
-        allOption ? (
-          <View style={styles.group}>
-            <Pressable
-              onPress={() => setMany(ALL_KEYS, !allOn)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: allOn }}
-              accessibilityLabel={`전체 지점 ${ALL_KEYS.length}곳`}
-              style={({ pressed }) => [styles.row, allOn && styles.rowOn, pressed && styles.rowPressed]}>
-              <PText style={[styles.rowName, allOn && styles.rowNameOn]}>전체 지점</PText>
-              <PText style={styles.rowCount}>{ALL_KEYS.length}곳</PText>
-              <Check on={allOn} />
-            </Pressable>
-          </View>
-        ) : null
-      }
-      regionEnd={
-        allOption
-          ? (rows) => {
-              const rOn = rows.every((b) => has(b.key));
-              return (
-                <Pressable onPress={() => setMany(rows.map((b) => b.key), !rOn)} accessibilityRole="button" hitSlop={8} style={styles.regAll}>
-                  <PText style={styles.regAllT}>{rOn ? '모두 해제' : '모두 선택'}</PText>
-                </Pressable>
-              );
-            }
-          : undefined
-      }
-      // 내 지점이 있는 권역 · 내 지점을 먼저
-      sortKey={(b) => (isMine(b.key) ? 0 : 1)}
-      row={(b, first) => <BranchRow key={b.key} b={b} first={first} on={has(b.key)} mine={isMine(b.key)} role="checkbox" onPress={() => toggle(b.key)} />}
-    />
-  );
-}
-
-/** 검색 · 권역 탭 · 권역별 묶음 카드 틀 (하나 · 여러 개 고르기가 같이 써요) */
-function PickerFrame({ head, row, regionEnd, sortKey }: { head?: ReactNode; row: (b: Branch, first: boolean) => ReactNode; regionEnd?: (rows: Branch[]) => ReactNode; sortKey?: (b: Branch) => number }) {
-  const [tab, setTab] = useState<Tab>('전체');
+export function BranchPicker({ value, onPick, purpose }: { value: string | null; onPick: (branch: BranchOption) => void; purpose: BranchPurpose }) {
+  const list = useBranchOptions();
+  const [tab, setTab] = useState(ALL);
   const [q, setQ] = useState('');
-  const query = q.trim();
-  const shown = LIST.filter((b) => (tab === '전체' || b.region === tab) && (!query || b.name.includes(query)));
-  const order = (L: Branch[]) => (sortKey ? [...L].sort((a, b) => sortKey(a) - sortKey(b)) : L);
-  const regions = [...BRANCH_REGIONS.filter((r) => shown.some((b) => b.region === r))].sort((a, b) =>
-    sortKey ? Math.min(...shown.filter((x) => x.region === a).map(sortKey)) - Math.min(...shown.filter((x) => x.region === b).map(sortKey)) : 0,
-  );
+  if (list.isPending) return <LoadingState />;
+  if (list.isError) return <ErrorState onRetry={() => list.refetch()} />;
+  const { rows, groups } = list.data;
+  const tabs = [ALL, ...groups.map((g) => g.region)];
+  const cur = tabs.includes(tab) ? tab : ALL;
+  const scroll = tabs.length > FIT_TABS;
+  const needle = q.trim();
+  const regions = groups
+    .filter((g) => cur === ALL || g.region === cur)
+    .map((g) => ({ region: g.region, rows: g.rows.filter((b) => !needle || b.name.includes(needle)) }))
+    .filter((g) => g.rows.length > 0);
+  const seg = tabs.map((t) => (
+    <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="tab" accessibilityState={{ selected: cur === t }} style={[styles.segItem, scroll && styles.segItemScroll, cur === t && styles.segOn]}>
+      <PText style={[styles.segText, cur === t && styles.segTextOn]} numberOfLines={1}>
+        {t}
+        {t === ALL ? <PText style={[styles.segCount, cur === t && styles.segTextOn]}> {rows.length}</PText> : null}
+      </PText>
+    </Pressable>
+  ));
   return (
     <View style={styles.picker}>
       <View style={styles.search}>
@@ -165,62 +90,55 @@ function PickerFrame({ head, row, regionEnd, sortKey }: { head?: ReactNode; row:
         </Svg>
         <TextInput value={q} onChangeText={setQ} placeholder="지점 이름으로 찾기" placeholderTextColor="#A79F8F" style={styles.searchInput} accessibilityLabel="지점 이름으로 찾기" />
       </View>
-      <View style={styles.seg} accessibilityRole="tablist">
-        {TABS.map((t) => (
-          <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="tab" accessibilityState={{ selected: tab === t }} style={[styles.segItem, tab === t && styles.segOn]}>
-            <PText style={[styles.segText, tab === t && styles.segTextOn]}>
-              {t}
-              {t === '전체' ? <PText style={[styles.segCount, tab === t && styles.segTextOn]}> {LIST.length}</PText> : null}
-            </PText>
-          </Pressable>
-        ))}
-      </View>
-      {/* 검색 · 권역 탭으로 좁혔을 때는 '전체 지점' 칸을 숨겨요 (보이는 것만 고르는 것처럼 보이지 않게) */}
-      {tab === '전체' && !query ? head : null}
-      {regions.length === 0 ? <PText style={styles.empty}>찾는 지점이 없어요</PText> : null}
-      {regions.map((r) => {
-        const rows = order(shown.filter((b) => b.region === r));
-        return (
-          <View key={r}>
-            <View style={styles.reg}>
-              <PText style={styles.regName}>{r}</PText>
-              <PText style={styles.regCount}>{rows.length}곳</PText>
-              <View style={styles.sp} />
-              {regionEnd ? regionEnd(rows) : null}
-            </View>
-            <View style={styles.group}>{rows.map((b, i) => row(b, i === 0))}</View>
+      {scroll ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.segScroll} contentContainerStyle={styles.seg} accessibilityRole="tablist">
+          {seg}
+        </ScrollView>
+      ) : (
+        <View style={styles.seg} accessibilityRole="tablist">
+          {seg}
+        </View>
+      )}
+      {regions.length === 0 ? <PText style={styles.empty}>{rows.length ? '찾는 지점이 없어요' : '아직 고를 수 있는 지점이 없어요'}</PText> : null}
+      {regions.map((g) => (
+        <View key={g.region}>
+          <View style={styles.reg}>
+            <PText style={styles.regName}>{g.region}</PText>
+            <PText style={styles.regCount}>{g.rows.length}곳</PText>
           </View>
-        );
-      })}
-    </View>
-  );
-}
-
-function BranchRow({ b, first, on, mine, role, onPress }: { b: Branch; first: boolean; on: boolean; mine?: boolean; role: 'radio' | 'checkbox'; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole={role}
-      accessibilityState={role === 'radio' ? { selected: on } : { checked: on }}
-      accessibilityLabel={mine ? `${b.name} · 내 지점` : b.name}
-      style={({ pressed }) => [styles.row, !first && styles.rowLine, on && styles.rowOn, pressed && styles.rowPressed]}>
-      <PText style={[styles.rowName, on && styles.rowNameOn]}>
-        {b.name}
-        {mine ? <PText style={styles.mine}>  내 지점</PText> : null}
-      </PText>
-      <Check on={on} />
-    </Pressable>
-  );
-}
-
-function Check({ on }: { on: boolean }) {
-  return (
-    <View style={[styles.chk, on && styles.chkOn]}>
-      {on ? (
-        <Svg width={12} height={12} viewBox="0 0 24 24">
-          <Path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={Colors.white} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
-      ) : null}
+          <View style={styles.group}>
+            {g.rows.map((b, i) => {
+              const on = b.code === value;
+              const blocked = branchBlockReason(b, purpose);
+              return (
+                <Pressable
+                  key={b.code}
+                  disabled={!!blocked}
+                  onPress={() => {
+                    sfx('tap');
+                    onPick(b);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on, disabled: !!blocked }}
+                  accessibilityLabel={blocked ? `${b.name}, ${blocked}` : b.name}
+                  style={({ pressed }) => [styles.row, i > 0 && styles.rowLine, on && styles.rowOn, pressed && styles.rowPressed]}>
+                  <PText style={[styles.rowName, on && styles.rowNameOn, blocked ? styles.rowNameOff : null]} numberOfLines={1}>
+                    {b.name}
+                  </PText>
+                  {blocked ? <PText style={styles.rowWhy}>{blocked}</PText> : null}
+                  <View style={[styles.chk, on && styles.chkOn, blocked ? styles.chkOff : null]}>
+                    {on ? (
+                      <Svg width={12} height={12} viewBox="0 0 24 24">
+                        <Path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={Colors.white} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" />
+                      </Svg>
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
@@ -231,19 +149,18 @@ const styles = StyleSheet.create({
   search: { height: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, boxShadow: '2px 2px 0 #1E1A2B' },
   // 웹: 브라우저 기본 포커스 테두리(주황)를 없애요 — 바깥 검색 상자가 이미 테두리를 그려요 ('auto' 외곽선은 굵기 0 이어도 그려져서 solid · 투명으로)
   searchInput: { flex: 1, height: '100%', paddingVertical: 0, includeFontPadding: false, fontFamily: Font.body700, fontSize: 15, color: Colors.ink, outlineStyle: 'solid', outlineWidth: 0, outlineColor: 'transparent' },
-  seg: { flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: '#EFE8D8' },
+  seg: { flexGrow: 1, flexDirection: 'row', padding: 3, borderRadius: 14, backgroundColor: '#EFE8D8' },
+  segScroll: { flexGrow: 0, borderRadius: 14 },
   segItem: { flex: 1, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  segItemScroll: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', minWidth: 64, paddingHorizontal: 14 },
   segOn: { backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink },
   segText: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 18, color: Colors.inkSub },
   segTextOn: { fontFamily: Font.body900, color: Colors.ink },
   segCount: { fontFamily: Font.display, fontSize: 12, color: Colors.inkSub },
   empty: { marginTop: 20, textAlign: 'center', fontFamily: Font.body700, fontSize: 14, color: Colors.inkSub },
-  reg: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 32, paddingTop: 4, paddingBottom: 4, paddingHorizontal: 4 },
+  reg: { flexDirection: 'row', alignItems: 'baseline', gap: 5, paddingTop: 6, paddingBottom: 6, paddingHorizontal: 4 },
   regName: { fontFamily: Font.body900, fontSize: 14, lineHeight: 19 },
   regCount: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  sp: { flex: 1 },
-  regAll: { paddingVertical: 4, paddingHorizontal: 2 },
-  regAllT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17, color: Colors.purple },
   group: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.white, overflow: 'hidden' },
   row: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 16, paddingRight: 14 },
   rowLine: { borderTopWidth: 1.5, borderColor: Colors.line },
@@ -251,8 +168,9 @@ const styles = StyleSheet.create({
   rowPressed: { backgroundColor: '#F6F1E4' },
   rowName: { flex: 1, fontFamily: Font.body800, fontSize: 15.5, lineHeight: 21 },
   rowNameOn: { fontFamily: Font.body900, color: Colors.purple },
-  rowCount: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 17, color: Colors.inkSub },
-  mine: { fontFamily: Font.body800, fontSize: 12, color: Colors.purple },
+  rowNameOff: { color: '#B4AC9B' },
+  rowWhy: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16, color: Colors.inkSub },
   chk: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#CFC6B2', alignItems: 'center', justifyContent: 'center' },
   chkOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
+  chkOff: { opacity: 0 },
 });

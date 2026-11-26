@@ -1,0 +1,176 @@
+/**
+ * 가입 단계 API — 백엔드 `MobileOnboardingController` · `MobileBranchOptionController` · `MobileAssetCatalogController` (`/app/api/v2`).
+ * - GET  /onboarding           가입 화면 준비: 약관(현행 버전) · 미리 채울 값 · 닉네임 규칙 · 학습 언어 · 배우고 싶은 이유
+ * - POST /onboarding           가입 완료 — 약관 · 닉네임 · 팔로로 · 길(MEMBER 연동 요청 / TRIAL 체험 신청 / APP 언어 · 이유)을 한 번에
+ * - GET  /branches             지점 시트 (폐점 제외 · 운영 상태 · 이 계정의 연동 상태 · 지역)
+ * - GET  /trial-slots          체험 상담 희망 시간표 (오늘부터 5일)
+ * - GET  /asset-catalog        고를 수 있는 팔로로
+ * 지점 · 시간표는 가입 뒤 체험 예약(/trial) · 연동 요청도 같이 써요.
+ *
+ * 가짜 서버(mock)는 앱 안 데이터(지점 목록 · 언어 4개 · 이유 8개 · 몸 색 7개)로 같은 모양을 흉내 내요 — code 가 곧 앱 안 키예요.
+ */
+import { BRANCHES } from '@/data/account';
+
+import { mockAddPendingLinkRequest } from './branch-link';
+import { http } from './client';
+import { apiConfig } from './config';
+import { mock, mockNotFound } from './mock';
+import { mockAddTrialApplication } from './trial-applications';
+
+type Opts = { signal?: AbortSignal };
+
+/** 백엔드 PublicConsentResponse — 동의는 versionId 로 보내요 */
+export type ConsentDoc = { versionId: string; code: string; title: string; body: string; required: boolean; version: number; effectiveFrom: string; sortOrder: number };
+/** 마스터데이터 한 칸 — 보낼 때는 code, 보여 줄 때는 label */
+export type Option = { code: string; label: string };
+
+export type OnboardingInfo = {
+  needsOnboarding: boolean;
+  consents: ConsentDoc[];
+  /** 카카오에서 받은 값 (없으면 null — 빈칸으로 시작) */
+  prefill: { nickname: string | null; realName: string | null; phone: string | null };
+  nickname: { min: number; max: number };
+  languages: Option[];
+  reasons: Option[];
+};
+
+/** 지점 시트 한 줄 — ACTIVE 만 체험 신청, linkStatus 가 null 인 곳만 연동 요청을 받아요 (막아서 이유를 보여 줘요) */
+export type BranchOption = { code: string; name: string; status: 'ACTIVE' | 'PAUSED'; linkStatus: 'linked' | 'pending' | null; region: string | null };
+
+/** 날짜(YYYY-MM-DD, KST)마다 상담 희망 시각(HH:mm) — 상담 시간이 없는 날은 빈 목록, 오늘은 지난 시각을 빼요 */
+export type TrialSlotDays = { days: { date: string; times: string[] }[] };
+
+export type Pallolo = { code: string; name: string; tint: string; isDefault: boolean; version: number; imageUrl: string };
+export type AssetCatalog = { formatVersion: number; canvas: { width: number; height: number }; bodyBox: { x: number; y: number; width: number; height: number }; pallolos: Pallolo[] };
+
+export type OnboardingBody = {
+  consents: { versionId: string; agreed: boolean }[];
+  nickname: string;
+  palloloCode: string;
+  path: 'MEMBER' | 'TRIAL' | 'APP';
+  member?: { branchCode: string; realName: string; phone: string };
+  trial?: { branchCode: string; realName: string; phone: string; languageCode: string; date: string; time: string; reasons: string[]; note: string | null };
+  app?: { languageCodes: string[]; reasons: string[] };
+};
+
+/** 고른 길의 결과만 들어 있어요 — 연동 대기 · 체험 확인 화면을 다시 조회하지 않고 그려요 */
+export type OnboardingResult = {
+  needsOnboarding: boolean;
+  path: OnboardingBody['path'];
+  linkRequest?: { id: string; branchCode: string; branchName: string; status: string };
+  trial?: { branchCode: string; branchName: string; languageCode: string; date: string; time: string; realName: string };
+};
+
+/* ───────── 가짜 서버 ───────── */
+
+const MOCK_LANGS: Option[] = [
+  { code: 'en', label: '영어' },
+  { code: 'ja', label: '일본어' },
+  { code: 'zh', label: '중국어' },
+  { code: 'es', label: '스페인어' },
+];
+
+/** 가짜 서버 '배우고 싶은 이유' (code = 이름) */
+const MOCK_REASONS = ['여행 가서 말하기', '일 · 이직', '유학 · 워홀 · 이민', '시험 · 자격증', '외국인 친구', '새 취미', '말하기 자신감', '기타'];
+
+const MOCK_CONSENTS: ConsentDoc[] = [
+  { code: 'AGE_14', title: '만 14세 이상이에요', required: true },
+  { code: 'TERMS', title: '서비스 이용약관', required: true },
+  { code: 'PRIVACY', title: '개인정보 수집 · 이용', required: true },
+  { code: 'MARKETING', title: '이벤트 · 번개 소식 받기', required: false },
+].map((c, i) => ({ ...c, versionId: `mock-consent-${c.code.toLowerCase()}`, body: `${c.title} 전문 (가짜)`, version: 1, effectiveFrom: '2026-01-01', sortOrder: i + 1 }));
+
+const withJeom = (n: string) => (n.endsWith('점') ? n : `${n}점`);
+const MOCK_BRANCHES: BranchOption[] = BRANCHES.map(([n, r]) => ({ code: withJeom(n), name: withJeom(n), status: 'ACTIVE', linkStatus: null, region: r }));
+
+const MOCK_PALLOLOS: Pallolo[] = [
+  ['yellow', '노랑', '#E0D121'],
+  ['purple', '보라', '#A88BEA'],
+  ['purple-lash', '보라 속눈썹', '#A88BEA'],
+  ['pink', '핑크', '#F49BBE'],
+  ['sky', '하늘', '#8DB6F2'],
+  ['green', '초록', '#93D67E'],
+  ['coral', '코랄', '#FF9E80'],
+].map(([code, name, tint]) => ({ code, name, tint, isDefault: code === 'purple-lash', version: 1, imageUrl: '' }));
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7);
+const MOCK_TIMES = ['10:00', '11:00', '14:00', '15:00', '19:00', '20:00'];
+
+/** 가짜 시간표: 오늘부터 5일, 금요일은 정기휴일이라 비어요, 지점 · 날짜마다 몇 칸은 없어요, 오늘은 지난 시각 빼기 (스토리도 써요) */
+export function mockTrialSlots(branchCode: string): TrialSlotDays {
+  const now = new Date();
+  const nowHm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  return {
+    days: Array.from({ length: 5 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+      const date = ymd(d);
+      const times = d.getDay() === 5 ? [] : MOCK_TIMES.filter((t) => hash(branchCode + date + t) % 3 !== 0).filter((t) => i > 0 || t > nowHm);
+      return { date, times };
+    }),
+  };
+}
+
+const mockBranchName = (code: string) => MOCK_BRANCHES.find((b) => b.code === code)?.name ?? code;
+
+function mockSubmit(body: OnboardingBody): OnboardingResult {
+  if (body.path === 'MEMBER' && body.member) {
+    const m = body.member;
+    const row = mockAddPendingLinkRequest(m.branchCode, mockBranchName(m.branchCode), m.realName, m.phone);
+    return { needsOnboarding: false, path: 'MEMBER', linkRequest: { id: row.id, branchCode: row.branchCode, branchName: row.branchName, status: 'PENDING' } };
+  }
+  if (body.path === 'TRIAL' && body.trial) {
+    const t = body.trial;
+    const branchName = mockBranchName(t.branchCode);
+    const languageLabel = MOCK_LANGS.find((l) => l.code === t.languageCode)?.label ?? t.languageCode;
+    mockAddTrialApplication({ branchCode: t.branchCode, branchName, languageCode: t.languageCode, languageLabel, date: t.date, time: t.time, realName: t.realName, phone: t.phone, note: t.note });
+    return { needsOnboarding: false, path: 'TRIAL', trial: { branchCode: t.branchCode, branchName, languageCode: t.languageCode, date: t.date, time: t.time, realName: t.realName } };
+  }
+  return { needsOnboarding: false, path: 'APP' };
+}
+
+/* ───────── API ───────── */
+
+/** GET /onboarding — 가입 화면 준비 */
+export function fetchOnboardingInfo({ signal }: Opts = {}): Promise<OnboardingInfo> {
+  if (apiConfig.useMock)
+    return mock('onboardingInfo', () => ({
+      needsOnboarding: true,
+      consents: MOCK_CONSENTS,
+      prefill: { nickname: '서현', realName: '김서현', phone: '010-1234-5678' },
+      nickname: { min: 2, max: 10 },
+      languages: MOCK_LANGS,
+      reasons: MOCK_REASONS.map((r) => ({ code: r, label: r })),
+    }));
+  return http.get('/onboarding', { signal });
+}
+
+/** POST /onboarding — 가입 완료 (한 트랜잭션: 하나라도 틀리면 아무것도 남지 않아요) */
+export function submitOnboarding(body: OnboardingBody): Promise<OnboardingResult> {
+  if (apiConfig.useMock) return mock('submitOnboarding', () => mockSubmit(body));
+  return http.post('/onboarding', body);
+}
+
+/** GET /branches — 지점 시트 */
+export function fetchBranchOptions({ signal }: Opts = {}): Promise<BranchOption[]> {
+  if (apiConfig.useMock) return mock('branchOptions', () => MOCK_BRANCHES.map((b) => ({ ...b })));
+  return http.get('/branches', { signal });
+}
+
+/** GET /trial-slots?branchCode= — 운영 중인 지점만 (아니면 404) */
+export function fetchTrialSlots(branchCode: string, { signal }: Opts = {}): Promise<TrialSlotDays> {
+  if (apiConfig.useMock)
+    return mock('trialSlots', () => {
+      if (!MOCK_BRANCHES.some((b) => b.code === branchCode)) throw mockNotFound();
+      return mockTrialSlots(branchCode);
+    });
+  return http.get('/trial-slots', { signal, query: { branchCode } });
+}
+
+/** GET /asset-catalog — 고를 수 있는 팔로로 (화면 순서, 기본 하나) */
+export function fetchAssetCatalog({ signal }: Opts = {}): Promise<AssetCatalog> {
+  if (apiConfig.useMock)
+    return mock('assetCatalog', () => ({ formatVersion: 1, canvas: { width: 680, height: 580 }, bodyBox: { x: 35, y: 214, width: 520, height: 332 }, pallolos: MOCK_PALLOLOS.map((p) => ({ ...p })) }));
+  return http.get('/asset-catalog', { signal });
+}

@@ -13,7 +13,13 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
-import { BR_BOARDS, MY_BRANCHES, type BranchItem, type Partner, type PartnerLink, type PartnerLinkKind, type PartnerPoster } from '@/data/my';
+import { useQuery } from '@tanstack/react-query';
+
+import type { BranchGuide } from '@/api/branch-guide';
+import { apiErrorMessage } from '@/api/errors';
+import { branchGuidesQuery } from '@/api/queries';
+import { ErrorState } from '@/components/ui/state-view';
+import { toBranchBoard, type BranchBoard as Board, type BranchItem, type Partner, type PartnerLink, type PartnerLinkKind, type PartnerPoster } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { openMap, openTel } from '@/lib/open-out';
 import { LayerModal } from '@/components/ui/sheet-stack';
@@ -47,23 +53,23 @@ function BrIc({ k, size = 20, color = Colors.ink }: { k: keyof typeof BR_IC; siz
 const copyText = (v: string) => Clipboard.setStringAsync(v).catch(() => {});
 
 /** 지점 둘 이상이면 위 칸 고르기 (프로토타입 .br-seg) */
-function BranchSeg({ value, onChange }: { value: string; onChange: (b: string) => void }) {
-  if (MY_BRANCHES.length < 2) return null;
+function BranchSeg({ boards, value, onChange }: { boards: Board[]; value: string; onChange: (code: string) => void }) {
+  if (boards.length < 2) return null;
   return (
     <View style={styles.seg} accessibilityRole="tablist">
-      {MY_BRANCHES.map((b) => {
-        const on = b === value;
+      {boards.map((b) => {
+        const on = b.code === value;
         return (
           <Pressable
-            key={b}
+            key={b.code}
             onPress={() => {
               sfx('tap');
-              onChange(b);
+              onChange(b.code);
             }}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
             style={[styles.segBtn, on && styles.segOn]}>
-            <PText style={[styles.segT, on && styles.segTOn]}>{b}</PText>
+            <PText style={[styles.segT, on && styles.segTOn]}>{b.name}</PText>
           </Pressable>
         );
       })}
@@ -71,16 +77,39 @@ function BranchSeg({ value, onChange }: { value: string; onChange: (b: string) =
   );
 }
 
+/** 서버 줄 → 보드 모양. 함수가 늘 같아야 Query 가 결과를 기억해요 */
+const selectBoards = (rows: BranchGuide[]) => rows.map(toBranchBoard);
+
 /**
  * 마이 › 지점 안내 보드 (프로토타입 #brBoard .brb): 지점 고르기 · 자주 찾는 4칸 + 교재 전체 진도 칸 · 매니저 고정 글.
  * [전체 보기 ›] · 칸 · 고정 글을 누르면 지점 안내 전체 (프로토타입은 겹쳐 뜨는 화면 — 앱은 키 큰 시트).
+ * 지점 목록 · 내용은 GET /me/branch-guides (연동된 지점만). 불러오는 중이거나 연동된 지점이 없으면 보드를 그리지 않아요.
  */
 export function BranchBoard() {
-  const [sel, setSel] = useState(MY_BRANCHES[0]);
+  const q = useQuery({ ...branchGuidesQuery(), select: selectBoards });
+  if (q.isPending) return null;
+  if (q.isError) {
+    return (
+      <Raised radius={Radius.card} style={styles.boardWrap}>
+        <View style={styles.board}>
+          <PText style={styles.hdT}>지점 안내</PText>
+          <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
+        </View>
+      </Raised>
+    );
+  }
+  if (q.data.length === 0) return null;
+  return <BranchBoardBody boards={q.data} />;
+}
+
+function BranchBoardBody({ boards }: { boards: Board[] }) {
+  const [selCode, setSel] = useState(boards[0].code);
   const [open, setOpen] = useState(false);
   const [course, setCourse] = useState(false);
-  const partner = usePartnerSheet(sel);
-  const B = BR_BOARDS[sel] ?? BR_BOARDS['하남점'];
+  // 고른 지점이 목록에서 빠지면 (연동 해제 등) 첫 지점으로
+  const B = boards.find((b) => b.code === selCode) ?? boards[0];
+  const sel = B.code;
+  const partner = usePartnerSheet(B.name);
   const star = B.items.filter((x) => x.star).slice(0, 4);
   const go = () => {
     sfx('tap');
@@ -91,12 +120,12 @@ export function BranchBoard() {
       <Raised radius={Radius.card} style={styles.boardWrap}>
         <View style={styles.board}>
           <View style={styles.hd}>
-            <PText style={styles.hdT}>{MY_BRANCHES.length > 1 ? '지점 안내' : `${sel} 안내`}</PText>
+            <PText style={styles.hdT}>{boards.length > 1 ? '지점 안내' : `${B.name} 안내`}</PText>
             <Pressable onPress={go} accessibilityRole="button" accessibilityLabel="지점 안내 전체 보기" hitSlop={10}>
               <PText style={styles.hdLink}>전체 보기 ›</PText>
             </Pressable>
           </View>
-          <BranchSeg value={sel} onChange={setSel} />
+          <BranchSeg boards={boards} value={sel} onChange={setSel} />
           <View style={styles.sc}>
             {star.map((x) => (
               <Pressable key={x.t} onPress={go} accessibilityRole="button" accessibilityLabel={x.t} style={styles.it}>
@@ -142,7 +171,7 @@ export function BranchBoard() {
                 <BrIc k="pin" size={15} />
               </View>
               <PText style={styles.pinT}>
-                {B.pin.t} · {B.pin.by}
+                {pinLabel(B.pin)}
               </PText>
             </Pressable>
           )}
@@ -150,17 +179,21 @@ export function BranchBoard() {
         </View>
       </Raised>
       <CourseProgressSheet open={course} onClose={() => setCourse(false)} />
-      <BranchInfoSheet open={open} onClose={() => setOpen(false)} sel={sel} onSel={setSel} />
+      <BranchInfoSheet open={open} onClose={() => setOpen(false)} boards={boards} B={B} onSel={setSel} />
       {partner.sheet}
     </>
   );
 }
 
+/** 고정 글 한 줄: 내용 · 매니저 이름 · 쓴 날 */
+function pinLabel(pin: NonNullable<Board['pin']>) {
+  return [pin.t, pin.by, pin.at].filter(Boolean).join(' · ');
+}
+
 /** 지점 안내 전체 (프로토타입 brInfoHTML): 지점 카드 · 고정 글 · 협업 업체 · 항목(복사 · 지도 · 전화) */
-function BranchInfoSheet({ open, onClose, sel, onSel }: { open: boolean; onClose: () => void; sel: string; onSel: (b: string) => void }) {
-  const B = BR_BOARDS[sel] ?? BR_BOARDS['하남점'];
+function BranchInfoSheet({ open, onClose, boards, B, onSel }: { open: boolean; onClose: () => void; boards: Board[]; B: Board; onSel: (code: string) => void }) {
   // 아이폰: 시트 위에 시트를 띄우려면 그 시트 안에 두어야 해요 (밖에 두면 안 뜨고, 그 뒤로 업체를 눌러도 반응이 없어요)
-  const partner = usePartnerSheet(sel);
+  const partner = usePartnerSheet(B.name);
   const loc = B.items.find((x) => x.ic === 'loc');
   const act = (x: BranchItem) => {
     if (!x.act) return;
@@ -170,13 +203,13 @@ function BranchInfoSheet({ open, onClose, sel, onSel }: { open: boolean; onClose
   };
   return (
     <Sheet open={open} onClose={onClose} title="지점 안내" tall label="지점 안내">
-      <BranchSeg value={sel} onChange={onSel} />
+      <BranchSeg boards={boards} value={B.code} onChange={onSel} />
       <Raised radius={Radius.card}>
         <View style={styles.hero}>
           <PText style={styles.heroK}>MY BRANCH</PText>
-          <PText style={styles.heroB}>{sel}</PText>
+          <PText style={styles.heroB}>{B.name}</PText>
           <PText style={styles.heroS}>{B.addr}</PText>
-          <PText style={styles.heroS}>{B.hrs}</PText>
+          {!!B.hrs && <PText style={styles.heroS}>{B.hrs}</PText>}
           {loc && (
             <Pressable onPress={() => act(loc)} accessibilityRole="button" accessibilityLabel="지도" style={styles.heroMap}>
               <BrIc k="loc" size={14} />

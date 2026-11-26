@@ -10,7 +10,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import type { StudyLang } from '@/state/me';
 
-import { ONB_LANGS } from './app-parts';
+import type { LangLook } from './app-parts';
 import { Pop, useEntranceDelay } from './fx-motion';
 import { ERROR_RED, FieldShell, useFieldInvalid } from './parts';
 import { STAGE } from './start-stage';
@@ -20,7 +20,10 @@ import { STAGE } from './start-stage';
  * 흰 알약 · 잉크 테두리 2 · 딱딱한 그림자, 고르면 무대 분홍 바탕 · 잉크 체크.
  */
 
-type OnbLang = (typeof ONB_LANGS)[number];
+/** 앱 안 4개 언어(ONB_LANGS)든 서버에서 온 처음 보는 언어(langLook)든 */
+type OnbLang = Pick<LangLook, 'key' | 'ko' | 'hello' | 'helloFont' | 'color'>;
+/** 처음 보는 언어: 쓰임 설명 없이 이름 · 이름 인사말만 */
+const OTHER_ROW = { sub: '', helloSize: 16 };
 
 /** 언어마다: 쓰임 (화면 읽기용) · 인사말 글꼴 크기 */
 const ROW: Record<StudyLang, { sub: string; helloSize: number }> = {
@@ -39,9 +42,9 @@ const helloFont = (lang: OnbLang): TextStyle => (lang.key === 'ja' ? { fontFamil
  */
 export function LangRow({ lang, on, onPress }: { lang: OnbLang; on: boolean; onPress: () => void }) {
   const invalid = useFieldInvalid();
-  const row = ROW[lang.key];
+  const row = lang.key ? ROW[lang.key] : OTHER_ROW;
   return (
-    <Pressable sound="pick" onPress={onPress} accessibilityRole="checkbox" accessibilityLabel={`${lang.ko}, ${row.sub}`} accessibilityState={{ checked: on }}>
+    <Pressable sound="pick" onPress={onPress} accessibilityRole="checkbox" accessibilityLabel={row.sub ? `${lang.ko}, ${row.sub}` : lang.ko} accessibilityState={{ checked: on }}>
       {({ pressed }) => (
         <Raised radius={RADIUS} pressed={pressed}>
           <View style={[styles.pill, on && styles.pillOn, invalid && styles.pillInvalid]}>

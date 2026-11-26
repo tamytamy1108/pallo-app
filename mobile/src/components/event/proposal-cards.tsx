@@ -9,7 +9,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { ColorCard } from '@/components/ui/card-maker';
-import { withJeom } from '@/components/onboarding/branch-sheet';
+import { withJeom } from '@/components/onboarding/branch-list';
 import { cardWords } from '@/data/poster-colors';
 import { WEEK, won } from '@/data/meet';
 import { FieldLabel, keepAll, SheetButton } from '@/components/common/sheet-parts';

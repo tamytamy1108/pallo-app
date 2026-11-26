@@ -15,7 +15,7 @@
 | 1 | POST | `/auth/login/:provider` | 카카오 · 애플 · 구글 로그인 (응답에 처음 가입인지 `isNew`) | 시작 |
 | 2 | POST | `/auth/phone/verify` | 휴대폰 확인 | 로그인 계정 |
 | 3 | GET | `/me` | 내 정보 · 역할 · 유형 · 지점 | 전체 |
-| 4 | PATCH | `/me` | 닉네임 · 소개 · 지점(≤2) | 설정 |
+| 4 | PATCH | `/me` | 닉네임 · 소개 · 지점 | 설정 |
 | 5 | POST / DELETE | `/me/auth-providers/:provider` | 연결 · 해제 (마지막 하나는 서버가 거절) | 로그인 계정 |
 | 6 | DELETE | `/me` | 탈퇴 | 설정 |
 | 7 | GET | `/members/:id` | 멤버 프로필 | 프로필 |

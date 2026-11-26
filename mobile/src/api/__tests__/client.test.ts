@@ -133,6 +133,17 @@ describe('401 → 토큰 갱신', () => {
     expect(refreshCalls()).toHaveLength(0);
   });
 
+  it('로그아웃: 서버 알림이 실패해도 던지지 않고 기기 토큰을 지워요', async () => {
+    const { logout } = jest.requireActual<typeof import('../auth')>('../auth');
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    tokenStorage.set({ accessToken: 'a', refreshToken: 'r' });
+    fetchMock.mockResolvedValue(reply(404, { error: 'not_found', message: '없음' }));
+    await expect(logout()).resolves.toBeUndefined();
+    expect(urlOf(0)).toBe('https://api.test/app/api/v2/auth/logout');
+    expect(tokenStorage.get()).toBeNull();
+    warn.mockRestore();
+  });
+
   it('/auth/* 의 401 은 갱신하지 않아요 (자격 증명이 틀림)', async () => {
     tokenStorage.set({ accessToken: 'old', refreshToken: 'r1' });
     fetchMock.mockResolvedValue(reply(401, { error: 'invalid_credentials', message: '틀렸어요' }));

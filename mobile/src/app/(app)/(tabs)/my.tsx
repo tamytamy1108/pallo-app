@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, type ScrollViewInstance, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area';
 
+import { apiErrorMessage } from '@/api/errors';
+import { useMyPage } from '@/api/use-my-page';
 import { applyDevMe } from '@/components/home/dev';
 import { Pressable } from '@/components/ui/pressable';
 import { MyStudyCard } from '@/components/account/my-study-card';
@@ -18,19 +20,18 @@ import { DevPersonaPill } from '@/components/my/dev-persona';
 import { GearIcon, LgIcon } from '@/components/my/icons';
 import { BadgeGrid, MyList, MyStats, RankSummary, SecHead } from '@/components/my/my-blocks';
 import { MyHero } from '@/components/my/my-hero';
-import { MyMeetsSheet, useMyMeetCounts } from '@/components/my/my-meets-sheet';
-import { BadgeSheet, FollowSheet, MeetsSheet, useMeetItems } from '@/components/my/my-sheets';
+import { MyMeetsSheet } from '@/components/my/my-meets-sheet';
+import { BadgeSheet, FollowSheet, MeetsSheet } from '@/components/my/my-sheets';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { Raised, SHADOW_OFFSET } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
-import { MY_BADGES, rankPeople } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
-import { useSavedCount } from '@/state/expressions';
 import { canUse, isMember } from '@/state/access';
 import { isProLike, useMe } from '@/state/me';
 import { grantReward, resetRewards } from '@/state/rewards';
@@ -48,6 +49,9 @@ const go = (href: string) => () => {
  */
 /** 비회원이 볼 수 있는 잠김 칸 위 높이 (랭킹 윗부분) */
 const MY_PEEK = 300;
+
+/** 숫자 칸 · 개수 표시: 아직 못 받았거나 서버가 집계하지 않는 값(null)은 '–' */
+const num = (v: number | null | undefined, unit: string) => (v == null ? '–' : `${v.toLocaleString()}${unit}`);
 
 export default function MyScreen() {
   const scroll = useRef<ScrollViewInstance>(null);
@@ -68,16 +72,16 @@ export default function MyScreen() {
   const [classOpen, setClassOpen] = useState(false);
   const canSettings = canUse(me, 'settings');
   const openSettings = canSettings ? go('/me/settings') : () => memberGate('설정을 쓰려면');
-  const saved = useSavedCount();
+  // 숫자 4칸 · 랭킹 요약 · 배지 · 내 활동 개수 = GET /me/mypage (api/use-my-page.ts)
+  const page = useMyPage();
+  const my = page.data;
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
   const [badges, setBadges] = useState(false);
   const [meets, setMeets] = useState<'joined' | 'saved' | null>(null);
   const savedChal = useSavedChallengeCount();
-  const savedMeets = useMeetItems('saved').length;
   const [chals, setChals] = useState(false);
   const [askReset, setAskReset] = useState(false);
   const [myMeetsOpen, setMyMeetsOpen] = useState(false);
-  const myMeets = useMyMeetCounts();
   // 토스트 [보러가기] → /my?open=saved-meets · joined-meets · saved-challenges 로 오면 그 목록 시트를 바로 열어요
   // (렌더 중에 이전 값과 비교해 한 번만 열고, 주소의 open 은 지워요)
   const [seenOpen, setSeenOpen] = useState<string | undefined>(undefined);
@@ -91,8 +95,6 @@ export default function MyScreen() {
     if (dev.open) router.setParams({ open: undefined });
   }, [dev.open]);
 
-  const people = rankPeople('w', me);
-  const myRank = people.findIndex((p) => p.me) + 1;
   // 카드 폭 = 놓인 자리 폭 - 그림자 4 (재기 전에는 화면 - 양쪽 16 - 그림자 4).
   // 화면 폭으로만 셈하면 넓은 화면에서 카드보다 자리가 넓어져 오른쪽에 그림자 판이 드러나요.
   const [heroSlotW, setHeroSlotW] = useState(0);
@@ -140,10 +142,10 @@ export default function MyScreen() {
                     { ic: 'heart', v: `${PRO_SENT_NOTES.reduce((a, n) => a + n.thanksN, 0)}개`, l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
                   ]
                 : [
-              { ic: 'flame', v: `${me.streak}일`, l: '연속 학습', onPress: go('/me/ranking') },
-              { ic: 'crown', v: `${myRank}위`, l: '이번 주 랭킹', onPress: go('/me/ranking') },
-              { ic: 'users', v: `${myMeets.active}개`, l: '참여 중인 모임', onPress: () => setMyMeetsOpen(true) },
-              { ic: 'heart', v: `${MY_BADGES.filter((b) => b.on).length}개`, l: '받은 배지', onPress: () => setBadges(true) },
+                    { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
+                    { ic: 'crown', v: num(my?.stats.weekRank, '위'), l: '이번 주 랭킹', onPress: go('/me/ranking') },
+                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여 중인 모임', onPress: () => setMyMeetsOpen(true) },
+                    { ic: 'heart', v: num(my?.stats.badgeCount, '개'), l: '받은 배지', onPress: () => setBadges(true) },
                   ]
             }
           />
@@ -182,37 +184,59 @@ export default function MyScreen() {
           <View style={styles.stack}>
             <SecHead title="랭킹" more="전체 보기 ›" onMore={go('/me/ranking')} />
             <Appear kind="rise">
-              <RankSummary people={people} myRank={myRank} branch={me.branch} onPress={go('/me/ranking')} />
+              {page.isPending ? (
+                <LoadingState />
+              ) : page.isError ? (
+                <ErrorState message={apiErrorMessage(page.error)} onRetry={() => page.refetch()} />
+              ) : (
+                <RankSummary podium={page.data.ranking.podium} myRank={page.data.ranking.myRank} myPoints={page.data.ranking.myPoints} branch={me.branch} onPress={go('/me/ranking')} />
+              )}
             </Appear>
 
-            <SecHead title="배지" more="모두 보기 ›" onMore={() => setBadges(true)} />
-            <Appear kind="rise">
-              <BadgeGrid list={MY_BADGES.slice(0, 4)} />
-            </Appear>
+            {/* 배지: 서버가 아직 집계하지 않으면(null) 칸째 숨겨요 */}
+            {my?.badges && (
+              <>
+                <SecHead title="배지" more="모두 보기 ›" onMore={() => setBadges(true)} />
+                <Appear kind="rise">
+                  <BadgeGrid list={my.badges} />
+                </Appear>
+              </>
+            )}
 
             <SecHead title="내 활동" more="전체 보기 ›" onMore={go('/me/expressions')} />
             <Appear kind="rise">
               <MyList
                 rows={[
-                  { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: `${myMeets.total}개`, onPress: () => setMyMeetsOpen(true) },
-                  { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: `${savedMeets}개`, onPress: () => setMeets('saved') },
+                  { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: num(my?.activity.joinedMeetCount, '개'), onPress: () => setMyMeetsOpen(true) },
+                  { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: num(my?.activity.savedMeetCount, '개'), onPress: () => setMeets('saved') },
                   { label: '찜한 챌린지', icon: <LgIcon name="heart" size={18} />, value: `${savedChal}개`, onPress: () => setChals(true) },
                   {
                     label: '내가 쓴 글',
                     icon: <LgIcon name="image" size={18} />,
-                    value: `${me.postCount}개`,
+                    value: num(my?.activity.postCount, '개'),
                     onPress: () => {
                       sfx('tap');
                       router.push('/lounge');
                       showToast('내가 쓴 글은 커뮤니티에서 볼 수 있어요');
                     },
                   },
-                  { label: '내 표현함', icon: <LgIcon name="save" size={18} />, value: `${saved}개`, onPress: go('/me/expressions') },
+                  { label: '내 표현함', icon: <LgIcon name="save" size={18} />, value: num(my?.activity.savedExpressionCount, '개'), onPress: go('/me/expressions') },
                   { label: '랭킹 · 퀘스트', icon: <LgIcon name="flame" size={18} />, onPress: go('/me/ranking') },
                 ]}
               />
             </Appear>
-            {/* 설정 · 고객센터 · 결제 내역은 위 톱니(설정) 안에 다 있어요 — 마이 아래 목록은 뺐어요 (2026-11-25) */}
+            <Appear kind="rise">
+              <MyList
+                rows={[
+                  { label: '설정', onPress: openSettings },
+                  { label: '고객센터 · 자주 묻는 질문', onPress: go('/me/support') },
+                  // 체험 상담은 회원도 다른 지점에 신청할 수 있어 누구나
+                  { label: '상담 신청 내역', onPress: go('/me/consultations') },
+                  // 이용권은 회원만 · 앱 구독자는 결제 내역만
+                  ...(member ? [{ label: '이용권 · 결제 내역', onPress: go('/me/pass') }] : me.plan === 'app' ? [{ label: '결제 내역', onPress: go('/me/payments') }] : []),
+                ]}
+              />
+            </Appear>
           </View>
         </ScrollLock>
 

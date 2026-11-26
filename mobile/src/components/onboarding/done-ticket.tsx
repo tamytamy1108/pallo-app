@@ -8,13 +8,13 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { kf, kfc } from '@/lib/motion';
 
-import type { ONB_LANGS } from './app-parts';
+import type { LangLook } from './app-parts';
 import { DONE_AT, useDoneClock } from './done-motion';
 import { DONE_STAGE } from './done-stage';
 import { OUT, POP } from './fx-motion';
 import { SparkBurst, SparkMark } from './fx-spark';
 
-type Lang = (typeof ONB_LANGS)[number];
+type Lang = Pick<LangLook, 'ko' | 'color' | 'tag' | 'tagInk'>;
 
 /** 그림자 · 테두리 · 잘린 홈 · 그루터기(오른쪽 표 조각) 폭 */
 const SHADOW = 4;

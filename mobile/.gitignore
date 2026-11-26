@@ -33,6 +33,10 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Firebase 설정 파일 (콘솔에서 받아 로컬에만 둠 — app.config.js 참고)
+google-services.json
+GoogleService-Info.plist
+
 # typescript
 *.tsbuildinfo
 
@@ -45,3 +49,7 @@ example
 # Finder 가 겹쳐 만든 복사본 (예: index 2.tsx) — 올리지 않아요
 * 2.ts
 * 2.tsx
+
+# Storybook
+storybook-static/
+*storybook.log

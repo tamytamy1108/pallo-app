@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 
+import { useOnboardingInfo } from '@/api/use-onboarding';
 import { LangList, LangRow } from '@/components/onboarding/app-langs';
-import { ONB_LANGS } from '@/components/onboarding/app-parts';
+import { langLook } from '@/components/onboarding/app-parts';
 import { NextButton, OnbScreen, useRequired } from '@/components/onboarding/parts';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { stepsFor, updateOnboarding, useOnboarding } from '@/state/onboarding';
 
 /**
@@ -11,7 +13,9 @@ import { stepsFor, updateOnboarding, useOnboarding } from '@/state/onboarding';
  */
 export default function OnboardingLangs() {
   const langs = useOnboarding((s) => s.langs);
-  const toggle = (key: (typeof ONB_LANGS)[number]['key']) =>
+  // 언어 목록은 서버 마스터데이터 (GET /onboarding languages) — 고르는 값은 code
+  const info = useOnboardingInfo();
+  const toggle = (key: string) =>
     // 고른 순서를 지켜요 (맨 앞 언어가 홈의 첫 언어)
     updateOnboarding({ langs: langs.includes(key) ? langs.filter((l) => l !== key) : [...langs, key] });
   // '다음'은 늘 켜 두고, 하나도 안 골랐으면 격자가 흔들리며 안내해요
@@ -35,11 +39,17 @@ export default function OnboardingLangs() {
           ready={form.ready}
         />
       }>
-      <LangList label="궁금한 언어" name="langs">
-        {ONB_LANGS.map((l) => (
-          <LangRow key={l.key} lang={l} on={langs.includes(l.key)} onPress={() => toggle(l.key)} />
-        ))}
-      </LangList>
+      {info.isPending ? (
+        <LoadingState />
+      ) : info.isError ? (
+        <ErrorState onRetry={() => info.refetch()} />
+      ) : (
+        <LangList label="궁금한 언어" name="langs">
+          {info.data.languages.map((l) => (
+            <LangRow key={l.code} lang={langLook(l.code, l.label)} on={langs.includes(l.code)} onPress={() => toggle(l.code)} />
+          ))}
+        </LangList>
+      )}
     </OnbScreen>
   );
 }

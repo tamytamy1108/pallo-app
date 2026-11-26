@@ -1,16 +1,18 @@
 /**
  * 체험 예약 칸 값 · 앱 안에서 방금 한 체험 예약 (예약 확정 화면이 읽어요).
- * 가입 중 예약은 온보딩 값(state/onboarding)에 같은 이름으로 담겨요. 맞는 API: 47 `POST /trial-bookings`.
+ * 가입 중 예약은 온보딩 값(state/onboarding)에 같은 이름으로 담겨요.
+ * API: 가입 중 = POST /onboarding (trial 블록) · 앱 안 = POST /trial-applications.
  */
 import { createStore } from '@/lib/store';
-import type { StudyLang } from '@/state/me';
 
-/** 체험 예약 칸 값 (가입 온보딩 값과 같은 이름). 희망 언어는 langs[0] 하나 */
+/** 체험 예약 칸 값 (가입 온보딩 값과 같은 이름). 지점 = code + 보여 줄 이름, 희망 언어는 langs[0] 하나(서버 code) + 그 이름 */
 export type TrialDraft = {
+  branchCode: string;
   branch: string;
   realName: string;
   phone: string;
-  langs: StudyLang[];
+  langs: string[];
+  langLabel: string;
   why: string[];
   trialDay: string;
   trialTime: string;

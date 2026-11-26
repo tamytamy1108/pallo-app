@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { getBranchProgress } from '@/api/use-branch-progress';
 import { keepAll, SheetButton, SheetButtons, SheetDesc } from '@/components/common/sheet-parts';
 import { UpsellHost } from '@/components/common/upsell-sheet';
 import { Sheet } from '@/components/ui/sheet';
@@ -10,7 +11,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { userKind } from '@/state/access';
+import { isMember } from '@/state/access';
 import { chapterUpsell, guideBusy, setIntroOpen, trialReminder } from '@/state/lock-hits';
 import { getMe, type StudyLang } from '@/state/me';
 
@@ -18,26 +19,26 @@ let openIntro: ((why: string) => void) | null = null;
 
 /**
  * 비회원 막힘 (프로토타입 lgGate(이유)): 회원만 할 수 있는 행동을 감싸요. 회원이면 그대로 실행.
- * 회원이 아니면 누를 때마다 누구냐(state/access userKind)에 따라 (09-onboarding '회원 · 비회원 권한'):
- * - 비회원 · 앱 구경 · 앱 구독(결제) → 체험 안내 시트 `${why}\n지점 회원이 되어야 해요` (→ 체험 상담 신청)
- * - 체험 예약 → '예약한 체험이 기다리고 있어요' 시트 (다시 예약하지 않게 · 예약 내용 보기)
+ * 회원이 아니면 누를 때마다 무엇을 기다리는지(api/use-branch-progress · 서버 요약)에 따라 (09-onboarding '회원 · 비회원 권한'):
  * - 연동 대기 → '…지점 연동이 끝나야 해요' 토스트 (이미 회원이라 체험 권유 없음)
- * - 연동 안 됨 → '…지점 연동이 필요해요' 토스트 + [다시 요청]
+ * - 확인 안 한 반려 → '…지점 연동이 필요해요' 토스트 + [다시 요청]
+ * - 다가오는 체험 → '예약한 체험이 기다리고 있어요' 시트 (다시 예약하지 않게 · 예약 내용 보기)
+ * - 그 밖(둘러보기 · 앱 구독) → 체험 안내 시트 `${why}\n지점 회원이 되어야 해요` (→ 체험 상담 신청)
  * 다른 안내 · 권유 시트가 떠 있으면 겹쳐 띄우지 않아요. 좋아요는 막지 않아요 (v291).
  * why 는 '~하려면' 한 줄 — 예) '댓글을 달려면' · '번개에 참여하려면' · '2과를 하려면' · '설정을 쓰려면'.
  * 예) onPress={() => guardMember(() => setJoinOpen(true), '번개에 참여하려면')}
  * @returns 실행했으면 true, 막혔으면 false
  */
 export function guardMember(run: () => void, why = '함께하려면') {
-  const kind = userKind(getMe());
-  if (kind === 'member') {
+  if (isMember(getMe())) {
     run();
     return true;
   }
-  if (kind === 'pending') showToast(`${why} 지점 연동이 끝나야 해요`);
-  else if (kind === 'rejected') showToast(`${why} 지점 연동이 필요해요`, { label: '다시 요청', onPress: () => router.push('/link-rejected') });
+  const { pending, rejected, trial } = getBranchProgress();
+  if (pending) showToast(`${why} 지점 연동이 끝나야 해요`);
+  else if (rejected) showToast(`${why} 지점 연동이 필요해요`, { label: '다시 요청', onPress: () => router.push('/link-rejected') });
   else if (guideBusy()) return false;
-  else if (kind === 'trial') trialReminder(why);
+  else if (trial) trialReminder(why);
   else openIntro?.(why);
   return false;
 }
@@ -50,8 +51,8 @@ export const memberGate = (why: string) => guardMember(() => undefined, why);
  * label 예) '2과' · '장면 2' → why '2과를 하려면'
  */
 export function lockedChapter(label: string, firstDone: boolean) {
-  const kind = userKind(getMe());
-  if (firstDone && kind !== 'pending' && kind !== 'rejected') chapterUpsell();
+  const { pending, rejected } = getBranchProgress();
+  if (firstDone && !pending && !rejected) chapterUpsell();
   else memberGate(`${label}를 하려면`);
 }
 

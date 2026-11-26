@@ -12,14 +12,32 @@ import type { PageParams } from './client';
 import { fetchBookShelf, fetchPatternLesson, fetchSceneContent, fetchSituationMaps, fetchUnit34, lessonContentId } from './learn';
 import { fetchLaunchPopups, fetchLoungeHighlights, fetchNotice, fetchNotices, fetchTodaySessions } from './home';
 import { fetchMe } from './me';
+import { fetchMyLinkRequests } from './branch-link';
+import { fetchBranchSummary } from './branch-summary';
+import { fetchMyPage } from './my-page';
+import { fetchBranchGuides } from './branch-guide';
+import { fetchFaq, fetchMyInquiries } from './support';
+import { fetchMyTrialApplications } from './trial-applications';
+import { fetchAssetCatalog, fetchBranchOptions, fetchOnboardingInfo, fetchTrialSlots } from './onboarding';
 
 export const queryKeys = {
   me: ['me'] as const,
+  linkRequests: ['me', 'branch-link-requests'] as const,
+  branchSummary: ['me', 'branch-summary'] as const,
+  myPage: ['me', 'mypage'] as const,
+  branchGuides: ['me', 'branch-guides'] as const,
+  trialApplications: ['me', 'trial-applications'] as const,
+  onboardingInfo: ['onboarding'] as const,
+  branchOptions: ['branches'] as const,
+  trialSlots: (branchCode: string) => ['trial-slots', branchCode] as const,
+  assetCatalog: ['asset-catalog'] as const,
   sessionsToday: ['sessions', 'today'] as const,
   notices: (params: PageParams = {}) => ['notices', 'list', params] as const,
   notice: (id: string) => ['notices', 'detail', id] as const,
   loungeHighlights: ['lounge', 'highlights'] as const,
   popups: ['popups'] as const,
+  faq: ['faq'] as const,
+  myInquiries: ['me', 'inquiries'] as const,
   situationMaps: ['library', 'maps'] as const,
   bookShelf: ['library', 'books'] as const,
   lesson: (id: string) => ['lessons', id] as const,
@@ -35,6 +53,36 @@ export const signupOptionsQuery = () =>
 
 /** 3 /me */
 export const meQuery = () => queryOptions({ queryKey: queryKeys.me, queryFn: ({ signal }) => fetchMe({ signal }) });
+
+/** GET /me/branch-link-requests — 내 지점 연동 요청 이력 전체 (최신 순) */
+export const linkRequestsQuery = () => queryOptions({ queryKey: queryKeys.linkRequests, queryFn: ({ signal }) => fetchMyLinkRequests({ signal }) });
+
+/** GET /me/branch-summary — 연동 대기 · 확인 안 한 반려 · 다가오는 체험 (홈 · 마이 · 잠김 칸이 나눠 써요) */
+export const branchSummaryQuery = () => queryOptions({ queryKey: queryKeys.branchSummary, queryFn: ({ signal }) => fetchBranchSummary({ signal }) });
+
+/** GET /me/mypage — 마이 탭 숫자 · 랭킹 요약 · 배지 · 내 활동 개수 (api/my-page.ts) */
+export const myPageQuery = () => queryOptions({ queryKey: queryKeys.myPage, queryFn: ({ signal }) => fetchMyPage({ signal }) });
+
+/** GET /trial-applications — 내 체험 상담 신청 전부 (상담 신청 내역) */
+export const trialApplicationsQuery = () => queryOptions({ queryKey: queryKeys.trialApplications, queryFn: ({ signal }) => fetchMyTrialApplications({ signal }) });
+
+/* ───────── 가입 단계 · 체험 예약 (api/onboarding) ───────── */
+
+/** GET /onboarding — 약관 · 미리 채울 값 · 닉네임 규칙 · 언어 · 이유 (가입 중엔 안 바뀌어요) */
+export const onboardingInfoQuery = () => queryOptions({ queryKey: queryKeys.onboardingInfo, queryFn: ({ signal }) => fetchOnboardingInfo({ signal }), staleTime: CONTENT_STALE_MS });
+
+/** GET /branches — 지점 시트 (연동 상태가 바뀌니 시트를 열 때마다 새로) */
+export const branchOptionsQuery = () => queryOptions({ queryKey: queryKeys.branchOptions, queryFn: ({ signal }) => fetchBranchOptions({ signal }) });
+
+/** GET /trial-slots?branchCode= — 체험 상담 희망 시간표 */
+export const trialSlotsQuery = (branchCode: string) => queryOptions({ queryKey: queryKeys.trialSlots(branchCode), queryFn: ({ signal }) => fetchTrialSlots(branchCode, { signal }) });
+
+/** GET /asset-catalog — 고를 수 있는 팔로로 */
+export const assetCatalogQuery = () => queryOptions({ queryKey: queryKeys.assetCatalog, queryFn: ({ signal }) => fetchAssetCatalog({ signal }), staleTime: CONTENT_STALE_MS });
+
+/** GET /me/branch-guides — 연동된 지점마다 지점 안내 (마이 › 지점 안내 보드). 자주 안 바뀌어요 */
+export const branchGuidesQuery = () =>
+  queryOptions({ queryKey: queryKeys.branchGuides, queryFn: ({ signal }) => fetchBranchGuides({ signal }), staleTime: CONTENT_STALE_MS });
 
 /** 8 /me/sessions/today */
 export const sessionsTodayQuery = () => queryOptions({ queryKey: queryKeys.sessionsToday, queryFn: ({ signal }) => fetchTodaySessions({ signal }) });
@@ -53,6 +101,14 @@ export const loungeHighlightsQuery = () => queryOptions({ queryKey: queryKeys.lo
 
 /** A1 /popups */
 export const popupsQuery = () => queryOptions({ queryKey: queryKeys.popups, queryFn: ({ signal }) => fetchLaunchPopups({ signal }) });
+
+/* ───────── 고객센터 (93 · 94) ───────── */
+
+/** 93 /faq — 자주 안 바뀌어요 */
+export const faqQuery = () => queryOptions({ queryKey: queryKeys.faq, queryFn: ({ signal }) => fetchFaq({ signal }), staleTime: CONTENT_STALE_MS });
+
+/** 94 GET /me/inquiries — 내 1:1 문의 (최신 순) */
+export const myInquiriesQuery = () => queryOptions({ queryKey: queryKeys.myInquiries, queryFn: ({ signal }) => fetchMyInquiries({ signal }) });
 
 /* ───────── 학습 (16 · 17 · 18) ───────── */
 

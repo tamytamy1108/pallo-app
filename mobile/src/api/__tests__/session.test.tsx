@@ -8,6 +8,8 @@ import type { ReactNode } from 'react';
 
 import { resetOnboarding, updateOnboarding } from '@/state/onboarding';
 
+import { showToast } from '@/components/ui/toast';
+
 import { setMockOptions } from '../mock';
 import { queryKeys } from '../queries';
 import { SessionProvider, useCompleteOnboarding, useSession } from '../session';
@@ -16,6 +18,8 @@ import { tokenStorage } from '../token';
 jest.mock('../config', () => ({
   apiConfig: { env: 'dev', baseUrl: '', useMock: true, mockDelayMs: 0, timeoutMs: 15000 },
 }));
+// 토스트는 애니메이션(reanimated)이라 jest 에선 대역 — 가입 끝내기 실패 토스트는 훅이 띄워요
+jest.mock('@/components/ui/toast', () => ({ showToast: jest.fn() }));
 
 let queryClient: QueryClient;
 
@@ -34,6 +38,7 @@ beforeEach(() => {
   tokenStorage.clear();
   resetOnboarding();
   setMockOptions({ delayMs: 0, fail: [] });
+  jest.mocked(showToast).mockClear();
 });
 
 describe('로그인 상태', () => {
@@ -63,6 +68,27 @@ describe('로그인 상태', () => {
     await waitFor(() => expect(result.current.session).toEqual({ status: 'signedIn', needsOnboarding: true }));
     await act(() => result.current.complete.mutateAsync());
     await waitFor(() => expect(result.current.session).toEqual({ status: 'signedIn', needsOnboarding: false }));
+  });
+
+  it('가입 끝내기 뒤 /me 다시 받기가 실패해도 가입 화면에 갇히지 않아요 (needsOnboarding=false)', async () => {
+    tokenStorage.set({ accessToken: 'a', refreshToken: 'r' });
+    const { result } = await render();
+    await waitFor(() => expect(result.current.session).toEqual({ status: 'signedIn', needsOnboarding: true }));
+    setMockOptions({ fail: ['me'] });
+    await act(() => result.current.complete.mutateAsync());
+    await waitFor(() => expect(queryClient.isFetching({ queryKey: queryKeys.me })).toBe(0));
+    expect(queryClient.getQueryState(queryKeys.me)?.status).toBe('error');
+    expect(result.current.session).toEqual({ status: 'signedIn', needsOnboarding: false });
+  });
+
+  it('가입 끝내기가 실패하면 그대로 가입 전 · 토스트', async () => {
+    tokenStorage.set({ accessToken: 'a', refreshToken: 'r' });
+    const { result } = await render();
+    await waitFor(() => expect(result.current.session).toEqual({ status: 'signedIn', needsOnboarding: true }));
+    setMockOptions({ fail: ['completeOnboarding'] });
+    await act(() => expect(result.current.complete.mutateAsync()).rejects.toBeTruthy());
+    expect(result.current.session).toEqual({ status: 'signedIn', needsOnboarding: true });
+    expect(showToast).toHaveBeenCalled();
   });
 
   it('토큰이 사라지면(로그아웃 · 갱신 실패) signedOut · 받아 둔 서버 데이터를 비워요', async () => {

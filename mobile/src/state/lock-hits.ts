@@ -4,13 +4,14 @@
  * - 스크롤로 잠긴 칸이 보이기만 한 것(lockView)만 세요: 앱을 켠 동안 3 · 6 · 9 … 번째면 '체험해 보시겠어요?' 권유 시트.
  * - 무료 첫 챕터를 다 끝내고 다음 챕터로 가려 하면 chapterUpsell() 로 '실제 대화' 권유 시트.
  * - 시트는 한 번에 하나만: 안내 시트나 권유 시트가 떠 있으면(guideBusy) 새로 띄우지 않아요.
- * 연동 대기(pending)는 세지도 띄우지도 않아요 — 짧은 토스트만. 회원은 아무 일도 없어요.
+ * 연동 대기 · 확인 안 한 반려(api/use-branch-progress · 서버 요약)는 세지도 띄우지도 않아요 — 짧은 토스트만. 회원은 아무 일도 없어요.
  */
 import { router } from 'expo-router';
 
+import { getBranchProgress } from '@/api/use-branch-progress';
 import { showToast } from '@/components/ui/toast';
 import { createStore } from '@/lib/store';
-import { userKind } from '@/state/access';
+import { isMember } from '@/state/access';
 import { getMe } from '@/state/me';
 
 /** 스크롤 잠김을 몇 번 볼 때마다 권유 시트 */
@@ -50,13 +51,13 @@ export const trialReminder = (why: string) => openUpsell('trial', why);
  * @returns 권유 시트를 띄웠으면 true
  */
 export function lockView(toast = '지점 회원이 되면 다 볼 수 있어요') {
-  const kind = userKind(getMe());
-  if (kind === 'member') return false;
-  if (kind === 'pending') {
+  if (isMember(getMe())) return false;
+  const { pending, rejected } = getBranchProgress();
+  if (pending) {
     showToast('지점 연동이 끝나면 다 볼 수 있어요');
     return false;
   }
-  if (kind === 'rejected') {
+  if (rejected) {
     rejectedToast('지점 연동이 필요해요');
     return false;
   }
@@ -69,11 +70,11 @@ export function lockView(toast = '지점 회원이 되면 다 볼 수 있어요'
 
 /** 무료 첫 챕터를 다 끝내고 다음 챕터로 가려 할 때 */
 export function chapterUpsell() {
-  const kind = userKind(getMe());
-  if (kind === 'member') return;
-  if (kind === 'pending') showToast('다음 챕터는 지점 연동이 끝나면 열려요');
-  else if (kind === 'rejected') rejectedToast('다음 챕터는 지점 연동이 필요해요');
-  else openUpsell(kind === 'trial' ? 'trial' : 'chapter', kind === 'trial' ? '다음 챕터를 하려면' : '');
+  if (isMember(getMe())) return;
+  const { pending, rejected, trial } = getBranchProgress();
+  if (pending) showToast('다음 챕터는 지점 연동이 끝나면 열려요');
+  else if (rejected) rejectedToast('다음 챕터는 지점 연동이 필요해요');
+  else openUpsell(trial ? 'trial' : 'chapter', trial ? '다음 챕터를 하려면' : '');
 }
 
 /** 테스트 · 로그아웃용 */

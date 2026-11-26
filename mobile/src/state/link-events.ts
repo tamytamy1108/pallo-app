@@ -6,6 +6,9 @@
  * 도착하면: 나(state/me) 연동 상태 바꾸기 → 알림함 맨 위 알림 → 위에서 내려오는 푸시 배너
  * → 홈 출석 카드가 풀리는 순간 · 마이 '연동됨' 표시가 톡 튀어나오는 순간을 한 번씩 보여 줘요.
  */
+import { mockRejectLinkRequest } from '@/api/branch-link';
+import { queryKeys } from '@/api/queries';
+import { queryClient } from '@/api/query-client';
 import { addNoti } from '@/components/home/noti-state';
 import { createStore } from '@/lib/store';
 import { getMe, updateMe } from '@/state/me';
@@ -51,6 +54,10 @@ export function receiveLinkResult(result: LinkResult, note = REJECT_NOTE_MOCK) {
     // 못 찾음: 권한은 비회원과 같아요 (state/access)
     updateMe({ link: 'rejected', role: 'guest' });
     addNoti({ id: `link-${key}`, kind: 'notice', badge: 'fail', text: `${branch}에서 회원 정보를 찾지 못했어요`, time: '방금', href: '/link-rejected', read: false });
+    // 가짜 서버의 내 연동 요청에도 반려 한 건 → 홈 반려 팝업 (components/home/link-rejected-popup)
+    mockRejectLinkRequest(branch, note);
+    void queryClient.invalidateQueries({ queryKey: queryKeys.branchSummary });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.linkRequests });
   }
   store.set((s) => ({
     ...s,

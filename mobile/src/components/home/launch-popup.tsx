@@ -12,23 +12,39 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import type { LaunchPopup as Popup } from '@/data/home';
+import type { PopupBackground, LaunchPopup as Popup } from '@/data/home';
 import { createStore } from '@/lib/store';
 import { LayerModal } from '@/components/ui/sheet-stack';
-import { getMe } from '@/state/me';
 
 import { nowDate } from './attendance';
 import { LineIcon } from './icons';
+import { useRejectionPopupOpen } from './link-rejected-popup';
 
 /** 포스터 양옆 넘김 화살표 — 글자(‹ ›)는 글꼴에 따라 끝이 뭉툭해서 선으로 그려요 (끝 · 꺾임 둥글게) */
 const CHEVRON_L = 'M15 5l-7 7 7 7';
 const CHEVRON_R = 'M9 5l7 7-7 7';
 
 /*
- * 앱을 열 때 팝업 공지 (프로토타입 POPS · popShow · .pop-wrap · .pop-c).
- * 본사 관리자가 올린 공지를 0.9초 뒤 보여 줘요. 여러 개면 옆으로 밀거나 포스터 양옆 ‹ › 로 넘겨요. '오늘은 그만 보기'를 누르면 오늘은 다시 안 떠요.
- * 만드는 화면은 관리자용이라 나중에 (여기선 보여 주기만). 데이터: A1 GET /popups (받기 전 · 실패면 안 떠요).
+ * 앱을 열 때 팝업 (프로토타입 POPS · popShow · .pop-wrap · .pop-c).
+ * 본사 관리자가 app-hub '앱 팝업'에서 올린 팝업을 0.9초 뒤 보여 줘요. 여러 개면 옆으로 밀거나 포스터 양옆 ‹ › 로 넘겨요. '오늘은 그만 보기'를 누르면 오늘은 다시 안 떠요.
+ * 데이터: GET /popups — 지금 띄울 것만 노출 순서대로 와요(받기 전 · 실패면 안 떠요). 배경은 키만 오고 색은 여기서 정해요.
  */
+
+/** 템플릿 배경 프리셋 → 그라데이션 (위 → 아래) */
+const GRADIENTS: Record<PopupBackground, [string, string]> = {
+  PURPLE: [Colors.purple, Colors.ink],
+  BLUE: [Colors.sky, Colors.purple],
+  PINK: [Colors.rosePink, Colors.purple],
+  SLATE: [Colors.inkSub, Colors.ink],
+};
+
+/** 버튼을 누르면 갈 화면 — 리소스 종류마다 */
+function hrefOf(p: Popup): Href {
+  switch (p.resourceType) {
+    case 'NOTICE':
+      return `/notice/${p.resourceId}`;
+  }
+}
 
 const today = () => {
   const d = nowDate();
@@ -45,12 +61,6 @@ function hideToday(ids: string[]) {
     return keep;
   });
 }
-/** 내 지점 · 전 지점만 남기고, 내 지점 이벤트를 앞으로 */
-export function orderForBranch(list: Popup[], branch: string): Popup[] {
-  const mine = list.filter((p) => p.branch && p.branch === branch).sort((a, b) => (a.date ?? a.until).localeCompare(b.date ?? b.until));
-  return [...mine, ...list.filter((p) => !p.branch)];
-}
-
 // 앱을 켠 뒤 한 번만 떠요
 let shownOnce = false;
 
@@ -62,24 +72,28 @@ export function LaunchPopup() {
 
 function PopupHost({ popups }: { popups: Popup[] }) {
   const still = useReducedMotion();
-  // 처음 받은 목록으로 한 번 정해요 (보는 중에 '오늘은 그만 보기'를 눌러도 목록이 줄지 않게)
-  // 우리 지점 이벤트가 맨 앞 (가까운 날부터) → 전 지점 공지 · 이벤트. 다른 지점 것은 안 띄워요
-  const [list] = useState(() => orderForBranch(popups.filter((p) => p.until >= today() && hiddenStore.get()[p.id] !== today()), getMe().branch));
+  // 처음 받은 목록으로 한 번 정해요 (보는 중에 '오늘은 그만 보기'를 눌러도 목록이 줄지 않게).
+  // 기간은 서버가 이미 걸렀지만, 앱을 켜 둔 채 기간이 지난 경우(·가짜 서버)를 위해 한 번 더 봐요.
+  const [list] = useState(() =>
+    popups.filter((p) => Date.parse(p.publishUntil) > nowDate().getTime() && hiddenStore.get()[p.id] !== today()),
+  );
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   /** 공지 카드 전체 높이 (포스터 · 버튼 · 아래 줄) — 넘김 화살표를 카드 한가운데 높이에 둬요 */
   const [cardH, setCardH] = useState(0);
   const fade = useSharedValue(0);
+  // 연동 반려 팝업이 떠 있으면 닫힐 때까지 기다렸다가 떠요 (두 장이 겹치지 않게)
+  const rejectionOpen = useRejectionPopupOpen();
 
   useEffect(() => {
-    if (shownOnce || !list.length) return;
+    if (shownOnce || !list.length || rejectionOpen) return;
     const t = setTimeout(() => {
       shownOnce = true;
       setOpen(true);
       fade.set(withTiming(1, { duration: still ? 0 : 200 }));
     }, 900);
     return () => clearTimeout(t);
-  }, [list.length, still, fade]);
+  }, [list.length, still, fade, rejectionOpen]);
 
   const close = () => {
     fade.set(withTiming(0, { duration: still ? 0 : 180 }));
@@ -102,15 +116,15 @@ function PopupHost({ popups }: { popups: Popup[] }) {
             <Pressable
               onPress={() => {
                 close();
-                router.push(p.href as Href);
+                router.push(hrefOf(p));
               }}
               accessibilityRole="button"
-              accessibilityLabel={p.cta}>
+              accessibilityLabel={p.ctaLabel}>
               {({ pressed }) => (
                 <View style={styles.goBox}>
                   {!pressed && <View style={styles.goShadow} />}
                   <View style={StyleSheet.flatten([styles.go, pressed && styles.goPressed])}>
-                    <PText style={styles.goText}>{p.cta}</PText>
+                    <PText style={styles.goText}>{p.ctaLabel}</PText>
                   </View>
                 </View>
               )}
@@ -217,25 +231,27 @@ function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; set
   );
 }
 
-/** 공지 포스터 한 장 */
+/** 팝업 포스터 한 장 — TEMPLATE = 문구 + 배경 프리셋, IMAGE = 배너 이미지 (글자는 이미지 안) */
 function Poster({ p, w }: { p: Popup; w: number }) {
   return (
-    <LinearGradient colors={p.bg} start={{ x: 0.33, y: 0 }} end={{ x: 0.67, y: 1 }} style={[styles.poster, { width: w }]}>
-      {!!p.branch && (
-        <View style={styles.mine}>
-          <PText style={styles.mineText}>우리 지점 · {p.branch}</PText>
-        </View>
+    <LinearGradient colors={GRADIENTS[p.background]} start={{ x: 0.33, y: 0 }} end={{ x: 0.67, y: 1 }} style={[styles.poster, { width: w }]}>
+      {p.design === 'IMAGE' && p.imageUrl ? (
+        // 배경 그라데이션은 이미지를 불러오는 동안만 보여요
+        <Image source={{ uri: p.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={p.ctaLabel} />
+      ) : (
+        <>
+          <PText style={styles.k} color={Colors.yellow}>
+            {p.kicker}
+          </PText>
+          <PText style={styles.t} color={Colors.white}>
+            {p.title}
+          </PText>
+          <PText style={styles.s} color={Colors.white}>
+            {p.sub}
+          </PText>
+          <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.char} contentFit="contain" />
+        </>
       )}
-      <PText style={styles.k} color={Colors.yellow}>
-        {p.kicker}
-      </PText>
-      <PText style={styles.t} color={Colors.white}>
-        {p.title}
-      </PText>
-      <PText style={styles.s} color={Colors.white}>
-        {p.sub}
-      </PText>
-      <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.char} contentFit="contain" />
     </LinearGradient>
   );
 }
@@ -251,8 +267,6 @@ const styles = StyleSheet.create({
   nav: { position: 'absolute', left: 0, right: 0, height: ARROW_H, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
   n: { position: 'absolute', right: 12, top: 12, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.4)' },
   nText: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
-  mine: { alignSelf: 'flex-start', marginBottom: 10, paddingVertical: 3, paddingHorizontal: 10, borderRadius: 999, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow },
-  mineText: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16, color: Colors.ink },
   k: { fontFamily: Font.display, fontSize: 11, lineHeight: 14, letterSpacing: 2 },
   t: { marginTop: 10, fontFamily: Font.display, fontSize: 28, lineHeight: 31.4 },
   s: { marginTop: 10, fontFamily: Font.body800, fontSize: 13, lineHeight: 18, opacity: 0.9 },

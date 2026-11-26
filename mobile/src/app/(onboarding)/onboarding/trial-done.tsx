@@ -1,7 +1,5 @@
-import { apiErrorMessage } from '@/api/errors';
 import { useCompleteOnboarding } from '@/api/session';
 import { TrialDoneView } from '@/components/onboarding/trial-done-view';
-import { showToast } from '@/components/ui/toast';
 import { useOnboarding } from '@/state/onboarding';
 
 /**
@@ -11,5 +9,5 @@ import { useOnboarding } from '@/state/onboarding';
 export default function OnboardingTrialDone() {
   const onb = useOnboarding();
   const { mutate: complete } = useCompleteOnboarding();
-  return <TrialDoneView booking={onb} button="앱 둘러보기" onDone={() => complete(undefined, { onError: (e) => showToast(apiErrorMessage(e)) })} />;
+  return <TrialDoneView booking={onb} button="앱 둘러보기" onDone={() => complete()} />;
 }

@@ -4,13 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { BackHandler, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area';
 
-import { apiErrorMessage } from '@/api/errors';
-import { useCompleteOnboarding } from '@/api/session';
+import { useCompleteOnboarding, useNeedsOnboarding } from '@/api/session';
 import { LinkTracker, type LinkStep } from '@/components/onboarding/link-tracker';
 import { NextButton } from '@/components/onboarding/parts';
 import { MyPalloro } from '@/components/onboarding/start-palloro';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { useOnboarding } from '@/state/onboarding';
@@ -24,7 +22,8 @@ const nowHHMM = () => {
 
 /**
  * 가입 · 지점 회원: 지점에서 확인 중 (프로토타입 onboarding-options.html #m-wait). 진행 바 없음.
- * 내 팔로로 · '○○점에 연동을 요청했어요!' · 한 줄 설명 · 세로 진행 표시 3칸 · 아래 노란 `시작하기` → 앱 홈 (useCompleteOnboarding).
+ * 내 팔로로 · '○○점에 연동을 요청했어요!' · 한 줄 설명 · 세로 진행 표시 3칸 · 아래 노란 `시작하기` → 앱 홈.
+ * 요청은 앞 화면에서 이미 보냈어요. 가입 중이면 `시작하기`가 가입을 끝내고(useCompleteOnboarding), 가입을 마친 뒤면 홈으로만 가요.
  * 요청 취소 · 지점 전화 · '기다리는 동안…' 안내는 두지 않아요 (docs/pages/09-onboarding.md 상태 표).
  *
  * 뒤로: 요청은 이미 보냈으니 양식으로 돌아가지 않아요. 뒤로 버튼은 없고, 밀어서 뒤로 가기는 막고,
@@ -34,18 +33,16 @@ export default function LinkWaitScreen() {
   const branch = useOnboarding((s) => s.branch) || '지점';
   const [sentAt] = useState(nowHHMM);
   const { mutate: complete } = useCompleteOnboarding();
+  const inOnboarding = useNeedsOnboarding();
   // 가입을 끝냈다고 표시하고 홈으로. 이 화면은 (link) 묶음이라 가입이 끝나도 저절로 닫히지 않아서 직접 홈으로 가요
-  const start = useCallback(
-    () =>
-      complete(undefined, {
-        onSuccess: () => {
-          if (router.canDismiss()) router.dismissAll();
-          router.replace('/');
-        },
-        onError: (e) => showToast(apiErrorMessage(e)),
-      }),
-    [complete],
-  );
+  const start = useCallback(() => {
+    const home = () => {
+      if (router.canDismiss()) router.dismissAll();
+      router.replace('/');
+    };
+    if (inOnboarding) complete(undefined, { onSuccess: home });
+    else home();
+  }, [complete, inOnboarding]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {

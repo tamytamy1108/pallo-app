@@ -9,7 +9,11 @@
  * '보통'(가입부터)은 개발용 사람 없이 첫 화면부터예요. 실제 앱(__DEV__ 아님)에서는 늘 '' 예요.
  */
 import { File, Paths } from 'expo-file-system';
-import { DevSettings, Platform } from 'react-native';
+// 네임스페이스로 가져온다: react-native-web 에는 DevSettings 가 없어서, 이름으로 import 하면
+// 스토리북(vite, 브라우저 ESM)이 모듈을 못 읽고 멈춘다. 네이티브에서만 부른다(아래 switchDevProfile).
+import * as ReactNative from 'react-native';
+
+const { Platform } = ReactNative;
 
 export type DevPersona = 'guest' | 'trial' | 'pending' | 'rejected' | 'app' | 'linked' | 'pro' | 'manager';
 /** 모임(동아리 · 번개) 안에서 나: 화면 그대로(내가 연 모임만 호스트) · 늘 멤버처럼 · 늘 호스트 · 늘 코호스트 */
@@ -155,5 +159,5 @@ export function switchDevProfile(next: { who?: DevPersona | 'none'; club?: DevCl
     window.location.replace(url.toString());
     return;
   }
-  DevSettings.reload();
+  ReactNative.DevSettings.reload();
 }

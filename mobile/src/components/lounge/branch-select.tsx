@@ -6,7 +6,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BranchMultiPicker, withJeom } from '@/components/onboarding/branch-sheet';
+import { BranchMultiPicker, withJeom } from '@/components/onboarding/branch-list';
 import { LG_BRS } from '@/data/lounge';
 import { useMe } from '@/state/me';
 

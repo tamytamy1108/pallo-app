@@ -5,7 +5,7 @@
 import { getAttend, myTeams, sendAttendance as markAttendance, sendRsvp as markRsvp, type Attend } from '@/components/home/attendance';
 import { markAllNotiRead, markNotiRead } from '@/components/home/noti-state';
 import { LANGS, LAUNCH_POPUPS, LOUNGE_HIGHLIGHTS, MY_LANG, MY_SLOT, NOTIS, QR_AFTER, QR_BEFORE, SLOTS, ATTEND_POINTS, type LaunchPopup, type LoungeHighlight, type Noti } from '@/data/home';
-import { NOTICES, type Notice } from '@/data/mock';
+import { NOTICE_DETAILS, NOTICES, type Notice, type NoticeDetail } from '@/data/mock';
 
 import { http, type Page, type PageParams } from './client';
 import { apiConfig } from './config';
@@ -73,21 +73,41 @@ export function sendAttendance({ slot, lang, qr }: { slot: number; lang: number;
 
 /* ───────── 공지 ───────── */
 
-/** 12 GET /notices — 홈 Notice board 띠는 앞의 3개 (limit=3) */
+// 가짜 서버의 고정 기록 (실서버는 사용자마다 DB 에). 처음엔 n1 이 고정돼 있어요.
+const mockPins = new Set<string>(['n1']);
+
+/** 가짜 서버 목록: 내가 고정한 것 먼저, 그다음 최신순 (서버와 같은 순서) */
+function mockNotices(): Notice[] {
+  const withPin = NOTICES.map((n) => ({ ...n, pinned: mockPins.has(n.id) }));
+  return [...withPin.filter((n) => n.pinned), ...withPin.filter((n) => !n.pinned)];
+}
+
+/** 12 GET /notices — 내가 고정한 공지 먼저, 그다음 최신순. 홈 Notice board 띠는 앞의 3개 (limit=3). 백엔드 MobileNoticeController */
 export function fetchNotices(params: PageParams = {}, { signal }: Opts = {}): Promise<Page<Notice>> {
-  if (apiConfig.useMock) return mock('notices', () => pageOf(NOTICES, params));
+  if (apiConfig.useMock) return mock('notices', () => pageOf(mockNotices(), params));
   return http.get('/notices', { query: params, signal });
 }
 
-/** 12 GET /notices/:id — 없으면 ApiError(404 · isNotFound) */
-export function fetchNotice(id: string, { signal }: Opts = {}): Promise<Notice> {
+/** 12 GET /notices/:id — 앱에 안 보이는 공지(숨김 · 기간 밖 · 삭제)는 ApiError(404 · isNotFound) */
+export function fetchNotice(id: string, { signal }: Opts = {}): Promise<NoticeDetail> {
   if (apiConfig.useMock)
     return mock('notice', () => {
-      const n = NOTICES.find((x) => x.id === id);
+      const n = NOTICE_DETAILS.find((x) => x.id === id);
       if (!n) throw mockNotFound();
-      return n;
+      return { ...n, pinned: mockPins.has(n.id) };
     });
   return http.get(`/notices/${encodeURIComponent(id)}`, { signal });
+}
+
+/** PUT /notices/:id/pin · DELETE /notices/:id/pin — 내 목록 맨 위 고정 / 풀기 (둘 다 여러 번 눌러도 같아요) */
+export function setNoticePinned({ id, pinned }: { id: string; pinned: boolean }): Promise<void> {
+  if (apiConfig.useMock)
+    return mock('noticePin', () => {
+      if (pinned) mockPins.add(id);
+      else mockPins.delete(id);
+    });
+  const path = `/notices/${encodeURIComponent(id)}/pin`;
+  return pinned ? http.put(path) : http.delete(path);
 }
 
 /* ───────── 알림함 ───────── */
@@ -116,7 +136,7 @@ export function fetchLoungeHighlights({ signal }: Opts = {}): Promise<LoungeHigh
   return http.get('/lounge/highlights', { signal });
 }
 
-/** A1 GET /popups — 본사 관리자가 올린 앱 시작 팝업 (오늘 보여 줄 것만) */
+/** A1 GET /popups — 본사 관리자가 app-hub 에서 올린 앱 시작 팝업 (지금 띄울 것만 · 노출 순서대로, 백엔드 MobilePopupController) */
 export function fetchLaunchPopups({ signal }: Opts = {}): Promise<LaunchPopup[]> {
   if (apiConfig.useMock) return mock('popups', () => LAUNCH_POPUPS);
   return http.get('/popups', { signal });

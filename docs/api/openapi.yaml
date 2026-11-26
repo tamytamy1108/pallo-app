@@ -28,7 +28,7 @@ info:
 
     ### 공통 약속 (지금 백엔드 방식에 맞췄어요)
 
-    - 주소: 모바일 앱 컨트롤러는 `/app/api/v1` 아래 (`ApiPathPrefixConfig.APP_PREFIX`)
+    - 주소: 새 앱(pallo-app)은 `/app/api/v2` 로 불러요 (앱 `api/client.ts` 의 `APP_API_PREFIX`, 백엔드 `api/appv2/*`). `x-backend` 에 `/app/api/v2` 가 적힌 것은 v2 에 이미 있고, 경로 없이 컨트롤러만 적힌 것(예전 `api/app`)은 아직 `/app/api/v1` 에만 있어 v2 로 옮겨 줘야 해요
 
     - 인증: `Authorization: Bearer <access>` (jwt.mobile, access 15분 · refresh 30일). `security: []` 인 것만 로그인 없이
 
@@ -76,13 +76,15 @@ info:
 
     - 프로 · 직원만 쓰는 API 는 '프로 · 직원' 태그 (`/staff/*` · `/manager/*`) 에 모았어요
 servers:
-  - url: http://localhost:8080/app/api/v1
-    description: 로컬 백엔드
-  - url: "{origin}/app/api/v1"
+  - url: http://localhost:8080/app/api/v2
+    description: 로컬 백엔드 (새 앱)
+  - url: "{origin}/app/api/v2"
     description: dev · stg · prod (주소는 정해지면 채워요)
     variables:
       origin:
         default: http://localhost:8080
+  - url: http://localhost:8080/app/api/v1
+    description: 예전 앱 경로 — v2 로 아직 안 옮긴 API
 security:
   - bearerAuth: []
 tags:
@@ -445,6 +447,67 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
       x-domain: my
+  /asset-catalog:
+    get:
+      tags:
+        - 가입 · 온보딩
+      operationId: getAssetCatalog
+      summary: 에셋 카탈로그 — 팔로로(가입 캐릭터 몸) 목록 · 그리는 기준
+      description: '화면: 가입 단계 캐릭터 고르기 · 마이 캐릭터. app-hub 에셋 관리 › 팔로로 관리에서 올린 manifest.json + PNG 를 내려요. 겹침 순서는 숫자 z.'
+      x-status: existing
+      x-backend: MobileAssetCatalogController GET /app/api/v2/asset-catalog → MobileAssetCatalogResponse {formatVersion,
+        canvas, bodyBox, pallolos[{code, name, tint, …}]}
+      x-screens:
+        - app/onboarding
+      x-app-code: api/onboarding.ts fetchAssetCatalog
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  formatVersion:
+                    type: integer
+                    example: 1
+                  canvas:
+                    type: object
+                    properties:
+                      width:
+                        type: integer
+                      height:
+                        type: integer
+                  bodyBox:
+                    type: object
+                    properties:
+                      x:
+                        type: integer
+                      y:
+                        type: integer
+                      width:
+                        type: integer
+                      height:
+                        type: integer
+                  pallolos:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - code
+                        - name
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        tint:
+                          type:
+                            - string
+                            - 'null'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: core
   /auth/email-login:
     post:
       tags:
@@ -496,8 +559,9 @@ paths:
 
         공개 API (토큰 없음).
       x-status: change
-      x-backend: MobileAuthController POST /auth/login (MobileLoginRequest →
-        MobileLoginResponse)
+      x-backend: MobileAuthV2Controller POST /app/api/v2/auth/login (MobileLoginRequest →
+        MobileLoginResponse {accessToken, refreshToken, inquiryBranchCode, inquiryBranchName,
+        inquiryCandidateId}) · 웹 미리보기 카카오 웹 로그인이 이것을 써요 (폰은 POST /auth/login/kakao-token)
       x-gap: 응답에 isNewMember(boolean, 가입 단계 안 끝냄) 를 추가해 주세요 (api/auth.ts ·
         app/welcome.tsx 가 읽어요). 지금은 카카오 authCode 만 받아요 — 앱도 카카오 하나라 당장은 충분하고,
         iOS 출시 전 Apple 을 더하면 provider(kakao|apple) 필드 + identityToken 검증. 앱이 쓰던
@@ -523,6 +587,62 @@ paths:
                 $ref: "#/components/schemas/AuthLoginResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
+      x-domain: core
+  /auth/login/kakao-token:
+    post:
+      tags:
+        - 인증 · 시작
+      operationId: loginWithKakaoToken
+      summary: 카카오 로그인 (폰 · 카카오 SDK 토큰) — 처음이면 가입
+      description: >
+        화면: app/welcome.tsx '카카오로 시작하기' (폰 앱). 앱이 카카오 네이티브 SDK 로 받은 카카오
+        access token 을 보내면 서버가 우리 카카오 앱에서 발급된 토큰인지 확인하고 토큰을 줘요.
+        웹 미리보기는 authCode 로 POST /auth/login 을 써요.
+
+        지점 QR 로 들어왔으면 branchCode · adId 를 같이 실어요 (POST /auth/login 과 같은 규칙).
+
+        가입 단계를 이어 갈지는 응답 뒤 GET /me needsOnboarding 으로 봐요.
+
+        공개 API (토큰 없음).
+      x-status: existing
+      x-backend: MobileAuthV2Controller POST /app/api/v2/auth/login/kakao-token
+        (MobileKakaoTokenLoginRequest {accessToken, branchCode?, adId?} → MobileLoginResponse)
+      x-screens:
+        - app/welcome.tsx
+      x-app-code: api/kakao-login.ts · api/use-kakao-login.ts · api/auth.ts
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accessToken
+              properties:
+                accessToken:
+                  type: string
+                  description: 카카오 SDK 가 준 access token
+                branchCode:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 20
+                adId:
+                  type:
+                    - integer
+                    - "null"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
       x-domain: core
   /auth/logout:
     post:
@@ -633,7 +753,7 @@ paths:
         규칙: refresh 토큰으로 새 access · refresh 를 받아요. 실패하면 앱은 토큰을 지우고 로그인 화면으로.
         공개 API.
       x-status: existing
-      x-backend: MobileAuthController POST /auth/refresh (MobileRefreshRequest →
+      x-backend: MobileAuthV2Controller POST /app/api/v2/auth/refresh (MobileRefreshRequest →
         MobileTokenResponse)
       x-inventory: A16
       x-screens:
@@ -814,17 +934,20 @@ paths:
 
         예약 확정 · 예약 내용 시트의 [지점에 전화하기] 에 지점 전화번호가 필요해요 (지금 앱은 가짜 BRANCH_TEL_MOCK).
       x-status: change
-      x-backend: "PublicBranchController GET /public/api/v1/branches
-        (PublicBranchResponse: code, name, address)"
-      x-gap: region(서울|경기|충청|경상 — 권역 칩) · phone(지점 대표 전화) 를 추가해 주세요.
+      x-backend: "MobileBranchOptionController GET /app/api/v2/branches (로그인 필요 ·
+        List<BranchOptionResponse>: code, name, status, linkStatus, region) — 가입 단계 지점 시트 ·
+        체험 예약이 이것을 불러요 (api/onboarding.ts). 예전 공개 API PublicBranchController GET
+        /public/api/v1/branches 도 남아 있어요"
+      x-gap: phone(지점 대표 전화) 를 추가해 주세요 (체험 예약 확정의 [지점에 전화하기]). region 은 서버가
+        시 · 도 이름을 줄여 줘요 (서울 · 경기 · 충북 · 경남 …) — 앱 권역 칩(서울 · 경기 · 충청 · 경상)과 묶는 규칙은 앱이
+        맞춰요. linkStatus 는 내가 그 지점에 보낸 연동 요청 상태
       x-inventory: "#48"
       x-screens:
         - app/trial/index.tsx
         - app/onboarding/trial.tsx
         - components/onboarding/branch-sheet.tsx
         - components/onboarding/trial-form.tsx
-      x-app-code: data/account.ts BRANCHES · BRANCH_REGIONS (branch-sheet 가 씀)
-      security: []
+      x-app-code: api/onboarding.ts fetchBranches · data/account.ts BRANCH_REGIONS (branch-sheet 가 씀)
       responses:
         "200":
           description: OK
@@ -837,50 +960,114 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
       x-domain: core
-    servers:
-      &a1
-      - url: http://localhost:8080/public/api/v1
-        description: 로컬 백엔드 (공개 API · 로그인 없이)
-      - url: "{origin}/public/api/v1"
-        description: dev · stg · prod
-        variables:
-          origin:
-            default: http://localhost:8080
-  "/branches/{id}/board":
+  /me/branch-guides:
     get:
       tags:
         - 수강 · 결제
-      operationId: getBranchBoard
-      summary: 지점 안내 보드 (주소 · 운영 시간 · 고정 공지 · 주차 · 와이파이 · 협업 업체)
-      description: |
-        화면: components/my/branch-board.tsx (마이 '지점 안내' 카드 · 별표 항목 · 협업 업체 시트)
-        편집은 관리자 화면. 와이파이 비밀번호 · 계좌는 그 지점 활성 회원에게만 (아니면 403).
-      x-status: new
+      operationId: listMyBranchGuides
+      summary: 지점 안내 (내가 연동된 지점마다 주소 · 전화 · 운영 시간 · 주차 · 계좌 · 와이파이 · 매니저 공지)
+      description: |-
+        화면: components/my/branch-board.tsx (마이 '지점 안내' 카드)
+        내 앱 계정과 연동된 지점마다 한 줄 (지점 이름 순). 연동된 지점이 없으면 빈 배열.
+        편집은 지점 관리자 웹 설정 '지점 안내' (BranchGuideController).
+        협업 업체 · 별표 항목은 아직 없어요 (앱 목 데이터만).
+      x-status: existing
+      x-backend: MobileBranchGuideController GET /app/api/v2/me/branch-guides → List<BranchGuideResponse>
       x-inventory: A8
       x-screens:
         - components/my/branch-board.tsx
-      x-app-code: data/my.ts BR_BOARDS · BranchBoard · Partner
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: 지점 id (UUID)
-          schema:
-            type: string
-            format: uuid
+      x-app-code: api/branch-guide.ts fetchBranchGuides · MOCK_BRANCH_GUIDES
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BranchBoard"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                type: array
+                items:
+                  type: object
+                  required:
+                    - branchCode
+                    - branchName
+                  properties:
+                    branchCode:
+                      type: string
+                    branchName:
+                      type: string
+                    address:
+                      type:
+                        - string
+                        - 'null'
+                    addressDetail:
+                      type:
+                        - string
+                        - 'null'
+                    latitude:
+                      type:
+                        - number
+                        - 'null'
+                    longitude:
+                      type:
+                        - number
+                        - 'null'
+                    phone:
+                      type:
+                        - string
+                        - 'null'
+                    phoneHours:
+                      type:
+                        - string
+                        - 'null'
+                    openHours:
+                      type:
+                        - string
+                        - 'null'
+                    parking:
+                      type:
+                        - string
+                        - 'null'
+                    bankAccount:
+                      oneOf:
+                        - type: object
+                          properties:
+                            bankName:
+                              type: string
+                            accountNumber:
+                              type: string
+                            holder:
+                              type: string
+                            note:
+                              type:
+                                - string
+                                - 'null'
+                        - type: 'null'
+                    wifi:
+                      oneOf:
+                        - type: object
+                          properties:
+                            ssid:
+                              type: string
+                            password:
+                              type:
+                                - string
+                                - 'null'
+                        - type: 'null'
+                    managerNotice:
+                      oneOf:
+                        - type: object
+                          properties:
+                            content:
+                              type: string
+                            authorName:
+                              type:
+                                - string
+                                - 'null'
+                            updatedAt:
+                              type: string
+                              format: date-time
+                        - type: 'null'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: my
   /candidate-inquiries:
     post:
@@ -944,7 +1131,15 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
       x-domain: core
-    servers: *a1
+    servers:
+      &a1
+      - url: http://localhost:8080/public/api/v1
+        description: 로컬 백엔드 (공개 API · 로그인 없이)
+      - url: "{origin}/public/api/v1"
+        description: dev · stg · prod
+        variables:
+          origin:
+            default: http://localhost:8080
   /candidate-inquiries/options:
     get:
       tags:
@@ -1874,22 +2069,16 @@ paths:
         - 동아리
       operationId: listClubs
       summary: 동아리 목록 (카테고리 · 정렬 · 지역 · 지점)
-      description: >
-        화면: components/meet/club-list.tsx (번개 · 동아리 탭 아래 한 줄 목록) ·
-        app/club/[id].tsx 홈 '같은 카테고리 추천'
-
+      description: |
+        화면: components/meet/club-list.tsx (번개 · 동아리 탭 아래 한 줄 목록) · app/club/[id].tsx 홈 '같은 카테고리 추천'
         규칙: 정렬 rec(추천 · 서버 계산) · big(멤버 많은 순) · new(새로 생긴). 승인 대기(PENDING)는 만든 사람에게만 'NEW · 승인 대기'로.
       x-status: change
-      x-backend: MobileClubController GET /clubs →
-        MobileGroupListResponse<MobileClubSummaryResponse>{joined, recommended}
-      x-gap: >
-        1) category · region · branchCodes · sort · page 파라미터 추가 (지금은 필터 없이
-        joined/recommended 두 묶음)
-
+      x-backend: MobileClubController GET /clubs → MobileGroupListResponse<MobileClubSummaryResponse>{joined, recommended}
+      x-gap: |
+        1) category · region · branchCodes · sort · page 파라미터 추가 (지금은 필터 없이 joined/recommended 두 묶음)
         2) 동아리가 지점/지역에 묶여야 해요(지금 백엔드는 '전역') → branchName · region · lang 필드 추가
-
         3) 카드용: scheduleText('매주 수 20:00') · weekdays · maxMembers · joinPolicy · lastActivityAt('최근 대화') · joinedLast30Days · isNew · status · posterUrls 추가
-      x-inventory: "#63"
+      x-inventory: '#63'
       x-screens:
         - components/meet/club-list.tsx
         - components/meet/meet-tab.tsx
@@ -1907,8 +2096,8 @@ paths:
           in: query
           required: false
           schema:
-            $ref: "#/components/schemas/LoungeRegion"
-        - $ref: "#/components/parameters/LoungeBranchCodes"
+            $ref: '#/components/schemas/LoungeRegion'
+        - $ref: '#/components/parameters/LoungeBranchCodes'
         - name: sort
           in: query
           schema:
@@ -1918,45 +2107,38 @@ paths:
               - big
               - new
             default: rec
-        - $ref: "#/components/parameters/PageOneBased"
+        - $ref: '#/components/parameters/PageOneBased'
         - name: size
           in: query
           schema:
             type: integer
             default: 20
       responses:
-        "200":
+        '200':
           description: OK (기존 joined · recommended 모양 유지 + 필터)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClubList"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/ClubList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: lounge
     post:
       tags:
         - 동아리
       operationId: createClub
       summary: 동아리 만들기 (승인 요청)
-      description: >
+      description: |
         화면: app/club/new.tsx [승인 요청하기] → '승인을 요청했어요 · 매니저가 확인하면 알려 드려요'
-
         규칙: PENDING 으로 생겨요. 매니저 승인은 콘솔(apphub) 몫 — 앱에는 승인 화면이 없어요. 포스터는 POST /uploads/images/club-photo 로 먼저(첫 장 = imagePath).
       x-status: change
-      x-backend: MobileClubController POST /clubs (MobileClubCreateRequest) → 201
-        MobileClubDetailResponse
-      x-gap: >
-        앱 폼 → 추가 필드: lang(언어) · region · branchCode(내 지점) · weekdays[] ·
-        meetTime('몇 시에 모여요?' 07:00~22:30 · 30분 간격) · joinPolicy(누구나=OPEN 바로 가입 /
-        Lv.2 이상 · 수강생만=APPROVAL 신청)
-
+      x-backend: MobileClubController POST /clubs (MobileClubCreateRequest) → 201 MobileClubDetailResponse
+      x-gap: |-
+        앱 폼 → 추가 필드: lang(언어) · region · branchCode(내 지점) · weekdays[] · meetTime('몇 시에 모여요?' 07:00~22:30 · 30분 간격) · joinPolicy(누구나=OPEN 바로 가입 / Lv.2 이상 · 수강생만=APPROVAL 신청)
         · chatNotice('채팅방 공지 (가입하면 보여요)') · posterPaths[](여러 장).
-
         앱 폼에 없는 백엔드 필수값: description → 앱이 chatNotice 를 description 으로 보내거나 선택으로 바꿔 주세요(열린 질문).
-
-        maxMembers 는 앱 '최대 인원 · 나 포함' 스테퍼 값(3~40, 기본 12) — 서버도 3~40 검증. scheduleText 는 앱이 '매주 수 · 금 20:00' 꼴로 만들어 보내요(표시용).
-      x-inventory: "#63"
+        maxMembers 는 앱 '최대 인원 · 나 포함' 스테퍼 값(3~40, 기본 12) — 서버도 3~40 검증. scheduleText 는 앱이 '매주 수 · 금 20:00' 꼴로 만들어 보내요(표시용). / 만들기는 신청이에요 (2026-11): 만들면 PENDING(검토 중, 1~3일) → 관리자 웹이 승인(만든 사람이 HOST) · 거절(이유). 호스트 · 코호스트 권한은 운영 중(승인 · 안 닫힘)일 때만. 거절된 신청은 같은 내용으로 다시 보내기 · 지우기 가능 (GET /me/club-applications)
+      x-inventory: '#63'
       x-screens:
         - app/club/new.tsx
       x-app-code: meet-store.ts addMyClub
@@ -1965,20 +2147,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ClubCreateRequest"
+              $ref: '#/components/schemas/ClubCreateRequest'
       responses:
-        "201":
+        '201':
           description: 승인 대기로 만들었어요
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClubDetail"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/ClubDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
       x-domain: lounge
   "/clubs/{id}":
     get:
@@ -2340,35 +2522,28 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-domain: lounge
-  "/clubs/{id}/meetings":
+  /clubs/{id}/meetings:
     get:
       tags:
         - 동아리
       operationId: listClubMeetings
       summary: 정기 모임 (타임라인 4회 · 일정 목록 12주)
-      description: >
-        화면: components/meet/club/club-home.tsx 타임라인(upcoming=true&limit=4) ·
-        schedule.tsx 일정 목록 '일정 N · 더보기'(limit=12)
-
+      description: |
+        화면: components/meet/club/club-home.tsx 타임라인(upcoming=true&limit=4) · schedule.tsx 일정 목록 '일정 N · 더보기'(limit=12)
         규칙: 이른 일정부터(백엔드 그대로). 다음 회차 노랑은 첫 행. 상태 글씨(모집 중 · 마감 · 참석 완료)는 full · viewerRole 로.
       x-status: change
-      x-backend: MobileClubController GET /clubs/{id}/meetings?upcoming=&limit= →
-        List<MobileClubMeetingResponse>
-      x-gap: >
-        추가: sessionNo(N회차) · myBranchCount(내 지점 N명) · viewerWaitlisted ·
-        bring(준비물 — 지금은 memo 를 써도 돼요)
-
+      x-backend: MobileClubController GET /clubs/{id}/meetings?upcoming=&limit= → List<MobileClubMeetingResponse>
+      x-gap: |
+        추가: sessionNo(N회차) · myBranchCount(내 지점 N명) · viewerWaitlisted · bring(준비물 — 지금은 memo 를 써도 돼요)
         참여자(MobileParticipantResponse)에 branchName · oneLiner(그날 한마디) 추가
-
         정기 모임을 방장이 매번 만들어야 하는지, 요일(weekdays)로 서버가 자동으로 만드는지 결정 필요(열린 질문)
-      x-inventory: "#69"
+      x-inventory: '#69'
       x-screens:
         - components/meet/club/club-home.tsx
         - components/meet/club/schedule.tsx
-      x-app-code: model.ts clubSessions · sessionMembers · data/meet.ts SESSION_THEME
-        · BRING
+      x-app-code: model.ts clubSessions · sessionMembers · data/meet.ts SESSION_THEME · BRING
       parameters:
-        - $ref: "#/components/parameters/ClubId"
+        - $ref: '#/components/parameters/ClubId'
         - name: upcoming
           in: query
           schema:
@@ -2378,48 +2553,252 @@ paths:
           schema:
             type: integer
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ClubMeeting"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                  $ref: '#/components/schemas/ClubMeeting'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: lounge
-  "/clubs/{id}/meetings/{meetingId}":
+    post:
+      tags:
+        - 동아리
+      operationId: createClubMeeting
+      summary: 동아리 일정 만들기 (호스트 · 코호스트)
+      description: |-
+        화면: app/(app)/club/[id].tsx → components/meet/club/session-new.tsx (관리 · 정기 모임 [일정 만들기])
+        칸: 제목 · 날짜 · 시작 · 끝 시간 · 정원(인원 무관 가능) · 장소 · 메모. 만들면 멤버 모두에게 알림 (A34).
+        내가 만든 동아리는 만든 일정만 보여요 (예시 일정을 지어내지 않음).
+      x-status: change
+      x-backend: MobileClubController POST /clubs/{id}/meetings (MobileClubMeetingRequest → MobileClubMeetingResponse)
+      x-gap: endTime(끝 시간) 추가 · placeName · placeAddress @NotBlank → 선택 · capacity @Min(2) 에 "인원 무관"(null 또는 0) 허용
+        · 만들면 멤버 전원 알림. 코호스트(SUB_HOST)도 만들 수 있어야 해요
+      x-roles-note: 그 동아리 HOST · SUB_HOST(코호스트)만, 동아리가 운영 중(승인됨 · 안 닫힘)일 때만
+      x-screens:
+        - app/(app)/club/[id].tsx
+        - components/meet/club/session-new.tsx
+        - components/meet/club/session-sheet.tsx
+      x-app-code: components/meet/meet-store.ts addSched · ClubSched · components/meet/model.ts clubSessions(made)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topic
+                - meetDate
+                - meetTime
+              properties:
+                topic:
+                  type: string
+                  maxLength: 40
+                  description: 일정 제목
+                meetDate:
+                  type: string
+                  format: date
+                meetTime:
+                  type: string
+                  pattern: ^\d{2}:\d{2}$
+                  example: '14:00'
+                endTime:
+                  type:
+                    - string
+                    - 'null'
+                  description: (추가) 끝 시간 HH:mm — 앱 일정 만들기에 있어요
+                placeName:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 140
+                placeAddress:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 200
+                latitude:
+                  type:
+                    - number
+                    - 'null'
+                longitude:
+                  type:
+                    - number
+                    - 'null'
+                capacity:
+                  type:
+                    - integer
+                    - 'null'
+                  description: 정원 (앱은 0 = 인원 무관)
+                fee:
+                  type:
+                    - integer
+                    - 'null'
+                  minimum: 0
+                memo:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 500
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubMeeting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      x-domain: lounge
+  /clubs/{id}/meetings/{meetingId}:
     get:
       tags:
         - 동아리
       operationId: getClubMeeting
       summary: 정기 모임 회차 상세
-      description: >
-        화면: components/meet/club/session-sheet.tsx (D-day · 회차 주제 · 일시 · 장소 + 복사
-        · 인원 · 준비물 · 참석 멤버 인사말)
-
+      description: |
+        화면: components/meet/club/session-sheet.tsx (D-day · 회차 주제 · 일시 · 장소 + 복사 · 인원 · 준비물 · 참석 멤버 인사말)
         버튼: viewerRole OUTSIDER=[가입하고 참석하기] · ELIGIBLE=[참석하기 · 남은 자리] · MEMBER=[참석 취소] · full=[빈자리 알림]
       x-status: change
-      x-backend: MobileClubController GET /clubs/{id}/meetings/{meetingId} →
-        MobileClubMeetingResponse
+      x-backend: MobileClubController GET /clubs/{id}/meetings/{meetingId} → MobileClubMeetingResponse
       x-gap: listClubMeetings 와 같은 추가 필드
-      x-inventory: "#69"
+      x-inventory: '#69'
       x-screens:
         - components/meet/club/session-sheet.tsx
       x-app-code: model.ts clubSessions · sessionMembers
       parameters:
-        - $ref: "#/components/parameters/ClubId"
-        - $ref: "#/components/parameters/ClubMeetingId"
+        - $ref: '#/components/parameters/ClubId'
+        - $ref: '#/components/parameters/ClubMeetingId'
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClubMeeting"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: '#/components/schemas/ClubMeeting'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-domain: lounge
+    put:
+      tags:
+        - 동아리
+      operationId: updateClubMeeting
+      summary: 동아리 일정 고치기 (호스트 · 코호스트)
+      x-status: change
+      x-backend: MobileClubController PUT /clubs/{id}/meetings/{meetingId} (MobileClubMeetingRequest)
+      x-gap: createClubMeeting 과 같아요 (endTime · 장소 선택 · 인원 무관)
+      x-roles-note: 그 동아리 HOST · SUB_HOST(코호스트)만, 동아리가 운영 중(승인됨 · 안 닫힘)일 때만
+      x-screens:
+        - components/meet/club/session-sheet.tsx
+      parameters:
+        - $ref: '#/components/parameters/ClubId'
+        - $ref: '#/components/parameters/ClubMeetingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topic
+                - meetDate
+                - meetTime
+              properties:
+                topic:
+                  type: string
+                  maxLength: 40
+                  description: 일정 제목
+                meetDate:
+                  type: string
+                  format: date
+                meetTime:
+                  type: string
+                  pattern: ^\d{2}:\d{2}$
+                  example: '14:00'
+                endTime:
+                  type:
+                    - string
+                    - 'null'
+                  description: (추가) 끝 시간 HH:mm — 앱 일정 만들기에 있어요
+                placeName:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 140
+                placeAddress:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 200
+                latitude:
+                  type:
+                    - number
+                    - 'null'
+                longitude:
+                  type:
+                    - number
+                    - 'null'
+                capacity:
+                  type:
+                    - integer
+                    - 'null'
+                  description: 정원 (앱은 0 = 인원 무관)
+                fee:
+                  type:
+                    - integer
+                    - 'null'
+                  minimum: 0
+                memo:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 500
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubMeeting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-domain: lounge
+    delete:
+      tags:
+        - 동아리
+      operationId: deleteClubMeeting
+      summary: 동아리 일정 취소 (호스트 · 코호스트)
+      description: '화면: components/meet/club/session-sheet.tsx [일정 취소]. 참석하기로 한 멤버에게 알림.'
+      x-status: change
+      x-backend: MobileClubController DELETE /clubs/{id}/meetings/{meetingId}
+      x-gap: 참석 멤버 알림 · 코호스트도 취소 가능
+      x-roles-note: 그 동아리 HOST · SUB_HOST(코호스트)만, 동아리가 운영 중(승인됨 · 안 닫힘)일 때만
+      x-screens:
+        - components/meet/club/session-sheet.tsx
+      x-app-code: components/meet/meet-store.ts removeSched
+      parameters:
+        - $ref: '#/components/parameters/ClubId'
+        - $ref: '#/components/parameters/ClubMeetingId'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
       x-domain: lounge
   "/clubs/{id}/meetings/{meetingId}/participants":
     post:
@@ -4271,27 +4650,56 @@ paths:
         - 설정 · 지원
       operationId: listFaq
       summary: 자주 묻는 질문
-      description: >
-        화면: app/me/support.tsx (찾기 칸 · 카테고리 칩 · 펼치는 답). 찾기 · 칩 거르기는 앱이 해요 (개수
-        적음).
-
+      description: |
+        화면: app/me/support.tsx (찾기 칸 · 카테고리 칩 · 펼치는 답). 찾기 · 칩 거르기는 앱이 해요 (개수 적음).
         카테고리: 수업 · 예약 / 이용권 · 결제 / 레벨 · 교재 / 라운지 / 계정
-      x-status: new
-      x-inventory: "#93"
+      x-status: existing
+      x-backend: MobileFaqController GET /app/api/v2/faq → MobileFaqResponse {categories, items} (분류는 app-hub 마스터데이터)
+      x-inventory: '#93'
       x-screens:
         - app/me/support.tsx
-      x-app-code: data/account.ts FAQ · FAQ_CATS
+      x-app-code: api/support.ts fetchFaq · filterFaqItems
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/FaqItem"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                type: object
+                required:
+                  - categories
+                  - items
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - code
+                        - label
+                      properties:
+                        code:
+                          type: string
+                        label:
+                          type: string
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        categoryCode:
+                          type: string
+                        categoryLabel:
+                          type: string
+                        question:
+                          type: string
+                        answer:
+                          type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: my
   /hangouts:
     get:
@@ -4885,20 +5293,20 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: core
-  /home/popups:
+  /popups:
     get:
       tags:
         - 홈
       operationId: listLaunchPopups
       summary: 앱 시작 팝업 (오늘 보여 줄 것만)
-      description: >
-        화면: components/home/launch-popup.tsx (홈 진입 0.9초 뒤 · 여러 개면 ‹ › · [자세히 보기]
-        → href)
-
+      description: |
+        화면: components/home/launch-popup.tsx (홈 진입 0.9초 뒤 · 여러 개면 ‹ › · [자세히 보기] → href)
         규칙: 본사 관리자가 올린 팝업 중 지금 기간 안 · 나(지점 · 역할) 대상인 것만, 순서대로. 서버가 기간 · 대상을 걸러요.
-
         '오늘은 그만 보기'는 기기에만 저장해요(API 없음).
-      x-status: new
+      x-status: existing
+      x-backend: MobilePopupController GET /app/api/v2/popups → List<MobilePopupResponse {id, design, kicker, title,
+        sub, background, imageUrl, ctaLabel, resourceType, resourceId, publishUntil}}> (app-hub 팝업 관리 /apphub/popups
+        에서 올려요. [자세히 보기] 는 resourceType → resourceId 로 이동, 지금은 공지사항)
       x-inventory: A1
       x-screens:
         - app/(tabs)/index.tsx
@@ -4908,16 +5316,16 @@ paths:
         - {}
         - bearerAuth: []
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/LaunchPopup"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                  $ref: '#/components/schemas/LaunchPopup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: core
   /home/recommendations:
     get:
@@ -5680,33 +6088,23 @@ paths:
         - 인증 · 시작
       operationId: getMe
       summary: 나 — 신원 · 역할 · 지점 · 온보딩 필요 여부
-      description: >
-        화면: app/_layout.tsx (스플래시 동안 미리 받기 · MeSync 가 state/me 에 넣음) ·
-        app/(tabs)/index.tsx (인사 'Hey {nickname}' · 앱 구독자면 오늘의 목표 카드, 스터디 회원이면
-        출석 카드) · 다른 모든 화면이 useMe 로 읽음
-
+      description: |
+        화면: app/_layout.tsx (스플래시 동안 미리 받기 · MeSync 가 state/me 에 넣음) · app/(tabs)/index.tsx (인사 'Hey {nickname}' · 앱 구독자면 오늘의 목표 카드, 스터디 회원이면 출석 카드) · 다른 모든 화면이 useMe 로 읽음
         언제: 부팅 · 로그인 직후 · 앱 복귀
-
         규칙: needsOnboarding 이 true 면 가입 단계(약관 동의 → 닉네임 → 캐릭터 → 지점 회원?)로 보내요. 기준은 '닉네임 없음'이 아니라 가입 단계를 끝낸 시각 onboardedAt 이 없는지예요 (POST /me/onboarding 이 채워요).
-
         권한(state/access.ts userKind): 지점이 연동해 주기 전에는 모두 비회원 권한(role guest)이에요. 앱은 role · linkStatus · trialBooking · plan 으로 홈 카드(출석 · 잠긴 라벤더 · 체험 D-n · 둘러보기)와 잠금을 정해요.
-
         서버도 회원 전용 API(출석 · 내 스터디 · 이용권 · 프로 노트 · 라운지 글쓰기/참여 · 이벤트 참여 등)에서 비회원이면 403 member_only 로 막아야 해요 (앱 잠금은 보여 주기일 뿐).
-
         스파크 · 이번 주 포인트 · 연속 학습 · 모임/글 수는 여기 말고 my · learn 도메인 요약 API 몫이에요.
-
         수정(닉네임 · 소개)은 my 도메인의 PATCH /me/profile 을 써요 (앱 api/me.ts patchMe 의 PATCH /me 는 버려요). 지점 변경은 지점 이동 신청(my 도메인).
       x-status: change
-      x-backend: "MobileMeController GET /me (MobileMeResponse: code, host,
-        needsOnboarding, memberAccessLevel)"
-      x-gap: "nickname, role(guest|member|pro|manager|hq — 지점 연동 전 guest · STAFF
-        멤버십 강사면 pro(예전 leader) · 지점 관리자 manager · 본사 운영자 hq), plan(study|app), primaryBranch(BranchRef), branches[],
-        studyLang, levels[] 을 추가해 주세요. 지금 앱 Me 타입의
-        id/name/branch/role/plan/lang/level/lvs 에 해당해요. 가입 단계 뒤로 더:
-        linkStatus(none|pending|linked|rejected — 가장 최근 지점 연동 요청 상태),
-        linkRequestId, trialBooking(앱에서 한 체험 예약 · 없으면 null). needsOnboarding 은
-        onboardedAt 없음으로 바꿔 주세요."
-      x-inventory: "#3"
+      x-backend: 'MobileMeV2Controller GET /app/api/v2/me (MobileMeResponse: code, host, needsOnboarding, memberAccessLevel
+        — v1 MobileMeController 와 같은 값, MobileMeReadService)'
+      x-gap: 'nickname, role(guest|member|pro|manager|hq — 지점 연동 전 guest · STAFF 멤버십 강사면 pro(예전 leader) · 지점 관리자 manager
+        · 본사 운영자 hq), plan(study|app), primaryBranch(BranchRef), branches[], studyLang, levels[] 을 추가해 주세요. 지금 앱 Me
+        타입의 id/name/branch/role/plan/lang/level/lvs 에 해당해요. 가입 단계 뒤로 더: linkStatus(none|pending|linked|rejected —
+        가장 최근 지점 연동 요청 상태), linkRequestId, trialBooking(앱에서 한 체험 예약 · 없으면 null). needsOnboarding 은 onboardedAt 없음으로
+        바꿔 주세요.'
+      x-inventory: '#3'
       x-screens:
         - app/_layout.tsx
         - app/(tabs)/index.tsx
@@ -5720,28 +6118,26 @@ paths:
         - app/me/settings/index.tsx
       x-app-code: api/me.ts fetchMe · state/me.ts Me · api/provider.tsx MeSync
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Me"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                $ref: '#/components/schemas/Me'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: core
     delete:
       tags:
         - 마이
       operationId: deleteMyAccount
       summary: 회원 탈퇴
-      description: >
+      description: |
         화면: app/me/delete.tsx (이유 고르기 → 확인 → 로그인 화면으로)
-
         규칙: 이용 중인 멤버십 · 결제 기록은 법정 보관 기간만큼 남기고 계정 · 프로필 · 라운지 글 작성자 표시는 지워요(서버 정책).
-
         error: active_membership_exists (이용 중 멤버십이 있어 막아야 한다면 — 정책 결정 필요)
       x-status: new
-      x-inventory: "#6"
+      x-inventory: '#6'
       x-screens:
         - app/me/delete.tsx
       x-app-code: api/me.ts deleteAccount · data/account.ts LEAVE_REASONS
@@ -5754,12 +6150,12 @@ paths:
             type: string
             example: 앱을 잘 안 써요,알림이 너무 많아요
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "409":
-          $ref: "#/components/responses/Conflict"
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
       x-domain: my
   /me/abroad-profile:
     put:
@@ -6187,77 +6583,147 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
+  /me/club-applications:
+    get:
+      tags:
+        - 동아리
+      operationId: listMyClubApplications
+      summary: 내 동아리 만들기 신청 (검토 중 · 거절 · 승인) · 호스트 기록
+      description: |-
+        화면: components/meet/club-apply.tsx (내 신청 카드) · app/(app)/club/new.tsx · 마이 · 프로필 호스트/코호스트 뱃지
+        운영 중인 동아리가 0개가 되면 호스트(코호스트) 뱃지가 없어져요. 닫힌 동아리도 기록(hostLog)은 남아요.
+      x-status: new
+      x-screens:
+        - components/meet/club-apply.tsx
+        - app/(app)/club/new.tsx
+      x-app-code: components/meet/meet-store.ts myClubs(wait · rejected · closed) · hostLog · decideMyClub · resubmitMyClub
+        · closeMyClub · data/host-rules.ts CLUB_RULE
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - rows
+                properties:
+                  rows:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - clubId
+                        - name
+                        - status
+                      properties:
+                        clubId:
+                          type: string
+                        name:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - PENDING
+                            - APPROVED
+                            - REJECTED
+                            - CLOSED
+                        role:
+                          type: string
+                          enum:
+                            - HOST
+                            - SUB_HOST
+                        rejectionReason:
+                          type:
+                            - string
+                            - 'null'
+                        requestedAt:
+                          type: string
+                          format: date-time
+                        decidedAt:
+                          type:
+                            - string
+                            - 'null'
+                          format: date-time
+                        closedAt:
+                          type:
+                            - string
+                            - 'null'
+                          format: date-time
+                        closedBy:
+                          type:
+                            - string
+                            - 'null'
+                          enum:
+                            - host
+                            - admin
+                            - null
+                  nextCursor:
+                    type:
+                      - string
+                      - 'null'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: meet
   /me/branch-link-requests:
     get:
       tags:
         - 가입 · 온보딩
       operationId: listMyBranchLinkRequests
       summary: 내 지점 연동 요청 (최신 순 · 못 찾음 이유 · 보낸 정보 · 지점 전화)
-      description: >
-        화면: app/link-rejected.tsx ('○○점에서 회원 정보를 찾지 못했어요' · 지점에서 남긴 말 · 보낸 정보 ·
-        [고쳐서 다시 요청하기] 칸 미리 채우기 · [○○점에 전화하기]) · app/onboarding/link-wait.tsx (다시
-        열었을 때 요청 시각)
-
+      description: |
+        화면: app/link-rejected.tsx ('○○점에서 회원 정보를 찾지 못했어요' · 지점에서 남긴 말 · 보낸 정보 · [고쳐서 다시 요청하기] 칸 미리 채우기 · [○○점에 전화하기]) · app/onboarding/link-wait.tsx (다시 열었을 때 요청 시각)
         언제: 못 찾음 알림(BRANCH_LINK_REJECTED)을 누르거나 홈 '다시 요청하기' · 토스트 [다시 요청] 으로 들어올 때
-
         규칙: 내 요청만, 최신 순. GET /me linkRequestId 가 가장 최근 것. 고쳐서 다시 요청하기는 같은 지점으로 POST /me/branch-link-requests 새로 (못 찾음 뒤라 막지 않아요).
-
         참고: 백엔드에 GET /me/inquiries/{id}?type=BRANCH_LINK (MobileInquiryController · 상태 · note · rejectionReason) 가 있어요. 거기에 보낸 이름 · 휴대폰 · 지점 전화만 더해서 써도 돼요 — 그러면 이 API 는 없어도 돼요.
-
         요청 취소(A23 DELETE)는 앱에 버튼이 없어서 넣지 않았어요 (기다리는 화면에 '요청 취소'를 두지 않기로 함).
-      x-status: new
+      x-status: existing
+      x-backend: MobileBranchLinkRequestV2Controller GET /app/api/v2/me/branch-link-requests → List<BranchLinkRequestV2Response
+        {id, branchCode, branchName, status, realName, phone, rejectionReason, createdAt, decidedAt, …}>
       x-inventory: A23
       x-screens:
         - app/link-rejected.tsx
         - app/onboarding/link-wait.tsx
-      x-app-code: state/link-events.ts REJECT_NOTE_MOCK · BRANCH_TEL_MOCK ·
-        state/onboarding.ts branch · realName · phone
+      x-app-code: api/branch-link.ts fetchMyLinkRequests
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/BranchLinkRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                  $ref: '#/components/schemas/BranchLinkRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: onboarding
     post:
       tags:
         - 수강 · 결제
       operationId: createBranchLinkRequest
       summary: 지점 연동 요청 보내기 (지점이 전산 회원과 맞춰 연동해요)
-      description: >
-        화면: 가입 단계 app/onboarding/link.tsx [연동 요청 보내기] →
-        app/onboarding/link-wait.tsx ('○○점에 연동을 요청했어요!') · 못 찾음 뒤
-        app/link-rejected.tsx [고쳐서 다시 요청하기] → 같은 화면 · 설정 '내 지점' 시트 [저장하기] (새로 고른
-        지점마다 한 번씩, 토스트 '매니저가 확인하면 바뀌어요')
-
-        칸: 지점(필수) · 이름(필수, 지점에 등록한 이름 2~20자 · 앱 닉네임 아님) · 휴대폰(필수, 로그인 때 받은 번호를 미리 채움) · [필수] 고른 지점에 이름 · 휴대폰 보내기 동의.
-
-        규칙: 지점마다 기다리는 요청(PENDING)은 하나만 (error: duplicate_resource). 못 찾음(REJECTED) 뒤에는 다시 보낼 수 있어요. 최대 2곳 (error: illegal_operation).
-
+      description: |
+        화면: 가입 단계 app/onboarding/link.tsx [연동 요청 보내기] → app/onboarding/link-wait.tsx ('○○점에 연동을 요청했어요!') · 못 찾음 뒤 app/link-rejected.tsx [고쳐서 다시 요청하기] → 같은 화면 · 설정 '내 지점' 시트 [저장하기] (새로 고른 지점마다 한 번씩, 토스트 '매니저가 확인하면 바뀌어요')
+        칸: 지점(필수) · 이름(필수, 지점에 등록한 이름 2~20자 · 앱 닉네임 아님) · 휴대폰(필수, 로그인 때 받은 번호를 미리 채움). 보내기 동의는 따로 받지 않아요 (요청을 보내는 것 자체가 동의).
+        규칙: 지점마다 기다리는 요청(PENDING)은 하나만 (error: duplicate_resource). 못 찾음(REJECTED) 뒤에는 다시 보낼 수 있어요. 지점 수 제한은 없어요.
         보내면 GET /me linkStatus = pending · role 은 guest 그대로. 지점 매니저가 관리자 웹(/{branchCode}/admin/branch-link-requests)에서 approve · reject 하면 알림(BRANCH_LINK_APPROVED · BRANCH_LINK_REJECTED) + 푸시.
-
         24시간 안에 처리 안 되면 매니저에게 한 번 더 알림 (서버 몫 · Q-O8).
-
         앱은 요청사항(note)을 받지 않아요 → note 필수를 풀어 주세요. 서버가 name · phone 으로 지점 전산 회원 후보를 미리 찾아 두면 매니저가 빨라요(Q-O7).
-      x-status: change
+      x-status: existing
+      x-backend: MobileBranchLinkRequestV2Controller POST /app/api/v2/me/branch-link-requests (BranchLinkCreateRequest
+        {branchCode, realName 2~20자, phone} → BranchLinkRequestV2Response) — 가입을 마친 뒤 앱 안에서 보내는 요청 (가입 단계 안에서는 POST
+        /onboarding member)
       x-demo-blocked: true
       x-roles-note: pro · manager · hq 는 403 demo_account (보여 주기 모드)
-      x-backend: MobileBranchLinkRequestController POST /me/branch-link-requests
-        (MobileBranchLinkCreateRequest)
-      x-gap: name(지점에 등록한 이름 2~20자) · phone · consent(true 필수, 동의 시각 consentAt 저장) 를
-        추가하고 note @NotBlank → 선택값으로. 응답에 name · phone 도 실어 주세요. 지점 최대 2곳 검증 · 지점
-        빼기 요청은 없음(열린 질문)
-      x-inventory: "#4 · A23"
+      x-inventory: '#4 · A23'
       x-screens:
         - app/onboarding/link.tsx
         - app/link-rejected.tsx
         - app/me/settings/index.tsx
-      x-app-code: components/account/store.ts updateSettings({branches})
+      x-app-code: api/branch-link.ts createLinkRequest
       requestBody:
         required: true
         content:
@@ -6266,47 +6732,153 @@ paths:
               type: object
               required:
                 - branchCode
-                - name
+                - realName
                 - phone
-                - consent
               properties:
                 branchCode:
                   type: string
                   example: hanam
-                name:
+                realName:
                   type: string
                   minLength: 2
                   maxLength: 20
-                  description: (추가) 지점에 등록한 이름 — 앱 닉네임 아님
+                  description: 지점에 등록한 이름 — 앱 닉네임 아님
                   example: 김서현
                 phone:
                   type: string
-                  description: (추가) 휴대폰 (앱은 010-1234-5678 꼴로 보내요)
+                  pattern: ^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$
                   example: 010-1234-5678
-                consent:
-                  type: boolean
-                  const: true
-                  description: (추가) [필수] 고른 지점에 이름 · 휴대폰 번호 보내기 동의
-                note:
-                  type:
-                    - string
-                    - "null"
-                  maxLength: 300
-                  description: 요청사항 (지금 백엔드는 필수 → 선택으로. 앱은 안 보내요)
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BranchLinkRequest"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "409":
-          $ref: "#/components/responses/Conflict"
+                $ref: '#/components/schemas/BranchLinkRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
       x-domain: my
+  /me/branch-link-requests/{id}/acknowledge:
+    post:
+      tags:
+        - 수강 · 결제
+      operationId: acknowledgeBranchLinkRequest
+      summary: 못 찾음(반려) 확인했어요 — 홈 반려 팝업 다시 안 띄우기
+      description: |-
+        화면: components/home/link-rejected-popup.tsx [확인] · app/link-rejected.tsx
+        반려(REJECTED)된 내 요청을 확인했다고 표시해요. 그 뒤로 GET /me/branch-summary rejectedLinks 에서 빠져요.
+      x-status: existing
+      x-backend: MobileBranchLinkRequestV2Controller POST /app/api/v2/me/branch-link-requests/{id}/acknowledge (204)
+      x-screens:
+        - components/home/link-rejected-popup.tsx
+      x-app-code: api/branch-link.ts acknowledgeLinkRequest · api/use-acknowledge-link-request.ts
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-domain: my
+  /me/branch-summary:
+    get:
+      tags:
+        - 수강 · 결제
+      operationId: getMyBranchSummary
+      summary: 내 지점 진행 상황 요약 — 연동 대기 · 반려 · 다가오는 체험 예약
+      description: |-
+        화면: 홈 (components/home/home-card.tsx 연동 대기 카드 · link-rejected-popup.tsx 반려 팝업) · components/common/member-lock.tsx · upsell-sheet.tsx (잠금 문구)
+        앱 회원 유형은 회원 · 비회원 둘뿐이고 (2026-11), 연동 대기 · 반려 · 체험 예약은 이 요약으로 봐요.
+      x-status: existing
+      x-backend: MobileBranchSummaryController GET /app/api/v2/me/branch-summary → BranchSummaryResponse (BFF)
+      x-screens:
+        - components/home/home-card.tsx
+        - components/home/link-rejected-popup.tsx
+        - components/common/member-lock.tsx
+      x-app-code: api/branch-summary.ts fetchBranchSummary · api/use-branch-progress.ts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - pendingLinks
+                  - rejectedLinks
+                  - upcomingTrials
+                properties:
+                  pendingLinks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        branchCode:
+                          type: string
+                        branchName:
+                          type: string
+                        requestedAt:
+                          type: string
+                          format: date-time
+                  rejectedLinks:
+                    type: array
+                    description: 확인(acknowledge) 안 한 반려만
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        branchCode:
+                          type: string
+                        branchName:
+                          type: string
+                        rejectionReason:
+                          type:
+                            - string
+                            - 'null'
+                        decidedAt:
+                          type: string
+                          format: date-time
+                  upcomingTrials:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        branchCode:
+                          type: string
+                        branchName:
+                          type: string
+                        branchPhone:
+                          type:
+                            - string
+                            - 'null'
+                        languageCode:
+                          type: string
+                        languageLabel:
+                          type: string
+                        date:
+                          type: string
+                          format: date
+                        time:
+                          type: string
+                          pattern: ^\d{2}:\d{2}$
+                          example: '14:00'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: core
   /me/branch-link-requests/branches:
     get:
       tags:
@@ -6314,7 +6886,7 @@ paths:
       operationId: listLinkableBranches
       summary: 내 지점 고르기 · 지점 연동 요청 지점 선택지
       description: >
-        화면: 설정 '내 지점' 시트 (권역별 체크 · 최대 2곳) · 가입 단계 지점 연동
+        화면: 설정 '내 지점' 시트 (권역별 체크) · 가입 단계 지점 연동
         요청(app/onboarding/link.tsx)의 지점 목록
         시트(components/onboarding/branch-sheet.tsx)
 
@@ -6911,31 +7483,160 @@ paths:
   /me/inquiries:
     get:
       tags:
-        - 수강 · 결제
-      operationId: listMyRequests
-      summary: 내 신청 내역 (연기 · 지점 연동 · 팀 변경 · 지점 이동)
-      description: >
-        백엔드 이름은 '내 문의'지만 실제로는 신청 내역이에요. 앱의 1:1 문의(질문 · 답)는 별개 →
-        /me/support-inquiries.
-
-        화면: my-study-card.tsx 대기 카드(PENDING 하나) · 설정 '내 지점' 변경 요청 상태
+        - 설정 · 지원
+      operationId: listMySupportInquiries
+      summary: 내 1:1 문의 (답변 대기 · 답변 완료)
+      description: |
+        화면: support.tsx ?view=ask '내 문의' (펼쳐서 답 보기). 최근 순.
+        경로를 /me/inquiries 로 하지 않은 이유: 백엔드 /me/inquiries 는 이미 '신청 내역'(연기 · 지점 연동 등)이에요.
       x-status: existing
-      x-backend: MobileInquiryController GET /me/inquiries → List<MobileInquiryResponse>
+      x-backend: MobileUserInquiryController GET /app/api/v2/me/inquiries → List<MobileUserInquiryResponse> (최신 순
+        · 페이지 없음)
+      x-inventory: '#94'
       x-screens:
-        - components/account/my-study-card.tsx
-        - app/me/settings/index.tsx
-      x-app-code: components/account/store.ts useChangeRequest
+        - app/me/support.tsx
+      x-app-code: api/support.ts fetchMyInquiries
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/MyRequestItem"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                  type: object
+                  required:
+                    - id
+                    - content
+                    - status
+                    - createdAt
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    categoryCode:
+                      type:
+                        - string
+                        - 'null'
+                    categoryLabel:
+                      type:
+                        - string
+                        - 'null'
+                    title:
+                      type:
+                        - string
+                        - 'null'
+                    content:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - PENDING
+                        - ANSWERED
+                      description: 답변 대기 · 답변 완료 (UserInquiryStatus)
+                    answer:
+                      type:
+                        - string
+                        - 'null'
+                    createdAt:
+                      type: string
+                      format: date-time
+                    answeredAt:
+                      type:
+                        - string
+                        - 'null'
+                      format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: my
+    post:
+      tags:
+        - 설정 · 지원
+      operationId: createSupportInquiry
+      summary: 1:1 문의하기
+      description: |
+        화면: support.tsx '문의하기' (유형 · 내용). 결제 내역 [환불 문의] 는 type=payment 가 미리 골라져요.
+        답이 달리면 알림. 받는 곳(본사 · 내 지점)은 유형으로 서버가 정해요.
+        error: invalid_request (내용이 너무 짧음 · 앱 문구 '내용을 조금 더 적어 주세요')
+      x-status: existing
+      x-backend: MobileUserInquiryController POST /app/api/v2/me/inquiries (MobileUserInquiryCreateRequest) · 첫 답변이
+        달리면 알림
+      x-inventory: '#94'
+      x-screens:
+        - app/me/support.tsx
+        - app/me/payments.tsx
+      x-app-code: api/support.ts createInquiry · api/use-create-inquiry.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                categoryCode:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 30
+                  description: GET /faq categories 의 code (없으면 기타)
+                content:
+                  type: string
+                  minLength: 5
+                  maxLength: 2000
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - content
+                  - status
+                  - createdAt
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  categoryCode:
+                    type:
+                      - string
+                      - 'null'
+                  categoryLabel:
+                    type:
+                      - string
+                      - 'null'
+                  title:
+                    type:
+                      - string
+                      - 'null'
+                  content:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - PENDING
+                      - ANSWERED
+                    description: 답변 대기 · 답변 완료 (UserInquiryStatus)
+                  answer:
+                    type:
+                      - string
+                      - 'null'
+                  createdAt:
+                    type: string
+                    format: date-time
+                  answeredAt:
+                    type:
+                      - string
+                      - 'null'
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: my
   /me/level-change-requests:
     post:
@@ -7149,31 +7850,130 @@ paths:
         - 마이
       operationId: getMyPage
       summary: 마이 화면 집계 (프로필 · 캐릭터 · 숫자 4칸 · 팔로우 수 · 배지 미리보기)
-      description: >
+      description: |
         화면: app/(tabs)/my.tsx (MyHero · MyStats · BadgeGrid · 내 활동 개수)
-
         언제: 마이 탭 진입 · 꾸미기 · 랭킹 · 표현함에서 돌아올 때
-
         규칙: 숫자는 모두 서버가 계산 — 연속 학습(오늘 퀘스트 1개 이상이면 이어짐) · 이번 주 랭킹(월요일 0시 KST 기준) · 참여 중인 모임(번개 + 동아리) · 받은 배지 수.
-      x-status: change
-      x-backend: MyPageController GET /me/mypage → MyPageResponse {profile, joinedClubs}
-      x-gap: summary(숫자) · avatar(꾸민 모습) · badges(미리보기 4개) 추가
-      x-inventory: "#32"
+      x-status: existing
+      x-backend: MobileMyPageV2Controller GET /app/api/v2/me/mypage → MyPageV2Response {avatar, sparks, follow, stats,
+        ranking, badges, activity} (서버 집계)
+      x-inventory: '#32'
       x-screens:
         - app/(tabs)/my.tsx
         - components/my/my-hero.tsx
         - components/my/my-blocks.tsx
-      x-app-code: state/me.ts (streak · weekPoints · sparks · joinedMeets · savedMeets
-        · postCount) · data/my.ts MY_BADGES · rankPeople
+      x-app-code: api/my-page.ts fetchMyPage · api/use-my-page.ts
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MyPage"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                type: object
+                properties:
+                  avatar:
+                    type: object
+                    properties:
+                      palloloCode:
+                        type:
+                          - string
+                          - 'null'
+                  sparks:
+                    type:
+                      - integer
+                      - 'null'
+                  follow:
+                    type: object
+                    properties:
+                      following:
+                        type: integer
+                      followers:
+                        type: integer
+                  stats:
+                    type: object
+                    properties:
+                      streakDays:
+                        type:
+                          - integer
+                          - 'null'
+                      weekRank:
+                        type:
+                          - integer
+                          - 'null'
+                      joinedMeetCount:
+                        type: integer
+                      badgeCount:
+                        type:
+                          - integer
+                          - 'null'
+                  ranking:
+                    type: object
+                    properties:
+                      period:
+                        type: string
+                      weekStart:
+                        type: string
+                        format: date
+                      podium:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            rank:
+                              type: integer
+                            code:
+                              type: string
+                            displayName:
+                              type: string
+                            branchName:
+                              type:
+                                - string
+                                - 'null'
+                            points:
+                              type: integer
+                      me:
+                        type: object
+                        properties:
+                          rank:
+                            type:
+                              - integer
+                              - 'null'
+                          points:
+                            type: integer
+                  badges:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type:
+                            - string
+                            - 'null'
+                        icon:
+                          type:
+                            - string
+                            - 'null'
+                        earned:
+                          type: boolean
+                  activity:
+                    type: object
+                    properties:
+                      joinedMeetCount:
+                        type: integer
+                      savedMeetCount:
+                        type:
+                          - integer
+                          - 'null'
+                      postCount:
+                        type: integer
+                      savedExpressionCount:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: my
   "/me/mypage/{code}":
     get:
@@ -7347,36 +8147,18 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: core
-  /me/onboarding:
-    post:
+  /onboarding:
+    get:
       tags:
         - 가입 · 온보딩
-      operationId: completeOnboarding
-      summary: 가입 단계 끝내기 — 고른 길 · 캐릭터 몸 색 · 희망 언어 · 이유
-      description: >
-        화면: 가입 마지막 버튼 — app/onboarding/why.tsx [앱 둘러보기] ·
-        app/onboarding/link-wait.tsx [시작하기] · app/onboarding/trial-done.tsx [앱
-        둘러보기] (모두 state/onboarding.ts finishOnboarding → 홈)
-
-        순서: 약관(POST /me/consents) → 닉네임(PATCH /me/profile nickname) → 이것. 회원 길은 그 전에 POST /me/branch-link-requests, 체험 길은 POST /public/api/v1/candidate-inquiries.
-
-        규칙(서버가):
-
-        - onboardedAt 을 채워요 → GET /me needsOnboarding false · 로그인 응답 isNewMember false. 다음 로그인부터 가입 단계를 건너뛰어요.
-
-        - bodyColor 를 내 캐릭터 기본 몸 색으로 저장하고 가진 목록에 더해요 (가입 때 고른 색은 스파크를 받지 않아요 · 옷 · 소품은 마이 › 꾸미기 = PUT /me/avatar).
-
-        - role 은 guest 그대로 (지점이 연동하면 member). plan 은 study (앱 구독은 결제한 사람만).
-
-        - langs: 앱 구경은 여러 개(고른 순서 · 맨 앞이 홈 첫 언어 · 고른 언어마다 오늘의 목표 · 레슨), 체험은 하나, 회원은 비움(지점 전산에서 읽어 옴). 실력은 묻지 않아요(첫 AI 대화에서 맞춰요).
-
-        - reasons: 앱 구경은 첫 주제 고를 때, 체험은 상담 때 프로님 참고. 마이에서 바꿀 수 있어요.
-
-        - 스파크 +50 환영 보상은 Q-O9 (환영 화면을 어디에 끼울지) 정해지면.
-
-        이미 끝낸 계정이 또 보내면 값만 덮어써요 (200).
-      x-status: new
-      x-inventory: "#4 (PATCH /me 대신)"
+      operationId: getOnboardingInfo
+      summary: 가입 단계 준비 — 약관 · 미리 채울 값 · 닉네임 규칙 · 언어 선택지
+      description: |-
+        화면: app/onboarding/* 가입 단계 첫 화면들 (약관 → 닉네임 → 캐릭터 → 지점 회원?)
+        약관 목록(consents) · 카카오에서 받은 닉네임 · 이름 · 휴대폰(prefill) · 닉네임 길이(min · max) · 체험 · 앱 길의 언어 선택지를 한 번에 받아요.
+      x-status: existing
+      x-backend: MobileOnboardingController GET /app/api/v2/onboarding → OnboardingResponse {consents, prefill, nickname,
+        languages}
       x-screens:
         - app/onboarding/why.tsx
         - app/onboarding/link-wait.tsx
@@ -7384,25 +8166,236 @@ paths:
         - app/onboarding/character.tsx
         - app/onboarding/member.tsx
         - app/onboarding/langs.tsx
-      x-app-code: state/onboarding.ts finishOnboarding · Onboarding(path · color ·
-        langs · why) · state/avatar.ts setAvatarBody · state/me.ts updateMe
+      x-app-code: api/onboarding.ts fetchOnboardingInfo · api/use-onboarding.ts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consents:
+                    type: array
+                    items:
+                      type: object
+                      description: PublicConsentResponse
+                  prefill:
+                    type: object
+                    properties:
+                      nickname:
+                        type:
+                          - string
+                          - 'null'
+                      realName:
+                        type:
+                          - string
+                          - 'null'
+                      phone:
+                        type:
+                          - string
+                          - 'null'
+                  nickname:
+                    type: object
+                    properties:
+                      min:
+                        type: integer
+                      max:
+                        type: integer
+                  languages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                        label:
+                          type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: onboarding
+    post:
+      tags:
+        - 가입 · 온보딩
+      operationId: completeOnboarding
+      summary: 가입 단계 끝내기 — 고른 길 · 캐릭터 몸 색 · 희망 언어 · 이유
+      description: |-
+        화면: 가입 마지막 버튼 — app/onboarding/why.tsx [앱 둘러보기] · app/onboarding/link-wait.tsx [시작하기] · app/onboarding/trial-done.tsx [앱 둘러보기] (모두 state/onboarding.ts finishOnboarding → 홈)
+        순서: 약관(POST /me/consents) → 닉네임(PATCH /me/profile nickname) → 이것. 회원 길은 그 전에 POST /me/branch-link-requests, 체험 길은 POST /public/api/v1/candidate-inquiries.
+        규칙(서버가):
+        - onboardedAt 을 채워요 → GET /me needsOnboarding false · 로그인 응답 isNewMember false. 다음 로그인부터 가입 단계를 건너뛰어요.
+        - bodyColor 를 내 캐릭터 기본 몸 색으로 저장하고 가진 목록에 더해요 (가입 때 고른 색은 스파크를 받지 않아요 · 옷 · 소품은 마이 › 꾸미기 = PUT /me/avatar).
+        - role 은 guest 그대로 (지점이 연동하면 member). plan 은 study (앱 구독은 결제한 사람만).
+        - langs: 앱 구경은 여러 개(고른 순서 · 맨 앞이 홈 첫 언어 · 고른 언어마다 오늘의 목표 · 레슨), 체험은 하나, 회원은 비움(지점 전산에서 읽어 옴). 실력은 묻지 않아요(첫 AI 대화에서 맞춰요).
+        - reasons: 앱 구경은 첫 주제 고를 때, 체험은 상담 때 프로님 참고. 마이에서 바꿀 수 있어요.
+        - 스파크 +50 환영 보상은 Q-O9 (환영 화면을 어디에 끼울지) 정해지면.
+        이미 끝낸 계정이 또 보내면 값만 덮어써요 (200).
+
+        규칙(백엔드): path 에 맞는 블록(member · trial · app) 하나만 보내요 — 아니면 400.
+      x-status: existing
+      x-backend: MobileOnboardingController POST /app/api/v2/onboarding (OnboardingCompleteRequest → OnboardingCompleteResponse)
+      x-inventory: '#4 (PATCH /me 대신)'
+      x-screens:
+        - app/onboarding/why.tsx
+        - app/onboarding/link-wait.tsx
+        - app/onboarding/trial-done.tsx
+        - app/onboarding/character.tsx
+        - app/onboarding/member.tsx
+        - app/onboarding/langs.tsx
+      x-app-code: api/onboarding.ts submitOnboarding · api/use-onboarding.ts · state/onboarding.ts
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OnboardingCompleteRequest"
+              type: object
+              required:
+                - consents
+                - nickname
+                - palloloCode
+                - path
+              properties:
+                consents:
+                  type: array
+                  maxItems: 30
+                  description: GET /onboarding consents 에 대한 답 (ConsentAnswerRequest)
+                  items:
+                    type: object
+                nickname:
+                  type: string
+                  minLength: 2
+                  maxLength: 10
+                  description: 2~10자 한글 · 영문 · 숫자
+                palloloCode:
+                  type: string
+                  maxLength: 40
+                  description: 고른 팔로로(캐릭터 몸) — GET /asset-catalog pallolos 의 code
+                path:
+                  type: string
+                  enum:
+                    - MEMBER
+                    - TRIAL
+                    - APP
+                member:
+                  description: path=MEMBER 일 때만 — 지점 연동 요청
+                  oneOf:
+                    - type: object
+                      required:
+                        - branchCode
+                        - realName
+                        - phone
+                      properties:
+                        branchCode:
+                          type: string
+                          maxLength: 20
+                        realName:
+                          type: string
+                          maxLength: 50
+                        phone:
+                          type: string
+                          pattern: ^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$
+                          example: 010-1234-5678
+                    - type: 'null'
+                trial:
+                  description: path=TRIAL 일 때만 — 체험 예약
+                  oneOf:
+                    - type: object
+                      required:
+                        - branchCode
+                        - realName
+                        - phone
+                        - languageCode
+                        - date
+                        - time
+                      properties:
+                        branchCode:
+                          type: string
+                          maxLength: 20
+                        realName:
+                          type: string
+                          maxLength: 50
+                        phone:
+                          type: string
+                          pattern: ^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$
+                          example: 010-1234-5678
+                        languageCode:
+                          type: string
+                        date:
+                          type: string
+                          format: date
+                        time:
+                          type: string
+                          pattern: ^\d{2}:\d{2}$
+                          example: '14:00'
+                        reasons:
+                          type: array
+                          maxItems: 10
+                          items:
+                            type: string
+                        note:
+                          type:
+                            - string
+                            - 'null'
+                          maxLength: 200
+                    - type: 'null'
+                app:
+                  description: path=APP 일 때만
+                  oneOf:
+                    - type: object
+                      required:
+                        - languageCodes
+                      properties:
+                        languageCodes:
+                          type: array
+                          minItems: 1
+                          maxItems: 10
+                          items:
+                            type: string
+                        reasons:
+                          type: array
+                          maxItems: 10
+                          items:
+                            type: string
+                    - type: 'null'
       responses:
-        "200":
-          description: 끝냈어요 — 바뀐 나를 돌려줘요 (앱은 state/me 에 넣고 홈으로)
+        '200':
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Me"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                type: object
+                properties:
+                  needsOnboarding:
+                    type: boolean
+                  path:
+                    type: string
+                    enum:
+                      - MEMBER
+                      - TRIAL
+                      - APP
+                  linkRequest:
+                    oneOf:
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          branchCode:
+                            type: string
+                          branchName:
+                            type: string
+                          status:
+                            type: string
+                      - type: 'null'
+                  trial:
+                    oneOf:
+                      - type: object
+                        description: branchCode · branchName · languageCode · date · time …
+                      - type: 'null'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: onboarding
   /me/payments:
     get:
@@ -7925,32 +8918,44 @@ paths:
           $ref: "#/components/responses/Conflict"
       x-domain: learn
   /me/push-tokens:
-    post:
+    put:
       tags:
         - 공통 · 설정값
       operationId: registerPushToken
       summary: 이 기기 푸시 토큰 등록 (로그인 · 토큰 바뀔 때)
-      description: >
+      description: |
         화면: app/_layout.tsx (로그인 뒤 · 알림 권한 허용 뒤)
-
         규칙: 같은 토큰이면 갱신(중복 없이 · 서버가 dedupe). 다른 계정에 붙어 있던 토큰이면 옮겨요. 어떤 알림을 받을지 설정은 my 도메인(설정 › 알림).
-      x-status: new
+      x-status: existing
+      x-backend: 'MobilePushTokenController PUT /app/api/v2/me/push-tokens (PushTokenRegisterRequest {token, platform:
+        IOS|ANDROID}) — 같은 토큰이면 덮어써요'
       x-screens:
         - app/_layout.tsx
-      x-app-code: 없음 (expo-notifications 아직 안 붙임)
+      x-app-code: api/push-tokens.ts registerPushToken · api/push-registration.ts (로그인 뒤 Firebase FCM 토큰)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PushTokenRequest"
+              type: object
+              required:
+                - token
+                - platform
+              properties:
+                token:
+                  type: string
+                  description: FCM 토큰
+                platform:
+                  type: string
+                  enum:
+                    - IOS
+                    - ANDROID
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
-        "400":
-          $ref: "#/components/responses/BadRequest"
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
       x-domain: core
-  "/me/push-tokens/{token}":
     delete:
       tags:
         - 공통 · 설정값
@@ -7958,21 +8963,22 @@ paths:
       summary: 이 기기 푸시 토큰 해제
       description: |
         화면: 알림 권한을 끈 걸 알았을 때 (로그아웃은 POST /auth/logout 의 pushToken 으로 같이)
-      x-status: new
+      x-status: existing
+      x-backend: MobilePushTokenController DELETE /app/api/v2/me/push-tokens?token=
       x-screens:
         - app/_layout.tsx
-      x-app-code: 없음
+      x-app-code: api/push-tokens.ts unregisterPushToken
       parameters:
         - name: token
-          in: path
+          in: query
           required: true
           schema:
             type: string
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: core
   /me/reports:
     get:
@@ -8176,85 +9182,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MyStudyLevel"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-      x-domain: my
-  /me/support-inquiries:
-    get:
-      tags:
-        - 설정 · 지원
-      operationId: listMySupportInquiries
-      summary: 내 1:1 문의 (답변 대기 · 답변 완료)
-      description: >
-        화면: support.tsx ?view=ask '내 문의' (펼쳐서 답 보기). 최근 순.
-
-        경로를 /me/inquiries 로 하지 않은 이유: 백엔드 /me/inquiries 는 이미 '신청 내역'(연기 · 지점 연동 등)이에요.
-      x-status: new
-      x-inventory: "#94"
-      x-screens:
-        - app/me/support.tsx
-      x-app-code: store.ts useAsks · data/account.ts ASKS_DEFAULT
-      parameters:
-        - $ref: "#/components/parameters/Cursor"
-        - $ref: "#/components/parameters/Size"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SupportInquiryPage"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-      x-domain: my
-    post:
-      tags:
-        - 설정 · 지원
-      operationId: createSupportInquiry
-      summary: 1:1 문의하기
-      description: >
-        화면: support.tsx '문의하기' (유형 · 내용). 결제 내역 [환불 문의] 는 type=payment 가 미리
-        골라져요.
-
-        답이 달리면 알림. 받는 곳(본사 · 내 지점)은 유형으로 서버가 정해요.
-
-        error: invalid_request (내용이 너무 짧음 · 앱 문구 '내용을 조금 더 적어 주세요')
-      x-status: new
-      x-inventory: "#94"
-      x-screens:
-        - app/me/support.tsx
-        - app/me/payments.tsx
-      x-app-code: store.ts addAsk · data/account.ts ASK_TYPES
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - type
-                - content
-              properties:
-                type:
-                  $ref: "#/components/schemas/SupportInquiryType"
-                content:
-                  type: string
-                  minLength: 5
-                  maxLength: 2000
-                paymentId:
-                  type:
-                    - string
-                    - "null"
-                  description: 환불 문의로 왔으면 그 결제
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SupportInquiry"
-        "400":
-          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
@@ -8519,15 +9446,14 @@ paths:
         - 알림 · 공지
       operationId: listNotices
       summary: 공지사항 목록 (홈 Notice board 띠는 board=true)
-      description: >
-        화면: app/notice/index.tsx (고정 공지 맨 위 · 태그 · 제목 · 날짜 · 쓴 곳) ·
-        components/home/notice-strip.tsx (홈 띠: 3.2초마다 넘어감 · 앞의 3개)
-
+      description: |
+        화면: app/notice/index.tsx (고정 공지 맨 위 · 태그 · 제목 · 날짜 · 쓴 곳) · components/home/notice-strip.tsx (홈 띠: 3.2초마다 넘어감 · 앞의 3개)
         규칙: 나에게 보이는 공지만(본사 전체 + 내 지점). 고정(pinned) 먼저, 그다음 최신 순. board=true 면 홈 띠에 걸 것만(관리자가 띠 노출을 고른 것 · 최대 size).
-
         새 글 점은 기기에 저장(상세를 열면 읽음).
-      x-status: new
-      x-inventory: "#12"
+      x-status: existing
+      x-backend: MobileNoticeController GET /app/api/v2/notices?cursor=&limit= → MobileNoticePageResponse {items,
+        nextCursor} (고정한 것 먼저 · 사용자별 pinned)
+      x-inventory: '#12'
       x-screens:
         - app/notice/index.tsx
         - components/home/notice-strip.tsx
@@ -8536,33 +9462,62 @@ paths:
         - {}
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/Cursor"
-        - $ref: "#/components/parameters/Size"
-        - name: board
+        - $ref: '#/components/parameters/Cursor'
+        - name: limit
           in: query
           required: false
-          description: true 면 홈 Notice board 띠용 (앱은 size=3)
           schema:
-            type: boolean
-            default: false
+            type: integer
+            minimum: 1
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/CursorPage"
-                  - type: object
-                    properties:
-                      rows:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/Notice"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - title
+                        - publishAt
+                        - pinned
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          description: AppNoticeType
+                        title:
+                          type: string
+                        publishAt:
+                          type: string
+                          format: date-time
+                        pinned:
+                          type: boolean
+                        author:
+                          type:
+                            - string
+                            - 'null'
+                        audience:
+                          type:
+                            - string
+                            - 'null'
+                  nextCursor:
+                    type:
+                      - string
+                      - 'null'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: core
-  "/notices/{id}":
+  /notices/{id}:
     get:
       tags:
         - 알림 · 공지
@@ -8571,8 +9526,9 @@ paths:
       description: |
         화면: app/notice/[id].tsx (태그 · 대상 · 제목 · 날짜 · 쓴 곳 · 본문 문단 · 아래 고정 행동 버튼)
         규칙: 없거나 내 대상이 아니면 404 → '게시물을 찾을 수 없어요.'
-      x-status: new
-      x-inventory: "#12"
+      x-status: existing
+      x-backend: MobileNoticeController GET /app/api/v2/notices/{id} → MobileNoticeDetailResponse (+ content, images[])
+      x-inventory: '#12'
       x-screens:
         - app/notice/[id].tsx
       x-app-code: api/home.ts fetchNotice
@@ -8580,16 +9536,91 @@ paths:
         - {}
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/PathId"
+        - $ref: '#/components/parameters/PathId'
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Notice"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                allOf:
+                  - type: object
+                    required:
+                      - id
+                      - title
+                      - publishAt
+                      - pinned
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                        description: AppNoticeType
+                      title:
+                        type: string
+                      publishAt:
+                        type: string
+                        format: date-time
+                      pinned:
+                        type: boolean
+                      author:
+                        type:
+                          - string
+                          - 'null'
+                      audience:
+                        type:
+                          - string
+                          - 'null'
+                  - type: object
+                    properties:
+                      content:
+                        type: string
+                      images:
+                        type: array
+                        items:
+                          type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-domain: core
+  /notices/{id}/pin:
+    put:
+      tags:
+        - 알림 · 공지
+      operationId: pinNotice
+      summary: 공지 고정하기 (나만)
+      description: '화면: 공지 상세 · 목록의 고정 표시 (나만 보는 고정)'
+      x-status: existing
+      x-backend: MobileNoticeController PUT /app/api/v2/notices/{id}/pin
+      x-app-code: api/home.ts setNoticePinned · api/use-notice-pin.ts
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-domain: core
+    delete:
+      tags:
+        - 알림 · 공지
+      operationId: unpinNotice
+      summary: 공지 고정 풀기
+      description: '화면: 공지 상세 · 목록의 고정 표시 (나만 보는 고정)'
+      x-status: existing
+      x-backend: MobileNoticeController DELETE /app/api/v2/notices/{id}/pin
+      x-app-code: api/home.ts setNoticePinned · api/use-notice-pin.ts
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
       x-domain: core
   /places:
     get:
@@ -10383,69 +11414,223 @@ paths:
         - 인증 · 시작
       operationId: listTrialSlots
       summary: 체험 가능한 날짜 · 시간 · 마감
-      description: >
-        화면: components/onboarding/trial-slots.tsx '상담 시간' (trial-form 안 · 지점을
-        고르기 전에는 안내 문구만)
-
+      description: |
+        화면: components/onboarding/trial-slots.tsx '상담 시간' (trial-form 안 · 지점을 고르기 전에는 안내 문구만)
         규칙: 내일부터 5일(날짜 칸) → 그날 시간 칸. **언어마다 상담 가능한 시간이 달라요** — 고른 지점 · 언어 프로님 일정만. 희망 언어를 바꾸면 다시 불러요.
-
         휴무일은 off. 시간마다 full(마감) 여부 — 서버가 계산(정원 · 이미 잡힌 체험). 마감은 흐리게 · 줄 긋기.
-
         지금 앱은 언어별 시간 6칸(TIMES)과 가짜 마감(hash)을 기기에서 만들어요.
-
         참고: 백엔드에 GET /public/api/v1/branches/{branchCode}/consultation-hours (요일 7줄 × 상담 시작 시각, 언어 · 마감 없음)가 있어요. 이걸 바탕으로 언어 · 날짜 · 마감을 더해 주면 돼요 (Q-O10 프로 일정을 어디서 읽을지).
-
         토큰 있으면 붙이고, 없어도 돼요.
-      x-status: new
-      x-inventory: "#48"
+      x-status: existing
+      x-backend: MobileBranchOptionController GET /app/api/v2/trial-slots?branchCode= → TrialSlotsResponse {days[{date,
+        times[HH:mm]}]} (오늘 KST 부터 5일 · 지점 상담 가능 시간)
+      x-inventory: '#48'
       x-screens:
         - components/onboarding/trial-slots.tsx
         - components/onboarding/trial-form.tsx
-      x-app-code: components/onboarding/trial-slots.tsx trialDayTiles · TIMES · trialSlots
-      security:
-        - {}
-        - bearerAuth: []
+      x-app-code: api/onboarding.ts fetchTrialSlots · mockTrialSlots
       parameters:
         - name: branchCode
           in: query
           required: true
           schema:
             type: string
-            example: hanam
-        - name: lang
-          in: query
-          required: true
-          description: 희망 언어 (학습 언어 code) — 그 언어 프로님 상담 시간만
-          schema:
-            type: string
-            example: en
-        - name: from
-          in: query
-          required: false
-          description: 첫 날짜 (기본 내일 · KST)
-          schema:
-            type: string
-            format: date
-            example: 2026-11-25
-        - name: days
-          in: query
-          required: false
-          description: 앱은 5일을 보여요
-          schema:
-            type: integer
-            default: 5
-            maximum: 14
       responses:
-        "200":
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - days
+                properties:
+                  days:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        times:
+                          type: array
+                          items:
+                            type: string
+                            pattern: ^\d{2}:\d{2}$
+                            example: '14:00'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      x-domain: core
+  /trial-applications:
+    get:
+      tags:
+        - 인증 · 시작
+      operationId: listMyTrialApplications
+      summary: 내 체험 상담 신청 내역
+      description: '화면: 마이 › 상담 신청 내역 · 체험 예약 확정 시트. 언어 이름은 서버가 실어요 (languageLabel).'
+      x-status: existing
+      x-backend: MobileTrialApplicationController GET /app/api/v2/trial-applications → List<TrialApplicationResponse>
+      x-screens:
+        - app/trial/index.tsx
+        - app/onboarding/trial.tsx
+        - components/onboarding/trial-form.tsx
+        - components/common/trial-guide.tsx
+      x-app-code: api/trial-applications.ts fetchMyTrialApplications · api/use-trial-applications.ts
+      responses:
+        '200':
           description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TrialDay"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    branchCode:
+                      type: string
+                    branchName:
+                      type: string
+                    branchPhone:
+                      type:
+                        - string
+                        - 'null'
+                    languageCode:
+                      type: string
+                    languageLabel:
+                      type: string
+                    date:
+                      type: string
+                      format: date
+                    time:
+                      type: string
+                      pattern: ^\d{2}:\d{2}$
+                      example: '14:00'
+                    realName:
+                      type: string
+                    phone:
+                      type: string
+                    note:
+                      type:
+                        - string
+                        - 'null'
+                    createdAt:
+                      type: string
+                      format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: core
+    post:
+      tags:
+        - 인증 · 시작
+      operationId: createTrialApplication
+      summary: 체험 상담 신청 (가입을 마친 뒤 앱 안에서)
+      description: |-
+        화면: app/trial/index.tsx → app/trial/done.tsx (components/onboarding/trial-form.tsx 한 장)
+        가입 단계 안의 체험 예약은 POST /onboarding (path=TRIAL, trial 블록) 으로 같이 보내요.
+        예전 공개 API POST /candidate-inquiries 대신 이것을 써요.
+      x-status: existing
+      x-backend: MobileTrialApplicationController POST /app/api/v2/trial-applications (TrialApplicationCreateRequest
+        → TrialApplicationResponse)
+      x-demo-blocked: true
+      x-screens:
+        - app/trial/index.tsx
+        - components/onboarding/trial-form.tsx
+      x-app-code: api/trial-applications.ts createTrialApplication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - branchCode
+                - realName
+                - phone
+                - languageCode
+                - date
+                - time
+              properties:
+                branchCode:
+                  type: string
+                  maxLength: 20
+                realName:
+                  type: string
+                  maxLength: 50
+                phone:
+                  type: string
+                  pattern: ^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$
+                  example: 010-1234-5678
+                languageCode:
+                  type: string
+                  maxLength: 50
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                  pattern: ^\d{2}:\d{2}$
+                  example: '14:00'
+                reasons:
+                  type: array
+                  maxItems: 10
+                  items:
+                    type: string
+                note:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 200
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  branchCode:
+                    type: string
+                  branchName:
+                    type: string
+                  branchPhone:
+                    type:
+                      - string
+                      - 'null'
+                  languageCode:
+                    type: string
+                  languageLabel:
+                    type: string
+                  date:
+                    type: string
+                    format: date
+                  time:
+                    type: string
+                    pattern: ^\d{2}:\d{2}$
+                    example: '14:00'
+                  realName:
+                    type: string
+                  phone:
+                    type: string
+                  note:
+                    type:
+                      - string
+                      - 'null'
+                  createdAt:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: core
   /trips:
     get:
@@ -11363,7 +12548,7 @@ components:
             - type: "null"
         branches:
           type: array
-          description: (추가) 활성 멤버십 지점 (최대 2)
+          description: (추가) 활성 멤버십 지점
           items:
             $ref: "#/components/schemas/BranchRef"
         studyLang:
@@ -11534,39 +12719,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MasterDataOption"
-    TrialDay:
-      type: object
-      required:
-        - date
-        - off
-        - times
-      properties:
-        date:
-          type: string
-          format: date
-          example: 2026-11-25
-        weekday:
-          type: string
-          description: 요일 한 글자
-          example: 수
-        off:
-          type: boolean
-          description: 휴무일 (지금은 일요일)
-        times:
-          type: array
-          items:
-            type: object
-            required:
-              - time
-              - full
-            properties:
-              time:
-                type: string
-                description: KST HH:mm
-                example: 19:30
-              full:
-                type: boolean
-                description: 마감 — 서버가 계산
     TrialBookingRequest:
       type: object
       description: 백엔드 CandidateInquirySubmitRequest + reasons · note(추가)
@@ -12164,73 +13316,6 @@ components:
           type: integer
           format: int64
           description: 필터와 상관없는 전체 안 읽음 수 (홈 종 점)
-    NoticeTag:
-      type: string
-      enum:
-        - 공지
-        - 이벤트
-        - 새 소식
-      example: 공지
-    NoticeCtaAction:
-      type: string
-      description: 아래 고정 버튼이 여는 곳 — schedule 수업 변경 신청 · event 이벤트 탭 · library 라이브러리 탭
-      enum:
-        - schedule
-        - event
-        - library
-    Notice:
-      type: object
-      required:
-        - id
-        - tag
-        - title
-        - publishedAt
-        - author
-        - audience
-        - body
-        - pinned
-      properties:
-        id:
-          type: string
-          example: n1
-        tag:
-          $ref: "#/components/schemas/NoticeTag"
-        title:
-          type: string
-          example: 이번 달 스터디 일정 안내
-        publishedAt:
-          type: string
-          format: date-time
-          description: 앱이 '2026.11.10' 로 표시
-        author:
-          type: string
-          description: 쓴 곳 (PALLO 본사 · 지점 이름)
-          example: PALLO 본사
-        audience:
-          type: string
-          description: 대상 (전 지점 · 영등포점)
-          example: 전 지점
-        body:
-          type: array
-          description: 본문 문단 (목록 응답에서는 생략 가능)
-          items:
-            type: string
-        cta:
-          oneOf:
-            - type: "null"
-            - type: object
-              required:
-                - label
-                - action
-              properties:
-                label:
-                  type: string
-                  example: 시간표 보고 신청하기
-                action:
-                  $ref: "#/components/schemas/NoticeCtaAction"
-        pinned:
-          type: boolean
-          description: 목록 맨 위 고정 (압정)
     AppConfig:
       type: object
       required:
@@ -12301,28 +13386,6 @@ components:
             - string
             - "null"
           description: 안내 문구
-    PushTokenRequest:
-      type: object
-      required:
-        - token
-        - platform
-      properties:
-        token:
-          type: string
-          description: Expo push token (ExponentPushToken[...]) 또는 FCM/APNs 토큰 — 어떤 걸 쓸지
-            결정 필요
-        platform:
-          type: string
-          enum:
-            - ios
-            - android
-          example: ios
-        appVersion:
-          type: string
-          example: 1.2.0
-        deviceId:
-          type: string
-          description: 기기 구분 (같은 기기 토큰 교체 때)
     AppContentKey:
       type: string
       description: 문구 키 (AppContentKey.slug)
@@ -12475,63 +13538,6 @@ components:
           oneOf:
             - $ref: "#/components/schemas/StartScreen"
             - type: "null"
-    OnboardingPath:
-      type: string
-      description: "'지점 회원이에요?'에서 고른 길 (app/onboarding/member.tsx). member 지점 회원 ·
-        trial 체험 · app 앱 구경"
-      enum:
-        - member
-        - trial
-        - app
-      example: member
-    AvatarBodyColor:
-      type: string
-      description: 캐릭터 몸 색 7가지 (app/onboarding/character.tsx · 마이 › 꾸미기 기본 몸 색)
-      enum:
-        - yellow
-        - purple
-        - purple-lash
-        - pink
-        - sky
-        - green
-        - coral
-      example: purple-lash
-    LearnReason:
-      type: string
-      description: 배우고 싶은 이유 (components/onboarding/app-parts.tsx WHY_REASONS)
-      enum:
-        - 여행 가서 말하기
-        - 일 · 이직
-        - 유학 · 워홀 · 이민
-        - 시험 · 자격증
-        - 외국인 친구
-        - 새 취미
-        - 말하기 자신감
-        - 기타
-      example: 여행 가서 말하기
-    OnboardingCompleteRequest:
-      type: object
-      required:
-        - path
-        - bodyColor
-      properties:
-        path:
-          $ref: "#/components/schemas/OnboardingPath"
-        bodyColor:
-          $ref: "#/components/schemas/AvatarBodyColor"
-        langs:
-          type: array
-          description: 희망 언어 — 고른 순서 (맨 앞 = 홈 첫 언어). 앱 구경 1개 이상 · 체험 1개 · 회원은 빈 배열
-          items:
-            $ref: "#/components/schemas/Lang"
-          example:
-            - en
-            - ja
-        reasons:
-          type: array
-          description: 배우고 싶은 이유 · 여러 개 · 선택 (앱 구경 · 체험)
-          items:
-            $ref: "#/components/schemas/LearnReason"
     NicknameCheck:
       type: object
       required:
@@ -20257,177 +21263,6 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/PassUsage"
-    BranchBoardItem:
-      type: object
-      description: data/my.ts BranchItem
-      required:
-        - icon
-        - title
-        - description
-      properties:
-        icon:
-          type: string
-          enum:
-            - park
-            - wifi
-            - loc
-            - lock
-            - tel
-        color:
-          type: string
-          description: 아이콘 바탕색
-          example: "#FFE200"
-        title:
-          type: string
-          example: 와이파이
-        shortTitle:
-          type:
-            - string
-            - "null"
-          description: 별표 칩 이름
-        description:
-          type: string
-        copyables:
-          type: array
-          description: 누르면 복사 [이름, 값]
-          items:
-            type: object
-            required:
-              - label
-              - value
-            properties:
-              label:
-                type: string
-                example: 비밀번호
-              value:
-                type: string
-        action:
-          type:
-            - object
-            - "null"
-          properties:
-            kind:
-              type: string
-              enum:
-                - map
-                - tel
-            value:
-              type: string
-        starred:
-          type: boolean
-          description: 위쪽 칩으로 꺼내 보여요
-    BranchPartner:
-      type: object
-      description: 협업 업체 (data/my.ts Partner)
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        benefit:
-          type:
-            - string
-            - "null"
-          description: 혜택 한 줄
-        category:
-          type:
-            - string
-            - "null"
-        color:
-          type:
-            - string
-            - "null"
-        address:
-          type:
-            - string
-            - "null"
-        tel:
-          type:
-            - string
-            - "null"
-        hours:
-          type:
-            - string
-            - "null"
-        info:
-          type:
-            - string
-            - "null"
-        how:
-          type:
-            - string
-            - "null"
-          description: 혜택 받는 법
-        links:
-          type: array
-          items:
-            type: object
-            required:
-              - kind
-              - url
-            properties:
-              kind:
-                type: string
-                enum:
-                  - naver
-                  - insta
-                  - kakao
-                  - web
-              url:
-                type: string
-                format: uri
-              label:
-                type:
-                  - string
-                  - "null"
-        posters:
-          type: array
-          items:
-            $ref: "#/components/schemas/ImageRef"
-          description: 0번이 대표
-    BranchBoard:
-      type: object
-      required:
-        - branch
-        - address
-        - hours
-        - items
-        - partners
-      properties:
-        branch:
-          $ref: "#/components/schemas/BranchRef"
-        address:
-          type: string
-        hours:
-          type: string
-          example: 평일 10~23시 · 주말 10~18시
-        phone:
-          type:
-            - string
-            - "null"
-          description: 고객센터 '내 지점 전화'도 이 값
-        pin:
-          type:
-            - object
-            - "null"
-          description: 고정 공지
-          properties:
-            text:
-              type: string
-            by:
-              type: string
-              example: 매니저 Jay
-            at:
-              type: string
-              format: date-time
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/BranchBoardItem"
-        partners:
-          type: array
-          items:
-            $ref: "#/components/schemas/BranchPartner"
     CourseChangeCourse:
       type: object
       description: 백엔드 MobileCourseChangeCourseResponse + (추가) hasSeat · level · teamName
@@ -20859,109 +21694,6 @@ components:
             - string
             - "null"
           format: date-time
-    MyRequestItem:
-      type: object
-      description: 백엔드 MobileInquiryResponse 그대로 (유형에 없는 항목은 null)
-      required:
-        - id
-        - type
-        - branchCode
-        - branchName
-        - status
-        - appliedAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum:
-            - DEFERRAL
-            - BRANCH_LINK
-            - COURSE_CHANGE
-            - BRANCH_TRANSFER
-        branchCode:
-          type: string
-        branchName:
-          type: string
-        status:
-          type: string
-          example: PENDING
-        membershipName:
-          type:
-            - string
-            - "null"
-        deferStartDate:
-          type:
-            - string
-            - "null"
-          format: date
-        deferEndDate:
-          type:
-            - string
-            - "null"
-          format: date
-        reason:
-          type:
-            - string
-            - "null"
-        note:
-          type:
-            - string
-            - "null"
-        courseChangeType:
-          oneOf:
-            - $ref: "#/components/schemas/CourseChangeType"
-            - type: "null"
-        effectiveDate:
-          type:
-            - string
-            - "null"
-          format: date
-        removeCourses:
-          type:
-            - array
-            - "null"
-          items:
-            $ref: "#/components/schemas/CourseChangeCourse"
-        addCourses:
-          type:
-            - array
-            - "null"
-          items:
-            $ref: "#/components/schemas/CourseChangeCourse"
-        targetBranchName:
-          type:
-            - string
-            - "null"
-        sourceDecision:
-          type:
-            - string
-            - "null"
-        targetDecision:
-          type:
-            - string
-            - "null"
-        rejectionReason:
-          type:
-            - string
-            - "null"
-        appliedAt:
-          type: string
-          format: date-time
-        decidedAt:
-          type:
-            - string
-            - "null"
-          format: date-time
-        canceledBy:
-          type:
-            - string
-            - "null"
-          enum:
-            - MEMBER
-            - BRANCH
-            - null
     LinkableBranch:
       type: object
       description: 백엔드 MobileLinkableBranchResponse
@@ -21710,28 +22442,6 @@ components:
         appealable:
           type: boolean
           description: 이의 신청 가능 (화면 자리만 있음)
-    FaqItem:
-      type: object
-      required:
-        - id
-        - category
-        - question
-        - answer
-      properties:
-        id:
-          type: string
-        category:
-          type: string
-          enum:
-            - 수업 · 예약
-            - 이용권 · 결제
-            - 레벨 · 교재
-            - 라운지
-            - 계정
-        question:
-          type: string
-        answer:
-          type: string
     SupportInquiryType:
       type: string
       description: 수업 · 예약 · 결제 · 환불 · 앱 오류 · 기타 (data/account.ts ASK_TYPES)
