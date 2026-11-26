@@ -26,6 +26,8 @@ export type BranchTodayView = {
   staffCount: number;
   /** 프로 출석 예정: 프로가 배정된 스터디 수 (전산 시간표) */
   proPlanned: number;
+  /** 프로 불참: 출석이 열렸는데(출석 중 · 끝남) 맡은 프로가 안 온 팀 수 — 스텝이 대타로 메워도 프로는 불참 */
+  proAbsent: number;
   /** 오늘 온 멤버 수 */
   members: number;
   open: SessionRow[];
@@ -74,6 +76,7 @@ export function toBranchTodayView(data: BranchToday, m: number, qrBefore: number
     proByStaff,
     staffCount: proByStaff + rows.filter((r) => r.staffJoinedName).length,
     proPlanned: rows.filter((r) => r.proName).length,
+    proAbsent: rows.filter((r) => r.proName && r.phase !== 'soon' && r.proCheckedInBy !== 'PRO').length,
     members: rows.reduce((n, r) => n + r.checkedIn, 0),
     open,
     soon,

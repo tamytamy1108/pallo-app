@@ -19,7 +19,8 @@ export function ClubAlbum({ c, inC }: { c: Club; inC: boolean }) {
   const [view, setView] = useState<number | null>(null);
   const { album, name } = clubContent(c);
   const h = hashId(c.id);
-  const cell = w ? (w - 8) / 3 : 0;
+  // 소수점 폭이면 세 칸 합이 줄 폭을 살짝 넘어 셋째 칸이 다음 줄로 밀려요 → 내림
+  const cell = w ? Math.floor((w - 8) / 3) : 0;
   const grid = (L: typeof album, tap: boolean) => (
     <View style={styles.grid} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       {cell

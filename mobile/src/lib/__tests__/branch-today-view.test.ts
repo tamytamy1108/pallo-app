@@ -60,6 +60,8 @@ describe('오늘 지점 현황', () => {
     expect(v.proByStaff).toBe(1);
     expect(v.staffCount).toBe(1);
     expect(v.proPlanned).toBe(5);
+    // 출석이 열린 팀 중 프로가 안 온 팀 (c 는 스텝이 대타라 프로는 불참)
+    expect(v.proAbsent).toBe(1);
     expect(v.members).toBe(30);
     expect(v.sessions).toBe(5);
     expect(v.studies).toBe(5);

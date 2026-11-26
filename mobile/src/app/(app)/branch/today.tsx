@@ -35,7 +35,7 @@ export default function BranchTodayScreen() {
           framed
           cells={[
             { label: '오늘 스터디', value: String(view.studies), sub: `팀 ${view.sessions}` },
-            { label: '프로 출석', value: String(view.proByPro), tone: 'pro', sub: `예정 ${view.proPlanned}` },
+            { label: '프로 출석', value: String(view.proByPro), tone: 'pro', sub: `예정 ${view.proPlanned}`, warn: view.proAbsent > 0 ? `불참 ${view.proAbsent}` : undefined },
             { label: '스텝 출석', value: String(view.staffCount), tone: 'staff' },
             { label: '멤버 출석', value: String(view.members), tone: 'member' },
           ]}
