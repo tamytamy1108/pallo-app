@@ -53,7 +53,6 @@ export default function HomeScreen() {
 
   // 3 /me — 로그인 상태(src/api/session.tsx)가 /me 를 받은 뒤에야 이 화면이 열리고, 받은 값은 state/me 에 들어 있어요
   const name = useMe((m) => m.name);
-  const plan = useMe((m) => m.plan);
   const role = useMe((m) => m.role);
   const unread = useUnreadCount();
   const scroll = useRef<ScrollViewInstance>(null);
@@ -197,9 +196,11 @@ export default function HomeScreen() {
         <Appear kind="rise" delay={60}>
           <NoticeStrip />
         </Appear>
-        <Appear kind="rise" delay={100}>{plan === 'app' ? <GoalCard onContinue={continueGoal} /> : <HomeCard onOpen={openAttend} />}</Appear>
-        {/* 지점 관리자: 출석 카드 아래 지점 현황 요약 (숫자 세 칸 · 모두 보기) */}
-        {role === 'manager' && plan !== 'app' ? (
+        <Appear kind="rise" delay={100}>
+          <HomeCard onOpen={openAttend} />
+        </Appear>
+        {/* 지점 관리자: 출석 카드 아래 지점 현황 요약 (칸 넷 · 모두 보기) */}
+        {role === 'manager' ? (
           <Appear kind="rise" delay={120}>
             <BranchStatusCard />
           </Appear>
