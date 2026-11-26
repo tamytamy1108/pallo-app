@@ -1,19 +1,18 @@
 import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
 import { TopBar } from '@/components/ui/top-bar';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { SCREEN } from '@/lib/transitions';
-import { BRANCH_TEL_MOCK, useLinkEvents } from '@/state/link-events';
+import { useLinkEvents } from '@/state/link-events';
 import { useMe } from '@/state/me';
 import { updateOnboarding, useOnboarding } from '@/state/onboarding';
 
@@ -21,7 +20,7 @@ import { updateOnboarding, useOnboarding } from '@/state/onboarding';
  * 지점 연동 안 됨 (09-onboarding '연동 안 됨 (rejected)' · 프로토타입 onboarding-options.html #m-fail).
  * 지점이 '못 찾음'으로 처리하면 푸시 · 알림 → 이 화면.
  * '○○점에서 연동 승인이 반려되었습니다.' · 지점에서 남긴 말
- * → [고쳐서 다시 요청하기] [○○점에 전화하기] · '지금은 둘러볼게요'(홈).
+ * → [다시 요청하기] · '지금은 둘러볼게요'(홈).
  */
 export default function LinkRejectedScreen() {
   const me = useMe();
@@ -35,9 +34,6 @@ export default function LinkRejectedScreen() {
     // 지점 code 는 가입에서 고른 값 — 없으면(개발용 ?link=) 이름으로 (가짜 서버는 code = 이름)
     updateOnboarding({ path: 'member', branch, branchCode: sent.branchCode || branch });
     router.push('/onboarding/link');
-  };
-  const call = () => {
-    Linking.openURL(`tel:${BRANCH_TEL_MOCK.replace(/-/g, '')}`).catch(() => showToast(`${branch} ${BRANCH_TEL_MOCK}`));
   };
   const browse = () => {
     sfx('soft');
@@ -64,8 +60,7 @@ export default function LinkRejectedScreen() {
       </ScrollView>
 
       <View style={styles.foot}>
-        <Button label="고쳐서 다시 요청하기" wide onPress={retry} />
-        <Button label={`${branch}에 전화하기`} variant="secondary" wide onPress={call} />
+        <Button label="다시 요청하기" wide onPress={retry} />
         <Pressable onPress={browse} sound={false} accessibilityRole="link" accessibilityLabel="지금은 둘러볼게요" hitSlop={8} style={styles.linkWrap}>
           {({ pressed }) => (
             <PText style={[styles.link, pressed && styles.linkPressed]} color={Colors.inkSub}>
