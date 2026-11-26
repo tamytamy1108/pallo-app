@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { noteReactions, PN_TAG_COLOR, PN_THANKS, type ProNote } from '@/data/account';
@@ -257,7 +257,7 @@ function ThanksSheet({ n, open, onClose }: { n: ProNote; open: boolean; onClose:
   const send = () => {
     const t = typed.trim() || (pick != null ? PN_THANKS[pick] : '');
     if (!t) {
-      showToast('감사 인사를 고르거나 써 주세요');
+      showWarnToast('감사 인사를 고르거나 써 주세요');
       return;
     }
     sendNoteMessage(n.id, { kind: '감사 인사', text: t });

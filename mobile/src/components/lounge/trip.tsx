@@ -8,7 +8,7 @@ import { useBlockedNames } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { type AbroadPerson, CC_KEYS, ccOf, type CountryCode, daysFrom, LG_C, LG_CC, LG_STY, LG_TYPES, monthDay, type Trip } from '@/data/lounge';
@@ -308,7 +308,7 @@ export function TripMakeSheet({ open, onClose, onClosed }: { open: boolean; onCl
   const [sty, setSty] = useState<string[]>(['맛집']);
   const [title, setTitle] = useState('');
   const submit = () => {
-    if (!city.trim()) return showToast('도시를 적어 주세요');
+    if (!city.trim()) return showWarnToast('도시를 적어 주세요');
     const code = ccOf(cc) ?? 'JP';
     addTrip({
       id: `u${Date.now()}`,
@@ -373,7 +373,7 @@ export function AbroadRegSheet({ open, onClose, onClosed }: { open: boolean; onC
   const [since, setSince] = useState('');
   const [job, setJob] = useState('');
   const submit = () => {
-    if (!city.trim()) return showToast('도시를 적어 주세요');
+    if (!city.trim()) return showWarnToast('도시를 적어 주세요');
     const code = ccOf(cc) ?? 'AU';
     addPerson({ n: me.name, cc: code, city: city.trim(), since: since.trim() || '이번 달부터', job: job.trim() || '해외살이', br: me.branch, av: LG_C.y, me: true });
     onClose();

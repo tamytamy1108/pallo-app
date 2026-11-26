@@ -14,7 +14,7 @@ import { AccountPage, Box, ChoiceChip, Head, Icon, TextLink, UnderTabs, type Ico
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
@@ -133,7 +133,7 @@ function AskView({ type, startOnList, bug = false }: { type?: string; startOnLis
   const send = () => {
     if (create.isPending) return;
     if (!inquiryContentOk(text)) {
-      showToast('내용을 조금 더 적어 주세요');
+      showWarnToast('내용을 조금 더 적어 주세요');
       return;
     }
     create.mutate(

@@ -22,18 +22,18 @@
 | 번개 | 7 | 3 | 8 | 18 |
 | 동아리 | 7 | 13 | 12 | 32 |
 | 여행 · 해외살이 | 0 | 0 | 14 | 14 |
-| 신고 · 차단 | 0 | 0 | 3 | 3 |
+| 신고 · 차단 | 2 | 0 | 2 | 4 |
 | 챌린지 | 11 | 5 | 9 | 25 |
-| 이벤트 | 0 | 0 | 20 | 20 |
+| 이벤트 | 4 | 0 | 17 | 21 |
 | 마이 | 2 | 1 | 7 | 10 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
 | 캐릭터 · 상점 | 0 | 0 | 6 | 6 |
 | 수강 · 결제 | 10 | 5 | 6 | 21 |
-| 프로 노트 | 2 | 1 | 7 | 10 |
+| 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **87** | **45** | **170** | **302** |
+| **합계** | **94** | **44** | **166** | **304** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -710,8 +710,8 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 배너(다가오는 5개) · 다가오는/지난 목록 · 지점 · 종류 칩 | GET /events?status=&kind=&branch= | new | data/events.ts EVENTS · splitEvents |
-| 내가 제안한 이벤트 카드 | GET /me/event-proposals | new | meet-store props |
-| 제안 [취소] | DELETE /event-proposals/{id} | new | removeProposal |
+| 내가 제안한 이벤트 카드 (검토 중 · 승인 · 반려 사유 · 취소) | GET /event-proposals | existing | api/event-proposals.ts fetchMyEventProposals |
+| 제안 [취소] (대기 중만) | DELETE /event-proposals/{id} | existing | cancelEventProposal |
 | [오픈하기] — 회원: 제안서 / 프로 · 지점 관리자: 바로 열기 | POST /events (프로 · 지점 관리자) | new | (지금은 누구나 제안서로) |
 | 지점 선택 목록 | GET /events/form-options (branches) 또는 공통 지점 API | new | components/lounge/branch-select.tsx |
 
@@ -730,9 +730,10 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 이벤트 제안 — `app/events/propose.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 진행 지점 · 장소 지도 · 카테고리 · 예상 인원 선택지 | GET /events/form-options | new | BRANCHES · PLACE_SPOTS · PROPOSAL_CATS · CAPS |
-| 이벤트 사진 올리기 (1장 이상) | POST /uploads/images/{purpose} — 새 purpose EVENT_PROPOSAL_PHOTO | change (다른 조각) | PosterPicker uri |
-| [제안 보내기] | POST /event-proposals | new | addProposal |
+| 카테고리 칩 | GET /event-proposals/categories | existing | fetchEventCategories |
+| 진행 지점 · 장소 지도 · 예상 인원 선택지 | GET /events/form-options | new | BRANCHES · PLACE_SPOTS · CAPS |
+| 이벤트 사진 올리기 (10장까지 · 없으면 카드 만들기) | POST /uploads/images/event-photo | existing | uploadEventPhoto |
+| [제안 보내기] (이용 중 회원만 — 아니면 409) | POST /event-proposals | existing | createEventProposal |
 
 ### 운영 쪽 (앱 화면 없음 · docs/pages/06-event.md)
 | 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
