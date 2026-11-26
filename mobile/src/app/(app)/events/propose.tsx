@@ -16,7 +16,7 @@ import { ProposalCard } from '@/components/event/proposal-cards';
 import { TextField } from '@/components/ui/field';
 import { CountPicker } from '@/components/ui/count-picker';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { JumpField, useFieldJump } from '@/components/ui/field-jump';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -111,7 +111,7 @@ function ProposeForm({ editing }: { editing?: EventProposal }) {
     if (!fee) return jump.to('fee', '참가비를 골라 주세요');
     if (fee === '유료' && !priceN) return jump.to('fee', '참가비 금액을 적어 주세요');
     const categoryCode = categories.data?.find((c) => c.label === cat)?.code;
-    if (!categoryCode) return showToast('카테고리를 다시 골라 주세요');
+    if (!categoryCode) return showWarnToast('카테고리를 다시 골라 주세요');
     const made = fillWords(usedCard(card, pics.length > 0), CARD_EX);
     const input = {
       body: {

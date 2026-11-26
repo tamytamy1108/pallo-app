@@ -8,7 +8,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { WordCard } from '@/components/lesson/word-card';
 import { Appear } from '@/components/ui/appear';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
+import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
@@ -274,7 +274,7 @@ export function DuoBlock({ task: t }: { task: DuoTask }) {
   const send = () => {
     const v = draft.trim();
     if (!v) {
-      showToast('영어로 한마디 해 주세요');
+      showWarnToast('영어로 한마디 해 주세요');
       return;
     }
     const nx = t.lines[i + 1];

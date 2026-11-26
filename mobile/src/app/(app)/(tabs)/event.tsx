@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { useHideOnScroll } from '@/components/ui/hide-on-scroll';
 import { SafeAreaView } from '@/components/ui/safe-area';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
@@ -34,6 +36,8 @@ const EVENT_PEEK = 640;
 export default function EventScreen() {
   const pullRefresh = usePullRefresh();
   const scroll = useRef<ScrollViewInstance>(null);
+  // 오른쪽 아래 [오픈하기]: 스크롤하는 동안 숨겨서 목록 카드를 가리지 않게 (라운지 + 버튼과 같은 동작)
+  const fab = useHideOnScroll();
   useTabReselect('event', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const role = useMe((m) => m.role);
   const [branch, setBranch] = useState('전체');
@@ -49,7 +53,15 @@ export default function EventScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView refreshControl={pullRefresh} ref={scroll} contentContainerStyle={styles.page} onScroll={() => checkScrollLock('event')} scrollEventThrottle={64}>
+      <ScrollView
+        refreshControl={pullRefresh}
+        ref={scroll}
+        contentContainerStyle={styles.page}
+        onScroll={(e) => {
+          fab.onScroll(e.nativeEvent.contentOffset.y);
+          checkScrollLock('event');
+        }}
+        scrollEventThrottle={64}>
         <View style={styles.hd}>
           {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
           <PText variant="headline" accessibilityRole="header" accessibilityLabel="이벤트">
@@ -96,14 +108,16 @@ export default function EventScreen() {
       {/* 오픈하기: 라운지 + 버튼과 같은 자리 · 멤버는 제안서, 프로 · 매니저는 바로 열기(관리자 화면이라 나중에) */}
       <SafeAreaInsetsContext.Consumer>
         {(insets) => (
-          <Pressable
-            onPress={() => guardMember(() => router.push('/events/propose'), '이벤트를 제안하려면')}
-            accessibilityRole="button"
-            accessibilityLabel={staff ? '이벤트 오픈하기' : '이벤트 제안하기'}
-            style={({ pressed }) => [styles.fab, { bottom: Math.max(insets?.bottom ?? 0, 12) + 62 + 32 }, pressed && styles.fabPressed]}>
-            <Icon name="pen" size={16} />
-            <PText style={styles.fabT}>오픈하기</PText>
-          </Pressable>
+          <Animated.View pointerEvents={fab.hidden ? 'none' : 'box-none'} style={[styles.fabAt, { bottom: Math.max(insets?.bottom ?? 0, 12) + 62 + 32 }, fab.style]}>
+            <Pressable
+              onPress={() => guardMember(() => router.push('/events/propose'), '이벤트를 제안하려면')}
+              accessibilityRole="button"
+              accessibilityLabel={staff ? '이벤트 오픈하기' : '이벤트 제안하기'}
+              style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}>
+              <Icon name="pen" size={16} />
+              <PText style={styles.fabT}>오픈하기</PText>
+            </Pressable>
+          </Animated.View>
         )}
       </SafeAreaInsetsContext.Consumer>
     </SafeAreaView>
@@ -141,7 +155,8 @@ const styles = StyleSheet.create({
   sort: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 19, color: Colors.inkSub, marginHorizontal: 2, marginBottom: -8 },
   list: { gap: 10 },
   empty: { textAlign: 'center', paddingVertical: 30, paddingHorizontal: 10, fontFamily: Font.body700, fontSize: 14, lineHeight: 22, color: Colors.inkSub },
-  fab: { position: 'absolute', right: 16, height: 44, borderRadius: 22, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 13, paddingRight: 15, boxShadow: '0px 4px 0px #1E1A2B' },
+  fabAt: { position: 'absolute', right: 16 },
+  fab: { height: 44, borderRadius: 22, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 13, paddingRight: 15, boxShadow: '0px 4px 0px #1E1A2B' },
   fabPressed: { transform: [{ translateY: 4 }], boxShadow: '0px 0px 0px #1E1A2B' },
   fabT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },
 });

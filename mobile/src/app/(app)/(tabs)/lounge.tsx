@@ -33,6 +33,7 @@ import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge
 import { EASE } from '@/lib/motion';
 import { useTabReselect } from '@/lib/tab-reselect';
 import { useCenterChip } from '@/lib/center-chip';
+import { useHideOnScroll } from '@/components/ui/hide-on-scroll';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /**
@@ -112,8 +113,11 @@ export default function LoungeScreen() {
     // 보던 자리가 탭보다 아래면 탭이 보이는 곳까지 올려요 (프로토타입 lgTab)
     if (scrolled) scroll.current?.scrollTo({ y: Math.max(0, tabsY.current - 8), animated: false });
   };
+  // 오른쪽 아래 + 버튼: 스크롤하는 동안 숨겨서 아래 칸(동아리 만들기 · 번개 열기)을 가리지 않게
+  const fab = useHideOnScroll();
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
+    fab.onScroll(y);
     if (y > 360 !== scrolled) setScrolled(y > 360);
     checkScrollLock('lounge');
   };
@@ -163,13 +167,15 @@ export default function LoungeScreen() {
       </ScrollView>
 
       <ToTop show={scrolled} bottom={fabBottom + 60 + 14} onPress={() => scroll.current?.scrollTo({ y: 0, animated: true })} />
-      <Pressable onPress={() => guardMember(() => setSheet('create'), '글을 올리려면')} accessibilityRole="button" accessibilityLabel="만들기" style={[styles.fabHit, { bottom: fabBottom }]}>
-        {({ pressed }) => (
-          <View style={[styles.fab, pressed && styles.fabDown]}>
-            <LgIcon name="plus" size={28} sw={2.8} />
-          </View>
-        )}
-      </Pressable>
+      <Animated.View pointerEvents={fab.hidden ? 'none' : 'box-none'} style={[styles.fabHit, { bottom: fabBottom }, fab.style]}>
+        <Pressable onPress={() => guardMember(() => setSheet('create'), '글을 올리려면')} accessibilityRole="button" accessibilityLabel="만들기">
+          {({ pressed }) => (
+            <View style={[styles.fab, pressed && styles.fabDown]}>
+              <LgIcon name="plus" size={28} sw={2.8} />
+            </View>
+          )}
+        </Pressable>
+      </Animated.View>
 
       <CreateSheet open={sheet === 'create'} tab={tab} onClose={() => setSheet(null)} onPick={onCreate} onClosed={afterCreateClosed} />
       {kept === 'trip' ? <TripMakeSheet open={sheet === 'trip'} onClose={() => setSheet(null)} onClosed={() => setKept(null)} /> : null}
