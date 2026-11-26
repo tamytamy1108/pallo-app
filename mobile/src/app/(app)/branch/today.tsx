@@ -34,7 +34,7 @@ export default function BranchTodayScreen() {
           framed
           cells={[
             { label: '오늘 스터디', value: String(view.sessions) },
-            { label: '프로 출석', value: String(view.proByPro), tone: 'pro' },
+            { label: '프로 출석', value: String(view.proByPro), tone: 'pro', sub: `예정 ${view.proPlanned}` },
             { label: '스텝 출석', value: String(view.proByStaff), tone: 'staff' },
             { label: '멤버 출석', value: String(view.members), tone: 'member' },
           ]}
@@ -82,15 +82,20 @@ function proRow(row: SessionRow) {
   return { label: `프로 ${row.proName ?? '미정'}`, sub: null, count: row.proCheckedInBy ? 1 : 0, staff: false };
 }
 
-function CountRow({ dot, label, sub, count }: { dot: 'pro' | 'staff' | 'member'; label: string; sub?: string | null; count: number }) {
+/** 인원 칸 (테이블 칸과 같은 모양: 크림 바탕 · 연한 선 · 이름 위 · 인원 아래). 0명이면 흰 바탕 · 흐린 숫자 */
+function CountBox({ tone, label, sub, count, planned }: { tone: 'pro' | 'staff' | 'member'; label: string; sub?: string | null; count: number; /** 예정 인원 (프로: 배정됐으면 1명) */ planned?: number }) {
   return (
-    <View style={styles.countRow}>
-      <View style={[styles.dot, dot === 'pro' ? styles.dotPro : dot === 'staff' ? styles.dotStaff : styles.dotMember]} />
-      <PText style={styles.countL} numberOfLines={1}>
+    <View style={[styles.box, count === 0 && styles.boxZero]}>
+      <PText style={[styles.boxL, tone === 'pro' && styles.boxLPro, tone === 'staff' && styles.boxLStaff]} numberOfLines={1}>
         {label}
-        {sub ? <PText style={styles.countSub}> ({sub})</PText> : null}
       </PText>
-      <PText style={[styles.countV, count === 0 && styles.countZero]}>{count}명</PText>
+      {sub ? (
+        <PText style={styles.boxSub} numberOfLines={1}>
+          {sub}
+        </PText>
+      ) : null}
+      <PText style={[styles.boxV, count === 0 && styles.boxVZero]}>{count}명</PText>
+      {planned !== undefined ? <PText style={styles.boxPlan}>예정 {planned}명</PText> : null}
     </View>
   );
 }
@@ -105,22 +110,11 @@ function SessionCard({ row }: { row: SessionRow }) {
         </PText>
         {row.phase === 'soon' ? <PText style={styles.soonT}>{fmtMin(row.start - QR_BEFORE)}부터 출석</PText> : null}
       </View>
-      {/* 프로 · 멤버 줄은 늘 위에 (찍기 전엔 0명, 찍으면 바로 바뀌어요) */}
-      <CountRow dot={pro.staff ? 'staff' : 'pro'} label={pro.label} sub={pro.sub} count={pro.count} />
-      <CountRow dot="member" label="멤버" count={row.checkedIn} />
-      {row.phase === 'open' ? (
-        <View style={styles.tables}>
-          {row.tables.map((t) => (
-            <View key={t.tableId} style={[styles.tb, t.checkedIn === 0 && styles.tbZero]}>
-              <PText style={[styles.tbNo, t.proCheckedIn && styles.tbNoPro]} numberOfLines={1}>
-                {t.tableName ?? `${t.tableNo}번`}
-                {t.proCheckedIn ? (row.proCheckedInBy === 'STAFF' ? ' · 스텝' : ' · 프로') : ''}
-              </PText>
-              <PText style={[styles.tbCount, t.checkedIn === 0 && styles.tbCountZero]}>{t.checkedIn}명</PText>
-            </View>
-          ))}
-        </View>
-      ) : null}
+      {/* 프로 · 멤버 칸은 늘 위에 (찍기 전엔 0명, 찍으면 바로 바뀌어요) */}
+      <View style={styles.boxes}>
+        <CountBox tone={pro.staff ? 'staff' : 'pro'} label={pro.label} sub={pro.sub} count={pro.count} planned={row.proName ? 1 : 0} />
+        <CountBox tone="member" label="멤버" count={row.checkedIn} />
+      </View>
     </View>
   );
 }
@@ -162,23 +156,17 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
   team: { flex: 1, minWidth: 0, fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
   soonT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  countRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dot: { width: 9, height: 9, borderRadius: 5 },
-  dotPro: { backgroundColor: Colors.purple },
-  dotStaff: { backgroundColor: Colors.ink },
-  dotMember: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
-  countL: { flex: 1, minWidth: 0, fontFamily: Font.body700, fontSize: 14, lineHeight: 20 },
-  countSub: { fontFamily: Font.body700, fontSize: 12, lineHeight: 20, color: Colors.inkSub },
-  countV: { fontFamily: Font.display, fontSize: 16, lineHeight: 22 },
-  countZero: { color: '#A39C8E' },
-  // 테이블: 같은 크기 칸 · 번호 위 · 인원 아래 (칸 안에 알약을 겹치지 않아요)
-  tables: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  tb: { width: 70, paddingVertical: 6, alignItems: 'center', borderRadius: 10, backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.line },
-  tbZero: { backgroundColor: Colors.white },
-  tbNo: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
-  tbNoPro: { color: Colors.purple, fontFamily: Font.body900 },
-  tbCount: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20 },
-  tbCountZero: { color: '#A39C8E' },
+  // 프로 · 멤버 칸: 같은 크기 두 칸
+  boxes: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  box: { flex: 1, minWidth: 0, paddingVertical: 8, paddingHorizontal: 8, alignItems: 'center', borderRadius: 10, backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.line },
+  boxZero: { backgroundColor: Colors.white },
+  boxL: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
+  boxLPro: { fontFamily: Font.body900, color: Colors.purple },
+  boxLStaff: { fontFamily: Font.body900, color: Colors.ink },
+  boxSub: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
+  boxV: { fontFamily: Font.body900, fontSize: 17, lineHeight: 23 },
+  boxVZero: { color: '#A39C8E' },
+  boxPlan: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
   done: { opacity: 0.5, gap: 6 },
   doneHead: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   doneRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1.5, borderColor: '#C9C0AE', borderRadius: 12, backgroundColor: Colors.white, paddingHorizontal: 10, height: 40 },

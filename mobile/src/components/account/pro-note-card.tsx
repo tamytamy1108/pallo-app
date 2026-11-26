@@ -2,38 +2,37 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import type { MyPageNotePreview, MyPageProNote } from '@/api/my-page';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { PRO_NOTES, PRO_SENT_NOTES, teamNameByNo, type ProNote } from '@/data/account';
 import { sfx } from '@/lib/feedback';
-import { isProLike, useMe } from '@/state/me';
 
 import { Box, Icon, Lift } from './parts';
-import { markNoteRead, useNoteState } from './store';
+import { markNoteRead } from './store';
+
+const WD = '일월화수목금토';
+/** 'YYYY-MM-DD' → '11/10(월)' */
+function dayLabel(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${m}/${d}(${WD[new Date(y, m - 1, d).getDay()]})`;
+}
 
 /**
- * 마이 화면의 PRO'S NOTE 카드 (최신 노트 · 새 노트 n · 모두 보기 ›) — 마이 화면이 그대로 넣어요.
- * 프로는 위에 [보낸 노트] [받은 노트] — 보낸 노트는 n/m명 읽음 · 고마워요, 받은 노트는 회원과 같아요 (프로도 멤버로 참여하면 노트를 받아요).
+ * 마이 화면의 PRO'S NOTE 카드 (최신 노트 · 새 노트 n · 모두 보기 ›) — 값은 마이 BFF(GET /me/mypage proNote) 그대로.
+ * note.sent 가 오면(서버가 프로로 판정) 위에 [보낸 노트] [받은 노트] — 보낸 노트는 n/m명 읽음 · 고마워요, 받은 노트는 회원과 같아요.
+ * 상자에 노트가 하나도 없으면(latest null) 버튼 대신 안내 문구.
  * 프로토타입 myPnHTML (.my-pnx: 보라 카드 안 크림 버튼). 새 노트 수는 상자 없이 노랑 글자로.
- * 담당: 마이 B. props 는 바꾸지 않아요(늘리기만).
  */
-export function ProNoteCard() {
-  const me = useMe();
-  const pro = isProLike(me.role);
+export function ProNoteCard({ note }: { note: MyPageProNote }) {
+  const pro = note.sent != null;
   // 프로는 보낸 노트 · 받은 노트로 나눠요 (프로도 멤버로 참여하면 노트를 받아요)
   const [box, setBox] = useState<'sent' | 'got'>('sent');
-  const { read } = useNoteState();
   const sent = pro && box === 'sent';
-  const n: ProNote = sent ? { ...PRO_SENT_NOTES[0], pro: me.name } : PRO_NOTES[0];
-  const s0 = PRO_SENT_NOTES[0];
-  const fresh = PRO_NOTES.filter((x) => x.isNew && !read[x.id]).length;
-  const cnt: Record<string, number> = {};
-  n.items.forEach(([k]) => {
-    cnt[k] = (cnt[k] ?? 0) + 1;
-  });
+  const n: MyPageNotePreview | null = (sent ? note.sent?.latest : note.received.latest) ?? null;
   const open = () => {
+    if (!n) return;
     sfx('tap');
     if (!sent) markNoteRead(n.id);
     router.push(`/me/notes/${n.id}`);
@@ -44,7 +43,7 @@ export function ProNoteCard() {
       <View style={styles.hd}>
         <Icon name="pen" size={18} color={Colors.yellow} fill={Colors.yellow} strokeWidth={2.4} />
         <PText style={styles.title}>PRO&apos;S NOTE</PText>
-        {fresh && !sent ? <PText style={styles.fresh}>{`새 노트 ${fresh}`}</PText> : null}
+        {note.unreadCount > 0 && !sent ? <PText style={styles.fresh}>{`새 노트 ${note.unreadCount}`}</PText> : null}
         <View style={styles.sp} />
         <Pressable
           onPress={() => {
@@ -56,12 +55,12 @@ export function ProNoteCard() {
           <PText style={styles.all}>모두 보기 ›</PText>
         </Pressable>
       </View>
-      {pro ? (
+      {note.sent ? (
         <View style={styles.tabs} accessibilityRole="tablist">
           {(
             [
-              ['sent', `보낸 노트 ${PRO_SENT_NOTES.length}`],
-              ['got', `받은 노트 ${PRO_NOTES.length}`],
+              ['sent', `보낸 노트 ${note.sent.total}`],
+              ['got', `받은 노트 ${note.received.total}`],
             ] as const
           ).map(([k, l]) => (
             <Pressable
@@ -78,20 +77,27 @@ export function ProNoteCard() {
           ))}
         </View>
       ) : null}
-      <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${n.m}월 ${n.d}일 노트 열기`}>
-        {({ pressed }) => (
-          <Lift radius={18} dx={0} dy={4} pressed={pressed}>
-            <View style={styles.ft}>
-              <PText style={styles.meta}>{sent ? `${n.m}/${n.d}(${n.wd}) · ${teamNameByNo(n.team)} · 보낸 노트` : `${n.m}/${n.d}(${n.wd}) · ${teamNameByNo(n.team)} · ${n.pro} 프로`}</PText>
-              <PText style={styles.head}>{n.items[0][1]}</PText>
-              <PText style={styles.tags}>{sent ? `${s0.readN}/${s0.total}명 읽음 · 고마워요 ${s0.thanksN}` : Object.entries(cnt).map(([k, v]) => `${k} ${v}`).join(' · ')}</PText>
-              <View style={styles.go}>
-                <PText style={styles.goText}>노트 열기</PText>
+      {n ? (
+        <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${dayLabel(n.date)} 노트 열기`}>
+          {({ pressed }) => (
+            <Lift radius={18} dx={0} dy={4} pressed={pressed}>
+              <View style={styles.ft}>
+                <PText style={styles.meta}>{sent ? `${dayLabel(n.date)} · ${n.courseTitle} · 보낸 노트` : `${dayLabel(n.date)} · ${n.courseTitle} · ${n.leaderName} 프로`}</PText>
+                <PText style={styles.head}>{n.previewQuestion ?? '질문 없이 보낸 노트'}</PText>
+                <PText style={styles.tags}>{sent ? `${n.readCount}/${n.recipientCount}명 읽음 · 고마워요 ${n.thanksCount}` : `질문 ${n.questionCount}개`}</PText>
+                <View style={styles.go}>
+                  <PText style={styles.goText}>노트 열기</PText>
+                </View>
               </View>
-            </View>
-          </Lift>
-        )}
-      </Pressable>
+            </Lift>
+          )}
+        </Pressable>
+      ) : (
+        <View style={styles.ft}>
+          <PText style={styles.meta}>{sent ? '아직 보낸 노트가 없어요' : '아직 받은 노트가 없어요'}</PText>
+          <PText style={styles.tags}>{sent ? '수업이 끝나면 테이블 친구들에게 노트를 보낼 수 있어요' : '수업이 끝나면 프로가 노트를 보내 줘요'}</PText>
+        </View>
+      )}
     </Box>
   );
 }

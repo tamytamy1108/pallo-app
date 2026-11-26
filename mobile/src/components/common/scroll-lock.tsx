@@ -29,9 +29,27 @@ export function checkScrollLock(screen: LockScreen) {
  * 흐린 곳을 누르면 늘 체험 안내 시트 (memberGate '끝까지 보려면'). 잠긴 칸까지 스크롤하면 잠김 1번 — 화면에 들어올 때마다 한 번만,
  * 3번째마다 권유 시트 (state/lock-hits lockView).
  */
-/** inset: 잠김 칸 양옆 여백 — 바깥에 여백이 없는 화면(라운지)은 16 */
-export function ScrollLock({ screen, peek, panel, inset = 0, children }: { screen: LockScreen; peek: number; panel?: ReactNode; inset?: number; children: ReactNode }) {
-  const locked = useMe((m) => !canUse(m, 'fullScroll'));
+/**
+ * inset: 잠김 칸 양옆 여백 — 바깥에 여백이 없는 화면(라운지)은 16.
+ * locked: 화면이 서버 판정을 받아 왔으면 그 값(마이 = GET /me/mypage branchMember). 안 주면 기기의 /me 판정(canUse 'fullScroll').
+ */
+export function ScrollLock({
+  screen,
+  peek,
+  panel,
+  inset = 0,
+  locked: given,
+  children,
+}: {
+  screen: LockScreen;
+  peek: number;
+  panel?: ReactNode;
+  inset?: number;
+  locked?: boolean;
+  children: ReactNode;
+}) {
+  const byMe = useMe((m) => !canUse(m, 'fullScroll'));
+  const locked = given ?? byMe;
   if (!locked) return children;
   return (
     <LockedTail screen={screen} peek={peek} panel={panel} inset={inset}>

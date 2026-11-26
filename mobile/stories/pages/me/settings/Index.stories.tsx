@@ -73,5 +73,3 @@ export const BranchSheet: Story = {
     await userEvent.click(await canvas.findByText('내 지점'));
   },
 };
-/** 앱 구독자 — 설정은 회원만이라 잠겨요 */
-export const AppOnly: Story = { globals: { userKind: 'app' } };

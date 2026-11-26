@@ -43,4 +43,3 @@ export const DiaryView: Story = { parameters: { route: { pathname: '/me/notes', 
 
 export const Guest: Story = { globals: { userKind: 'guest' } };
 export const Pending: Story = { globals: { userKind: 'pending' } };
-export const AppOnly: Story = { globals: { userKind: 'app' } };

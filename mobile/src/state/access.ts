@@ -1,7 +1,8 @@
 /**
  * 회원 · 비회원 권한 — docs/pages/09-onboarding.md '회원 · 비회원 권한' 표와 같아요.
- * 누가 누구인지(userKind)는 회원(member) · 비회원(guest) 둘뿐이에요. 회원 = 연동된 지점이 있는 사람 (state/me 의 role · link).
- * 지점이 연동해 주기 전(가입 직후 · 연동 대기 · 못 찾음 · 체험 예약)은 모두 guest 이고, 연동되면 member (state/link-events).
+ * 누가 누구인지(userKind)는 회원(member) · 비회원(guest) 둘뿐이에요. 회원 = 지점 회원인 사람 — 서버 /me 의 memberAccessLevel 이
+ * UNREGISTERED 가 아니면 (활성 멤버십이 없는 INACTIVE_MEMBER 도 회원). 누가 지점 회원인지는 서버(MemberAccessLevelResolver)가 정해요.
+ * 지점이 연동해 주기 전(가입 직후 · 연동 대기 · 못 찾음 · 체험 예약)은 모두 guest 예요.
  * 비회원이 지금 무엇을 기다리는지(연동 대기 · 반려 · 체험 예약)는 상태가 아니라 서버 요약에서 봐요 (api/use-branch-progress).
  */
 import type { Me } from '@/state/me';
@@ -9,11 +10,10 @@ import type { Me } from '@/state/me';
 /** 회원 · 비회원 */
 export type UserKind = 'member' | 'guest';
 
-type AccessFields = Pick<Me, 'role' | 'link'>;
+type AccessFields = Pick<Me, 'memberAccessLevel'>;
 
 export function userKind(me: AccessFields): UserKind {
-  // 회원 · 프로 · 매니저 (연동됨 — 처음 넣어 둔 가짜 회원도 linked)
-  return me.role !== 'guest' && (me.link === 'linked' || me.link === 'none') ? 'member' : 'guest';
+  return me.memberAccessLevel !== 'UNREGISTERED' ? 'member' : 'guest';
 }
 
 export const isMember = (me: AccessFields) => userKind(me) === 'member';
@@ -28,7 +28,6 @@ export const MEMBER_FEATURES = {
   loungeWrite: '라운지 글쓰기 · 댓글 · 모임 참여',
   eventJoin: '이벤트 참여 · 제안',
   challengeCreate: '챌린지 만들기',
-  settings: '설정',
   fullScroll: '라운지 · 이벤트 · 마이 끝까지 보기',
   allChapters: '스터디 맵 · 상황 맵 둘째 챕터부터',
 } as const;
@@ -40,6 +39,7 @@ export const OPEN_FEATURES = {
   loungeBrowse: '라운지 · 이벤트 위쪽 구경',
   like: '좋아요',
   customize: '캐릭터 꾸미기',
+  settings: '설정 (계정 · 알림 · 차단 · 로그아웃) — 회원 전용 줄(스터디 세션 알림)은 그 안에서 숨겨요',
 } as const;
 
 export type Feature = keyof typeof MEMBER_FEATURES | keyof typeof OPEN_FEATURES;

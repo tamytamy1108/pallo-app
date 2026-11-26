@@ -23,7 +23,7 @@ const meta = {
   title: 'Common/MemberOnly',
   component: MemberOnly,
   args: { feature: 'pass', title: '이용권', children: <RealContent label="이용권" /> },
-  argTypes: { feature: { control: 'select', options: ['pass', 'myStudy', 'proNote', 'settings', 'allChapters', 'fullScroll'] } },
+  argTypes: { feature: { control: 'select', options: ['pass', 'myStudy', 'proNote', 'allChapters', 'fullScroll'] } },
   beforeEach: () => {
     resetLockHits();
     return resetLockHits;
@@ -43,10 +43,6 @@ export const Pending: Story = { globals: { userKind: 'pending' } };
 export const Rejected: Story = { globals: { userKind: 'rejected' } };
 /** 체험 예약 — [체험 예약 보기] */
 export const Trial: Story = { globals: { userKind: 'trial' } };
-/** 앱 구독 — 이용권은 회원만이라 잠겨요 */
-export const AppOnlyLocked: Story = { globals: { userKind: 'app' } };
-/** 앱 구독 — 설정도 회원만이라 잠겨요 */
-export const AppOnlySettingsLocked: Story = { globals: { userKind: 'app' }, args: { feature: 'settings', title: '설정', children: <RealContent label="설정" /> } };
 /** 프로 노트 · 비회원 */
 export const ProNoteGuest: Story = { globals: { userKind: 'guest' }, args: { feature: 'proNote', title: '프로 노트', children: <RealContent label="프로 노트" /> } };
 

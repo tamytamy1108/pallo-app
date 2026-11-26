@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { langColor, type DayOfWeekName, type MyPageStudy, type MyPageStudyTeam } from '@/api/my-page';
 import { MemberFace } from '@/components/common/member-face';
 import { Pressable } from '@/components/ui/pressable';
 import { Button } from '@/components/ui/button';
@@ -10,30 +11,35 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { changesLeftText, getMembership, LANG_COLOR, MY_TEAMS, teamLabel, type Team } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
 import { Box, Lift } from './parts';
 import { cancelChangeRequest, useChangeRequest } from './store';
 
-const WD = '월화수목금토일';
+const DAY_ORDER: DayOfWeekName[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+const DAY_KO = '월화수목금토일';
 
 /** 팀 목록 = 시간 순 타임라인: 월요일부터 가는 순서 (프로토타입 myStudyHTML 의 first()) */
-const firstDay = (t: Team) => Math.min(...[...t.when.split(' ')[0]].map((d) => WD.indexOf(d)).filter((i) => i >= 0));
+const firstDay = (t: MyPageStudyTeam) => Math.min(7, ...t.days.map((d) => DAY_ORDER.indexOf(d)));
+/** 남은 횟수 글자 (null = 제한 없음) */
+const leftText = (n: number | null) => (n == null ? '무제한' : `${n}번`);
+/** 'YYYY-MM-DD' → 'YYYY.MM.DD' */
+const dot = (iso: string) => iso.replaceAll('-', '.');
 
 /**
  * 마이 화면의 '내 스터디' 카드 (내 프로필 · 이용권 · 팀 시간표 · [연기 · 팀 · 지점 변경]) — 남은 횟수 고리 · 무료 줄은 뺐어요 (D안) — 마이 화면이 그대로 넣어요.
  * 프로토타입 myStudyHTML (.my-study.ms-a). 신청 중이면 '○○ 신청 · 운영진 확인 중' + [신청 취소].
- * 담당: 마이 B. props 는 바꾸지 않아요(늘리기만). title={false} 면 위 '내 스터디' 제목 없이.
+ * 값은 마이 BFF(GET /me/mypage study) 그대로 — 이용 중인 멤버십 하나와 그 지점에서 듣는 팀. 신청 중 표시만 기기 상태(store).
+ * title={false} 면 위 '내 스터디' 제목 없이.
  */
-export function MyStudyCard({ title = true }: { title?: boolean }) {
-  const ms = getMembership();
+export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title?: boolean }) {
   const me = useMe();
   const req = useChangeRequest();
   const [askCancel, setAskCancel] = useState(false);
-  const teams = MY_TEAMS.slice().sort((p, q) => firstDay(p) - firstDay(q));
-  const end = String(ms.period).split('~').pop()?.trim();
+  const teams = study.teams.slice().sort((p, q) => firstDay(p) - firstDay(q));
+  const period = `${dot(study.startDate)} ~ ${dot(study.endDate)}`;
+  const weekly = study.teams.reduce((a, t) => a + t.days.length, 0);
 
   return (
     <View style={styles.wrap}>
@@ -53,32 +59,32 @@ export function MyStudyCard({ title = true }: { title?: boolean }) {
           </View>
           <View style={styles.info}>
             <View style={styles.pl}>
-              <PText style={styles.plan}>{ms.name}</PText>
-              <PText style={styles.period} accessibilityLabel={`기간 ${ms.period}, ${end}까지`}>
-                {ms.period}
+              <PText style={styles.plan}>{study.membershipName}</PText>
+              <PText style={styles.period} accessibilityLabel={`기간 ${period}, ${dot(study.endDate)}까지`}>
+                {period}
               </PText>
             </View>
-            <KV k="연기 · 변경" v={changesLeftText(ms.pp)} />
-            <KV k="팀" v={`${MY_TEAMS.length}팀 · 주 ${ms.wk}회`} />
+            <KV k="연기 · 변경" v={`연기 ${leftText(study.remainingHoldingCount)} · 변경 ${leftText(study.remainingCourseChangeCount)}`} />
+            <KV k="팀" v={`${study.teams.length}팀 · 주 ${weekly}회`} />
           </View>
         </View>
 
         <View style={styles.tl}>
           <View style={styles.tlLine} />
           {teams.map((t) => {
-            const [ds, hm = ''] = t.when.split(' ');
-            const [h, m] = hm.split(':').map(Number);
+            const [h, m] = t.time.split(':').map(Number);
             const ap = h < 12 ? '오전' : h < 18 ? '오후' : '저녁';
+            const ds = t.days.map((d) => DAY_KO[DAY_ORDER.indexOf(d)]).join(' · ');
             return (
-              <View key={t.branch + t.no} style={styles.r}>
-                <View style={[styles.dot, { backgroundColor: LANG_COLOR[t.lang] }]} />
+              <View key={t.courseId} style={styles.r}>
+                <View style={[styles.dot, { backgroundColor: langColor(t.languageLabel) }]} />
                 <View style={styles.tm}>
                   <PText style={styles.tmB}>{`${h % 12 || 12}:${String(m || 0).padStart(2, '0')}`}</PText>
-                  <PText style={styles.tmS}>{`${[...ds].join(' · ')} ${ap}`}</PText>
+                  <PText style={styles.tmS}>{`${ds} ${ap}`}</PText>
                 </View>
                 <View style={styles.tx}>
-                  <PText style={styles.txB}>{teamLabel(t)}</PText>
-                  <PText style={styles.txS}>{t.branch}</PText>
+                  <PText style={styles.txB}>{t.courseTitle}</PText>
+                  <PText style={styles.txS}>{t.leaderName ? `${study.branchName} · ${t.leaderName} 프로` : study.branchName}</PText>
                 </View>
               </View>
             );

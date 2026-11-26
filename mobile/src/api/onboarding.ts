@@ -40,6 +40,31 @@ export type BranchOption = { code: string; name: string; status: 'ACTIVE' | 'PAU
 /** 날짜(YYYY-MM-DD, KST)마다 상담 희망 시각(HH:mm) — 상담 시간이 없는 날은 빈 목록, 오늘은 지난 시각을 빼요 */
 export type TrialSlotDays = { days: { date: string; times: string[] }[] };
 
+/**
+ * 고른 지점 안내 (GET /branches/{code}/guide) — 아직 연동 안 된 사람도 보는 공개 칸만. 지점이 콘솔 설정 > 지점 > 지점 안내에 적은 값이고,
+ * 적지 않은 칸은 null · 사진 · 언어는 빈 목록이에요. 입금 계좌 · 와이파이 · 매니저 주의사항은 연동된 회원용(api/branch-guide)에만 있어요.
+ */
+export type BranchPublicGuide = {
+  branchCode: string;
+  branchName: string;
+  address: string | null;
+  /** 층 · 호 */
+  addressDetail: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  /** 지점 소개 글 (줄바꿈 그대로) */
+  intro: string | null;
+  /** 지점 사진 주소 — 순서 = 넘겨 보는 순서 */
+  photoPaths: string[];
+  /** 지점 문의 전화번호 (숫자 · 하이픈) */
+  phone: string | null;
+  phoneHours: string | null;
+  openHours: string | null;
+  parking: string | null;
+  /** 이 지점에 열린 수업의 언어 (언어 정렬 순) · 그 언어 수업 수 */
+  languages: { code: string; label: string; courseCount: number }[];
+};
+
 export type Pallolo = { code: string; name: string; tint: string; isDefault: boolean; version: number; imageUrl: string };
 export type AssetCatalog = { formatVersion: number; canvas: { width: number; height: number }; bodyBox: { x: number; y: number; width: number; height: number }; pallolos: Pallolo[] };
 
@@ -60,6 +85,32 @@ export type OnboardingResult = {
   linkRequest?: { id: string; branchCode: string; branchName: string; status: string };
   trial?: { branchCode: string; branchName: string; languageCode: string; date: string; time: string; realName: string };
 };
+
+/** 지점 안내 화면이 그대로 그리는 값 — 비어 있는 줄은 null (화면은 null 인 줄을 그리지 않아요) */
+export type BranchGuideView = {
+  name: string;
+  photos: string[];
+  intro: string | null;
+  /** 주소 + 층 · 호 */
+  address: string | null;
+  openHours: string | null;
+  /** '영어 · 일본어 · 7팀' — 열린 수업이 없으면 null */
+  study: string | null;
+  phone: string | null;
+};
+
+export function branchGuideView(g: BranchPublicGuide): BranchGuideView {
+  const total = g.languages.reduce((n, l) => n + l.courseCount, 0);
+  return {
+    name: g.branchName,
+    photos: g.photoPaths,
+    intro: g.intro,
+    address: g.address ? [g.address, g.addressDetail].filter(Boolean).join(' ') : null,
+    openHours: g.openHours,
+    study: total > 0 ? `${g.languages.map((l) => l.label).join(' · ')} · ${total}팀` : null,
+    phone: g.phone,
+  };
+}
 
 /* ───────── 가짜 서버 ───────── */
 
@@ -114,6 +165,56 @@ export function mockTrialSlots(branchCode: string): TrialSlotDays {
 
 const mockBranchName = (code: string) => MOCK_BRANCHES.find((b) => b.code === code)?.name ?? code;
 
+/** 가짜 지점 안내: 하남점 · 잠실점은 다 적은 지점, 나머지는 주소만 적은 지점 (사진은 없어요 — 스토리가 따로 채워요) */
+export function mockBranchPublicGuide(code: string): BranchPublicGuide {
+  const base: BranchPublicGuide = {
+    branchCode: code,
+    branchName: mockBranchName(code),
+    address: `${mockBranchName(code)} [주소]`,
+    addressDetail: null,
+    latitude: null,
+    longitude: null,
+    intro: null,
+    photoPaths: [],
+    phone: null,
+    phoneHours: null,
+    openHours: null,
+    parking: null,
+    languages: [{ code: 'en', label: '영어', courseCount: 3 }],
+  };
+  if (code === '하남점')
+    return {
+      ...base,
+      address: '하남시 [주소]',
+      addressDetail: '3층',
+      intro: '미사역 바로 앞, 통창 라운지가 있는 지점이에요. 평일 저녁 스터디가 가장 많고, 스터디 끝나고 라운지에서 프리토킹을 이어 가는 분이 많아요.',
+      phone: '0507-0000-0000',
+      phoneHours: '평일 10~19시',
+      openHours: '평일 10~23시 · 주말 10~18시',
+      parking: '건물 지하 2층 · 스터디 시간 2시간 무료',
+      languages: [
+        { code: 'en', label: '영어', courseCount: 5 },
+        { code: 'ja', label: '일본어', courseCount: 2 },
+        { code: 'zh', label: '중국어', courseCount: 2 },
+        { code: 'es', label: '스페인어', courseCount: 1 },
+      ],
+    };
+  if (code === '잠실점')
+    return {
+      ...base,
+      address: '서울 송파구 [주소]',
+      addressDetail: '5층',
+      intro: '잠실역 8번 출구에서 3분, 스터디룸 6개가 있는 지점이에요. 직장인 저녁 스터디와 주말 오전 스터디가 많아요.',
+      phone: '0507-1111-1111',
+      openHours: '평일 10~22시 · 주말 10~18시',
+      languages: [
+        { code: 'en', label: '영어', courseCount: 4 },
+        { code: 'ja', label: '일본어', courseCount: 2 },
+      ],
+    };
+  return base;
+}
+
 function mockSubmit(body: OnboardingBody): OnboardingResult {
   if (body.path === 'MEMBER' && body.member) {
     const m = body.member;
@@ -156,6 +257,16 @@ export function submitOnboarding(body: OnboardingBody): Promise<OnboardingResult
 export function fetchBranchOptions({ signal }: Opts = {}): Promise<BranchOption[]> {
   if (apiConfig.useMock) return mock('branchOptions', () => MOCK_BRANCHES.map((b) => ({ ...b })));
   return http.get('/branches', { signal });
+}
+
+/** GET /branches/{code}/guide — 고른 지점 안내 (운영 중인 지점만, 아니면 404) */
+export function fetchBranchPublicGuide(branchCode: string, { signal }: Opts = {}): Promise<BranchPublicGuide> {
+  if (apiConfig.useMock)
+    return mock('branchPublicGuide', () => {
+      if (!MOCK_BRANCHES.some((b) => b.code === branchCode)) throw mockNotFound();
+      return mockBranchPublicGuide(branchCode);
+    });
+  return http.get(`/branches/${encodeURIComponent(branchCode)}/guide`, { signal });
 }
 
 /** GET /trial-slots?branchCode= — 운영 중인 지점만 (아니면 404) */

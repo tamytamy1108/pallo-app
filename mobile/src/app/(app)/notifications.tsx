@@ -18,7 +18,7 @@ import { NOTI_TABS, type Noti, type NotiKind } from '@/data/home';
 import { sfx } from '@/lib/feedback';
 import { canUse, type Feature } from '@/state/access';
 import { memberGate } from '@/components/common/trial-guide';
-import { getMe, useMe } from '@/state/me';
+import { getMe } from '@/state/me';
 import { getLastStep } from '@/state/progress';
 
 /**
@@ -44,7 +44,6 @@ export default function NotificationsScreen() {
   const [tab, setTab] = useState<'all' | NotiKind>('all');
   const read = useNotiRead();
   const unread = useUnreadCount();
-  const canSettings = useMe((m) => canUse(m, 'settings'));
   // 앱을 쓰는 동안 새로 온 알림(지점 연동 결과 등)이 맨 위에 쌓여요
   const list = useNotiList().filter((n) => tab === 'all' || n.kind === tab);
 
@@ -79,13 +78,7 @@ export default function NotificationsScreen() {
           <PText style={styles.linkText}>모두 읽음</PText>
         </Pressable>
         {/* 알림 설정: 설정 › 알림 칸으로 */}
-        {/* 설정은 회원만: 비회원은 흐리게 · 누르면 체험 안내 (trial-guide memberGate) */}
-        <Pressable
-          onPress={() => (canSettings ? router.push('/me/settings?section=noti' as Href) : memberGate('설정을 쓰려면'))}
-          accessibilityRole="button"
-          accessibilityLabel="알림 설정"
-          accessibilityHint={canSettings ? undefined : '지점 회원이 되면 쓸 수 있어요'}
-          style={StyleSheet.flatten([TOP_ICON, !canSettings && styles.linkOff])}>
+        <Pressable onPress={() => router.push('/me/settings?section=noti' as Href)} accessibilityRole="button" accessibilityLabel="알림 설정" style={TOP_ICON}>
           <LineIcon d={ICON_PATH.grid} size={19} />
         </Pressable>
           </>

@@ -6,7 +6,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 
-import type { Me } from '@/state/me';
+import type { TrialBooking } from '@/components/common/trial-booking';
 import { toStudyLang } from '@/state/onboarding';
 
 import { EMPTY_BRANCH_SUMMARY, type BranchSummary, type PendingLink, type RejectedLink } from './branch-summary';
@@ -17,7 +17,7 @@ export type BranchProgress = {
   pending: PendingLink | null;
   rejected: RejectedLink | null;
   /** 가장 가까운 체험 (체험 카드 · 예약 내용 시트 모양) */
-  trial: NonNullable<Me['trial']> | null;
+  trial: TrialBooking | null;
 };
 
 export function toBranchProgress(s: BranchSummary): BranchProgress {

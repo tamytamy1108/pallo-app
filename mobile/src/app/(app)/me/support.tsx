@@ -6,6 +6,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { apiErrorMessage } from '@/api/errors';
 import { faqQuery, myInquiriesQuery } from '@/api/queries';
 import { FAQ_ALL, filterFaqItems, INQUIRY_MAX, INQUIRY_STATUS_LABEL, inquiryChoices, inquiryContentOk, inquiryDate } from '@/api/support';
+import { useMyBranchContact } from '@/api/use-branch-guide';
 import { useCreateInquiry } from '@/api/use-create-inquiry';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
@@ -16,15 +17,14 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BRANCH_PHONE } from '@/data/account';
 import { sfx } from '@/lib/feedback';
-import { useMe } from '@/state/me';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { openTel } from '@/lib/open-out';
 
 /**
  * 고객센터 (프로토타입 helpHTML · askHTML).
  * - 기본: 자주 묻는 질문(찾기 · 분류 칩 · 펼치는 답 · 도움이 됐어요 / 문의하기) + 1:1 문의 · 카카오톡 상담 · 내 지점 전화
+ *   (내 지점 전화는 연동된 지점이 콘솔 지점 안내에 적은 번호 — GET /me/branch-guides. 연동 전이거나 번호가 없으면 줄을 빼요)
  * - ?view=faq: 자주 묻는 질문만 · ?view=ask(&type=분류 코드): 1:1 문의 (문의하기 · 내 문의)
  * - ?view=ask&tab=list: 내 문의 탭부터 — 답변 알림(USER_INQUIRY)을 누르면 여기로 와요
  * 데이터: 93 GET `/faq` · 94 GET · POST `/me/inquiries` (api/support — FAQ 내용 · 분류는 app-hub FAQ 관리에서 본사가 정해요)
@@ -36,7 +36,7 @@ export default function SupportScreen() {
 }
 
 function HelpView({ faqOnly }: { faqOnly: boolean }) {
-  const me = useMe();
+  const contact = useMyBranchContact().data ?? null;
   const faq = useQuery(faqQuery());
   // 문의 건수는 '더 도움이 필요하면' 칸에만 보여요
   const inquiries = useQuery({ ...myInquiriesQuery(), enabled: !faqOnly });
@@ -54,7 +54,7 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
   const ways: [IconName, string, string, () => void][] = [
     ['edit', '1:1 문의하기', askSub, ask],
     ['cmt', '카카오톡 상담', '평일 10:00 ~ 19:00', () => showToast('카카오톡 PALLO 채널로 이어져요')],
-    ['phone', '내 지점 전화', `${me.branch} · ${BRANCH_PHONE}`, () => openTel(BRANCH_PHONE)],
+    ...(contact ? [['phone', '내 지점 전화', `${contact.branchName} · ${contact.phone}`, () => openTel(contact.phone)] as [IconName, string, string, () => void]] : []),
   ];
 
   return (

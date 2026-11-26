@@ -45,8 +45,6 @@ type Story = StoryObj<typeof meta>;
 export const Lock: Story = {};
 /** 첫 챕터 끝 — NEXT TAKE · [나중에] */
 export const Chapter: Story = { args: { trigger: 'chapter' } };
-/** 앱 구독자 · 잠김 3번 (비회원과 같아요) */
-export const AppOnlyLock: Story = { globals: { userKind: 'app' } };
 /** 체험 예약자가 회원 전용을 누름 — 제목에 '…하려면' */
 export const TrialReminder: Story = { globals: { userKind: 'trial' }, args: { trigger: 'reminder' } };
 /** 체험 예약자 · 첫 챕터 끝 */

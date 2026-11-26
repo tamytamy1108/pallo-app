@@ -5,16 +5,15 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { apiErrorMessage } from '@/api/errors';
 import { useCompleteOnboarding } from '@/api/session';
-import { useSubmitOnboarding } from '@/api/use-onboarding';
+import { useBranchPublicGuide, useSubmitOnboarding } from '@/api/use-onboarding';
 import { NextButton, OnbScreen } from '@/components/onboarding/parts';
 import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { BRANCH_PHONE, teamsOf, TEAM_LANGS } from '@/data/account';
-import { BR_BOARDS, type PartnerPoster } from '@/data/my';
 import { openTel } from '@/lib/open-out';
 import { updateOnboarding, useOnboarding } from '@/state/onboarding';
 
@@ -33,19 +32,20 @@ const IC = {
 /**
  * 가입 › 앱 구경 › 고른 지점 안내 (전체 화면 · 진행 바 칸 없음) — 디자인 캔버스 시안 B.
  * 위에서부터: 지점 이름 → 넘겨 보는 지점 사진 → 지점 소개 → 주소 · 운영 시간 · 스터디 · 연락처 → '앱 둘러보기'.
- * 사진 · 소개는 지점이 전산에서 직접 올려요 (BR_BOARDS photos · intro). 없으면 빈 사진 칸 · 소개 줄 없음.
+ * 내용은 GET /branches/{code}/guide — 지점이 콘솔 설정 > 지점 > 지점 안내에 적은 사진 · 소개 · 문의 · 운영 시간, 주소는 지점 등록 정보,
+ * 스터디 줄은 그 지점에 열린 수업. 지점이 적지 않은 줄은 그리지 않고, 사진이 없으면 빈 사진 칸이에요.
+ * 안내를 못 받아도 '앱 둘러보기'는 그대로 눌러요 (가입을 막지 않아요).
  * '앱 둘러보기' → POST /onboarding (APP) 뒤 가입이 끝나고 홈 (홈 시작 공지는 그다음에 떠요). 뒤로 가면 지점을 다시 골라요.
  */
 export default function OnboardingBranch() {
   const branch = useOnboarding((s) => s.branch);
+  const branchCode = useOnboarding((s) => s.branchCode);
+  const guide = useBranchPublicGuide(branchCode);
   const complete = useCompleteOnboarding();
   const submit = useSubmitOnboarding();
   const busy = submit.isPending || complete.isPending;
-  const board = BR_BOARDS[branch];
-  const teams = teamsOf(branch);
-  const langs = TEAM_LANGS.filter((l) => teams.some((t) => t.lang === l));
-  const telItem = board?.items.find((i) => i.ic === 'tel');
-  const tel = telItem?.act?.[1] ?? BRANCH_PHONE;
+  const g = guide.data;
+  const name = g?.name ?? branch;
 
   const browse = () => {
     updateOnboarding({ path: 'app' });
@@ -57,39 +57,49 @@ export default function OnboardingBranch() {
   return (
     <OnbScreen footer={<NextButton label={busy ? '보내는 중…' : '앱 둘러보기'} disabled={busy} onPress={browse} />}>
       <PText style={styles.title} accessibilityRole="header">
-        팔로 {branch}입니다!
+        팔로 {name}입니다!
       </PText>
-      <Photos photos={board?.photos ?? []} branch={branch} />
-      {board?.intro ? (
-        <View style={styles.introBox}>
-          <PText style={styles.introT} accessibilityRole="header">
-            지점 소개
-          </PText>
-          <PText style={styles.intro}>{board.intro}</PText>
-        </View>
-      ) : null}
-      <View style={styles.list}>
-        {board ? <Row ic="loc">{board.addr}</Row> : null}
-        {board ? <Row ic="clk">{board.hrs}</Row> : null}
-        <Row ic="talk">
-          {langs.join(' · ')} · {teams.length}팀
-        </Row>
-        <Row
-          ic="tel"
-          end={
-            <Pressable onPress={() => openTel(tel)} accessibilityRole="button" accessibilityLabel={`${branch}에 전화하기`} hitSlop={8} style={styles.call}>
-              <PText style={styles.callT}>전화</PText>
-            </Pressable>
-          }>
-          {tel}
-        </Row>
-      </View>
+      {guide.isPending ? (
+        <LoadingState />
+      ) : guide.isError ? (
+        <ErrorState onRetry={() => guide.refetch()} />
+      ) : (
+        <>
+          <Photos photos={g?.photos ?? []} branch={name} />
+          {g?.intro ? (
+            <View style={styles.introBox}>
+              <PText style={styles.introT} accessibilityRole="header">
+                지점 소개
+              </PText>
+              <PText style={styles.intro}>{g.intro}</PText>
+            </View>
+          ) : null}
+          {g && (g.address || g.openHours || g.study || g.phone) ? (
+            <View style={styles.list}>
+              {g.address ? <Row ic="loc">{g.address}</Row> : null}
+              {g.openHours ? <Row ic="clk">{g.openHours}</Row> : null}
+              {g.study ? <Row ic="talk">{g.study}</Row> : null}
+              {g.phone ? (
+                <Row
+                  ic="tel"
+                  end={
+                    <Pressable onPress={() => openTel(g.phone ?? '')} accessibilityRole="button" accessibilityLabel={`${name}에 전화하기`} hitSlop={8} style={styles.call}>
+                      <PText style={styles.callT}>전화</PText>
+                    </Pressable>
+                  }>
+                  {g.phone}
+                </Row>
+              ) : null}
+            </View>
+          ) : null}
+        </>
+      )}
     </OnbScreen>
   );
 }
 
 /** 지점 사진: 옆으로 넘겨요 (n / 전체 · 아래 점). 사진이 없으면 빈 사진 칸 */
-function Photos({ photos, branch }: { photos: PartnerPoster[]; branch: string }) {
+function Photos({ photos, branch }: { photos: string[]; branch: string }) {
   const { width } = useWindowDimensions();
   const w = width - SIDE * 2;
   const [i, setI] = useState(0);
@@ -105,7 +115,7 @@ function Photos({ photos, branch }: { photos: PartnerPoster[]; branch: string })
               onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / (w - 4)))}
               accessibilityLabel={`${branch} 사진 ${photos.length}장`}>
               {photos.map((p, k) => (
-                <Image key={k} source={typeof p === 'string' ? { uri: p } : p} style={{ width: w - 4, height: PHOTO_H - 4 }} contentFit="cover" accessibilityIgnoresInvertColors />
+                <Image key={k} source={{ uri: p }} style={{ width: w - 4, height: PHOTO_H - 4 }} contentFit="cover" accessibilityIgnoresInvertColors />
               ))}
             </ScrollView>
           ) : (

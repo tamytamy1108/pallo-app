@@ -10,7 +10,7 @@ import { lessonQuestTitle, shareQuest } from '../quest-share';
 const mockSend = jest.fn((_a: unknown) => Promise.resolve());
 jest.mock('@/api/home', () => ({ sendQuestDone: (a: unknown) => mockSend(a) }));
 
-const member = { role: 'member' as const, link: 'linked' as const, trial: null, plan: 'study' as const };
+const member = { role: 'member' as const, memberAccessLevel: 'ACTIVE_MEMBER' as const };
 
 describe('shouldAskInvite', () => {
   it('회원 · 팔로우한 멤버가 있을 때만, 2주간 보지 않기 뒤엔 14일 동안 안 물어요', () => {
@@ -22,7 +22,7 @@ describe('shouldAskInvite', () => {
     snoozeInvite(now);
     expect(shouldAskInvite(now + 1000)).toBe(false);
     expect(shouldAskInvite(now + INVITE_SNOOZE_MS + 1)).toBe(true);
-    updateMe({ role: 'guest', link: 'none' });
+    updateMe({ role: 'guest', memberAccessLevel: 'UNREGISTERED' });
     expect(shouldAskInvite(now + INVITE_SNOOZE_MS + 1)).toBe(false);
   });
 });
@@ -46,7 +46,7 @@ describe('shareQuest', () => {
     updateSettings({ shareProgress: false });
     expect(shareQuest({ ...q, key: '1:1:story' })).toBe(false);
     updateSettings({ shareProgress: true });
-    updateMe({ role: 'guest', link: 'none' });
+    updateMe({ role: 'guest', memberAccessLevel: 'UNREGISTERED' });
     expect(shareQuest({ ...q, key: '1:1:talk' })).toBe(false);
     expect(mockSend).not.toHaveBeenCalled();
   });

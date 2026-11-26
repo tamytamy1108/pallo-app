@@ -12,17 +12,16 @@ import type { Me } from '@/state/me';
  * 그래서 사람마다 나(state/me)에 덮을 값(USER_KIND_PATCH)과 요약(PERSONA_SUMMARY) 두 가지를 같이 정해요 (.storybook/preview 가 둘 다 채워요).
  * 스토리 하나를 특정 사람에 고정하려면 `globals: { userKind: 'pending' }`.
  */
-export type StoryPersona = 'member' | 'pending' | 'rejected' | 'trial' | 'app' | 'guest';
+export type StoryPersona = 'member' | 'pending' | 'rejected' | 'trial' | 'guest';
 
 const TRIAL = { branch: '하남점', day: '2026-12-03', time: '19:30', lang: 'en' } as const;
 
 export const USER_KIND_PATCH: Record<StoryPersona, Partial<Me>> = {
-  member: { role: 'member', link: 'linked', trial: null, plan: 'study' },
-  pending: { role: 'guest', link: 'pending', trial: null, plan: 'study' },
-  rejected: { role: 'guest', link: 'rejected', trial: null, plan: 'study' },
-  trial: { role: 'guest', link: 'none', trial: { ...TRIAL }, plan: 'study' },
-  app: { role: 'guest', link: 'none', trial: null, plan: 'app' },
-  guest: { role: 'guest', link: 'none', trial: null, plan: 'study' },
+  member: { role: 'member', memberAccessLevel: 'ACTIVE_MEMBER' },
+  pending: { role: 'guest', memberAccessLevel: 'UNREGISTERED' },
+  rejected: { role: 'guest', memberAccessLevel: 'UNREGISTERED' },
+  trial: { role: 'guest', memberAccessLevel: 'UNREGISTERED' },
+  guest: { role: 'guest', memberAccessLevel: 'UNREGISTERED' },
 };
 
 /** 사람마다 서버 요약 (연동 대기 · 확인 안 한 반려 · 다가오는 체험) */
@@ -39,7 +38,6 @@ export const PERSONA_SUMMARY: Record<StoryPersona, BranchSummary> = {
       { id: 'story-trial', branchCode: 'HANAM', branchName: TRIAL.branch, branchPhone: null, languageCode: TRIAL.lang, languageLabel: '영어', date: TRIAL.day, time: TRIAL.time },
     ],
   },
-  app: EMPTY_BRANCH_SUMMARY,
   guest: EMPTY_BRANCH_SUMMARY,
 };
 
@@ -65,6 +63,5 @@ export const USER_KIND_ITEMS: { value: StoryPersona; title: string }[] = [
   { value: 'pending', title: '비회원 · 연동 대기' },
   { value: 'rejected', title: '비회원 · 반려 확인 전' },
   { value: 'trial', title: '비회원 · 체험 예약' },
-  { value: 'app', title: '비회원 · 앱 구독' },
   { value: 'guest', title: '비회원' },
 ];

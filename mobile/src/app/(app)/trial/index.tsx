@@ -5,8 +5,8 @@ import { useCreateTrialApplication } from '@/api/use-onboarding';
 import { leaveTrial } from '@/components/common/trial-guide';
 import { ONB_LANGS } from '@/components/onboarding/app-parts';
 import { TrialForm } from '@/components/onboarding/trial-form';
-import { getMe, updateMe } from '@/state/me';
-import { getOnboarding, toStudyLang } from '@/state/onboarding';
+import { getMe } from '@/state/me';
+import { getOnboarding } from '@/state/onboarding';
 import { setLastTrial, type TrialDraft } from '@/state/trial-booking';
 
 /**
@@ -54,8 +54,6 @@ export default function TrialScreen() {
           {
             onSuccess: () => {
               setLastTrial(b);
-              // 가짜 내 정보의 체험 예약 (홈 카드는 서버 요약 upcomingTrials 로 옮겨 가는 중)
-              updateMe({ trial: { branch: b.branch, day: b.trialDay, time: b.trialTime, lang: toStudyLang(b.langs[0]) ?? 'en' } });
               router.replace('/trial/done');
             },
           },

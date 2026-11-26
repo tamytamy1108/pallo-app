@@ -15,8 +15,7 @@ import { AttendSheet, type AttendSheetMode } from '@/components/home/attend-shee
 import { BranchStatusCard } from '@/components/home/branch-status-card';
 import { getAttend, minuteOf, nowDate, openTeams, slotSelectable, summary, type SheetMode } from '@/components/home/attendance';
 import { setDecoOnScreen } from '@/components/home/deco-on-screen';
-import { applyDevAdmin, applyDevMe, applyDevParams, applyDevPlan } from '@/components/home/dev';
-import { GoalCard } from '@/components/home/goal-card';
+import { applyDevAdmin, applyDevMe, applyDevParams } from '@/components/home/dev';
 import { Greeting } from '@/components/home/greeting';
 import { LineIcon } from '@/components/home/icons';
 import { InviteSheet } from '@/components/home/invite-sheet';
@@ -25,7 +24,6 @@ import { LaunchPopup } from '@/components/home/launch-popup';
 import { LinkAdminDev } from '@/components/home/link-admin-dev';
 import { LinkRejectedPopup } from '@/components/home/link-rejected-popup';
 import { LoungePreview } from '@/components/home/lounge-preview';
-import { askCurrentStop } from '@/components/home/map-state';
 import { useUnreadCount } from '@/components/home/noti-state';
 import { NoticeStrip } from '@/components/home/notice-strip';
 import { QrScanner } from '@/components/home/qr-scanner';
@@ -45,12 +43,11 @@ import { useTabReselect } from '@/lib/tab-reselect';
 
 const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
 
-/** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드(앱 구독자는 오늘의 목표) → 스터디 맵 → 라운지 미리보기. */
+/** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드 → 스터디 맵 → 라운지 미리보기. */
 export default function HomeScreen() {
-  // 개발용 주소 값 (?now= · ?season= · ?plan= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
-  const dev = useLocalSearchParams<{ now?: string; season?: string; plan?: string; link?: string; name?: string; admin?: string; trial?: string; follow?: string; attend?: string; slot?: string; lang?: string }>();
+  // 개발용 주소 값 (?now= · ?season= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
+  const dev = useLocalSearchParams<{ now?: string; season?: string; link?: string; name?: string; admin?: string; trial?: string; follow?: string; attend?: string; slot?: string; lang?: string }>();
   useState(() => applyDevParams(dev));
-  useEffect(() => applyDevPlan(dev.plan), [dev.plan]);
   useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial, follow: dev.follow }), [dev.link, dev.name, dev.trial, dev.follow]);
   useEffect(() => applyDevAdmin(dev.admin), [dev.admin]);
 
@@ -159,11 +156,6 @@ export default function HomeScreen() {
     // 가짜 서버: 테이블은 그 세션 첫 테이블로 쳐요 (실제는 QR 의 tableId)
     const session = branchSessionAt(j.slot, j.lang);
     proCheckIn.mutate({ sessionId: session?.id ?? `${SLOTS[j.slot].id}-${LANGS[j.lang].key}`, tableNo: session?.tables[0]?.no ?? 0 });
-  };
-
-  const continueGoal = () => {
-    scroll.current?.scrollTo({ y: Math.max(0, mapY.current - 20), animated: true });
-    askCurrentStop();
   };
 
   return (

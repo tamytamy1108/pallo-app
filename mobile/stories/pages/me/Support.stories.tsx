@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
+import { branchGuidesQuery } from '@/api/queries';
 import { setMockInquiries } from '@/api/support';
 import SupportScreen from '@/app/(app)/me/support';
 
@@ -9,7 +10,7 @@ const at = (params?: Record<string, string>) => ({ route: { pathname: '/me/suppo
 
 /**
  * 고객센터 (/me/support) — 찾기 · 분류 칩 · 자주 묻는 질문 · 문의 방법. ?view=faq 면 질문만, ?view=ask 면 1:1 문의(새 문의 · 내 문의).
- * 데이터는 가짜 서버(api/support — GET /faq · GET · POST /me/inquiries). 불러오는 중 · 오류는 주소에 ?mockDelay= · ?mockFail=faq,inquiries.
+ * 데이터는 가짜 서버(api/support — GET /faq · GET · POST /me/inquiries). '내 지점 전화'는 GET /me/branch-guides 의 내 지점 번호. 불러오는 중 · 오류는 주소에 ?mockDelay= · ?mockFail=faq,inquiries.
  */
 const meta = {
   title: 'Pages/Me/Support',
@@ -22,6 +23,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Help: Story = {};
+/** 연동된 지점이 없음(비회원) — '내 지점 전화' 줄이 빠져요 */
+export const HelpNoLinkedBranch: Story = { parameters: { ...at(), queries: [[branchGuidesQuery().queryKey, []]] } };
 /** 자주 묻는 질문만 (?view=faq) */
 export const FaqOnly: Story = { parameters: at({ view: 'faq' }) };
 /** 찾기 — 결과 없음 */

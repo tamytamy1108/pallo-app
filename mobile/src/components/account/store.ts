@@ -46,6 +46,7 @@ type NoteState = {
 };
 const noteStore = createStore<NoteState>({ read: {}, thanks: {}, msgs: {}, diary: {} }, { persist: { key: 'pro-notes' } });
 export const useNoteState = () => noteStore.useStore();
+export const getNoteState = noteStore.get;
 export const markNoteRead = (id: string) => noteStore.set((s) => (s.read[id] ? s : { ...s, read: { ...s.read, [id]: true } }));
 export const toggleNoteThanks = (id: string) => {
   const on = !noteStore.get().thanks[id];

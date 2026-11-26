@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
+import type { ProsNoteDetail } from '@/api/pros-notes';
+import { queryKeys } from '@/api/queries';
 import { sendNoteMessage, toggleNoteThanks } from '@/components/account/store';
 import ProNoteScreen from '@/app/(app)/me/notes/[id]';
 
@@ -40,3 +42,32 @@ export const NotFound: Story = { parameters: at('nope') };
 
 export const Guest: Story = { globals: { userKind: 'guest' } };
 export const Pending: Story = { globals: { userKind: 'pending' } };
+
+/** 실서버 모양 받은 노트 — 질문 + AI 답변만 (예문 · 반에 남긴 인사 · 고마워요 · 친구들 반응 칸 없음) · 답변 실패 항목 하나 */
+const SERVER_NOTE: ProsNoteDetail = {
+  note: {
+    id: 'srv-1',
+    course: { courseId: 'c1', title: '비즈니스 영어', languageLabel: '영어', branchName: '하남점', date: '2026-11-24', time: '19:30', endTime: '20:50' },
+    leaderName: 'Julie',
+    questionCount: 2,
+    participantCount: 6,
+    readCount: 0,
+    sentAt: '2026-11-24T12:00:00Z',
+    viewerRole: 'PARTICIPANT',
+    previewQuestion: 'How do I say hello politely?',
+  },
+  questions: [
+    { id: 'q1', question: 'How do I say hello politely?', answer: 'Good evening, nice to meet you. 처음 만난 자리에서 정중하게 써요.', status: 'ANSWERED', askedAt: '2026-11-24T11:00:00Z' },
+    { id: 'q2', question: 'commute 는 명사예요 동사예요?', answer: null, status: 'FAILED', askedAt: '2026-11-24T11:05:00Z' },
+  ],
+};
+export const ServerNote: Story = {
+  parameters: { ...at('srv-1'), queries: [[queryKeys.prosNote('srv-1'), SERVER_NOTE]] },
+};
+/** 실서버 모양 보낸 노트 (프로) — 6명 중 4명 읽음, 고마워요 칸 없음 */
+export const ServerSentNote: Story = {
+  parameters: {
+    ...at('srv-2'),
+    queries: [[queryKeys.prosNote('srv-2'), { ...SERVER_NOTE, note: { ...SERVER_NOTE.note, id: 'srv-2', viewerRole: 'LEADER', readCount: 4 } }]],
+  },
+};

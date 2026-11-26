@@ -27,7 +27,7 @@ import { ChapterGate } from '@/components/common/member-lock';
 
 const NOTE: Record<StageKey, string> = {
   pre: '스터디 전에 해요. 수업에서 바로 말할 수 있게 표현과 내 답을 미리 준비해요.',
-  main: '스터디에서 하는 활동이에요. 못 온 날이나 앱 구독자는 AI와 같은 활동을 해요.',
+  main: '스터디에서 하는 활동이에요. 못 온 날은 AI와 같은 활동을 해요.',
   post: '스터디가 끝난 뒤 해요. 예습 때 답과 비교해서 얼마나 늘었는지 보여줘요.',
 };
 

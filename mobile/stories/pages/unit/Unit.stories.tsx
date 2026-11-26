@@ -59,5 +59,3 @@ export const GuestFree: Story = { globals: { userKind: 'guest' } };
 export const GuestLocked: Story = { globals: { userKind: 'guest' }, parameters: route('1-2') };
 /** 연동 안 됨 · Lv.3 101 — 잠김 */
 export const RejectedLocked: Story = { globals: { userKind: 'rejected' }, parameters: route('3-101') };
-/** 앱 구독만 · 2과 — 비회원과 같이 잠겨요 */
-export const AppOnlyLocked: Story = { globals: { userKind: 'app' }, parameters: route('2-2') };

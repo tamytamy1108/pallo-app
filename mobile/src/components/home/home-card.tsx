@@ -26,14 +26,12 @@ const FIRST_LESSON = '/unit/1?lv=1' as Href;
 /**
  * 홈 오늘 스터디 자리 — 회원인지(state/access) · 비회원이 무엇을 기다리는지(api/use-branch-progress)에 따라 카드가 달라요 (09-onboarding '회원 · 비회원 권한').
  * 회원 · 연동 대기 · 연동 안 됨 → 출석 카드(SessionCard) / 다가오는 체험(서버 요약) → 체험 카드 / 둘러보는 비회원 → 둘러보기 카드.
- * 앱 구독자(plan app)는 홈이 이 자리 대신 오늘의 목표 카드를 그려요.
  */
 export function HomeCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
   const member = useMe(isMember);
-  const link = useMe((m) => m.link);
-  const { trial } = useBranchProgress();
-  // 연동 대기 · 못 찾음은 출석 카드 자리에 잠긴 카드 (session-card 가 me.link 로 그려요)
-  if (member || link === 'pending' || link === 'rejected') return <SessionCard onOpen={onOpen} />;
+  const { pending, rejected, trial } = useBranchProgress();
+  // 연동 대기 · 확인 안 한 반려는 출석 카드 자리에 잠긴 카드 (session-card 가 같은 서버 요약으로 그려요)
+  if (member || pending || rejected) return <SessionCard onOpen={onOpen} />;
   if (trial) return <TrialCard trial={trial} />;
   return <GuestCard />;
 }

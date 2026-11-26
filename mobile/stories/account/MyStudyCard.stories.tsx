@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
+import { mockStudy } from '@/api/my-page';
 import { MyStudyCard } from '@/components/account/my-study-card';
 import { submitChangeRequest } from '@/components/account/store';
 
@@ -12,6 +13,7 @@ const meta = {
   component: MyStudyCard,
   decorators: [padded],
   beforeEach: fresh(),
+  args: { study: mockStudy() },
 } satisfies Meta<typeof MyStudyCard>;
 
 export default meta;
@@ -21,6 +23,10 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 /** 제목 없이 (내 스터디 화면) */
 export const NoTitle: Story = { args: { title: false } };
+/** 팀 변경 · 연기 제한이 있고 리더가 안 정해진 팀 */
+export const LimitedNoLeader: Story = {
+  args: { study: { ...mockStudy(), remainingHoldingCount: 1, remainingCourseChangeCount: 0, teams: mockStudy().teams.map((t, i) => (i ? t : { ...t, leaderName: null })) } },
+};
 /** 연기 신청 중 — [신청 취소] */
 export const RequestPending: Story = {
   beforeEach: fresh({}, () => submitChangeRequest({ label: '연기', txt: '영어 월수 21:00 · 14일 연기 · 11/25(수)~12/8(화) · 12/9(수) 복귀', msg: '' })),

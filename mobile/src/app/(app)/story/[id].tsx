@@ -28,6 +28,7 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { branchOk, LG_C, LG_SCAT, type Story, STORY_CATS } from '@/data/lounge';
 import { addStoryComment, dropStory, getLounge, isRecent, markSeen, restoreStory, setStoryPin, storyComments, type StoryGroup, storyGroups, toggleStoryLike, useLounge } from '@/data/lounge-store';
+import { isMember } from '@/state/access';
 import { useMe } from '@/state/me';
 import { HeartPop } from '@/components/ui/heart-pop';
 import { FramedImage } from '@/components/ui/photo-frame';
@@ -357,7 +358,7 @@ export default function StoryScreen() {
               onChangeText={setText}
               placeholder={st.mine ? '내 스토리에 댓글 달기' : `${st.who}에게 댓글 달기`}
               placeholderTextColor="#8C8597"
-              onFocus={() => (me.role === 'guest' ? (input.current?.blur(), guardMember(() => undefined, '댓글을 달려면')) : pause('input', true))}
+              onFocus={() => (!isMember(me) ? (input.current?.blur(), guardMember(() => undefined, '댓글을 달려면')) : pause('input', true))}
               onBlur={() => pause('input', false)}
               onSubmitEditing={send}
               returnKeyType="send"

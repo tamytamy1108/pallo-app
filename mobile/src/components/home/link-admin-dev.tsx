@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { useBranchProgress } from '@/api/use-branch-progress';
 import { Button } from '@/components/ui/button';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
@@ -17,14 +18,14 @@ const WRENCH = 'M14.7 6.3a4 4 0 0 0-5.4 5.2L3.5 17.3a1.8 1.8 0 0 0 2.5 2.5l5.8-5
 
 /**
  * 개발용 (웹 미리보기에서만): 관리자 웹이 앱에 없어서, 지점 매니저가 연동 요청을 처리한 것처럼 흉내 내요.
- * 연동 확인 중(link=pending)일 때 홈 왼쪽 아래 떠 있는 알약 → 시트에서 [연동해 주기] · [못 찾음으로 처리].
+ * 연동 확인 중(서버 요약에 대기 요청)일 때 홈 왼쪽 아래 떠 있는 알약 → 시트에서 [연동해 주기] · [못 찾음으로 처리].
  * 2.5초 뒤 서버에서 온 것처럼 결과가 도착해요 (state/link-events). 주소 /?admin=link · /?admin=reject 로 바로 불러도 돼요.
  */
 export function LinkAdminDev() {
-  const link = useMe((m) => m.link);
+  const { pending } = useBranchProgress();
   const processing = useLinkEvents((s) => s.processing);
   if (!__DEV__ || Platform.OS !== 'web') return null;
-  if (link !== 'pending' && !processing) return null;
+  if (!pending && !processing) return null;
   return <DevPill processing={processing} />;
 }
 

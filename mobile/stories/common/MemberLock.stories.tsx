@@ -19,8 +19,6 @@ type Story = StoryObj<typeof meta>;
 
 /** 비회원 — [체험 신청하기] + '이미 회원이에요 · 연동 요청' */
 export const Guest: Story = { globals: { userKind: 'guest' } };
-/** 앱 구독만 — 비회원과 같은 행동 */
-export const AppOnly: Story = { globals: { userKind: 'app' } };
 /** 연동 대기 — 버튼 없이 안내만 */
 export const Pending: Story = { globals: { userKind: 'pending' } };
 /** 연동 안 됨 — [다시 요청하기] */

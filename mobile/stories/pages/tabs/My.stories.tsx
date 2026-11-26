@@ -7,7 +7,7 @@ import { asRole, followingOf, fresh } from '../../my/_state';
 
 /**
  * 마이 탭 (/my) — 회원은 PRO'S NOTE · 내 스터디 · 지점 안내까지 보이고, 비회원은 랭킹 윗부분 아래가 '지점 회원이 되면 열려요' 칸.
- * 설정 톱니는 회원 · 앱 구독자만 진하게. 아래 목록의 이용권 줄: 회원 '이용권 · 결제 내역' · 앱 구독 '결제 내역' · 그 밖엔 없음.
+ * 설정 톱니는 회원만 진하게. 아래 목록의 이용권 줄: 회원 '이용권 · 결제 내역' · 비회원은 없음.
  * 역할(리더 · 매니저)로 갈리는 곳은 지금 없다 — 같은 모양인지 확인용.
  */
 const meta = {
@@ -26,8 +26,6 @@ export const Pending: Story = { globals: { userKind: 'pending' } };
 /** 연동 안 됨 — '연동 신청하기' 칩 · 잠김 */
 export const Rejected: Story = { globals: { userKind: 'rejected' } };
 export const Trial: Story = { globals: { userKind: 'trial' } };
-/** 앱 구독만 — 비회원과 같이 잠김 칸 */
-export const AppOnly: Story = { globals: { userKind: 'app' } };
 export const Guest: Story = { globals: { userKind: 'guest' } };
 
 export const Leader: Story = { globals: { userKind: 'member' }, beforeEach: asRole('leader') };

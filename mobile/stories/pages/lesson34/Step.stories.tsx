@@ -114,7 +114,5 @@ export const UnknownUnit: Story = { parameters: at(3, 'kwl', 999) };
 export const LockedGuest: Story = { globals: { userKind: 'guest' } };
 /** 연동 대기 — 잠금 (버튼 없이 안내만) */
 export const LockedPending: Story = { globals: { userKind: 'pending' } };
-/** 앱 구독만 — 비회원과 같이 잠겨요 */
-export const AppOnlyLocked: Story = { globals: { userKind: 'app' } };
 export const Loading: Story = { parameters: { api: { delayMs: LOADING_FOREVER } } };
 export const Error: Story = { parameters: { api: { fail: ['lesson'] } } };

@@ -37,8 +37,6 @@ export const Default: Story = {};
 export const AllRead: Story = { beforeEach: freshDevice(markAllNotiRead) };
 /** 비회원 — 알림 설정 흐림 */
 export const Guest: Story = { globals: { userKind: 'guest' } };
-/** 앱 구독 — 비회원과 같아요 */
-export const AppOnly: Story = { globals: { userKind: 'app' } };
 export const NoticeTab: Story = { play: tab('공지') };
 export const LearnTab: Story = { play: tab('학습') };
 export const LoungeTab: Story = { play: tab('라운지') };

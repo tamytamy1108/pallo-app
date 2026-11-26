@@ -41,7 +41,5 @@ export const TrialLocked: Story = { globals: { userKind: 'trial' } };
 export const SceneLocked: Story = { globals: { userKind: 'guest' }, args: { no: 2, label: '장면 2', children: <Chapter label="장면 2" /> } };
 /** 회원 — 모든 챕터 */
 export const Member: Story = { globals: { userKind: 'member' } };
-/** 앱 구독 — 비회원과 같이 잠겨요 (앱 구독만 여는 예외는 없어요) */
-export const AppOnly: Story = { globals: { userKind: 'app' } };
 
 const styles = StyleSheet.create({ real: { flex: 1, padding: Spacing.gutter, gap: Spacing.tight } });

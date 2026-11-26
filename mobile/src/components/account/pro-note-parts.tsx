@@ -24,9 +24,13 @@ import { saveDiary, useNoteState } from './store';
 export const PN_SOURCE = "PRO'S NOTE";
 
 /** 노트 항목 → 표현 카드 (바로잡기는 '틀린 문장 → 고친 문장'을 나눠 고친 문장도 같이 저장) */
-export function noteExpression(n: ProNote, i: number): Omit<SavedExpression, 'id' | 'savedAt'> {
+/** 서버 노트는 수업 이름(place)을 싣고, 예시 노트는 팀 번호로 이름을 찾아요 */
+export type NoteLike = ProNote & { place?: string };
+export const noteTeamName = (n: NoteLike) => n.place ?? teamNameByNo(n.team);
+
+export function noteExpression(n: NoteLike, i: number): Omit<SavedExpression, 'id' | 'savedAt'> {
   const [tag, title, desc] = n.items[i];
-  const source = `${PN_SOURCE} · ${n.m}/${n.d} ${teamNameByNo(n.team)}`;
+  const source = `${PN_SOURCE} · ${n.m}/${n.d} ${noteTeamName(n)}`;
   if (tag === '바로잡기' && title.includes(' → ')) {
     const [from, to] = title.split(' → ');
     return { en: from, fixed: to, ko: desc, source };
@@ -80,7 +84,7 @@ const stamp = () => {
 };
 
 /** 오늘의 스터디 일기: 잘한 것 스티커(여러 개) + 질문 하나 + 자유롭게 쓰기 · 나만 봐요 (프로토타입 pnDiaryHTML) */
-export function DiaryCard({ n }: { n: ProNote }) {
+export function DiaryCard({ n }: { n: NoteLike }) {
   const saved = useDiaryOf(n.id);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Diary>(() => saved ?? { st: [], q: 0, t: '' });
@@ -110,7 +114,7 @@ export function DiaryCard({ n }: { n: ProNote }) {
         <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.dyImg} contentFit="contain" />
         <View style={styles.flex}>
           <PText style={styles.dyB}>오늘의 스터디 일기</PText>
-          <PText style={styles.dyS}>{`${n.m}.${n.d} ${n.wd} · ${teamNameByNo(n.team)}`}</PText>
+          <PText style={styles.dyS}>{`${n.m}.${n.d} ${n.wd} · ${noteTeamName(n)}`}</PText>
         </View>
         <View style={styles.lk}>
           <Icon name="lock" size={12} color={Colors.purple} strokeWidth={2.8} />

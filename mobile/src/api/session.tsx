@@ -55,13 +55,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     hadTokens.current = hasTokens;
   }, [hasTokens, queryClient]);
 
-  // 받은 /me 를 state/me 에 (useMe() 로 읽는 화면은 그대로 동작해요)
+  // 받은 /me 를 state/me 에 (useMe() 로 읽는 화면은 그대로 동작해요). 지금 서버가 주는 Me 값은 회원 등급 하나예요
+  const accessLevel = me.data?.memberAccessLevel;
   useEffect(() => {
-    if (me.data) {
-      const { needsOnboarding: _ignored, ...rest } = me.data;
-      updateMe(rest);
-    }
-  }, [me.data]);
+    if (accessLevel) updateMe({ memberAccessLevel: accessLevel });
+  }, [accessLevel]);
 
   const session: Session = !hydrated
     ? { status: 'restoring' }

@@ -23,7 +23,6 @@ function Feed() {
 
 /**
  * 스크롤 잠김 (라운지 · 이벤트 · 마이) — 회원은 그대로, 비회원은 peek 높이까지만 보이고 아래를 흐리게 덮은 뒤 잠김 칸.
- * 앱 구독(app)은 끝까지 스크롤할 수 있어요.
  */
 const meta = {
   title: 'Common/ScrollLock',
@@ -53,8 +52,6 @@ export const Pending: Story = { globals: { userKind: 'pending' } };
 export const Rejected: Story = { globals: { userKind: 'rejected' } };
 /** 체험 예약 */
 export const Trial: Story = { globals: { userKind: 'trial' } };
-/** 앱 구독 — 비회원과 같이 잠겨요 */
-export const AppOnly: Story = { globals: { userKind: 'app' } };
 /** 짧게 보이기 (peek 200) */
 export const ShortPeek: Story = { globals: { userKind: 'guest' }, args: { peek: 200 } };
 /** 잠김 칸을 직접 정하기 (panel) */

@@ -5,6 +5,7 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Rect, Stop } from 'react-native-svg';
 
+import { useBranchProgress } from '@/api/use-branch-progress';
 import { memberGate } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
@@ -15,6 +16,7 @@ import { sfx } from '@/lib/feedback';
 import { kf, SPRING, useLoop, useStill } from '@/lib/motion';
 import { createStore } from '@/lib/store';
 import { finishHomeMoment, useLinkEvents } from '@/state/link-events';
+import { isMember } from '@/state/access';
 import { useMe } from '@/state/me';
 
 import { countOf, fmtMin, heroOf, minuteOf, rsvpOpen, todayTeam, useAttend, useClock, type Hero } from './attendance';
@@ -64,13 +66,15 @@ const stageTurn = createStore(-1, { persist: { key: 'stage-line' } });
 
 /** 회원 · 연동 대기 · 연동 안 됨일 때 홈 출석 카드. 체험 · 둘러보기는 home-card 가 골라요 */
 export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
-  const link = useMe((m) => m.link);
+  const member = useMe(isMember);
   const branch = useMe((m) => m.branch);
+  // 비회원이 기다리는 것: 연동 대기 · 확인 안 한 반려 (서버 요약 GET /me/branch-summary)
+  const { pending, rejected } = useBranchProgress();
   // 방금 연동됐으면: 잠긴 카드가 풀리며 원래 카드로 뒤집혀요 (한 번만 · link-unlock)
   const moment = useLinkEvents((s) => s.homeMoment);
   return (
-    <UnlockStage play={link === 'linked' && moment} branch={branch} front={<PendingCard />} onDone={finishHomeMoment}>
-      {link === 'pending' ? <PendingCard /> : link === 'rejected' ? <PendingCard rejected /> : <StudyCard onOpen={onOpen} />}
+    <UnlockStage play={member && moment} branch={branch} front={<PendingCard />} onDone={finishHomeMoment}>
+      {member ? <StudyCard onOpen={onOpen} /> : pending ? <PendingCard branch={pending.branchName} /> : rejected ? <PendingCard rejected branch={rejected.branchName} /> : <StudyCard onOpen={onOpen} />}
     </UnlockStage>
   );
 }
@@ -78,11 +82,13 @@ export function SessionCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => 
 /**
  * 지점 연동 확인 중일 때 (09-onboarding · A 잠긴 출석 카드): 같은 클래퍼보드를 라벤더로 잠가요.
  * 칸: 스터디 미정 · 연동 확인 중 · DATE / STANDBY · Almost on stage. · 한 줄 안내 · 점선으로 꺼 둔 버튼.
- * 연동되면(link → linked) 원래 카드로 돌아와요.
+ * 연동되면(서버 /me 가 회원 등급을 주면) 원래 카드로 돌아와요.
  * rejected: 지점이 못 찾았을 때 — 같은 잠긴 카드에 '연동 안 됨'과 [다시 요청하기](→ 연동 안 됨 화면)만 열어 둬요.
  */
-function PendingCard({ rejected = false }: { rejected?: boolean }) {
-  const branch = useMe((m) => m.branch);
+function PendingCard({ rejected = false, branch: requested }: { rejected?: boolean; branch?: string }) {
+  const myBranch = useMe((m) => m.branch);
+  // 요청한 지점 (서버 요약) — 풀리는 순간의 앞면처럼 지점을 모를 땐 내 지점
+  const branch = requested ?? myBranch;
   const now = useClock();
   const heroRoom = useHeroRoom();
   if (rejected) return <RejectedCard branch={branch} now={now} />;

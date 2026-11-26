@@ -12,7 +12,7 @@ import { updateMe } from '../me';
 const mockToast = jest.fn();
 jest.mock('@/components/ui/toast', () => ({ showToast: (m: string) => mockToast(m) }));
 
-const guest = () => updateMe({ role: 'guest', link: 'none', trial: null, plan: 'study' });
+const guest = () => updateMe({ role: 'guest', memberAccessLevel: 'UNREGISTERED' });
 
 /** 서버 요약(연동 대기 · 확인 안 한 반려 · 다가오는 체험)을 받아 둔 것처럼 */
 const summary = (s: Partial<BranchSummary>) => queryClient.setQueryData(queryKeys.branchSummary, { ...EMPTY_BRANCH_SUMMARY, ...s });
@@ -28,7 +28,7 @@ beforeEach(() => {
 
 describe('lockView', () => {
   it('회원은 세지 않아요', () => {
-    updateMe({ role: 'member', link: 'linked', trial: null, plan: 'study' });
+    updateMe({ role: 'member', memberAccessLevel: 'ACTIVE_MEMBER' });
     expect(lockView()).toBe(false);
     expect(getLockHits()).toBe(0);
     expect(mockToast).not.toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe('lockView', () => {
   });
 
   it('회원이면 요약에 대기가 남아 있어도 아무 일 없어요', () => {
-    updateMe({ role: 'member', link: 'linked', trial: null, plan: 'study' });
+    updateMe({ role: 'member', memberAccessLevel: 'ACTIVE_MEMBER' });
     summary({ pendingLinks: [PENDING], upcomingTrials: [TRIAL] });
     expect(lockView()).toBe(false);
     chapterUpsell();
