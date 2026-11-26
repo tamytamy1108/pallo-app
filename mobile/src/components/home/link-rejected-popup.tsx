@@ -8,7 +8,6 @@ import { apiErrorMessage } from '@/api/errors';
 import { branchSummaryQuery } from '@/api/queries';
 import { useAcknowledgeLinkRequest } from '@/api/use-acknowledge-link-request';
 import { Button } from '@/components/ui/button';
-import { Raised } from '@/components/ui/raised';
 import { LayerModal } from '@/components/ui/sheet-stack';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -18,7 +17,7 @@ import { haptic } from '@/lib/feedback';
 import { createStore } from '@/lib/store';
 
 /*
- * 지점 연동 반려 팝업 — 홈에 들어오면 가운데에 떠요. 지점이 남긴 반려 사유를 보여 주고 [확인]을 누르면
+ * 지점 연동 반려 팝업 — 홈에 들어오면 가운데에 떠요. '○○점에서 연동 승인이 반려되었습니다.' · 지점에서 남긴 말(반려 사유)만 보여 주고 [확인]을 누르면
  * 서버에 확인했다고 남겨(POST /me/branch-link-requests/:id/acknowledge) 다시는 안 떠요.
  * 바깥을 눌러도 닫히지 않아요 (꼭 [확인]). 안드로이드 뒤로 키는 이번만 닫고, 확인 전이라 다음에 홈에 오면 또 떠요.
  * 여러 지점이 반려됐으면 하나씩 차례로 (확인하면 다음 것).
@@ -99,7 +98,7 @@ export function LinkRejectedPopupView({
 
   return (
     <LayerModal visible transparent animationType="none" onRequestClose={onBack} statusBarTranslucent>
-      <Animated.View style={[styles.wrap, dim]} accessibilityViewIsModal accessibilityLabel={`${request.branchName}에서 회원 정보를 찾지 못했어요`}>
+      <Animated.View style={[styles.wrap, dim]} accessibilityViewIsModal accessibilityLabel={`${request.branchName}에서 연동 승인이 반려되었습니다`}>
         <View style={styles.cardBox}>
           <View style={styles.cardShadow} />
           <View style={styles.card}>
@@ -110,15 +109,8 @@ export function LinkRejectedPopupView({
                 </PText>
               </View>
             )}
-            <View style={styles.iconRow}>
-              <Raised radius={20}>
-                <View style={styles.icon}>
-                  <PText style={styles.q}>?</PText>
-                </View>
-              </Raised>
-            </View>
             <PText style={styles.title} accessibilityRole="header">
-              {request.branchName}에서{'\n'}회원 정보를 찾지 못했어요
+              {request.branchName}에서{'\n'}연동 승인이 반려되었습니다.
             </PText>
             {reason ? (
               <View style={styles.note}>
@@ -127,11 +119,7 @@ export function LinkRejectedPopupView({
                 </PText>
                 <PText style={styles.noteText}>{reason}</PText>
               </View>
-            ) : (
-              <PText style={styles.desc} color={Colors.inkSub}>
-                자세한 내용은 지점에 물어봐 주세요
-              </PText>
-            )}
+            ) : null}
             <View style={styles.foot}>
               <Button label="확인" wide disabled={busy} onPress={onConfirm} />
             </View>
@@ -149,13 +137,9 @@ const styles = StyleSheet.create({
   card: { paddingTop: 24, paddingHorizontal: 18, paddingBottom: 18, backgroundColor: Colors.cream, borderWidth: 2, borderColor: Colors.ink, borderRadius: 24 },
   count: { position: 'absolute', top: 12, right: 14 },
   countText: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
-  iconRow: { alignItems: 'center' },
-  icon: { width: 64, height: 64, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink, backgroundColor: '#FCE3EA', alignItems: 'center', justifyContent: 'center' },
-  q: { fontFamily: Font.display, fontSize: 26, lineHeight: 32 },
-  title: { marginTop: 16, textAlign: 'center', fontFamily: Font.body900, fontSize: 19, lineHeight: 26, letterSpacing: -0.5 },
+  title: { marginTop: 4, textAlign: 'center', fontFamily: Font.body900, fontSize: 19, lineHeight: 26, letterSpacing: -0.5 },
   note: { marginTop: 16, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
   noteLabel: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
   noteText: { marginTop: 4, fontFamily: Font.body800, fontSize: 13.5, lineHeight: 20 },
-  desc: { marginTop: 10, textAlign: 'center', fontFamily: Font.body700, fontSize: 13.5, lineHeight: 20 },
   foot: { marginTop: 18 },
 });
