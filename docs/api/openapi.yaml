@@ -2318,7 +2318,7 @@ paths:
 
         · subHosts[](코호스트, 인원 제한 없음) · lastActivityAt · joinedLast30Days · hostIntro(호스트 소개 글) · hostStats{운영 개월 · 정기 모임 수 · 또 만나고 싶어요 수}
 
-        · viewerBookmarked · viewerGreeting · placeName/placeAddress(기본 모이는 곳)
+        · viewerBookmarked · viewerGreeting · placeName/placeAddress(기본 모이는 곳) — placeAddress 는 멤버 · 호스트 · 코호스트 · 스텝에게만, 그 밖엔 null (안전)
       x-inventory: "#63"
       x-screens:
         - app/club/[id].tsx
@@ -4990,9 +4990,11 @@ paths:
         1) branchCode 하나 → branchCodes 여러 개 · 2) region · date ·
         when(upcoming|past) 필터 추가
 
-        3) 응답에 dayCounts(날짜별 모집 중 개수) 추가 · 4) 카드에 region · posterUrls · placeAddress · estimatedCost · recruiting · full · viewerBookmarked · viewerWaitlisted 추가
+        3) 응답에 dayCounts(날짜별 모집 중 개수) 추가 · 4) 카드에 region · posterUrls · estimatedCost · recruiting · full · viewerBookmarked · viewerWaitlisted 추가
 
         5) 상태 CLOSED 가 '호스트 취소'와 '모집 닫기'를 같이 쓰면 구분 필요 → recruiting(boolean) 따로
+
+        6) 목록 카드에는 placeAddress · placeDetail · latitude · longitude 를 넣지 않아요 (안전 · 자세한 주소는 참여한 사람만, getHangout 규칙)
       x-inventory: "#59"
       x-screens:
         - components/meet/meet-tab.tsx
@@ -5099,6 +5101,8 @@ paths:
         규칙: 함께하는 멤버 순서 = 나(참여했으면) → 호스트 → 나머지. 5명 넘으면 '모두 보기'(같은 목록 다 줘요).
 
         viewerRole 로 [참여하기 · 남은 자리 N / 참여 완료 / 모집 닫기(호스트) / 빈자리 알림 받기(꽉 참) / 후기 보기(지남)] 를 골라요.
+
+        규칙(안전): 자세한 주소 placeAddress · placeDetail · latitude · longitude 는 호스트 · 참여한 사람(viewerRole 있음) · 지점 스텝에게만 내려줘요. 그 밖엔 null (placeName · region 은 그대로). 참여를 취소하면 다시 null. 대신 누구에게나 area(시 · 구 · 가까운 역, 예: '서울 영등포구 · 영등포역 근처') 를 내려줘요 — 앱 components/meet/area.ts areaLine 과 같은 규칙.
       x-status: change
       x-backend: MobileHangoutController GET /hangouts/{id} → MobileHangoutDetailResponse
       x-gap: >
@@ -18391,7 +18395,10 @@ components:
         placeName:
           type: string
         placeAddress:
-          type: string
+          type:
+            - string
+            - "null"
+          description: 자세한 주소 — 동아리 멤버 · 호스트 · 코호스트 · 지점 스텝에게만 (안전). 가입 안 한 사람은 null (placeName 은 그대로). 대신 area(시 · 구 · 가까운 역) 를 따로 내려줘요
         latitude:
           type:
             - number

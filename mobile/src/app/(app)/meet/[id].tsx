@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
 import { guardMember } from '@/components/common/trial-guide';
+import { areaLine } from '@/components/meet/area';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
 import { CopyBtn, Desc, DSec, HostRow, InfoRow, InfoRows, infoStyles, MainBtn, MemberSection, SafetyNote, SaveBtn } from '@/components/meet/detail/detail-parts';
 import { AskSheet, JoinSheet } from '@/components/meet/detail/sheets';
@@ -56,6 +57,8 @@ export default function MeetDetail() {
   const full = capFull(cur, m.max) && !joined;
   const members = membersOf({ ...m, mine }, cur, joined || mine, myHi, { name: me.name, branch: me.branch });
   const dd = dday(m);
+  // 자세한 주소(지도 주소 · 직접 적은 상세 주소 · 복사)는 호스트 · 참여한 사람 · 스텝만 봐요 (안전). 취소하면 다시 가려져요
+  const seeAddr = mine || joined || me.role === 'manager';
 
   const main = past ? (
     <MainBtn label="후기 보기" variant="wh" onPress={() => setReviews(true)} />
@@ -117,12 +120,19 @@ export default function MeetDetail() {
             icon="pin"
             main={m.place}
             sub={
-              <>
-                <PText style={infoStyles.sub}>{m.addr || m.reg}</PText>
-                {m.addr2 ? <PText style={[infoStyles.sub, { fontFamily: Font.body900, color: Colors.ink }]}>{m.addr2}</PText> : null}
-              </>
+              seeAddr ? (
+                <>
+                  <PText style={infoStyles.sub}>{m.addr || m.reg}</PText>
+                  {m.addr2 ? <PText style={[infoStyles.sub, { fontFamily: Font.body900, color: Colors.ink }]}>{m.addr2}</PText> : null}
+                </>
+              ) : (
+                <>
+                  <PText style={infoStyles.sub}>{areaLine(m.addr, m.reg, m.place)}</PText>
+                  <PText style={infoStyles.sub}>참여하면 자세한 주소가 보여요</PText>
+                </>
+              )
             }
-            end={<CopyBtn text={[m.addr || m.place, m.addr2].filter(Boolean).join(' · ')} />}
+            end={seeAddr ? <CopyBtn text={[m.addr || m.place, m.addr2].filter(Boolean).join(' · ')} /> : undefined}
           />
           <InfoRow icon="heart" main="참가비 없음 · 각자 계산" />
           <InfoRow icon="users" main={m.max > 0 ? `${capText(cur, m.max)} ${cur >= m.max ? '· 마감' : `· 남은 자리 ${m.max - cur}`}` : capText(cur, m.max)} sub={m.max > 0 ? <CapBar cur={cur} max={m.max} width={140} /> : '누구나 함께해요'} />
