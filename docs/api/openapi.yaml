@@ -5102,6 +5102,8 @@ paths:
 
         viewerRole 로 [참여하기 · 남은 자리 N / 참여 완료 / 모집 닫기(호스트) / 빈자리 알림 받기(꽉 참) / 후기 보기(지남)] 를 골라요.
 
+        규칙(장소 변경 알림): 호스트가 수정(PUT)에서 장소 이름이나 주소를 바꾸면 참여자(호스트 빼고)에게 알림함 + 푸시 HANGOUT_PLACE_CHANGED. 본문엔 새 장소 이름만 (자세한 주소는 안 실어요 — 잠금 화면). 좌표만 바뀐 건 안 보내요. 동아리 모임 수정은 CLUB_MEETING_PLACE_CHANGED.
+
         규칙(안전): 자세한 주소 placeAddress · placeDetail · latitude · longitude 는 호스트 · 참여한 사람(viewerRole 있음) · 지점 스텝에게만 내려줘요. 그 밖엔 null (placeName · region 은 그대로). 참여를 취소하면 다시 null. 대신 누구에게나 area(시 · 구 · 가까운 역, 예: '서울 영등포구 · 영등포역 근처') 를 내려줘요 — 앱 components/meet/area.ts areaLine 과 같은 규칙.
       x-status: change
       x-backend: MobileHangoutController GET /hangouts/{id} → MobileHangoutDetailResponse
@@ -13508,6 +13510,7 @@ components:
         - CLUB_JOIN_REQUESTED
         - CLUB_JOIN_CANCELLED
         - CLUB_MEMBER_LEFT
+        - CLUB_MEETING_PLACE_CHANGED
         - CHALLENGE_APPROVED
         - CHALLENGE_REJECTED
         - CHALLENGE_SUSPENDED
@@ -13521,6 +13524,7 @@ components:
         - HANGOUT_RESUMED
         - HANGOUT_HIDDEN
         - HANGOUT_DELETED
+        - HANGOUT_PLACE_CHANGED
         - POST_HIDDEN
         - POST_DELETED
         - COMMENT_HIDDEN
