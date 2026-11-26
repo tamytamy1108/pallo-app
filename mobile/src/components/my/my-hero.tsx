@@ -5,6 +5,7 @@ import Svg, { Circle, Defs, Mask, Rect } from 'react-native-svg';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 
 import { RoleTag, type RoleKind } from '@/components/common/role-tag';
+import { useMyClubRoles } from '@/components/meet/model';
 import { Pressable } from '@/components/ui/pressable';
 import { AvatarStage } from '@/components/character/avatar';
 import { Raised } from '@/components/ui/raised';
@@ -47,6 +48,7 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
   const [menu, setMenu] = useState(false);
   const lists = followLists(me.name, me, me.following);
   const staff = staffKind(me.role);
+  const clubRole = useMyClubRoles(me.name).badge;
   // 카드 테두리 2 · 안쪽 여백 10
   const stageW = width - 4 - 20;
   return (
@@ -83,6 +85,8 @@ export function MyHero({ width, onFollow }: { width: number; onFollow: (t: 'fing
               <PText style={styles.name}>{me.name}</PText>
               {/* 프로 · 직원은 이름 옆에 PRO · STAFF (10-roles 8장) */}
               {staff ? <RoleTag kind={staff} big /> : null}
+              {/* 운영 중인 동아리가 있으면 HOST · CO-HOST (0개가 되거나 관리자가 떼면 없어요) */}
+              {clubRole && !me.roleBadgeOff ? <RoleTag kind={clubRole} big /> : null}
             </View>
             {staff ? (
               // 프로: 지점 · 가르치는 언어 / 지점 관리자: 지점 · 지점 관리자 — 연동 표시는 붙이지 않아요

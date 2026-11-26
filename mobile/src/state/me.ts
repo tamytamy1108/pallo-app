@@ -28,6 +28,8 @@ export type Me = {
    * 못 찾음(rejected)이면 홈 카드는 잠긴 채 '다시 요청'만 열려 있고, 마이에는 '연동 안 됨'이 붙어요 (state/link-events).
    */
   link: 'none' | 'pending' | 'linked' | 'rejected';
+  /** 관리자가 호스트 · 코호스트 뱃지를 뗐어요 (A32 · 동아리 운영은 그대로). 없으면 운영 중인 동아리에 따라 붙어요 */
+  roleBadgeOff?: boolean;
   /** 체험 예약 (가입 단계 · 체험). 있으면 홈 출석 카드 자리에 체험 카드가 떠요. day 'YYYY-MM-DD' · time 'HH:MM' */
   trial: { branch: string; day: string; time: string; lang: StudyLang } | null;
   /** 꾸미기 상점 재화 */
