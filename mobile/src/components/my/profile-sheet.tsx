@@ -6,6 +6,7 @@ import Svg, { Rect } from 'react-native-svg';
 import { Pressable } from '@/components/ui/pressable';
 import { ProfileTap } from '@/components/common/profile-tap';
 import { ReportSheet } from '@/components/common/report-sheet';
+import { keepAll } from '@/components/common/sheet-parts';
 import { AvatarChar, AvatarStage, MemberFace } from '@/components/character/avatar';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -13,7 +14,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
-import { findMember, followLists, MEMBERS, memberAvatar, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
+import { findMember, followLists, MEMBERS, memberAvatar, memberBio, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { useMyAvatar } from '@/state/avatar';
 import { toggleFollow, useMe } from '@/state/me';
@@ -100,6 +101,7 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
   const h = nameHash(name);
   const br = findMember(name)?.branch ?? me.branch;
   const langs = memberLangs(name);
+  const bio = memberBio(name);
   const lv = 1 + (h % 3);
   const fol = !!me.following[name];
   const L = followLists(name, me, me.following);
@@ -143,6 +145,8 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
           <PText style={styles.idS}>
             {[...langs, br, '2026년 가입'].filter(Boolean).join(' · ')}
           </PText>
+          {/* 한 줄 소개: 마이에서 남긴 글 그대로. 안 남긴 사람은 줄 없이 */}
+          {bio ? <PText style={[styles.bio, keepAll]}>{bio}</PText> : null}
         </View>
         <View style={styles.cnt}>
           <Pressable onPress={() => setList('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${L.fing.length}`} style={styles.cntC}>
@@ -331,6 +335,7 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', rowGap: 4 },
   runS: { marginTop: -4, fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
   idS: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
+  bio: { fontFamily: Font.body600, fontSize: 14, lineHeight: 21, color: Colors.ink },
   cnt: { flexDirection: 'row', paddingVertical: 6 },
   cntC: { flex: 1, alignItems: 'center' },
   cntN: { fontFamily: Font.display, fontSize: 19, lineHeight: 23 },

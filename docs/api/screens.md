@@ -799,6 +799,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 캐릭터 룸 · 이름 · @아이디 · 지점 · 학습 언어 · 팔로잉/팔로워 · 함께 아는 멤버 · 이번 주 포인트 비교 · 학습 현황 · 배지 · 동아리 | GET /me/mypage/{code} | change | data/my.ts findMember · memberAvatar · memberHandle · memberLangs · nameHash |
+| 한 줄 소개 (그 사람이 마이에서 남긴 글 · 안 남겼으면 줄 숨김) | GET /me/mypage/{code} (profile.bio) | existing | data/my.ts memberBio |
 | [팔로우] · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
 | 팔로우 직후 추천 멤버 · 추천 멤버 n명 시트 | GET /me/follow-recommendations?basedOn= | new | profile-sheet.tsx recs |
 | 팔로잉 · 팔로워 시트 | GET /members/{code}/following · /followers | new | followLists |

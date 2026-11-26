@@ -7,7 +7,7 @@ import { followingOf, fresh } from './_state';
 
 /**
  * 멤버 프로필 시트 — 팔로우 안 함 [팔로우] · 팔로우 중 [팔로잉] · 이번 주 포인트 달리기(내가 앞섬 · 뒤짐).
- * 이름마다 지점 · 학습 언어 · 레벨 · 배지가 정해진다 (가짜 데이터).
+ * 이름마다 지점 · 학습 언어 · 레벨 · 배지 · 한 줄 소개가 정해진다 (가짜 데이터). 소개를 안 남긴 멤버는 그 줄이 없다.
  */
 const meta = {
   title: 'My/ProfileSheet',
@@ -29,5 +29,7 @@ export const IAmAhead: Story = { beforeEach: fresh({ weekPoints: 900 }) };
 export const OtherMember: Story = { args: { name: 'Leo' } };
 /** 멤버 목록에 없는 이름 — 지점은 내 지점으로 */
 export const UnknownMember: Story = { args: { name: '처음보는멤버' } };
+/** 한 줄 소개를 안 남긴 멤버 — 소개 줄 없이 */
+export const NoBio: Story = { args: { name: '소라' } };
 /** 닫힘 */
 export const Closed: Story = { args: { open: false } };
