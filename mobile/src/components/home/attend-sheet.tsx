@@ -116,7 +116,7 @@ function FormView({
   const checkin = mode === 'checkin';
   // 지점 관리자는 등록된 팀 대신 지점의 오늘 세션 전부를 골라요 (attendance myTeams)
   const staff = useMe((me) => me.role === 'manager');
-  const pickWhat = staff ? '세션' : '내 팀';
+  const pickWhat = staff ? '스터디' : '내 팀';
   const ready = lang !== null && !!openTeamAt(slot, lang) && slotSelectable(slot, mode, m);
   const teams = sortTeams(myTeams());
   const none = teams.length === 0;
@@ -147,8 +147,8 @@ function FormView({
 
       {!none && (
         <>
-          <PText style={styles.label}>① {staff ? '오늘 지점 세션' : '내 팀'}</PText>
-          <View style={styles.teams} accessibilityRole="radiogroup" accessibilityLabel={staff ? '오늘 지점 세션' : '내 팀'}>
+          <PText style={styles.label}>① {staff ? '오늘 지점 스터디' : '내 팀'}</PText>
+          <View style={styles.teams} accessibilityRole="radiogroup" accessibilityLabel={staff ? '오늘 지점 스터디' : '내 팀'}>
             {teams.map((t) => {
               const l = LANGS[t.lang];
               const can = teamSelectable(t, mode, m);

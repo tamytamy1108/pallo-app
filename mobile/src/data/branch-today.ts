@@ -23,7 +23,7 @@ export type BranchSession = {
   sessionId: string;
   /** 오늘 시작 시각 (ISO) */
   startsAt: string;
-  /** '3팀' */
+  /** 전산 팀 이름 그대로 (예: '1-1 영어') — 앱은 바꾸지 않고 보여요 */
   teamName: string;
   /** 'en' · 'ja' · 'zh' · 'es' */
   lang: string;
@@ -61,12 +61,12 @@ export type MockBranchSession = {
 
 /** 하남점 하루 시간표 (일요일은 쉬어요) */
 export const MOCK_BRANCH_SESSIONS: MockBranchSession[] = [
-  { id: 'b-1100-en', slot: 0, lang: 0, team: '1팀', level: 'Lv.2', pro: 'Logan', tables: [{ no: 1, full: 4 }, { no: 2, full: 4 }] },
-  { id: 'b-1930-en', slot: 1, lang: 0, team: '3팀', level: 'Lv.3', pro: 'Lily', tables: [{ no: 7, full: 5 }, { no: 8, full: 3 }, { no: 9, full: 2 }] },
-  { id: 'b-1930-ja', slot: 1, lang: 1, team: '2팀', level: 'Lv.1', pro: 'Sora', tables: [{ no: 3, full: 5 }, { no: 4, full: 0 }], proLate: true },
-  { id: 'b-1930-es', slot: 1, lang: 3, team: '1팀', level: 'Lv.1', pro: 'Mateo', tables: [{ no: 6, full: 3 }] },
-  { id: 'b-2100-en', slot: 2, lang: 0, team: '5팀', level: 'Lv.4', pro: 'Aiden', tables: [{ no: 10, full: 4 }, { no: 11, full: 3 }] },
-  { id: 'b-2100-zh', slot: 2, lang: 2, team: '1팀', level: 'Lv.1', pro: 'Wei', tables: [{ no: 12, full: 3 }] },
+  { id: 'b-1100-en', slot: 0, lang: 0, team: '1-1 영어', level: 'Lv.2', pro: 'Logan', tables: [{ no: 1, full: 4 }, { no: 2, full: 4 }] },
+  { id: 'b-1930-en', slot: 1, lang: 0, team: '3-2 영어', level: 'Lv.3', pro: 'Lily', tables: [{ no: 7, full: 5 }, { no: 8, full: 3 }, { no: 9, full: 2 }] },
+  { id: 'b-1930-ja', slot: 1, lang: 1, team: '1-1 일본어', level: 'Lv.1', pro: 'Sora', tables: [{ no: 3, full: 5 }, { no: 4, full: 0 }], proLate: true },
+  { id: 'b-1930-es', slot: 1, lang: 3, team: '1-1 스페인어', level: 'Lv.1', pro: 'Mateo', tables: [{ no: 6, full: 3 }] },
+  { id: 'b-2100-en', slot: 2, lang: 0, team: '4-1 영어', level: 'Lv.4', pro: 'Aiden', tables: [{ no: 10, full: 4 }, { no: 11, full: 3 }] },
+  { id: 'b-2100-zh', slot: 2, lang: 2, team: '1-1 중국어', level: 'Lv.1', pro: 'Wei', tables: [{ no: 12, full: 3 }] },
 ];
 
 /** 쉬는 요일 (0 = 일) */
@@ -74,11 +74,11 @@ export const BRANCH_CLOSED_DOW = [0];
 
 /**
  * 지점 관리자 홈 출석 카드: 등록된 팀이 없어서 '지점의 오늘 세션'을 내 팀처럼 써요 (다음 세션 시각 · 고르기 시트).
- * when = '3팀 19:30' → teamName '영어 3팀 7시 30분'
+ * label = 전산 팀 이름 ('1-1 영어') → teamName '1-1 영어 7시 30분'
  */
 export function branchTeamsOn(dow: number, branch: string): MyTeamToday[] {
   if (BRANCH_CLOSED_DOW.includes(dow)) return [];
-  return MOCK_BRANCH_SESSIONS.map((s) => ({ no: s.team, branch, lang: s.lang, when: `${s.team} ${SLOTS[s.slot].t}`, slot: s.slot }));
+  return MOCK_BRANCH_SESSIONS.map((s) => ({ no: s.id, branch, lang: s.lang, when: `오늘 ${SLOTS[s.slot].t}`, slot: s.slot, label: s.team }));
 }
 
 /** 그 시각 · 언어의 지점 세션 (QR 을 찍은 세션 · '프로로 참여'에 보낼 id) */

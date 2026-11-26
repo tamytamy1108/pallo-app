@@ -9,20 +9,15 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { LANGS, QR_BEFORE } from '@/data/home';
+import { QR_BEFORE } from '@/data/home';
 import type { SessionRow } from '@/lib/branch-today-view';
 
-const lang = (key: string) => LANGS.find((l) => l.key === key) ?? LANGS[0];
-const clock = (iso: string) => {
-  const d = new Date(iso);
-  return fmtMin(d.getHours() * 60 + d.getMinutes());
-};
 const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
 /**
  * 오늘 지점 현황 · 모두 보기 (지점 관리자 · docs/pages/10-roles.md 4장). 보기만 해요 — 손 출석 · 지각은 출석 명단에서.
  * 지금 QR 이 열린 세션이 맨 위, 그다음 예정, 끝난 수업은 맨 아래 연하게 한 줄씩.
- * 인원은 오늘 온 수만 (정원 없이). 멤버 = 노랑, 프로 = 보라, 스텝이 프로 대신 = STAFF.
+ * 카드마다 전산 팀 이름 그대로 + 프로(또는 프로 대신 스텝) n명 · 멤버 n명 — 아무도 안 찍었어도 0명으로 늘 보여요.
  */
 export default function BranchTodayScreen() {
   const { view, isPending, isError, refetch } = useBranchToday();
@@ -31,14 +26,14 @@ export default function BranchTodayScreen() {
   let body;
   if (isError) body = <ErrorState message="현황을 못 불러왔어요" onRetry={refetch} />;
   else if (isPending || !view) body = <LoadingState />;
-  else if (view.sessions === 0) body = <EmptyState title={'오늘은 세션이 없어요.'} />;
+  else if (view.sessions === 0) body = <EmptyState title={'오늘은 스터디가 없어요.'} />;
   else
     body = (
       <>
         <StatCells
           framed
           cells={[
-            { label: '오늘 세션', value: String(view.sessions) },
+            { label: '오늘 스터디', value: String(view.sessions) },
             { label: '프로 출석', value: String(view.proByPro), tone: 'pro' },
             { label: '스텝 출석', value: String(view.proByStaff), tone: 'staff' },
             { label: '멤버 출석', value: String(view.members), tone: 'member' },
@@ -81,45 +76,38 @@ function Group({ title, tone, rows }: { title: string; tone: 'open' | 'soon'; ro
   );
 }
 
-function LangChip({ code }: { code: string }) {
-  const l = lang(code);
-  // 언어 글자 수가 달라도(영어 · 일본어 · 스페인어) 칸 크기는 같아요
+/** 프로 줄: 스텝이 '프로로 참여'로 대신했으면 스텝 이름, 아니면 맡은 프로 이름. 찍기 전엔 0명 */
+function proRow(row: SessionRow) {
+  if (row.proCheckedInBy === 'STAFF') return { label: `스텝 ${row.proCheckedInName ?? ''}`, sub: row.proName ? `${row.proName} 대신` : null, count: 1, staff: true };
+  return { label: `프로 ${row.proName ?? '미정'}`, sub: null, count: row.proCheckedInBy ? 1 : 0, staff: false };
+}
+
+function CountRow({ dot, label, sub, count }: { dot: 'pro' | 'staff' | 'member'; label: string; sub?: string | null; count: number }) {
   return (
-    <View style={[styles.lang, { backgroundColor: l.color }]}>
-      <PText style={styles.langT} color={l.ink}>
-        {l.ko}
+    <View style={styles.countRow}>
+      <View style={[styles.dot, dot === 'pro' ? styles.dotPro : dot === 'staff' ? styles.dotStaff : styles.dotMember]} />
+      <PText style={styles.countL} numberOfLines={1}>
+        {label}
+        {sub ? <PText style={styles.countSub}> ({sub})</PText> : null}
       </PText>
+      <PText style={[styles.countV, count === 0 && styles.countZero]}>{count}명</PText>
     </View>
   );
 }
 
-/** 누가 프로로 출석했는지 · 언제: 글자만 (프로 = 보라, 아직 = 빨강) */
-function proLine(row: SessionRow) {
-  const who = row.proCheckedInBy === 'STAFF' ? `스텝 ${row.proCheckedInName ?? ''}${row.proName ? ` (${row.proName} 대신)` : ''}` : `프로 ${row.proName ?? '미정'}`;
-  if (row.phase === 'soon') return { who, state: `${fmtMin(row.start - QR_BEFORE)}부터 출석`, color: Colors.inkSub };
-  if (row.proCheckedInAt) return { who, state: `출석 ✓ ${clock(row.proCheckedInAt)}`, color: Colors.purple };
-  return { who, state: '아직 안 왔어요', color: '#B23A5A' };
-}
-
 function SessionCard({ row }: { row: SessionRow }) {
-  const pro = proLine(row);
+  const pro = proRow(row);
   return (
-    <View style={styles.card} accessible accessibilityLabel={`${lang(row.lang).ko} ${row.teamName} ${row.level}, 멤버 ${row.checkedIn}명, ${pro.who} ${pro.state}`}>
-      <View style={styles.row1}>
-        <LangChip code={row.lang} />
+    <View style={styles.card} accessible accessibilityLabel={`${row.teamName}, ${pro.label} ${pro.count}명, 멤버 ${row.checkedIn}명`}>
+      <View style={styles.titleRow}>
         <PText style={styles.team} numberOfLines={1}>
-          {row.teamName} · {row.level}
+          {row.teamName}
         </PText>
-        <PText style={styles.count}>{row.checkedIn}명</PText>
+        {row.phase === 'soon' ? <PText style={styles.soonT}>{fmtMin(row.start - QR_BEFORE)}부터 출석</PText> : null}
       </View>
-      <View style={styles.row2}>
-        <PText style={styles.who} numberOfLines={1}>
-          {pro.who}
-        </PText>
-        <PText style={styles.proState} color={pro.color}>
-          {pro.state}
-        </PText>
-      </View>
+      {/* 프로 · 멤버 줄은 늘 위에 (찍기 전엔 0명, 찍으면 바로 바뀌어요) */}
+      <CountRow dot={pro.staff ? 'staff' : 'pro'} label={pro.label} sub={pro.sub} count={pro.count} />
+      <CountRow dot="member" label="멤버" count={row.checkedIn} />
       {row.phase === 'open' ? (
         <View style={styles.tables}>
           {row.tables.map((t) => (
@@ -137,22 +125,25 @@ function SessionCard({ row }: { row: SessionRow }) {
   );
 }
 
-/** 끝난 수업: 맨 아래 연하게 · 한 줄씩 (시각 · 언어 · 팀 · 멤버 수 · 프로 출석) */
+/** 끝난 수업: 맨 아래 연하게 · 한 줄씩 (시각 · 팀 이름 · 프로 · 멤버) */
 function DoneGroup({ rows }: { rows: SessionRow[] }) {
   return (
     <View style={[styles.group, styles.done]}>
       <PText style={styles.doneHead}>끝난 수업 {rows.length}</PText>
-      {rows.map((r) => (
-        <View key={r.sessionId} style={styles.doneRow} accessible accessibilityLabel={`${fmtMin(r.start)} ${lang(r.lang).ko} ${r.teamName}, 끝난 수업, 멤버 ${r.checkedIn}명`}>
-          <PText style={styles.doneTime}>{fmtMin(r.start)}</PText>
-          <LangChip code={r.lang} />
-          <PText style={styles.doneTeam} numberOfLines={1}>
-            {r.teamName} · {r.level}
-          </PText>
-          <PText style={styles.doneCount}>{r.checkedIn}명</PText>
-          <PText style={styles.doneNoPro}>{r.proCheckedInBy === 'STAFF' ? '스텝 ✓' : r.proCheckedInBy ? '프로 ✓' : '프로 없음'}</PText>
-        </View>
-      ))}
+      {rows.map((r) => {
+        const pro = proRow(r);
+        return (
+          <View key={r.sessionId} style={styles.doneRow} accessible accessibilityLabel={`${fmtMin(r.start)} ${r.teamName}, 끝난 수업, ${pro.label} ${pro.count}명, 멤버 ${r.checkedIn}명`}>
+            <PText style={styles.doneTime}>{fmtMin(r.start)}</PText>
+            <PText style={styles.doneTeam} numberOfLines={1}>
+              {r.teamName}
+            </PText>
+            <PText style={styles.doneCount}>
+              {pro.staff ? '스텝' : '프로'} {pro.count} · 멤버 {r.checkedIn}
+            </PText>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -167,15 +158,19 @@ const styles = StyleSheet.create({
   stateOpen: { backgroundColor: Colors.rosePink },
   stateSoon: { backgroundColor: Colors.yellow },
   stateT: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
-  card: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.white, paddingHorizontal: 12, paddingVertical: 10, gap: 6 },
-  row1: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  lang: { width: 54, height: 20, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  langT: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
-  team: { flex: 1, minWidth: 0, fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
-  count: { fontFamily: Font.display, fontSize: 15, lineHeight: 20 },
-  row2: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  who: { flex: 1, minWidth: 0, fontFamily: Font.body700, fontSize: 13, lineHeight: 18, color: Colors.inkSub },
-  proState: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
+  card: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.white, paddingHorizontal: 14, paddingVertical: 12, gap: 6 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  team: { flex: 1, minWidth: 0, fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
+  soonT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
+  countRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dot: { width: 9, height: 9, borderRadius: 5 },
+  dotPro: { backgroundColor: Colors.purple },
+  dotStaff: { backgroundColor: Colors.ink },
+  dotMember: { backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink },
+  countL: { flex: 1, minWidth: 0, fontFamily: Font.body700, fontSize: 14, lineHeight: 20 },
+  countSub: { fontFamily: Font.body700, fontSize: 12, lineHeight: 20, color: Colors.inkSub },
+  countV: { fontFamily: Font.display, fontSize: 16, lineHeight: 22 },
+  countZero: { color: '#A39C8E' },
   // 테이블: 같은 크기 칸 · 번호 위 · 인원 아래 (칸 안에 알약을 겹치지 않아요)
   tables: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   tb: { width: 70, paddingVertical: 6, alignItems: 'center', borderRadius: 10, backgroundColor: Colors.cream, borderWidth: 1.5, borderColor: Colors.line },
@@ -190,5 +185,4 @@ const styles = StyleSheet.create({
   doneTime: { fontFamily: Font.display, fontSize: 12, lineHeight: 16, width: 40 },
   doneTeam: { flex: 1, minWidth: 0, fontFamily: Font.body800, fontSize: 12, lineHeight: 17 },
   doneCount: { fontFamily: Font.display, fontSize: 12, lineHeight: 16 },
-  doneNoPro: { fontFamily: Font.body700, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
 });

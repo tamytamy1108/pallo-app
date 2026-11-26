@@ -38,6 +38,8 @@ export type MyTeamToday = {
   when: string;
   /** 전산에서 그날 연 수업 (SLOTS 순서) · 안 열었으면 null */
   slot: number | null;
+  /** 전산 팀 이름 그대로 (예: '1-1 영어') — 있으면 이 이름 + 시각으로 보여요 (지점 관리자의 지점 세션) */
+  label?: string;
 };
 
 /** 가짜 전산: 마이의 내 팀(MY_TEAMS) 중 그 요일 수업이 있는 팀을 열어요 (dow: 0 일 ~ 6 토) */

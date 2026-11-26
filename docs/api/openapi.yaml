@@ -22910,6 +22910,8 @@ components:
                 format: date-time
               teamName:
                 type: string
+                description: 전산 팀 이름 그대로 (예 '1-1 영어') — 앱은 바꾸지 않고 카드 제목으로 보여요
+                example: 1-1 영어
               lang:
                 type: string
               level:

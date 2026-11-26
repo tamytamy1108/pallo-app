@@ -170,8 +170,9 @@ export function countOf(a: Attend, d: Date) {
 /* ───────── 내 팀 (다 보이고 · 오늘 열린 수업만 누를 수 있어요) ───────── */
 
 /** 팀 이름 · 예) 영어 월수 8시 · 영어 화목 7시 30분 */
-export function teamName(t: Pick<MyTeamToday, 'lang' | 'when'>) {
+export function teamName(t: Pick<MyTeamToday, 'lang' | 'when' | 'label'>) {
   const [days, time] = t.when.split(' ');
+  if (t.label) return `${t.label} ${hourLabel(time)}`;
   return `${LANGS[t.lang].ko} ${days} ${hourLabel(time)}`;
 }
 
