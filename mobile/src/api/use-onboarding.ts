@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { showToast } from '@/components/ui/toast';
+import { markLinkWaited } from '@/state/link-waited';
 import { getOnboarding, updateOnboarding } from '@/state/onboarding';
 
 import { createLinkRequest } from './branch-link';
@@ -107,6 +108,8 @@ export function useCreateLinkRequest() {
     mutationFn: ({ branchCode, branchName, realName, phone }: { branchCode: string; branchName: string; realName: string; phone: string }) =>
       createLinkRequest({ branchCode, realName, phone }, branchName),
     onSuccess: () => {
+      // 승인되면 처음 홈에 올 때 '회원이 됐어요' 팝업 (components/home/link-welcome-popup)
+      markLinkWaited();
       void queryClient.invalidateQueries({ queryKey: queryKeys.branchSummary });
       void queryClient.invalidateQueries({ queryKey: queryKeys.linkRequests });
       void queryClient.invalidateQueries({ queryKey: queryKeys.branchOptions });

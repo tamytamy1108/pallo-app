@@ -59,7 +59,7 @@ export function receiveLinkResult(result: LinkResult, note = REJECT_NOTE_MOCK) {
   } else {
     // 못 찾음: 권한은 비회원 그대로 (state/access). 가짜 서버의 내 연동 요청에 반려 한 건 → 홈 반려 팝업 (components/home/link-rejected-popup)
     if (apiConfig.useMock) mockRejectLinkRequest(branch, note);
-    addNoti({ id: `link-${key}`, kind: 'notice', badge: 'fail', text: `${branch}에서 회원 정보를 찾지 못했어요`, time: '방금', href: '/link-rejected', read: false });
+    addNoti({ id: `link-${key}`, kind: 'notice', badge: 'fail', text: `${branch} 연동이 반려됐어요. 눌러서 사유를 확인해 주세요`, time: '방금', href: '/link-rejected', read: false });
   }
   // ['me'] 아래 전부: /me(회원 등급) · 요약(연동 대기 · 반려) · 내 연동 요청
   void queryClient.invalidateQueries({ queryKey: queryKeys.me });

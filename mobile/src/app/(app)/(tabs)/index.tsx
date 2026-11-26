@@ -23,6 +23,7 @@ import { JoinRoleSheet, type JoinRole } from '@/components/home/join-role-sheet'
 import { LaunchPopup } from '@/components/home/launch-popup';
 import { LinkAdminDev } from '@/components/home/link-admin-dev';
 import { LinkRejectedPopup } from '@/components/home/link-rejected-popup';
+import { LinkWelcomePopup } from '@/components/home/link-welcome-popup';
 import { LoungePreview } from '@/components/home/lounge-preview';
 import { useUnreadCount } from '@/components/home/noti-state';
 import { NoticeStrip } from '@/components/home/notice-strip';
@@ -247,6 +248,8 @@ export default function HomeScreen() {
       />
       {/* 지점 연동 반려: 확인할 때까지 홈에 들어올 때마다 (떠 있는 동안 시작 팝업은 기다려요) */}
       <LinkRejectedPopup />
+      {/* 지점 연동 승인: 승인 뒤 처음 홈에 오면 한 번 — [나의 팔로 꾸미러 가기] → 마이 */}
+      <LinkWelcomePopup />
       <LaunchPopup />
       {/* 지점 연동 결과: 개발용 '지점 처리 흉내' 알약 · 위에서 내려오는 푸시 배너 (state/link-events) */}
       <LinkAdminDev />
