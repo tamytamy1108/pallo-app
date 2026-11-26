@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useBranchToday } from '@/api/use-branch-today';
 import { AccountPage } from '@/components/account/parts';
 import { fmtMin } from '@/components/home/attendance';
-import { Num } from '@/components/home/branch-status-card';
+import { StatCells } from '@/components/home/branch-status-card';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -35,11 +35,15 @@ export default function BranchTodayScreen() {
   else
     body = (
       <>
-        <View style={styles.nums}>
-          <Num value={String(view.sessions)} label="오늘 세션" />
-          <Num value={String(view.proCount)} label="프로 출석" sub={view.proByStaff > 0 ? `프로 ${view.proByPro} · 스텝 ${view.proByStaff}` : undefined} tone="pro" />
-          <Num value={String(view.members)} label="멤버 출석" tone="member" />
-        </View>
+        <StatCells
+          framed
+          cells={[
+            { label: '오늘 세션', value: String(view.sessions) },
+            { label: '프로 출석', value: String(view.proByPro), tone: 'pro' },
+            { label: '스텝 출석', value: String(view.proByStaff), tone: 'staff' },
+            { label: '멤버 출석', value: String(view.members), tone: 'member' },
+          ]}
+        />
         {view.open.length ? <Group title="출석 중" tone="open" rows={view.open} /> : null}
         {view.soon.length ? <Group title="예정" tone="soon" rows={view.soon} /> : null}
         {view.done.length ? <DoneGroup rows={view.done} /> : null}
@@ -155,7 +159,6 @@ function DoneGroup({ rows }: { rows: SessionRow[] }) {
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40, gap: 14 },
-  nums: { flexDirection: 'row', gap: 8 },
   group: { gap: 14 },
   slot: { gap: 8 },
   slotHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
