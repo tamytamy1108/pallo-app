@@ -8,6 +8,7 @@ import { ApiError, isApiError } from './errors';
 import {
   cancelEventProposal,
   createEventProposal,
+  hideEventProposal,
   uploadEventPhoto,
   type EventProposal,
   type EventProposalBody,
@@ -33,6 +34,8 @@ export type SubmitEventProposalInput = {
   photoUris: string[];
   /** 가짜 서버가 남길 지점 이름 */
   branchName: string;
+  /** 반려된 제안을 고쳐 다시 보낼 때 그 제안 id — 새 제안을 보낸 뒤 목록에서 지워요 */
+  replaces?: string;
 };
 
 /** 사진을 한 장씩 올려 path 로 (순서 유지). 이미 서버에 있는 사진(keep)은 그대로 써요 */
@@ -49,9 +52,12 @@ async function photoPathsOf(uris: string[], keep: readonly string[] = []) {
 export function useSubmitEventProposal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ body, photoUris, branchName }: SubmitEventProposalInput) => {
-      const photoPaths = await photoPathsOf(photoUris);
-      return createEventProposal({ ...body, photoPaths }, { branchName });
+    mutationFn: async ({ body, photoUris, branchName, replaces, keepPhotos }: SubmitEventProposalInput & { keepPhotos?: string[] }) => {
+      const photoPaths = await photoPathsOf(photoUris, keepPhotos);
+      const saved = await createEventProposal({ ...body, photoPaths }, { branchName });
+      // 다시 제안: 새 제안은 이미 갔으니, 예전 반려 카드를 못 지워도 실패로 보지 않아요 (카드에서 직접 지울 수 있어요)
+      if (replaces) await hideEventProposal(replaces).catch(() => undefined);
+      return saved;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.eventProposals }),
   });
@@ -94,6 +100,15 @@ export function useCancelEventProposal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => cancelEventProposal(id),
+    onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.eventProposals }),
+  });
+}
+
+/** 확정 · 반려된 내 제안을 '내가 제안한 이벤트'에서 지우기 (서버 기록은 남아요) */
+export function useHideEventProposal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => hideEventProposal(id),
     onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.eventProposals }),
   });
 }

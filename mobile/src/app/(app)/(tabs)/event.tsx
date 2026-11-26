@@ -20,6 +20,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { EVENT_FILTERS, EVENTS, type EventKind } from '@/data/events';
+import { useServerEvents } from '@/api/use-events';
 import { useMe } from '@/state/me';
 import { useTabReselect } from '@/lib/tab-reselect';
 import { ChipScroll } from '@/components/ui/chip-scroll';
@@ -29,6 +30,7 @@ import { usePullRefresh } from '@/components/ui/pull-refresh';
  * 이벤트 탭 (docs/pages/06-event.md): 지점 · 본사가 여는 파티 · 클래스 · 여행.
  * 프로토타입은 라운지 화면을 이벤트만 보이게 써요 (lgMode('event') — 탭 줄 · 스토리 · 지도는 숨김).
  * 위 → 아래: 제목 · 내가 제안한 이벤트 · 지점 선택 + 종류 칩 · 배너 · 다가오는/지난 탭 · 목록 · 오른쪽 아래 [오픈하기].
+ * 목록 = 서버 이벤트(GET /events — 멤버 제안이 승인돼 열린 이벤트 포함) + 예시 이벤트(data/events). 지점 이벤트 API 가 생기면 예시는 빼요.
  */
 /** 비회원이 볼 수 있는 높이 (제안 카드 · 배너 · 이벤트 한두 개) */
 const EVENT_PEEK = 640;
@@ -44,7 +46,8 @@ export default function EventScreen() {
   const [kind, setKind] = useState<EventKind | 'all'>('all');
   const [tab, setTab] = useState<'up' | 'past'>('up');
 
-  const all = EVENTS.filter((e) => branchOk(e.br, branch) && (kind === 'all' || e.ev === kind));
+  const server = useServerEvents();
+  const all = [...(server.data ?? []), ...EVENTS].filter((e) => branchOk(e.br, branch) && (kind === 'all' || e.ev === kind));
   const { up, past } = splitEvents(all);
   const isPastTab = tab === 'past';
   const L = isPastTab ? past : up;

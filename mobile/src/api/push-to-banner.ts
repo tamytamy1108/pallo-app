@@ -16,6 +16,9 @@ function hrefOf(type: unknown, referenceId: unknown): Href | undefined {
       return typeof referenceId === 'string' && referenceId ? (`/me/notes/${encodeURIComponent(referenceId)}` as Href) : '/me/notes';
     case 'USER_INQUIRY':
       return '/me/support';
+    // 이벤트 제안 확정 · 반려 — 이벤트 탭 맨 위 '내가 제안한 이벤트' 카드에서 결과 · 매니저 메모를 봐요
+    case 'EVENT_PROPOSAL':
+      return '/event';
     // 연기 요청 · 지점 이동 요청 결과는 아직 앱 상세 화면이 없어 알림함으로
     case 'DEFERRAL_REQUEST':
     case 'BRANCH_TRANSFER_REQUEST':

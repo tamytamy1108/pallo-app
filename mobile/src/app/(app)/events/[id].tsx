@@ -18,7 +18,8 @@ import { setAnswers, setText, toggleIn, useMeetStore } from '@/components/meet/m
 import { membersOf } from '@/components/meet/model';
 import { CapBar } from '@/components/meet/parts';
 import { Sheet } from '@/components/ui/sheet';
-import { EmptyState } from '@/components/ui/state-view';
+import { EmptyState, LoadingState } from '@/components/ui/state-view';
+import { useServerEvent } from '@/api/use-events';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
@@ -33,11 +34,14 @@ import { useMe } from '@/state/me';
  * 이벤트 상세 (docs/pages/06-event.md '이벤트 상세' — 라운지 상세 공통 틀 + 차이).
  * 정보 줄: 날짜 · 장소(복사) · 참가비 · 인원 · 신청 설문 · 주최 · 문의(문자 버튼) → 소개 → 함께하는 멤버 → 아래 고정 [찜][참가비][참여하기].
  * 신청하면 제목 바로 아래 '내 신청' 카드가 떠요.
+ * 서버 이벤트(GET /events/{id})면 사진 · 카드 · 소개 · 주소 · 주최 멤버를 서버 값으로 그려요. 예시 이벤트(e1 …)는 data/events.
  * 맞는 API: 86 `/events/:id` · 88 `/events/:id/applications` · 89 `/event-applications/:id` · 찜 `/events/:id/save`
  */
 export default function EventDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const e = findEvent(String(id));
+  const sample = findEvent(String(id));
+  const server = useServerEvent(String(id), !sample);
+  const e = sample ?? server.data;
   const me = useMe();
   const key = String(id);
   const joined = useMeetStore((s) => !!s.joined[key]);
@@ -53,7 +57,7 @@ export default function EventDetail() {
   // 방금 신청했으면 '내 신청' 카드로 화면을 옮겨요 (이미 신청한 채로 들어온 경우는 그대로)
   const [justJoined, setJustJoined] = useState(false);
 
-  if (!e) return <EmptyState title="이벤트를 찾을 수 없어요" />;
+  if (!e) return server.isPending && !sample ? <LoadingState /> : <EmptyState title="이벤트를 찾을 수 없어요" />;
   const past = isPast(e);
   const cur = e.cur + (joined ? 1 : 0);
   const full = cur >= e.max && !joined;
@@ -61,9 +65,12 @@ export default function EventDetail() {
   const tel = eventContact(e);
   const dd = dday(e);
   const addr = eventAddr(e);
-  const members = membersOf(e, cur, joined, myHi, { name: me.name, branch: me.branch });
+  // 내가 주최한 이벤트는 '호스트 · 나'로 함께하는 멤버 맨 앞에 (서버 cur 에 주최 1명이 들어 있어요)
+  const members = membersOf(e, cur, joined || !!e.mine, myHi, { name: me.name, branch: me.branch });
 
-  const main = past ? (
+  const main = e.mine && !past ? (
+    <MainBtn label="내가 주최하는 이벤트" variant="done" onPress={() => showToast('함께하는 멤버가 모이면 알려 드릴게요')} />
+  ) : past ? (
     <MainBtn label="후기 보기" variant="wh" onPress={() => setReviews(true)} />
   ) : full ? (
     <MainBtn
@@ -77,13 +84,15 @@ export default function EventDetail() {
       }
     />
   ) : (
-    <MainBtn label={joined ? '참여 완료' : `참여하기 · 남은 자리 ${e.max - cur}`} variant={joined ? 'done' : 'y'} onPress={() => (joined ? setCancel(true) : guardMember(() => setJoin(true), '파티에 가려면'))} />
+    <MainBtn label={joined ? '참여 완료' : e.noCap ? '참여하기' : `참여하기 · 남은 자리 ${e.max - cur}`} variant={joined ? 'done' : 'y'} onPress={() => (joined ? setCancel(true) : guardMember(() => setJoin(true), '파티에 가려면'))} />
   );
 
   return (
     <>
       <DetailFrame
         id={e.id}
+        posters={e.posters}
+        card={e.card}
         title={e.title}
         heading={e.title}
         kicker={
@@ -130,7 +139,11 @@ export default function EventDetail() {
           {past ? (
             <InfoRow icon="users" main={`${cur}명 참여`} />
           ) : (
-            <InfoRow icon="users" main={`${cur} / ${e.max}명 ${cur >= e.max ? '· 마감' : `· 남은 자리 ${e.max - cur}`}`} sub={<CapBar cur={cur} max={e.max} width={140} />} />
+            e.noCap ? (
+              <InfoRow icon="users" main={`${cur}명 함께해요 · 인원 무관`} />
+            ) : (
+              <InfoRow icon="users" main={`${cur} / ${e.max}명 ${cur >= e.max ? '· 마감' : `· 남은 자리 ${e.max - cur}`}`} sub={<CapBar cur={cur} max={e.max} width={140} />} />
+            )
           )}
           {Q.length && !joined && !past ? <InfoRow icon="check" main={`신청 설문 ${Q.length}개`} sub="신청할 때 주최가 준비한 질문에 답해요" /> : null}
           {/* 멤버가 제안해 열린 이벤트는 주최가 멤버 — 라운지 모임 상세와 같은 호스트 줄(얼굴 · 닉네임 · HOST · 프로필). 지점 · 본사 주최만 연락처 · 운영 시간 · 문자 문의 */}

@@ -21,6 +21,7 @@ import { fetchBranchGuides } from './branch-guide';
 import { fetchFaq, fetchMyInquiries } from './support';
 import { fetchReportReasons } from './reports';
 import { fetchEventCategories, fetchMyEventProposals } from './event-proposals';
+import { fetchEvent, fetchEvents } from './events';
 import { fetchMyTrialApplications } from './trial-applications';
 import { fetchAssetCatalog, fetchBranchOptions, fetchBranchPublicGuide, fetchOnboardingInfo, fetchTrialSlots, roundLatLng, type LatLng } from './onboarding';
 
@@ -53,6 +54,9 @@ export const queryKeys = {
   reportReasons: ['reports', 'reasons'] as const,
   eventProposals: ['me', 'event-proposals'] as const,
   eventCategories: ['event-proposals', 'categories'] as const,
+  /** 이벤트 탭 — 목록 · 상세가 이 키 아래라 이걸로 다시 받으면 다 새로 받아요 */
+  events: ['events'] as const,
+  event: (id: string) => ['events', id] as const,
   situationMaps: ['library', 'maps'] as const,
   bookShelf: ['library', 'books'] as const,
   lesson: (id: string) => ['lessons', id] as const,
@@ -141,6 +145,12 @@ export const myInquiriesQuery = () => queryOptions({ queryKey: queryKeys.myInqui
 
 /** GET /event-proposals — 내 이벤트 제안 전부 (이벤트 탭 '내가 제안한 이벤트') */
 export const eventProposalsQuery = () => queryOptions({ queryKey: queryKeys.eventProposals, queryFn: ({ signal }) => fetchMyEventProposals({ signal }) });
+
+/** GET /events — 이벤트 탭 목록 (오늘 이후 열린 이벤트) */
+export const eventsQuery = () => queryOptions({ queryKey: queryKeys.events, queryFn: ({ signal }) => fetchEvents({ signal }) });
+
+/** GET /events/{id} — 이벤트 상세 */
+export const eventQuery = (id: string) => queryOptions({ queryKey: queryKeys.event(id), queryFn: ({ signal }) => fetchEvent(id, { signal }) });
 
 /** GET /event-proposals/categories — 이벤트 분류 선택지 (자주 안 바뀌어요) */
 export const eventCategoriesQuery = () =>

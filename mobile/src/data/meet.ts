@@ -132,13 +132,14 @@ export const today0 = () => {
   return d;
 };
 /** 모임 날짜까지 남은 날 (프로토타입 lgMeetN · LG_DD: 기기 날짜 기준, 지나면 음수) */
-export const daysUntil = (it: { mon: string; day: string }) => {
-  const d = new Date(2026, MONTHS.indexOf(it.mon), Number(it.day));
+export const daysUntil = (it: { mon: string; day: string; year?: number }) => {
+  // year: 서버에서 온 날짜만 (예시 모임은 2026년)
+  const d = new Date(it.year ?? 2026, MONTHS.indexOf(it.mon), Number(it.day));
   return Math.round((d.getTime() - today0().getTime()) / 864e5);
 };
-export const isPast = (it: { mon: string; day: string }) => daysUntil(it) < 0;
+export const isPast = (it: { mon: string; day: string; year?: number }) => daysUntil(it) < 0;
 /** 'D-8' · 'D-DAY' · '지남' (프로토타입 lgMeetDD) */
-export const dday = (it: { mon: string; day: string }) => {
+export const dday = (it: { mon: string; day: string; year?: number }) => {
   const n = daysUntil(it);
   return n > 0 ? `D-${n}` : n === 0 ? 'D-DAY' : '지남';
 };

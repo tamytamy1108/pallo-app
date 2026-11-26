@@ -31,7 +31,6 @@ import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { clearSavedData } from '@/lib/store';
 import { isMember } from '@/state/access';
-import { useLearnedStepCount } from '@/state/progress';
 import { useMe } from '@/state/me';
 import { grantReward, resetRewards } from '@/state/rewards';
 import { useTabReselect } from '@/lib/tab-reselect';
@@ -79,8 +78,6 @@ export default function MyScreen() {
   const member = my ? my.branchMember : isMember(me);
   // 프로 마이인지는 서버가 정해요 (프로 숫자 칸이 오면 프로)
   const proStats = my?.proStats ?? null;
-  // 앱 학습 = 앱에서 끝낸 학습 단계 수 (진도는 아직 기기에 남아요 · state/progress)
-  const learnedSteps = useLearnedStepCount();
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
   const [badges, setBadges] = useState(false);
   const [meets, setMeets] = useState<'joined' | 'saved' | null>(null);
@@ -138,10 +135,10 @@ export default function MyScreen() {
           <MyStats
             items={
               proStats
-                ? // 프로: 참여 중(동아리 · 번개) · 앱 학습 · 보낸 노트 · 받은 고마워요 (2026-11-26: 이번 달 세션 · 출석 체크 대신)
+                ? // 프로: 연속 학습(앱 학습 코너) · 출석률(맡은 세션 중 프로로 참여) · 보낸 노트 · 받은 고마워요 (2026-11-26)
                   [
-                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여 중', onPress: () => setMyMeetsOpen(true) },
-                    { ic: 'book', v: `${learnedSteps.toLocaleString()}개`, l: '앱 학습', onPress: go('/library') },
+                    { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
+                    { ic: 'bolt', v: num(proStats.attendanceRate, '%'), l: '출석률', onPress: () => setClassOpen(true) },
                     { ic: 'mic', v: num(proStats.notesSent, '개'), l: '보낸 노트', onPress: go('/me/notes?box=sent') },
                     { ic: 'heart', v: num(proStats.thanksReceived, '개'), l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
                   ]

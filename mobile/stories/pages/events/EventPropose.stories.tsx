@@ -72,6 +72,7 @@ const PENDING: EventProposal = {
   card: { color: '#FFE200', words: ['PICNIC', ''], design: 'circle' },
   status: 'PENDING',
   rejectionReason: null,
+  eventId: null,
   decidedAt: null,
   createdAt: new Date().toISOString(),
 };
