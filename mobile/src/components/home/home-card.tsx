@@ -62,9 +62,10 @@ function TrialCard({ trial }: { trial: TrialBooking }) {
         <View style={cs.shadow} />
         <View style={StyleSheet.flatten([cs.body, styles.bodyTrial])}>
           <View style={cs.fields}>
-            <Cell label="체험" value={dday} big flex={1} />
-            <Cell label="DATE" value={trialShortDate(trial)} divider flex={1.05} />
-            <Cell label="TIME" value={trial.time} big divider flex={0.95} />
+            {/* 큰 값(D-DAY · 23:59)이 가장 넓어서 양 끝 칸을 넓게 — 375pt 폭에서 잘리지 않게 */}
+            <Cell label="체험" value={dday} big flex={1.1} />
+            <Cell label="DATE" value={trialShortDate(trial)} divider flex={0.95} />
+            <Cell label="TIME" value={trial.time} big divider flex={1.08} />
           </View>
           <View style={StyleSheet.flatten([cs.main, styles.main])} onLayout={heroRoom.onMain}>
             <HeroChar pose={stage === 'after' ? 'standard' : 'jump'} room={heroRoom.room} />
@@ -195,11 +196,11 @@ function CardButton({ label, icon, tint, onPress }: { label: string; icon: strin
 /** 위 칸 하나 (체험 카드는 칸 폭을 조금씩 달리 줘요) */
 function Cell({ label, value, big, divider, flex }: { label: string; value: string; big?: boolean; divider?: boolean; flex: number }) {
   return (
-    <View style={StyleSheet.flatten([cs.field, divider && cs.fieldDivider, { flex }])}>
+    <View style={StyleSheet.flatten([cs.field, styles.cellPad, divider && cs.fieldDivider, { flex }])}>
       <PText style={cs.fieldLabel} color={Colors.inkSub}>
         {label}
       </PText>
-      <PText style={big ? cs.fieldBig : cs.fieldValue} numberOfLines={1}>
+      <PText style={big ? [cs.fieldBig, styles.cellBig] : cs.fieldValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
         {value}
       </PText>
     </View>
@@ -219,6 +220,9 @@ const styles = StyleSheet.create({
   // 아래 두 칸: 크림 바탕 · 위 잉크 선 · 가운데 세로 선 (출석 카드 위 칸 cs.fields 와 같은 결)
   foot: { flexDirection: 'row', backgroundColor: Colors.cream, borderTopWidth: 2, borderColor: Colors.ink },
   cell: { flex: 1 },
+  // 체험 카드 위 세 칸: 세 칸 다 값이 길어서(D-DAY · 12.31 (수) · 23:59) 큰 글자와 옆 여백을 조금 줄여요
+  cellPad: { paddingHorizontal: 10 },
+  cellBig: { fontSize: 23, lineHeight: 30 },
   cellDivider: { borderLeftWidth: 2, borderColor: Colors.ink },
   cellIn: { paddingTop: 9, paddingBottom: 11, paddingHorizontal: 14 },
   cellPressed: { backgroundColor: '#F1EAD9' },
