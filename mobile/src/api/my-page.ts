@@ -85,6 +85,8 @@ export type MyPageProStats = {
   sessionsThisMonth: number;
   /** 출석 체크 — 서버 기록이 아직 없어 0 */
   attendanceChecks: number;
+  /** 출석률(%) — 이번 달 맡은 세션 중 '프로로 참여'로 출석한 비율 (0~100). 서버에 아직 없으면 null → '–' (2026-11-26) */
+  attendanceRate?: number | null;
   /** 보낸 노트 (전체 기간) */
   notesSent: number;
   /** 받은 고마워요 — 도메인 전까지 0 */
@@ -277,7 +279,7 @@ export function mockMyPage(): MyPage {
     follow: { following: lists.fing.length, followers: lists.fer.length },
     stats: { streakDays: me.streak, weekRank: myRank, joinedMeetCount: me.joinedMeets, badgeCount: MY_BADGES.filter((b) => b.on).length },
     proStats: pro
-      ? { sessionsThisMonth: PRO_STATS.sessions, attendanceChecks: PRO_STATS.checks, notesSent: PRO_SENT_NOTES.length, thanksReceived: PRO_SENT_NOTES.reduce((a, n) => a + n.thanksN, 0) }
+      ? { sessionsThisMonth: PRO_STATS.sessions, attendanceChecks: PRO_STATS.checks, attendanceRate: PRO_STATS.sessions ? Math.round((PRO_STATS.checks / PRO_STATS.sessions) * 100) : null, notesSent: PRO_SENT_NOTES.length, thanksReceived: PRO_SENT_NOTES.reduce((a, n) => a + n.thanksN, 0) }
       : null,
     proNote: member || pro ? mockProNote(pro, me.name) : null,
     myClasses: pro ? mockMyClasses(monday) : null,

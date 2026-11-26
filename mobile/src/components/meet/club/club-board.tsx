@@ -38,8 +38,8 @@ function seedBoard(c: Club): BoardPost[] {
   const { posts, name } = clubContent(c);
   const h = hashId(c.id);
   return [
-    { id: c.id + 'n1', k: 'note', w: name('H'), pin: true, ti: `${c.name} 처음 오셨나요? 모임 안내`, bd: `${c.when}에 모여요. 첫날은 자기소개만 해도 충분해요.`, t: '고정', lk: 0, cm: [] },
-    { id: c.id + 'n2', k: 'note', w: name('H'), pin: true, ti: '가입 인사 양식', bd: '이름(닉네임) · 공부하는 언어 · 요즘 말해 보고 싶은 주제 한 가지', t: '고정', lk: 0, cm: [] },
+    { id: c.id + 'n1', k: 'note', w: name('H'), pin: true, ti: `${c.name} 처음 오셨나요? 모임 안내`, bd: `${c.when}에 모여요. 첫날은 자기소개만 해도 충분해요.`, t: '11월 1일', lk: 0, cm: [] },
+    { id: c.id + 'n2', k: 'note', w: name('H'), pin: true, ti: '가입 인사 양식', bd: '이름(닉네임) · 공부하는 언어 · 요즘 말해 보고 싶은 주제 한 가지', t: '11월 1일', lk: 0, cm: [] },
     ...posts.map(([k, w, ti, bd, t, lk, cm], i): BoardPost => ({ id: c.id + 'b' + i, k, w: name(w), ti, bd, t, lk: lk + (h % 4), cm: cm.map(([cw, ct]): [string, string] => [name(cw), ct]) })),
   ];
 }

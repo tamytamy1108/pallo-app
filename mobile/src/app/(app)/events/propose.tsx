@@ -47,10 +47,17 @@ const FEE_MAX = 1000000;
  * 서버: 사진을 `/uploads/images/event-photo` 로 한 장씩 올린 뒤 `POST /event-proposals` (api/use-event-proposals).
  * 진행 지점은 서버 지점 목록(GET /branches — 쉬는 지점은 막혀요), 카테고리는 서버 '이벤트 분류' 선택지예요.
  * 고치기: /events/propose?edit=<제안 id> — 매니저 검토 중인 내 제안만, 보낸 값이 채워진 채로 열려요 (확정 · 반려된 건 못 고쳐요).
+ * 다시 제안: /events/propose?again=<반려된 제안 id> — 보낸 값이 채워진 새 제안서(날짜만 다시 골라요). 보내면 반려 카드는 목록에서 지워져요.
  */
 export default function ProposeEvent() {
-  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  const { edit, again } = useLocalSearchParams<{ edit?: string; again?: string }>();
   const mine = useMyEventProposals();
+  if (again) {
+    const from = mine.data?.find((r) => r.id === again && r.status === 'REJECTED');
+    if (from) return <ProposeForm key={from.id} again={from} />;
+    if (mine.isPending) return <SheetPage title="이벤트 제안하기" label="이벤트 제안하기" footer={null}><LoadingState /></SheetPage>;
+    return <ProposeForm />;
+  }
   if (!edit) return <ProposeForm />;
   const target = mine.data?.find((r) => r.id === edit);
   if (target?.status === 'PENDING') return <ProposeForm key={target.id} editing={target} />;
@@ -62,16 +69,18 @@ export default function ProposeEvent() {
   );
 }
 
-function ProposeForm({ editing }: { editing?: EventProposal }) {
+function ProposeForm({ editing, again }: { editing?: EventProposal; /** 반려된 제안을 바탕으로 새로 (날짜는 비워요) */ again?: EventProposal }) {
   const me = useMe();
-  const [pics, setPics] = useState<string[]>(() => editing?.photos ?? []);
+  // 채워 둘 값: 고치기면 보낸 그대로, 다시 제안이면 날짜만 빼고 그대로
+  const src = editing ?? again;
+  const [pics, setPics] = useState<string[]>(() => src?.photos ?? []);
   // 카드: 사진이 없으면 꼭 (안 만지면 기본 색 · 기본 글자) · 사진이 있으면 선택
-  const [card, setCard] = useState<MadeCard | null>(() => (editing?.card ? { color: editing.card.color, words: editing.card.words, design: (editing.card.design ?? undefined) as MadeCard['design'] } : null));
+  const [card, setCard] = useState<MadeCard | null>(() => (src?.card ? { color: src.card.color, words: src.card.words, design: (src.card.design ?? undefined) as MadeCard['design'] } : null));
   // 진행 지점: 고르기 전에는 내 지점(서버 지점 목록에서 이름이 같은 곳)
   const branches = useBranchOptions();
   const [picked, setPicked] = useState<BranchOption | null>(null);
   // 고칠 때는 보낸 지점 그대로
-  const branch = picked ?? branches.data?.rows.find((b) => (editing ? b.code === editing.branchCode : withJeom(b.name) === withJeom(me.branch) && b.status === 'ACTIVE')) ?? null;
+  const branch = picked ?? branches.data?.rows.find((b) => (src ? b.code === src.branchCode : withJeom(b.name) === withJeom(me.branch) && b.status === 'ACTIVE')) ?? null;
   const br = branch?.name ?? '';
   const [brOpen, setBrOpen] = useState(false);
   const categories = useEventCategories();
@@ -79,21 +88,21 @@ function ProposeForm({ editing }: { editing?: EventProposal }) {
   const create = useSubmitEventProposal();
   const update = useEditEventProposal();
   const submit = editing ? update : create;
-  const [place, setPlace] = useState<Place | null>(() => (editing?.placeName ? { name: editing.placeName, addr: editing.placeAddress ?? '' } : null));
-  const [addr, setAddr] = useState(editing?.addressDetail ?? '');
+  const [place, setPlace] = useState<Place | null>(() => (src?.placeName ? { name: src.placeName, addr: src.placeAddress ?? '' } : null));
+  const [addr, setAddr] = useState(src?.addressDetail ?? '');
   const [date, setDate] = useState(editing?.date ?? '');
   // 희망 시간: 시작 ~ 끝 (끝은 시작 30분 뒤부터 · 밤 12:00 까지)
-  const [time, setTime] = useState(editing?.startTime ?? '19:00');
-  const [endTime, setEndTime] = useState(() => editing?.endTime ?? defaultEnd('19:00'));
-  const [cat, setCat] = useState<string | null>(editing?.categoryLabel ?? null);
-  const [title, setTitle] = useState(editing?.title ?? '');
-  const [body, setBody] = useState(editing?.description ?? '');
+  const [time, setTime] = useState(src?.startTime ?? '19:00');
+  const [endTime, setEndTime] = useState(() => src?.endTime ?? defaultEnd('19:00'));
+  const [cat, setCat] = useState<string | null>(src?.categoryLabel ?? null);
+  const [title, setTitle] = useState(src?.title ?? '');
+  const [body, setBody] = useState(src?.description ?? '');
   // 예상 인원: 숫자 (알약 · −/+ · 직접 적기) 또는 null(무관 — 0 으로 보내요)
-  const [cap, setCap] = useState<number | null>(editing ? editing.expectedAttendees : 20);
+  const [cap, setCap] = useState<number | null>(src ? src.expectedAttendees : 20);
   // 참가비는 꼭 골라요 (처음엔 비어 있어요)
-  const [fee, setFee] = useState<string | null>(editing ? (editing.fee ? '유료' : '무료') : null);
+  const [fee, setFee] = useState<string | null>(src ? (src.fee ? '유료' : '무료') : null);
   // 유료면 1인 금액을 직접 적어요 (숫자만 · 쉼표는 보여 줄 때만)
-  const [price, setPrice] = useState(editing?.fee ? String(editing.fee) : '');
+  const [price, setPrice] = useState(src?.fee ? String(src.fee) : '');
   const priceN = Number(price) || 0;
   // 지도 권역 — 서버 지점의 지역, 없으면 앱 지점 목록에서 이름으로
   const region = branch?.region ?? (BRANCHES.find((b) => withJeom(b[0]) === withJeom(br)) || BRANCHES[0])[2];
@@ -136,12 +145,12 @@ function ProposeForm({ editing }: { editing?: EventProposal }) {
       onSuccess: () => {
         sfx('save');
         router.back();
-        showToast(editing ? '제안을 수정했어요' : '제안을 보냈어요');
+        showToast(editing ? '제안을 수정했어요' : again ? '다시 제안했어요' : '제안을 보냈어요');
       },
       onError: (e: unknown) => showToast(apiErrorMessage(e)),
     };
     if (editing) update.mutate({ ...input, id: editing.id, keepPhotos: editing.photos }, done);
-    else create.mutate(input, done);
+    else create.mutate(again ? { ...input, replaces: again.id, keepPhotos: again.photos } : input, done);
   };
 
   return (
@@ -154,7 +163,11 @@ function ProposeForm({ editing }: { editing?: EventProposal }) {
           <Icon name="flag" size={18} color={Colors.purple} strokeWidth={2.6} />
         </View>
         <PText style={styles.noteT}>
-          {editing ? '매니저가 확정하기 전까지 고칠 수 있어요. 고친 내용으로 다시 검토해요.' : '열고 싶은 이벤트가 있다면 알려 주세요. 지점 매니저가 확인하고, 확정되면 이벤트 탭에 올라가요.'}
+          {editing
+            ? '매니저가 확정하기 전까지 고칠 수 있어요. 고친 내용으로 다시 검토해요.'
+            : again
+              ? `지난 제안 내용을 채워 뒀어요. 매니저 메모를 보고 고친 뒤 날짜를 다시 골라 주세요.${again.rejectionReason ? `\n매니저 메모 · ${again.rejectionReason}` : ''}`
+              : '열고 싶은 이벤트가 있다면 알려 주세요. 지점 매니저가 확인하고, 확정되면 이벤트 탭에 올라가요.'}
         </PText>
       </View>
       <Field label="대표 이미지 · 사진 여러 장 또는 카드" hint={pics.length ? (card ? '카드가 대표예요. 사진은 그 뒤에 보여요.' : '첫 장이 대표 사진이 돼요. 사진을 누르면 대표로 바꿔요.') : '사진이 없으면 아래 카드가 대표예요.'}>

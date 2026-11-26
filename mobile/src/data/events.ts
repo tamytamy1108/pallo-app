@@ -6,8 +6,10 @@
  * 입금 계좌 · 전화번호 · 담당자 · 소개 장문은 모두 예시 문안이에요 (Q-P3, Q-L5).
  */
 import { C, type PosterWords } from './meet';
+import type { MadeCard } from './poster-colors';
 
-export type EventKind = 'party' | 'class' | 'trip';
+/** etc: 서버 분류 중 파티 · 클래스 · 여행이 아닌 것 (액티비티 · 취미 · 자기계발 · 기타) — '전체'에서만 보여요 */
+export type EventKind = 'party' | 'class' | 'trip' | 'etc';
 
 /** 이벤트 한 줄. 날짜는 2026년 mon · day. fee 가 없으면 무료, fee0 은 할인 전 금액 */
 export type EventItem = {
@@ -32,6 +34,19 @@ export type EventItem = {
    * host 에는 같은 닉네임을 넣어요 (함께하는 멤버의 HOST 줄).
    */
   hostMember?: { name: string; branch: string };
+  // ---- 서버 이벤트(GET /events)에서 온 줄만 채워요 (components/event/event-model 의 fromServer) ----
+  /** 날짜의 해 (없으면 2026 — 예시 이벤트) */
+  year?: number;
+  /** 사진 주소 (0번이 대표) · 만든 카드 — 있으면 예시 포스터 대신 이걸 그려요 */
+  posters?: string[];
+  card?: MadeCard;
+  /** 소개 · 주소 (예시 이벤트는 EVENT_DESC · EVENT_ADDR) */
+  desc?: string;
+  addr?: string;
+  /** 정원 무관 (max 는 계산용 큰 수) */
+  noCap?: boolean;
+  /** 내가 주최한 이벤트 */
+  mine?: boolean;
 };
 
 export type SurveyQuestion = { q: string; t: 'one' | 'multi' | 'text'; opts: string[]; req: boolean };
@@ -77,7 +92,6 @@ export const EVENTS: EventItem[] = [
   { id: 'e6', ev: 'party', kind: '파티', br: '연신내', day: '31', mon: 'OCT', wd: '금 19:00', title: '할로윈 코스튬 영어 파티', place: '연신내 라운지', host: '연신내', cur: 28, max: 30 },
   { id: 'e7', ev: 'trip', kind: '여행', br: '영등포', day: '18', mon: 'OCT', wd: '토 11:00', title: '가을 한강 영어 피크닉', place: '여의도 한강공원', host: '영등포', cur: 18, max: 20, fee: 8000 },
   // 멤버가 제안해 지점이 승인한 이벤트 (예시) — 주최가 멤버라 상세 주최 줄이 멤버 프로필이에요
-  { id: 'e8', ev: 'trip', kind: '이벤트', br: '영등포', day: '13', mon: 'DEC', wd: '일 14:00', title: '한강 영어 피크닉', place: '여의도 한강공원 · 돗자리 존', host: '태오', hostMember: { name: '태오', branch: '영등포' }, cur: 6, max: 20 },
 ];
 
 export const EVENT_POSTER_WORDS: Record<string, PosterWords> = {
@@ -88,7 +102,6 @@ export const EVENT_POSTER_WORDS: Record<string, PosterWords> = {
   e5: [['NIHONGO', 'CLASS'], C.lpu],
   e6: [['HALLO', 'WEEN'], C.pu],
   e7: [['HANGANG', 'PICNIC'], C.y],
-  e8: [['PICNIC'], C.pk],
   e3: [['SMALL', 'TALK', 'CLASS'], C.sky],
 };
 

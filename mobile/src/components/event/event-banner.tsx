@@ -59,7 +59,7 @@ export function EventBanner({ list }: { list: EventItem[] }) {
           <ScrollView ref={ref} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={32} onTouchStart={touch} onScrollBeginDrag={touch}>
             {list.map((e, k) => (
               <Pressable key={e.id} onPress={() => router.push(`/events/${e.id}`)} accessibilityRole="button" accessibilityLabel={`${k + 1} / ${n} ${e.title}`} style={{ width: w, height: 188 }}>
-                <Poster id={e.id} slide={posterSlides(e.id)[0]} height={188} wordSize={26} wordStyle={styles.pw} />
+                <Poster id={e.id} slide={posterSlides(e.id, false, e.posters, e.card)[0]} height={188} wordSize={26} wordStyle={styles.pw} />
                 {/* 노란 · 밝은 포스터 위에서도 노란 첫 줄(종류 · 지점 · D-day)이 읽히게, 첫 줄 높이부터 충분히 어둡게 */}
                 <LinearGradient colors={['rgba(20,17,30,0)', 'rgba(20,17,30,0.62)', 'rgba(20,17,30,0.86)']} locations={[0, 0.38, 1]} style={styles.ov} pointerEvents="none">
                   <PText numberOfLines={1} style={styles.k}>

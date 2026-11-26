@@ -7,7 +7,8 @@ import { LgLink, SecHead } from '@/components/meet/parts';
 import type { Proposal } from '@/components/meet/meet-store';
 import { apiErrorMessage } from '@/api/errors';
 import type { EventProposal } from '@/api/event-proposals';
-import { useCancelEventProposal, useMyEventProposals } from '@/api/use-event-proposals';
+import { useCancelEventProposal, useHideEventProposal, useMyEventProposals } from '@/api/use-event-proposals';
+import { useServerEvents } from '@/api/use-events';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -38,6 +39,7 @@ export function toProposal(r: EventProposal): Proposal {
     fee: r.fee,
     status: r.status,
     rejectionReason: r.rejectionReason,
+    eventId: r.eventId,
     sentAt: r.createdAt,
   };
 }
@@ -51,11 +53,26 @@ const STATUS_TEXT: Record<NonNullable<Proposal['status']>, string> = {
 };
 const statusOf = (q: Proposal) => q.status ?? 'PENDING';
 
-/** 내가 제안한 이벤트 (보낸 제안이 있을 때만, 프로토타입 lgPropCards · .lg-prop) — 서버 GET /event-proposals (취소한 건 빼고) */
+/**
+ * 내가 제안한 이벤트 (보낸 제안이 있을 때만, 프로토타입 lgPropCards · .lg-prop) — 서버 GET /event-proposals (취소 · 지운 건 빼고).
+ * 카드가 사라지는 때:
+ * - 검토 중 → [취소]로 거두면
+ * - 확정 → [지우기]를 누르거나, 열린 이벤트 날짜가 지나면 (이벤트 탭 목록에 더는 없으면) 저절로
+ * - 반려 → [지우기]를 누르거나, [다시 제안하기]로 고쳐 보내면 (새 제안 카드로 바뀌어요)
+ */
 export function ProposalCards() {
   const list = useMyEventProposals();
+  const events = useServerEvents();
   const cancel = useCancelEventProposal();
-  const props = (list.data ?? []).map(toProposal);
+  const hide = useHideEventProposal();
+  // 확정된 제안: 그 이벤트가 끝나 목록에서 빠지면 카드도 빼요 (이벤트 목록을 아직 못 받았으면 그대로 둬요)
+  const openIds = events.data ? new Set(events.data.map((e) => e.id)) : null;
+  const props = (list.data ?? []).map(toProposal).filter((q) => !(q.status === 'APPROVED' && q.eventId && openIds && !openIds.has(q.eventId)));
+  const remove = (q: Proposal) =>
+    hide.mutate(q.id, {
+      onSuccess: () => showToast('목록에서 지웠어요'),
+      onError: (e) => showToast(apiErrorMessage(e)),
+    });
   // 누른 제안 (시트가 내려가는 동안에도 내용이 남게 따로 둬요)
   const [openId, setOpenId] = useState<string | null>(null);
   const [shown, setShown] = useState<Proposal | null>(null);
@@ -74,9 +91,21 @@ export function ProposalCards() {
             setOpenId(q.id);
           }}
           onCancel={statusOf(q) === 'PENDING' ? () => setCanceling(q) : undefined}
+          onRemove={statusOf(q) === 'PENDING' ? undefined : () => remove(q)}
         />
       ))}
-      {shown ? <ProposalSheet q={shown} open={openId === shown.id && props.some((p) => p.id === shown.id)} onClose={() => setOpenId(null)} onClosed={() => setShown(null)} /> : null}
+      {shown ? (
+        <ProposalSheet
+          q={shown}
+          open={openId === shown.id && props.some((p) => p.id === shown.id)}
+          onClose={() => setOpenId(null)}
+          onClosed={() => setShown(null)}
+          onRemove={() => {
+            setOpenId(null);
+            remove(shown);
+          }}
+        />
+      ) : null}
       <ConfirmDialog
         open={!!canceling}
         title="제안을 취소할까요?"
@@ -116,9 +145,9 @@ function sentAt(q: Proposal) {
 function statusNote(q: Proposal) {
   switch (statusOf(q)) {
     case 'APPROVED':
-      return '매니저가 확정했어요. 확정된 날짜 · 시간 · 장소로 이벤트 탭에 올라가요.';
+      return '매니저가 확정했어요. 확정된 날짜 · 시간 · 장소로 이벤트 탭에 올라갔어요. 이벤트가 끝나면 이 카드는 저절로 사라져요.';
     case 'REJECTED':
-      return q.rejectionReason ? `매니저 메모 · ${q.rejectionReason}` : '이번에는 열기 어려워요. 다른 날짜나 내용으로 다시 제안해 주세요.';
+      return `${q.rejectionReason ? `매니저 메모 · ${q.rejectionReason}\n` : '이번에는 열기 어려워요. '}고쳐서 다시 제안하거나, 확인했으면 목록에서 지워 주세요.`;
     default:
       return '지점 매니저가 확인하고 있어요. 확정되면 이벤트 탭에 올라가요.';
   }
@@ -126,12 +155,27 @@ function statusNote(q: Proposal) {
 
 /**
  * 내가 보낸 제안 보기 — 적어 보낸 칸 전부 · 보낸 날 · 지금 상태.
- * 매니저 검토 중이면 [수정하기] → 제안서가 보낸 값 그대로 열려요 (/events/propose?edit=id). 확정 · 반려된 뒤에는 닫기만 (동아리 신청 시트와 같은 모양).
+ * 아래 버튼: 검토 중 [닫기][수정하기] (/events/propose?edit=id) · 확정 [지우기][이벤트 보기] (/events/{eventId})
+ * · 반려 [지우기][다시 제안하기] (/events/propose?again=id — 보낸 값이 채워진 새 제안서).
  */
-function ProposalSheet({ q, open, onClose, onClosed }: { q: Proposal; open: boolean; onClose: () => void; onClosed: () => void }) {
+function ProposalSheet({ q, open, onClose, onClosed, onRemove }: { q: Proposal; open: boolean; onClose: () => void; onClosed: () => void; onRemove: () => void }) {
   const sent = sentAt(q);
+  const go = (to: Parameters<typeof router.push>[0]) => {
+    onClose();
+    runAfterSheetClose(() => router.push(to));
+  };
+  const st = statusOf(q);
   const footer =
-    statusOf(q) === 'PENDING' ? (
+    st === 'APPROVED' || st === 'REJECTED' ? (
+      <SheetButtons>
+        <SheetButton label="목록에서 지우기" tone="white" style={styles.flex} onPress={onRemove} />
+        {st === 'APPROVED' && q.eventId ? (
+          <SheetButton label="이벤트 보기" style={styles.flex} onPress={() => go(`/events/${q.eventId}`)} />
+        ) : st === 'REJECTED' ? (
+          <SheetButton label="다시 제안하기" style={styles.flex} onPress={() => go({ pathname: '/events/propose', params: { again: q.id } })} />
+        ) : null}
+      </SheetButtons>
+    ) : st === 'PENDING' ? (
       <SheetButtons>
         <SheetButton label="닫기" tone="white" style={styles.flex} onPress={onClose} />
         <SheetButton
@@ -204,7 +248,19 @@ function Cover({ q, size }: { q: Proposal; size: number }) {
  * 제안 한 장 — 제안하기 화면의 '이렇게 보여요' 미리보기도 이걸 써요 (date 가 비면 '날짜 고르기 전').
  * onOpen 을 주면 카드를 눌러 내가 보낸 내용을 볼 수 있어요 (이벤트 탭)
  */
-export function ProposalCard({ q, onOpen, onCancel }: { q: Proposal; onOpen?: () => void; /** 주면 옆에 '취소' (대기 중일 때만) */ onCancel?: () => void }) {
+export function ProposalCard({
+  q,
+  onOpen,
+  onCancel,
+  onRemove,
+}: {
+  q: Proposal;
+  onOpen?: () => void;
+  /** 주면 옆에 '취소' (대기 중일 때만) */
+  onCancel?: () => void;
+  /** 주면 옆에 '지우기' (확정 · 반려된 뒤) */
+  onRemove?: () => void;
+}) {
   const d = new Date(q.date + 'T00:00');
   const hm = q.time ? ` ${q.time[0]}~${q.time[1] === '24:00' ? '24:00' : q.time[1]}` : '';
   const when = q.date ? `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})${hm} 희망` : '날짜 고르기 전';
@@ -219,7 +275,7 @@ export function ProposalCard({ q, onOpen, onCancel }: { q: Proposal; onOpen?: ()
           {withJeom(q.br)} · {when} · {q.cat}
         </PText>
         <PText style={[styles.st, statusOf(q) === 'REJECTED' && { color: Colors.inkSub }]}>
-          {statusOf(q) === 'PENDING' ? '매니저 검토 중' : statusOf(q) === 'APPROVED' ? '확정됐어요 · 이벤트 탭에 올라가요' : '이번엔 어려워요 · 눌러서 매니저 메모 보기'}
+          {statusOf(q) === 'PENDING' ? '매니저 검토 중' : statusOf(q) === 'APPROVED' ? '확정됐어요 · 눌러서 이벤트 보기' : '이번엔 어려워요 · 눌러서 매니저 메모 보기'}
         </PText>
       </View>
     </>
@@ -235,6 +291,7 @@ export function ProposalCard({ q, onOpen, onCancel }: { q: Proposal; onOpen?: ()
         <View style={styles.main}>{body}</View>
       )}
       {onCancel ? <LgLink color={Colors.inkSub} size={12.5} label="취소" onPress={onCancel} /> : null}
+      {onRemove ? <LgLink color={Colors.inkSub} size={12.5} label="지우기" onPress={onRemove} /> : null}
     </View>
   );
 }

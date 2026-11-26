@@ -27,7 +27,7 @@ export function EventRow({ e, onOpen, feeLabel }: { e: EventItem; onOpen?: () =>
       <View style={styles.th}>
         {/* 270px 포스터를 0.3556배로 줄여요 (프로토타입 .lg-evr .th .lg-pst) */}
         <View style={styles.thIn}>
-          <Poster id={e.id} slide={posterSlides(e.id)[0]} height={270} />
+          <Poster id={e.id} slide={posterSlides(e.id, false, e.posters, e.card)[0]} height={270} />
         </View>
       </View>
       <View style={styles.tx}>
@@ -49,7 +49,7 @@ export function EventRow({ e, onOpen, feeLabel }: { e: EventItem; onOpen?: () =>
           <PText style={feeLabel ? styles.feeLabel : styles.fee}>{feeLabel ?? feeText(e)}</PText>
           {!feeLabel && e.fee0 ? <PText numberOfLines={1} style={styles.fee0}>{won(e.fee0)}</PText> : null}
           <View style={styles.sp} />
-          <PText numberOfLines={1} style={styles.left}>{past ? `${cur}명 참여` : joined ? '참여 완료' : left <= 0 ? '마감' : `${left}자리 남음`}</PText>
+          <PText numberOfLines={1} style={styles.left}>{past ? `${cur}명 참여` : e.mine ? '내가 주최' : joined ? '참여 완료' : e.noCap ? '인원 무관' : left <= 0 ? '마감' : `${left}자리 남음`}</PText>
         </View>
       </View>
     </Pressable>

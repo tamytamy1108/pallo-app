@@ -15,6 +15,7 @@ describe('푸시 → 배너', () => {
 
   it.each([
     ['USER_INQUIRY', 'q1', '/me/support'],
+    ['EVENT_PROPOSAL', 'p1', '/event'],
     ['DEFERRAL_REQUEST', 'd1', '/notifications'],
     ['BRANCH_TRANSFER_REQUEST', 't1', '/notifications'],
     ['PROS_NOTE', undefined, '/me/notes'],
