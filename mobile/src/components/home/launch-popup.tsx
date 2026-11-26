@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { popupsQuery } from '@/api/queries';
@@ -38,9 +38,11 @@ const GRADIENTS: Record<PopupBackground, [string, string]> = {
   SLATE: [Colors.inkSub, Colors.ink],
 };
 
-/** 버튼을 누르면 갈 화면 — 리소스 종류마다 */
+/** 버튼을 누르면 갈 화면 — 이벤트처럼 따로 글이 있으면 그 글, 그냥 공지면 공지 상세 (공지 상세 위에도 이 포스터가 떠요) */
 function hrefOf(p: Popup): Href {
   switch (p.resourceType) {
+    case 'EVENT':
+      return `/events/${p.resourceId}`;
     case 'NOTICE':
       return `/notice/${p.resourceId}`;
   }
@@ -153,8 +155,9 @@ function PopupHost({ popups }: { popups: Popup[] }) {
   );
 }
 
-/** 포스터 높이 · 화살표 누르는 칸 높이 */
+/** 포스터 높이 · 화살표 누르는 칸 높이 (공지 상세는 같은 비율로 — 카드 안쪽 너비 326 : 320) */
 const POSTER_H = 320;
+export const POSTER_RATIO = 326 / POSTER_H;
 const ARROW_H = 44;
 
 /**
@@ -206,7 +209,7 @@ function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; set
           accessibilityActions={many ? [{ name: 'increment' }, { name: 'decrement' }] : undefined}
           onAccessibilityAction={(e) => go(i + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}>
           {list.map((p) => (
-            <Poster key={p.id} p={p} w={w} />
+            <PopupPoster key={p.id} p={p} style={{ width: w, height: '100%' }} />
           ))}
         </ScrollView>
       )}
@@ -231,10 +234,13 @@ function Pager({ list, i, setI, still, arrowY }: { list: Popup[]; i: number; set
   );
 }
 
-/** 팝업 포스터 한 장 — TEMPLATE = 문구 + 배경 프리셋, IMAGE = 배너 이미지 (글자는 이미지 안) */
-function Poster({ p, w }: { p: Popup; w: number }) {
+/**
+ * 팝업 포스터 한 장 — TEMPLATE = 문구 + 배경 프리셋, IMAGE = 배너 이미지 (글자는 이미지 안).
+ * 공지 상세 맨 위에도 같은 포스터를 보여 줘요 (charInside: 캐릭터가 테두리에 잘리지 않게 안쪽에)
+ */
+export function PopupPoster({ p, style, charInside }: { p: Popup; style?: StyleProp<ViewStyle>; charInside?: boolean }) {
   return (
-    <LinearGradient colors={GRADIENTS[p.background]} start={{ x: 0.33, y: 0 }} end={{ x: 0.67, y: 1 }} style={[styles.poster, { width: w }]}>
+    <LinearGradient colors={GRADIENTS[p.background]} start={{ x: 0.33, y: 0 }} end={{ x: 0.67, y: 1 }} style={[styles.poster, style]}>
       {p.design === 'IMAGE' && p.imageUrl ? (
         // 배경 그라데이션은 이미지를 불러오는 동안만 보여요
         <Image source={{ uri: p.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel={p.ctaLabel} />
@@ -249,7 +255,7 @@ function Poster({ p, w }: { p: Popup; w: number }) {
           <PText style={styles.s} color={Colors.white}>
             {p.sub}
           </PText>
-          <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.char} contentFit="contain" />
+          <Image source={require('@/assets/characters/c-upright-yellow.png')} style={[styles.char, charInside && styles.charInside]} contentFit="contain" />
         </>
       )}
     </LinearGradient>
@@ -263,7 +269,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink, borderRadius: 24, overflow: 'hidden' },
   im: { height: POSTER_H, overflow: 'hidden' },
   row: { flexDirection: 'row', height: '100%' },
-  poster: { height: '100%', paddingVertical: 22, paddingHorizontal: 20, overflow: 'hidden' },
+  poster: { paddingVertical: 22, paddingHorizontal: 20, overflow: 'hidden' },
   nav: { position: 'absolute', left: 0, right: 0, height: ARROW_H, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
   n: { position: 'absolute', right: 12, top: 12, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.4)' },
   nText: { fontFamily: Font.body900, fontSize: 11, lineHeight: 15 },
@@ -271,6 +277,7 @@ const styles = StyleSheet.create({
   t: { marginTop: 10, fontFamily: Font.display, fontSize: 28, lineHeight: 31.4 },
   s: { marginTop: 10, fontFamily: Font.body800, fontSize: 13, lineHeight: 18, opacity: 0.9 },
   char: { position: 'absolute', right: -12, bottom: -10, width: 150, height: (150 * 306) / 480 },
+  charInside: { right: 8, bottom: 6 },
   // 화살표만 (동그란 바탕 없이)
   nx: { width: 34, height: ARROW_H, alignItems: 'center', justifyContent: 'center' },
   goBox: { margin: 12 },

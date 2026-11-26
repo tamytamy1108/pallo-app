@@ -93,8 +93,8 @@ export const LANGS = [
 /** 템플릿 배경 프리셋 — 서버는 키만 주고 색은 앱이 정해요 (components/home/launch-popup.tsx) */
 export type PopupBackground = 'PURPLE' | 'BLUE' | 'PINK' | 'SLATE';
 
-/** 버튼을 누르면 갈 리소스 종류 — 지금은 공지만 */
-export type PopupResourceType = 'NOTICE';
+/** 버튼을 누르면 갈 리소스 종류 — 이벤트처럼 따로 글이 있으면 그 글로, 아니면 공지로 가요 */
+export type PopupResourceType = 'NOTICE' | 'EVENT';
 
 /** 백엔드 MobilePopupResponse 와 1:1. 지금 띄울 것만 내려와요 (숨김 · 기간 밖 · 연결 공지 비공개는 서버가 뺌) */
 export type LaunchPopup = {
@@ -116,7 +116,7 @@ export type LaunchPopup = {
 };
 
 export const LAUNCH_POPUPS: LaunchPopup[] = [
-  { id: 'pop-party', design: 'TEMPLATE', kicker: 'YEAR END PARTY', title: 'PALLO\n연말 랭귀지 파티', sub: '11.29 토 19:00 · 전 지점', background: 'PURPLE', imageUrl: null, ctaLabel: '자세히 보기', resourceType: 'NOTICE', resourceId: 'n2', publishUntil: '2026-11-29T14:59:00Z' },
+  { id: 'pop-party', design: 'TEMPLATE', kicker: 'YEAR END PARTY', title: 'PALLO\n연말 랭귀지 파티', sub: '11.29 토 19:00 · 전 지점', background: 'PURPLE', imageUrl: null, ctaLabel: '자세히 보기', resourceType: 'EVENT', resourceId: 'm2', publishUntil: '2026-11-29T14:59:00Z' },
   { id: 'pop-dec', design: 'TEMPLATE', kicker: 'DECEMBER', title: '12월\n스터디 일정', sub: '25일 · 31일 휴무 · 27일 보충', background: 'BLUE', imageUrl: null, ctaLabel: '공지 보기', resourceType: 'NOTICE', resourceId: 'n1', publishUntil: '2026-12-31T14:59:00Z' },
 ];
 

@@ -2,15 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useEffect } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { apiErrorMessage, isNotFound } from '@/api/errors';
-import { noticeQuery } from '@/api/queries';
+import { noticeQuery, popupsQuery } from '@/api/queries';
 import { useNoticePin } from '@/api/use-notice-pin';
 import { TopBar } from '@/components/ui/top-bar';
 import { Pressable } from '@/components/ui/pressable';
 import { ICON_PATH, LineIcon } from '@/components/home/icons';
+import { POSTER_RATIO, PopupPoster } from '@/components/home/launch-popup';
 import { markNoticeRead } from '@/components/home/noti-state';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
@@ -23,6 +24,7 @@ import { usePullRefresh } from '@/components/ui/pull-refresh';
 /**
  * 공지 · 이벤트 · 새 소식 상세. 위 오른쪽 압정으로 내 공지 목록 맨 위에 고정해요 (사람마다 따로).
  * 데이터: 12 GET /notices/:id (본문 · 첨부 이미지). 행동 버튼(cta)은 콘솔에 칸이 생기면 다시 붙여요.
+ * 이 공지를 가리키는 앱 시작 팝업(A1 GET /popups)이 있으면 그 포스터를 맨 위에 그대로 보여 줘요 (팝업에서 넘어와도 글만 있지 않게).
  */
 export default function NoticeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,8 +79,16 @@ function PinButton({ notice }: { notice: NoticeDetail }) {
 function Detail({ notice }: { notice: NoticeDetail }) {
   const pullRefresh = usePullRefresh();
   const paragraphs = notice.content.split(/\n+/).filter((p) => p.trim());
+  const { data: popups } = useQuery(popupsQuery());
+  const popup = popups?.find((p) => p.resourceType === 'NOTICE' && p.resourceId === notice.id);
   return (
     <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
+      {popup && (
+        <View style={styles.posterBox}>
+          <View style={styles.posterShadow} />
+          <PopupPoster p={popup} style={styles.poster} charInside />
+        </View>
+      )}
       <PText variant="label" color={Colors.purple}>
         {NOTICE_TAG[notice.type]} · {notice.audience}
       </PText>
@@ -106,6 +116,10 @@ function Detail({ notice }: { notice: NoticeDetail }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   body: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 40, gap: 4 },
+  // 팝업 카드처럼 검은 테두리 + 오른쪽 아래 그림자
+  posterBox: { marginBottom: 18, marginRight: 4 },
+  posterShadow: { position: 'absolute', left: 4, top: 4, right: -4, bottom: -4, borderRadius: 20, backgroundColor: Colors.ink },
+  poster: { width: '100%', aspectRatio: POSTER_RATIO, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink },
   title: { marginTop: 4, fontFamily: Font.body900, fontSize: 22, lineHeight: 30, letterSpacing: -0.4 },
   meta: { marginBottom: 10 },
   para: { fontFamily: Font.body700, fontSize: 15, lineHeight: 25, marginBottom: 10 },
