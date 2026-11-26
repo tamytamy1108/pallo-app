@@ -41,11 +41,12 @@ export function useClubChat(c: Club, joinedOnce: boolean, myName: string) {
 }
 
 /**
- * 채팅 탭 (위 호스트 안내 고정 · 날짜 구분 · 입장 알림 · 내 말 노랑 말풍선). 가입 전엔 최근 4줄 흐리게 + 잠금.
+ * 채팅 탭 (위 호스트 안내 고정 · 날짜 구분 · 입장 알림 · 내 말 노랑 말풍선). 가입 안 한 사람만 최근 4줄 흐리게 + 잠금
+ * (inC = 잠금 없이 보기 · model clubOpen). joined: 멤버로 가입했을 때만 '○○님이 들어왔어요' (호스트 · 스텝은 안 붙어요).
  * 실시간 연결은 백엔드와 정해요 (Q-T6) — 지금은 이 기기 안에서만 쌓여요.
  */
-export function ClubChat({ c, inC, myName, staff }: { c: Club; inC: boolean; myName: string; staff: string[] }) {
-  const M = useClubChat(c, inC, myName);
+export function ClubChat({ c, inC, joined = inC, myName, staff }: { c: Club; inC: boolean; joined?: boolean; myName: string; staff: string[] }) {
+  const M = useClubChat(c, joined, myName);
   const [v, setV] = useState('');
   const role = (n?: string, h?: boolean) => (h ? '호스트' : n && staff.includes(n) ? '코호스트' : '');
   const msg = (m: ChatMsg, i: number, peek = false) => {

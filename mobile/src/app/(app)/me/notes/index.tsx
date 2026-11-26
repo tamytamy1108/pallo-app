@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { StyleSheet, View, type ScrollViewInstance, type ViewInstance } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Icon, Lift } from '@/components/account/parts';
@@ -11,7 +11,7 @@ import { markNoteRead, useNoteState } from '@/components/account/store';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
 import { DIARY_EXAMPLES, MY_TEAMS, PN_TAG_COLOR, PN_WAIT, PRO_NOTES, PRO_SENT_NOTES, teamLabel, teamNameByNo } from '@/data/account';
 import { sfx } from '@/lib/feedback';
 import { toggleExpression, useSavedExpressions } from '@/state/expressions';
@@ -35,7 +35,7 @@ function ProNotesScreen() {
   return box === 'sent' ? <SentList head={sw} /> : <NotesList head={sw} />;
 }
 
-/** 프로: [보낸 노트 n] [받은 노트 n] (팔로워 목록 시트와 같은 밑줄 탭) */
+/** 프로: [보낸 노트 n] [받은 노트 n] — 위 줄 바로 아래 붙은 밑줄 탭 (챌린지 상세 탭 줄과 같은 높이 · 선) */
 function BoxSwitch({ box, onBox }: { box: 'sent' | 'got'; onBox: (b: 'sent' | 'got') => void }) {
   return (
     <View style={styles.box} accessibilityRole="tablist">
@@ -73,8 +73,7 @@ function SentList({ head }: { head: ReactNode }) {
     router.push({ pathname: '/me/notes/[id]', params: { id, from: 'list' } });
   };
   return (
-    <AccountPage title="PRO'S NOTE" bodyStyle={styles.body}>
-      {head}
+    <AccountPage title="PRO'S NOTE" bodyStyle={styles.body} head={head}>
       <PText style={styles.intro}>내가 반에 보낸 노트예요. 몇 명이 읽었는지 · 고마워요를 볼 수 있어요.</PText>
       <PText style={styles.ym}>2026년 11월</PText>
       <Box style={styles.list}>
@@ -120,9 +119,31 @@ function NotesList({ head }: { head?: ReactNode }) {
     router.push({ pathname: '/me/notes/[id]', params: { id, from: 'list' } });
   };
 
+  // 탭을 바꿨을 때 탭 줄 아래로 내려 보고 있었으면, 탭 줄이 위 줄 바로 아래 오게 올려 새 목록을 처음부터 보여요 (새 목록 머리가 위 줄 밑에 잘려 보이지 않게)
+  const scroll = useRef<ScrollViewInstance>(null);
+  const chips = useRef<ViewInstance>(null);
+  const lastTab = useRef(tab);
+  useEffect(() => {
+    if (lastTab.current === tab) return;
+    lastTab.current = tab;
+    const sv = scroll.current;
+    const inner = sv?.getInnerViewRef();
+    const row = chips.current;
+    if (!sv || !inner || !row) return;
+    row.measureLayout(inner, (_x, ry) => {
+      row.measureInWindow((_wx, wy) => {
+        sv.measureInWindow((_sx, sy) => {
+          // 지금 스크롤 자리 = 탭 줄의 본문 안 자리 - 화면에서 스크롤 칸 맨 위부터 탭 줄까지
+          const now = ry - (wy - sy);
+          const want = Math.max(0, ry - 8);
+          if (now > want + 1) sv.scrollTo({ y: want, animated: false });
+        });
+      });
+    });
+  }, [tab]);
+
   return (
-    <AccountPage title="PRO'S NOTE" bodyStyle={styles.body}>
-      {head}
+    <AccountPage title="PRO'S NOTE" bodyStyle={styles.body} head={head} scrollRef={scroll}>
       <PText style={styles.intro}>수업이 끝나면 프로님이 그날 배운 표현 · 바로잡은 문장 · 질문을 정리해서 보내 줘요. 마음에 드는 건 저장해 두고 다시 봐요.</PText>
       <Box color={Colors.yellow} style={styles.wait}>
         <PText style={styles.waitB}>{`오늘 ${teamNameByNo(PN_WAIT.team)} 노트 준비 중`}</PText>
@@ -153,26 +174,28 @@ function NotesList({ head }: { head?: ReactNode }) {
           }}
         />
       </View>
-      <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
-        {tabs.map(([k, l]) => {
-          const on = tab === k;
-          return (
-            <Pressable
-              key={k}
-              onPress={() => {
-                sfx('tab');
-                setTab(k);
-              }}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: on }}
-              style={[styles.tab, on && styles.tabOn]}>
-              <PText style={styles.tabText} color={on ? Colors.white : Colors.ink}>
-                {l}
-              </PText>
-            </Pressable>
-          );
-        })}
-      </ChipScroll>
+      <View ref={chips} collapsable={false}>
+        <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.tabsWrap} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+          {tabs.map(([k, l]) => {
+            const on = tab === k;
+            return (
+              <Pressable
+                key={k}
+                onPress={() => {
+                  sfx('tab');
+                  setTab(k);
+                }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                style={[styles.tab, on && styles.tabOn]}>
+                <PText style={styles.tabText} color={on ? Colors.white : Colors.ink}>
+                  {l}
+                </PText>
+              </Pressable>
+            );
+          })}
+        </ChipScroll>
+      </View>
       {tab === 'saved' ? (
         saved.length ? (
           saved.map(({ n, i }) => {
@@ -199,9 +222,9 @@ function NotesList({ head }: { head?: ReactNode }) {
             );
           })
         ) : (
-          <PText style={styles.empty}>노트에서 저장 버튼을 누르면 여기 모여요.</PText>
+          <NotesEmpty sub="노트에서 저장 버튼을 누르면 여기 모여요." />
         )
-      ) : (
+      ) : L.length ? (
         <>
           <PText style={styles.ym}>2026년 11월</PText>
           <Box style={styles.list}>
@@ -210,8 +233,22 @@ function NotesList({ head }: { head?: ReactNode }) {
             ))}
           </Box>
         </>
+      ) : (
+        // 이 반에서 받은 노트가 아직 없을 때: 빈 흰 칸 대신 '아직 없어요' (2026-11-26)
+        <NotesEmpty sub={'이 반 수업이 끝나면 프로님이 노트를 보내 줘요.\n도착하면 알림을 드려요.'} />
       )}
     </AccountPage>
+  );
+}
+
+/** 목록이 비었을 때: 팔로로 · '아직 없어요' · 한 줄 안내 */
+function NotesEmpty({ sub }: { sub: string }) {
+  return (
+    <View style={styles.none} accessible accessibilityLabel={`아직 없어요. ${sub.replace('\n', ' ')}`}>
+      <Image source={require('@/assets/characters/c-upright-yellow.png')} style={styles.noneImg} contentFit="contain" />
+      <PText style={styles.noneT}>아직 없어요</PText>
+      <PText style={styles.noneS}>{sub}</PText>
+    </View>
   );
 }
 
@@ -268,9 +305,9 @@ const styles = StyleSheet.create({
   itP: { fontFamily: Font.body600, fontSize: 13.5, lineHeight: 21 },
   mk: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   mkOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
-  // 프로: 보낸 · 받은 노트 탭 (팔로워 목록 시트의 밑줄 탭과 같아요)
-  box: { flexDirection: 'row', gap: 18, borderBottomWidth: 1.5, borderColor: Colors.line },
-  boxTab: { paddingTop: 6, paddingBottom: 10, marginBottom: -1.5, borderBottomWidth: 3, borderColor: 'transparent' },
+  // 프로: 보낸 · 받은 노트 탭 — 위 줄 바로 아래 붙어요 (챌린지 상세 .lg-dtabs 와 같은 TAB_ROW_H 높이 · 좌우 끝까지 아래 선 1.5)
+  box: { flexDirection: 'row', paddingHorizontal: 18, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: Colors.line },
+  boxTab: { flex: 1, height: TAB_ROW_H, alignItems: 'center', justifyContent: 'center', marginBottom: -1.5, borderBottomWidth: 3, borderColor: 'transparent' },
   boxTabOn: { borderColor: Colors.ink },
   boxT: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20, color: Colors.inkSub },
   boxTOn: { color: Colors.ink },
@@ -286,7 +323,10 @@ const styles = StyleSheet.create({
   sH: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
   sP: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   sChev: { fontFamily: Font.body900, fontSize: 18, lineHeight: 22, color: Colors.inkSub },
-  empty: { paddingVertical: 30, paddingHorizontal: 10, textAlign: 'center', fontFamily: Font.body700, fontSize: 14, lineHeight: 21, color: Colors.inkSub },
+  none: { alignItems: 'center', gap: 4, marginTop: 4, paddingTop: 26, paddingBottom: 28, paddingHorizontal: 16, borderWidth: 2, borderStyle: 'dashed', borderColor: Colors.line, borderRadius: 20 },
+  noneImg: { width: 64, height: 41, marginBottom: 8 },
+  noneT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
+  noneS: { textAlign: 'center', fontFamily: Font.body700, fontSize: 13, lineHeight: 19.5, color: Colors.inkSub },
 });
 
 /** 회원 전용 화면 (state/access 'proNote'): 비회원이 알림 · 주소로 바로 들어와도 '지점 회원이 되면 열려요' 칸만 보여요 */

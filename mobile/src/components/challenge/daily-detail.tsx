@@ -15,7 +15,7 @@ import { guardMember } from '@/components/common/trial-guide';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
 import {
   addCheckinReply,
   CH_BG,
@@ -51,6 +51,7 @@ import { Face } from './face';
 import { ChIcon } from './icons';
 import { Empty, LgBtn, LgLink, LINE, SUB } from './parts';
 import { ChCover } from './cover';
+import { DoubleTapLike } from './double-tap-like';
 
 type Tab = 'home' | 'feed' | 'rank';
 const TABS: [Tab, string][] = [
@@ -59,6 +60,8 @@ const TABS: [Tab, string][] = [
   ['rank', '순위'],
 ];
 const TOP_H = 44;
+/** 탭 줄 높이 (탭 + 아래 선 1.5) */
+const TABS_H = TAB_ROW_H + 1.5;
 
 /**
  * 일상 챌린지 상세 (프로토타입 lgChalDetail): 진행 카드 → 카테고리 · 이름 · 지점 · 멤버 → 홈 | 인증 | 순위 탭 → 아래 고정 [찜] [참여하기 / 오늘 인증하기].
@@ -67,13 +70,20 @@ const TOP_H = 44;
 export function DailyDetail({ p }: { p: Challenge }) {
   const s = useChallengeState();
   const [tab, setTab] = useState<Tab>('home');
-  // 탭을 바꿀 때 탭 줄이 위에 붙어 있으면, 새 탭 맨 위(탭 줄 바로 아래)부터 보여요 (첫 글 머리가 탭 줄에 가리지 않게)
+  // 탭을 바꾸면 탭 줄이 위 줄 바로 아래에 붙게 부드럽게 올려요. 이미 붙어 있으면 그대로 두고 새 탭 맨 위(탭 줄 바로 아래)부터 보여요 (첫 글 머리가 탭 줄에 가리지 않게)
   const scroll = useRef<ScrollViewInstance>(null);
   const scrollY = useRef(0);
   const tabsY = useRef(0);
   const tabsH = useRef(0);
+  // 탭 본문이 짧아도 탭 줄이 위에 붙을 수 있게 (스크롤 칸 높이 - 탭 줄 - 아래 여백 24)
+  const [scrollH, setScrollH] = useState(0);
+  const lastTab = useRef(tab);
   useEffect(() => {
-    if (scrollY.current > tabsY.current) scroll.current?.scrollTo({ y: tabsY.current, animated: false });
+    if (lastTab.current === tab) return;
+    lastTab.current = tab;
+    const docked = scrollY.current >= tabsY.current - 1;
+    scrollY.current = tabsY.current;
+    scroll.current?.scrollTo({ y: tabsY.current, animated: !docked });
   }, [tab]);
   const [titled, setTitled] = useState(false);
   const [dbdY, setDbdY] = useState(9999);
@@ -134,6 +144,7 @@ export function DailyDetail({ p }: { p: Challenge }) {
         stickyHeaderIndices={[2]}
         scrollEventThrottle={16}
         ref={scroll}
+        onLayout={(e) => setScrollH(e.nativeEvent.layout.height)}
         onScroll={(e) => {
           scrollY.current = e.nativeEvent.contentOffset.y;
           setTitled(e.nativeEvent.contentOffset.y > dbdY + h2Bottom);
@@ -200,7 +211,7 @@ export function DailyDetail({ p }: { p: Challenge }) {
         </View>
         </View>
 
-        <View style={styles.body}>
+        <View style={[styles.body, { minHeight: Math.max(0, scrollH - TABS_H - 24) }]}>
           {tab === 'home' ? <HomeTab p={p} s={s} onAll={() => setTab('feed')} onThread={setThread} onReport={setReport} /> : null}
           {tab === 'feed' ? <FeedTab p={p} s={s} onThread={setThread} onReport={setReport} onMineShown={revealMine ? revealRow : undefined} /> : null}
           {tab === 'rank' ? <RankTab p={p} s={s} /> : null}
@@ -413,19 +424,20 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
         <PText style={styles.chfT}>{q.t}</PText>
       </View>
       <View style={styles.chfB}>
+        {/* 사진을 두 번 누르면 좋아요 (하트가 톡 터져요) */}
         {photo ? (
-          <View style={[styles.pic, { aspectRatio: photo.ratio }]}>
+          <DoubleTapLike liked={on} onLike={() => toggleLiked(q.key)} style={[styles.pic, { aspectRatio: photo.ratio }]}>
             <FramedImage uri={photo.uri} framing={photo.framing} accessibilityLabel={`${q.n}의 인증 사진`} />
             {(q.photos?.length ?? 0) > 1 ? (
               <View style={styles.picN}>
                 <PText style={styles.picNT}>{`1 / ${q.photos?.length}`}</PText>
               </View>
             ) : null}
-          </View>
+          </DoubleTapLike>
         ) : q.pic ? (
-          <View style={[styles.pic, styles.picEx, { aspectRatio: [1, 0.8, 1.25, 1][i % 4], backgroundColor: [CH_BG[C.tone], '#FCE3EA', '#E3F5EA', '#FFF5B0'][i % 4] }]}>
+          <DoubleTapLike liked={on} onLike={() => toggleLiked(q.key)} style={[styles.pic, styles.picEx, { aspectRatio: [1, 0.8, 1.25, 1][i % 4], backgroundColor: [CH_BG[C.tone], '#FCE3EA', '#E3F5EA', '#FFF5B0'][i % 4] }]}>
             <ChIcon name={C.icon} size={34} />
-          </View>
+          </DoubleTapLike>
         ) : null}
         <View style={styles.acts}>
           <Pressable
@@ -572,7 +584,7 @@ const styles = StyleSheet.create({
   dmetaEm: { fontFamily: Font.body900, fontSize: 13, color: Colors.rosePink },
   tabsSticky: { backgroundColor: Colors.cream },
   tabs: { flexDirection: 'row', paddingHorizontal: 18, backgroundColor: Colors.cream, borderBottomWidth: 1.5, borderColor: LINE },
-  tab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
+  tab: { flex: 1, height: TAB_ROW_H, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
   tabOn: { borderColor: Colors.ink },
   tabT: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 20, color: SUB },
   tabTOn: { fontFamily: Font.body900, color: Colors.ink },

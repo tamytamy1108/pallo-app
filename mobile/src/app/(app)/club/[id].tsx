@@ -8,7 +8,7 @@ import { ClubBoard } from '@/components/meet/club/club-board';
 import { ClubChat } from '@/components/meet/club/club-chat';
 import { ClubHome } from '@/components/meet/club/club-home';
 import { ClubJoin } from '@/components/meet/club/club-join';
-import { ClubManage, manageCounts, type ManageRole } from '@/components/meet/club/club-manage';
+import { ClubManage, type ManageRole } from '@/components/meet/club/club-manage';
 import { SessionSheet } from '@/components/meet/club/session-sheet';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
 import { MainBtn, SaveBtn } from '@/components/meet/detail/detail-parts';
@@ -16,13 +16,13 @@ import { AskSheet } from '@/components/meet/detail/sheets';
 import { guardMember } from '@/components/common/trial-guide';
 import { Icon } from '@/components/meet/icons';
 import { setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
-import { clubCat, clubHost, clubSessions, clubStaff, clubX, findClub, membersOf, useAllClubs } from '@/components/meet/model';
+import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, membersOf, useAllClubs } from '@/components/meet/model';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
-import { C, joinFree } from '@/data/meet';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
+import { C } from '@/data/meet';
 import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
 import { seeAt, SEE } from '@/lib/see';
@@ -38,7 +38,7 @@ const TABS: [Tab, string][] = [
 
 /**
  * 동아리 상세 (docs/pages/04-lounge.md '동아리 상세 탭' · '정기 모임' — 프로토타입 lgClubDetail).
- * 탭: 홈(누구나) · 게시판 · 사진첩 · 채팅(멤버 — 가입 전엔 흐린 미리보기). 탭은 위에 닿으면 위 막대 아래에 붙어요.
+ * 탭: 홈(누구나) · 게시판 · 사진첩 · 채팅(멤버 — 가입 전엔 흐린 미리보기). 탭은 위에 닿으면 위 막대 바로 아래에 붙고, 탭을 누르면 그 자리로 올라가요.
  * 아래 고정: '최근 30일 동안 N명이 가입했어요' + 찜 + 가입하기.
  * 맞는 API: 63 `/clubs/:id` · 65 `/clubs/:id/members` · 67 `/board` · `/photos` · 68 `/chat`(실시간 — Q-T6) · 69 `/sessions`
  */
@@ -50,6 +50,7 @@ export default function ClubDetail() {
   const c = findClub(key, myClubs);
   const me = useMe();
   const st = useMeetStore((s) => s.club[key]);
+  const picked = useMeetStore((s) => s.cohost[key]);
   const saved = useMeetStore((s) => !!s.saved[key]);
   const greet = useMeetStore((s) => s.greet[key] ?? '');
   const att = useMeetStore((s) => s.att);
@@ -61,12 +62,13 @@ export default function ClubDetail() {
   const [manage, setManage] = useState(false);
 
   if (!c) return <EmptyState title="동아리를 찾을 수 없어요" />;
-  // 개발용 동아리 역할을 골랐으면 가입한 사람으로 봐요
-  const inC = st === 'in' || (__DEV__ && devClubRole !== 'auto');
-  const cur = c.n + (inC ? 1 : 0);
+  // 가입한 멤버인지 (신청하면 바로 가입 · 개발용 동아리 역할을 골랐으면 가입한 사람으로 봐요)
+  const joined = st === 'in' || (__DEV__ && devClubRole !== 'auto');
+  const cur = c.n + (joined ? 1 : 0);
   const meArg = { name: me.name, branch: me.branch };
-  const staff = clubStaff(c, cur, meArg);
-  const members = membersOf(c, cur, inC || !!c.mine, greet, meArg, staff, true);
+  // 코호스트: 호스트가 관리에서 정한 사람들 (안 정했으면 예시)
+  const staff = picked ?? clubStaff(c, cur, meArg);
+  const members = membersOf(c, cur, joined || !!c.mine, greet, meArg, staff, true);
   const x = clubX(c);
   const cat = clubCat(c);
   const recs = clubs.filter((q) => q.id !== c.id && q.cc === c.cc).slice(0, 3);
@@ -74,18 +76,17 @@ export default function ClubDetail() {
   const devAs = __DEV__ ? (as === 'host' || as === 'co' ? as : devClubRole) : 'auto';
   const devRole: ManageRole | null = devAs === 'host' || devAs === 'co' ? devAs : null;
   const role: ManageRole | null = devRole ?? (devAs === 'member' ? null : c.mine || clubHost(c) === me.name ? 'host' : staff.includes(me.name) ? 'co' : null);
-  const counts = manageCounts();
+  // 잠금 없이 보기: 멤버 · 호스트 · 코호스트 · 스텝(지점 관리자). 가입 안 한 사람만 게시판 · 사진첩 · 채팅이 잠겨요
+  const inC = clubOpen(joined, role, me.role);
 
   const btn = role ? (
     <MainBtn label="관리" variant="pu" onPress={() => setManage(true)} />
   ) : c.wait ? (
     <MainBtn label="승인 대기" variant="off" />
-  ) : inC ? (
+  ) : joined ? (
     <MainBtn label="가입 완료" variant="done" onPress={() => setLeave(true)} />
-  ) : st === 'ask' ? (
-    <MainBtn label="신청 중 · 취소" variant="wh" grow={false} onPress={() => setLeave(true)} />
   ) : (
-    <MainBtn label={joinFree(c.cond, c.br, me.branch) ? '가입하기' : '가입 신청'} variant="pu" onPress={() => guardMember(() => setJoin(true), '동아리에 가입하려면')} />
+    <MainBtn label="가입하기" variant="pu" onPress={() => guardMember(() => setJoin(true), '동아리에 가입하려면')} />
   );
 
   const tabs = (
@@ -106,7 +107,7 @@ export default function ClubDetail() {
     ) : tab === 'photo' ? (
       <ClubAlbum c={c} inC={inC} />
     ) : (
-      <ClubChat c={c} inC={inC} myName={me.name} staff={staff} />
+      <ClubChat c={c} inC={inC} joined={joined} myName={me.name} staff={staff} />
     );
 
   return (
@@ -134,11 +135,7 @@ export default function ClubDetail() {
         tabKey={tab}
         tabBody={body}
         ctaNote={
-          role ? (
-            <PText style={styles.j30}>
-              가입 신청 <PText style={styles.j30B}>{counts.ask}명</PText> · 대기자 <PText style={styles.j30B}>{counts.wait}명</PText> · 관리에서 승인해요
-            </PText>
-          ) : x.j30 ? (
+          x.j30 ? (
             <PText style={styles.j30}>
               최근 30일 동안 <PText style={styles.j30B}>{x.j30}명</PText>이 가입했어요
             </PText>
@@ -166,13 +163,13 @@ export default function ClubDetail() {
       <AskSheet
         open={leave}
         onClose={() => setLeave(false)}
-        title={inC ? '동아리에서 나갈까요?' : '가입 신청을 취소할까요?'}
-        desc={inC ? '나가면 게시판 · 사진첩 · 채팅을 볼 수 없고, 참석하기로 한 정기 모임도 함께 취소돼요.' : '다시 신청할 수 있어요.'}
-        button={inC ? '나가기' : '신청 취소'}
+        title="동아리에서 나갈까요?"
+        desc="나가면 게시판 · 사진첩 · 채팅을 볼 수 없고, 참석하기로 한 정기 모임도 함께 취소돼요."
+        button="나가기"
         onConfirm={() => {
           setLeave(false);
           setClubState(c.id, null);
-          showToast(inC ? '동아리에서 나왔어요' : '가입 신청을 취소했어요');
+          showToast('동아리에서 나왔어요');
         }}
       />
       <SessionSheet
@@ -195,8 +192,9 @@ const styles = StyleSheet.create({
   kick: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 19, color: Colors.purple },
   meta: { marginTop: 6, fontFamily: Font.body700, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   metaEm: { fontFamily: Font.body900, fontSize: 13, color: C.pk },
-  tabs: { flexDirection: 'row', marginTop: 16, borderBottomWidth: 1, borderColor: Colors.line, backgroundColor: Colors.cream },
-  tab: { flex: 1, height: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
+  // 챌린지 상세 탭 줄과 같아요 (좌우 끝까지 · 아래 선 1.5). 위 여백은 상세 틀이 줘요 — 탭에 margin 을 주면 위에 붙을 때 띠가 생겨요
+  tabs: { flexDirection: 'row', paddingHorizontal: 18, borderBottomWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.cream },
+  tab: { flex: 1, height: TAB_ROW_H, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderColor: 'transparent', marginBottom: -1.5 },
   tabOn: { borderColor: Colors.ink },
   tabT: { fontFamily: Font.body800, fontSize: 14.5, lineHeight: 20, color: Colors.inkSub },
   tabTOn: { fontFamily: Font.body900, color: Colors.ink },

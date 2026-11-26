@@ -52,7 +52,7 @@ export function useBoard(c: Club, inC: boolean, myName: string) {
   return L;
 }
 
-/** 게시판 탭 (전체 · 공지 · 모임 후기 · 가입 인사). 가입 전엔 글 2개 흐리게 + '글 n개 더' */
+/** 게시판 탭 (전체 · 공지 · 모임 후기 · 가입 인사). inC = 잠금 없이 보기(멤버 · 호스트 · 코호스트 · 스텝, model clubOpen). 가입 안 한 사람만 글 2개 흐리게 + '글 n개 더' */
 export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; myName: string; staff: string[] }) {
   const [f, setF] = useState<Filter>('all');
   const [write, setWrite] = useState(false);
@@ -158,7 +158,7 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
         open={write}
         onClose={() => setWrite(false)}
         c={c}
-        host={host === myName}
+        host={host === myName || staff.includes(myName)}
         onPost={(k, ti, bd) => {
           const pins = all.filter((x) => x.pin).length;
           setBoard(c.id, [...all.slice(0, pins), { id: c.id + 'u' + Date.now(), k, w: myName, mine: true, ti, bd, t: '방금', lk: 0, cm: [] }, ...all.slice(pins)]);
@@ -184,7 +184,7 @@ export function ClubBoard({ c, inC, myName, staff }: { c: Club; inC: boolean; my
   );
 }
 
-/** 게시판 글쓰기 (호스트는 공지도) */
+/** 게시판 글쓰기 (호스트 · 코호스트는 공지도) */
 function BoardWrite({ open, onClose, c, host, onPost }: { open: boolean; onClose: () => void; c: Club; host: boolean; onPost: (k: BoardPost['k'], ti: string, bd: string) => void }) {
   const kinds: string[] = [...(host ? ['공지'] : []), '모임 후기', '가입 인사'];
   const [k, setK] = useState<string>('모임 후기');

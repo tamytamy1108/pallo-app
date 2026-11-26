@@ -10,13 +10,16 @@ export function useKeyboardShown() {
   // 키보드가 이미 떠 있을 때 그려지는 칸(시트 등)도 처음부터 맞는 값으로
   const [shown, setShown] = useState(() => Keyboard.isVisible());
   useEffect(() => {
-    // iOS 는 올라오기 시작할 때(Will), 안드로이드는 다 올라온 뒤(Did)만 알려 줘요
-    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setShown(true));
-    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setShown(false));
-    return () => {
-      show.remove();
-      hide.remove();
-    };
+    // iOS 는 올라오기 시작할 때(Will), 안드로이드는 다 올라온 뒤(Did)만 알려 줘요.
+    // iOS 도 Did 를 한 번 더 들어요: Keyboard.isVisible() 은 Did 알림에서야 바뀌어서, 키보드가 내려가는 중(Will ~ Did)에 그려진 칸은
+    // '떠 있음'으로 시작한 채 Will 알림을 놓쳐요 → 키보드가 없는데도 아래 버튼 칸이 홈 바 여백을 빼서 화면 끝에 잘렸어요 (2026-11-26)
+    const on = () => setShown(true);
+    const off = () => setShown(false);
+    const subs =
+      Platform.OS === 'ios'
+        ? [Keyboard.addListener('keyboardWillShow', on), Keyboard.addListener('keyboardDidShow', on), Keyboard.addListener('keyboardWillHide', off), Keyboard.addListener('keyboardDidHide', off)]
+        : [Keyboard.addListener('keyboardDidShow', on), Keyboard.addListener('keyboardDidHide', off)];
+    return () => subs.forEach((s) => s.remove());
   }, []);
   return shown;
 }

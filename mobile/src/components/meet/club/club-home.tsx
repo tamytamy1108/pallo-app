@@ -9,7 +9,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { HOST_INTRO, hashId, joinFree, type Club } from '@/data/meet';
+import { HOST_INTRO, hashId, type Club } from '@/data/meet';
 import { useMe } from '@/state/me';
 
 import { ClubRow } from '../club-list';
@@ -44,7 +44,7 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
       <InfoRows>
         <InfoRow first icon="cal" main={c.when} sub="매주 모여요" />
         <InfoRow icon="pin" main={`${c.br}${c.reg ? ' · ' + c.reg : ''}`} sub={clubLangLine(c)} />
-        <InfoRow icon="users" main={`멤버 ${c.n + (inC ? 1 : 0)}명`} sub={clubCapLine(c)} />
+        <InfoRow icon="users" main={`멤버 ${members.length}명`} sub={clubCapLine(c)} />
         <HostRow name={c.mine ? me.name : host} branch={c.br} me={!!c.mine} sub={c.br} />
         <InfoRow
           icon="crown"
@@ -63,9 +63,9 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
               '코호스트는 아직 없어요'
             )
           }
-          sub="가입 승인 · 공지 · 정기 모임을 함께 맡아요"
+          sub="공지 · 정기 모임을 함께 맡아요"
         />
-        <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub={joinFree(c.cond, c.br, me.branch) ? '가입 인사만 쓰면 바로 가입돼요' : `${c.br} 멤버가 아니면 호스트가 확인하면 가입돼요`} />
+        <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub="신청하면 바로 가입돼요" />
       </InfoRows>
 
       <View style={styles.schhd}>

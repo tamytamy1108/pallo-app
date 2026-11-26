@@ -20,7 +20,10 @@ export type BoardPost = { id: string; k: 'note' | 'rev' | 'hi'; w: string; pin?:
 
 type State = {
   joined: Record<string, boolean>;
-  club: Record<string, 'in' | 'ask'>;
+  /** 가입한 동아리 (신청하면 바로 가입돼요 · 승인 단계 없음) */
+  club: Record<string, 'in'>;
+  /** 호스트가 정한 코호스트 이름들 (clubId → 이름). 없으면 예시 코호스트(model clubStaff) */
+  cohost: Record<string, string[]>;
   saved: Record<string, boolean>;
   vac: Record<string, boolean>;
   /** 번개 · 이벤트 인사 (함께하는 멤버 내 줄) */
@@ -42,13 +45,14 @@ type State = {
 };
 
 /**
- * 가짜 서버로 볼 때의 예시 (마이 › 내 모임이 비어 보이지 않게): 다가오는 · 지난 번개, 가입한 · 신청 중인 동아리, 다가오는 · 지난 이벤트, 제안 하나.
+ * 가짜 서버로 볼 때의 예시 (마이 › 내 모임이 비어 보이지 않게): 다가오는 · 지난 번개, 가입한 동아리, 다가오는 · 지난 이벤트, 제안 하나.
  * 진짜 서버면 비어서 시작해요 (서버가 내 참여 목록을 줘요).
  */
 const SAMPLE = apiConfig.useMock;
 const MEET0: State = {
   joined: SAMPLE ? { m15: true, m16: true, m17: true, m1: true, m9: true, m6: true, m2: true, e4: true, e3: true, e6: true } : {},
-  club: SAMPLE ? { cl1: 'in', cl2: 'in', cl10: 'in', cl4: 'ask' } : {},
+  club: SAMPLE ? { cl1: 'in', cl2: 'in', cl10: 'in', cl4: 'in' } : {},
+  cohost: {},
   saved: {},
   vac: {},
   mhi: {},
@@ -63,7 +67,18 @@ const MEET0: State = {
   myMeets: [],
   myClubs: [],
 };
-const store = createStore<State>(MEET0, { persist: { key: 'meets', version: 2 } });
+const store = createStore<State>(MEET0, {
+  persist: {
+    key: 'meets',
+    version: 2,
+    // 예전엔 '가입 신청 중'('ask')이 있었어요 → 이제 신청하면 바로 가입이라 가입한 것으로 봐요
+    load: (saved, initial) => {
+      if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return initial;
+      const s = { ...initial, ...(saved as Partial<State>) };
+      return { ...s, club: Object.fromEntries(Object.keys(s.club ?? {}).map((k) => [k, 'in' as const])) };
+    },
+  },
+});
 
 export const useMeetStore = store.useStore;
 export const getMeetStore = store.get;
@@ -87,7 +102,7 @@ export const setText = (key: TextRec, id: string, v: string | null) =>
     return { ...s, [key]: next };
   });
 
-export const setClubState = (id: string, v: 'in' | 'ask' | null) =>
+export const setClubState = (id: string, v: 'in' | null) =>
   store.set((s) => {
     const club = { ...s.club };
     let att = s.att;
@@ -98,6 +113,9 @@ export const setClubState = (id: string, v: 'in' | 'ask' | null) =>
     } else club[id] = v;
     return { ...s, club, att };
   });
+
+/** 코호스트 정하기 · 빼기 (호스트만 · 정한 순간부터 코호스트예요) */
+export const setCohosts = (id: string, L: string[]) => store.set((s) => ({ ...s, cohost: { ...s.cohost, [id]: L } }));
 
 export const setAnswers = (id: string, a: SurveyAnswers | null) =>
   store.set((s) => {

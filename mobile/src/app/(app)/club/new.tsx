@@ -141,7 +141,16 @@ export default function NewClub() {
         <SheetPills options={conds} value={cond} onChange={setCond} />
       </Field>
       <View ref={memoBox} collapsable={false}>
-        <TextField label="채팅방 공지 (가입하면 보여요) · 선택" value={memo} onChangeText={setMemo} onFocus={() => reveal(memoBox.current)} placeholder="예) 첫 모임은 자기소개만 해도 충분해요." />
+        {/* 여러 줄: Enter 는 줄 바꿈 (보내기 · 닫기 아님). 길어지면 칸이 늘고, 쓰는 줄은 키보드 위로 따라 내려가요 (GrowInput) */}
+        <TextField
+          label="채팅방 공지 (가입하면 보여요) · 선택"
+          multiline
+          submitBehavior="newline"
+          value={memo}
+          onChangeText={setMemo}
+          onFocus={() => reveal(memoBox.current)}
+          placeholder="예) 첫 모임은 자기소개만 해도 충분해요."
+        />
       </View>
       <Field label="대표 이미지 · 사진 여러 장 또는 카드" req>
         <PosterPicker uris={pics} onChange={setPics} coverTaken={!!usedCard(card, pics.length > 0)} />

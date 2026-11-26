@@ -44,6 +44,8 @@
 | A26 | (기존 30에 추가) | `GET · PUT /me/settings` 에 `shareProgress` · `inviteSnoozeUntil` | 퀘스트 성공을 팔로워에게 알리기(기본 켜짐) · '함께 가자고 할까요?' 2주간 보지 않기 기한 | `data/account.ts` `SETTINGS_DEFAULT` · `state/invite-prompt.ts` |
 | A27 | (기존 13에 추가) | `GET /me/notifications` 항목에 `type` · `actor` · `deepLink` · `action` | 새 알림 종류 `session_invite` · `quest_completed` (아래 모양) | `data/home.ts` `Noti` · `app/notifications.tsx` |
 | A28 | GET · POST | `/me/rewards` · `/me/rewards/:id/seen` | **시즌 보상 자동 지급**: 규칙마다 진행(n/need) · 받았는지 · 안 본 보상. 받은 창을 닫으면 seen. 아래 '시즌 보상 — 자동 지급 규칙' | `data/rewards.ts` · `state/rewards.ts` · `components/my/reward-sheet.tsx` |
+| A29 | (기존 63에 추가) | `GET /clubs` 항목에 `lastChatAt` · `?sort=recommended` | **동아리 [추천] 정렬**: 동아리별 마지막 대화 시각을 주면, 그 시각이 최근인 순서로 정렬해요. 아래 '동아리 [추천] 정렬 기준' | `components/meet/club-list.tsx` |
+| A30 | (기존 65 바뀜) | `POST /clubs/:id/members` | **신청하면 바로 가입** (승인 대기 · 신청자 목록 없음). 가입 인사는 가입 뒤 선택 | `components/meet/club/club-join.tsx` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 
@@ -56,6 +58,19 @@
   - **받는 쪽 하루 최대 3개** · 밤 10시 ~ 아침 8시는 알림함에만 쌓고 푸시는 안 보내요. 여러 친구가 같은 시간대에 성공하면 `태미님 외 2명이 퀘스트를 성공했어요` 로 하나.
   - 30일 넘은 이벤트 · 회원이 아닌(연동 전) 사람의 이벤트는 버려요.
 - **A26 기기 간 맞추기**: `inviteSnoozeUntil` 은 지금 기기에만 남아요 (`state/invite-prompt.ts`). 폰을 바꿔도 2주가 이어져야 하면 서버 설정에 넣어요. `shareProgress` 는 서버 설정이어야 해요 (서버가 보내는 쪽을 거르니까).
+
+### 동아리 [추천] 정렬 기준 (A29 · 2026-11-26)
+
+지금 앱의 추천 순서는 실제 데이터가 아니라 임시 값이에요. 이 기준은 앱 화면에는 적지 않아요.
+
+- 동아리마다 '최근 대화' 표시(방금 대화 · 10분 전 · 30분 전 · 1시간 전 · 3시간 전 · 어제 대화)가 있는데, 지금은 동아리 id 글자로 정해지는 가짜 값이에요.
+- 추천 = 이 '최근 대화'가 최근인 순서
+- 내가 만든 동아리('방금 만듦')는 늘 맨 앞
+- 순서가 같으면 원래 목록 순서 그대로 (내가 만든 것 최신 순 → 기본 목록 순)
+- 멤버 수 · 새로 생긴 · 최근 30일 가입 수는 추천 순서에 안 들어가요
+- 카테고리 · 지점은 정렬 전에 목록을 거르기만 해요
+
+**백엔드에서 동아리별 '마지막 대화 시각'(`lastChatAt`, UTC ISO 8601)을 주면, 그 시각이 최근인 순서로 바꾸면 돼요.** 대화가 한 번도 없는 동아리는 `null` 로 주고 맨 뒤에 둬요.
 
 ### 시즌 보상 — 자동 지급 규칙 (A28 · 2026-11-25)
 

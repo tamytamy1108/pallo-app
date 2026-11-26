@@ -25,8 +25,6 @@ export const ALL_REGIONS = '전체';
 /** 동아리 가입 조건: 'PALLO 멤버만' 또는 '개설한 사람 지점 멤버만' (예: '하남점 멤버만') — 옛 '누구나' 는 멤버만과 같아요 */
 export const CLUB_MEMBERS = '멤버만';
 export const branchOnly = (br: string) => `${br} 멤버만`;
-/** 바로 가입되나요: 멤버만이면 누구나 · 지점 멤버만이면 그 지점 사람만 (다른 지점은 호스트 확인) */
-export const joinFree = (cond: string, clubBr: string, myBr: string) => cond === '누구나' || cond === CLUB_MEMBERS || (cond === branchOnly(clubBr) && myBr === clubBr);
 
 export type Region = '서울' | '경기' | '천안' | '대전' | '대구' | '울산' | '부산';
 export type ClubCat = 'run' | 'book' | 'drama' | 'food' | 'study';

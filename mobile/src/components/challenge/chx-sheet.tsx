@@ -43,7 +43,7 @@ type Mode = { t: 'reply' | 'edit'; e: ChEntry } | null;
 
 /**
  * 표현 챌린지 창 — 나만의 문장 완성하기 (프로토타입 chxSheet + lgCS 댓글 창).
- * 위에 표현 카드(예문 · 출처) + '예문 말고, 내 이야기로 문장을 만들어요.' → 나만의 문장 목록(좋아요 · 답글) → 아래 입력칸.
+ * 위에 표현 카드(예문 · 출처) + '내 이야기로 문장을 만들어요.' → 나만의 문장 목록(좋아요 · 답글) → 아래 입력칸.
  * 문장 · 답글을 처음 다는 순간 자동 참여('챌린지에 참여했어요'). 다른 멤버 문장은 길게 눌러 신고 · 차단.
  */
 export function ChxSheet({ p, open, onClose, onClosed, write = false }: { p: Challenge; open: boolean; onClose: () => void; onClosed?: () => void; write?: boolean }) {
@@ -143,7 +143,7 @@ export function ChxSheet({ p, open, onClose, onClosed, write = false }: { p: Cha
               <ChIcon name="edit" size={16} color={Colors.purple} />
             </View>
             <PText style={styles.missionP}>
-              <PText style={styles.missionB}>{'예문 말고, 내 이야기로 문장을 만들어요.\n'}</PText>
+              <PText style={styles.missionB}>{'내 이야기로 문장을 만들어요.\n'}</PText>
               오늘 있었던 일이나 내 생각에 이 표현을 넣어 보세요.
             </PText>
           </View>

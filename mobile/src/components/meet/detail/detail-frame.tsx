@@ -12,7 +12,7 @@ import { BottomBar } from '@/components/bottom-bar';
 import { useKeyboardShown } from '@/lib/keyboard';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, TAB_ROW_H } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { LayerModal } from '@/components/ui/sheet-stack';
 import { KeepVisibleContext, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
@@ -48,11 +48,13 @@ type Props = {
   tabs?: ReactNode;
   /** 탭 아래 본문 (tabs 가 있을 때) */
   tabBody?: ReactNode;
-  /** 고른 탭 — 바뀌면 탭이 위에 붙어 있던 경우 새 탭의 처음부터, 아니면 보던 자리 그대로 */
+  /** 고른 탭 — 바뀌면 탭 줄이 위 막대 바로 아래로 올라가 붙고(이미 붙어 있으면 그대로) 새 탭을 처음부터 보여 줘요 */
   tabKey?: string;
 };
 
 const BAR = 44; // .dtop 안 높이 (아래 8) — 줄 가운데가 탭 화면 머리줄과 같게 위 여백은 없어요
+/** 탭 줄 높이 (재기 전 어림값 — 탭 + 아래 선 1.5) */
+const TAB_H = TAB_ROW_H + 1.5;
 /** 칸을 눌러 키보드가 올라오면 칸 아래로 이만큼 띄워 보여요 */
 const KB_ROOM = 28;
 
@@ -71,15 +73,22 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
   // 제목 · 탭 자리 (본문 안에서) — 포스터 높이는 나중에 정해져서 그리면서 더해요
   const [h2Rel, setH2Rel] = useState(9999);
   const [tabRel, setTabRel] = useState(-1);
+  const [tabH, setTabH] = useState(TAB_H);
   const { height: winH } = useWindowDimensions();
+  const [scrollH, setScrollH] = useState(0);
   const [view, setView] = useState<number | null>(null);
   const topH = insets.top + BAR + 8;
+  // 탭 줄이 붙을 때 위 막대 높이: 아래 여백 8 을 접어 제목 줄 바로 아래에 탭이 붙어요 (챌린지 상세와 같게)
+  const dockH = insets.top + BAR;
   const posterH = w ? (w * 5) / 4 : 0;
   const h2Bottom = posterH + h2Rel;
   const tabY = tabRel < 0 ? -1 : posterH + tabRel;
   const solid = !posterH || y > posterH - topH * 2;
   const titled = y > h2Bottom - topH;
-  const pinned = tabY >= 0 && y >= tabY - topH;
+  const dockAt = tabY - dockH;
+  const pinned = tabY >= 0 && y >= dockAt;
+  // 탭 줄이 다가오면 위 막대 아래 여백이 스크롤을 따라 접혀서, 막대 아래 선이 탭 줄 윗선과 함께 움직여요 (붙는 순간 튀지 않게)
+  const barH = tabY >= 0 ? Math.max(dockH, Math.min(topH, tabY - y)) : topH;
 
   const scroll = useRef<ScrollViewInstance>(null);
   const root = useRef<ViewInstance>(null);
@@ -114,12 +123,20 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
     if (!target || !inner) return;
     target.measureLayout(inner, (_x, ty) => scroll.current?.scrollTo({ y: Math.max(0, ty - topH - 12), animated: true }));
   };
-  const pinRef = useRef({ pinned, at: tabY - topH });
+  // 탭을 바꾸면: 탭 줄이 위 막대 바로 아래에 붙게 부드럽게 올려요. 이미 붙어 있으면 그대로 두고 새 탭 맨 위부터 보여요
+  const dockRef = useRef(dockAt);
   useEffect(() => {
-    pinRef.current = { pinned, at: tabY - topH };
+    dockRef.current = dockAt;
   });
+  const lastTab = useRef(tabKey);
   useEffect(() => {
-    if (pinRef.current.pinned) scroll.current?.scrollTo({ y: pinRef.current.at, animated: false });
+    if (lastTab.current === tabKey) return;
+    lastTab.current = tabKey;
+    const at = dockRef.current;
+    if (at < 0) return;
+    const docked = yNow.current >= at - 1;
+    yNow.current = at;
+    scroll.current?.scrollTo({ y: at, animated: !docked });
   }, [tabKey]);
   const ink = solid ? Colors.ink : fg;
 
@@ -130,6 +147,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
         ref={scroll}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        onLayout={(e) => setScrollH(e.nativeEvent.layout.height)}
         contentContainerStyle={{ paddingBottom: 24 }}
         // 인사 · 댓글 입력칸을 누르면 키보드 위로 올려 보여요 (iOS) · 끌어내리면 키보드가 내려가요
         automaticallyAdjustKeyboardInsets
@@ -143,25 +161,30 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
           </PText>
           {sub}
           {tabs ? (
-            <View onLayout={(e) => setTabRel(e.nativeEvent.layout.y)} style={{ opacity: pinned ? 0 : 1 }}>
+            <View
+              onLayout={(e) => {
+                setTabRel(e.nativeEvent.layout.y);
+                setTabH(e.nativeEvent.layout.height);
+              }}
+              style={[styles.tabsIn, { opacity: pinned ? 0 : 1 }]}>
               {tabs}
             </View>
           ) : null}
-          {/* 탭 본문이 짧아도 탭이 위에 붙을 수 있게 화면 높이만큼은 둬요 */}
+          {/* 탭 본문이 짧아도 탭이 위 막대 아래에 붙을 수 있게: 스크롤 칸 높이 - 붙은 막대 - 탭 줄 - 아래 여백(본문 24 + 스크롤 24) 만큼은 둬요 */}
           <DetailScrollContext.Provider value={scrollToTarget}>
-            <KeepVisibleContext.Provider value={Platform.OS === 'web' ? null : keepGrowing}>{tabs ? <View style={{ minHeight: winH - topH - 44 - 100 }}>{tabBody}</View> : children}</KeepVisibleContext.Provider>
+            <KeepVisibleContext.Provider value={Platform.OS === 'web' ? null : keepGrowing}>{tabs ? <View style={{ minHeight: Math.max(0, (scrollH || winH) - dockH - tabH - 48) }}>{tabBody}</View> : children}</KeepVisibleContext.Provider>
           </DetailScrollContext.Provider>
         </View>
       </ScrollView>
 
       {/* 위 막대: 뒤로 · (모임 이름) */}
-      <View style={[styles.dtop, { paddingTop: insets.top, height: topH }, solid && styles.dtopSolid]} pointerEvents="box-none">
+      <View style={[styles.dtop, { paddingTop: insets.top, height: barH, paddingBottom: barH - dockH }, solid && styles.dtopSolid]} pointerEvents="box-none">
         <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} color={ink} />
         <FadeTitle show={titled} text={title} />
         {/* 공유 버튼은 웹 주소가 생기면 다시 (지금은 자리만 맞춰요) */}
         <View style={styles.ib} />
       </View>
-      {tabs && pinned ? <View style={[styles.pinTabs, { top: topH }]}>{tabs}</View> : null}
+      {tabs && pinned ? <View style={[styles.pinTabs, { top: dockH }]}>{tabs}</View> : null}
 
       {/* 인사 · 댓글을 쓰는 동안(키보드가 떠 있는 동안)은 아래 신청 바를 숨겨 입력칸 자리를 넓혀요 */}
       {!kbShown && (
@@ -291,12 +314,14 @@ const styles = StyleSheet.create({
   dbd: { paddingTop: 18, paddingHorizontal: 18, paddingBottom: 24 },
   dk: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 19 },
   h2: { fontFamily: Font.body900, fontSize: 24, lineHeight: 31.2, letterSpacing: -0.5, marginTop: 6 },
-  dtop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 8, zIndex: 3 },
+  dtop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, zIndex: 3 },
   dtopSolid: { backgroundColor: Colors.cream, borderBottomWidth: 2, borderColor: Colors.line },
   ib: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   dttW: { flex: 1 },
   dtt: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
-  pinTabs: { position: 'absolute', left: 0, right: 0, paddingHorizontal: 18, backgroundColor: Colors.cream, zIndex: 2 },
+  // 탭 줄: 위 16 띄우고 좌우 끝까지 (아래 선이 화면 끝까지 — 챌린지 상세 .lg-dtabs 와 같아요). 탭 쪽에서 좌우 18 을 줘요
+  tabsIn: { marginTop: 16, marginHorizontal: -18 },
+  pinTabs: { position: 'absolute', left: 0, right: 0, backgroundColor: Colors.cream, zIndex: 2 },
   cta: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
   pv: { flex: 1, backgroundColor: 'rgba(20,17,30,0.96)' },
   pvTop: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 6 },

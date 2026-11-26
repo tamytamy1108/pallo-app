@@ -16,6 +16,7 @@ import { Colors } from '@/constants/theme';
 import { type Abroad, LANG_COLOR, LG_C, LG_LIKERS, memberLangs, nameHash, type Post } from '@/data/lounge';
 import { addPostComment, hideMember, likeOn, postComments, toggleLike, toggleSave, unhideMember, useLounge } from '@/data/lounge-store';
 import { kfc, SPRING } from '@/lib/motion';
+import { seeAt, SEE } from '@/lib/see';
 import { whenLabel } from '@/lib/when';
 import { useMe } from '@/state/me';
 import { HeartPop } from '@/components/ui/heart-pop';
@@ -89,7 +90,7 @@ function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number;
         <PText style={styles.cntText}>{cmts || ''}</PText>
       </Pressable>
       <View style={styles.sp} />
-      <Pressable onPress={() => showToast(toggleSave(id) ? '라운지 저장함에 담았어요' : '저장을 취소했어요')} accessibilityRole="button" accessibilityLabel="저장" accessibilityState={{ selected: saved }} style={styles.ib}>
+      <Pressable onPress={() => (toggleSave(id) ? showToast('라운지 저장함에 담았어요', seeAt(SEE.savedPosts)) : showToast('저장을 취소했어요'))} accessibilityRole="button" accessibilityLabel="저장" accessibilityState={{ selected: saved }} style={styles.ib}>
         <HeartPop on={saved}><LgIcon name="save" size={23} fill={saved ? LG_C.y : 'none'} /></HeartPop>
       </Pressable>
     </View>
