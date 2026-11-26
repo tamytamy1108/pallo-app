@@ -495,8 +495,8 @@ const styles = StyleSheet.create({
   tabBar: { position: 'absolute', left: 0, bottom: 0, height: 3, borderRadius: 2, backgroundColor: Colors.purple },
   tabText: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 21, color: '#6E6780' },
   // 새 글 수 (탭 글자 오른쪽 위)
-  // 새 글 수: 작은 노랑 알약 · 잉크 테두리 (앱 버튼과 같은 말투)
-  badge: { position: 'absolute', top: -3, left: '100%', marginLeft: 2, minWidth: 14, height: 14, borderRadius: 7, paddingHorizontal: 3, backgroundColor: Colors.yellow, borderWidth: 1.25, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
+  // 새 글 수: 작은 노랑 알약 (테두리 없이)
+  badge: { position: 'absolute', top: -3, left: '100%', marginLeft: 2, minWidth: 14, height: 14, borderRadius: 7, paddingHorizontal: 3, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontFamily: Font.body900, fontSize: 8.5, lineHeight: 10.5, color: Colors.ink, fontVariant: ['tabular-nums'] },
   fade: { position: 'absolute', top: 0, bottom: 0, right: 0, width: 28 },
   subs: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 4, gap: 6, alignItems: 'center' },
