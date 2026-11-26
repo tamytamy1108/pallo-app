@@ -443,4 +443,5 @@ export const PRO_SENT_NOTES: SentNote[] = [
 ];
 
 /** 프로 마이 숫자 칸: 이번 달 맡은 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요. 맞는 API: 마이 숫자 (제안) */
-export const PRO_STATS = { sessions: 14, checks: 13 };
+/** sessions = 이번 달 맡은 세션 · checks = 그중 프로로 출석 · total = 프로로 출석한 세션 누적 */
+export const PRO_STATS = { sessions: 14, checks: 13, total: 27 };
