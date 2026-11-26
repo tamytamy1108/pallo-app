@@ -7,6 +7,7 @@
 import { router, type Href } from 'expo-router';
 
 import { showToast } from '@/components/ui/toast';
+import { LAUNCH } from '@/constants/launch';
 import { findSameExpr, getChallengeState } from '@/data/challenge';
 import { getSavedExpressions } from '@/state/expressions';
 import { seeAt, SEE } from '@/lib/see';
@@ -18,7 +19,8 @@ export const setChallengeOfferOff = (v: boolean) => {
 };
 
 export function offerChallenge(en: string, head = '내 표현함에 저장했어요') {
-  if (off) {
+  // 표현 챌린지를 아직 안 열었으면 저장 알림만 (constants/launch)
+  if (off || !LAUNCH.exprChallenge) {
     showToast(head, seeAt(SEE.expressions));
     return;
   }

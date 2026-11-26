@@ -100,7 +100,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
     });
   }, [saved]);
 
-  const [cat, setCat] = useState<ChCatKey>('study');
+  const [cat, setCat] = useState<ChCatKey>(CH_CATS[0].key);
   const [name, setName] = useState('');
   // 시작: 빠른 고르기 셋 + '날짜 고르기'(달력에서 아무 날이나)
   const [start, setStart] = useState<StartOpt | typeof PICK_DATE>('오늘');

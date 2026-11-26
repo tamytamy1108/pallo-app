@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { SheetButton, SheetDesc, SheetNote, SheetOptions, type SheetOption } from '@/components/common/sheet-parts';
 import { Sheet } from '@/components/ui/sheet';
 import { showToast } from '@/components/ui/toast';
+import { LAUNCH } from '@/constants/launch';
 import { createStore } from '@/lib/store';
 
 export type ReportTarget = {
@@ -117,7 +118,7 @@ export function ReportSheet({
       <Sheet open={open} onClose={onClose} title="무엇이 문제인가요?" label="신고하기" scrollKey={stage}>
         <SheetDesc>신고한 사람은 {who}에게 알려지지 않아요.</SheetDesc>
         <SheetOptions radio items={REPORT_REASONS.map(asOption)} selected={reason} onPick={setReason} />
-        <SheetNote>차단 · 신고 시 지점에도 보고돼요.</SheetNote>
+        <SheetNote>{LAUNCH.block ? '차단 · 신고 시' : '신고하면'} 지점에도 보고돼요.</SheetNote>
         <SheetButton label="신고하기" size="inline" disabled={!reason} onPress={sendReport} />
       </Sheet>
     );
@@ -137,7 +138,7 @@ export function ReportSheet({
   const rows: (SheetOption & { run: () => void })[] = [
     ...extra.map((x) => ({ key: x.key, label: x.label, sub: x.sub, run: x.onPress })),
     { key: 'report', label: '신고하기', sub: '매니저가 24시간 안에 확인해요', bad: true, run: () => go('report') },
-    { key: 'block', label: `${who} 차단하기`, sub: '서로의 글이 더 이상 보이지 않아요', bad: true, run: () => go('block') },
+    ...(LAUNCH.block ? [{ key: 'block', label: `${who} 차단하기`, sub: '서로의 글이 더 이상 보이지 않아요', bad: true, run: () => go('block') }] : []),
   ];
   return (
     <Sheet open={open} onClose={onClose} title={target.title ?? (target.kind === 'member' ? who : `${who}의 글`)} label="글 메뉴" scrollKey={stage}>

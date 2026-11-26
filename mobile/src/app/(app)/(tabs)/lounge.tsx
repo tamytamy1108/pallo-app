@@ -22,6 +22,7 @@ import { AbroadCard, PostCard } from '@/components/lounge/post-card';
 import { RecChalCard, RecMeetCard } from '@/components/lounge/rec-cards';
 import { Section } from '@/components/lounge/section';
 import { StoryRow } from '@/components/lounge/story-row';
+import { LAUNCH } from '@/constants/launch';
 import { AbroadRegSheet, PeopleRow, PersonSheet, TripCard, TripMakeSheet, WorldMapCard } from '@/components/lounge/trip';
 import { MeetTab } from '@/components/meet/meet-tab';
 import { PText } from '@/components/ui/text';
@@ -147,7 +148,7 @@ export default function LoungeScreen() {
           {LG_TABS.map(([k]) =>
             mountedTabs.includes(k) ? (
               <TabSwap key={k} dir={slideDir} active={k === shownTab}>
-                {k === 'all' || k === 'com' ? <StoryRow /> : null}
+                {LAUNCH.story && (k === 'all' || k === 'com') ? <StoryRow /> : null}
                 {k === 'chal' ? (
                   <ChallengeTab branch={branch} header={branchBtn} />
                 ) : k === 'meet' ? (
@@ -165,7 +166,7 @@ export default function LoungeScreen() {
       </ScrollView>
 
       <ToTop show={scrolled} bottom={fabBottom + 60 + 14} onPress={() => scroll.current?.scrollTo({ y: 0, animated: true })} />
-      <Pressable onPress={() => guardMember(() => setSheet('create'), '글을 올리려면')} accessibilityRole="button" accessibilityLabel="만들기 (글 · 스토리 · 번개 · 동아리 · 동행)" style={[styles.fabHit, { bottom: fabBottom }]}>
+      <Pressable onPress={() => guardMember(() => setSheet('create'), '글을 올리려면')} accessibilityRole="button" accessibilityLabel="만들기" style={[styles.fabHit, { bottom: fabBottom }]}>
         {({ pressed }) => (
           <View style={[styles.fab, pressed && styles.fabDown]}>
             <LgIcon name="plus" size={28} sw={2.8} />
@@ -342,7 +343,7 @@ function Feed({ tab, brs, onMakeTrip, onRegAbroad }: { tab: LoungeTab; brs: stri
   const cc = useLounge((s) => s.cc);
   const people = useLounge((s) => s.people);
   const [person, setPerson] = useState<AbroadPerson | null>(null);
-  const vis = (p: FeedItem) => !('who' in p && (blocked.includes(p.who) || hidden[p.who]));
+  const vis = (p: FeedItem) => launched(p) && !('who' in p && (blocked.includes(p.who) || hidden[p.who]));
   const F = feed.filter((p) => vis(p) && (tab === 'trip' || branchOk(brs, 'br' in p ? p.br : undefined)));
 
   if (tab === 'trip') {
@@ -404,6 +405,9 @@ function Feed({ tab, brs, onMakeTrip, onRegAbroad }: { tab: LoungeTab; brs: stri
     </View>
   );
 }
+
+/** 출시 때 안 여는 기능의 카드는 추천에도 안 섞어요 (constants/launch) — 표현 챌린지 · 동행 · 해외살이 */
+const launched = (p: FeedItem) => (p.k === 'chal' ? LAUNCH.exprChallenge : p.k === 'trip' || p.k === 'abroad' ? LAUNCH.trip : true);
 
 function FeedCard({ p }: { p: FeedItem }) {
   switch (p.k) {

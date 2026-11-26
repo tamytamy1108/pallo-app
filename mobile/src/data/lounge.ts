@@ -4,6 +4,7 @@
  * · 55 `/stories` · 56 `/stories/:id/views` · 58 `/lounge/map` · 71 `/trips` · 73 `/abroad-profiles`.
  * 백엔드가 생기면 이 값 대신 서버에서 받아 와요. 예시 지점 이름은 실제 지점, 내 지점은 하남점.
  */
+import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import type { PhotoFraming } from '@/lib/photo-framing';
 
@@ -24,13 +25,15 @@ export const LG_C = {
 
 // ---- 탭 · 서브 칩 ----
 export type LoungeTab = 'all' | 'com' | 'chal' | 'meet' | 'trip';
-export const LG_TABS: [LoungeTab, string][] = [
+const ALL_LG_TABS: [LoungeTab, string][] = [
   ['all', '추천'],
   ['com', '커뮤니티'],
   ['chal', '챌린지'],
   ['meet', '번개 · 동아리'],
   ['trip', '해외 동행'],
 ];
+/** 출시 때 안 여는 탭은 빼요 (constants/launch) */
+export const LG_TABS = ALL_LG_TABS.filter(([k]) => k !== 'trip' || LAUNCH.trip);
 export type AllSub = 'all' | 'hot';
 export const ALL_SUBS: [AllSub, string][] = [
   ['all', '전체'],

@@ -11,6 +11,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
+import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import { findMember, followLists, MEMBERS, memberAvatar, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
 import { sfx } from '@/lib/feedback';
@@ -285,10 +286,12 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
             <PfIcon.flag color="#9A93A6" />
             <PText style={styles.badT}>신고하기</PText>
           </Pressable>
-          <Pressable onPress={() => setReport('block')} accessibilityRole="button" style={styles.badBtn}>
-            <PfIcon.ban color="#9A93A6" />
-            <PText style={styles.badT}>차단하기</PText>
-          </Pressable>
+          {LAUNCH.block ? (
+            <Pressable onPress={() => setReport('block')} accessibilityRole="button" style={styles.badBtn}>
+              <PfIcon.ban color="#9A93A6" />
+              <PText style={styles.badT}>차단하기</PText>
+            </Pressable>
+          ) : null}
         </View>
       </Sheet>
 

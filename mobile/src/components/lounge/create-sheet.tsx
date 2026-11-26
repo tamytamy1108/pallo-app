@@ -4,6 +4,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
+import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import { LG_C, type LoungeTab } from '@/data/lounge';
 
@@ -13,7 +14,7 @@ export type CreateKind = 'chal' | 'photo' | 'story' | 'bolt' | 'club' | 'plane' 
 
 /** 만들기 칸: 이름 · 설명 · 바탕 · 아이콘 (프로토타입 lgWrite 의 W) */
 const W: Record<CreateKind, [string, string, string, LgIconName]> = {
-  chal: ['챌린지 열기', '내 표현함 표현으로 함께 도전', LG_C.lpu, 'flame'],
+  chal: ['챌린지 열기', LAUNCH.exprChallenge ? '내 표현함 표현으로 함께 도전' : '공부 습관 · 운동 · 아침 루틴', LG_C.lpu, 'flame'],
   photo: ['커뮤니티 글쓰기', '사진 · 일상 · 스터디 · 여행', LG_C.y, 'cam'],
   story: ['스토리 올리기', '24시간 뒤 하이라이트로', '#fff', 'plus'],
   bolt: ['번개 열기', '날짜 · 장소 · 인원만 정하면 지도에', LG_C.pk, 'bolt'],
@@ -30,13 +31,15 @@ const ORDER: Partial<Record<LoungeTab, CreateKind[]>> = {
   chal: ['chal', 'story', 'photo', 'bolt', 'club', 'plane', 'abroad'],
 };
 const DEFAULT: CreateKind[] = ['photo', 'story', 'chal', 'bolt', 'club', 'plane', 'abroad'];
+/** 출시 때 안 여는 칸은 빼요 (constants/launch) */
+const launched = (k: CreateKind) => (k === 'story' ? LAUNCH.story : k === 'plane' || k === 'abroad' ? LAUNCH.trip : true);
 
 /**
  * 오른쪽 아래 + 를 누르면 '무엇을 만들까요?' (프로토타입 lgWrite).
  * onClosed: 시트가 다 닫힌 뒤 — 고른 화면으로 가는 건 여기서 해요 (아이폰은 닫히는 중인 시트가 다음 화면 · 시트를 막아요)
  */
 export function CreateSheet({ open, tab, onClose, onPick, onClosed }: { open: boolean; tab: LoungeTab; onClose: () => void; onPick: (k: CreateKind) => void; onClosed?: () => void }) {
-  const order = ORDER[tab] ?? DEFAULT;
+  const order = (ORDER[tab] ?? DEFAULT).filter(launched);
   return (
     <Sheet open={open} onClose={onClose} onClosed={onClosed} title="무엇을 만들까요?">
       <View style={styles.grid}>

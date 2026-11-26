@@ -12,6 +12,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
+import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import { setSfxOn, sfx, useSfxOn } from '@/lib/feedback';
 import { updateMe, useMe } from '@/state/me';
@@ -71,7 +72,7 @@ export default function SettingsScreen() {
           value={set.shareProgress !== false}
           onPress={() => updateSettings({ shareProgress: set.shareProgress === false })}
         />
-        <GoRow title="차단한 멤버" value="0명" onPress={() => setSheet('block')} />
+        {LAUNCH.block ? <GoRow title="차단한 멤버" value="0명" onPress={() => setSheet('block')} /> : null}
       </Sec>
       <View style={styles.out}>
         <Pressable onPress={() => setSheet('logout')} accessibilityRole="button" hitSlop={8}>
