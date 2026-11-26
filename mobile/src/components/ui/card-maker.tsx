@@ -81,7 +81,7 @@ export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor
   const [inW, setInW] = useState(0);
   const pw = square ? 96 : 108;
   const ph = square ? 96 : 135;
-  // 아직 안 적었으면 미리보기에 예시를 흐리게
+  // 아직 안 적었으면 예시 글자 — 그대로 올라가요 (data/poster-colors fillWords)
   const typed = card ? card.words.map((w) => w.trim()).filter(Boolean) : [];
   const words = typed.length ? typed : example;
   return (
@@ -105,7 +105,7 @@ export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor
       {card ? (
         <>
           <View style={styles.row}>
-            <View style={[styles.pv, { width: pw, height: ph, borderRadius: square ? 16 : 14 }, !typed.length && styles.ghost]}>
+            <View style={[styles.pv, { width: pw, height: ph, borderRadius: square ? 16 : 14 }]}>
               {renderPreview ? renderPreview(card, words, pw, ph) : <CardArt design={card.design ?? 'circle'} color={card.color} words={words} />}
             </View>
             <View style={[styles.ins, { height: ph }]}>
@@ -149,9 +149,9 @@ export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor
               );
             })}
           </ScrollView>
-          <PText style={styles.hint}>문구는 꼭 적어요 · 첫 줄만 적어도 돼요.</PText>
+          <PText style={styles.hint}>안 적으면 미리보기 글자 그대로 올라가요 · 첫 줄만 적어도 돼요.</PText>
           {listPreview && inW > 0 ? (
-            <View style={[styles.list, !typed.length && styles.ghost]}>
+            <View style={styles.list}>
               <PText style={styles.listL}>{listPreview.label}</PText>
               {listPreview.render(card, words, inW)}
             </View>
@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
   ins: { flex: 1, gap: 8, justifyContent: 'center' },
   // Android: 기본 위아래 여백 · 글꼴 여백 때문에 40 칸 안에서 글자가 위로 잘려 보여서 0 으로 · 가운데 정렬 (TextField 와 같게)
   in: { height: 40, paddingVertical: 0, includeFontPadding: false, textAlignVertical: 'center', borderWidth: 2, borderColor: Colors.ink, borderRadius: 12, paddingHorizontal: 10, fontFamily: Font.body800, fontSize: 14, color: Colors.ink, backgroundColor: Colors.cream },
-  ghost: { opacity: 0.45 },
   list: { gap: 6, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
   listL: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   hint: { marginTop: -2, fontFamily: Font.body700, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },

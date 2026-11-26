@@ -45,7 +45,7 @@
 | A27 | (기존 13에 추가) | `GET /me/notifications` 항목에 `type` · `actor` · `deepLink` · `action` | 새 알림 종류 `session_invite` · `quest_completed` (아래 모양) | `data/home.ts` `Noti` · `app/notifications.tsx` |
 | A28 | GET · POST | `/me/rewards` · `/me/rewards/:id/seen` | **시즌 보상 자동 지급**: 규칙마다 진행(n/need) · 받았는지 · 안 본 보상. 받은 창을 닫으면 seen. 아래 '시즌 보상 — 자동 지급 규칙' | `data/rewards.ts` · `state/rewards.ts` · `components/my/reward-sheet.tsx` |
 | A29 | (기존 63에 추가) | `GET /clubs` 항목에 `lastChatAt` · `?sort=recommended` | **동아리 [추천] 정렬**: 동아리별 마지막 대화 시각을 주면, 그 시각이 최근인 순서로 정렬해요. 아래 '동아리 [추천] 정렬 기준' | `components/meet/club-list.tsx` |
-| A30 | (기존 65 바뀜) | `POST /clubs/:id/members` | **신청하면 바로 가입** (승인 대기 · 신청자 목록 없음). 가입 인사는 가입 뒤 선택 | `components/meet/club/club-join.tsx` |
+| A30 | (기존 65 바뀜) | `POST /clubs/:id/members` | **신청하면 바로 가입** (승인 대기 · 신청자 목록 없음). 가입 인사는 가입 뒤 선택. 단 **가입 조건**(`○○점 멤버만` · `Lv.N 이상` · `○○어 수강생`)이 안 맞으면 `{ code: CLUB_COND_NOT_MET, message: '잠실점 멤버만 가입할 수 있어요' }` 로 거절 (앱 `joinBlock` 과 같은 규칙) | `components/meet/club/club-join.tsx` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 

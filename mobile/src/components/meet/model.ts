@@ -28,9 +28,10 @@ import {
   type Meet,
   type Region,
   ALL_REGIONS,
+  CLUB_MEMBERS,
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
-import type { Role } from '@/state/me';
+import type { Me, Role, StudyLang } from '@/state/me';
 
 import { useMeetStore } from './meet-store';
 
@@ -109,6 +110,28 @@ export function membersOf(it: { id: string; host: string; br: string; mine?: boo
  * 가입 안 한 사람만 흐린 미리보기 + 잠금 칸이에요. 호스트 권한이 있는 곳엔 잠금이 없어요.
  */
 export const clubOpen = (joined: boolean, role: 'host' | 'co' | null, meRole: Role) => joined || !!role || meRole === 'manager';
+
+const LANG_NAME: Record<StudyLang, string> = { en: '영어', ja: '일본어', zh: '중국어', es: '스페인어' };
+/** '하남점' · '하남' · '대전 둔산점' 을 같은 모양으로 (띄어쓰기 · 끝의 '점' 빼고) */
+const brKey = (b: string) => b.replace(/\s+/g, '').replace(/점$/, '');
+const lvNum = (lv: string) => Number(/\d+/.exec(lv)?.[0] ?? 0);
+
+/**
+ * 동아리 가입 조건에 맞는지 — 안 맞으면 가입을 막고 이유 한 줄을 돌려줘요 (맞으면 null).
+ * 조건: '누구나' · '멤버만'(체험 · 연동 전은 guardMember 가 따로 막아요) · '○○점 멤버만' · 'Lv.N 이상' · '○○어 수강생'.
+ * 모르는 조건은 막지 않아요. 백엔드가 생기면 서버가 같은 규칙으로 가입(65)을 거절해요.
+ */
+export function joinBlock(cond: string, me: Pick<Me, 'branch' | 'level' | 'lang' | 'role'>): string | null {
+  const c = cond.trim();
+  if (me.role === 'guest' || !c || c === '누구나' || c === CLUB_MEMBERS) return null;
+  let m = /^(.+?)\s*멤버만$/.exec(c);
+  if (m) return brKey(m[1]) === brKey(me.branch) ? null : `${m[1]} 멤버만 가입할 수 있어요`;
+  m = /^Lv\.?\s*(\d+)\s*이상$/i.exec(c);
+  if (m) return lvNum(me.level) >= Number(m[1]) ? null : `Lv.${m[1]} 이상부터 가입할 수 있어요 · 지금 ${me.level}`;
+  m = /^(.+?)\s*수강생$/.exec(c);
+  if (m) return LANG_NAME[me.lang] === m[1] ? null : `${m[1]} 수강생만 가입할 수 있어요`;
+  return null;
+}
 
 /** 동아리 코호스트 (예시: 첫 멤버 한 명, 프로토타입 lgStaffOf) — 호스트가 관리에서 정하면 그 이름들(meet-store cohost)로 바뀌어요 */
 export function clubStaff(c: Club, cur: number, me: MeArg) {

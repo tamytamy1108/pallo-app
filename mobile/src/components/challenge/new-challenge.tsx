@@ -27,7 +27,9 @@ import {
   normExpr,
   PICK_DAYS,
   planOf,
+  START_MAX_DAYS,
   START_OPTS,
+  WEEKDAYS,
   useChallengeState,
   XDUR_OPTS,
   type ChCatKey,
@@ -40,15 +42,23 @@ import {
 import { haptic, sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
 import { ChipScroll } from '@/components/ui/chip-scroll';
-import { CountStepper, PosterPicker } from '@/components/event/form-parts';
+import { CountStepper, MonthCalendar, PosterPicker } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
 import { CountPicker } from '@/components/ui/count-picker';
-import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
+import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { seeAt } from '@/lib/see';
 
 import { ChLoungePreview } from './cards';
 import { ChIcon } from './icons';
 import { Field, FieldLabel, LgBtn, Pills, SearchBox, SUB } from './parts';
+
+/** 시작 칸의 넷째 고르기 — 누르면 달력이 열려요 */
+const PICK_DATE = '날짜 고르기';
+/** '2026-12-03' → '12월 3일 (목)' */
+const dayText = (iso: string) => {
+  const d = new Date(iso + 'T00:00');
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`;
+};
 
 /** 기간: 알약(자주 쓰는 날 수) 말고도 −/+ · 직접 적기로 1~100일 */
 const DUR_MIN = 1;
@@ -90,7 +100,9 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
 
   const [cat, setCat] = useState<ChCatKey>('study');
   const [name, setName] = useState('');
-  const [start, setStart] = useState<StartOpt>('오늘');
+  // 시작: 빠른 고르기 셋 + '날짜 고르기'(달력에서 아무 날이나)
+  const [start, setStart] = useState<StartOpt | typeof PICK_DATE>('오늘');
+  const [startDay, setStartDay] = useState('');
   const [dur, setDur] = useState(7);
   const [weekly, setWeekly] = useState(false);
   const [n, setN] = useState(3);
@@ -110,7 +122,9 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
   const [first, setFirst] = useState('');
 
   const study = cat === 'study';
-  const plan = planOf(start, dur, weekly, n, days);
+  // 카드 예시 글자 (안 적으면 이대로 올라가요)
+  const pwDef = (CH_PW[cat as DailyCatKey] || CH_PW.free).split('\n');
+  const plan = planOf(start === PICK_DATE ? startDay || '오늘' : start, dur, weekly, n, days);
   const picked = cards.find((c) => c.id === sel) ?? null;
   const dup = picked ? findSameExpr(s, picked.p) : null;
 
@@ -141,6 +155,10 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
   const submit = () =>
     guardMember(() => {
       if (!study) {
+        if (start === PICK_DATE && !startDay) {
+          showToast('시작 날짜를 골라 주세요');
+          return;
+        }
         if (!plan.total) {
           showToast('인증할 요일을 하나 이상 골라 주세요');
           return;
@@ -153,11 +171,7 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           showToast('챌린지 소개를 적어 주세요');
           return;
         }
-        if (missingWords(usedCard(card, covers.length > 0, chPbgOf(cat)))) {
-          showToast('카드 문구를 적어 주세요');
-          return;
-        }
-        const made = createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), ...cardOf(usedCard(card, covers.length > 0, chPbgOf(cat))), plan, cover: covers[0] });
+        const made = createDaily({ cat: cat as DailyCatKey, name: name.trim(), way: photo ? 'photo' : 'cmt', guide: guide.trim(), ...cardOf(fillWords(usedCard(card, covers.length > 0, chPbgOf(cat)), pwDef)), plan, cover: covers[0] });
         sfx('save');
         haptic('success');
         onClose();
@@ -179,7 +193,6 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
       showToast(`나만의 문장 완성하기를 열었어요 · ${xdur}일 동안 함께해요`, seeAt({ pathname: '/challenge/[id]', params: { id: made.id } }));
     }, '챌린지를 열려면');
 
-  const pwDef = (CH_PW[cat as DailyCatKey] || CH_PW.free).split('\n');
 
   return (
     <Sheet
@@ -222,7 +235,15 @@ export function NewChallengeSheet({ open, onClose, onClosed, preset = [], onGoCh
           </View>
           <View style={styles.fl}>
             <FieldLabel req>시작</FieldLabel>
-            <Pills options={START_OPTS} value={start} onChange={setStart} />
+            <Pills
+              options={[...START_OPTS, PICK_DATE]}
+              value={start}
+              onChange={setStart}
+              label={(o) => (o === PICK_DATE && startDay ? dayText(startDay) : o)}
+            />
+            {start === PICK_DATE ? (
+              <MonthCalendar value={startDay} onChange={setStartDay} minDays={0} maxDays={START_MAX_DAYS} hint="오늘부터 3달 안에서 골라요" pick={(d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})에 시작해요`} />
+            ) : null}
           </View>
           <View style={styles.fl}>
             <FieldLabel req>기간</FieldLabel>
