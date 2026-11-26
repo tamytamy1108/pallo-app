@@ -1,13 +1,13 @@
 import { router } from 'expo-router';
 import { Stack } from 'expo-router/js-stack';
 import { useEffect, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
-import { KB_FOOT_PAD, KeyboardFill, SheetFooterContext } from '@/components/ui/sheet';
+import { KB_FOOT_PAD, KeyboardFill, KeyboardLift, SheetFooterContext } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Colors, Radius } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
@@ -28,7 +28,7 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
   const still = useReducedMotion();
   const y = useSharedValue(still ? 0 : 1);
   useEffect(() => {
-    y.set(withTiming(0, { duration: still ? 0 : 550, easing: EASE }));
+    y.set(withTiming(0, { duration: still ? 0 : 380, easing: EASE }));
   }, [still, y]);
   const st = useAnimatedStyle(() => ({ transform: [{ translateY: `${y.value * 100}%` }] }));
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/event'));
@@ -36,7 +36,7 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
   const close = () => {
     if (still) return leave();
     y.set(
-      withTiming(1, { duration: 550, easing: EASE }, (done) => {
+      withTiming(1, { duration: still ? 0 : 280, easing: EASE }, (done) => {
         if (done) runOnJS(leave)();
       }),
     );
@@ -47,7 +47,7 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
       <Pressable style={styles.dim} onPress={close} accessibilityRole="button" accessibilityLabel="닫기" />
       {/* 키보드 뒤까지 시트 바탕이 이어지게 (시트와 키보드가 따로 떠 보이지 않게) */}
       <KeyboardFill />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
+      <KeyboardLift style={styles.kav} androidPad={false}>
         <Animated.View style={[styles.sheet, { marginTop: insets.top + 72 }, st]} accessibilityLabel={label} accessibilityViewIsModal>
           <View style={styles.grab} />
           {/* 하나 고르면 다음 칸이 보이게 올려 줘요 (ui/form-scroll) */}
@@ -69,7 +69,7 @@ export function SheetPage({ title, label, children, footer }: { title: string; l
             </View>
           </SheetFooterContext.Provider>
         </Animated.View>
-      </KeyboardAvoidingView>
+      </KeyboardLift>
     </View>
   );
 }

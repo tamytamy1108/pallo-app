@@ -118,7 +118,7 @@ function renderTab(descriptor: TabsDescriptor, { isFocused, loaded }: TabsSlotRe
 const PAGE_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 
 /** 프로토타입 --spring: cubic-bezier(.2,.9,.3,1.3) — 끝에서 살짝 지나쳤다 돌아와요 */
-const indSlide = css.create({ t: { transitionProperty: 'transform', transitionDuration: '450ms', transitionTimingFunction: cubicBezier(0.2, 0.9, 0.3, 1.3) } }).t;
+const indSlide = css.create({ t: { transitionProperty: 'transform', transitionDuration: '280ms', transitionTimingFunction: cubicBezier(0.2, 0.9, 0.3, 1.3) } }).t;
 
 /** 길 이름(index · library …) → 탭 이름 */
 const tabNameOf = (route: string): TabName | null => TABS.find((t) => t.name === route || (t.name === 'home' && route === 'index'))?.name ?? null;

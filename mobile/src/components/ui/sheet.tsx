@@ -6,7 +6,7 @@ import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'reac
 
 import { Pressable } from '@/components/ui/pressable';
 import { Colors, Radius } from '@/constants/theme';
-import { dismissKeyboardBehind, useKeyboardHeight, useKeyboardShown } from '@/lib/keyboard';
+import { dismissKeyboardBehind, useKeyboardFillStyle, useKeyboardLiftStyle, useKeyboardShown } from '@/lib/keyboard';
 import { EASE } from '@/lib/motion';
 
 import { FormScrollContext, KeepVisibleContext, useFormScroll, useShowFocusedOnKeyboard } from './form-scroll';
@@ -119,9 +119,9 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
   // 올라오는 움직임: 아이폰은 Modal 이 실제로 뜬 뒤(onShow)에 시작해요 (뜨기 전에 움직이면 시트가 화면 밖에 남을 수 있어요)
   const enter = useCallback(() => {
     drag.set(0);
-    // .sheet { transition: transform .55s var(--ease) } · .lg-dim { transition: opacity .3s }
-    shown.set(withTiming(1, { duration: still ? 0 : 550, easing: EASE }));
-    dim.set(withTiming(1, { duration: still ? 0 : 300 }));
+    // 프로토타입 .55s 는 폰에서 느려서 짧게 (2026-11-26): 올라오기 .38초 · 흐림 .22초
+    shown.set(withTiming(1, { duration: still ? 0 : 380, easing: EASE }));
+    dim.set(withTiming(1, { duration: still ? 0 : 220 }));
   }, [drag, shown, dim, still]);
   const onShow = useCallback(() => {
     presented.current = true;
@@ -145,9 +145,9 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
       return () => clearTimeout(t);
     } else if (wasOpen.current) {
       wasOpen.current = false;
-      dim.set(withTiming(0, { duration: still ? 0 : 300 }));
+      dim.set(withTiming(0, { duration: still ? 0 : 220 }));
       shown.set(
-        withTiming(0, { duration: still ? 0 : 450, easing: EASE }, (done) => {
+        withTiming(0, { duration: still ? 0 : 280, easing: EASE }, (done) => {
           if (done) runOnJS(finishClose)();
         }),
       );
@@ -215,7 +215,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
                   <Pressable style={styles.fill} onPress={requestClose} accessibilityRole="button" accessibilityLabel="닫기" />
                 </Animated.View>
                 <KeyboardFill />
-                <KeyboardAvoidingView behavior={Platform.OS === 'web' ? undefined : 'padding'} style={[styles.root, { paddingTop: topGap }]} pointerEvents="box-none">
+                <KeyboardLift style={[styles.root, { paddingTop: topGap }]}>
                   <Animated.View
                     accessibilityViewIsModal
                     accessibilityLabel={label ?? title}
@@ -258,7 +258,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
                       </SheetFooterContext.Provider>
                     ) : null}
                   </Animated.View>
-                </KeyboardAvoidingView>
+                </KeyboardLift>
                 {showToastHere ? <ToastView /> : null}
                 {/* 이 시트가 떠 있는 동안 연 다른 시트 (아이폰은 여기 안에 그려야 떠요) */}
                 <NestedSheets id={layerId} />
@@ -295,10 +295,36 @@ export const KB_FOOT_PAD = 10;
  */
 const KB_FILL_OVERLAP = 48;
 export function KeyboardFill() {
-  const h = useKeyboardHeight();
-  if (!h) return null;
+  if (!IOS) return null;
+  return <KeyboardFillIos />;
+}
+function KeyboardFillIos() {
   // 키보드 위끝보다 조금 더 올려 시트 뒤로 겹쳐 둬요 — 키보드 둥근 모서리 · 시트 아래 끝 사이에 1px 틈도 안 생기게 (겹친 부분은 시트가 덮어요)
-  return <View pointerEvents="none" style={[styles.kbFill, { height: h + KB_FILL_OVERLAP }]} />;
+  // 키보드와 같은 프레임에 움직여요 (UI 스레드)
+  const st = useKeyboardFillStyle(KB_FILL_OVERLAP);
+  return <Animated.View pointerEvents="none" style={[styles.kbFill, st]} />;
+}
+
+/**
+ * 키보드만큼 아래 여백을 줘서 시트를 키보드 위로 올려요.
+ * 아이폰: 키보드 움직임과 같은 프레임에 (UI 스레드) — KeyboardAvoidingView 는 JS 알림을 기다려서 늦게 따라왔어요.
+ * 안드로이드: 그대로 KeyboardAvoidingView (androidPad=false 면 아무것도 안 해요 — 창이 이미 줄어드는 화면) · 웹: 그냥 칸.
+ */
+export function KeyboardLift({ style, androidPad = true, children }: { style: StyleProp<ViewStyle>; androidPad?: boolean; children: ReactNode }) {
+  if (IOS) return <KeyboardLiftIos style={style}>{children}</KeyboardLiftIos>;
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'android' && androidPad ? 'padding' : undefined} style={style} pointerEvents="box-none">
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+function KeyboardLiftIos({ style, children }: { style: StyleProp<ViewStyle>; children: ReactNode }) {
+  const lift = useKeyboardLiftStyle();
+  return (
+    <Animated.View style={[style, lift]} pointerEvents="box-none">
+      {children}
+    </Animated.View>
+  );
 }
 
 /** 버튼 칸: <>…</> 로 묶어 넘겨도 버튼마다 한 칸씩 */

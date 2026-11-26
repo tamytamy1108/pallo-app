@@ -40,6 +40,9 @@ import { useCenterChip } from '@/lib/center-chip';
  */
 /** 비회원이 볼 수 있는 탭 아래 높이 (스토리 줄 + 카드 1~2개) */
 const LOUNGE_PEEK = 720;
+/** 라운지가 뜬 뒤 다른 탭을 미리 그리기 시작하는 때 · 탭 사이 간격 (한꺼번에 그리면 스크롤이 잠깐 멈춰요) */
+const PREWARM_MS = 900;
+const PREWARM_STEP_MS = 350;
 
 export default function LoungeScreen() {
   const tab = useLounge((s) => s.tab);
@@ -82,6 +85,17 @@ export default function LoungeScreen() {
   }, []);
   const branch = branchValue(brs);
   const branchBtn = <BranchSelect value={branch} onChange={(v) => setBranches(branchList(v))} />;
+
+  // 그려 둔 탭: 지금 탭 + 한 번 연 탭. 라운지가 뜬 뒤 나머지 탭도 하나씩 미리 그려 둬요 (처음 누를 때도 바로 바뀌게)
+  const [mountedTabs, setMountedTabs] = useState<LoungeTab[]>(() => [tab]);
+  if (!mountedTabs.includes(shownTab)) setMountedTabs([...mountedTabs, shownTab]);
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    LG_TABS.forEach(([k], i) => {
+      timers.push(setTimeout(() => setMountedTabs((m) => (m.includes(k) ? m : [...m, k])), PREWARM_MS + i * PREWARM_STEP_MS));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   // 탭을 바꾸면 새 내용이 그 방향(오른쪽 탭이면 오른쪽에서)으로 살짝 밀려 들어와요
   const [slideDir, setSlideDir] = useState(0);
@@ -128,20 +142,25 @@ export default function LoungeScreen() {
           <Tabs tab={tab} counts={counts} onPick={pickTab} />
         </View>
         {/* 비회원은 모든 탭에서 위쪽(카드 1~2개)까지만 · 아래는 잠김 칸 (components/common/scroll-lock) */}
-        <ScrollLock key={shownTab} screen="lounge" peek={LOUNGE_PEEK} inset={16}>
-          <TabSwap dir={slideDir}>
-            {shownTab === 'all' || shownTab === 'com' ? <StoryRow /> : null}
-            {shownTab === 'chal' ? (
-              <ChallengeTab branch={branch} header={branchBtn} />
-            ) : shownTab === 'meet' ? (
-              <MeetTab branch={branch} header={branchBtn} region={region} />
-            ) : (
-              <>
-                <SubRow tab={shownTab} branchBtn={branchBtn} />
-                <Feed tab={shownTab} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
-              </>
-            )}
-          </TabSwap>
+        {/* 한 번 연 탭은 그려 둔 채로 숨겨만 둬요 — 탭을 바꿀 때마다 피드 · 챌린지 · 동아리를 처음부터 다시 그려서 느렸어요 (2026-11-26) */}
+        <ScrollLock screen="lounge" peek={LOUNGE_PEEK} inset={16}>
+          {LG_TABS.map(([k]) =>
+            mountedTabs.includes(k) ? (
+              <TabSwap key={k} dir={slideDir} active={k === shownTab}>
+                {k === 'all' || k === 'com' ? <StoryRow /> : null}
+                {k === 'chal' ? (
+                  <ChallengeTab branch={branch} header={branchBtn} />
+                ) : k === 'meet' ? (
+                  <MeetTab branch={branch} header={branchBtn} region={region} />
+                ) : (
+                  <>
+                    <SubRow tab={k} branchBtn={branchBtn} />
+                    <Feed tab={k} brs={brs} onMakeTrip={() => guardMember(() => setSheet('trip'), '동행을 구하려면')} onRegAbroad={() => guardMember(() => setSheet('abroad'), '내 카드를 올리려면')} />
+                  </>
+                )}
+              </TabSwap>
+            ) : null,
+          )}
         </ScrollLock>
       </ScrollView>
 
@@ -263,15 +282,21 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
 }
 
 /** 탭 내용이 바뀔 때: 고른 쪽에서 살짝 밀려 들어오며 서서히 (0.3초) — 딱 끊겨 바뀌지 않게 */
-function TabSwap({ dir, children }: { dir: number; children: ReactNode }) {
+function TabSwap({ dir, active, children }: { dir: number; active: boolean; children: ReactNode }) {
   const still = useReducedMotion();
-  // 완전히 투명한 데서 시작하면 빈 화면이 잠깐 보여요 → 반쯤 보이는 데서 짧게
-  const p = useSharedValue(still || dir === 0 ? 1 : 0.35);
+  // 완전히 투명한 데서 시작하면 빈 화면이 잠깐 보여요 → 반쯤 보이는 데서 짧게 (.2초)
+  const p = useSharedValue(1);
+  const was = useRef(active);
   useEffect(() => {
-    if (!still) p.set(withTiming(1, { duration: 220, easing: EASE }));
-  }, [still, p]);
-  const st = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ translateX: (1 - p.get()) * 24 * dir }] }));
-  return <Animated.View style={st}>{children}</Animated.View>;
+    if (active && !was.current && !still && dir !== 0) {
+      p.set(0.4);
+      p.set(withTiming(1, { duration: 200, easing: EASE }));
+    }
+    was.current = active;
+  }, [active, still, dir, p]);
+  const st = useAnimatedStyle(() => ({ opacity: p.get(), transform: [{ translateX: (1 - p.get()) * 20 * dir }] }));
+  // 숨은 탭은 자리도 차지하지 않아요 (그려 둔 채로)
+  return <Animated.View style={[st, !active && styles.hiddenTab]}>{children}</Animated.View>;
 }
 
 /** 지점 선택(해외 동행 탭은 빼요) + 탭별 세부 칩 (프로토타입 #lgSub) */
@@ -419,6 +444,7 @@ function ToTop({ show, bottom, onPress }: { show: boolean; bottom: number; onPre
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
+  hiddenTab: { display: 'none' },
   page: { paddingTop: TabHeadTop, paddingBottom: 190 },
   // 첫 줄(제목) · 둘째 줄(탭) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (홈 · 라이브러리 · 마이와 같게)
   hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center', marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },

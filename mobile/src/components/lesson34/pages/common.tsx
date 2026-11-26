@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -25,14 +26,29 @@ export const Intro = ({ text }: { text: string }) => (
 export const PCard = ({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) => <View style={StyleSheet.flatten([s.card, style])}>{children}</View>;
 
 /** 아래 고정 칸 .st-foot */
-export function PFoot({ children, lift = 0 }: { children: ReactNode; lift?: number }) {
+export function PFoot({ children, keyboard = false }: { children: ReactNode; keyboard?: boolean }) {
   const insets = useSafeAreaInsets();
-  // lift: 키보드 높이 (아이폰). 키보드가 홈 바 자리를 덮으니 그 여백은 빼고 키보드 바로 위에 붙어요
+  if (keyboard && Platform.OS === 'ios') return <PFootKeyboard bottom={16 + insets.bottom}>{children}</PFootKeyboard>;
   return (
-    <View style={StyleSheet.flatten([s.foot, lift > 0 ? { paddingBottom: 12, marginBottom: lift } : { paddingBottom: 16 + insets.bottom }])}>
+    <View style={StyleSheet.flatten([s.foot, { paddingBottom: 16 + insets.bottom }])}>
       <FootFade />
       {children}
     </View>
+  );
+}
+
+/**
+ * 키보드 바로 위에 붙는 아래 칸 (아이폰): 키보드가 올라오는 움직임과 같은 프레임에 따라 올라가요 (UI 스레드).
+ * 내려가 있을 땐 홈 바 여백(bottom), 올라오면 키보드 위 12 — 두 값 중 큰 쪽이라 중간에 툭 튀지 않아요.
+ */
+function PFootKeyboard({ bottom, children }: { bottom: number; children: ReactNode }) {
+  const kb = useAnimatedKeyboard();
+  const st = useAnimatedStyle(() => ({ paddingBottom: Math.max(bottom, kb.height.value + 12) }));
+  return (
+    <Animated.View style={[s.foot, st]}>
+      <FootFade />
+      {children}
+    </Animated.View>
   );
 }
 
