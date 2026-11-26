@@ -23,12 +23,13 @@ import { SessionRow } from './schedule';
 /**
  * 동아리 홈 탭 (프로토타입 lgClubDetail tab 'home'): 소개 · 모임 정보 · 다가오는 정기 모임 · 호스트 소개 · 멤버 · 같은 카테고리 추천.
  */
-export function ClubHome({ c, inC, block, members, staff, recs, myBranch, onSession }: { c: Club; inC: boolean; block?: string | null; members: Member[]; staff: string[]; recs: Club[]; myBranch: string; onSession: (q: Session) => void }) {
+export function ClubHome({ c, inC, block, members, staff, recs, myBranch, onSession, onNewSession }: { c: Club; inC: boolean; block?: string | null; members: Member[]; staff: string[]; recs: Club[]; myBranch: string; onSession: (q: Session) => void; /** 호스트 · 코호스트만: 일정 만들기 */ onNewSession?: () => void }) {
   const att = useMeetStore((s) => s.att);
+  const made = useMeetStore((s) => s.sched[c.id]);
   const me = useMe();
   const [all, setAll] = useState(false);
-  const SS = clubSessions(c, att);
-  const S12 = clubSessions(c, att, 12, 85);
+  const SS = clubSessions(c, att, 4, 29, made);
+  const S12 = clubSessions(c, att, 12, 91, made);
   const { album } = clubContent(c);
   const h = hashId(c.id);
   const host = clubHost(c);
@@ -72,7 +73,8 @@ export function ClubHome({ c, inC, block, members, staff, recs, myBranch, onSess
         <PText style={styles.schT}>일정</PText>
         <PText style={styles.schN}>{S12.length}</PText>
         <View style={{ flex: 1 }} />
-        <LgLink label="더보기 ›" color={Colors.inkSub} onPress={() => setAll(true)} />
+        {onNewSession ? <LgLink label="+ 일정 만들기" onPress={onNewSession} /> : null}
+        {S12.length ? <LgLink label="더보기 ›" color={Colors.inkSub} onPress={() => setAll(true)} /> : null}
       </View>
       {SS.length ? (
         <>
@@ -80,7 +82,7 @@ export function ClubHome({ c, inC, block, members, staff, recs, myBranch, onSess
           {inC ? null : <PText style={styles.hi0}>가입하면 회차마다 참석할 수 있어요.</PText>}
         </>
       ) : (
-        <PText style={styles.empty}>4주 안에 잡힌 모임이 없어요.</PText>
+        <PText style={styles.empty}>{onNewSession ? '아직 잡힌 모임이 없어요. 위 + 일정 만들기로 첫 모임을 올려 주세요.' : '4주 안에 잡힌 모임이 없어요.'}</PText>
       )}
 
       <DSec>호스트 소개</DSec>

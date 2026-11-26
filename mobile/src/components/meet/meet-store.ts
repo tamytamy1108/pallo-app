@@ -44,7 +44,12 @@ type State = {
   myClubs: Club[];
   /** 호스트 · 코호스트였던 기록 (동아리가 닫혀도 남아요). to 가 없으면 지금도 맡고 있어요 */
   hostLog: HostLog[];
+  /** 호스트 · 코호스트가 만든 정기 모임 일정 (clubId → 일정들) */
+  sched: Record<string, ClubSched[]>;
 };
+
+/** 호스트 · 코호스트가 만든 일정 하나 — date 'YYYY-MM-DD' · time 'HH:MM' · cap 0 = 인원 무관 */
+export type ClubSched = { id: string; date: string; time: string; end?: string; title: string; cap: number; place?: string; memo?: string; at: number };
 
 /** 호스트 · 코호스트 기록 한 줄 */
 export type HostLog = { clubId: string; name: string; role: 'host' | 'co'; from: number; to?: number; why?: string };
@@ -72,6 +77,7 @@ const MEET0: State = {
   myMeets: [],
   myClubs: [],
   hostLog: [],
+  sched: {},
 };
 const store = createStore<State>(MEET0, {
   persist: {
@@ -183,4 +189,14 @@ export const closeMyClub = (id: string, by: 'host' | 'admin', reason?: string) =
       cohost,
       hostLog: endLog(s.hostLog, id, by === 'admin' ? '관리자가 닫음' : '동아리를 닫음', at),
     };
+  });
+
+/** 일정 만들기 (호스트 · 코호스트) — 멤버 모두에게 알림은 서버가 보내요 (A34) */
+export const addSched = (clubId: string, q: ClubSched) =>
+  store.set((s) => ({ ...s, sched: { ...s.sched, [clubId]: [...(s.sched[clubId] ?? []), q].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)) } }));
+/** 만든 일정 취소 (참석하기로 한 멤버에게 알림) */
+export const removeSched = (clubId: string, id: string) =>
+  store.set((s) => {
+    const att = Object.fromEntries(Object.entries(s.att).filter(([k]) => k !== id));
+    return { ...s, att, sched: { ...s.sched, [clubId]: (s.sched[clubId] ?? []).filter((q) => q.id !== id) } };
   });

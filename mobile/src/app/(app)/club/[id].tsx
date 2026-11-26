@@ -10,16 +10,18 @@ import { ClubHome } from '@/components/meet/club/club-home';
 import { ClubJoin } from '@/components/meet/club/club-join';
 import { ClubApplySheet } from '@/components/meet/club-apply';
 import { ClubManage, type ManageRole } from '@/components/meet/club/club-manage';
+import { SessionNewSheet } from '@/components/meet/club/session-new';
 import { SessionSheet } from '@/components/meet/club/session-sheet';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
 import { MainBtn, SaveBtn } from '@/components/meet/detail/detail-parts';
 import { AskSheet } from '@/components/meet/detail/sheets';
 import { guardMember } from '@/components/common/trial-guide';
 import { Icon } from '@/components/meet/icons';
-import { setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
+import { removeSched, setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
 import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, joinBlock, clubLive, membersOf, useAllClubs } from '@/components/meet/model';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
+import { runAfterSheetClose } from '@/components/ui/sheet';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors, TAB_ROW_H } from '@/constants/theme';
@@ -62,6 +64,8 @@ export default function ClubDetail() {
   const [sid, setSid] = useState<string | null>(null);
   const [manage, setManage] = useState(false);
   const [apply, setApply] = useState(false);
+  const [newSess, setNewSess] = useState(false);
+  const made = useMeetStore((s) => s.sched[key]);
 
   if (!c) return <EmptyState title="동아리를 찾을 수 없어요" />;
   // 가입한 멤버인지 (신청하면 바로 가입 · 개발용 동아리 역할을 골랐으면 가입한 사람으로 봐요)
@@ -74,7 +78,7 @@ export default function ClubDetail() {
   const x = clubX(c);
   const cat = clubCat(c);
   const recs = clubs.filter((q) => q.id !== c.id && q.cc === c.cc).slice(0, 3);
-  const q = sid ? clubSessions(c, att, 12, 85).find((s) => s.id === sid) ?? null : null;
+  const q = sid ? clubSessions(c, att, 12, 91, made).find((s) => s.id === sid) ?? null : null;
   const devAs = __DEV__ ? (as === 'host' || as === 'co' ? as : devClubRole) : 'auto';
   const devRole: ManageRole | null = devAs === 'host' || devAs === 'co' ? devAs : null;
   // 호스트 · 코호스트는 운영 중인 동아리에서만 (검토 중 · 거절 · 닫힘이면 관리 권한이 없어요). 호스트는 내가 만든 동아리만
@@ -112,7 +116,7 @@ export default function ClubDetail() {
 
   const body =
     tab === 'home' ? (
-      <ClubHome c={c} inC={inC} block={block} members={members} staff={staff} recs={recs} myBranch={me.branch} onSession={(s) => setSid(s.id)} />
+      <ClubHome c={c} inC={inC} block={block} onNewSession={role ? () => setNewSess(true) : undefined} members={members} staff={staff} recs={recs} myBranch={me.branch} onSession={(s) => setSid(s.id)} />
     ) : tab === 'board' ? (
       <ClubBoard c={c} inC={inC} myName={me.name} staff={staff} />
     ) : tab === 'photo' ? (
@@ -177,7 +181,21 @@ export default function ClubDetail() {
 
       <ClubJoin c={c} open={join} onClose={() => setJoin(false)} />
       {c.mine ? <ClubApplySheet c={c} open={apply} onClose={() => setApply(false)} /> : null}
-      {role ? <ClubManage c={c} role={role} open={manage} onClose={() => setManage(false)} members={members} staff={staff} /> : null}
+      {role ? (
+        <ClubManage
+          c={c}
+          role={role}
+          open={manage}
+          onClose={() => setManage(false)}
+          members={members}
+          staff={staff}
+          onNewSession={() => {
+            setManage(false);
+            runAfterSheetClose(() => setNewSess(true));
+          }}
+        />
+      ) : null}
+      {role ? <SessionNewSheet c={c} open={newSess} onClose={() => setNewSess(false)} /> : null}
       <AskSheet
         open={leave}
         onClose={() => setLeave(false)}
@@ -197,6 +215,16 @@ export default function ClubDetail() {
         all={members}
         me={meArg}
         onClose={() => setSid(null)}
+        onCancel={
+          role && q?.made
+            ? () => {
+                const id = q.id;
+                setSid(null);
+                removeSched(c.id, id);
+                showToast('일정을 취소했어요 · 참석하기로 한 멤버에게 알렸어요');
+              }
+            : undefined
+        }
         onJoinClub={() => {
           setSid(null);
           if (block) showToast(block);
