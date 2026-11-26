@@ -1,8 +1,9 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { FramedImage, PhotoFrame } from '@/components/ui/photo-frame';
+import { PhotoReorderRow } from '@/components/ui/photo-reorder-row';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -74,6 +75,12 @@ export function CheckSheet({ challenge, onClose, onPosted }: { challenge: Challe
     if (!r.canceled) add(r.assets);
   };
   const reframe = (i: number, framing: PhotoFraming) => setDrafts((L) => L.map((x, k) => (k === i ? { ...x, framing } : x)));
+  // 순서를 바꿔도 지금 맞추던 사진은 그대로 골라져 있어요
+  const reorder = (next: typeof drafts) => {
+    const now = drafts[cur];
+    setDrafts(next);
+    if (now) setCur(Math.max(0, next.indexOf(now)));
+  };
   const unPick = () => {
     const next = drafts.filter((_, i) => i !== cur);
     setDrafts(next);
@@ -143,7 +150,7 @@ export function CheckSheet({ challenge, onClose, onPosted }: { challenge: Challe
         <PText style={styles.ds}>{`${p.name}\n${p.guide || ''}`}</PText>
         {d ? (
           <View>
-            <PhotoFrame key={`${cur}-${d.uri}`} uri={d.uri} framing={d.framing} onChange={(f) => reframe(cur, f)} style={[styles.prev, { aspectRatio: ratio }]} accessibilityLabel="올릴 사진 맞추기">
+            <PhotoFrame key={d.uri} uri={d.uri} framing={d.framing} onChange={(f) => reframe(cur, f)} style={[styles.prev, { aspectRatio: ratio }]} accessibilityLabel="올릴 사진 맞추기">
               <Pressable onPress={() => setSquare((v) => !v)} accessibilityRole="button" accessibilityLabel="비율 바꾸기 · 원본 비율 ↔ 1:1 정사각형" style={styles.ratioTg}>
                 <ChIcon name="ratio" size={16} color={Colors.white} width={2.6} />
               </Pressable>
@@ -151,25 +158,34 @@ export function CheckSheet({ challenge, onClose, onPosted }: { challenge: Challe
                 <LgBtn label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={unPick} />
               </View>
             </PhotoFrame>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-              {drafts.map((x, i) => (
+            {/* 고른 사진 줄: 눌러서 맞출 사진 고르기 · 끌어서 순서 바꾸기 (첫 장이 인증 목록에 먼저 보여요) */}
+            <PhotoReorderRow
+              items={drafts}
+              keyOf={(x) => x.uri}
+              itemWidth={58 * ratio}
+              itemHeight={58}
+              onReorder={reorder}
+              contentContainerStyle={styles.strip}
+              renderItem={(x, i, a11y) => (
                 <Pressable
-                  key={x.uri + i}
                   onPress={() => setCur(i)}
                   accessibilityRole="button"
                   accessibilityLabel={`${i + 1}번째 사진 맞추기`}
                   accessibilityState={{ selected: i === cur }}
-                  style={[styles.sth, { aspectRatio: ratio }, i === cur && styles.sthOn]}>
+                  {...a11y}
+                  style={[styles.sth, { width: 58 * ratio }, i === cur && styles.sthOn]}>
                   <FramedImage uri={x.uri} framing={x.framing} />
                   <PText style={styles.sthN}>{i + 1}</PText>
                 </Pressable>
-              ))}
-              {drafts.length < MAX_PHOTOS ? (
-                <Pressable onPress={pickAlbum} accessibilityRole="button" accessibilityLabel="사진 더 넣기" style={[styles.sth, styles.sthAdd, { aspectRatio: ratio }]}>
-                  <ChIcon name="plus" size={20} width={2.8} />
-                </Pressable>
-              ) : null}
-            </ScrollView>
+              )}
+              trailing={
+                drafts.length < MAX_PHOTOS ? (
+                  <Pressable onPress={pickAlbum} accessibilityRole="button" accessibilityLabel="사진 더 넣기" style={[styles.sth, styles.sthAdd, { aspectRatio: ratio }]}>
+                    <ChIcon name="plus" size={20} width={2.8} />
+                  </Pressable>
+                ) : null
+              }
+            />
           </View>
         ) : (
           <View style={styles.photos}>
