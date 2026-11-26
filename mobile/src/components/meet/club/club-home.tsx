@@ -23,7 +23,7 @@ import { SessionRow } from './schedule';
 /**
  * 동아리 홈 탭 (프로토타입 lgClubDetail tab 'home'): 소개 · 모임 정보 · 다가오는 정기 모임 · 호스트 소개 · 멤버 · 같은 카테고리 추천.
  */
-export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: { c: Club; inC: boolean; members: Member[]; staff: string[]; recs: Club[]; myBranch: string; onSession: (q: Session) => void }) {
+export function ClubHome({ c, inC, block, members, staff, recs, myBranch, onSession }: { c: Club; inC: boolean; block?: string | null; members: Member[]; staff: string[]; recs: Club[]; myBranch: string; onSession: (q: Session) => void }) {
   const att = useMeetStore((s) => s.att);
   const me = useMe();
   const [all, setAll] = useState(false);
@@ -65,7 +65,7 @@ export function ClubHome({ c, inC, members, staff, recs, myBranch, onSession }: 
           }
           sub="공지 · 정기 모임을 함께 맡아요"
         />
-        <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub="신청하면 바로 가입돼요" />
+        <InfoRow icon="check" main={`가입 조건 · ${c.cond}`} sub={block ?? '신청하면 바로 가입돼요'} />
       </InfoRows>
 
       <View style={styles.schhd}>

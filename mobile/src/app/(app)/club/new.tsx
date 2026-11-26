@@ -7,7 +7,7 @@ import { defaultEnd, MultiPills, PosterPicker, TimeRange } from '@/components/ev
 import { ClubRow } from '@/components/meet/club-list';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
-import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
+import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyClub } from '@/components/meet/meet-store';
 import { TextField } from '@/components/ui/field';
@@ -19,6 +19,9 @@ import { Font } from '@/constants/fonts';
 import { ALL_REGIONS, branchOnly, CLUB_CATS, CLUB_MEMBERS, NO_LIMIT, REGIONS, type Club, type Region } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
+
+/** 카드 예시 글자 — 안 적으면 이대로 올라가요 */
+const CARD_EX = ['NEW', 'CLUB'];
 
 /** '언어 무관' 은 혼자만 골라져요 (고르면 다른 언어가 풀리고, 다른 언어를 고르면 '언어 무관' 이 풀려요) */
 const ANY_LANG = '언어 무관';
@@ -88,14 +91,13 @@ export default function NewClub() {
     intro: intro.trim() || undefined,
     memo: memo.trim() || undefined,
     posters: pics.length ? pics : undefined,
-    card: usedCard(card, pics.length > 0),
+    card: fillWords(usedCard(card, pics.length > 0), CARD_EX),
   });
 
   const ask = () => {
     if (!name.trim()) return showToast('동아리 이름을 적어 주세요');
     if (!langs.length) return showToast('언어를 골라 주세요');
     if (!days.length) return showToast('모이는 요일을 골라 주세요');
-    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     addMyClub(draft());
     sfx('save');
     router.back();
@@ -158,7 +160,7 @@ export default function NewClub() {
           value={card}
           onChange={setCard}
           hasPhoto={pics.length > 0}
-          example={['NEW', 'CLUB']}
+          example={CARD_EX}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
           listPreview={{
             label: '라운지 동아리 목록에서는 이렇게 보여요 · 누르기 전 모습 (카드는 첫 줄만)',

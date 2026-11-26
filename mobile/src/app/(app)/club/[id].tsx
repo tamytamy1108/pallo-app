@@ -16,7 +16,7 @@ import { AskSheet } from '@/components/meet/detail/sheets';
 import { guardMember } from '@/components/common/trial-guide';
 import { Icon } from '@/components/meet/icons';
 import { setClubState, toggleIn, useMeetStore } from '@/components/meet/meet-store';
-import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, membersOf, useAllClubs } from '@/components/meet/model';
+import { clubCat, clubHost, clubOpen, clubSessions, clubStaff, clubX, findClub, joinBlock, membersOf, useAllClubs } from '@/components/meet/model';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -79,12 +79,17 @@ export default function ClubDetail() {
   // 잠금 없이 보기: 멤버 · 호스트 · 코호스트 · 스텝(지점 관리자). 가입 안 한 사람만 게시판 · 사진첩 · 채팅이 잠겨요
   const inC = clubOpen(joined, role, me.role);
 
+  // 가입 조건이 안 맞으면 가입하기를 막아요 (호스트 · 코호스트 · 스텝 · 이미 가입한 사람은 상관없어요)
+  const block = role || joined || inC ? null : joinBlock(c.cond, me);
+
   const btn = role ? (
     <MainBtn label="관리" variant="pu" onPress={() => setManage(true)} />
   ) : c.wait ? (
     <MainBtn label="승인 대기" variant="off" />
   ) : joined ? (
     <MainBtn label="가입 완료" variant="done" onPress={() => setLeave(true)} />
+  ) : block ? (
+    <MainBtn label="가입 조건이 안 맞아요" variant="off" />
   ) : (
     <MainBtn label="가입하기" variant="pu" onPress={() => guardMember(() => setJoin(true), '동아리에 가입하려면')} />
   );
@@ -101,7 +106,7 @@ export default function ClubDetail() {
 
   const body =
     tab === 'home' ? (
-      <ClubHome c={c} inC={inC} members={members} staff={staff} recs={recs} myBranch={me.branch} onSession={(s) => setSid(s.id)} />
+      <ClubHome c={c} inC={inC} block={block} members={members} staff={staff} recs={recs} myBranch={me.branch} onSession={(s) => setSid(s.id)} />
     ) : tab === 'board' ? (
       <ClubBoard c={c} inC={inC} myName={me.name} staff={staff} />
     ) : tab === 'photo' ? (
@@ -135,7 +140,9 @@ export default function ClubDetail() {
         tabKey={tab}
         tabBody={body}
         ctaNote={
-          x.j30 ? (
+          block ? (
+            <PText style={styles.j30}>{block}</PText>
+          ) : x.j30 ? (
             <PText style={styles.j30}>
               최근 30일 동안 <PText style={styles.j30B}>{x.j30}명</PText>이 가입했어요
             </PText>
@@ -181,7 +188,8 @@ export default function ClubDetail() {
         onClose={() => setSid(null)}
         onJoinClub={() => {
           setSid(null);
-          guardMember(() => setJoin(true), '동아리에 가입하려면');
+          if (block) showToast(block);
+          else guardMember(() => setJoin(true), '동아리에 가입하려면');
         }}
       />
     </>

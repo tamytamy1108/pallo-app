@@ -62,5 +62,5 @@ export const newCard = (color: string = CARD_COLORS[0].hex, design: CardDesign =
  * 사진이 있으면 카드는 선택 — 켠 경우에만.
  */
 export const usedCard = (card: MadeCard | null, hasPhoto: boolean, color?: string) => card ?? (hasPhoto ? undefined : newCard(color));
-/** 카드를 쓰는데 문구를 안 적었나요 (문구는 필수 · 첫 줄만 적어도 돼요) */
-export const missingWords = (c?: MadeCard) => !!c && !c.words.some((w) => w.trim());
+/** 카드 문구를 안 적었으면 미리보기에 보이던 예시 글자 그대로 올려요 (카드만 골라도 바로 만들 수 있게) */
+export const fillWords = (c: MadeCard | undefined, example: string[]) => (c && !c.words.some((w) => w.trim()) ? { ...c, words: [...example] } : c);

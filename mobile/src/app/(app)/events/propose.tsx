@@ -7,7 +7,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { SheetButton, SheetPills } from '@/components/common/sheet-parts';
 import { defaultEnd, MonthCalendar, PlacePicker, PosterPicker, TimeRange, type Place } from '@/components/event/form-parts';
 import { CardMaker } from '@/components/ui/card-maker';
-import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
+import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { BranchSheet, withJeom } from '@/components/onboarding/branch-sheet';
 import { Icon } from '@/components/meet/icons';
@@ -23,6 +23,9 @@ import { BRANCHES, PROPOSAL_CATS } from '@/data/events';
 import { NO_LIMIT, WEEK } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
+
+/** 카드 예시 글자 — 안 적으면 이대로 올라가요 */
+const CARD_EX = ['NEW', 'EVENT'];
 
 const CAP_MIN = 2;
 const CAP_MAX = 300;
@@ -63,14 +66,13 @@ export default function ProposeEvent() {
 
   const send = () => {
     // 화면 위에서부터 (대표 카드 → 날짜 → 카테고리 → 제목 → 소개) 첫 빈칸을 알려요
-    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     if (!date) return showToast('희망 날짜를 골라 주세요');
     if (!cat) return showToast('카테고리를 골라 주세요');
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!body.trim()) return showToast('어떤 이벤트인지 적어 주세요');
     if (!fee) return showToast('참가비를 골라 주세요');
     if (fee === '유료' && !priceN) return showToast('참가비 금액을 적어 주세요');
-    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: usedCard(card, pics.length > 0), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim(), fee: fee === '유료' ? priceN : 0 });
+    addProposal({ id: 'pr' + Date.now(), title: title.trim(), br, date, cat, cover: pics[0], card: fillWords(usedCard(card, pics.length > 0), CARD_EX), time: [time, endTime], cap: cap ?? NO_LIMIT, body: body.trim(), fee: fee === '유료' ? priceN : 0 });
     sfx('save');
     router.back();
     showToast('제안을 보냈어요 · 매니저가 2~3일 안에 연락드려요');
@@ -92,7 +94,7 @@ export default function ProposeEvent() {
           value={card}
           onChange={setCard}
           hasPhoto={pics.length > 0}
-          example={['NEW', 'EVENT']}
+          example={CARD_EX}
           square
           listPreview={{
             label: "이벤트 탭 '내가 제안한 이벤트'에 이렇게 보여요 · 누르기 전 모습",

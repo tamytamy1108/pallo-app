@@ -7,7 +7,7 @@ import { SheetButton, SheetDesc, SheetPills } from '@/components/common/sheet-pa
 import { defaultEnd, PlacePicker, PosterPicker, timeLabel, TimeRange, type Place } from '@/components/event/form-parts';
 import { PosterPreview } from '@/components/meet/poster';
 import { CardMaker } from '@/components/ui/card-maker';
-import { missingWords, usedCard, type MadeCard } from '@/data/poster-colors';
+import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
 import { addMyMeet } from '@/components/meet/meet-store';
 import { MeetCard } from '@/components/meet/meet-card';
@@ -21,6 +21,9 @@ import { C, MONTHS, NO_LIMIT, REGIONS, WEEK, type Meet, type Region } from '@/da
 import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 import { seeAt } from '@/lib/see';
+
+/** 카드 예시 글자 — 안 적으면 이대로 올라가요 */
+const CARD_EX = ['NEW', 'MEET'];
 
 const MEET_MAX = 7; // 오늘부터 1주 뒤까지 (프로토타입 MEET_MAX)
 /** 정원 (나 포함) — 직접 정해요 */
@@ -77,13 +80,12 @@ export default function NewMeet() {
     max: cap ?? NO_LIMIT,
     mine: true,
     posters: pics.length ? pics : undefined,
-    card: usedCard(card, pics.length > 0),
+    card: fillWords(usedCard(card, pics.length > 0), CARD_EX),
   });
 
   const open = () => {
     if (!title.trim()) return showToast('제목을 적어 주세요');
     if (!place) return showToast('지도에서 장소를 골라 주세요');
-    if (missingWords(usedCard(card, pics.length > 0))) return showToast('카드 문구를 적어 주세요');
     const made = draft();
     addMyMeet(made);
     sfx('save');
@@ -165,7 +167,7 @@ export default function NewMeet() {
           value={card}
           onChange={setCard}
           hasPhoto={pics.length > 0}
-          example={['NEW', 'MEET']}
+          example={CARD_EX}
           renderPreview={(c, words, w) => <PosterPreview card={c} words={words} width={w} />}
           listPreview={{
             label: '라운지 번개 목록에서는 이렇게 보여요 · 누르기 전 모습',
