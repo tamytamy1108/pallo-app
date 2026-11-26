@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
@@ -18,13 +17,11 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, Ellipse, Path, Polygon, RadialGradient, Stop } from 'react-native-svg';
 
-import { loginWithProvider } from '@/api/auth';
-import { apiErrorMessage } from '@/api/errors';
+import { useKakaoLogin } from '@/api/use-kakao-login';
 import { SPARK } from '@/components/meet/korea-paths';
 import { Logo } from '@/components/logo';
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
-import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
@@ -56,11 +53,8 @@ export default function WelcomeScreen() {
   // 웹 미리보기: 이 화면을 열 때마다 처음 가입하는 사람으로 시작해요 (앱을 처음 받은 것처럼 해 보기)
   useState(() => Platform.OS === 'web' && __DEV__ && resetOnboarding());
 
-  // 로그인하면 토큰이 저장되고, 로그인 상태(api/session.tsx)가 /me 를 받아 가입 과정 · 홈으로 보내요 (app/_layout.tsx)
-  const login = useMutation({
-    mutationFn: () => loginWithProvider('kakao'),
-    onError: (e) => showToast(apiErrorMessage(e)),
-  });
+  // 카카오 로그인 (폰 = 카카오 SDK · 웹 미리보기 = 카카오 웹 로그인). 로그인되면 로그인 상태(api/session.tsx)가 가입 과정 · 홈으로 보내요
+  const login = useKakaoLogin();
 
   // 움직임 값 (0 → 1)
   const live = useSharedValue(still ? 1 : 0);
@@ -200,7 +194,7 @@ export default function WelcomeScreen() {
         <Pressable
           onPress={() => {
             sfx('tap');
-            login.mutate();
+            login.start();
           }}
           disabled={login.isPending}
           accessibilityRole="button"

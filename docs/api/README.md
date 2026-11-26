@@ -1,11 +1,11 @@
 # Pallo 앱 API 문서 (서버 개발자용)
 
 앱(`mobile/`)의 **모든 화면에서 서버와 연결해야 하는 곳**을 화면 코드에서 하나씩 찾아 Swagger(OpenAPI 3.1)로 정리했어요.
-지금 앱은 전부 가짜 데이터(mock)로 돌아가요. 이 문서는 지금 백엔드(`backend/…/api/app`, `/app/api/v1`) 컨트롤러와 하나씩 맞춰 봤어요.
+지금 앱은 전부 가짜 데이터(mock)로 돌아가요. 이 문서는 지금 백엔드 컨트롤러와 하나씩 맞춰 봤어요. 새 앱은 `/app/api/v2`(`backend/…/api/appv2`)를 불러요 — 아직 v2 로 안 옮긴 API 는 예전 `/app/api/v1`(`api/app`)에만 있어요.
 
 | 파일 | 내용 |
 |---|---|
-| [`openapi.yaml`](openapi.yaml) | API 290개: 요청 · 응답 모양, 쓰는 화면, 규칙 · 누가 부를 수 있나(역할) |
+| [`openapi.yaml`](openapi.yaml) | API 302개: 요청 · 응답 모양, 쓰는 화면, 규칙 · 누가 부를 수 있나(역할) |
 | [`screens.md`](screens.md) | 화면 67개마다 무슨 API를 부르는지 · 지금 가짜 데이터가 어디 있는지 · 열린 질문 |
 | [`index.html`](index.html) | Swagger UI로 보기 |
 
@@ -21,15 +21,16 @@ cd docs/api && npx -y http-server -p 8090 .
 
 | 값 | 개수 | 뜻 |
 |---|---:|---|
-| `existing` | 63 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
-| `change` | 45 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
-| `new` | 182 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
+| `existing` | 85 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
+| `change` | 46 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
+| `new` | 171 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
 
-`existing` · `change` 108개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음).
+`existing` · `change` 131개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음). `x-backend` 에 `/app/api/v2` 가 적힌 것(27개)이 새 앱 경로에 이미 있는 것이에요.
 각 API에 붙은 다른 표시: `x-screens`(쓰는 화면 파일) · `x-app-code`(지금 가짜 데이터 위치) · `x-inventory`(예전 목록 `docs/appendix/api-inventory.md` 번호, `docs/frontend/api-additions.md` A번호).
 
 묶음별 개수는 [`screens.md` 맨 위 표](screens.md#한눈에)에 있어요. 큰 덩어리로 보면:
-- **거의 있음**: 로그인 · `/me` · 출석(`/study`) · 커뮤니티 글 · 번개(`/hangouts`) · 동아리(`/clubs`) · 챌린지(`/challenges`) · 수강 변경 · 연기 · 지점 이동
+- **v2 에 있음 (2026-11)**: 카카오 로그인(SDK 토큰 · authCode) · 토큰 갱신 · `/me` · 가입 단계(`GET · POST /onboarding`) · 지점 선택지 · 체험 시간표 · 체험 상담 신청 · 지점 연동 요청 · 진행 상황 요약 · 지점 안내 · 마이 집계 · 푸시 토큰 · 공지(고정) · 시작 팝업 · FAQ · 1:1 문의 · 에셋 카탈로그
+- **거의 있음 (v1)**: 로그인 · `/me` · 출석(`/study`) · 커뮤니티 글 · 번개(`/hangouts`) · 동아리(`/clubs`) · 챌린지(`/challenges`) · 수강 변경 · 연기 · 지점 이동
 - **전부 새로**: 첫 화면 · 가입 마무리 · 닉네임 확인 · 사용 가이드, 학습 콘텐츠 · 진도 · 보상, 음성 · AI, 스토리, 여행 · 해외살이, 이벤트, 캐릭터 · 상점, 랭킹 · 배지, 신고 · 차단, 공지
 
 ## 역할 — 누가 부를 수 있나
@@ -49,7 +50,7 @@ cd docs/api && npx -y http-server -p 8090 .
 - 새 목록 API: `?cursor=&size=` → `{ rows, nextCursor }`. 있는 API는 지금 모양 그대로
 - 시간 UTC ISO 8601 · 사진은 `POST /uploads/images/{purpose}` 먼저 (새 purpose 필요한 것은 설명에 적었어요)
 - 포인트 · 스파크 · 랭킹 · 연속 학습 · 정원 · 자격은 **서버가 계산**. 앱이 지금 기기에서 하는 규칙을 각 API 설명에 옮겨 적었어요
-- 공개 API(약관 · 지점 목록 · 체험 접수 · 첫 화면, `/public/api/v1`)는 그 API에만 `servers` 를 따로 달았어요. 체험 접수는 로그인 토큰이 있으면 같이 보내 계정과 이어요
+- 공개 API(약관 · 체험 접수 · 첫 화면, `/public/api/v1`)는 그 API에만 `servers` 를 따로 달았어요. 체험 접수는 로그인 토큰이 있으면 같이 보내 계정과 이어요
 
 ## 백엔드가 정해 줘야 할 것 (큰 것만 — 나머지는 screens.md 각 화면의 '열린 질문')
 
@@ -63,14 +64,16 @@ cd docs/api && npx -y http-server -p 8090 .
 8. **수강 변경 날짜**: 앱은 오늘 + 2주부터, 백엔드는 수업 변경 3일 · 연기 다음 날부터. 남은 변경 횟수를 하나로 셀지
 9. **프로 노트**: 백엔드는 리더 질문 + AI 답, 앱은 태그 붙은 항목(표현 · 바로잡기 · 뜻 · 질문) + 프로 한마디
 10. **랭킹**: 지점 두 곳 회원의 포인트를 어느 지점에 셀지
-11. **역할**: `role` 값 이름(`pro` · `manager` · `hq`, 예전 `leader`), 보여 주기 모드 오류 코드(`demo_account`), 한 세션에 프로가 둘일 때
+11. **v1 → v2**: 새 앱은 `/app/api/v2` 만 불러요. 아직 v1 에만 있는 API(출석 · 라운지 · 번개 · 동아리 · 챌린지 · 수강 변경 등)를 v2 로 옮길 때 경로 · 모양을 이 문서대로 바꿀지, v1 모양 그대로 옮길지. v2 공지 목록은 `?cursor=&limit=` → `{items, nextCursor}` 라 새 목록 약속(`size` · `rows`)과 달라요 — 어느 쪽으로 맞출지
+12. **동아리 만들기 승인**: 신청(PENDING) → 관리자 승인 · 거절을 서버 상태로 둘지, 내 신청 목록(`GET /me/club-applications`) · 닫기 · 활동 저조 경고(A33) 규칙
+13. **역할**: `role` 값 이름(`pro` · `manager` · `hq`, 예전 `leader`), 보여 주기 모드 오류 코드(`demo_account`), 한 세션에 프로가 둘일 때
 
 ## 앱 쪽에서 맞출 것 (프론트 할 일 — 참고)
 
 - `api/errors.ts` 의 `{code,message}` → `{error,message}`, `api/client.ts` 의 `Page {items,nextCursor}` → `{rows,nextCursor}`
 - 로그인 `/auth/login/:provider` → `POST /auth/login`, `isNewMember` → `GET /me` 의 `needsOnboarding`. 온보딩 화면(약관 → 닉네임) 새로 만들기
 - `PATCH /me` → `PATCH /me/profile`
-- 가입 끝내기 `POST /me/onboarding` (고른 몸 색은 공짜로 지급) · 지점 연동 거절 화면은 `GET /me/branch-link-requests`
+- 가입 끝내기는 `POST /onboarding` (palloloCode · path · member/trial/app 블록) · 지점 연동 반려는 `GET /me/branch-summary` + `POST /me/branch-link-requests/{id}/acknowledge` (붙임 끝)
 
 ## 고치는 법
 

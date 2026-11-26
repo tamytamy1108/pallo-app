@@ -2,10 +2,10 @@
  * 마이 B 화면들이 같이 쓰는 작은 상태 (가짜 데이터용 · 백엔드가 생기면 서버 값으로 바꿔요).
  * - 변경 신청: 내 스터디 카드 · 신청서가 같이 봐요 (프로토타입 CHG · `pallo-chg`) — API 39 `/me/change-requests`
  * - PRO'S NOTE: 읽음 · 고마워요 · 보낸 인사 · 스터디 일기 (프로토타입 PNR · PNT · PNM · PND) — API 44 · 45
- * - 설정 · 로그인 연결 · 1:1 문의 · 레벨 변경 요청 (프로토타입 SET · LOGINS · ASKS · LVREQ) — API 30 · 46 · 94
+ * - 설정 · 로그인 연결 · 레벨 변경 요청 (프로토타입 SET · LOGINS · LVREQ) — API 30 · 46 (1:1 문의는 서버: api/support)
  * 모두 기기에 남아요 (프로토타입 `pallo-chg` · `pallo-pn` · `pallo-set` 과 같은 일).
  */
-import { ASKS_DEFAULT, LOGINS_DEFAULT, SETTINGS_DEFAULT, type Ask, type Diary, type Settings } from '@/data/account';
+import { LOGINS_DEFAULT, SETTINGS_DEFAULT, type Diary, type Settings } from '@/data/account';
 import { createStore } from '@/lib/store';
 
 // ---------- 연기 · 팀 · 지점 변경 신청 ----------
@@ -77,10 +77,6 @@ export function toggleLogin(name: string) {
   loginStore.set({ ...L, [name]: !L[name] });
   return true;
 }
-
-const askStore = createStore<Ask[]>([...ASKS_DEFAULT], { persist: { key: 'asks' } });
-export const useAsks = () => askStore.useStore();
-export const addAsk = (a: Ask) => askStore.set((L) => [a, ...L]);
 
 /** 레벨 변경 요청 (예: '한 단계 위로 · 수업이 쉬워요') */
 const levelReqStore = createStore<string | null>(null, { persist: { key: 'level-request', load: (v, initial) => (typeof v === 'string' ? v : initial) } });

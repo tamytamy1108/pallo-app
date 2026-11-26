@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
@@ -6,7 +6,7 @@ import { SafeAreaView } from '@/components/ui/safe-area';
 
 import { apiErrorMessage } from '@/api/errors';
 import { sendAttendance, sendRsvp } from '@/api/home';
-import { meQuery, queryKeys } from '@/api/queries';
+import { queryKeys } from '@/api/queries';
 import { queryClient } from '@/api/query-client';
 import { guardMember } from '@/components/common/trial-guide';
 import { Pressable } from '@/components/ui/pressable';
@@ -20,6 +20,7 @@ import { LineIcon } from '@/components/home/icons';
 import { InviteSheet } from '@/components/home/invite-sheet';
 import { LaunchPopup } from '@/components/home/launch-popup';
 import { LinkAdminDev } from '@/components/home/link-admin-dev';
+import { LinkRejectedPopup } from '@/components/home/link-rejected-popup';
 import { LoungePreview } from '@/components/home/lounge-preview';
 import { askCurrentStop } from '@/components/home/map-state';
 import { useUnreadCount } from '@/components/home/noti-state';
@@ -30,7 +31,6 @@ import { StudyMap } from '@/components/home/study-map';
 import { Logo } from '@/components/logo';
 import { Appear } from '@/components/ui/appear';
 import { Raised } from '@/components/ui/raised';
-import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
@@ -50,8 +50,7 @@ export default function HomeScreen() {
   useEffect(() => applyDevMe({ link: dev.link, name: dev.name, trial: dev.trial, follow: dev.follow }), [dev.link, dev.name, dev.trial, dev.follow]);
   useEffect(() => applyDevAdmin(dev.admin), [dev.admin]);
 
-  // 3 /me — 받아 온 값은 로그인 상태가 state/me 에 넣어요 (src/api/session.tsx). 여기서는 불러오는 중 · 오류만 봐요
-  const me = useQuery(meQuery());
+  // 3 /me — 로그인 상태(src/api/session.tsx)가 /me 를 받은 뒤에야 이 화면이 열리고, 받은 값은 state/me 에 들어 있어요
   const name = useMe((m) => m.name);
   const plan = useMe((m) => m.plan);
   const unread = useUnreadCount();
@@ -137,14 +136,6 @@ export default function HomeScreen() {
     askCurrentStop();
   };
 
-  if (me.isPending || (me.isError && !me.data)) {
-    return (
-      <SafeAreaView style={[styles.safe, styles.center]} edges={['top']}>
-        {me.isPending ? <LoadingState /> : <ErrorState message={apiErrorMessage(me.error)} onRetry={() => me.refetch()} />}
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
@@ -215,6 +206,8 @@ export default function HomeScreen() {
         onClose={() => setScan(null)}
         onScanned={scanned}
       />
+      {/* 지점 연동 반려: 확인할 때까지 홈에 들어올 때마다 (떠 있는 동안 시작 팝업은 기다려요) */}
+      <LinkRejectedPopup />
       <LaunchPopup />
       {/* 지점 연동 결과: 개발용 '지점 처리 흉내' 알약 · 위에서 내려오는 푸시 배너 (state/link-events) */}
       <LinkAdminDev />

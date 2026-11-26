@@ -9,7 +9,7 @@ import { defaultEnd, MonthCalendar, PlacePicker, PosterPicker, TimeRange, type P
 import { CardMaker } from '@/components/ui/card-maker';
 import { fillWords, usedCard, type MadeCard } from '@/data/poster-colors';
 import { SheetPage } from '@/components/event/sheet-page';
-import { BranchSheet, withJeom } from '@/components/onboarding/branch-sheet';
+import { BranchListSheet, withJeom } from '@/components/onboarding/branch-list';
 import { Icon } from '@/components/meet/icons';
 import { addProposal } from '@/components/meet/meet-store';
 import { ProposalCard } from '@/components/event/proposal-cards';
@@ -160,7 +160,7 @@ export default function ProposeEvent() {
         ) : null}
       </Field>
 
-      <BranchSheet
+      <BranchListSheet
         open={brOpen}
         onClose={() => setBrOpen(false)}
         title="진행 지점을 골라요"

@@ -2,6 +2,7 @@ import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { useBranchProgress } from '@/api/use-branch-progress';
 import { openTrial } from '@/components/common/trial-guide';
 import { TrialBookingSheet, trialDaysLeft, trialShortDate, trialStage, type TrialBooking } from '@/components/common/trial-booking';
 import { Pressable } from '@/components/ui/pressable';
@@ -10,7 +11,7 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { userKind } from '@/state/access';
+import { isMember } from '@/state/access';
 import { useMe } from '@/state/me';
 import { updateOnboarding } from '@/state/onboarding';
 
@@ -23,16 +24,18 @@ const PLAY_PATH = 'M8 5.5v13l10.5-6.5z';
 const FIRST_LESSON = '/unit/1?lv=1' as Href;
 
 /**
- * 홈 오늘 스터디 자리 — 누구냐(state/access userKind)에 따라 카드가 달라요 (09-onboarding '회원 · 비회원 권한').
- * 회원 · 연동 대기 · 연동 안 됨 → 출석 카드(SessionCard) / 체험 예약 → 체험 카드 / 둘러보는 비회원 → 둘러보기 카드.
+ * 홈 오늘 스터디 자리 — 회원인지(state/access) · 비회원이 무엇을 기다리는지(api/use-branch-progress)에 따라 카드가 달라요 (09-onboarding '회원 · 비회원 권한').
+ * 회원 · 연동 대기 · 연동 안 됨 → 출석 카드(SessionCard) / 다가오는 체험(서버 요약) → 체험 카드 / 둘러보는 비회원 → 둘러보기 카드.
  * 앱 구독자(plan app)는 홈이 이 자리 대신 오늘의 목표 카드를 그려요.
  */
 export function HomeCard({ onOpen }: { onOpen: (mode: 'rsvp' | 'checkin') => void }) {
-  const kind = useMe(userKind);
-  const trial = useMe((m) => m.trial);
-  if (kind === 'trial' && trial) return <TrialCard trial={trial} />;
-  if (kind === 'guest' || kind === 'app') return <GuestCard />;
-  return <SessionCard onOpen={onOpen} />;
+  const member = useMe(isMember);
+  const link = useMe((m) => m.link);
+  const { trial } = useBranchProgress();
+  // 연동 대기 · 못 찾음은 출석 카드 자리에 잠긴 카드 (session-card 가 me.link 로 그려요)
+  if (member || link === 'pending' || link === 'rejected') return <SessionCard onOpen={onOpen} />;
+  if (trial) return <TrialCard trial={trial} />;
+  return <GuestCard />;
 }
 
 /**

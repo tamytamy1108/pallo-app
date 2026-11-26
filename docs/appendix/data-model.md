@@ -14,7 +14,7 @@
 | email | string? | |
 | role | enum | `member` · `guest` · `leader` · `manager` |
 | userType | enum | `member`(스터디 회원) · `sub`(앱 구독자) |
-| branchIds | ID[] (최대 2) | 다니는 지점 |
+| branchIds | ID[] | 다니는 지점 (지점 수 제한 없음) |
 | bio | string | 한 줄 소개 |
 | studyLang · level | enum · string | 학습 언어 · 레벨 |
 | authProviders | enum[] | kakao · apple · google (최소 1개) |

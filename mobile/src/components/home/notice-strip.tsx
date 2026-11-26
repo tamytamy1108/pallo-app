@@ -8,7 +8,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { NOTICE_TAG_STYLE, type Notice } from '@/data/mock';
+import { NOTICE_TAG, NOTICE_TAG_STYLE, type Notice } from '@/data/mock';
 
 const ROTATE_MS = 3200;
 const HEIGHT = 48;
@@ -50,7 +50,7 @@ function NoticeTrack({ notices }: { notices: Notice[] }) {
     <Pressable
       onPress={() => router.push(`/notice/${current.id}`)}
       accessibilityRole="button"
-      accessibilityLabel={`${current.tag} · ${current.title} 보기`}
+      accessibilityLabel={`${NOTICE_TAG[current.type]} · ${current.title} 보기`}
       style={({ pressed }) => StyleSheet.flatten([styles.wrap, pressed && styles.pressed])}>
       <View style={styles.tag}>
         <PText style={styles.tagText} color={Colors.white}>
@@ -61,9 +61,9 @@ function NoticeTrack({ notices }: { notices: Notice[] }) {
         <Animated.View style={StyleSheet.flatten([styles.track, { transform: [{ translateX: x }] }])}>
           {notices.map((n) => (
             <View key={n.id} style={StyleSheet.flatten([styles.item, { width }])}>
-              <View style={StyleSheet.flatten([styles.chip, { backgroundColor: NOTICE_TAG_STYLE[n.tag].bg }])}>
-                <PText variant="label" color={NOTICE_TAG_STYLE[n.tag].ink} style={styles.chipText}>
-                  {n.tag}
+              <View style={StyleSheet.flatten([styles.chip, { backgroundColor: NOTICE_TAG_STYLE[NOTICE_TAG[n.type]].bg }])}>
+                <PText variant="label" color={NOTICE_TAG_STYLE[NOTICE_TAG[n.type]].ink} style={styles.chipText}>
+                  {NOTICE_TAG[n.type]}
                 </PText>
               </View>
               <PText variant="bodyStrong" numberOfLines={1} style={styles.title}>

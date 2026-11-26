@@ -17,8 +17,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 
+import { showToast } from '@/components/ui/toast';
 import { updateMe } from '@/state/me';
+import { useOnboarding } from '@/state/onboarding';
 
+import { apiErrorMessage } from './errors';
 import { completeOnboarding, patchMe, type MePatch } from './me';
 import { meQuery, queryKeys } from './queries';
 import { hydrateTokens, isTokensHydrated, subscribeTokens, tokenStorage } from './token';
@@ -79,12 +82,30 @@ export function useSession(): Session {
   return s;
 }
 
-/** 가입 과정 끝내기 → /me 를 다시 받아요. needsOnboarding 이 false 가 되면 Stack.Protected 가 가입 화면을 닫아요 */
+/**
+ * 아직 가입 중인지 — 같은 화면을 가입 중 · 가입 뒤에 같이 쓰는 곳(연동 요청 · 연동 대기)이 보내는 API 를 고를 때.
+ * 로그인 상태(/me needsOnboarding)가 기준이고, 로그인 상태가 없는 곳(스토리북)에서는 이 기기의 가입 기록(done)으로 봐요.
+ */
+export function useNeedsOnboarding(): boolean {
+  const s = useContext(SessionContext);
+  const notDone = useOnboarding((o) => !o.done);
+  return s ? s.status === 'signedIn' && s.needsOnboarding : notDone;
+}
+
+/**
+ * 가입 과정 끝내기 → 받아 둔 /me 의 needsOnboarding 을 바로 false 로 바꾸고(Stack.Protected 가 가입 화면을 닫아요) /me 를 다시 받아요.
+ * 다시 받기를 기다리지 않는 건, 그게 실패하면 받아 둔 옛 값(needsOnboarding=true)이 남아 가입 화면에 갇히기 때문이에요.
+ * 실패하면 여기서 토스트를 띄워요 (부르는 화면마다 붙이다 빠뜨리지 않게). 화면은 성공 뒤 할 일만 넘겨요
+ */
 export function useCompleteOnboarding() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: completeOnboarding,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+    onSuccess: () => {
+      queryClient.setQueryData(meQuery().queryKey, (old) => (old ? { ...old, needsOnboarding: false } : old));
+      void queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
+    onError: (e) => showToast(apiErrorMessage(e)),
   });
 }
 

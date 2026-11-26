@@ -29,6 +29,17 @@ export const ONB_LANGS: { key: StudyLang; ko: string; hello: string; helloFont: 
   { key: 'es', ko: '스페인어', hello: '¡Hola!', helloFont: { fontFamily: Font.display }, color: Colors.langEs, tag: 'ES', tagInk: Colors.ink },
 ];
 
+/** 서버 언어 한 칸을 화면에 그릴 모양 — 앱 안 4개 언어면 그 색 · 인사말, 처음 보는 언어면 이름만 (중립 색) */
+export type LangLook = { code: string; key: StudyLang | null; ko: string; hello: string; helloFont: TextStyle; color: string; tag: string; tagInk: string };
+
+/** 서버 언어 code(+ 이름) → 그릴 모양. code 가 en · ja · zh · es (대소문자 무시) 이면 ONB_LANGS, 이름은 서버 이름을 써요 */
+export function langLook(code: string, label?: string): LangLook {
+  const known = ONB_LANGS.find((l) => l.key === code.toLowerCase());
+  if (known) return { ...known, code, ko: label ?? known.ko };
+  const name = label ?? code;
+  return { code, key: null, ko: name, hello: name, helloFont: { fontFamily: Font.body900 }, color: Colors.lavender, tag: code.slice(0, 2).toUpperCase(), tagInk: Colors.ink };
+}
+
 /** 체크 동그라미 (.mv i · .lc i): 고르면 보라 바탕 + 흰 체크. 켜지는 순간 톡 튀어요 */
 function CheckDot({ on }: { on: boolean }) {
   return (

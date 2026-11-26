@@ -24,16 +24,17 @@ export function fetchMe({ signal }: Opts = {}): Promise<MeResponse> {
 }
 
 /**
- * 가입 과정 끝내기 — 고른 값(닉네임 · 캐릭터 · 언어 · 이유 · 지점)을 내 정보에 옮기고 끝났다고 표시해요.
- * 부르는 쪽은 useCompleteOnboarding() (끝나면 /me 를 다시 받아요).
- * 서버 API 는 아직 없어요 (v2 에서 정해요) — mock 을 끄면 오류를 내요.
+ * 가입 과정 끝내기 (연동 대기 [시작하기] · 체험 확인 · 이유 [앱 둘러보기]) — 서버에는 이미 POST /onboarding 으로 보냈어요
+ * (api/use-onboarding useSubmitOnboarding). 여기서는 앱 안 값(나 · 내 팔로로)만 맞추고 끝났다고 표시해요.
+ * 부르는 쪽은 useCompleteOnboarding() (세션을 바로 내리고 /me 를 다시 받아요).
  */
 export function completeOnboarding(): Promise<void> {
   if (apiConfig.useMock) return mock('completeOnboarding', () => finishOnboarding());
-  return Promise.reject(new Error('가입 완료 API 가 아직 없어요 (app/api/v2)'));
+  finishOnboarding();
+  return Promise.resolve();
 }
 
-/** 4 PATCH /me — 닉네임 · 소개 · 지점(≤2) */
+/** 4 PATCH /me — 닉네임 · 소개 · 지점 */
 export type MePatch = Partial<Pick<Me, 'name' | 'bio' | 'branch'>>;
 export function patchMe(patch: MePatch): Promise<Me> {
   if (apiConfig.useMock)

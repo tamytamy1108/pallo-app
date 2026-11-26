@@ -20,6 +20,22 @@ npx expo start
 - **컴퓨터 브라우저로 보기:** 터미널에서 `w` 를 눌러요.
 - 코드를 저장하면 화면이 바로 바뀌어요.
 
+## 부품을 상태별로 보기 (Storybook)
+
+```bash
+npm run storybook          # http://localhost:6006 (frontend 루트에서는 npm run storybook:mobile)
+```
+
+- 로그인 · 서버 없이 부품 하나를 상태별로 봐요. 웹 미리보기와 같은 react-native-web 으로 그려요.
+- 스토리는 `stories/<영역>/X.stories.tsx` 에만 둬요 (`src/app/` 에 두면 화면이 돼요).
+- 툴바 **회원 유형**(회원 · 연동 대기 · 연동 안 됨 · 체험 예약 · 앱 구독만 · 비회원)이 나(state/me)를 바꿔요. 스토리 하나를 고정하려면 `globals: { userKind: 'pending' }`.
+- 스토어로 정해지는 상태(오늘 목표 등)는 스토리의 `beforeEach` 에서 스토어를 채워요 (`stories/home/GoalCard.stories.tsx` 참고).
+- 데이터 훅을 쓰는 부품은 `parameters.queries: [[쿼리키, 응답], ...]` 로 캐시를 미리 채워요.
+- 화면(src/app) 스토리는 `stories/pages/` 에 둬요. expo-router 는 대역이라 이동하지 않고 Actions 패널에 기록만 남아요.
+  주소 값은 `parameters.route: { params: { id: '1' } }`.
+- 불러오는 중 · 오류는 가짜 API 로: `parameters.api: { delayMs: LOADING_FOREVER }` · `{ fail: ['notices'] }` (`stories/pages/notice/NoticeList.stories.tsx` 참고).
+- 다 그려지는지 한 번에 확인: Storybook 을 띄운 채로 `node scripts/storybook-smoke.mjs [스토리 id 앞부분]` (설치된 Chrome 을 헤드리스로 써요).
+
 ## 확인 (작업 끝날 때마다)
 
 ```bash

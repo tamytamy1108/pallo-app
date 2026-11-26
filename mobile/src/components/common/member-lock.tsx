@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area';
 
+import { useBranchProgress } from '@/api/use-branch-progress';
 import { TrialBookingSheet } from '@/components/common/trial-booking';
 import { memberGate, openTrial } from '@/components/common/trial-guide';
 import { ICON_PATH, LineIcon, QR_PATH } from '@/components/home/icons';
@@ -13,7 +14,7 @@ import { TopBar } from '@/components/ui/top-bar';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { canUse, isFreeChapter, userKind, type Feature } from '@/state/access';
+import { canUse, isFreeChapter, type Feature } from '@/state/access';
 import { useMe } from '@/state/me';
 import { updateOnboarding } from '@/state/onboarding';
 
@@ -32,12 +33,12 @@ const OPENS = [
 /**
  * '지점 회원이 되면 열려요' 칸 (09-onboarding '회원 · 비회원 권한').
  * 마이의 PRO'S NOTE · 내 스터디 · 지점 안내 자리를 이 칸 하나로 바꿔요. 회원 전용 화면을 비회원이 열었을 때도 이 칸을 보여 줘요.
- * 아래 행동은 누구냐에 따라: 연동 대기 → 안내만 · 연동 안 됨 → [다시 요청하기] · 체험 예약 → [체험 예약 보기]
- * · 둘러보기 / 앱 구독 → [체험 신청하기] + '이미 회원이에요 · 연동 요청'.
+ * 아래 행동은 비회원이 무엇을 기다리는지(api/use-branch-progress · 서버 요약)에 따라:
+ * 연동 대기 → 안내만 · 확인 안 한 반려 → [다시 요청하기] · 다가오는 체험 → [체험 예약 보기]
+ * · 그 밖(둘러보기 · 앱 구독) → [체험 신청하기] + '이미 회원이에요 · 연동 요청'.
  */
 export function MemberLock({ title = '지점 회원이 되면 열려요', sub = '지점에서 연동하면 출석부터 프로 노트까지 여기서 봐요.' }: { title?: string; sub?: string }) {
-  const kind = useMe(userKind);
-  const trial = useMe((m) => m.trial);
+  const { pending, rejected, trial } = useBranchProgress();
   const [sheet, setSheet] = useState(false);
   const linkRequest = () => {
     sfx('soft');
@@ -69,16 +70,16 @@ export function MemberLock({ title = '지점 회원이 되면 열려요', sub = 
         ))}
       </View>
 
-      {kind === 'pending' ? (
+      {pending ? (
         <View style={styles.wait}>
           <View style={styles.waitDot} />
           <PText style={styles.waitText} color={Colors.purple}>
             연동 승인 대기중이에요 · 승인되면 알림으로 알려 드려요
           </PText>
         </View>
-      ) : kind === 'rejected' ? (
+      ) : rejected ? (
         <Button label="다시 요청하기" wide onPress={() => router.push('/link-rejected')} />
-      ) : kind === 'trial' && trial ? (
+      ) : trial ? (
         <>
           <Button label="체험 예약 보기" wide onPress={() => setSheet(true)} />
           <TrialBookingSheet trial={trial} open={sheet} onClose={() => setSheet(false)} />

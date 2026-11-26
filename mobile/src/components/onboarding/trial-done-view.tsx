@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Colors } from '@/constants/theme';
 import type { TrialDraft } from '@/state/trial-booking';
 
-import { ONB_LANGS } from './app-parts';
+import { langLook } from './app-parts';
 import { DoneNotice } from './done-notice';
 import { DoneStage, STAGE_OVERLAP } from './done-stage';
 import { DoneTicket } from './done-ticket';
@@ -26,7 +26,7 @@ const TICKET_INSET = 8;
  */
 export function TrialDoneView({ booking: b, button, onDone, hero }: { booking: TrialDraft; button: string; onDone: () => void; hero?: number }) {
   const { width } = useWindowDimensions();
-  const lang = ONB_LANGS.find((l) => l.key === b.langs[0]) ?? ONB_LANGS[0];
+  const lang = langLook(b.langs[0] ?? '', b.langLabel || undefined);
   const branch = b.branch.trim();
 
   useFocusEffect(

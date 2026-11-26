@@ -1,4 +1,4 @@
-import { fetchNotice, fetchNotices } from '../home';
+import { fetchNotice, fetchNotices, setNoticePinned } from '../home';
 import { fetchMe } from '../me';
 import { setMockOptions } from '../mock';
 
@@ -16,6 +16,21 @@ describe('가짜 API', () => {
     const rest = await fetchNotices({ limit: 3, cursor: first.nextCursor });
     expect(rest.items.map((n) => n.id)).toEqual(['n4', 'n5']);
     expect(rest.nextCursor).toBeNull();
+  });
+
+  it('고정한 공지가 목록 맨 위로 오고, 풀면 최신순 제자리로 가요', async () => {
+    await setNoticePinned({ id: 'n4', pinned: true });
+    const pinned = await fetchNotices({ limit: 3 });
+    expect(pinned.items.map((n) => [n.id, n.pinned])).toEqual([
+      ['n1', true],
+      ['n4', true],
+      ['n2', false],
+    ]);
+    await expect(fetchNotice('n4')).resolves.toMatchObject({ pinned: true, content: expect.any(String), images: [] });
+
+    await setNoticePinned({ id: 'n4', pinned: false });
+    const back = await fetchNotices();
+    expect(back.items.map((n) => n.id)).toEqual(['n1', 'n2', 'n3', 'n4', 'n5']);
   });
 
   it('없는 공지는 not_found', async () => {

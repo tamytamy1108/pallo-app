@@ -2,6 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 
+import { useOnboardingInfo, useTrialSlots } from '@/api/use-onboarding';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -10,10 +12,9 @@ import { sfx } from '@/lib/feedback';
 import { stepsFor } from '@/state/onboarding';
 import type { TrialDraft } from '@/state/trial-booking';
 
-import { ONB_LANGS, WHY_REASONS } from './app-parts';
 import { BranchSheet } from './branch-sheet';
 import { Chip, Chips, Field, FieldLabel, NextButton, OnbInput, OnbScreen, PickField, useRequired } from './parts';
-import { isTrialDay, TrialSlots, TrialWait, trialDayTiles, trialSlots } from './trial-slots';
+import { slotDays, slotsOn, TrialSlots, TrialWait } from './trial-slots';
 
 /** onboarding: 가입 4/4 (진행 바 · 뒤로는 앞 단계) · app: 앱 안 전체 화면 (진행 바 없이 ‹ 는 닫기) */
 export type TrialFormMode = 'onboarding' | 'app';
@@ -24,27 +25,51 @@ const NOTE_MAX = 200;
  * 체험 예약 한 장 — docs/pages/09-onboarding.md '3-2. 체험 예약', 프로토타입 #dest-trial · #t-sheet · #t-pick.
  * 지점 → 이름 → 번호 → 희망 언어(하나) → 상담 시간 → 배우고 싶은 이유(선택) → 전달 사항(선택)을 위에서 아래로 채워요.
  * 값은 바깥이 들고 있어요 (가입: 온보딩 값 · 앱: 그 화면). 고르는 대로 onChange, '체험 예약하기'를 누르면
- * 빠진 칸으로 데려가거나(useRequired) 다듬은 값으로 onSubmit (이름 다듬기 · 번호 꾸미기 · 보이던 날짜 · 고른 시간).
- * 맞는 API: 47 `POST /trial-bookings`.
+ * 빠진 칸으로 데려가거나(useRequired) 다듬은 값으로 onSubmit (이름 다듬기 · 번호 꾸미기 · 보이던 날짜 · 고른 시간 · 언어 이름).
+ * 서버 값: 지점 GET /branches (쉬는 지점은 막아요) · 시간표 GET /trial-slots · 언어 · 이유 GET /onboarding.
+ * 보내기는 바깥이 해요 (가입: POST /onboarding · 앱: POST /trial-applications) — busy 동안 버튼이 '보내는 중'.
  */
-export function TrialForm({ mode, value: v, onChange, onSubmit, onBack }: { mode: TrialFormMode; value: TrialDraft; onChange: (patch: Partial<TrialDraft>) => void; onSubmit: (booking: TrialDraft) => void; onBack?: () => void }) {
+export function TrialForm({
+  mode,
+  value: v,
+  onChange,
+  onSubmit,
+  onBack,
+  busy = false,
+}: {
+  mode: TrialFormMode;
+  value: TrialDraft;
+  onChange: (patch: Partial<TrialDraft>) => void;
+  onSubmit: (booking: TrialDraft) => void;
+  onBack?: () => void;
+  busy?: boolean;
+}) {
   const [sheet, setSheet] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
-  const [days] = useState(trialDayTiles);
+  const info = useOnboardingInfo();
+  const slotQ = useTrialSlots(v.branchCode);
 
-  const lang = ONB_LANGS.find((l) => l.key === v.langs[0]) ?? ONB_LANGS[0];
-  // 날짜는 고른 게 없으면 첫날(내일)을 보여 줘요 · 2주 줄 밖이어도 달력에서 고른 날(두 달 안)이면 그대로. 시간은 직접 골라야 해요
-  const day = days.some((d) => d.key === v.trialDay) || isTrialDay(v.trialDay) ? v.trialDay : days[0].key;
-  const slots = v.branch ? trialSlots(v.branch, day, lang.key) : [];
-  const time = slots.some((s) => s.time === v.trialTime && !s.full) ? v.trialTime : '';
+  const langs = info.data?.languages ?? [];
+  const reasons = info.data?.reasons ?? [];
+  // 희망 언어는 하나 — 고른 code 가 목록에 없으면(꺼졌거나 처음) 첫 언어
+  const want = v.langs[0]?.toLowerCase();
+  const lang = langs.find((l) => l.code.toLowerCase() === want) ?? langs[0];
+  const serverDays = slotQ.data?.days ?? [];
+  const days = slotDays(serverDays);
+  // 날짜는 고른 게 없으면 상담 시간이 있는 첫날을 보여 줘요. 시간은 직접 골라야 해요
+  const firstOpen = serverDays.find((d) => d.times.length)?.date ?? days[0]?.key ?? '';
+  const day = days.some((d) => d.key === v.trialDay) ? v.trialDay : firstOpen;
+  const slots = slotsOn(serverDays, day);
+  const time = slots.some((s) => s.time === v.trialTime) ? v.trialTime : '';
 
   const nameOk = v.realName.trim().length > 0;
   const phoneOk = isPhone(v.phone);
   // 버튼은 늘 켜 두고, 누를 때 빠진 칸이 있으면 그 칸으로 데려가요 (useRequired). 희망 언어는 늘 하나 골라져 있어요
   const form = useRequired([
-    { name: 'branch', ok: !!v.branch, message: '지점을 골라 주세요' },
+    { name: 'branch', ok: !!v.branchCode, message: '지점을 골라 주세요' },
     { name: 'name', ok: nameOk, message: '이름을 적어 주세요' },
     { name: 'phone', ok: phoneOk, message: '휴대폰 번호를 확인해 주세요' },
+    { name: 'lang', ok: !!lang, message: '희망 언어를 골라 주세요' },
     { name: 'time', ok: !!time, message: '상담 시간을 골라 주세요' },
   ]);
 
@@ -70,11 +95,14 @@ export function TrialForm({ mode, value: v, onChange, onSubmit, onBack }: { mode
     form.reveal('note');
   };
 
-  const submit = () =>
+  const submit = () => {
+    if (busy) return;
     form.submit(() => {
+      if (!lang) return;
       sfx('save');
-      onSubmit({ ...v, realName: v.realName.trim(), phone: formatPhone(v.phone), langs: [lang.key], trialDay: day, trialTime: time, note: v.note.trim() });
+      onSubmit({ ...v, realName: v.realName.trim(), phone: formatPhone(v.phone), langs: [lang.code], langLabel: lang.label, trialDay: day, trialTime: time, note: v.note.trim() });
     });
+  };
 
   const progress = mode === 'onboarding' ? stepsFor('trial') : undefined;
 
@@ -91,7 +119,7 @@ export function TrialForm({ mode, value: v, onChange, onSubmit, onBack }: { mode
           <>
             {/* 스크롤 내용이 버튼 뒤로 스르르 사라지게 (.t1-ft::before) */}
             <LinearGradient colors={['rgba(251,246,234,0)', Colors.cream]} style={styles.fade} pointerEvents="none" />
-            <NextButton label="체험 예약하기" onPress={submit} ready={form.ready} />
+            <NextButton label={busy ? '보내는 중…' : '체험 예약하기'} onPress={submit} ready={form.ready && !busy} />
           </>
         }>
         <Field name="branch" style={styles.first}>
@@ -135,24 +163,36 @@ export function TrialForm({ mode, value: v, onChange, onSubmit, onBack }: { mode
 
         <Field name="lang">
           <FieldLabel required>희망 언어</FieldLabel>
-          <Chips>
-            {ONB_LANGS.map((l) => (
-              <Chip
-                key={l.key}
-                label={l.ko}
-                on={l.key === lang.key}
-                onPress={() => {
-                  onChange({ langs: [l.key], trialTime: '' });
-                  form.reveal('time');
-                }}
-              />
-            ))}
-          </Chips>
+          {info.isPending ? (
+            <LoadingState />
+          ) : info.isError ? (
+            <ErrorState onRetry={() => info.refetch()} />
+          ) : (
+            <Chips>
+              {langs.map((l) => (
+                <Chip
+                  key={l.code}
+                  label={l.label}
+                  on={l.code === lang?.code}
+                  onPress={() => {
+                    onChange({ langs: [l.code], langLabel: l.label });
+                    form.reveal('time');
+                  }}
+                />
+              ))}
+            </Chips>
+          )}
         </Field>
 
         <Field name="time">
           <FieldLabel required>상담 시간</FieldLabel>
-          {v.branch ? (
+          {!v.branchCode ? (
+            <TrialWait />
+          ) : slotQ.isPending ? (
+            <LoadingState />
+          ) : slotQ.isError ? (
+            <ErrorState onRetry={() => slotQ.refetch()} />
+          ) : (
             <TrialSlots
               days={days}
               day={day}
@@ -163,18 +203,16 @@ export function TrialForm({ mode, value: v, onChange, onSubmit, onBack }: { mode
                 onChange({ trialDay: day, trialTime: t });
                 form.reveal('why');
               }}
-              note={`${v.branch} ${lang.ko} 프로님이 상담할 수 있는 시간이에요`}
+              note={`${v.branch}에서 상담할 수 있는 시간이에요. 확정되면 지점에서 연락드려요`}
             />
-          ) : (
-            <TrialWait />
           )}
         </Field>
 
         <Field name="why">
           <FieldLabel hint="여러 개 · 골라 주면 상담 때 참고해요">배우고 싶은 이유</FieldLabel>
           <Chips>
-            {WHY_REASONS.map((r) => (
-              <Chip key={r} label={r} on={v.why.includes(r)} onPress={() => toggleWhy(r)} />
+            {reasons.map((r) => (
+              <Chip key={r.code} label={r.label} on={v.why.includes(r.code)} onPress={() => toggleWhy(r.code)} />
             ))}
           </Chips>
         </Field>
@@ -201,13 +239,13 @@ export function TrialForm({ mode, value: v, onChange, onSubmit, onBack }: { mode
         open={sheet}
         onClose={() => setSheet(false)}
         title="체험할 지점을 골라요"
-        value={v.branch}
-        // 지점이 바뀌면 시간표도 바뀌어서 고른 시간을 비워요
-        onPick={(name) => {
-          onChange(name === v.branch ? {} : { branch: name, trialTime: '' });
+        value={v.branchCode}
+        // 지점이 바뀌면 시간표도 바뀌어서 고른 날짜 · 시간을 비워요
+        onPick={(b) => {
+          onChange(b.code === v.branchCode ? {} : { branchCode: b.code, branch: b.name, trialDay: '', trialTime: '' });
           form.reveal('name', 'phone');
         }}
-        trial
+        purpose="trial"
       />
     </KeyboardAvoidingView>
   );

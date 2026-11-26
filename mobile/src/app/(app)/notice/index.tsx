@@ -13,10 +13,11 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { NOTICE_TAG, noticeDate } from '@/data/mock';
 
 /**
  * 공지사항 목록 (프로토타입 noticeHTML · .nc-row).
- * 고정 공지(압정) 맨 위 · 태그 · 제목 · 날짜 · 쓴 곳 · 새 글 점. 누르면 상세로.
+ * 내가 고정한 공지(압정) 맨 위 · 태그 · 제목 · 날짜 · 쓴 곳 · 새 글 점. 누르면 상세로 (고정은 상세 위 압정으로).
  * 데이터: 12 GET /notices (첫 20개 · 더 받기는 공지가 많아지면 useInfiniteQuery 로)
  */
 export default function NoticeListScreen() {
@@ -32,7 +33,7 @@ export default function NoticeListScreen() {
         ) : data.items.length === 0 ? (
           <EmptyState title="아직 공지가 없어요." />
         ) : (
-          data.items.map((n) => <Row key={n.id} id={n.id} tag={n.tag} pinned={!!n.pinned} title={n.title} meta={`${n.date} · ${n.author}`} />)
+          data.items.map((n) => <Row key={n.id} id={n.id} tag={NOTICE_TAG[n.type]} pinned={n.pinned} title={n.title} meta={`${noticeDate(n.publishAt)} · ${n.author}`} />)
         )}
       </ScrollView>
     </SafeAreaView>

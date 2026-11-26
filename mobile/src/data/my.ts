@@ -1,9 +1,10 @@
 /**
  * 마이 A 가짜 데이터 — 꾸미기 상점 · 배지 · 랭킹 · 멤버 · 지점 안내 · 내 표현함 예시.
- * 값 · id 는 프로토타입(prototype/index.html 의 AV_ITEMS · AV_BG · MY_BADGES · RANK_PEOPLE · LG_MEMS · BR_BOARDS · S.marks)과 같아요.
+ * 값 · id 는 프로토타입(prototype/index.html 의 AV_ITEMS · AV_BG · MY_BADGES · RANK_PEOPLE · LG_MEMS · S.marks)과 같아요.
  * 맞는 API: docs/appendix/api-inventory.md — 7 `/members/:id` · 29 `/me/expressions` · 31 `/ranking` · 32 `/me/summary`
  *           · 33 `/me/badges` · 34 `/me/avatar` · 35 `/avatar/items` · 36 `/me/avatar/purchase` · 38 `/branches`
  */
+import type { BranchGuide } from '@/api/branch-guide';
 import type { SavedExpression } from '@/state/expressions';
 
 import { AV_BG, AV_BODIES, AV_ITEMS } from './av-items';
@@ -274,10 +275,27 @@ export type PartnerLink = { kind: PartnerLinkKind; url: string; label?: string }
 /** 포스터 · 사진: 앱에 넣은 그림(require) 또는 서버 주소. 관리자가 아무 크기로 올려요 (0번이 대표) */
 export type PartnerPoster = number | string;
 export type Partner = { n: string; b: string; c: string; w: string; addr?: string; tel?: string; hrs?: string; info?: string; how?: string; links?: PartnerLink[]; posters?: PartnerPoster[] };
-/** intro · photos: 지점 소개 글 · 사진 (전산에서 지점이 직접 써요 · 올려요). 비회원 가입의 '가까운 지점' 안내(onboarding/branch)가 보여 줘요. 사진이 없으면 빈 사진 칸 */
-export type BranchBoard = { addr: string; hrs: string; intro?: string; photos?: PartnerPoster[]; pin: { t: string; by: string; at: string } | null; items: BranchItem[]; partners: Partner[] };
+/** 보드 한 지점 (화면 모양) — 서버 지점 안내(api/branch-guide)를 toBranchBoard 로 바꿔 만들어요 */
+export type BranchBoard = { code: string; name: string; addr: string; hrs: string; intro?: string; photos?: PartnerPoster[]; pin: { t: string; by: string | null; at: string } | null; items: BranchItem[]; partners: Partner[] };
+
+/** 협업 업체 — 아직 서버에 없어서 지점 이름으로 앱 안 예시를 붙여요 (없는 지점은 빈 목록) */
+export const BR_PARTNERS: Record<string, Partner[]> = {
+  하남점: [
+    { n: 'Cafe Tammy', b: '음료 10% 할인', c: '#8A4B3A', w: 'CAFE', addr: '하남시 [주소] 1층 · 지점에서 도보 2분', tel: '031-000-0000', hrs: '매일 8~22시', info: '지점에서 걸어서 2분, 스터디 전후로 들르기 좋은 조용한 카페예요. 2층에 4인 테이블이 있어서 번개 모임이나 복습 자리로도 많이 써요. 영어로 주문하면 쿠키 하나를 더 주세요.', how: '주문할 때 PALLO 앱 멤버 화면을 보여 주세요', links: [{ kind: 'naver', url: 'https://map.naver.com' }, { kind: 'insta', url: 'https://instagram.com/cafe_tammy' }], posters: [require('@/assets/images/partners/cafe-poster.webp'), require('@/assets/images/partners/cafe-room.webp')] },
+    { n: '북스 미사', b: '원서 15% 할인', c: '#493087', w: 'BOOKS', addr: '하남시 미사 [주소] 2층', hrs: '10~21시 · 월요일 휴무', info: '원서 · 그래픽노블 코너가 따로 있는 동네 서점이에요. PALLO 교재 원서도 주문해 줘요.', how: '계산할 때 멤버 화면을 보여 주세요', links: [{ kind: 'insta', url: 'https://instagram.com/books_misa' }, { kind: 'web', url: 'https://example.com' }], posters: [require('@/assets/images/partners/books-poster.webp')] },
+    { n: '스터디카페 온', b: '2시간 이용권 20% 할인', c: '#138A9E', w: 'STUDY', posters: [require('@/assets/images/partners/study-poster.webp')] },
+  ],
+  잠실점: [
+    { n: '잠실 북카페', b: '음료 15% 할인', c: '#6B4E9B', w: 'BOOK CAFE', addr: '서울 송파구 [주소] 2층', info: '원서가 300권 넘게 있는 북카페예요. 스터디 끝나고 복습하기 좋아요.' },
+  ],
+};
+
+/** 앱 구경(비회원 · onboarding/branch)이 보여 주는 지점 안내 예시 — 지점 소개 글 · 사진(intro · photos) 포함.
+ *  회원 마이 보드는 서버 값(toBranchBoard)이에요. 비회원용 지점 안내 API 가 생기면 이것도 바꿔요 */
 export const BR_BOARDS: Record<string, BranchBoard> = {
   하남점: {
+    code: '',
+    name: '하남점',
     addr: '하남시 [주소] 3층',
     hrs: '평일 10~23시 · 주말 10~18시',
     intro: '미사역 바로 앞, 통창 라운지가 있는 지점이에요. 평일 저녁 스터디가 가장 많고, 스터디 끝나고 라운지에서 프리토킹을 이어 가는 분이 많아요.',
@@ -296,6 +314,8 @@ export const BR_BOARDS: Record<string, BranchBoard> = {
     ],
   },
   잠실점: {
+    code: '',
+    name: '잠실점',
     addr: '서울 송파구 [주소] 5층 · 잠실역 8번 출구 도보 3분',
     hrs: '평일 10~22시 · 주말 10~18시',
     intro: '잠실역 8번 출구에서 3분, 스터디룸 6개가 있는 지점이에요. 직장인 저녁 스터디와 주말 오전 스터디가 많아요.',
@@ -309,8 +329,61 @@ export const BR_BOARDS: Record<string, BranchBoard> = {
     partners: [{ n: '잠실 북카페', b: '음료 15% 할인', c: '#6B4E9B', w: 'BOOK CAFE', addr: '서울 송파구 [주소] 2층', info: '원서가 300권 넘게 있는 북카페예요. 스터디 끝나고 복습하기 좋아요.' }],
   },
 };
-/** 내가 듣는 팀의 지점들 (프로토타입 MY_TEAMS: 하남점 2팀 · 잠실점 1팀) */
-export const MY_BRANCHES = ['하남점', '잠실점'];
+
+/** 'MM.DD' (한국 시각) — 주의사항 쓴 날 */
+function kstMonthDay(iso: string): string {
+  const d = new Date(Date.parse(iso) + 9 * 3_600_000);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+const joinDot = (...parts: (string | null | undefined)[]) => parts.filter((p): p is string => !!p).join(' · ');
+
+/**
+ * 서버 지점 안내 → 보드 모양. 지점이 적지 않은 칸은 만들지 않아요 (주소 · 운영 시간 칸만 늘 있어요).
+ * 칸 순서: 주차 · 입금 계좌 → 와이파이 → 오시는 길 · 운영 시간 → 지점 문의. 사물함은 서버에 없어 뺐어요.
+ */
+export function toBranchBoard(g: BranchGuide): BranchBoard {
+  const addr = joinDot(g.address, g.addressDetail);
+  const items: BranchItem[] = [];
+  const acc = g.bankAccount;
+  if (g.parking || acc) {
+    const t = g.parking && acc ? '주차 · 입금 계좌' : g.parking ? '주차' : '입금 계좌';
+    items.push({
+      ic: 'park',
+      bg: '#FFE200',
+      t,
+      s: g.parking && acc ? '주차 · 계좌' : undefined,
+      d: g.parking ?? '',
+      cp: acc ? [[joinDot('입금 계좌', `예금주 ${acc.holder}`, acc.note), `${acc.bankName} ${acc.accountNumber}`]] : undefined,
+      star: true,
+    });
+  }
+  if (g.wifi) {
+    items.push({
+      ic: 'wifi',
+      bg: '#BFE4EC',
+      t: '와이파이',
+      d: g.wifi.password ? '' : '비밀번호 없이 연결돼요',
+      cp: g.wifi.password ? [['이름', g.wifi.ssid], ['비밀번호', g.wifi.password]] : [['이름', g.wifi.ssid]],
+      star: true,
+    });
+  }
+  items.push({ ic: 'loc', bg: '#F6C9D4', t: '오시는 길 · 운영 시간', d: joinDot(addr, g.openHours), act: ['map', g.address], star: true });
+  if (g.phone || g.phoneHours) {
+    items.push({ ic: 'tel', bg: '#FFE7D1', t: '지점 문의', d: joinDot(g.phone, g.phoneHours), act: g.phone ? ['tel', g.phone] : undefined, star: true });
+  }
+  const n = g.managerNotice;
+  return {
+    code: g.branchCode,
+    name: g.branchName,
+    addr,
+    hrs: g.openHours ?? '',
+    pin: n ? { t: n.content, by: n.authorName ? `매니저 ${n.authorName}` : null, at: kstMonthDay(n.updatedAt) } : null,
+    items,
+    partners: BR_PARTNERS[g.branchName] ?? [],
+  };
+}
 
 // ---------------------------------------------------------------- 내 표현함 예시 (프로토타입 S.marks 14개 · 최근 저장한 게 위)
 

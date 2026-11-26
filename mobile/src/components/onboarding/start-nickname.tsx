@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -12,15 +12,12 @@ export const NICKNAME_MAX = 10;
 const SHAPE = /^[가-힣a-zA-Z0-9]+$/;
 /** 한글을 쓰는 중 (ㅅ → 서) 잠깐 보이는 낱자 */
 const JAMO = /[ㄱ-ㆎ]/;
-/** 이미 쓰는 닉네임 (가짜 · 실제는 A22 GET /members/nickname-check?q=) */
-const TAKEN = new Set(['팔로로', 'admin']);
-const CHECK_MS = 400;
 
 const ERROR = '#C2416B';
 
 export type NickStatus = { tone: 'ok' | 'error' | 'wait'; text: string };
 
-/** 글자 모양만 보고 문제를 알려 줘요. 괜찮으면 null (중복 확인은 useNicknameStatus) */
+/** 글자 모양만 보고 문제를 알려 줘요. 괜찮으면 null — 서버(POST /onboarding)와 같은 규칙이고, 같은 닉네임은 여럿이 써도 돼요 */
 export function checkNickname(name: string): NickStatus | null {
   if (!name) return { tone: 'wait', text: '2~10자 한글 · 영문 · 숫자로 써 주세요' };
   if (JAMO.test(name) && /^[가-힣a-zA-Z0-9ㄱ-ㆎ]+$/.test(name)) return { tone: 'wait', text: '글자를 끝까지 써 주세요' };
@@ -31,23 +28,9 @@ export function checkNickname(name: string): NickStatus | null {
   return null;
 }
 
-/**
- * 입력하는 동안 중복 확인: 멈추고 0.4초 뒤에 확인해요 (가짜). 확인 전에는 '확인하는 중'이라 '다음'이 꺼져 있어요.
- * 처음 채워 둔 이름은 바로 확인된 것으로 쳐요.
- */
+/** 입력하는 대로 규칙 확인 — 중복 확인은 하지 않아요 (서버가 같은 닉네임을 허용해요) */
 export function useNicknameStatus(name: string): NickStatus {
-  const shape = checkNickname(name);
-  const [checked, setChecked] = useState(name);
-  useEffect(() => {
-    if (shape || checked === name) return;
-    const t = setTimeout(() => setChecked(name), CHECK_MS);
-    return () => clearTimeout(t);
-  }, [name, shape, checked]);
-
-  if (shape) return shape;
-  if (checked !== name) return { tone: 'wait', text: '쓸 수 있는지 확인하는 중…' };
-  if (TAKEN.has(name.toLowerCase())) return { tone: 'error', text: '이미 쓰는 닉네임이에요' };
-  return { tone: 'ok', text: '쓸 수 있는 닉네임이에요' };
+  return checkNickname(name) ?? { tone: 'ok', text: '쓸 수 있는 닉네임이에요' };
 }
 
 /** 입력칸 아래 도움말 (.help): 왼쪽 확인 결과 · 오른쪽 글자 수 n/10 */

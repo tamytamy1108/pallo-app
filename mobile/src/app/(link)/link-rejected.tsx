@@ -35,7 +35,8 @@ export default function LinkRejectedScreen() {
     // 연동 요청 화면(onboarding/link)은 보내면 기다리는 화면 → 시작하기(useCompleteOnboarding)로 이어져요.
     // 그 화면을 지금 다른 사람이 고치는 중이라, 여기서 미리 '확인 중'으로 되돌리고 지점 회원 길로 맞춰 둬요
     restartLinkRequest();
-    updateOnboarding({ path: 'member', branch });
+    // 지점 code 는 가입에서 고른 값 — 없으면(개발용 ?link=) 이름으로 (가짜 서버는 code = 이름)
+    updateOnboarding({ path: 'member', branch, branchCode: sent.branchCode || branch });
     router.push('/onboarding/link');
   };
   const call = () => {

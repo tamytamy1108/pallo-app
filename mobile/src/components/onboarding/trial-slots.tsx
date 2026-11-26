@@ -1,20 +1,16 @@
-import { useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import Svg, { Path, Rect } from 'react-native-svg';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { MonthCalendar } from '@/components/event/form-parts';
 import { Pressable } from '@/components/ui/pressable';
-import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import type { StudyLang } from '@/state/me';
 
 import { ERROR_RED, useFieldInvalid } from './parts';
 
 /**
  * 체험 상담 날짜 · 시간 고르기 (프로토타입 onboarding-options.html #t-pick 의 .t1-wait · .dys/.dy · .sls/.sl · .t1-note).
- * 시간표는 가짜예요. 실제로는 48 `GET /trial-slots?branch=&date=&lang=` — 지점 · 언어 프로님 일정 (Q-O10).
+ * 시간표는 서버 `GET /trial-slots?branchCode=` — 지점 상담 가능시간에서 오늘부터 5일 (오늘은 지난 시각을 빼요).
+ * 예약이 아니라 희망 시간이라 마감 칸은 없어요 (full 은 늘 false — 칸 모양만 남겨 둬요).
  */
 
 export type TrialDayTile = {
@@ -31,51 +27,27 @@ export type TrialSlot = { time: string; full: boolean };
 const WEEK = '일월화수목금토';
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** 옆으로 넘겨 고르는 날짜: 내일부터 2주 (그 뒤는 달력으로) */
-export const TRIAL_QUICK_DAYS = 14;
-/** 달력으로 고를 수 있는 끝 (오늘부터 며칠 뒤까지) */
-export const TRIAL_LAST_DAY = 60;
-
-const tileOf = (d: Date): TrialDayTile => ({ key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, month: d.getMonth() + 1, date: d.getDate(), week: WEEK[d.getDay()] });
-
-/** 'YYYY-MM-DD' → 날짜 칸 (형식이 틀리면 null) */
-export function trialDayTile(key: string): TrialDayTile | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
-  return m ? tileOf(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))) : null;
+/** 'YYYY-MM-DD' → 날짜 칸 (기기 달력 기준 요일) */
+export function dayTile(key: string): TrialDayTile {
+  const [y, m, d] = key.split('-').map(Number);
+  const at = new Date(y, m - 1, d);
+  return { key, month: at.getMonth() + 1, date: at.getDate(), week: WEEK[at.getDay()] };
 }
 
-/** 고를 수 있는 날인지 (내일 ~ TRIAL_LAST_DAY 일 뒤) */
-export function isTrialDay(key: string, now = new Date()) {
-  const t = trialDayTile(key);
-  if (!t) return false;
-  const d = new Date(Number(key.slice(0, 4)), t.month - 1, t.date);
-  const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diff = Math.round((d.getTime() - t0.getTime()) / 86400000);
-  return diff >= 1 && diff <= TRIAL_LAST_DAY;
-}
-
-/** 내일부터 2주 */
+/** 오늘부터 5일 (스토리 · 서버 응답 전 모양 맞추기용) */
 export function trialDayTiles(now = new Date()): TrialDayTile[] {
-  return Array.from({ length: TRIAL_QUICK_DAYS }, (_, i) => {
-    return tileOf(new Date(now.getFullYear(), now.getMonth(), now.getDate() + i + 1));
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    return dayTile(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   });
 }
 
-/** 언어마다 프로님 상담 시간이 달라요 (가짜) */
-const TIMES: Record<StudyLang, readonly string[]> = {
-  en: ['10:00', '11:00', '14:00', '15:00', '19:00', '20:00'],
-  ja: ['10:30', '13:00', '14:30', '16:00', '19:30', '20:30'],
-  zh: ['11:00', '13:30', '15:00', '17:00', '18:30', '20:00'],
-  es: ['10:00', '12:00', '14:00', '16:30', '18:00', '19:30'],
-};
-
-const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7);
-
-/** 그 지점 · 날짜 · 언어의 상담 시간 6칸. 몇 칸은 마감 (가짜 · 한 칸은 늘 비워 둬요) */
-export function trialSlots(branch: string, day: string, lang: StudyLang): TrialSlot[] {
-  const slots = TIMES[lang].map((time) => ({ time, full: hash(branch + day + lang + time) % 3 === 0 }));
-  if (slots.every((s) => s.full)) slots[slots.length - 1] = { ...slots[slots.length - 1], full: false };
-  return slots;
+/** 서버 시간표(날짜마다 시각) → 날짜 칸 · 고른 날의 시간 칸 */
+export function slotDays(days: { date: string; times: string[] }[]): TrialDayTile[] {
+  return days.map((d) => dayTile(d.date));
+}
+export function slotsOn(days: { date: string; times: string[] }[], day: string): TrialSlot[] {
+  return (days.find((d) => d.date === day)?.times ?? []).map((time) => ({ time, full: false }));
 }
 
 /** '2026-11-28' + '15:00' → '11월 28일 (금) 15:00' */
@@ -117,6 +89,7 @@ export function TrialSlots({
   return (
     <View>
       <DayStrip days={days} day={day} onDay={onDay} />
+      {slots.length === 0 ? <PText style={styles.noSlot}>이 날은 상담할 수 있는 시간이 없어요. 다른 날을 골라 주세요</PText> : null}
       <View style={styles.slots} accessibilityRole="radiogroup" accessibilityLabel="상담 시간">
         {slots.map((s) => {
           const on = !s.full && s.time === time;
@@ -142,55 +115,29 @@ export function TrialSlots({
 }
 
 /**
- * 날짜 줄: 내일부터 2주를 옆으로 넘겨 골라요. 맨 끝 [달력] 칸으로 그 뒤 날짜(2주 뒤 ~ 두 달)를 직접 골라요.
- * 달력에서 고른 날은 줄 끝(달력 칸 앞)에 따로 보여요.
+ * 날짜 줄: 서버가 준 날짜(오늘부터 5일)를 옆으로 넘겨 골라요. 첫 칸과 1일에는 달도 같이 보여요.
+ * 원격 시안의 '2주 + 달력' 은 서버 시간표가 5일이라 달력 칸은 빼 뒀어요 (GET /trial-slots 가 기간을 늘리면 다시).
  */
 function DayStrip({ days, day, onDay }: { days: TrialDayTile[]; day: string; onDay: (key: string) => void }) {
-  const [cal, setCal] = useState(false);
-  const ref = useRef<ScrollViewInstance>(null);
-  const later = days.some((d) => d.key === day) ? null : trialDayTile(day);
-  const tile = (d: TrialDayTile, on: boolean, extra?: boolean) => (
-    <Pressable
-      key={d.key}
-      sound="pick"
-      onPress={() => (extra ? setCal(true) : onDay(d.key))}
-      accessibilityRole="radio"
-      accessibilityLabel={`${d.month}월 ${d.date}일 ${d.week}요일${extra ? ' · 달력에서 고른 날 · 바꾸기' : ''}`}
-      accessibilityState={{ selected: on, checked: on }}
-      style={({ pressed }) => [styles.day, on && styles.dayOn, pressed && styles.pressed]}>
-      <PText style={[styles.dayWeek, on && styles.dayWeekOn]}>{extra ? `${d.month}월 ${d.week}` : d.date === 1 || d === days[0] ? `${d.month}월 ${d.week}` : d.week}</PText>
-      <PText style={[styles.dayNum, on && styles.textOnDark]}>{d.date}</PText>
-    </Pressable>
-  );
   return (
-    <>
-      <ScrollView ref={ref} horizontal showsHorizontalScrollIndicator={false} style={styles.strip} contentContainerStyle={styles.days} accessibilityRole="radiogroup" accessibilityLabel="상담 날짜 · 옆으로 넘겨 2주">
-        {days.map((d) => tile(d, d.key === day))}
-        {later ? tile(later, true, true) : null}
-        <Pressable sound="open" onPress={() => setCal(true)} accessibilityRole="button" accessibilityLabel="2주 뒤 날짜를 달력에서 고르기" style={({ pressed }) => [styles.day, styles.calTile, pressed && styles.pressed]}>
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-            <Rect x={3.5} y={5} width={17} height={15.5} rx={3} />
-            <Path d="M3.5 10h17M8 3v4M16 3v4" />
-          </Svg>
-          <PText style={styles.calTileT}>달력</PText>
-        </Pressable>
-      </ScrollView>
-      <Sheet open={cal} onClose={() => setCal(false)} title="상담 날짜를 골라요">
-        <MonthCalendar
-          value={later ? later.key : ''}
-          onChange={(key) => {
-            onDay(key);
-            setCal(false);
-            // 고른 날 칸이 보이게 줄 끝으로
-            setTimeout(() => ref.current?.scrollToEnd({ animated: true }), 350);
-          }}
-          minDays={TRIAL_QUICK_DAYS + 1}
-          maxDays={TRIAL_LAST_DAY}
-          hint="2주 뒤부터 두 달 안에서 골라요 · 2주 안은 날짜 줄에서 골라요"
-          pick={(d) => `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`}
-        />
-      </Sheet>
-    </>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.strip} contentContainerStyle={styles.days} accessibilityRole="radiogroup" accessibilityLabel="상담 날짜">
+      {days.map((d, i) => {
+        const on = d.key === day;
+        return (
+          <Pressable
+            key={d.key}
+            sound="pick"
+            onPress={() => onDay(d.key)}
+            accessibilityRole="radio"
+            accessibilityLabel={`${d.month}월 ${d.date}일 ${d.week}요일`}
+            accessibilityState={{ selected: on, checked: on }}
+            style={({ pressed }) => [styles.day, on && styles.dayOn, pressed && styles.pressed]}>
+            <PText style={[styles.dayWeek, on && styles.dayWeekOn]}>{d.date === 1 || i === 0 ? `${d.month}월 ${d.week}` : d.week}</PText>
+            <PText style={[styles.dayNum, on && styles.textOnDark]}>{d.date}</PText>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -206,8 +153,6 @@ const styles = StyleSheet.create({
   dayWeekOn: { color: '#D9CFF2' },
   dayNum: { fontFamily: Font.display, fontSize: 17, lineHeight: 22 },
   textOnDark: { color: Colors.white },
-  calTile: { borderStyle: 'dashed', gap: 2 },
-  calTileT: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 15 },
   slots: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, marginHorizontal: -3.5 },
   slotCell: { width: '33.333%', padding: 3.5 },
   slot: { height: 46, borderRadius: 12, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
@@ -216,6 +161,7 @@ const styles = StyleSheet.create({
   slotText: { fontFamily: Font.display, fontSize: 14.5, lineHeight: 19 },
   slotTextOn: { color: Colors.purple },
   slotTextFull: { color: '#B4AC9B', textDecorationLine: 'line-through' },
+  noSlot: { marginTop: 10, paddingVertical: 14, textAlign: 'center', fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   note: { marginTop: 8, fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   pressed: { opacity: 0.85 },
 });

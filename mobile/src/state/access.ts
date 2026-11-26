@@ -1,23 +1,19 @@
 /**
  * 회원 · 비회원 권한 — docs/pages/09-onboarding.md '회원 · 비회원 권한' 표와 같아요.
- * 누가 누구인지(userKind)는 나(state/me)의 role · link · trial · plan 으로 정해요. role 'guest' 가 기준이에요:
- * 지점이 연동해 주기 전(가입 직후 · 연동 대기 · 못 찾음 · 체험 예약 · 앱으로만)은 모두 guest 이고, 연동되면 member (state/link-events).
+ * 누가 누구인지(userKind)는 회원(member) · 비회원(guest) 둘뿐이에요. 회원 = 연동된 지점이 있는 사람 (state/me 의 role · link).
+ * 지점이 연동해 주기 전(가입 직후 · 연동 대기 · 못 찾음 · 체험 예약)은 모두 guest 이고, 연동되면 member (state/link-events).
+ * 비회원이 지금 무엇을 기다리는지(연동 대기 · 반려 · 체험 예약)는 상태가 아니라 서버 요약에서 봐요 (api/use-branch-progress).
  */
 import type { Me } from '@/state/me';
 
-/** 회원 · 연동 대기 · 연동 안 됨 · 체험 예약 · 앱으로만 · 비회원 */
-export type UserKind = 'member' | 'pending' | 'rejected' | 'trial' | 'app' | 'guest';
+/** 회원 · 비회원 */
+export type UserKind = 'member' | 'guest';
 
-type AccessFields = Pick<Me, 'role' | 'link' | 'trial' | 'plan'>;
+type AccessFields = Pick<Me, 'role' | 'link'>;
 
 export function userKind(me: AccessFields): UserKind {
   // 회원 · 프로 · 매니저 (연동됨 — 처음 넣어 둔 가짜 회원도 linked)
-  if (me.role !== 'guest' && (me.link === 'linked' || me.link === 'none')) return 'member';
-  if (me.link === 'pending') return 'pending';
-  if (me.link === 'rejected') return 'rejected';
-  if (me.trial) return 'trial';
-  if (me.plan === 'app') return 'app';
-  return 'guest';
+  return me.role !== 'guest' && (me.link === 'linked' || me.link === 'none') ? 'member' : 'guest';
 }
 
 export const isMember = (me: AccessFields) => userKind(me) === 'member';
@@ -48,13 +44,8 @@ export const OPEN_FEATURES = {
 
 export type Feature = keyof typeof MEMBER_FEATURES | keyof typeof OPEN_FEATURES;
 
-/** 앱 구독(결제)도 쓰는 것: 레슨 맵 전부 · 끝까지 스크롤 · 설정 (지점 전산 · 다른 사람과 함께하는 건 회원만) */
-const APP_FEATURES: Feature[] = ['allChapters', 'fullScroll', 'settings'];
-
 export function canUse(me: AccessFields, feature: Feature) {
-  if (!(feature in MEMBER_FEATURES)) return true;
-  const kind = userKind(me);
-  return kind === 'member' || (kind === 'app' && APP_FEATURES.includes(feature));
+  return !(feature in MEMBER_FEATURES) || isMember(me);
 }
 
 /** 비회원이 끝까지 해 볼 수 있는 챕터: 맵마다 첫 챕터 (스터디 맵 1과 · 상황 맵 장면 1) */

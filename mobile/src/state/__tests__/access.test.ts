@@ -3,32 +3,32 @@
  */
 import { canUse, userKind } from '../access';
 
-const base = { role: 'guest', link: 'none', trial: null, plan: 'study' } as const;
-const trial = { branch: '영등포점', day: '2026-11-27', time: '19:30', lang: 'en' } as const;
+const base = { role: 'guest', link: 'none' } as const;
 
 describe('userKind', () => {
-  it('연동된 회원 · 처음 넣어 둔 회원', () => {
-    expect(userKind({ ...base, role: 'member', link: 'linked' })).toBe('member');
-    expect(userKind({ ...base, role: 'leader', link: 'linked' })).toBe('member');
+  it('연동된 회원 · 처음 넣어 둔 회원은 member', () => {
+    expect(userKind({ role: 'member', link: 'linked' })).toBe('member');
+    expect(userKind({ role: 'leader', link: 'linked' })).toBe('member');
+    expect(userKind({ role: 'member', link: 'none' })).toBe('member');
   });
-  it('연동 대기 · 못 찾음은 역할과 상관없이 회원이 아니에요', () => {
-    expect(userKind({ ...base, link: 'pending' })).toBe('pending');
-    expect(userKind({ ...base, role: 'member', link: 'pending' })).toBe('pending');
-    expect(userKind({ ...base, link: 'rejected' })).toBe('rejected');
+  it('연동 대기 · 못 찾음은 역할과 상관없이 guest', () => {
+    expect(userKind({ ...base, link: 'pending' })).toBe('guest');
+    expect(userKind({ role: 'member', link: 'pending' })).toBe('guest');
+    expect(userKind({ role: 'manager', link: 'rejected' })).toBe('guest');
   });
-  it('체험 예약 · 앱 구독 · 둘러보기', () => {
-    expect(userKind({ ...base, trial })).toBe('trial');
-    expect(userKind({ ...base, plan: 'app' })).toBe('app');
+  it('연동 안 한 비회원은 guest', () => {
     expect(userKind(base)).toBe('guest');
+    expect(userKind({ role: 'guest', link: 'linked' })).toBe('guest');
   });
 });
 
 describe('canUse', () => {
-  it('회원 전용은 회원만', () => {
-    expect(canUse({ ...base, role: 'member', link: 'linked' }, 'attendance')).toBe(true);
-    for (const me of [base, { ...base, link: 'pending' as const }, { ...base, trial }, { ...base, plan: 'app' as const }]) {
-      expect(canUse(me, 'attendance')).toBe(false);
-      expect(canUse(me, 'proNote')).toBe(false);
+  it('회원은 전부', () => {
+    for (const f of ['attendance', 'settings', 'allChapters', 'fullScroll', 'lesson'] as const) expect(canUse({ role: 'member', link: 'linked' }, f)).toBe(true);
+  });
+  it('비회원은 누구나 쓰는 것만 — 앱 구독만 여는 예외는 없어요', () => {
+    for (const me of [base, { ...base, link: 'pending' as const }, { ...base, link: 'rejected' as const }]) {
+      for (const f of ['attendance', 'proNote', 'settings', 'allChapters', 'fullScroll'] as const) expect(canUse(me, f)).toBe(false);
       expect(canUse(me, 'lesson')).toBe(true);
       expect(canUse(me, 'like')).toBe(true);
     }

@@ -7,7 +7,7 @@ import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { ChangeCalendar } from '@/components/account/change-calendar';
 import { AccountPage, Box, ChoiceChip, Icon, Lift, type IconName } from '@/components/account/parts';
-import { BranchSheet, withJeom } from '@/components/onboarding/branch-sheet';
+import { BranchListSheet, withJeom } from '@/components/onboarding/branch-list';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { showWarnToast } from '@/components/ui/toast';
@@ -494,7 +494,7 @@ function ChangeScreen() {
                 <PText style={styles.selT}>{withJeom(f.br)}</PText>
                 <PText style={styles.selGo}>바꾸기 ›</PText>
               </Pressable>
-              <BranchSheet
+              <BranchListSheet
                 open={brOpen}
                 onClose={() => setBrOpen(false)}
                 title="어느 지점으로 옮길까요?"

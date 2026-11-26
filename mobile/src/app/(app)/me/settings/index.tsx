@@ -3,7 +3,6 @@ import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
 
 import { logout } from '@/api/auth';
-import { apiErrorMessage } from '@/api/errors';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Toggle } from '@/components/account/parts';
@@ -96,7 +95,7 @@ export default function SettingsScreen() {
               onPress={() => {
                 setSheet(null);
                 // 토큰을 지우면 로그인 상태(api/session.tsx)가 캐시를 비우고 app/_layout.tsx 가 첫 화면으로 보내요
-                logout().catch((e: unknown) => showToast(apiErrorMessage(e)));
+                void logout();
               }}
             />
           </View>
