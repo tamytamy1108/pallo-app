@@ -6,6 +6,7 @@
  *   13 `/me/notifications` · 14 `/me/notifications/read` · 15 `/lounge/highlights` · 22 `/me/progress/skip-test`
  *   팝업 공지는 아직 목록에 없어요 (제안: GET `/popups` — 본사 관리자가 올리는 앱 시작 팝업)
  */
+import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import { MY_TEAMS, teamWeekdays } from '@/data/account';
 
@@ -148,7 +149,7 @@ export type LoungeHighlight = {
   href: string;
 };
 
-export const LOUNGE_HIGHLIGHTS: LoungeHighlight[] = [
+const ALL_LOUNGE_HIGHLIGHTS: LoungeHighlight[] = [
   {
     id: 'p1',
     channel: '커뮤니티',
@@ -225,6 +226,14 @@ export const LOUNGE_HIGHLIGHTS: LoungeHighlight[] = [
     href: '/trip/a1',
   },
 ];
+/**
+ * 출시 때 안 여는 기능(constants/launch)으로 가는 예시는 빼요 — 해외 동행 · 해외살이 · 표현 챌린지.
+ * c1 · c2 · c3 · c14 는 data/challenge 의 예시 표현 챌린지예요 (여기서 data/challenge 를 부르면 today-goal 과 서로 물려요).
+ * 서버 데이터로 바뀌면 서버가 안 보내면 돼요.
+ */
+const EXPR_CHALLENGE_HREF = /^\/challenge\/(c1|c2|c3|c14)(\?|$)/;
+const launchedHref = (h?: string) => !((!LAUNCH.trip && !!h && /trip/.test(h)) || (!LAUNCH.exprChallenge && !!h && EXPR_CHALLENGE_HREF.test(h)));
+export const LOUNGE_HIGHLIGHTS = ALL_LOUNGE_HIGHLIGHTS.filter((x) => launchedHref(x.href));
 
 /** 학습 언어 칩 색 (프로토타입 LG_LANGC) */
 export const LANG_CHIP: Record<string, string> = {
@@ -266,7 +275,7 @@ export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [
   { key: 'event', label: '이벤트' },
 ];
 
-export const NOTIS: Noti[] = [
+const ALL_NOTIS: Noti[] = [
   // 받는 쪽 예시 (추가 제안 · api-additions): 팔로우한 멤버의 '같이 갈래요?' → 그 시간 · 언어로 사전 출석 시트
   { id: 'inv1', kind: 'learn', who: { name: '민준', bg: '#E3EAF8', body: 'sky' }, text: '민준님이 오늘 21:00 영어 세션에 가요. 같이 갈래요?', time: '5분 전', href: '/?attend=rsvp&slot=2&lang=0', read: false, action: '같이 가기' },
   // 팔로우한 멤버의 퀘스트 성공 → 같은 단계로 (첫 챕터 · 회원 잠금은 레슨 화면이 지켜요)
@@ -287,6 +296,7 @@ export const NOTIS: Noti[] = [
   { id: 'n10', kind: 'notice', icon: 'tack', text: '[이벤트] 영등포점 Thanksgiving 포틀럭 파티', time: '10.30', href: '/notice/n2', read: true },
   { id: 'nc3', kind: 'notice', icon: 'tack', text: '[공지] 라운지 이용 규칙 안내', time: '10.27', href: '/notice/n4', read: true },
 ];
+export const NOTIS = ALL_NOTIS.filter((n) => launchedHref(n.href));
 
 /* ───────── 앱 구독자 · 오늘의 목표 (프로토타입 .sub-hero) ───────── */
 

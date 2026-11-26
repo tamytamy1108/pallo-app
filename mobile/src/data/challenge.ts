@@ -6,6 +6,7 @@
  * · 84 GET `/challenges/:id/ranking` · 85 GET·POST `/challenges/:id/entries`.
  * 백엔드가 생기면 이 값 · 계산 대신 서버 응답을 써요. 담당: 챌린지.
  */
+import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import { createStore } from '@/lib/store';
 import { exprCard, exprFrom, type SavedExpression } from '@/state/expressions';
@@ -34,7 +35,7 @@ export type ChIconName = 'cmt' | 'book' | 'cup' | 'run' | 'clock' | 'flag';
 export type ChTone = 'y' | 'sk' | '';
 export type ChCat = { key: ChCatKey; label: string; icon: ChIconName; tone: ChTone };
 
-export const CH_CATS: ChCat[] = [
+const ALL_CH_CATS: ChCat[] = [
   { key: 'study', label: '표현', icon: 'cmt', tone: 'y' },
   { key: 'habit', label: '공부 습관', icon: 'book', tone: '' },
   { key: 'health', label: '건강 · 식단', icon: 'cup', tone: 'sk' },
@@ -42,7 +43,9 @@ export const CH_CATS: ChCat[] = [
   { key: 'morning', label: '아침 루틴', icon: 'clock', tone: 'y' },
   { key: 'free', label: '자유', icon: 'flag', tone: '' },
 ];
-export const chCat = (k?: ChCatKey) => CH_CATS.find((c) => c.key === k) ?? CH_CATS[0];
+/** 표현 챌린지는 출시 뒤에 열어요 (constants/launch) — 칩 · 챌린지 열기 종류에서 빠져요 */
+export const CH_CATS = ALL_CH_CATS.filter((c) => c.key !== 'study' || LAUNCH.exprChallenge);
+export const chCat = (k?: ChCatKey) => ALL_CH_CATS.find((c) => c.key === k) ?? ALL_CH_CATS[0];
 /** CH_BG: 카테고리 아이콘 칸 · 상세 위 진행 카드 바탕 */
 export const CH_BG: Record<ChTone, string> = { y: '#FFF5B0', sk: '#E3EAF8', '': '#E5DDF6' };
 
@@ -115,7 +118,7 @@ export type Challenge = {
 };
 
 /** 예시 챌린지 (LG_FEED 의 챌린지 순서 그대로) */
-export const CHALLENGES: Challenge[] = [
+const ALL_CHALLENGES: Challenge[] = [
   { id: 'c1', who: '민준', av: CH_C.sky, br: '잠실점', time: '1시간 전', at: SEED_NEW_AT, name: '30일 하루 한 문장', ls: 6, host: '하나', members: 128, day: 17, of: 30, q: 'I’m on the fence about it.', hl: 'on the fence', ko: '그건 아직 결정을 못 하겠어요 · 세션에서 배운 표현', lang: 'en-US', likes: 41, rec: true },
   { id: 'c2', who: 'Leo', av: CH_C.pk, br: '연신내', time: '3시간 전', name: '주 3회 쉐도잉 · 4주', src: { k: 'free', t: '11.12 영등포 세션' }, unit: '회', bg: 'sk', host: 'Leo', members: 46, day: 9, of: 12, q: 'Could you say that again?', hl: 'say that again', ko: '다시 말해 줄래요? · 이번 주 쉐도잉 문장', lang: 'en-US', likes: 22 },
   { id: 'c4', cat: 'health', way: 'photo', who: '소라', av: CH_C.mint, br: '영등포', time: '5시간 전', name: '14일 아침 건강하게 먹기', guide: '아침 식단 사진 한 장 + 한 줄 소감 · 영어로 쓰면 더 좋아요', freqT: '매일', dur: 14, host: '소라', members: 37, day: 5, of: 14, bg: 'sk', lang: 'en-US', likes: 18 },
@@ -130,6 +133,9 @@ export const CHALLENGES: Challenge[] = [
   { id: 'c14', who: '소라', av: CH_C.mint, br: '영등포', time: '2시간 전', at: SEED_NEW_AT, name: '14일 하루 한 문장', ls: 0, bg: 'sk', host: '소라', members: 24, day: 3, of: 14, q: 'I got hooked on a new podcast.', hl: 'hooked on', ko: '~에 빠지다 · 레벨 3 키워드', lang: 'en-US', likes: 9 },
   { id: 'c3', who: 'PALLO', av: CH_C.y, br: '전 지점', time: '오늘', name: '7일 영어 일기', ls: 6, cmn: 10, bg: 'y', host: 'PALLO', members: 213, day: 0, of: 7, start: '11.17 월 시작', q: 'Today was a long day.', hl: 'a long day', ko: '오늘은 긴 하루였어요 · 첫날 예시 문장', lang: 'en-US', likes: 75 },
 ];
+/** 표현 챌린지(cat 없음 = study)는 출시 뒤에 열어요 (constants/launch) — 목록 · 추천 · 내 챌린지 어디에도 안 나와요 */
+const launched = (p: Challenge) => LAUNCH.exprChallenge || (p.cat ?? 'study') !== 'study';
+export const CHALLENGES = ALL_CHALLENGES.filter(launched);
 
 // ---- 예시 멤버 (LG_MEMS · LG_POOL · LG_RANK) ----
 type Mem = [name: string, color: string];
@@ -222,7 +228,7 @@ const without = <T,>(rec: Record<string, T>, key: string) => {
 };
 
 // ---- 계산 (프로토타입 함수 이름을 옆에 적어요) ----
-export const allChallenges = (s: ChView) => [...s.created, ...CHALLENGES];
+export const allChallenges = (s: ChView) => [...s.created.filter(launched), ...CHALLENGES];
 export const findChallenge = (s: ChView, id: string) => allChallenges(s).find((p) => p.id === id);
 /** chIsX: 표현 챌린지 (나만의 문장 완성하기) */
 export const isExpr = (p: Challenge) => (p.cat ?? 'study') === 'study';
