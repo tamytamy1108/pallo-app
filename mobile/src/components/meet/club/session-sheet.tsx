@@ -14,6 +14,7 @@ import { CopyBtn, HiForm, MemberRow } from '../detail/detail-parts';
 import { DoneSheet, SumCard, sumText } from '../detail/sheets';
 import { Icon } from '../icons';
 import { setText, toggleIn, useMeetStore } from '../meet-store';
+import { areaLine } from '../area';
 import { clubSpot, sessionMembers, type Member, type Session } from '../model';
 
 type Me = { name: string; branch: string };
@@ -43,7 +44,10 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub, onCancel
   const full = q.cur >= q.cap && !q.me;
   const at = sessionMembers(all, q, me, myHi);
   // 만든 일정은 호스트가 적은 장소 (없으면 동아리 장소)
-  const spot: [string, string] = q.made ? [q.place || clubSpot(c)[0], q.place ? '호스트가 정한 장소예요' : clubSpot(c)[1]] : clubSpot(c);
+  const spot0: [string, string] = q.made ? [q.place || clubSpot(c)[0], q.place ? '호스트가 정한 장소예요' : clubSpot(c)[1]] : clubSpot(c);
+  // 자세한 주소 · 복사는 멤버 · 호스트 · 코호스트 · 스텝만 (inC = model clubOpen). 가입 안 한 사람은 장소 이름 + 시 · 구 · 역 근처만 봐요
+  const area = areaLine(spot0[1], '', spot0[0]);
+  const spot: [string, string] = inC ? spot0 : [spot0[0], [area, '가입하면 자세한 주소가 보여요'].filter(Boolean).join(' · ')];
 
   const attend = () => {
     toggleIn('att', q.id);
@@ -98,7 +102,7 @@ export function SessionSheet({ c, q, inC, all, me, onClose, onJoinClub, onCancel
                   <PText style={styles.addrB}>{spot[0]}</PText>
                   <PText style={[styles.addrS, keepAll]}>{spot[1]}</PText>
                 </View>
-                <CopyBtn text={q.made ? spot[0] : spot[1]} />
+                {inC ? <CopyBtn text={q.made ? spot[0] : spot[1]} /> : null}
               </View>,
             ],
             ['users', `${q.cur} / ${q.cap}명${q.cur >= q.cap ? ' · 마감' : ` · 남은 자리 ${q.cap - q.cur}`}`],
