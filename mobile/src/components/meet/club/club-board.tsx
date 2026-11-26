@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { meetRoleKind, RoleTag } from '@/components/common/role-tag';
 import { StyleSheet, View } from 'react-native';
 
+import { ChipScroll } from '@/components/ui/chip-scroll';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { ProfileTap } from '@/components/common/profile-tap';
@@ -162,15 +163,15 @@ export function ClubBoard({ c, inC, myName, staff, isHost = false }: { c: Club; 
 
   return (
     <View>
-      {/* 칩 줄 오른쪽 끝에 글쓰기 (좁은 화면이면 칩이 다음 줄로 넘어가요) */}
+      {/* 칩 줄 한 줄 · 오른쪽 끝에 글쓰기 고정 (좁은 화면이면 칩 줄만 옆으로 넘겨요 — 다음 줄로 내려가지 않게) */}
       <View style={[chipStyles.row, styles.bar]}>
-        <View style={styles.chips}>
+        <ChipScroll horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chips} accessibilityLabel="게시판 글 종류">
           {FILTERS.map(([k, l]) => (
-            <Pressable key={k} onPress={() => setF(k)} accessibilityRole="button" accessibilityState={{ selected: f === k }} style={[chipStyles.b, f === k && chipStyles.on]}>
+            <Pressable key={k} onPress={() => setF(k)} accessibilityRole="button" accessibilityState={{ selected: f === k }} style={[chipStyles.b, styles.chip, f === k && chipStyles.on]}>
               <PText style={[chipStyles.t, f === k && chipStyles.tOn]}>{l}</PText>
             </Pressable>
           ))}
-        </View>
+        </ChipScroll>
         {inC ? (
           <Pressable onPress={() => setWrite(true)} accessibilityRole="button" accessibilityLabel="게시판 글쓰기" style={styles.write}>
             <Icon name="plus" size={15} strokeWidth={2.8} />
@@ -329,8 +330,11 @@ const PIN_NO = '일반 글';
 const PIN_YES = '필독으로 올리기';
 
 const styles = StyleSheet.create({
-  bar: { alignItems: 'flex-start' },
-  chips: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  bar: { alignItems: 'center' },
+  chipScroll: { flex: 1, minWidth: 0, flexGrow: 1 },
+  chips: { flexDirection: 'row', gap: 6 },
+  // 게시판 칩은 글쓰기와 한 줄에 들어가게 조금 좁게 (390pt 폭에서 네 칩 + 글쓰기가 넘기지 않고 다 보여요)
+  chip: { paddingHorizontal: 10 },
   readBd: { marginTop: 12, fontSize: 14, lineHeight: 22 },
   bp: { paddingVertical: 12 },
   line: { borderTopWidth: 1, borderColor: Colors.line },
