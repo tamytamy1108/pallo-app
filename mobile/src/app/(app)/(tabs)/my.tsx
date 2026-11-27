@@ -54,7 +54,7 @@ const MY_PEEK = 300;
 const num = (v: number | null | undefined, unit: string) => (v == null ? '–' : `${v.toLocaleString()}${unit}`);
 
 export default function MyScreen() {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const scroll = useRef<ScrollViewInstance>(null);
   useTabReselect('my', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
   const { width } = useWindowDimensions();
@@ -115,7 +115,10 @@ export default function MyScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView refreshControl={pullRefresh} ref={scroll} contentContainerStyle={styles.body} onScroll={() => checkScrollLock('my')} scrollEventThrottle={64}>
+      <ScrollView refreshControl={pull.refreshControl} onScrollBeginDrag={pull.onScrollBeginDrag} onScrollEndDrag={pull.onScrollEndDrag} ref={scroll} contentContainerStyle={styles.body} onScroll={(e) => {
+          pull.onScroll(e);
+          checkScrollLock('my');
+        }} scrollEventThrottle={64}>
         <Appear kind="rise" style={styles.head}>
           {/* 화면 제목은 영어 · 탭 버튼은 한국어 그대로 (2026-11-25) */}
           <PText variant="headline" accessibilityRole="header" accessibilityLabel="마이">

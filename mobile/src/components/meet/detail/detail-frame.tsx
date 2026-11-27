@@ -67,7 +67,7 @@ const DetailScrollContext = createContext<ScrollToTarget | null>(null);
 export const useDetailScrollTo = (): ScrollToTarget => useContext(DetailScrollContext) ?? (() => {});
 
 export function DetailFrame({ id, club, posters, card, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey, dock }: Props) {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const insets = useSafeAreaInsets();
   const kbShown = useKeyboardShown();
   const slides = posterSlides(id, club, posters, card);
@@ -100,6 +100,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
   const contentH = useRef(0);
   const dockKey = useRef<string | undefined>(undefined);
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    pull.onScroll(e);
     yNow.current = e.nativeEvent.contentOffset.y;
     setY(e.nativeEvent.contentOffset.y);
   };
@@ -151,7 +152,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
     <View ref={root} collapsable={false} style={styles.root} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Stack.Screen options={SCREEN.push} />
       <ScrollView
-        refreshControl={pullRefresh}
+        refreshControl={pull.refreshControl} onScrollBeginDrag={pull.onScrollBeginDrag} onScrollEndDrag={pull.onScrollEndDrag}
         ref={scroll}
         onScroll={onScroll}
         scrollEventThrottle={16}

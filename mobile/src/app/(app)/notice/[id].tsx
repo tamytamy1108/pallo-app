@@ -77,12 +77,12 @@ function PinButton({ notice }: { notice: NoticeDetail }) {
 }
 
 function Detail({ notice }: { notice: NoticeDetail }) {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const paragraphs = notice.content.split(/\n+/).filter((p) => p.trim());
   const { data: popups } = useQuery(popupsQuery());
   const popup = popups?.find((p) => p.resourceType === 'NOTICE' && p.resourceId === notice.id);
   return (
-    <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
+    <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body}>
       {popup && (
         <View style={styles.posterBox}>
           <View style={styles.posterShadow} />

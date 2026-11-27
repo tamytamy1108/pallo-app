@@ -42,7 +42,7 @@ function myLastHref() {
 }
 
 export default function NotificationsScreen() {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const [tab, setTab] = useState<'all' | NotiKind>('all');
   const read = useNotiRead();
   const unread = useUnreadCount();
@@ -101,7 +101,7 @@ export default function NotificationsScreen() {
         })}
       </View>
 
-      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body}>
         {list.length ? (
           list.map((n) => <Row key={n.id} n={n} unread={!read[n.id]} onPress={() => open(n)} />)
         ) : (

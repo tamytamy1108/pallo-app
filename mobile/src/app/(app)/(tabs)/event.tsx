@@ -36,7 +36,7 @@ import { usePullRefresh } from '@/components/ui/pull-refresh';
 const EVENT_PEEK = 640;
 
 export default function EventScreen() {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const scroll = useRef<ScrollViewInstance>(null);
   // 오른쪽 아래 [오픈하기]: 스크롤하는 동안 숨겨서 목록 카드를 가리지 않게 (라운지 + 버튼과 같은 동작)
   const fab = useHideOnScroll();
@@ -57,10 +57,11 @@ export default function EventScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
-        refreshControl={pullRefresh}
+        refreshControl={pull.refreshControl} onScrollBeginDrag={pull.onScrollBeginDrag} onScrollEndDrag={pull.onScrollEndDrag}
         ref={scroll}
         contentContainerStyle={styles.page}
         onScroll={(e) => {
+          pull.onScroll(e);
           fab.onScroll(e.nativeEvent.contentOffset.y);
           checkScrollLock('event');
         }}

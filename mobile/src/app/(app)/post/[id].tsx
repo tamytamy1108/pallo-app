@@ -17,7 +17,7 @@ import { usePullRefresh } from '@/components/ui/pull-refresh';
  * 좋아요 · 댓글 · 신고 · 차단은 카드 그대로.
  */
 export default function PostScreen() {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const { id } = useLocalSearchParams<{ id: string }>();
   const p = useItem(String(id));
   const hidden = useLounge((s) => (p && 'who' in p ? !!s.hidden[p.who] : false));
@@ -27,7 +27,7 @@ export default function PostScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Stack.Screen options={SCREEN.push} />
       <TopBar onBack={back} />
-      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">{!p || blocked || (p.k !== 'post' && p.k !== 'abroad') ? <EmptyState title="글을 볼 수 없어요" /> : p.k === 'post' ? <PostCard p={p} /> : <AbroadCard p={p} />}</ScrollView>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">{!p || blocked || (p.k !== 'post' && p.k !== 'abroad') ? <EmptyState title="글을 볼 수 없어요" /> : p.k === 'post' ? <PostCard p={p} /> : <AbroadCard p={p} />}</ScrollView>
     </SafeAreaView>
   );
 }
