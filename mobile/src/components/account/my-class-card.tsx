@@ -10,7 +10,7 @@ import { Box } from './parts';
 
 const WD = '일월화수목금토';
 /** 'YYYY-MM-DD' → '11.26 (수)' */
-function dayLabel(iso: string) {
+export function dayLabel(iso: string) {
   const [y, m, d] = iso.split('-').map(Number);
   return `${m}.${d} (${WD[new Date(y, m - 1, d).getDay()]})`;
 }

@@ -9,6 +9,7 @@ import { applyDevMe } from '@/components/home/dev';
 import { Pressable } from '@/components/ui/pressable';
 import { MyStudyCard } from '@/components/account/my-study-card';
 import { MyClassCard } from '@/components/account/my-class-card';
+import { ProSessionsSheet } from '@/components/account/pro-sessions-sheet';
 import { SavedChallengesSheet } from '@/components/challenge/saved-sheet';
 import { MemberLock } from '@/components/common/member-lock';
 import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
@@ -69,6 +70,8 @@ export default function MyScreen() {
   }, [dev.reward]);
   const me = useMe();
   const [classOpen, setClassOpen] = useState(false);
+  // 스텝 '참여한 세션' 칸 → 프로로 참여한 세션 기록 (스텝은 맡은 세션이 없어서 담당팀 대신)
+  const [proSessionsOpen, setProSessionsOpen] = useState(false);
   // 설정은 누구나 (비회원도 로그아웃 · 알림 · 차단). 회원 전용 줄은 설정 안에서 숨겨요
   const openSettings = go('/me/settings');
   // 숫자 4칸 · PRO'S NOTE · 내 수업 · 내 스터디 · 랭킹 요약 · 배지 · 내 활동 개수 = GET /me/mypage (api/use-my-page.ts)
@@ -154,7 +157,7 @@ export default function MyScreen() {
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
                     // 프로 = 출석률(맡은 세션 중) · 스텝 = 참여한 세션(프로로 출석 체크한 누적 수 — 맡은 세션이 없어서)
                     me.role === 'manager'
-                      ? { ic: 'bolt', v: num(proStats.sessionsTotal, '회'), l: '참여한 세션', onPress: () => setClassOpen(true) }
+                      ? { ic: 'bolt', v: num(proStats.sessionsTotal, '회'), l: '참여한 세션', onPress: () => setProSessionsOpen(true) }
                       : { ic: 'bolt', v: num(proStats.attendanceRate, '%'), l: '출석률', onPress: () => setClassOpen(true) },
                     { ic: 'mic', v: num(proStats.notesSent, '개'), l: '보낸 노트', onPress: go('/me/notes?box=sent') },
                     { ic: 'heart', v: num(proStats.thanksReceived, '개'), l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
@@ -278,6 +281,7 @@ export default function MyScreen() {
       <MeetsSheet kind={meets} onClose={() => setMeets(null)} />
       <MyMeetsSheet open={myMeetsOpen} onClose={() => setMyMeetsOpen(false)} />
       <SavedChallengesSheet open={chals} onClose={() => setChals(false)} />
+      <ProSessionsSheet open={proSessionsOpen} onClose={() => setProSessionsOpen(false)} />
       <ConfirmDialog
         open={askReset}
         title="저장한 기록을 지울까요?"

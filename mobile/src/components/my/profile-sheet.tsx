@@ -257,7 +257,23 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
               <View style={styles.stC}>
                 <PfIcon.book />
                 <View style={styles.stTx}>
-                  <PText style={styles.stB}>{langs.map((l, i) => `${l} Lv.${i ? 1 + ((h + 1) % 2) : lv}`).join('\n')}</PText>
+                  {/* 언어마다 한 줄 — 언어 이름 칸 · 레벨 칸을 따로 세워 'Lv.' 가 늘 같은 자리에서 시작해요 (언어가 3~4개여도) */}
+                  <View style={styles.lvRows}>
+                    <View>
+                      {langs.map((l) => (
+                        <PText key={l} style={[styles.stB, langs.length > 2 && styles.stBSm]}>
+                          {l}
+                        </PText>
+                      ))}
+                    </View>
+                    <View>
+                      {langs.map((l, i) => (
+                        <PText key={l} style={[styles.stB, langs.length > 2 && styles.stBSm]}>
+                          {`Lv.${i ? 1 + ((h + i) % 2) : lv}`}
+                        </PText>
+                      ))}
+                    </View>
+                  </View>
                   <PText style={styles.stS}>{langs.length > 1 ? '학습 레벨' : SUB_LV[lv - 1]}</PText>
                 </View>
               </View>
@@ -378,6 +394,9 @@ const styles = StyleSheet.create({
   stC: { width: '48%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.white },
   stTx: { flex: 1 },
   stB: { fontFamily: Font.display, fontSize: 16, lineHeight: 18 },
+  // 언어 3개 이상이면 한 단계 작게 (카드가 너무 길어지지 않게)
+  stBSm: { fontSize: 14, lineHeight: 17 },
+  lvRows: { flexDirection: 'row', gap: 6 },
   stS: { marginTop: 3, fontFamily: Font.body800, fontSize: 11, lineHeight: 15, color: Colors.inkSub },
   bad: { flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 10 },
   badBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 },

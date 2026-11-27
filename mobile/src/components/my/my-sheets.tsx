@@ -7,14 +7,14 @@ import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { followLists, MY_BADGES, SPARK_EARN, type Member } from '@/data/my';
+import { followLists, MY_BADGES, SPARK_EARN, SPARK_EARN_PRO, SPARK_PRO_RATE_MIN_SESSIONS, type Member } from '@/data/my';
 import { REWARDS } from '@/data/rewards';
 import { findEvent } from '@/components/event/event-model';
 import { useMeetStore } from '@/components/meet/meet-store';
 import { findClub, findMeet } from '@/components/meet/model';
 import { MONTHS } from '@/data/meet';
 import { sfx } from '@/lib/feedback';
-import { toggleFollow, useMe } from '@/state/me';
+import { isProLike, toggleFollow, useMe } from '@/state/me';
 
 import { BadgeGrid } from './my-blocks';
 import { Lift } from './lift';
@@ -37,6 +37,7 @@ export function BadgeSheet({ open, onClose }: { open: boolean; onClose: () => vo
 
 /** 스파크 모으는 법 (프로토타입 earn 시트) */
 export function SparkSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const proLike = useMe((m) => isProLike(m.role));
   return (
     <Sheet open={open} onClose={onClose} title="스파크 모으는 법" label="스파크">
       <Ds>스파크로 캐릭터 · 배경 아이템을 살 수 있어요.</Ds>
@@ -48,6 +49,21 @@ export function SparkSheet({ open, onClose }: { open: boolean; onClose: () => vo
           </View>
         ))}
       </View>
+      {/* 프로 · 스텝에게만: 프로로 참여 · 출석률 우수 (2026-11-27) */}
+      {proLike ? (
+        <>
+          <Ds>프로 · 스텝은 이것도 받아요.</Ds>
+          <View style={styles.stCard}>
+            {SPARK_EARN_PRO.map(([l, v], i) => (
+              <View key={l} style={[styles.stRow, i > 0 && styles.line]}>
+                <PText style={styles.stB}>{l}</PText>
+                <PText style={styles.stV}>{v}</PText>
+              </View>
+            ))}
+          </View>
+          <Ds>{`출석률은 맡은 세션 중 프로로 출석한 비율이에요. 맡은 세션이 ${SPARK_PRO_RATE_MIN_SESSIONS}개 이상인 달만, 다음 달 1일에 들어와요.`}</Ds>
+        </>
+      ) : null}
       <Ds>시즌 아이템은 스파크로 못 사요. 조건을 채우면 자동으로 들어와요.</Ds>
       <View style={styles.stCard}>
         {REWARDS.map((r, i) => (

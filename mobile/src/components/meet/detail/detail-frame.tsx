@@ -166,7 +166,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
           dockKey.current = dock ? tabKey : undefined;
           if (sameDock && h > was && yNow.current + (scrollH || winH) >= was - 80) scroll.current?.scrollToEnd({ animated: true });
         }}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 8 }}
         // 인사 · 댓글 입력칸을 누르면 키보드 위로 올려 보여요 (iOS) · 끌어내리면 키보드가 내려가요
         // 아래 입력 줄(dock)이 있으면 그 줄이 키보드만큼 올라가며 본문 칸을 줄여요 (자동 여백까지 더하면 두 번 올라가요)
         automaticallyAdjustKeyboardInsets={!dock}

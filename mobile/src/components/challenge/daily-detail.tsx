@@ -408,7 +408,7 @@ function FeedTab({ p, s, onThread, onReport, onMineShown }: { p: Challenge; s: C
   );
 }
 
-/** 인증 한 줄 (.lg-chf): 사진(고른 비율) → 좋아요 · 답글 → 글. 다른 멤버 인증은 길게 눌러 신고 · 차단 */
+/** 인증 한 줄 (.lg-chf): 사진(고른 비율) → 글 → 좋아요 · 답글. 다른 멤버 인증은 길게 눌러 신고 · 차단 */
 function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChCheckin; i: number; s: ChView; onThread: (q: ChCheckin) => void; onReport: (n: string) => void }) {
   const C = chCat(p.cat);
   const on = !!s.liked[q.key];
@@ -439,6 +439,8 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
             <ChIcon name={C.icon} size={34} />
           </DoubleTapLike>
         ) : null}
+        {/* 글 → 그 아래 좋아요 · 답글 (2026-11-27 요청) */}
+        <PText style={styles.chfX}>{q.x}</PText>
         <View style={styles.acts}>
           <Pressable
             onPress={() => {
@@ -457,7 +459,6 @@ function CheckinRow({ p, q, i, s, onThread, onReport }: { p: Challenge; q: ChChe
             <PText style={styles.akN}>{nr || ''}</PText>
           </Pressable>
         </View>
-        <PText style={styles.chfX}>{q.x}</PText>
       </View>
     </Pressable>
   );
@@ -624,10 +625,10 @@ const styles = StyleSheet.create({
   picEx: { alignItems: 'center', justifyContent: 'center' },
   picN: { position: 'absolute', right: 8, top: 8, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, backgroundColor: 'rgba(30,26,43,0.6)' },
   picNT: { fontFamily: Font.display, fontSize: 10.5, lineHeight: 15, color: Colors.white },
-  acts: { marginTop: 8, flexDirection: 'row', gap: 16 },
+  acts: { marginTop: 6, flexDirection: 'row', gap: 16 },
   ak: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 2 },
   akN: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: SUB },
-  chfX: { marginTop: 4, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
+  chfX: { marginTop: 8, fontFamily: Font.body600, fontSize: 14, lineHeight: 21 },
   btnShadow3: { position: 'absolute', top: 3, left: 3, right: -3, bottom: -3, backgroundColor: Colors.ink },
   rme: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: '#FFF8C2' },
   rmeNo: { fontFamily: Font.display, fontSize: 26, lineHeight: 30 },
