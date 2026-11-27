@@ -9480,7 +9480,7 @@ paths:
       description: |
         화면: customize.tsx 위 스파크 잔액(누르면 SparkSheet '모으는 방법') · MyHero 오른쪽 위
         잔액 = 장부 합계 (서버가 계산). 지급 규칙은 서버(관리자)가 정해요 — 지금 연결된 건 세션 출석 +50 하나.
-        2026-11-27: 프로 · 스텝 규칙 추가 (프로로 참여 +50 · 한 달 출석률 100% +300 / 90% 이상 +150) —
+        2026-11-27 확정: 프로 · 스텝 규칙 추가 (프로로 참여 +50 · 한 달 출석률 100% +300 / 90% 이상 +150) —
         docs/frontend/api-additions.md '스파크 지급 기준' (A35). earnRules 에 audience 를 붙여 주세요.
       x-status: new
       x-inventory: A3

@@ -116,7 +116,7 @@ export const SPARK_EARN: readonly (readonly [string, string])[] = [
 ];
 
 /**
- * 프로 · 스텝 스파크 (2026-11-27 추가 · 금액은 제안 — 확정되면 서버 GET /me/sparks earnRules 가 그대로 내려줘요).
+ * 프로 · 스텝 스파크 (2026-11-27 추가 · 금액 확정 — 서버가 생기면 GET /me/sparks earnRules 가 그대로 내려줘요).
  * - 프로로 참여: 테이블 QR '프로로 참여' 로 출석 체크할 때마다 (세션 출석과 같은 금액 · 같은 세션 한 번만)
  * - 출석률 우수: 한 달 맡은 세션 중 프로로 출석한 비율. 맡은 세션 SPARK_PRO_RATE_MIN_SESSIONS 개 이상인 달만,
  *   다음 달 1일에 한 번 지급 (높은 쪽 하나만 · 멱등키 pro-rate:{memberId}:{YYYY-MM})
