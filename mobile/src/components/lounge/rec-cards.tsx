@@ -12,6 +12,8 @@ import { daysFrom, LG_C, LG_PW, meetIso, meetMonth, type RecChal, type RecMeet, 
 import { addPostComment, postComments, useLounge } from '@/data/lounge-store';
 import { expressionSpeech, sayExpression } from '@/lib/say-expression';
 import { useMe } from '@/state/me';
+import { areaLine } from '@/components/meet/area';
+import { useMeetStore } from '@/components/meet/meet-store';
 
 import { Face } from './face';
 import { LgIcon } from './icons';
@@ -47,6 +49,9 @@ export function RecMeetCard({ p }: { p: RecMeet }) {
   const ev = !!p.party;
   const full = p.cur >= p.max;
   const open = () => go(meetHref(p));
+  // 번개는 승인제: 참여 확정 전엔 가게 이름 대신 시 · 구 · 가까운 역만 (안전). 파티(이벤트)는 공개 장소라 그대로
+  const joinedMeet = useMeetStore((s) => !!s.joined[p.id]);
+  const place = ev || joinedMeet || me.role === 'manager' ? p.place : areaLine(undefined, p.reg ?? p.br, p.place);
   return (
     <View style={[styles.pcShadow, { borderRadius: ev ? 22 : 16 }, past && styles.past]}>
       <View style={[styles.pc, { borderRadius: ev ? 22 : 16 }]}>
@@ -80,7 +85,7 @@ export function RecMeetCard({ p }: { p: RecMeet }) {
             </View>
             <View style={styles.mi}>
               <LgIcon name="pin" size={13} color={Colors.inkSub} />
-              <PText style={styles.mt}>{p.place}</PText>
+              <PText style={styles.mt}>{place}</PText>
             </View>
           </View>
           <View style={styles.foot}>
@@ -91,7 +96,7 @@ export function RecMeetCard({ p }: { p: RecMeet }) {
               <CapBar cur={p.cur} max={p.max} color={past ? gray(Colors.purple) : Colors.purple} />
             </View>
             <View style={styles.sp} />
-            {past ? <LgButton label="후기 보기" tone="white" onPress={() => setCmtOpen(true)} /> : full ? <LgButton label="빈자리 알림 받기" tone="white" onPress={open} /> : <LgButton label="참여하기" onPress={open} />}
+            {past ? <LgButton label="후기 보기" tone="white" onPress={() => setCmtOpen(true)} /> : full ? <LgButton label="빈자리 알림 받기" tone="white" onPress={open} /> : <LgButton label={ev ? '참여하기' : '참여 신청'} onPress={open} />}
           </View>
         </View>
       </View>

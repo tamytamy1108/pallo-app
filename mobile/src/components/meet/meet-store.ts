@@ -19,7 +19,12 @@ export type ChatMsg = { day?: string; sys?: string; n?: string; host?: boolean; 
 export type BoardPost = { id: string; k: 'note' | 'rev' | 'hi'; w: string; pin?: boolean; mine?: boolean; ti: string; bd: string; t: string; lk: number; cm: [string, string][] };
 
 type State = {
+  /** 참여가 확정된 번개 · 이벤트 (번개는 호스트가 승인한 뒤) */
   joined: Record<string, boolean>;
+  /** 참여 신청하고 호스트 승인을 기다리는 번개 (승인되면 joined 로 옮겨가요) */
+  asked: Record<string, boolean>;
+  /** 내가 연 번개에 들어온 참여 신청 (meetId → 신청한 사람 이름들). 수락 · 거절하면 빠져요 */
+  reqs: Record<string, string[]>;
   /** 가입한 동아리 (신청하면 바로 가입돼요 · 승인 단계 없음) */
   club: Record<string, 'in'>;
   /** 호스트가 정한 코호스트 이름들 (clubId → 이름). 없으면 예시 코호스트(model clubStaff) */
@@ -61,6 +66,8 @@ export type HostLog = { clubId: string; name: string; role: 'host' | 'co'; from:
 const SAMPLE = apiConfig.useMock;
 const MEET0: State = {
   joined: SAMPLE ? { m15: true, m16: true, m17: true, m1: true, m9: true, m6: true, m2: true, e4: true, e3: true, e6: true } : {},
+  asked: SAMPLE ? { m3: true } : {},
+  reqs: {},
   club: SAMPLE ? { cl1: 'in', cl2: 'in', cl10: 'in', cl4: 'in' } : {},
   cohost: {},
   saved: {},
@@ -143,7 +150,36 @@ export const removeProposal = (id: string) => store.set((s) => ({ ...s, props: s
 export const setBoard = (id: string, L: BoardPost[]) => store.set((s) => ({ ...s, board: { ...s.board, [id]: L } }));
 export const setChat = (id: string, L: ChatMsg[]) => store.set((s) => ({ ...s, chat: { ...s.chat, [id]: L } }));
 
-export const addMyMeet = (m: Meet) => store.set((s) => ({ ...s, myMeets: [{ ...m, at: m.at ?? Date.now() }, ...s.myMeets] }));
+// 가짜 서버: 내가 번개를 열면 예시 참여 신청 두 개가 들어와요 (진짜 서버면 신청 목록을 서버가 줘요)
+const SAMPLE_REQS = ['민준', '소라'];
+export const addMyMeet = (m: Meet) =>
+  store.set((s) => ({ ...s, myMeets: [{ ...m, at: m.at ?? Date.now() }, ...s.myMeets], reqs: SAMPLE ? { ...s.reqs, [m.id]: SAMPLE_REQS } : s.reqs }));
+
+/** 번개 참여 신청 (승인 전엔 가게 이름 · 주소가 안 보여요) */
+export const askJoin = (id: string) => store.set((s) => ({ ...s, asked: { ...s.asked, [id]: true } }));
+/** 신청 취소 · 참여 취소 — 둘 다 지워요 */
+export const leaveMeet = (id: string) =>
+  store.set((s) => {
+    const asked = { ...s.asked };
+    const joined = { ...s.joined };
+    delete asked[id];
+    delete joined[id];
+    return { ...s, asked, joined };
+  });
+/** 호스트가 내 신청을 승인함 (가짜 서버 · 개발용 흉내) */
+export const approveMyAsk = (id: string) =>
+  store.set((s) => {
+    const asked = { ...s.asked };
+    delete asked[id];
+    return { ...s, asked, joined: { ...s.joined, [id]: true } };
+  });
+/** 호스트: 내 번개에 들어온 신청 수락 · 거절. 수락하면 인원이 하나 늘어요 */
+export const decideReq = (meetId: string, name: string, ok: boolean) =>
+  store.set((s) => ({
+    ...s,
+    reqs: { ...s.reqs, [meetId]: (s.reqs[meetId] ?? []).filter((n) => n !== name) },
+    myMeets: ok ? s.myMeets.map((m) => (m.id === meetId ? { ...m, cur: m.cur + 1 } : m)) : s.myMeets,
+  }));
 export const updateMyMeet = (id: string, patch: Partial<Meet>) => store.set((s) => ({ ...s, myMeets: s.myMeets.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
 export const addMyClub = (c: Club) => store.set((s) => ({ ...s, myClubs: [{ ...c, at: c.at ?? Date.now() }, ...s.myClubs] }));
 
