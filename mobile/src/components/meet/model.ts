@@ -31,6 +31,7 @@ import {
   CLUB_MEMBERS,
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
+import { areaLine } from './area';
 import { devClubRole } from '@/lib/dev-profile';
 import type { Me, Role, StudyLang } from '@/state/me';
 
@@ -71,6 +72,17 @@ export function useMyClubRoles(myName: string) {
   const coOf = devClub && devClubRole === 'co' ? [...realCo, devClub] : realCo;
   const badge: 'host' | 'co' | null = hostOf.length ? 'host' : coOf.length ? 'co' : null;
   return { hostOf, coOf, badge };
+}
+/**
+ * 번개 장소를 누구에게 얼마나 보여 줄지 (안전). see: 가게 이름 · 지도 주소 · 상세 주소 · 복사까지 다 봐요.
+ * 호스트 · 참여 확정(호스트 승인)된 사람 · 스텝만 see. 그 밖엔(신청만 한 사람 포함) 시 · 구 · 가까운 역만 (area).
+ * 백엔드도 같은 규칙: 승인 전엔 placeName · placeAddress · 좌표가 null, area 만 와요.
+ */
+export const meetPlace = (m: Meet, see: boolean) => ({ see, area: areaLine(m.addr, m.reg, m.place), place: see ? m.place : areaLine(m.addr, m.reg, m.place) });
+export function useMeetSee(m: Meet, role: Role) {
+  const joined = useMeetStore((s) => !!s.joined[m.id]);
+  const asked = useMeetStore((s) => !!s.asked[m.id]);
+  return { joined, asked, see: !!m.mine || joined || role === 'manager' };
 }
 export const findMeet = (id: string, mine: Meet[]) => mine.find((m) => m.id === id) ?? MEETS.find((m) => m.id === id);
 export const findClub = (id: string, mine: Club[]) => mine.find((c) => c.id === id) ?? CLUBS.find((c) => c.id === id);

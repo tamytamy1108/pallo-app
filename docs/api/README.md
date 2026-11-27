@@ -52,6 +52,7 @@ cd docs/api && npx -y http-server -p 8090 .
 |---|---|---|---|
 | 2026-11-26 | `migration-event-proposal-notify-hide.sql` | `event_proposals.hidden_at` 추가 · `member_notifications.type` 에 `EVENT_PROPOSAL_APPROVED` · `EVENT_PROPOSAL_REJECTED` | `POST /event-proposals/{id}/hide` · 제안 승인 · 반려 알림 · `GET /events` |
 | 2026-11-27 | `migration-meeting-plan-changed-notify.sql` | `member_notifications.type` 에 `HANGOUT_PLAN_CHANGED` · `CLUB_MEETING_PLAN_CHANGED` | `PUT /hangouts/{id}` · 동아리 모임 수정 — 날짜 · 시간 · 장소가 바뀌면 참여자에게 알림 |
+| 2026-11-27 | `migration-hangout-join-approval.sql` | `hangout_participants.status` 추가(기존 행은 APPROVED) · `member_notifications.type` 에 `HANGOUT_JOIN_REQUESTED` · `HANGOUT_JOIN_APPROVED` · `HANGOUT_JOIN_REJECTED` | 번개 참여 승인제 — `POST /hangouts/{id}/participants` · `/join-requests` |
 
 enum `MODIFY` 는 `schema.sql` 기준 전체 값 목록이에요. 그사이 다른 작업이 값을 늘렸으면 `SHOW CREATE TABLE` 로 확인해 같이 넣어 주세요.
 

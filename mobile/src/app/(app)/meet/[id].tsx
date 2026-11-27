@@ -5,18 +5,19 @@ import { CommentsSheet, type Comment } from '@/components/common/comments-sheet'
 import { guardMember } from '@/components/common/trial-guide';
 import { areaLine } from '@/components/meet/area';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
-import { CopyBtn, Desc, DSec, HostRow, InfoRow, InfoRows, infoStyles, MainBtn, MemberSection, SafetyNote, SaveBtn } from '@/components/meet/detail/detail-parts';
+import { CopyBtn, Desc, DSec, HostRow, InfoRow, InfoRows, infoStyles, JoinRequestSection, MainBtn, MemberSection, SafetyNote, SaveBtn } from '@/components/meet/detail/detail-parts';
 import { AskSheet, JoinSheet } from '@/components/meet/detail/sheets';
 import { Bolt } from '@/components/meet/icons';
-import { setText, toggleIn, updateMyMeet, useMeetStore } from '@/components/meet/meet-store';
-import { findMeet, hostName, membersOf } from '@/components/meet/model';
+import { Pressable } from '@/components/ui/pressable';
+import { approveMyAsk, askJoin, decideReq, leaveMeet, setText, toggleIn, updateMyMeet, useMeetStore } from '@/components/meet/meet-store';
+import { findMeet, hostName, membersOf, type Member } from '@/components/meet/model';
 import { CapBar } from '@/components/meet/parts';
 import { EmptyState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { DESC, dday, isPast, MONTHS, capFull, capText } from '@/data/meet';
+import { C, DESC, dday, isPast, MEMBER_POOL, MEMBERS, MONTHS, capFull, capText } from '@/data/meet';
 import { devClubRole } from '@/lib/dev-profile';
 import { sfx } from '@/lib/feedback';
 import { seeAt, SEE } from '@/lib/see';
@@ -36,7 +37,10 @@ export default function MeetDetail() {
   const devHost = __DEV__ && devClubRole === 'host';
   const devIn = __DEV__ && (devClubRole === 'member' || devClubRole === 'co');
   const [devClosed, setDevClosed] = useState(false);
+  // 참여는 승인제: 신청(asked) → 호스트가 수락하면 확정(joined). 확정 전엔 가게 이름 · 주소가 안 보여요
   const joined = useMeetStore((s) => !!s.joined[String(id)]) || devIn;
+  const asked = useMeetStore((s) => !!s.asked[String(id)]) && !joined;
+  const reqNames = useMeetStore((s) => s.reqs[String(id)]) ?? NO_REQS;
   const saved = useMeetStore((s) => !!s.saved[String(id)]);
   const vac = useMeetStore((s) => !!s.vac[String(id)]);
   const myHi = useMeetStore((s) => s.mhi[String(id)] ?? '');
@@ -57,8 +61,15 @@ export default function MeetDetail() {
   const full = capFull(cur, m.max) && !joined;
   const members = membersOf({ ...m, mine }, cur, joined || mine, myHi, { name: me.name, branch: me.branch });
   const dd = dday(m);
-  // 자세한 주소(지도 주소 · 직접 적은 상세 주소 · 복사)는 호스트 · 참여한 사람 · 스텝만 봐요 (안전). 취소하면 다시 가려져요
+  // 가게 이름 · 지도 주소 · 상세 주소 · 복사는 호스트 · 참여 확정(호스트가 수락)된 사람 · 스텝만 봐요 (안전).
+  // 신청만 한 사람 · 그 밖의 사람은 시 · 구 · 가까운 역만. 취소하면 다시 가려져요
   const seeAddr = mine || joined || me.role === 'manager';
+  const area = areaLine(m.addr, m.reg, m.place);
+  const placeShown = seeAddr ? m.place : area;
+  const reqs: Member[] = reqNames.map((n) => {
+    const seed = [...MEMBERS, ...MEMBER_POOL].find(([x]) => x === n);
+    return { n, c: seed?.[1] ?? C.sky, b: seed?.[2] ?? m.br, t: '참여 신청', hi: '' };
+  });
 
   const main = past ? (
     <MainBtn label="후기 보기" variant="wh" onPress={() => setReviews(true)} />
@@ -83,7 +94,11 @@ export default function MeetDetail() {
       }
     />
   ) : (
-    <MainBtn label={joined ? '참여 완료' : m.max > 0 ? `참여하기 · 남은 자리 ${m.max - cur}` : '참여하기'} variant={joined ? 'done' : 'y'} onPress={() => (joined ? setCancel(true) : guardMember(() => setJoin(true), '번개에 참여하려면'))} />
+    <MainBtn
+      label={joined ? '참여 확정' : asked ? '수락 기다리는 중' : m.max > 0 ? `참여 신청하기 · 남은 자리 ${m.max - cur}` : '참여 신청하기'}
+      variant={joined ? 'done' : asked ? 'on' : 'y'}
+      onPress={() => (joined || asked ? setCancel(true) : guardMember(() => setJoin(true), '번개에 참여하려면'))}
+    />
   );
 
   return (
@@ -118,7 +133,7 @@ export default function MeetDetail() {
           <InfoRow first icon="cal" main={`${MONTHS.indexOf(m.mon) + 1}월 ${Number(m.day)}일 ${m.wd}`} sub={past ? '끝난 모임이에요' : dd + (dd === 'D-DAY' ? ' · 오늘이에요' : ' 남았어요')} />
           <InfoRow
             icon="pin"
-            main={m.place}
+            main={placeShown}
             sub={
               seeAddr ? (
                 <>
@@ -126,10 +141,7 @@ export default function MeetDetail() {
                   {m.addr2 ? <PText style={[infoStyles.sub, { fontFamily: Font.body900, color: Colors.ink }]}>{m.addr2}</PText> : null}
                 </>
               ) : (
-                <>
-                  <PText style={infoStyles.sub}>{areaLine(m.addr, m.reg, m.place)}</PText>
-                  <PText style={infoStyles.sub}>참여하면 자세한 주소가 보여요</PText>
-                </>
+                <PText style={infoStyles.sub}>{asked ? '호스트가 수락하면 장소와 주소가 보여요' : '참여가 확정되면 장소와 주소가 보여요'}</PText>
               )
             }
             end={seeAddr ? <CopyBtn text={[m.addr || m.place, m.addr2].filter(Boolean).join(' · ')} /> : undefined}
@@ -139,7 +151,16 @@ export default function MeetDetail() {
           <HostRow name={mine ? me.name : hostName(m.host)} branch={mine ? me.branch : m.br === '전 지점' ? '본사' : m.br} me={mine} />
         </InfoRows>
         <DSec>소개</DSec>
-        <Desc text={DESC[m.id] || `${m.place}에서 만나요. 영어로 먼저 인사하고, 그다음은 편하게 이야기해요. 처음 오는 분도 환영이에요.`} />
+        <Desc text={DESC[m.id] || `${placeShown}에서 만나요. 영어로 먼저 인사하고, 그다음은 편하게 이야기해요. 처음 오는 분도 환영이에요.`} />
+        {mine && !past ? (
+          <JoinRequestSection
+            members={reqs}
+            onDecide={(n, ok) => {
+              decideReq(m.id, n, ok);
+              showToast(ok ? `${n}님 참여를 수락했어요 · 장소와 주소가 보여요` : `${n}님 신청을 거절했어요`);
+            }}
+          />
+        ) : null}
         <MemberSection
           title="함께하는 멤버"
           members={members}
@@ -154,29 +175,35 @@ export default function MeetDetail() {
           }}
         />
         <SafetyNote />
+        {__DEV__ && asked ? (
+          <Pressable onPress={() => approveMyAsk(m.id)} accessibilityRole="button" style={{ alignSelf: 'center', padding: 8 }}>
+            <PText style={infoStyles.sub}>개발용 · 호스트가 수락한 것처럼 보기</PText>
+          </Pressable>
+        ) : null}
       </DetailFrame>
 
       <JoinSheet
         open={join}
         onClose={() => setJoin(false)}
-        it={{ ...m, party: false }}
+        it={{ ...m, place: placeShown, party: false }}
+        ask
         onJoin={() => {
           setJoin(false);
-          toggleIn('joined', m.id);
+          askJoin(m.id);
           sfx('save');
-          showToast(`${m.title} 참여했어요 · ${m.wd}`, seeAt(SEE.joinedMeets));
+          showToast('참여를 신청했어요 · 호스트가 수락하면 알려 드려요');
         }}
       />
       <AskSheet
         open={cancel}
         onClose={() => setCancel(false)}
-        title="참여를 취소할까요?"
-        desc={`${m.title} · ${MONTHS.indexOf(m.mon) + 1}월 ${Number(m.day)}일`}
-        button="참여 취소"
+        title={asked ? '신청을 취소할까요?' : '참여를 취소할까요?'}
+        desc={`${m.title} · ${MONTHS.indexOf(m.mon) + 1}월 ${Number(m.day)}일${asked ? '' : ' · 다시 참여하려면 신청부터 다시 해요'}`}
+        button={asked ? '신청 취소' : '참여 취소'}
         onConfirm={() => {
           setCancel(false);
-          toggleIn('joined', m.id);
-          showToast('참여를 취소했어요');
+          leaveMeet(m.id);
+          showToast(asked ? '신청을 취소했어요' : '참여를 취소했어요');
         }}
       />
       <AskSheet
@@ -201,6 +228,7 @@ export default function MeetDetail() {
   );
 }
 
+const NO_REQS: string[] = [];
 const kick = { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 19, color: Colors.purple };
 
 // 프로토타입 LG_CMTS 앞 두 줄 (지난 번개 후기 예시)

@@ -57,12 +57,12 @@ export const sumText = StyleSheet.create({ t: { flex: 1, fontFamily: Font.body70
 
 export type JoinTarget = { id: string; title: string; mon: string; day: string; wd: string; place: string; cur: number; max: number; host: string; fee?: number; fee0?: number; party: boolean };
 
-/** 참여 확인 시트 (번개 · 이벤트) */
-export function JoinSheet({ open, onClose, it, questions = [], acct, onJoin }: { open: boolean; onClose: () => void; it: JoinTarget; questions?: SurveyQuestion[]; acct?: [string, string, string]; onJoin: (a: SurveyAnswers | null) => void }) {
+/** 참여 확인 시트 (번개 · 이벤트). ask: 번개처럼 호스트가 수락해야 확정되는 '참여 신청' */
+export function JoinSheet({ open, onClose, it, questions = [], acct, onJoin, ask }: { open: boolean; onClose: () => void; it: JoinTarget; questions?: SurveyQuestion[]; acct?: [string, string, string]; onJoin: (a: SurveyAnswers | null) => void; ask?: boolean }) {
   const [ok, setOk] = useState(false);
   const [ans, setAns] = useState<SurveyAnswers>({});
   const ready = ok && surveyDone(questions, ans);
-  const label = `${questions.length ? '설문 보내고 ' : ''}${it.fee ? `${won(it.fee)} 입금하고 참여하기` : '참여하기'}`;
+  const label = `${questions.length ? '설문 보내고 ' : ''}${it.fee ? `${won(it.fee)} 입금하고 참여하기` : ask ? '참여 신청하기' : '참여하기'}`;
   const feeRow: ReactNode = it.fee ? (
     <PText style={sumText.t}>
       참가비 <PText style={{ fontFamily: Font.body900 }}>{won(it.fee)}</PText>
@@ -82,15 +82,15 @@ export function JoinSheet({ open, onClose, it, questions = [], acct, onJoin }: {
         setOk(false);
         setAns({});
       }}
-      title="참여 전에 확인해 주세요"
-      label="참여 확인"
+      title={ask ? '참여 신청 전에 확인해 주세요' : '참여 전에 확인해 주세요'}
+      label={ask ? '참여 신청 확인' : '참여 확인'}
       footer={<SheetButton label={label} size="foot" disabled={!ready} onPress={() => onJoin(questions.length ? ans : null)} />}>
       <SumCard
         title={it.title}
         rows={[
           ['cal', `${MONTHS.indexOf(it.mon) + 1}월 ${Number(it.day)}일 ${it.wd} · ${dday(it)}`],
           ['pin', it.place],
-          ['users', `${it.cur + 1} / ${it.max}명 · 내가 들어가면 남은 자리 ${Math.max(0, it.max - it.cur - 1)}`],
+          ['users', ask ? `${it.cur} / ${it.max}명 · 남은 자리 ${Math.max(0, it.max - it.cur)}` : `${it.cur + 1} / ${it.max}명 · 내가 들어가면 남은 자리 ${Math.max(0, it.max - it.cur - 1)}`],
           ['crown', `${it.party ? '주최' : '호스트'} ${it.host}`],
           ['heart', feeRow],
         ]}
@@ -101,6 +101,7 @@ export function JoinSheet({ open, onClose, it, questions = [], acct, onJoin }: {
           <AccountCard acct={acct} />
         </View>
       ) : null}
+      {ask ? <SheetDesc>호스트가 수락하면 참여가 확정되고, 그때부터 장소 이름과 주소가 보여요. 결과는 알림으로 알려 드려요.</SheetDesc> : null}
       {questions.length ? <SurveyForm questions={questions} answers={ans} onChange={setAns} /> : null}
       <ConfirmCheck checked={ok} onChange={setOk} label={it.fee ? '모임 내용 · 안내 · 입금 계좌를 확인했어요' : '모임 내용과 안내를 확인했어요'} />
     </Sheet>

@@ -9,9 +9,11 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { dday, isPast, monthDay, type Meet, capFull, capText } from '@/data/meet';
+import { useMe } from '@/state/me';
 
 import { Icon } from './icons';
 import { toggleIn, useMeetStore } from './meet-store';
+import { meetPlace, useMeetSee } from './model';
 import { CapBar, LgButton, Shadowed } from './parts';
 import { Poster, posterFg, posterSlides } from './poster';
 
@@ -20,7 +22,10 @@ import { Poster, posterFg, posterSlides } from './poster';
  * 점선 + 양옆 반원 홈, 제목 · 날짜 · 장소 · 인원 바 · 노랑 버튼. 카드에서 바로 참여하지 않고 상세로 가요.
  */
 export function MeetCard({ m, width }: { m: Meet; width: number }) {
-  const joined = useMeetStore((s) => !!s.joined[m.id]);
+  const me = useMe();
+  // 승인제: 참여 확정(joined) 전엔 가게 이름 대신 시 · 구 · 가까운 역만 (안전)
+  const { joined, asked, see } = useMeetSee(m, me.role);
+  const place = meetPlace(m, see).place;
   const vac = useMeetStore((s) => !!s.vac[m.id]);
   const cur = m.cur + (joined ? 1 : 0);
   const past = isPast(m);
@@ -47,7 +52,7 @@ export function MeetCard({ m, width }: { m: Meet; width: number }) {
       }
     />
   ) : (
-    <LgButton label={joined ? '참여 완료' : '참여하기'} variant={joined ? 'done' : 'y'} height={36} onPress={open} />
+    <LgButton label={joined ? '참여 확정' : asked ? '수락 대기' : '참여 신청'} variant={joined ? 'done' : asked ? 'on' : 'y'} height={36} onPress={open} />
   );
 
   return (
@@ -83,7 +88,7 @@ export function MeetCard({ m, width }: { m: Meet; width: number }) {
             <View style={[styles.mi, styles.shrink]}>
               <Icon name="pin" size={13} color={Colors.inkSub} />
               <PText numberOfLines={1} style={[styles.mt, styles.shrink]}>
-                {m.place}
+                {place}
               </PText>
             </View>
           </View>

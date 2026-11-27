@@ -237,6 +237,35 @@ export function MemberSection({ title, members, club, ended, onHi, onHiDel }: { 
   );
 }
 
+/**
+ * 참여 신청 (번개 호스트만 · 승인제). 한 줄 = 신청한 사람 + [수락][거절].
+ * 수락하면 '함께하는 멤버'로 들어가고 그 사람에게 장소 · 주소가 보여요. 맞는 API: GET · POST /hangouts/{id}/join-requests
+ */
+export function JoinRequestSection({ members, onDecide }: { members: Member[]; onDecide: (name: string, ok: boolean) => void }) {
+  if (!members.length) return null;
+  return (
+    <>
+      <DSec>참여 신청 {members.length}명</DSec>
+      <PText style={styles.hi0}>수락하면 이 사람에게 장소와 주소가 보여요.</PText>
+      <View>
+        {members.map((m, i) => (
+          <MemberRow
+            key={m.n}
+            m={m}
+            first={i === 0}
+            tail={
+              <View style={styles.reqAct}>
+                <LgButton label="수락" height={34} fontSize={13} onPress={() => onDecide(m.n, true)} accessibilityLabel={`${m.n}님 수락`} />
+                <LgButton label="거절" variant="wh" height={34} fontSize={13} onPress={() => onDecide(m.n, false)} accessibilityLabel={`${m.n}님 거절`} />
+              </View>
+            }
+          />
+        ))}
+      </View>
+    </>
+  );
+}
+
 /** 안전 안내 (번개만) */
 export function SafetyNote() {
   return (
@@ -274,6 +303,7 @@ export function MainBtn({ label, variant = 'y', onPress, grow = true }: { label:
 }
 
 const styles = StyleSheet.create({
+  reqAct: { flexDirection: 'row', gap: 6, marginTop: 8 },
   rows: { marginTop: 14, paddingVertical: 2, paddingHorizontal: 14, borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: Colors.white },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 11 },
   rowLine: { borderTopWidth: 1, borderColor: Colors.line },
