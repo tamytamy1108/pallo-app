@@ -13,9 +13,9 @@ import { createStore } from '@/lib/store';
  * 프로토타입 이름과 짝: hop=boing(노랑 팔로 깡충) · big=pop(노란 큰 버튼 '뿅') · toggle=pluck(켜고 끄기 · 좋아요 '띵')
  * · card=key(단어 카드 '딱') · quit=sad(그만하기 트롬본) · nav(아래 탭 바 '통') · pick(칩 고르기 '뽁') · soft(글자 링크 '톡')
  * · tick(시계 1초마다 작은 '째깍') · tick-hi(마지막 3초 '삑')
- * · refresh(당겨서 새로고침 '뾱')
+ * · refresh(당겨서 새로고침 '뾱') · pull(끌어 내리기 시작 '쭈욱')
  */
-export type Sfx = 'correct' | 'wrong' | 'hop' | 'peek' | 'save' | 'fanfare' | 'quit' | 'tap' | 'back' | 'tab' | 'big' | 'toggle' | 'open' | 'send' | 'card' | 'nav' | 'pick' | 'soft' | 'tick' | 'tick-hi' | 'refresh';
+export type Sfx = 'correct' | 'wrong' | 'hop' | 'peek' | 'save' | 'fanfare' | 'quit' | 'tap' | 'back' | 'tab' | 'big' | 'toggle' | 'open' | 'send' | 'card' | 'nav' | 'pick' | 'soft' | 'tick' | 'tick-hi' | 'refresh' | 'pull';
 export type HapticKind = 'tap' | 'select' | 'success' | 'warning' | 'error';
 
 const FILES = {
@@ -39,6 +39,7 @@ const FILES = {
   tick: require('@/assets/sfx/tick.wav'),
   'tick-hi': require('@/assets/sfx/tick-hi.wav'),
   refresh: require('@/assets/sfx/refresh.wav'),
+  pull: require('@/assets/sfx/pull.wav'),
   'card-0': require('@/assets/sfx/card-0.wav'),
   'card-1': require('@/assets/sfx/card-1.wav'),
   'card-2': require('@/assets/sfx/card-2.wav'),

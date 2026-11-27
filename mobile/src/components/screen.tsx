@@ -8,10 +8,10 @@ import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /** 탭 화면 공통 틀: 크림 바탕 · 큰 제목 · 아래 탭 바만큼 여백. */
 export function Screen({ title, children }: { title: string; children?: ReactNode }) {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body}>
         <PText variant="headline" accessibilityRole="header" style={styles.title}>
           {title}
         </PText>

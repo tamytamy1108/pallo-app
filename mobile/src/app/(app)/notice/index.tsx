@@ -22,12 +22,12 @@ import { usePullRefresh } from '@/components/ui/pull-refresh';
  * 데이터: 12 GET /notices (첫 20개 · 더 받기는 공지가 많아지면 useInfiniteQuery 로)
  */
 export default function NoticeListScreen() {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const { data, isPending, isError, error, refetch } = useQuery(noticesQuery());
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar title="공지사항" />
-      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body}>
         {isPending ? (
           <LoadingState />
         ) : isError ? (

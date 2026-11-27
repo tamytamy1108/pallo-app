@@ -47,7 +47,7 @@ const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
 
 /** 홈: 로고 · 알림 → 인사 → 공지 띠 → 오늘 스터디 카드 → 스터디 맵 → 라운지 미리보기. */
 export default function HomeScreen() {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   // 개발용 주소 값 (?now= · ?season= · ?link= · ?admin=) — 웹에서만, 화면엔 아무것도 안 그려요
   const dev = useLocalSearchParams<{ now?: string; season?: string; link?: string; name?: string; admin?: string; trial?: string; follow?: string; attend?: string; slot?: string; lang?: string }>();
   useState(() => applyDevParams(dev));
@@ -163,12 +163,13 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
-        refreshControl={pullRefresh}
+        refreshControl={pull.refreshControl} onScrollBeginDrag={pull.onScrollBeginDrag} onScrollEndDrag={pull.onScrollEndDrag}
         ref={scroll}
         contentContainerStyle={styles.body}
         onLayout={(e) => (viewH.current = e.nativeEvent.layout.height)}
         // 스터디 맵 카드가 화면 밖으로 나가면 카드 장식 움직임을 멈춰요 (스크롤이 부드럽게)
         onScroll={(e) => {
+          pull.onScroll(e);
           const y = e.nativeEvent.contentOffset.y;
           setDecoOnScreen(y + viewH.current > mapY.current && y < mapY.current + mapH.current);
         }}

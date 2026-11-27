@@ -39,7 +39,7 @@ const NO_MAPS: SituationMap[] = [];
  * 책장은 17 `/library/books`, 상황 맵은 16 `/library/maps` 로 받아요 (스플래시 동안 미리 받아 둬요).
  */
 export default function LibraryScreen() {
-  const pullRefresh = usePullRefresh();
+  const pull = usePullRefresh();
   const st = libStore.useStore();
   const myLang = useMe((m) => m.lang);
   useProgressVersion();
@@ -124,7 +124,8 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* 만지거나 스크롤하는 동안은 지도 미리 만들기(화면이 잠깐 멈춤)를 미뤄요 */}
-      <ScrollView refreshControl={pullRefresh} ref={scroll} contentContainerStyle={styles.body} onTouchStart={noteLibTouch} onScroll={(e) => {
+      <ScrollView refreshControl={pull.refreshControl} onScrollBeginDrag={pull.onScrollBeginDrag} onScrollEndDrag={pull.onScrollEndDrag} ref={scroll} contentContainerStyle={styles.body} onTouchStart={noteLibTouch} onScroll={(e) => {
+          pull.onScroll(e);
           noteLibTouch();
           const y = e.nativeEvent.contentOffset.y;
           setShowTop(y > 360);
