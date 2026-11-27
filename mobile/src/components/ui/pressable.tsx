@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { Pressable as RNPressable, type GestureResponderEvent, type PressableProps } from 'react-native';
 
-import { tapSound, type Sfx } from '@/lib/feedback';
+import { flushTapSound, tapSound, type Sfx } from '@/lib/feedback';
 
 type Props = PressableProps & {
   /** 누를 때 소리. 안 정하면 프로토타입 tapKind 처럼 버튼 종류를 보고 골라요. false 면 소리 없음 */
@@ -19,7 +19,12 @@ export function Pressable({ sound, onPress, ...rest }: Props) {
       const [name, key] = sound ? [sound, undefined] : soundFor(rest);
       tapSound(name, key);
     }
-    onPress?.(e);
+    try {
+      onPress?.(e);
+    } finally {
+      // onPress 안에서 sfx(...) 로 다른 소리를 냈으면 기본 소리는 이미 빠졌어요. 아니면 한 틱 기다리지 않고 바로 울려요
+      flushTapSound();
+    }
   };
   return <RNPressable {...rest} onPress={onPress || sound ? press : undefined} />;
 }
