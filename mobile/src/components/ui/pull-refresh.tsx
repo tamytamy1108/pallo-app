@@ -10,7 +10,7 @@ const MIN_SPIN_MS = 600;
 
 /**
  * 화면을 아래로 끌어 내렸다 놓으면 새로고침해요: 지금 화면에 쓰이는 서버 데이터를 다시 받아요.
- * 놓는 순간 '뾰롱' 효과음이 나요 (설정 › 효과음을 끄면 조용히).
+ * 놓는 순간 '뾱' 효과음이 나요 (설정 › 효과음을 끄면 조용히).
  * 세로 ScrollView 의 `refreshControl` 에 그대로 넘겨요.
  */
 export function usePullRefresh() {
