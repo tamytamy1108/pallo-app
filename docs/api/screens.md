@@ -779,6 +779,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 내가 쓴 글 → 라운지로 | (라운지 몫) | — | state/me.ts postCount |
 | 내 표현함 개수 | GET /me/mypage (summary.savedExpressionCount) · 목록은 학습 도메인 표현함 API | change | state/expressions useSavedCount |
 | PRO'S NOTE 카드(새 노트 n · 최근 받은/보낸 노트 · n/m명 읽음) · 내 수업(프로, 이번 주 맡은 세션) · 내 스터디(이용권 · 듣는 팀 · 리더) — 서버가 준 칸만 | GET /me/mypage (proNote · myClasses · study) | existing | components/account/pro-note-card.tsx · my-class-card.tsx · my-study-card.tsx |
+| 스텝 숫자 칸 참여한 세션 → 참여한 세션 시트 (전체 · 이번 달 · 달마다 기록 · 대타/참여 · +스파크) | GET /me/pro-sessions (A34) | new | api/pro-sessions.ts · components/account/pro-sessions-sheet.tsx |
 | 지점 안내 (회원만 보여요) | 아래 컴포넌트 | | |
 | 비회원: 랭킹 윗부분 아래 '지점 회원이 되면 열려요' 칸 · 메뉴 '이용권 · 결제 내역' · 지점 안내는 회원만 | GET /me/mypage (branchMember · 받기 전엔 GET /me memberAccessLevel) · GET /me/branch-summary | existing | state/access.ts isMember · canUse · components/common/member-lock.tsx · scroll-lock.tsx |
 | 잠김 칸 아래 버튼: 연동 대기 '연동 확인 중이에요' · 못 찾음 '다시 요청하기'(→ /link-rejected) · 체험 예약 '체험 예약 보기' · 그 밖 '체험 신청하기' + '이미 회원이에요 · 연동 요청'(→ /onboarding/link) | GET /me | change | components/common/member-lock.tsx |
@@ -792,7 +793,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 팔로잉 · 팔로워 목록 | GET /members/{code}/following · /followers | new | data/my.ts followLists |
 | 목록에서 팔로우 · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
 | 배지 모두 보기 | GET /me/badges | new | data/my.ts MY_BADGES |
-| 스파크 모으는 방법 | GET /me/sparks (earnRules) | new | data/my.ts SPARK_EARN |
+| 스파크 모으는 방법 (프로 · 스텝은 PRO 줄도) | GET /me/sparks (earnRules · audience) | new | data/my.ts SPARK_EARN · SPARK_EARN_PRO |
 | 프로필 카드 이름 아래 줄 '○○점 · 언어 Lv.n · 회원' + 작은 표시 ● 연동 확인 중 · ✓ 연동됨(처음 한 번 톡 튀어나옴) · 연동 안 됨 | GET /me (memberAccessLevel) · GET /me/branch-summary | existing | components/my/my-hero.tsx · state/link-events.ts myMoment |
 
 ### 멤버 프로필 — `app/me/profile/[id].tsx` · `components/my/profile-sheet.tsx`

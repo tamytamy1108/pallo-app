@@ -49,6 +49,8 @@
 | A31 | GET · DELETE · POST | `/me/club-applications` · `/me/club-applications/:id` · `/:id/resubmit` | **내가 신청한 동아리**: `{ id, club, status: review \| approved \| rejected, reason, sentAt, decidedAt }`. 검토 중이면 취소, 거절이면 지우기 · 다시 신청. 결정되면 알림(`club_approved` · `club_rejected`) | `components/meet/club-apply.tsx` |
 | A32 | GET | `/me/roles` (또는 `/me` 에 추가) | **호스트 · 코호스트 자격**: `{ hostOf: clubId[], cohostOf: clubId[], badge: host \| cohost \| null, history: [{ clubId, role, from, to, why }] }`. 운영 중인 동아리만 셈 — 0개면 badge null. 관리자가 뱃지를 뗄 수 있음(`/admin/members/:id/role`) | `components/meet/model.ts` `useMyClubRoles` · meet-store `hostLog` |
 | A33 | (관리자) POST · DELETE | `/admin/clubs/:id/warnings` · `/admin/clubs/:id` · `/admin/challenges/:id/warnings` · `/admin/challenges/:id` | **활동 없음 · 저조 경고 · 닫기**. 서버가 활동을 세서 관리자 웹에 후보를 보여 주고, 관리자가 경고 알림(`club_warning` · `challenge_warning`, n/최대)을 보내요. 닫으면 `club_closed` 알림 + 호스트 · 코호스트 자격 끝. 아래 '활동 없음 · 저조 규칙' | `data/host-rules.ts` |
+| A34 | GET | `/me/pro-sessions?cursor=&limit=` | **참여한 세션 기록** (스텝 · 프로): '프로로 참여'로 출석한 세션 `{ total, thisMonth, items: [{ sessionId, date, time, teamName, languageLabel, branchName, kind: COVER \| JOIN, sparks }], nextCursor }`. 스텝 마이 '참여한 세션' 칸을 누르면 열려요. `total` = 마이 `proStats.sessionsTotal` | `api/pro-sessions.ts` · `components/account/pro-sessions-sheet.tsx` |
+| A35 | (기존 A3 에 추가) | `GET /me/sparks` `earnRules[].audience` · 서버 지급 2가지 | **프로 · 스텝 스파크**: 프로로 참여 +50 · 한 달 출석률 우수 (아래 '스파크 지급 기준') | `data/my.ts` `SPARK_EARN_PRO` · `components/my/my-sheets.tsx` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 
@@ -85,6 +87,27 @@
 - **경고**: 동아리 7일 간격 최대 3번 (호스트 · 코호스트에게) · 챌린지 3일 간격 최대 2번 (연 사람에게). 알림 본문에 몇 번째 경고인지 · 언제까지 활동하면 되는지
 - **닫기 · 지우기**: 마지막 경고 뒤 동아리 7일 · 챌린지 3일 안에도 그대로면 관리자가 닫거나 지울 수 있어요 (자동이 아니라 관리자가 눌러요). 사이에 활동이 생기면 경고 횟수가 0으로
 - 닫힌 동아리의 호스트 · 코호스트 자격은 끝나고 기록만 남아요 (A32 `history`)
+
+### 스파크 지급 기준 (A3 · A35 · 2026-11-27 업데이트 · 금액은 제안)
+
+앱은 스파크를 POST 하지 않아요. 원래 API(출석 · 단계 완료 · 모임 참여 …)를 서버가 처리하면서 장부(원장)에 쌓아요. 멱등키가 같으면 두 번 주지 않아요.
+
+| 대상 | 언제 | 스파크 | 멱등키 · 비고 |
+|---|---|---|---|
+| 멤버 | 세션 출석 (QR) | +50 | `attend:{sessionId}:{memberId}` · 지금 앱에 연결된 것 |
+| 멤버 | 오늘 퀘스트 완료 | +10 | 하루 한 번 |
+| 멤버 | 번개 · 정기 모임 참여 | +40 | 모임마다 한 번 |
+| 멤버 | 7일 연속 학습 | +100 | 연속이 7의 배수가 될 때 |
+| 멤버 | 게시판 첫 글 · 첫 인사 | +20 | 한 사람 한 번 |
+| 멤버 | 주간 랭킹 TOP 3 | +150 · 왕관 | 주마다 |
+| **프로 · 스텝** | **프로로 세션 참여** (테이블 QR '프로로 참여' · POST /study/sessions/{id}/check-in role=LEADER) | **+50** | `pro-attend:{sessionId}:{memberId}` · 대타(COVER) · 같이 참여(JOIN) 똑같이 |
+| **프로** | **한 달 출석률 100%** | **+300** | 출석률 = 그 달 맡은 세션 중 프로로 출석한 비율. 맡은 세션 **4개 이상**인 달만. **다음 달 1일**에 한 번 (KST) |
+| **프로** | **한 달 출석률 90% 이상** | **+150** | 위와 같음. 100% 면 +300 하나만 (높은 쪽만). 멱등키 `pro-rate:{memberId}:{YYYY-MM}` |
+
+- 출석률은 마이 `proStats.attendanceRate` 와 같은 계산이에요. 맡은 세션이 휴강 · 취소된 건 분모에서 빼요.
+- 스텝(지점 관리자)은 맡은 세션이 없어 출석률 보상은 없고, 프로로 참여할 때마다 +50 이에요.
+- `GET /me/sparks` `earnRules` 에 `audience: MEMBER | PRO` 를 붙여 주세요. 앱은 프로 · 스텝에게만 PRO 줄을 보여 줘요 (지금은 `data/my.ts` `SPARK_EARN_PRO` 로 그려요).
+- 지급되면 알림(`spark_awarded`, 예: '10월 출석률 100%! 스파크 +300') 이 있으면 좋아요 — 정해지면 알림 종류에 추가.
 
 ### 시즌 보상 — 자동 지급 규칙 (A28 · 2026-11-25)
 

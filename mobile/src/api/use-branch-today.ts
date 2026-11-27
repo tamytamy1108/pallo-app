@@ -28,6 +28,9 @@ export function useProCheckIn(onDone: () => void, onError: (e: unknown) => void)
     mutationFn: sendProCheckIn,
     onSuccess: () => {
       void refreshBranchToday();
+      // 참여한 세션 기록 · 마이 숫자 칸도 하나 늘어요
+      void queryClient.invalidateQueries({ queryKey: queryKeys.proSessions });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.myPage });
       onDone();
     },
     onError,

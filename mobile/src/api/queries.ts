@@ -16,6 +16,7 @@ import { fetchMyLinkRequests } from './branch-link';
 import { fetchBranchSummary } from './branch-summary';
 import { fetchBranchToday } from './branch-today';
 import { fetchMyPage } from './my-page';
+import { fetchProSessions } from './pro-sessions';
 import { fetchProsNote, type ProsNoteBox } from './pros-notes';
 import { fetchBranchGuides } from './branch-guide';
 import { fetchFaq, fetchMyInquiries } from './support';
@@ -30,6 +31,7 @@ export const queryKeys = {
   linkRequests: ['me', 'branch-link-requests'] as const,
   branchSummary: ['me', 'branch-summary'] as const,
   myPage: ['me', 'mypage'] as const,
+  proSessions: ['me', 'pro-sessions'] as const,
   prosNote: (id: string) => ['me', 'pros-notes', id] as const,
   /** 노트 목록 — 열람 뒤 'list' 아래를 통째로 다시 받아요 (NEW 표시) */
   prosNotesAll: ['me', 'pros-notes', 'list'] as const,
@@ -81,6 +83,8 @@ export const branchSummaryQuery = () => queryOptions({ queryKey: queryKeys.branc
 
 /** GET /me/mypage — 마이 탭 숫자 · 랭킹 요약 · 배지 · 내 활동 개수 (api/my-page.ts) */
 export const myPageQuery = () => queryOptions({ queryKey: queryKeys.myPage, queryFn: ({ signal }) => fetchMyPage({ signal }) });
+/** A34 /me/pro-sessions — 참여한 세션 (스텝 마이) */
+export const proSessionsQuery = () => queryOptions({ queryKey: queryKeys.proSessions, queryFn: ({ signal }) => fetchProSessions({ signal }) });
 
 /** GET /me/pros-notes/{id} — PRO'S NOTE 한 장 (api/pros-notes.ts) */
 export const prosNoteQuery = (id: string) => queryOptions({ queryKey: queryKeys.prosNote(id), queryFn: ({ signal }) => fetchProsNote(id, { signal }) });

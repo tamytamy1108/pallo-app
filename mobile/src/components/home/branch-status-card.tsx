@@ -16,6 +16,8 @@ import { fmtMin } from './attendance';
 const BRANCH_TODAY = '/branch/today' as Href;
 const RADIUS = 18;
 const LINE = 2.5;
+/** 안쪽 칸이 테두리 밑으로 1px 들어가게 (테두리 두께보다 1 작게) */
+const INSET = LINE - 1;
 
 /** 아래 한 줄: '출석 중 19:30 · 영어 3팀 · 일본어 2팀' */
 function nextLine(v: BranchTodayView) {
@@ -28,7 +30,7 @@ function nextLine(v: BranchTodayView) {
 }
 
 /** 위 출석 카드(클래퍼보드)와 같은 줄무늬 — 얇게 (session-card ClapperArm 과 같은 방식: 기울인 막대) */
-const STRIPE_H = 16;
+const STRIPE_H = 16 + LINE; // 위 테두리(LINE)가 줄무늬 위에 덮여요
 const STRIPE = 12;
 const BAR_W = STRIPE / Math.sin((55 * Math.PI) / 180);
 function Stripes() {
@@ -95,11 +97,20 @@ export function BranchStatusCard() {
                 </PText>
               </View>
             ) : null}
+            <FrameLine radius={RADIUS} />
           </View>
         </Raised>
       )}
     </Pressable>
   );
+}
+
+/**
+ * 카드 테두리를 내용 위에 덮어 그려요. 테두리를 바깥 View 에 두면 둥근 모서리 · 위 선에서
+ * 안쪽 칸(줄무늬 · 검정 · 노랑 칸) 바탕과 선 사이에 얇은 틈이 비쳐 선이 끊겨 보여요.
+ */
+function FrameLine({ radius }: { radius: number }) {
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.frame, { borderRadius: radius }]} />;
 }
 
 /** 칸 나눔 숫자 줄 (출석 카드 위 칸과 같은 잉크 선). 프로 = 보라, 스텝 = 잉크 바탕 노랑(앱 STAFF), 멤버 = 노랑 칸 */
@@ -129,12 +140,14 @@ export function StatCells({ cells, framed = false }: { cells: Cell[]; framed?: b
           </View>
         </View>
       ))}
+      {framed ? <FrameLine radius={14} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: LINE, borderColor: Colors.ink, borderRadius: RADIUS, backgroundColor: Colors.cream, overflow: 'hidden' },
+  card: { borderRadius: RADIUS, backgroundColor: Colors.cream, overflow: 'hidden', paddingHorizontal: INSET, paddingBottom: INSET },
+  frame: { borderWidth: LINE, borderColor: Colors.ink },
   stripes: { height: STRIPE_H, overflow: 'hidden', borderBottomWidth: LINE, borderColor: Colors.ink, backgroundColor: Colors.cream },
   bar: { position: 'absolute', top: -4, height: STRIPE_H + 8, width: BAR_W, backgroundColor: Colors.ink, transform: [{ skewX: '-35deg' }] },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 8, backgroundColor: Colors.white, borderBottomWidth: LINE, borderColor: Colors.ink },
@@ -143,7 +156,8 @@ const styles = StyleSheet.create({
   only: { flexShrink: 1, fontFamily: Font.body700, fontSize: 11, lineHeight: 16, color: Colors.inkSub },
   more: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   cells: { flexDirection: 'row', borderBottomWidth: LINE, borderColor: Colors.ink },
-  cellsFramed: { borderWidth: LINE, borderRadius: 14, overflow: 'hidden', backgroundColor: Colors.cream },
+  // 테두리는 FrameLine 이 덮어 그려요. 칸이 선 밑으로 1px 들어가서 틈이 안 생겨요
+  cellsFramed: { borderBottomWidth: 0, borderRadius: 14, overflow: 'hidden', backgroundColor: Colors.cream, padding: INSET },
   cell: { flex: 1, minWidth: 0, paddingHorizontal: 9, paddingTop: 7, paddingBottom: 8 },
   cellLine: { borderLeftWidth: LINE, borderColor: Colors.ink },
   cellMember: { backgroundColor: Colors.yellow },

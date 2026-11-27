@@ -9337,6 +9337,8 @@ paths:
       description: |
         화면: customize.tsx 위 스파크 잔액(누르면 SparkSheet '모으는 방법') · MyHero 오른쪽 위
         잔액 = 장부 합계 (서버가 계산). 지급 규칙은 서버(관리자)가 정해요 — 지금 연결된 건 세션 출석 +50 하나.
+        2026-11-27: 프로 · 스텝 규칙 추가 (프로로 참여 +50 · 한 달 출석률 100% +300 / 90% 이상 +150) —
+        docs/frontend/api-additions.md '스파크 지급 기준' (A35). earnRules 에 audience 를 붙여 주세요.
       x-status: new
       x-inventory: A3
       x-screens:
@@ -9351,6 +9353,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MySparks"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: my
+  /me/pro-sessions:
+    get:
+      tags:
+        - 마이
+      operationId: getMyProSessions
+      summary: 참여한 세션 기록 (프로로 참여)
+      description: |
+        화면: 스텝 마이 숫자 칸 '참여한 세션' 을 누르면 ProSessionsSheet (최근 순 · 달마다 묶음).
+        '프로로 참여'(POST /study/sessions/{id}/check-in role=LEADER)로 출석한 세션. total = GET /me/mypage proStats.sessionsTotal.
+        A34 · 2026-11-27
+      x-status: new
+      x-inventory: A34
+      x-screens:
+        - components/account/pro-sessions-sheet.tsx
+      x-app-code: api/pro-sessions.ts · api/use-pro-sessions.ts
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProSessions"
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
@@ -21473,6 +21512,69 @@ components:
           type: integer
           description: 스파크 잔액
           example: 1250
+    ProSessions:
+      type: object
+      required:
+        - total
+        - thisMonth
+        - items
+        - nextCursor
+      properties:
+        total:
+          type: integer
+          description: 전체 기간 프로로 참여 횟수
+          example: 27
+        thisMonth:
+          type: integer
+          description: 이번 달 (KST)
+          example: 8
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - sessionId
+              - date
+              - time
+              - teamName
+              - languageLabel
+              - branchName
+              - kind
+              - sparks
+            properties:
+              sessionId:
+                type: string
+              date:
+                type: string
+                description: KST YYYY-MM-DD
+                example: "2026-11-26"
+              time:
+                type: string
+                example: "19:30"
+              teamName:
+                type: string
+                description: 전산 팀 이름 그대로
+                example: 2-2 영어
+              languageLabel:
+                type: string
+                example: 영어
+              branchName:
+                type: string
+                example: 하남점
+              kind:
+                type: string
+                enum:
+                  - COVER
+                  - JOIN
+                description: COVER = 맡은 프로가 없어 대타 · JOIN = 프로가 있는데 같이 참여
+              sparks:
+                type: integer
+                description: 이 출석으로 받은 스파크
+                example: 50
+        nextCursor:
+          type:
+            - string
+            - 'null'
     MySparks:
       type: object
       required:
@@ -21498,6 +21600,12 @@ components:
                 type: string
                 description: 표시 문구
                 example: "+50"
+              audience:
+                type: string
+                enum:
+                  - MEMBER
+                  - PRO
+                description: PRO = 프로 · 스텝에게만 보여요 (프로로 참여 · 출석률 우수). 없으면 MEMBER (A35 · 2026-11-27)
     RewardEvent:
       type: object
       description: state/ledger.ts RewardEvent

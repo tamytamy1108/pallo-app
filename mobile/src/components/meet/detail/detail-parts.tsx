@@ -242,7 +242,7 @@ export function SafetyNote() {
   return (
     <View style={styles.dnote}>
       <Icon name="shield" size={15} color={Colors.inkSub} />
-      <PText style={[styles.dnoteT, keepAll]}>처음 만나는 곳은 사람 많은 공개 장소예요. 불편한 일이 있으면 언제든 신고할 수 있어요.</PText>
+      <PText style={[styles.dnoteT, keepAll]}>처음엔 사람 많은 공개 장소에서 만나요. 불편한 일이 생기면 언제든 신고해 주세요.</PText>
     </View>
   );
 }
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   hiIn: { flex: 1, minWidth: 0, minHeight: 46, paddingHorizontal: 14, paddingVertical: 11, lineHeight: 20, includeFontPadding: false, borderRadius: 14, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white, fontFamily: Font.body700, fontSize: 14, color: Colors.ink },
   hia: { paddingHorizontal: 4, height: 44, justifyContent: 'center' },
   hiaT: { fontFamily: Font.body800, fontSize: 12.5, color: Colors.inkSub },
-  dnote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 14 },
+  dnote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 10 },
   dnoteT: { flex: 1, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 19, color: Colors.inkSub },
   right: { marginLeft: 'auto' },
   fee: { justifyContent: 'center', paddingHorizontal: 2, flexShrink: 0 },
