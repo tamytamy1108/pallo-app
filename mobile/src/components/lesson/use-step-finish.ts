@@ -75,5 +75,5 @@ export function useStepFinish(lv: number, unit: number, step: StepDef) {
 export const leaveLesson = () => {
   stopSay();
   if (router.canGoBack()) router.back();
-  else router.replace('/');
+  else router.replace('/home');
 };

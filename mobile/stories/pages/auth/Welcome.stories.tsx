@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { userEvent, within } from 'storybook/test';
 
-import WelcomeScreen from '@/app/(auth)/welcome';
+import WelcomeScreen from '@/app/(auth)/index';
 
 import { LOADING_FOREVER } from '../../_support/api';
 

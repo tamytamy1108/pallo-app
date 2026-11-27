@@ -29,11 +29,11 @@
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
 | 캐릭터 · 상점 | 0 | 0 | 6 | 6 |
-| 수강 · 결제 | 10 | 5 | 6 | 21 |
+| 수강 · 결제 | 9 | 6 | 6 | 21 |
 | 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **95** | **46** | **164** | **305** |
+| **합계** | **94** | **47** | **164** | **305** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -59,13 +59,13 @@
 가입 단계 화면(약관 → 닉네임 → 캐릭터 → 지점 회원?)은 이제 앱에 있어요 → onboarding-screens.md. 회원 · 비회원은 GET /me memberAccessLevel, 연동 대기 · 반려 · 체험 예약은 GET /me/branch-summary 로 봐요 (권한 · 홈 카드).
 
 ### 탭 틀 — `app/(tabs)/_layout.tsx`
-서버 호출 없음. 기기에 토큰이 없고 가입 단계를 안 끝냈으면 첫 화면(/welcome)으로 보내요 (api/token.ts getTokens · state/onboarding.ts done). 토큰이 있으면 needsOnboarding 은 GET /me 로.
+서버 호출 없음. 기기에 토큰이 없고 가입 단계를 안 끝냈으면 첫 화면(/)으로 보내요 (api/token.ts getTokens · state/onboarding.ts done). 토큰이 있으면 needsOnboarding 은 GET /me 로.
 
 ### 로그인 — `app/login/index.tsx`
-서버 호출 없음 — 예전 주소라 첫 화면(/welcome)으로 보내기만 해요. 로그인은 `app/welcome.tsx` '카카오로 시작하기' 하나 (onboarding-screens.md 첫 화면):
+서버 호출 없음 — 예전 주소라 첫 화면(/)으로 보내기만 해요. 로그인은 `app/(auth)/index.tsx` '카카오로 시작하기' 하나 (onboarding-screens.md 첫 화면):
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 카카오로 시작 (welcome.tsx) | POST /auth/login (kakao authCode) | change (응답 isNewMember 추가) | api/auth.ts loginWithProvider (경로 /auth/login/:provider → 버림) |
+| 카카오로 시작 ((auth)/index.tsx) | POST /auth/login (kakao authCode) | change (응답 isNewMember 추가) | api/auth.ts loginWithProvider (경로 /auth/login/:provider → 버림) |
 | 로그인 뒤 가입 단계로 갈지 | 응답 isNewMember (= GET /me needsOnboarding) | change | isNewMember: !getOnboarding().done (가짜) |
 
 Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
@@ -195,7 +195,7 @@ PATCH /me (api/me.ts patchMe: 닉네임 · 소개 · 지점) 는 여기서 정�
 기준: docs/pages/09-onboarding.md · api-additions A19 ~ A23. 다른 태그에 있는 API 는 그대로 가리켜요 (core: 인증 · 시작 / my: 마이 · 수강 · 결제).
 흐름: 첫 화면 → 카카오 로그인 → (처음이면) 약관 → 닉네임 → 캐릭터 → 지점 회원이에요? → 회원 · 체험 · 앱 구경 → GET /onboarding (약관 · 미리 채울 값) … POST /onboarding → 홈.
 
-### 첫 화면 — `app/welcome.tsx`
+### 첫 화면 — `app/(auth)/index.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 관리자 웹 그림(비율별 3장 중 하나) · 바탕색 · 그림 설명, 다음 예약 미리 받기 | GET /public/api/v1/start-screen | new | 앱 고정 'YOUR FIRST STAGE' 움직이는 포스터만 (기본 화면) |
@@ -833,7 +833,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 신청서 정보 (남은 횟수 · 지금 팀 · 같은 지점 옮길 수 있는 팀 · 날짜 범위 · 대기 요청) | GET /me/course-change | change | data/account.ts getMembership · MY_TEAMS · teamsOf · CHANGE_MIN |
-| 잠깐 쉬어가기 (1주 · 2주 · 3주 · 1달) | POST /me/deferral-requests | existing | store.ts submitChangeRequest |
+| 잠깐 쉬어가기 — 시작일 → 돌아올 스터디(그대로 · 같은 레벨 다른 팀) → 복귀일 · 사유 꼭 (2026-11-27) | POST /me/deferral-requests | change | store.ts submitChangeRequest · data/account.ts REST_MIN_DAYS · REST_REASONS · sameLevelTeams |
 | 팀 바꾸기 (SWAP) · 팀 하나 더하기 (ADD) | POST /me/course-change-requests | existing | submitChangeRequest |
 | 지점 옮기기 — 권역별 지점 | GET /me/branch-transfer/branches?sourceBranchId= | existing | BRANCHES · BRANCH_REGIONS |
 | 지점 옮기기 — 그 지점 팀 | GET /me/branch-transfer/branches/{code}/courses | new | teamsOf(branch) |
@@ -842,7 +842,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 기기에만 저장 (API 없음): 단계(pick · form · confirm) · 요약 문장(앱이 고른 값으로 만들어요).
 열린 질문:
 - 새 일정 하한: 앱 문구 '오늘 + 2주' vs 백엔드 수업 변경 MIN_LEAD_DAYS=3 · 지점 이동 MIN_LEAD_DAYS · 연기 '다음 날부터'. 하나로 정해서 minEffectiveDate 로 내려 주세요.
-- 쉬어가기에서 팀 하나만 쉬기(앱 cls) — 백엔드 연기는 멤버십 단위. 팀 단위 연기를 받을지, 앱에서 '전체'만 남길지.
+- 쉬어가기는 이제 모든 스터디를 함께 쉬어요 (멤버십 단위 — 백엔드와 같음, 2026-11-27). 대신 돌아올 때 스터디마다 같은 레벨 다른 팀을 고를 수 있어요 → returnTeams 를 연기 신청에 같이 받을지, 연기 승인 뒤 팀 변경 요청을 따로 만들지.
 - 연기 · 변경 '남은 횟수'가 연기 · 팀 변경 · 지점 이동을 한 주머니로 세는지 (앱 PLANS.changes 는 하나) vs 백엔드 remainingChanges(수업 변경)만.
 - 팀 변경과 연기를 한 번에 ('연기 + 지점 이동' 조합 · 07-my.md) — 지금 화면은 종류 하나만 고르니 두 건으로 나눠 보내도 되는지.
 - 대기 요청은 회원당 1건(수업 변경) — 연기 · 지점 이동 대기와 동시에 있어도 되는지.
@@ -933,7 +933,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 차단한 멤버 n명 시트 | GET /me/blocks | new | '0명' 고정 |
 | 이용권 'n회 남음' | GET /me/memberships | change | getMembership |
 | 앱 버전 '1.0.0 최신' | GET /app-version?platform= | new | APP_VERSION |
-| 로그아웃 → 첫 화면(/welcome) | POST /auth/logout (core) | new | router.replace('/welcome') |
+| 로그아웃 → 첫 화면(/) | POST /auth/logout (core) | new | router.replace('/') |
 | 회원 탈퇴 → /me/delete | | | |
 
 기기에만 저장 (API 없음): 말하기가 어려워요(15분) · 소리 끄기(15분) · 효과음 (state/learn-prefs · lib/feedback).
@@ -1002,7 +1002,7 @@ v2 에서는 `/me/inquiries` 가 1:1 문의예요 (MobileUserInquiryController).
 ### 회원 탈퇴 — `app/me/delete.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 이유 고르기 → 탈퇴 → 첫 화면(/welcome) | DELETE /me?reason= | new | api/me.ts deleteAccount · LEAVE_REASONS |
+| 이유 고르기 → 탈퇴 → 첫 화면(/) | DELETE /me?reason= | new | api/me.ts deleteAccount · LEAVE_REASONS |
 
 열린 질문: 이용 중 멤버십이 있으면 막을지(409 active_membership_exists) · 남은 횟수 환불 안내.
 
@@ -1049,7 +1049,7 @@ v2 에서는 `/me/inquiries` 가 1:1 문의예요 (MobileUserInquiryController).
 | 내 일정 (이번 주 · 다음 주, 보기만) | GET /staff/sessions?from&to | new | 없음 |
 | 내 반 · 내 반 학생 | GET /staff/teams · GET /staff/teams/{teamId}/students | new | 없음 |
 | 반 공지 (휴강 · 교실 · 준비물) | POST /staff/teams/{teamId}/notices | new | 없음 |
-| 마이 숫자 칸 (이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요) | GET /staff/me/summary | new | 없음 |
+| 마이 숫자 칸 (프로: 이번 달 세션 · 출석률 · 보낸 노트 · 받은 고마워요 / 스텝: 참여한 세션 누적) | GET /staff/me/summary (attendanceRate · sessionsTotal) | new | api/my-page.ts proStats · data/account.ts PRO_STATS |
 | 이름 옆 `PRO` (라운지 · 프로필) | AuthorRole PRO (글 · 댓글 · 스토리 · 프로필) | change | 앱은 지금 '리더' 글자 |
 
 ### 지점 관리자 (manager)

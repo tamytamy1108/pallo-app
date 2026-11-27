@@ -33,7 +33,7 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 
 | 묶음 | 열리는 때 | 첫 화면 |
 |---|---|---|
-| `(auth)` | 로그아웃 | `/welcome` |
+| `(auth)` | 로그아웃 | `/` |
 | `(onboarding)` | 로그인 · 가입 전 | `/onboarding/terms` |
 | `(app)` | 로그인 · 가입 끝 | `/` (탭) |
 | `(link)` | 로그인 (가입 중 · 뒤 모두) | — |
@@ -65,12 +65,12 @@ if (data.items.length === 0) return <EmptyState title="아직 공지가 없어�
 
 ### 1. 로그인 · /me (1 ~ 7)
 
-- ✅ 1 로그인 — `app/(auth)/welcome.tsx` · `(auth)/login/index.tsx` → `loginWithProvider` (useMutation) → 토큰 저장 → 로그인 상태가 `/me` 를 받아 가입 · 홈으로
+- ✅ 1 로그인 — `app/(auth)/index.tsx` · `(auth)/login/index.tsx` → `loginWithProvider` (useMutation) → 토큰 저장 → 로그인 상태가 `/me` 를 받아 가입 · 홈으로
 - ✅ 2 휴대폰 확인 — `app/(auth)/login/phone.tsx` → `sendPhoneCode` · `verifyPhoneCode` (틀리면 `INVALID_CODE`)
 - ✅ 3 `/me` — `api/session.tsx` 가 받아서 로그인 상태를 정하고 `state/me` 에 넣어요. 실패하면 다시 시도 화면
 - ◐ 4 `PATCH /me` · 5 로그인 수단 연결 · 6 탈퇴 — `api/me.ts` 함수만. 설정 화면(`app/(app)/me/settings/*`, `me/delete.tsx`)은 아직 (로그아웃 버튼 · 탈퇴 끝 `처음으로` 는 `logout()`)
 - ☐ 7 `/members/:id` — `app/me/profile/[id].tsx`
-- ✅ 로그인 안 했으면 `/welcome`, 가입 전이면 가입 화면으로 (`api/session.tsx` + `Stack.Protected`) · 로그아웃 = `logout()` (캐시 비우기는 로그인 상태가)
+- ✅ 로그인 안 했으면 `/`, 가입 전이면 가입 화면으로 (`api/session.tsx` + `Stack.Protected`) · 로그아웃 = `logout()` (캐시 비우기는 로그인 상태가)
 - ☐ 가입 완료 API (v2) — 지금은 mock 만
 
 ### 2. 홈 · 출석 (8 ~ 15)

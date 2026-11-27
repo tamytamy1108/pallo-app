@@ -37,7 +37,7 @@ const MEMBER_HREFS: [string, Feature, string][] = [
 /** 내가 마지막으로 연 단계 (없으면 홈 스터디 맵) — 친구 퀘스트 알림의 [나도 이어서 하기] */
 function myLastHref() {
   const l = getLastStep();
-  if (!l) return '/';
+  if (!l) return '/home';
   return `${l.lv <= 2 ? '/lesson' : '/lesson34'}/${l.step}?lv=${l.lv}&unit=${l.unit}`;
 }
 

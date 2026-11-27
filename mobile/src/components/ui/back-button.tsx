@@ -10,7 +10,7 @@ import { Colors } from '@/constants/theme';
  * 위 줄은 좌우 여백 12 로 맞춰서 어느 화면이든 같은 자리에 와요.
  * onPress 를 안 넘기면 앞 화면으로 (없으면 fallback 으로).
  */
-export function BackButton({ onPress, fallback = '/', color = Colors.ink, label = '뒤로', style }: { onPress?: () => void; fallback?: Href; color?: string; label?: string; style?: StyleProp<ViewStyle> }) {
+export function BackButton({ onPress, fallback = '/home', color = Colors.ink, label = '뒤로', style }: { onPress?: () => void; fallback?: Href; color?: string; label?: string; style?: StyleProp<ViewStyle> }) {
   const go = onPress ?? (() => (router.canGoBack() ? router.back() : router.replace(fallback)));
   return (
     <Pressable onPress={go} sound="back" accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={({ pressed }) => [BACK_BOX, pressed && { transform: [{ scale: 0.9 }] }, style]}>

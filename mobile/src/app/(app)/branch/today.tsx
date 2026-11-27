@@ -13,7 +13,7 @@ import { Colors } from '@/constants/theme';
 import { QR_BEFORE } from '@/data/home';
 import { groupByStudy, type SessionRow } from '@/lib/branch-today-view';
 
-const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
+const back = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
 /**
  * 오늘 지점 현황 · 모두 보기 (지점 관리자 · docs/pages/10-roles.md 4장). 보기만 해요 — 손 출석 · 지각은 출석 명단에서.

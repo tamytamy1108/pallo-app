@@ -65,7 +65,7 @@ export function openTrial(start: { lang?: StudyLang } = {}) {
 }
 
 /** 체험 예약 화면 · 확정 화면을 닫고 보던 화면으로 (주소로 바로 들어왔으면 홈) */
-export const leaveTrial = () => (router.canGoBack() ? router.back() : router.replace('/'));
+export const leaveTrial = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
 /** 맨 바깥(_layout)에 한 번만 있어요: 체험 안내 시트 · 체험 권유 시트(UpsellHost) */
 export function TrialGuideHost() {

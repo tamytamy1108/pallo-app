@@ -15,14 +15,14 @@ import { emitTabReselect, flushTabEnter, markTabEnter, type TabName } from '@/li
 
 /** 프로토타입(prototype/index.html 의 TABS)과 같은 다섯 탭 · 같은 아이콘이에요. */
 const TABS = [
-  { name: 'home', href: '/', label: '홈', d: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z' },
+  { name: 'home', href: '/home', label: '홈', d: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z' },
   { name: 'library', href: '/library', label: '라이브러리', d: 'M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z' },
   { name: 'lounge', href: '/lounge', label: '라운지', d: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z' },
   { name: 'event', href: '/event', label: '이벤트', d: 'M3 7h18v3.5a1.5 1.5 0 0 0 0 3V17H3v-3.5a1.5 1.5 0 0 0 0-3zM15 7v10' },
   { name: 'my', href: '/my', label: '마이', d: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 21a7.5 7.5 0 0 1 15 0' },
 ] as const;
 
-/** 지금 탭 번호: 주소의 첫 칸으로 (/ → 0, /library → 1 …) */
+/** 지금 탭 번호: 주소의 첫 칸으로 (/home → 0, /library → 1 …) */
 function tabIndexOf(path: string) {
   const first = `/${path.split('/')[1] ?? ''}`;
   const i = TABS.findIndex((t) => t.href === first);

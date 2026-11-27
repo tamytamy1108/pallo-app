@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { userEvent, within } from 'storybook/test';
 
 import { popupsQuery } from '@/api/queries';
-import HomeScreen from '@/app/(app)/(tabs)/index';
+import HomeScreen from '@/app/(app)/(tabs)/home';
 import { sendAttendance, sendRsvp } from '@/components/home/attendance';
 import { applyDevMe } from '@/components/home/dev';
 import { markAllNotiRead } from '@/components/home/noti-state';

@@ -12,7 +12,7 @@ import { kf, kfc, SPRING } from '@/lib/motion';
 import { OUT, POP, usePulse } from './fx-motion';
 import { SparkBurst } from './fx-spark';
 
-/** 첫 화면 포스터 색 (YOUR FIRST STAGE · welcome.tsx 와 같은 값) */
+/** 첫 화면 포스터 색 (YOUR FIRST STAGE · (auth)/index.tsx 와 같은 값) */
 export const STAGE = { bg: '#333033', yellow: '#E0D121', pink: '#DE7593', pinkLight: '#F2A3B8' } as const;
 
 type Box = { l: number; t?: number; w: number; b: number; h?: number };
