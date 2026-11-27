@@ -45,7 +45,8 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 let mockLite = false;
-jest.mock('@/components/library/world/world-support', () => ({ liteWorld: () => mockLite, warmAllInBackground: () => true }));
+let mockWeb = true;
+jest.mock('@/components/library/world/world-support', () => ({ liteWorld: () => mockLite, warmAllInBackground: () => mockWeb }));
 // 지도 칸은 라이브러리 화면 안에서만 미리 만들어요 (테스트엔 길 안내가 없어서 늘 보고 있는 것으로)
 jest.mock('expo-router', () => ({ useIsFocused: () => true }));
 jest.mock('@/components/ui/raised', () => ({ Raised: ({ children }: { children: ReactNode }) => children }));
@@ -64,6 +65,7 @@ const draw = (id: string) => act(async () => of(id).at(-1)!.draw());
 beforeEach(() => {
   fakes.length = 0;
   mockLite = false;
+  mockWeb = true;
   jest.useFakeTimers();
 });
 afterEach(() => jest.useRealTimers());
@@ -110,6 +112,18 @@ describe('라이브러리 지도 바꾸기', () => {
     expect(of('study')[0].active).toBe(false); // 새 지도가 돌며 들어오는 동안 앞 지도는 그리기를 멈춰요
     await tick(400);
     expect(of('study')).toHaveLength(1); // 앞 지도는 숨겨 두기만 (다시 돌아가면 바로)
+  });
+
+  it('폰은 지도가 화면에 보이는 동안 미리 만들지 않고, 지도가 화면 밖으로 가면 만들어요 (보는 지도가 멈칫거리지 않게)', async () => {
+    mockWeb = false;
+    const r = await render(<LibraryWorld world={study} warm={[travel]} onOpen={() => {}} visible />);
+    await draw('study');
+    await tick(5000);
+    expect(fakes.map((f) => f.id)).toEqual(['study']);
+    expect(of('study')[0].active).toBe(true);
+    await r.rerender(<LibraryWorld world={study} warm={[travel]} onOpen={() => {}} visible={false} />);
+    await tick(3000);
+    expect(fakes.map((f) => f.id)).toEqual(['study', 'travel']);
   });
 
   it('메모리가 적은 폰은 다음에 갈 지도 두 장만 미리 만들어요', async () => {
