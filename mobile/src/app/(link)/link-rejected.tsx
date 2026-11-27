@@ -38,13 +38,13 @@ export default function LinkRejectedScreen() {
   const browse = () => {
     sfx('soft');
     if (router.canDismiss()) router.dismissAll();
-    router.navigate('/');
+    router.navigate('/home');
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <Stack.Screen options={SCREEN.push} />
-      <TopBar fallback="/" />
+      <TopBar fallback="/home" />
       <ScrollView contentContainerStyle={styles.body}>
         <Appear kind="rise" delay={40}>
           <PText style={styles.title} accessibilityRole="header">

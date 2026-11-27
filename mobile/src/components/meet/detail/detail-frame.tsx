@@ -197,7 +197,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
 
       {/* 위 막대: 뒤로 · (모임 이름) */}
       <View style={[styles.dtop, { paddingTop: insets.top, height: barH, paddingBottom: barH - dockH }, solid && styles.dtopSolid]} pointerEvents="box-none">
-        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} color={ink} />
+        <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/home'))} color={ink} />
         <FadeTitle show={titled} text={title} />
         {/* 공유 버튼은 웹 주소가 생기면 다시 (지금은 자리만 맞춰요) */}
         <View style={styles.ib} />

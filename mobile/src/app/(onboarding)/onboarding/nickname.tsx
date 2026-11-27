@@ -1,8 +1,9 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { logout } from '@/api/auth';
 import { Field, NextButton, OnbInput, OnbScreen, useRequired } from '@/components/onboarding/parts';
 import { checkNickname, NICKNAME_MAX, NickHelp, useNicknameStatus } from '@/components/onboarding/start-nickname';
 import { NameStage } from '@/components/onboarding/start-stage';
@@ -22,6 +23,8 @@ const HERO = require('@/assets/characters/c-purple-lash-sticker.png');
 export default function NicknameScreen() {
   const insets = useSafeAreaInsets();
   const path = useOnboarding((s) => s.path);
+  // 동의할 약관이 없어 약관 단계를 건너뛰고 왔으면(terms.tsx) 돌아갈 곳이 없으니, 뒤로 = 가입 그만두기 (로그아웃 → 첫 화면)
+  const { noTerms } = useLocalSearchParams<{ noTerms?: string }>();
   const [name, setName] = useState(() => {
     const kakao = getOnboarding().nickname;
     return checkNickname(kakao) ? '' : kakao;
@@ -41,7 +44,7 @@ export default function NicknameScreen() {
   return (
     // iOS: 키보드가 올라오면 '다음'이 키보드 바로 위에 붙어요 (아래 안전 영역만큼은 겹쳐서 빼요)
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={-insets.bottom}>
-      <OnbScreen step={1} total={stepsFor(path)} form={form} footer={<NextButton onPress={next} ready={ok} />}>
+      <OnbScreen step={1} total={stepsFor(path)} form={form} onBack={noTerms === '1' ? () => void logout() : undefined} footer={<NextButton onPress={next} ready={ok} />}>
         <View style={styles.stage}>
           <NameStage kind="nickname" name={name} hero={HERO} cheer={ok} label={`무대 위 팔로로: HELLO, ${name || '닉네임'}!`} />
         </View>

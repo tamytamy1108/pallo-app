@@ -83,7 +83,7 @@ function RootNavigator() {
   const onboarding = signedIn && session.needsOnboarding;
   // 지금 상태의 들어가는 화면. 막힌 화면을 열려고 하거나 상태가 바뀌어 지금 화면이 막히면 여기로 가요
   // (그룹 이름(/(auth) 등)으로 보내면 그룹에 index 화면이 없어 '없는 화면'이 떠서, 화면 주소를 직접 줘요)
-  const entry = session.status === 'signedOut' ? '/welcome' : onboarding ? '/onboarding/terms' : '/';
+  const entry = session.status === 'signedOut' ? '/' : onboarding ? '/onboarding/terms' : '/home';
 
   return (
     <GestureHandlerRootView style={styles.root}>

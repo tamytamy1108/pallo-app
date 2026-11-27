@@ -99,7 +99,7 @@ tags:
       백엔드는 외부 authCode 로그인(POST /auth/login) + 이메일 가입/로그인을 이미 가지고 있어요. 앱의 Apple · Google · 휴대폰 로그인은 아직 없음(x-gap).
   - name: 홈
     description: >
-      화면 app/(tabs)/index.tsx — 인사(/me) → 공지 띠 → 오늘 스터디 카드(사전 출석 · QR 출석) → 스터디
+      화면 app/(tabs)/home.tsx — 인사(/me) → 공지 띠 → 오늘 스터디 카드(사전 출석 · QR 출석) → 스터디
       맵(진도는 learn 도메인) → 라운지 미리보기 → 앱 시작 팝업.
 
       출석은 백엔드 MobileStudyController(/study/...) + TableScanController(/tables/...) 로 맞춰요.
@@ -5104,7 +5104,7 @@ paths:
 
         규칙(일정 · 장소 변경 알림): 호스트가 수정(PUT)에서 날짜 · 시간이나 장소 이름 · 주소를 바꾸면 참여자(호스트 빼고)에게 알림함 + 푸시 HANGOUT_PLAN_CHANGED. 제목 '번개 시간이 · 장소가 · 시간과 장소가 바뀌었어요', 본문엔 새 날짜 · 시간 · 장소 이름만 (자세한 주소는 안 실어요 — 잠금 화면). 좌표만 · 공백만 바뀐 건 안 보내요. 동아리 모임 수정은 CLUB_MEETING_PLAN_CHANGED.
 
-        규칙(안전): 자세한 주소 placeAddress · placeDetail · latitude · longitude 는 호스트 · 참여한 사람(viewerRole 있음) · 지점 스텝에게만 내려줘요. 그 밖엔 null (placeName · region 은 그대로). 참여를 취소하면 다시 null. 대신 누구에게나 area(시 · 구 · 가까운 역, 예: '서울 영등포구 · 영등포역 근처') 를 내려줘요 — 앱 components/meet/area.ts areaLine 과 같은 규칙.
+        규칙(안전): 자세한 주소 placeAddress · placeDetail · latitude · longitude 는 호스트 · 참여한 사람(viewerRole 있음) · 지점 스텝에게만 내려줘요. 그 밖엔 null (placeName · region 은 그대로). 참여를 취소하면 다시 null. 대신 누구에게나 area(시 · 구 · 가까운 역, 예: '서울 영등포구 · 영등포역 근처') 를 내려줘요 — 앱 components/meet/area.ts areaLine 과 같은 규칙. 백엔드(fa6eb088c)는 area · 주소 숨기기를 반영했어요 — 다만 지금은 호스트 · 참여자(동아리는 멤버도)에게만 주소를 주고 지점 스텝 예외는 아직 없어요.
       x-status: change
       x-backend: MobileHangoutController GET /hangouts/{id} → MobileHangoutDetailResponse
       x-gap: >
@@ -5578,7 +5578,7 @@ paths:
         에서 올려요. [자세히 보기] 는 resourceType → resourceId 로 이동 — NOTICE → /notice/:id, EVENT → /events/:id)
       x-inventory: A1
       x-screens:
-        - app/(tabs)/index.tsx
+        - app/(tabs)/home.tsx
         - components/home/launch-popup.tsx
       x-app-code: api/home.ts fetchLaunchPopups · data/home.ts LAUNCH_POPUPS · LaunchPopup
       security:
@@ -6310,7 +6310,7 @@ paths:
       x-roles:
         - manager
       x-screens:
-        - app/(tabs)/index.tsx
+        - app/(tabs)/home.tsx
         - components/home/branch-status-card.tsx
         - app/branch/today.tsx
       x-app-code: api/branch-today.ts fetchBranchToday (가짜 서버 data/branch-today.ts) · api/use-branch-today.ts useBranchToday · lib/branch-today-view.ts
@@ -6333,7 +6333,7 @@ paths:
       operationId: getMe
       summary: 나 — 신원 · 역할 · 지점 · 온보딩 필요 여부
       description: |
-        화면: app/_layout.tsx (스플래시 동안 미리 받기 · MeSync 가 state/me 에 넣음) · app/(tabs)/index.tsx (인사 'Hey {nickname}' · 출석 카드) · 다른 모든 화면이 useMe 로 읽음
+        화면: app/_layout.tsx (스플래시 동안 미리 받기 · MeSync 가 state/me 에 넣음) · app/(tabs)/home.tsx (인사 'Hey {nickname}' · 출석 카드) · 다른 모든 화면이 useMe 로 읽음
         언제: 부팅 · 로그인 직후 · 앱 복귀
         규칙: needsOnboarding 이 true 면 가입 단계(약관 동의 → 닉네임 → 캐릭터 → 지점 회원?)로 보내요. 기준은 '닉네임 없음'이 아니라 가입 단계를 끝낸 시각 onboardedAt 이 없는지예요 (POST /me/onboarding 이 채워요).
         권한(state/access.ts userKind): 지점이 연동해 주기 전에는 모두 비회원 권한(role guest)이에요. 앱은 role · linkStatus · trialBooking 으로 홈 카드(출석 · 잠긴 라벤더 · 체험 D-n · 둘러보기)와 잠금을 정해요.
@@ -6351,7 +6351,7 @@ paths:
       x-inventory: '#3'
       x-screens:
         - app/_layout.tsx
-        - app/(tabs)/index.tsx
+        - app/(tabs)/home.tsx
         - app/(tabs)/my.tsx
         - app/notifications.tsx
         - api/provider.tsx
@@ -7488,15 +7488,19 @@ paths:
       operationId: createDeferralRequest
       summary: 연기(쉬어가기 · 홀딩) 신청
       description: >
-        화면: change.tsx — 종류 '잠깐 쉬어가기'(언제부터 · 1주 / 2주 / 3주 / 1달) · pass.tsx [연기 ·
-        변경 신청]
+        화면: change.tsx — 종류 '잠깐 쉬어가기' · pass.tsx [연기 · 변경 신청]
 
-        deferEndDate = 시작 + 기간 - 1일 (1달은 다음 달 같은 날 - 1). 쉬는 동안 남은 횟수가 줄지 않고 끝나는 날이 뒤로 밀려요.
+        흐름(2026-11-27, 567296791): 시작일(내 스터디 요일만) → 돌아올 때 스터디(스터디마다 그대로 · 또는 같은 지점 · 같은 언어 · 같은 레벨의 다른 팀) → 복귀일(돌아갈 스터디 요일만). 수업 고르기 없이 모든 스터디를 함께 쉬어요 (멤버십 단위 — 백엔드와 같아짐).
 
-        앱은 팀 하나만 쉬기(cls)도 고를 수 있는데 백엔드는 멤버십 단위 — 열린 질문.
+        규칙: 최소 2주(14일) · 금요일 휴무라 시작 · 복귀로 못 골라요 · 복귀는 2년 안 · 이용권 끝나는 날 안. 사유는 기간과 상관없이 꼭 적어요 (2주 ~ 1달: 출장 · 여행 · 바쁜 일정 · 건강 · 그 밖의 사유 / 1달 넘게: 출산 · 군 입대 · 그 밖의 사유 + 5자 이상 · 운영진 확인). 변경 횟수는 연기 · 팀 변경 · 지점 이동이 같이 써요: 연기 1번 + 옮기는 팀마다 1번.
+
+        deferEndDate = 복귀일 - 1일. 쉬는 동안 남은 횟수가 줄지 않고 끝나는 날이 뒤로 밀려요.
 
         error: illegal_operation (당일 연기 · 기간 역전 · 최소 기간 · 연기 횟수 다 씀)
-      x-status: existing
+      x-status: change
+      x-gap: >
+        추가: reasonCode(사유 종류) · reason 필수(지금은 null 가능) · returnTeams[{fromTeamId, toTeamId}]
+        (돌아올 때 옮길 팀 — 안 옮기면 빼요, 옮기는 팀마다 변경 횟수 1번 더 씀) · 금요일 · 최소 14일 검증
       x-demo-blocked: true
       x-roles-note: manager · hq 는 403 demo_account (보여 주기 모드) · hq 는 화면 자체를 열지 않아요 · pro 는 회원처럼 돼요 (2026-11-26)
       x-backend: MobileDeferralRequestController POST /me/deferral-requests
@@ -7505,7 +7509,7 @@ paths:
       x-screens:
         - app/me/change.tsx
         - app/me/pass.tsx
-      x-app-code: change.tsx restEnd · store.ts submitChangeRequest
+      x-app-code: change.tsx · data/account.ts REST_MIN_DAYS · REST_REASONS · sameLevelTeams · store.ts submitChangeRequest
       requestBody:
         required: true
         content:
@@ -8244,7 +8248,7 @@ paths:
       summary: 알림함 목록 (+ 안 읽은 수 = 홈 종 점)
       description: >
         화면: app/notifications.tsx (탭: 전체 · 공지 · 학습 · 라운지 · 이벤트 · 안 읽은 건 노랑 바탕 +
-        분홍 점) · app/(tabs)/index.tsx (종의 분홍 점 — unreadCount > 0)
+        분홍 점) · app/(tabs)/home.tsx (종의 분홍 점 — unreadCount > 0)
 
         언제: 알림함 진입 · 홈 진입/복귀(종 점만 필요하면 pageSize=1)
 
@@ -8264,7 +8268,7 @@ paths:
       x-inventory: "#13"
       x-screens:
         - app/notifications.tsx
-        - app/(tabs)/index.tsx
+        - app/(tabs)/home.tsx
       x-app-code: api/home.ts fetchNotifications · data/home.ts NOTIS · Noti ·
         NOTI_TABS · components/home/noti-state.ts
       parameters:
@@ -10410,7 +10414,7 @@ paths:
       tags:
         - 프로 · 직원
       operationId: getStaffSummary
-      summary: 프로 마이 숫자 (이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요)
+      summary: 프로 마이 숫자 (이번 달 세션 · 출석률 · 참여한 세션 · 보낸 노트 · 받은 고마워요)
       description: >
         화면: 마이 숫자 칸 (프로) — 10-roles 8장 '마이 · 알림 · 설정'. 회원은 연속 학습 · 랭킹 · 모임 · 배지, 프로는 이 네 칸.
       x-status: new
@@ -11418,7 +11422,7 @@ paths:
       operationId: listStudyCoursesByDate
       summary: 그 날짜의 내 수업 (= 오늘 스터디 카드 · 출석 시트의 시간대 × 언어)
       description: >
-        화면: app/(tabs)/index.tsx · components/home/session-card.tsx (클래퍼보드: 스터디
+        화면: app/(tabs)/home.tsx · components/home/session-card.tsx (클래퍼보드: 스터디
         시각 · 시작까지 · ACTION! · 입장 완료) · components/home/attend-sheet.tsx (시간대 ·
         언어 고르기)
 
@@ -11437,7 +11441,7 @@ paths:
         그대로 써요.
       x-inventory: "#8"
       x-screens:
-        - app/(tabs)/index.tsx
+        - app/(tabs)/home.tsx
         - components/home/session-card.tsx
         - components/home/attend-sheet.tsx
       x-app-code: api/home.ts fetchTodaySessions · data/home.ts SLOTS · LANGS ·
@@ -11504,7 +11508,7 @@ paths:
         /study/courses/{courseId}/pre-check-in?date= (204)
       x-inventory: "#9"
       x-screens:
-        - app/(tabs)/index.tsx
+        - app/(tabs)/home.tsx
         - components/home/attend-sheet.tsx
       x-app-code: api/home.ts sendRsvp · components/home/attendance.ts sendRsvp
       responses:
@@ -11569,7 +11573,7 @@ paths:
         주세요 (LEADER · MEMBER 둘 다). 한 세션에 프로가 둘이 되면 어떻게 할지 정해 주세요 (10-roles 3-1).
       x-inventory: "#10"
       x-screens:
-        - app/(tabs)/index.tsx
+        - app/(tabs)/home.tsx
         - components/home/qr-scanner.tsx
         - components/home/attend-sheet.tsx
       x-app-code: api/home.ts sendAttendance · components/home/attendance.ts
@@ -17513,8 +17517,17 @@ components:
           example: 20:00:00
         placeName:
           type: string
+        area:
+          type:
+            - string
+            - "null"
+          description: "대략적인 위치(시 · 구 · 가까운 역, 예: '서울 영등포구 · 영등포역 근처') — 누구에게나. 백엔드 PlaceArea.of(address, placeName) = 앱 components/meet/area.ts areaLine. 시 · 구도 역도 모르면 null"
+          example: 서울 영등포구 · 영등포역 근처
         placeAddress:
-          type: string
+          type:
+            - string
+            - "null"
+          description: 자세한 주소 — 호스트 · 참여한 사람에게만 (안전). 그 밖엔 null
         latitude:
           type:
             - number
@@ -18398,6 +18411,12 @@ components:
           example: 20:00:00
         placeName:
           type: string
+        area:
+          type:
+            - string
+            - "null"
+          description: "대략적인 위치(시 · 구 · 가까운 역, 예: '서울 영등포구 · 영등포역 근처') — 누구에게나. 백엔드 PlaceArea.of(address, placeName) = 앱 components/meet/area.ts areaLine. 시 · 구도 역도 모르면 null"
+          example: 서울 영등포구 · 영등포역 근처
         placeAddress:
           type:
             - string
@@ -21944,7 +21963,7 @@ components:
           description: 운영진에게 남길 말
     DeferralCreate:
       type: object
-      description: 백엔드 MobileDeferralCreateRequest 그대로
+      description: 백엔드 MobileDeferralCreateRequest + (추가) 사유 종류 · 돌아올 팀
       required:
         - membershipId
         - deferStartDate
@@ -21959,11 +21978,28 @@ components:
         deferEndDate:
           type: string
           format: date
+          description: 복귀일 - 1일 (최소 14일 · 금요일은 시작 · 복귀로 못 골라요)
+        reasonCode:
+          type: string
+          description: (추가) 사유 종류 — 2주 ~ 1달 TRIP · TRAVEL · BUSY · HEALTH · OTHER / 1달 넘게 CHILDBIRTH · MILITARY · OTHER
+          enum: [TRIP, TRAVEL, BUSY, HEALTH, CHILDBIRTH, MILITARY, OTHER]
         reason:
           type:
             - string
             - "null"
           maxLength: 1000
+          description: 자세한 사유 — 앱은 늘 적게 해요 (1달 넘게는 5자 이상). (추가) 서버도 필수로
+        returnTeams:
+          type: array
+          description: (추가) 돌아올 때 다른 팀으로 옮길 스터디 — 같은 지점 · 같은 언어 · 같은 레벨 팀만, 이미 듣는 팀 빼고. 그대로 돌아가면 빼요. 옮기는 팀마다 변경 횟수 1번
+          items:
+            type: object
+            required: [fromTeamId, toTeamId]
+            properties:
+              fromTeamId:
+                type: string
+              toTeamId:
+                type: string
     DeferralRequest:
       type: object
       description: 백엔드 MobileDeferralRequestResponse 그대로
@@ -23382,6 +23418,20 @@ components:
         checkIns:
           type: integer
           description: 프로 출석 체크 수
+        attendanceRate:
+          type:
+            - integer
+            - "null"
+          minimum: 0
+          maximum: 100
+          description: 출석률(%) — 이번 달 맡은 세션 중 '프로로 참여'로 출석한 비율. 프로 마이 '출석률' 칸 (앱 my-page.ts proStats.attendanceRate · 2026-11-26). 계산할 세션이 없으면 null → '–'
+          example: 93
+        sessionsTotal:
+          type:
+            - integer
+            - "null"
+          description: 참여한 세션(누적) — 테이블 QR 에서 '프로로 참여'로 출석 체크한 세션 수, 전체 기간. 스텝 마이 '참여한 세션' 칸 (앱 proStats.sessionsTotal · 2026-11-26)
+          example: 27
         notesSent:
           type: integer
           description: 보낸 노트

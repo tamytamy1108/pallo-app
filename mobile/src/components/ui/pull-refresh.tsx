@@ -3,12 +3,14 @@ import { useCallback, useState } from 'react';
 import { RefreshControl } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { sfx } from '@/lib/feedback';
 
 // 받아 오기가 아주 빨리 끝나도 도는 표시가 깜빡 사라지지 않게 이만큼은 보여 줘요
 const MIN_SPIN_MS = 600;
 
 /**
  * 화면을 아래로 끌어 내렸다 놓으면 새로고침해요: 지금 화면에 쓰이는 서버 데이터를 다시 받아요.
+ * 놓는 순간 '뾰롱' 효과음이 나요 (설정 › 효과음을 끄면 조용히).
  * 세로 ScrollView 의 `refreshControl` 에 그대로 넘겨요.
  */
 export function usePullRefresh() {
@@ -17,6 +19,7 @@ export function usePullRefresh() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    sfx('refresh');
     const minSpin = new Promise((done) => setTimeout(done, MIN_SPIN_MS));
     try {
       await Promise.all([queryClient.refetchQueries({ type: 'active' }), minSpin]);

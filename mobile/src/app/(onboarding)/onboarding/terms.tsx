@@ -7,7 +7,7 @@ import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { logout } from '@/api/auth';
-import type { ConsentDoc } from '@/api/onboarding';
+import type { ConsentDoc, OnboardingInfo } from '@/api/onboarding';
 import { useOnboardingInfo } from '@/api/use-onboarding';
 import { Bob } from '@/components/onboarding/fx-motion';
 import { NextButton } from '@/components/onboarding/parts';
@@ -26,6 +26,11 @@ import { getOnboarding, updateOnboarding } from '@/state/onboarding';
 type Agreed = Record<string, boolean>;
 
 const JUMP = require('@/assets/characters/c-purple-jump-3d.png');
+
+/** 약관 답을 담고, 카카오 값(prefill)은 처음 한 번만 채워요 (뒤로 와서 다시 동의해도 고친 값을 덮지 않아요) */
+function saveAnswers(p: OnboardingInfo['prefill'], consents: { versionId: string; agreed: boolean }[]) {
+  updateOnboarding(getOnboarding().prefilled ? { consents } : { consents, prefilled: true, nickname: p.nickname ?? '', realName: p.realName ?? '', phone: p.phone ?? '' });
+}
 
 /**
  * 약관 동의 (가입 단계 맨 앞 · 진행 바 칸에 넣지 않아요).
@@ -53,7 +58,7 @@ export default function TermsScreen() {
   const dimStyle = useAnimatedStyle(() => ({ opacity: Math.min(1, shown.get() * 1.8) }));
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - shown.get()) * 520 }] }));
 
-  // 가입 첫 화면에서 닫으면 가입을 그만둬요 → 로그아웃하면 app/_layout.tsx 가 첫 화면(welcome)으로 보내요
+  // 가입 첫 화면에서 닫으면 가입을 그만둬요 → 로그아웃하면 app/_layout.tsx 가 첫 화면(/)으로 보내요
   const leave = () => (router.canGoBack() ? router.back() : void logout());
   const close = () => {
     if (still) return leave();
@@ -65,13 +70,18 @@ export default function TermsScreen() {
 
   const start = () => {
     if (!info.data) return;
-    const consents = docs.map((d) => ({ versionId: d.versionId, agreed: !!agreed[d.versionId] }));
-    const o = getOnboarding();
-    const p = info.data.prefill;
-    // 카카오 값은 처음 한 번만 (뒤로 와서 다시 동의해도 고친 값을 덮지 않아요)
-    updateOnboarding(o.prefilled ? { consents } : { consents, prefilled: true, nickname: p.nickname ?? '', realName: p.realName ?? '', phone: p.phone ?? '' });
+    saveAnswers(info.data.prefill, docs.map((d) => ({ versionId: d.versionId, agreed: !!agreed[d.versionId] })));
     router.push('/onboarding/nickname');
   };
+
+  // 서버에 지금 받는 약관이 하나도 없으면 시트 없이 바로 다음 단계로 (빈 목록이라 '동의하고 시작하기'가 켜질 수 없어서).
+  // 이 화면을 남기지 않으니(replace) 닉네임의 뒤로는 noTerms 를 보고 가입을 그만둬요 (시트 바깥을 누른 것과 같게)
+  const empty = info.data && info.data.consents.length === 0 ? info.data.prefill : null;
+  useEffect(() => {
+    if (!empty) return;
+    saveAnswers(empty, []);
+    router.replace({ pathname: '/onboarding/nickname', params: { noTerms: '1' } });
+  }, [empty]);
 
   return (
     <View style={styles.root}>

@@ -38,7 +38,7 @@ export default function LinkWaitScreen() {
   const start = useCallback(() => {
     const home = () => {
       if (router.canDismiss()) router.dismissAll();
-      router.replace('/');
+      router.replace('/home');
     };
     if (inOnboarding) complete(undefined, { onSuccess: home });
     else home();

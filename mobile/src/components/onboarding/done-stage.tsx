@@ -13,7 +13,7 @@ import { OUT, POP } from './fx-motion';
 import { SparkBurst, SparkMark } from './fx-spark';
 import { BODY_RATIO, useMyBody } from './start-palloro';
 
-/** 첫 화면 포스터 색 (YOUR FIRST STAGE · welcome.tsx 와 같은 값) */
+/** 첫 화면 포스터 색 (YOUR FIRST STAGE · (auth)/index.tsx 와 같은 값) */
 export const DONE_STAGE = { bg: '#333033', yellow: '#E0D121', pink: '#DE7593', pinkLight: '#F2A3B8' } as const;
 
 /** 표가 무대 판 아래를 덮는 길이 (그만큼 판 아래쪽은 비워 둬요) */

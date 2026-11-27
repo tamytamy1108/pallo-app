@@ -13,6 +13,6 @@ import { useLastTrial } from '@/state/trial-booking';
 export default function TrialDoneScreen() {
   const booking = useLastTrial();
   const avatar = useMyAvatar();
-  if (!booking) return <Redirect href="/" />;
+  if (!booking) return <Redirect href="/home" />;
   return <TrialDoneView booking={booking} button="확인" onDone={leaveTrial} hero={bodySrcOf(avatar.color)} />;
 }

@@ -86,7 +86,7 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <TopBar title="회원가입" fallback="/welcome" />
+      <TopBar title="회원가입" fallback="/" />
       <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Field label="이메일" required error={errorOf('email')}>
           <TextField

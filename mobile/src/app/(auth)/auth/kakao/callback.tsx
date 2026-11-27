@@ -16,7 +16,7 @@ export default function KakaoCallbackScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       {error ? (
-        <EmptyState title={error} link={{ label: '처음으로', onPress: () => router.replace('/welcome') }} />
+        <EmptyState title={error} link={{ label: '처음으로', onPress: () => router.replace('/') }} />
       ) : (
         <LoadingState />
       )}
