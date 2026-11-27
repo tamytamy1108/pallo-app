@@ -13,7 +13,7 @@ import { createStore } from '@/lib/store';
  * 프로토타입 이름과 짝: hop=boing(노랑 팔로 깡충) · big=pop(노란 큰 버튼 '뿅') · toggle=pluck(켜고 끄기 · 좋아요 '띵')
  * · card=key(단어 카드 '딱') · quit=sad(그만하기 트롬본) · nav(아래 탭 바 '통') · pick(칩 고르기 '뽁') · soft(글자 링크 '톡')
  * · tick(시계 1초마다 작은 '째깍') · tick-hi(마지막 3초 '삑')
- * · refresh(당겨서 새로고침 '뾰롱')
+ * · refresh(당겨서 새로고침 '뾱')
  */
 export type Sfx = 'correct' | 'wrong' | 'hop' | 'peek' | 'save' | 'fanfare' | 'quit' | 'tap' | 'back' | 'tab' | 'big' | 'toggle' | 'open' | 'send' | 'card' | 'nav' | 'pick' | 'soft' | 'tick' | 'tick-hi' | 'refresh';
 export type HapticKind = 'tap' | 'select' | 'success' | 'warning' | 'error';
@@ -73,6 +73,17 @@ function player(file: SfxFile) {
   return p;
 }
 
+/** 효과음 플레이어를 미리 다 만들어 둬요 (앱 켤 때 한 번). 안 그러면 버튼마다 처음 누를 때 파일을 읽느라 소리가 늦어요 */
+export function preloadSfx() {
+  for (const file of Object.keys(FILES) as SfxFile[]) {
+    try {
+      player(file);
+    } catch {
+      // 못 만들면 처음 울릴 때 다시 만들어요
+    }
+  }
+}
+
 let cardTurn = 0;
 // 그 밖의 버튼은 도레미솔라시도 중 하나 — 같은 버튼(같은 글자)은 늘 같은 음 (프로토타입 tapv · TAP_NOTES)
 function noteFor(key: string): SfxFile {
@@ -99,7 +110,8 @@ let pending: { timer: ReturnType<typeof setTimeout>; name: Sfx; key?: string } |
 
 /**
  * 누르는 것마다 나는 기본 소리 (components/ui/pressable 이 불러요).
- * 바로 울리지 않고 한 틱 기다려서, 그 버튼이 sfx(...) 로 자기 소리를 내면 기본 소리는 빼요.
+ * 바로 울리지 않고 버튼의 onPress 가 끝나길 기다려서, 그 안에서 sfx(...) 로 자기 소리를 내면 기본 소리는 빼요.
+ * pressable 이 onPress 를 부른 직후 flushTapSound() 로 바로 울려요. 혹시 못 불러도 한 틱 뒤엔 울려요.
  */
 export function tapSound(name: Sfx, key?: string) {
   if (pending) clearTimeout(pending.timer);
@@ -108,6 +120,15 @@ export function tapSound(name: Sfx, key?: string) {
     play(name, key);
   }, 0);
   pending = { timer, name, key };
+}
+
+/** 기다리던 버튼 기본 소리를 지금 울려요 (기다리는 게 없으면 아무것도 안 해요) */
+export function flushTapSound() {
+  if (!pending) return;
+  clearTimeout(pending.timer);
+  const { name, key } = pending;
+  pending = null;
+  play(name, key);
 }
 
 function play(name: Sfx, noteKey?: string) {

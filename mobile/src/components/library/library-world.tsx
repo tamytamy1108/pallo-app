@@ -48,6 +48,7 @@ const FADE = { duration: 200, easing: Easing.out(Easing.ease) };
  * 바로 바뀌게: 지금 지도가 다 뜬 뒤 warm 의 지도(앞에 둔 것부터 · 스터디 맵 · 다른 상황 맵)를 하나씩 미리 만들어 숨겨 둬요 (그리기는 멈춤).
  * 미리 만든 지도로 바꾸면 만들 것 없이 바로 돌며 들어와요. 아직 안 만든 지도면 그려질 때까지 앞 지도가 그대로 있다가
  * 그려지면 돌며 들어오고, SWAP_WAIT_MS 를 넘으면 사진판부터 떠요. 메모리가 적은 폰(liteWorld)은 LITE_WARM 장만 미리 만들어요.
+ * 폰은 지도가 화면에 보이는 동안엔 미리 만들지 않고, 스크롤해서 지도가 화면 밖일 때 만들어요 (보는 지도가 멈칫거리지 않게).
  * 새 지도가 돌며 들어오는 동안 아래 지도는 그리기를 멈춰요 (한 프레임에 한 장만 그려서 더 매끄럽게).
  * 다른 지도를 만드는 그 순간에만 보이는 지도를 멈춰 둬요 (만드는 동안 JS 가 멈춰서 움직임이 끊겨 보여요).
  * 오른쪽 맵으로 가면 시계 방향, 왼쪽이면 반대로 돌며 들어와요.
@@ -117,7 +118,10 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
   useEffect(() => {
     if (!(focused || (tabsFront && warmAllInBackground())) || under || warming || !drawn.has(top)) return;
     const keys = new Set(warmSig.split('\n'));
-    const next = warmNow.current.find((w) => !layers.some((l) => l.key === keyOf(w)));
+    // 폰은 지도가 화면에 보이는 동안 미리 만들지 않아요: 한 장마다 JS 가 멈춰서 보는 지도(캠퍼스 분수 · 배)가 멈췄다 움직였다를 되풀이해요 (버퍼링처럼).
+    // 지도를 스크롤해 내리면 그때 만들어요. 안 만든 지도로 바꾸면 사진판이 바로 뜨고 3D 가 이어 받아요
+    const watching = focused && visible && !warmAllInBackground();
+    const next = watching ? undefined : warmNow.current.find((w) => !layers.some((l) => l.key === keyOf(w)));
     const stale = layers.some((l) => l.key !== top && !keys.has(l.key));
     if (!next && !stale) return;
     // 첫 장(다음에 누를 것 같은 지도)은 바로, 나머지는 화면을 안 만질 때만 (만지는 중이면 조용해질 때 다시 봐요)
@@ -140,7 +144,7 @@ export function LibraryWorld({ world, warm = [], onOpen, visible = true }: { wor
       }
     }, WARM_GAP_MS);
     return () => clearTimeout(t);
-  }, [focused, tabsFront, under, warming, drawn, top, layers, warmSig, idleTick]);
+  }, [focused, tabsFront, visible, under, warming, drawn, top, layers, warmSig, idleTick]);
 
   // 지금 다른 지도를 만드는 중이에요 → 그동안만 보이는 지도를 멈춰 둬요 (만드는 동안 JS 가 멈춰서 움직임이 뚝뚝 끊겨 보여요).
   // 전에는 만들 지도가 남아 있기만 해도 멈춰서, 화면을 만지는 동안(미리 만들기가 미뤄지는 동안) 지도가 계속 멈춰 있었어요
