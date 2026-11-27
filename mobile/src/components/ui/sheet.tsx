@@ -175,8 +175,12 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [scrollKey, scrollRef]);
 
+  // 바깥을 누르거나 끌어 닫을 때: 키보드는 누른 그 순간 내려요. 부모가 open=false 로 다시 그린 뒤(effect)에 내리면
+  // 무거운 화면(피드 · 상세)에선 그 사이만큼 키보드가 늦게 내려가기 시작했어요 (2026-11-27)
   const requestClose = useCallback(() => {
-    if (dismissible) onClose();
+    if (!dismissible) return;
+    Keyboard.dismiss();
+    onClose();
   }, [dismissible, onClose]);
 
   // 손잡이를 아래로 끌면 따라 내려오고, 충분히 끌었거나 빨리 튕기면 닫아요
@@ -187,7 +191,7 @@ export function Sheet({ open, onClose, title, children, footer, tall = false, sc
       drag.set(e.translationY > 0 ? e.translationY : e.translationY / 4);
     })
     .onEnd((e) => {
-      if (e.translationY > CLOSE_DRAG || e.velocityY > 900) runOnJS(onClose)();
+      if (e.translationY > CLOSE_DRAG || e.velocityY > 900) runOnJS(requestClose)();
       else drag.set(withTiming(0, { duration: 250, easing: EASE }));
     });
 
