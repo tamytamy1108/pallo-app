@@ -15,6 +15,7 @@ import { sfx } from '@/lib/feedback';
 import { useMe } from '@/state/me';
 
 import { Box, Lift } from './parts';
+import { RequestSummary } from './request-summary';
 import { cancelChangeRequest, useChangeRequest } from './store';
 
 const DAY_ORDER: DayOfWeekName[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -39,12 +40,6 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
   const saved = useChangeRequest();
   // 운영진이 승인 · 반려하기 전(대기)에만 '확인 중' + [신청 취소] 를 보여요
   const req = saved?.status === 'pending' ? saved : null;
-  // 연기 신청 글: 첫 줄 = 고른 수업 (· 로 나눔) · 둘째 줄 = '14일 연기 · 기간 · 복귀'. 줄이 하나면(팀 · 지점 변경 · 예전 신청) 그대로
-  const [reqHead, reqTail] = req?.txt.includes('\n') ? req.txt.split('\n') : [null, req?.txt ?? ''];
-  // 팀 · 지점 변경 신청 글: 첫 줄 = '지금 팀 → 새 팀' — 바뀌기 전 · 후를 위아래로 나눠 보여요
-  const [moveFrom, moveTo] = reqHead?.includes(' → ') ? reqHead.split(' → ').map((x) => x.split(' · ')) : [[], []];
-  const reqClasses = reqHead && !moveTo.length ? reqHead.split(' · ') : [];
-  const reqInfo = reqTail ?? '';
   const [askCancel, setAskCancel] = useState(false);
   // 두 지점을 같이 다니면 지점 안내 보드처럼 위 칸에서 지점을 골라 그 지점 팀만 봐요 (내 지점이 먼저)
   const brOf = (t: MyPageStudyTeam) => t.branchName ?? study.branchName;
@@ -132,47 +127,7 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
         {req ? (
           <View style={styles.rq}>
             <PText style={styles.rqB}>{`${req.label} 신청 · 운영진 확인 중`}</PText>
-            {reqClasses.length ? (
-              <View style={styles.rqCls}>
-                {reqClasses.map((c) => (
-                  <View key={c} style={styles.rqCl}>
-                    <View style={[styles.rqDot, { backgroundColor: langColor(c.split(' ')[0]) }]} />
-                    <PText style={styles.rqClT} numberOfLines={1}>
-                      {c}
-                    </PText>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-            {moveTo.length ? (
-              <View style={styles.rqCls}>
-                {moveFrom.map((c) => (
-                  <View key={`f-${c}`} style={styles.rqCl}>
-                    <View style={[styles.rqDot, styles.rqDotOff]} />
-                    <PText style={[styles.rqClT, styles.rqClOff]} numberOfLines={1}>
-                      {c}
-                    </PText>
-                  </View>
-                ))}
-                <PText style={styles.rqTo}>바뀌어요</PText>
-                {moveTo.map((c) => (
-                  <View key={`t-${c}`} style={styles.rqCl}>
-                    <View style={[styles.rqDot, { backgroundColor: langColor(c.split(' ')[0]) }]} />
-                    <PText style={styles.rqClT} numberOfLines={1}>
-                      {c}
-                    </PText>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-            {reqClasses.length || moveTo.length ? (
-              <PText style={styles.rqInfo}>
-                <PText style={styles.rqDays}>{reqInfo.split(' · ')[0]}</PText>
-                {reqInfo.split(' · ').slice(1).map((p) => ` · ${p}`).join('')}
-              </PText>
-            ) : (
-              <PText style={styles.rqT}>{reqInfo}</PText>
-            )}
+            <RequestSummary txt={req.txt} />
             <Pressable
               onPress={() => {
                 sfx('tap');
@@ -277,16 +232,6 @@ const styles = StyleSheet.create({
   goText: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
   rq: { marginTop: 12, paddingTop: 12, paddingBottom: 4, gap: 6, borderTopWidth: 1.5, borderColor: Colors.line },
   rqB: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20, color: Colors.purple },
-  rqCls: { gap: 4 },
-  rqCl: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  rqDot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: Colors.ink },
-  rqClT: { flexShrink: 1, fontFamily: Font.body800, fontSize: 13, lineHeight: 19 },
-  rqClOff: { color: Colors.inkSub, textDecorationLine: 'line-through' },
-  rqDotOff: { backgroundColor: Colors.white, borderColor: Colors.inkSub },
-  rqTo: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.purple, paddingLeft: 18 },
-  rqInfo: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
-  rqDays: { fontFamily: Font.body900, color: Colors.ink },
-  rqT: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19.5 },
   rqCancel: { alignSelf: 'flex-start', marginTop: 6, height: 32, borderRadius: 16, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.white, paddingHorizontal: 14, justifyContent: 'center' },
   rqCancelText: { fontFamily: Font.body800, fontSize: 13, lineHeight: 18 },
   ds: { fontFamily: Font.body700, fontSize: 15, lineHeight: 23, color: Colors.inkSub },
