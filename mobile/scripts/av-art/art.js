@@ -74,6 +74,13 @@
   // 윗옷 자리: 소매 끝 xl · xr, 밑단 hy. 얼굴(목둘레)은 비워요
   const NECK = 'M204 20 C198 142 250 168 300 168 C350 168 402 142 396 20 Z';
   const top = (xl, xr, hy = 214, hb = 16) => `M${xl} -20 L${xr} -20 L${xr} ${hy} Q${(xr + 300) / 2} ${hy} 300 ${hy + hb} Q${(xl + 300) / 2} ${hy} ${xl} ${hy} Z ${NECK}`;
+  /**
+   * 다리까지 내려오는 윗옷: 몸통(얼굴 빼고) + 두 다리 띠(0.12 ~ s1). 밑단이 다리마다 다리와 직각이라 바지처럼 자연스러워요.
+   * top() 의 가로 밑단은 비스듬한 다리를 가로질러 잘려 보이고, 가운데(300)가 실제 가랑이(252)와 어긋나 한쪽 다리만 처져 보였어요.
+   * 조각마다 따로 칠해요(lower 와 같은 까닭) — 무늬를 자를 땐 clipPath 에 세 조각을 다 넣어요.
+   */
+  const shirt = (xl, xr, s1, b = 0.03) => [`M${xl} -20 L${xr} -20 L${xr} 200 L${xl} 200 Z ${NECK}`, band('ll', 0.12, s1, 0, b), band('lr', 0.12, s1, 0, b)];
+  const fills = (ds, c) => ds.map((d) => fl(d, c)).join('');
   /** 몸에 칠하기 (몸 모양으로 자르고 원본 빛 · 그림자를 곱해요) */
   const paint = (body, out = '') => {
     const u = 'p' + U++;
@@ -239,7 +246,7 @@
   const pants = (s1, c) => lower(0.26, s1, 'M96 190 H420 V236 H96 Z', c);
   const WEARS = [
     { id: 'w-tee', name: '줄무늬 티셔츠', price: 0, rare: '기본', art: () => paint(
-      fl(top(112, 400), '#FFFFFF') + `<clipPath id="te${U}"><path d="${top(112, 400)}" fill-rule="evenodd"/></clipPath>` +
+      fills(shirt(112, 400, 0.4), '#FFFFFF') + `<clipPath id="te${U}">${shirt(112, 400, 0.4).map((d) => `<path d="${d}"/>`).join('')}</clipPath>` +
       `<g clip-path="url(#te${U})">${rng(9, (i) => fl(`M0 ${-4 + i * 26} H520 V${12 + i * 26} H0Z`, '#2F4A8C'))}</g>` +
       ln(NECK.replace(' Z', ''), '#2F4A8C', 12) + ln('M112 40 Q122 112 112 184', '#E5484D', 18, { cap: 'butt' }) + ln('M400 40 Q390 112 400 184', '#E5484D', 18, { cap: 'butt' })) },
     { id: 'w-hoodie', name: '포근 후드티', price: 0, rare: '기본', art: () => paint(
@@ -276,11 +283,11 @@
       ln('M58 44 Q68 112 58 180', '#DDA978', 20, { cap: 'butt' }) + ln('M444 44 Q434 112 444 180', '#DDA978', 20, { cap: 'butt' }) +
       fl('M96 208 H420 V222 Q300 240 96 222 Z', '#DDA978') + rng(30, (i) => ln(`M${104 + i * 10} 208 l0 16`, '#B99A66', 2, { op: 0.35 }))) },
     { id: 'w-suit', name: '정장 재킷', price: 350, rare: '레어', art: () => paint(
-      `<path d="${top(60, 440, 222, 18)}" fill="#2E3350" fill-rule="evenodd"/>` +
-      fl('M232 120 L300 220 L368 120 Q340 168 300 170 Q260 168 232 120 Z', '#FFFFFF') +
-      fl('M292 170 L308 170 L314 182 L300 230 L286 182 Z', '#E5484D') + fl('M290 166 h20 l-4 12 h-12 Z', '#B83238') +
-      fl('M216 80 L262 160 L300 226 L254 196 L232 150 Z', '#3B4166') + fl('M384 80 L338 160 L300 226 L346 196 L368 150 Z', '#3B4166') +
-      `<circle cx="300" cy="206" r="5" fill="#C9CCD6"/>` + fl('M352 176 l22 -4 l2 8 l-22 4 Z', '#FFE200') +
+      fills(shirt(60, 440, 0.5), '#2E3350') +
+      fl('M232 120 L300 206 L368 120 Q340 168 300 170 Q260 168 232 120 Z', '#FFFFFF') +
+      fl('M292 170 L308 170 L313 180 L300 210 L287 180 Z', '#E5484D') + fl('M290 166 h20 l-4 12 h-12 Z', '#B83238') +
+      fl('M216 80 L262 160 L300 210 L256 186 L232 150 Z', '#3B4166') + fl('M384 80 L338 160 L300 210 L344 186 L368 150 Z', '#3B4166') +
+      `<circle cx="300" cy="198" r="5" fill="#C9CCD6"/>` + fl('M352 176 l22 -4 l2 8 l-22 4 Z', '#FFE200') +
       ln('M60 44 Q70 112 60 180', '#FFFFFF', 12, { cap: 'butt' })) },
     { id: 'w-hanbok', name: '색동 한복', price: 350, rare: '레어', art: () => paint(
       lower(0.2, 0.95, 'M90 196 H426 V240 H90 Z', '#3B5BA9', [0.04, 0.04]) +
