@@ -996,6 +996,8 @@ BUILD.study2 = (EL, SC) => {
     bank(H * .52, 34, 'rgba(255,232,228,.9)', 'rgba(236,200,210,.6)'); bank(H * .6, 42, 'rgba(255,244,240,.95)', 'rgba(220,214,236,.6)'); bank(H * .7, 50, '#FFFFFF', 'rgba(206,218,238,.8)'); }), az: [.2, 1.2] }), sc = S.sc;
   // 구름 바다: 아래 넓게 깔린 부드러운 구름 (안개 띠 + 몽실 구름 · 천천히 옆으로 흘러요)
   { const fogT = canvasTex(512, 512, (g, W, H) => { const gr = g.createRadialGradient(W / 2, H / 2, 20, W / 2, H / 2, W / 2); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.7, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H); });
+    // 바닥에 비스듬히 누운 판이라 작은 축소 단계(mipmap)를 써요 — 폰 GL 에서 이 단계가 비어 올라가 무지개 노이즈가 났어요. 부드러운 그라데이션이라 축소 단계 없이 그려요
+    fogT.generateMipmaps = false; fogT.minFilter = THREE.LinearFilter; fogT.anisotropy = 1; fogT.wrapS = fogT.wrapT = THREE.ClampToEdgeWrapping;
     const fp = new THREE.Mesh(new THREE.PlaneGeometry(46, 46), new THREE.MeshBasicMaterial({ map: fogT, transparent: true, depthWrite: false })); fp.rotation.x = -Math.PI / 2; fp.position.y = -2.4; fp.userData.bg = 1; sc.add(fp); }
   const drift = [];
   for (let i = 0; i < 30; i++) { const row = Math.floor(i / 6), [x, z] = SX(-9.5 + (i % 6) * 3.6 + (row % 2) * 1.8, -14 + row * 5.2); const c = puffCloud(x, -2.6 + (i % 3) * .25, z, 1.0 + (i % 4) * .12, i + 1); c.userData.bg = 1; sc.add(c); drift.push([c, x, i]); }
