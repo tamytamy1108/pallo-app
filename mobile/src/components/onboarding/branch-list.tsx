@@ -35,13 +35,14 @@ const same = (a: string, b: string) => withJeom(a) === withJeom(b);
  * 지점 목록 시트 (프로토타입 .bs · 가입 단계의 '다니는 지점'): 제목 · 검색 · 권역 탭 · 권역별 묶음 카드. 하나 고르면 닫혀요.
  * raw: 데이터 이름 그대로('가산') 돌려줘요 — 기본은 보이는 이름('가산점', 가입 · 체험 예약이 저장하는 값).
  */
-export function BranchListSheet({ open, onClose, title, value, onPick, raw = false, mine, hide }: { open: boolean; onClose: () => void; title: string; value: string; onPick: (name: string) => void; trial?: boolean; raw?: boolean; mine?: string[]; /** 목록에서 뺄 지점 (예: 지금 다니는 지점) */ hide?: string[] }) {
+export function BranchListSheet({ open, onClose, title, value, onPick, raw = false, mine, hide, current }: { open: boolean; onClose: () => void; title: string; value: string; onPick: (name: string) => void; trial?: boolean; raw?: boolean; mine?: string[]; /** 목록에서 뺄 지점 (예: 지금 다니는 지점) */ hide?: string[]; /** 지금 다니는 지점 — 맨 위 '지금 내 지점' 칸에 보여 주기만 해요 (고를 수 없어요 · 아래 권역 목록에선 빠져요) */ current?: string[] }) {
   return (
     <Sheet open={open} onClose={onClose} title={title} tall>
       <BranchListPicker
         value={value}
         mine={mine}
         hide={hide}
+        current={current}
         onPick={(b) => {
           onPick(raw ? b.key : b.name);
           onClose();
@@ -55,11 +56,30 @@ export function BranchListSheet({ open, onClose, title, value, onPick, raw = fal
  * 지점 하나 고르기 본문 (검색 · 권역 탭 · 권역별 묶음 카드).
  * 가입 단계 · 체험 예약 · 이벤트 제안(진행 지점) · 연기 · 팀 · 지점 변경이 같은 모양을 써요.
  */
-export function BranchListPicker({ value, onPick, mine = [], hide = [] }: { value: string | null; onPick: (b: Branch) => void; /** 내 지점(수업 듣는 지점) — '내 지점'으로 표시 · 맨 위 고정 */ mine?: string[]; hide?: string[] }) {
+export function BranchListPicker({ value, onPick, mine = [], hide = [], current = [] }: { value: string | null; onPick: (b: Branch) => void; /** 내 지점(수업 듣는 지점) — '내 지점'으로 표시 · 맨 위 고정 */ mine?: string[]; hide?: string[]; /** 지금 다니는 지점 — 맨 위 칸에 보여 주기만 (지점 옮기기) */ current?: string[] }) {
   const isMine = (k: string) => mine.some((m) => same(k, m));
+  // 넘겨준 순서대로 (등록된 내 지점이 먼저)
+  const now = current.map((c) => LIST.find((b) => same(b.key, c))).filter((b): b is Branch => !!b);
   return (
     <PickerFrame
-      hide={(b) => hide.some((h) => same(b.key, h))}
+      head={
+        now.length ? (
+          <View>
+            <View style={styles.reg}>
+              <PText style={styles.regName}>지금 내 지점</PText>
+            </View>
+            <View style={[styles.group, styles.nowGroup]}>
+              {now.map((b, i) => (
+                <View key={b.key} style={[styles.row, i > 0 && styles.rowLine]} accessibilityLabel={`${b.name} · 지금 다니는 내 지점`}>
+                  <PText style={styles.rowName}>{b.name}</PText>
+                  <PText style={styles.nowTag}>지금 다녀요</PText>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null
+      }
+      hide={(b) => hide.some((h) => same(b.key, h)) || current.some((c) => same(b.key, c))}
       // 내 지점은 맨 위 고정 · 그다음 고른 지점 (권역도 같은 순서 — 바꾸러 들어왔을 때 지금 값이 바로 보이게)
       sortKey={(b) => {
         // 내 지점이 맨 위 (넘겨준 순서대로 · 등록 지점이 먼저) · 그다음 고른 지점
@@ -278,6 +298,9 @@ const styles = StyleSheet.create({
   rowNameOn: { fontFamily: Font.body900, color: Colors.purple },
   rowCount: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 17, color: Colors.inkSub },
   mine: { fontFamily: Font.body800, fontSize: 12, color: Colors.purple },
+  // 지금 다니는 지점 칸 (지점 옮기기): 연보라 바탕 · 고를 수 없어요
+  nowGroup: { backgroundColor: '#F3EEFB' },
+  nowTag: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.purple },
   chk: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#CFC6B2', alignItems: 'center', justifyContent: 'center' },
   chkOn: { backgroundColor: Colors.purple, borderColor: Colors.purple },
 });
