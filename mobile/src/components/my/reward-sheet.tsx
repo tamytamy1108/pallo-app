@@ -8,7 +8,8 @@ import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { AV_BG, AV_ITEM, type Avatar } from '@/data/my';
+import { type Avatar } from '@/data/my';
+import { avBgs, avItem } from '@/state/av-catalog';
 import { REWARD } from '@/data/rewards';
 import { haptic, sfx } from '@/lib/feedback';
 import { cloneAvatar, useMyAvatar } from '@/state/avatar';
@@ -18,8 +19,9 @@ import { eul, markRewardSeen, useUnseenReward } from '@/state/rewards';
 export function wearReward(a: Avatar, keys: readonly string[]): Avatar {
   const x = cloneAvatar(a);
   keys.forEach((k) => {
+    const it = avItem(k);
     if (k.startsWith('bg:')) x.bg = k.slice(3);
-    else if (AV_ITEM[k]) x.eq[AV_ITEM[k].cat] = k;
+    else if (it) x.eq[it.cat] = k;
   });
   return x;
 }
@@ -47,7 +49,7 @@ export function RewardHost() {
     setOpen(false);
     markRewardSeen(id);
   };
-  const names = r.items.map((k) => (k.startsWith('bg:') ? `${AV_BG.find((b) => b.id === k.slice(3))?.name ?? ''} 배경` : (AV_ITEM[k]?.name ?? k))).join(' · ');
+  const names = r.items.map((k) => (k.startsWith('bg:') ? `${avBgs().find((b) => b.id === k.slice(3))?.name ?? ''} 배경` : (avItem(k)?.name ?? k))).join(' · ');
   return (
     <Sheet
       open={open}

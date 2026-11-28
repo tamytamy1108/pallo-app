@@ -3,6 +3,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native';
 
 import { logout } from '@/api/auth';
+import { useMyLinkRequests } from '@/api/use-link-requests';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Toggle } from '@/components/account/parts';
@@ -19,10 +20,11 @@ import { isMember } from '@/state/access';
 import { updateMe, useMe } from '@/state/me';
 
 /**
- * 설정 — 꼭 필요한 것만 (2026-11-25 줄임): 계정(닉네임 · 로그인) · 알림 7개 · 효과음 · 안전(퀘스트 공유 · 차단) · 도움(자주 묻는 질문) · 로그아웃.
+ * 설정 — 꼭 필요한 것만 (2026-11-25 줄임): 계정(닉네임 · 내 지점 · 로그인) · 알림 7개 · 효과음 · 안전(퀘스트 공유 · 차단) · 도움(자주 묻는 질문) · 로그아웃.
  * 자주 묻는 질문은 마이 아래 메뉴에서 빠져서(2026-11-26) 여기서 들어가요.
  * 누구나 열어요 (비회원도 로그아웃 · 알림 · 차단). 회원 전용 줄은 비회원에게 안 보여요: 스터디 세션 알림.
- * 뺀 것: 내 지점 · 학습 언어 · 레벨(전산 웹 · 프로가 정해요) · 약관 · 회원 탈퇴 · 말하기 어려움 · 소리 끄기(레슨 안에 있어요) · 하루 목표 · 공개 범위 · 신고 내역 · 이용권 · 결제 내역 · 공지사항 · 앱 버전.
+ * 내 지점(지점 연동 요청 내역 · 상태)은 2026-11-27 다시 넣었어요 — 누구나, 확인 중인 요청이 있으면 '확인 중 N'.
+ * 뺀 것: 학습 언어 · 레벨(전산 웹 · 프로가 정해요) · 약관 · 회원 탈퇴 · 말하기 어려움 · 소리 끄기(레슨 안에 있어요) · 하루 목표 · 공개 범위 · 신고 내역 · 이용권 · 결제 내역 · 공지사항 · 앱 버전.
  * 뺀 설정 값은 기본값 그대로 서버에 남아요. 효과음은 @/lib/feedback 이 가져요.
  * 맞는 API: 30 `GET / PUT /me/settings`
  */
@@ -36,6 +38,8 @@ export default function SettingsScreen() {
   const { section, sheet: openSheet } = useLocalSearchParams<{ section?: string; sheet?: string }>();
   const [sheet, setSheet] = useState<null | 'nick' | 'block' | 'logout'>(openSheet === 'nick' ? 'nick' : null);
   const loginName = Object.keys(logins).find((k) => logins[k]);
+  const links = useMyLinkRequests();
+  const pendingLinks = links.data?.pendingCount ?? 0;
   const scrollRef = useRef<ScrollViewInstance>(null);
   const onNotiLayout = (e: LayoutChangeEvent) => {
     if (section === 'noti') scrollRef.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 12), animated: true });
@@ -45,6 +49,7 @@ export default function SettingsScreen() {
     <AccountPage title="설정" bodyStyle={styles.body} scrollRef={scrollRef}>
       <Sec title="계정">
         <GoRow title="닉네임 · 한 줄 소개" value={me.name} onPress={() => setSheet('nick')} />
+        <GoRow title="내 지점" value={pendingLinks ? `확인 중 ${pendingLinks}` : ''} onPress={() => go('/me/settings/branch')} />
         <GoRow title="로그인 계정" value={loginName ? `${loginName} 연결됨` : ''} onPress={() => go('/me/settings/login')} />
       </Sec>
       <Sec title="알림" onLayout={onNotiLayout}>

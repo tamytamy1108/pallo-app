@@ -4,8 +4,8 @@
  * 진짜 서버: 응답(모습 · 가진 것 · 잔액)을 state/avatar · state/me 에 넣어요.
  */
 import type { Avatar, AvCat } from '@/data/my';
-import { applyAvatarState, buyAndSave } from '@/state/avatar';
-import { updateMe } from '@/state/me';
+import { applyAvatarState, buyAndSave, getMyAvatar, getOwned } from '@/state/avatar';
+import { getMe } from '@/state/me';
 
 import { http } from './client';
 import { apiConfig } from './config';
@@ -21,15 +21,15 @@ export type AvatarLook = {
   say: string;
   equipped: Record<AvCat, string | null>;
 };
-type MyAvatarState = { look: AvatarLook; owned: string[]; sparks: number };
+export type MyAvatarState = { look: AvatarLook; owned: string[]; sparks: number };
 export type PurchaseResult = { spent: number; bought: string[] };
 
 export const toLook = (a: Avatar): AvatarLook => ({ color: a.color, flip: a.flip, bg: a.bg, hairColor: a.hc, say: a.say, equipped: { ...a.eq } });
 export const fromLook = (l: AvatarLook): Avatar => ({ color: l.color, flip: l.flip, bg: l.bg, hc: l.hairColor, say: l.say, eq: { ...l.equipped } });
 
-function applyServer(s: MyAvatarState) {
+/** 서버 상태를 기기에 넣어요. 스파크는 스파크 도메인이 생기기 전까지 서버가 0 을 보내니 아직 넣지 않아요 (기기 값 그대로) */
+export function applyServer(s: MyAvatarState) {
   applyAvatarState({ saved: fromLook(s.look), own: s.owned });
-  updateMe({ sparks: s.sparks });
 }
 
 /** 서버 오류 코드 (openapi `/me/avatar/purchase` error) */
@@ -53,6 +53,12 @@ export function purchaseAvatar(d: Avatar, expectedCost: number, requestId: strin
       applyServer(res);
       return { spent: res.spent, bought: res.bought };
     });
+}
+
+/** 34 GET /me/avatar — 저장한 모습 · 가진 것 (가짜 서버는 이 기기에 남긴 값 그대로) */
+export function fetchMyAvatar({ signal }: { signal?: AbortSignal } = {}): Promise<MyAvatarState> {
+  if (apiConfig.useMock) return mock('myAvatar', () => ({ look: toLook(getMyAvatar()), owned: [...getOwned()], sparks: getMe().sparks }));
+  return http.get<MyAvatarState>('/me/avatar', { signal });
 }
 
 /** 34 PUT /me/avatar — 새로 살 것이 없을 때 모습만 저장 */

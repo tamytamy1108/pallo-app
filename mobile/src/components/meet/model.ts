@@ -32,17 +32,18 @@ import {
 } from '@/data/meet';
 import { branchMatches } from '@/components/lounge/branch-select';
 import { areaLine } from './area';
-import { devClubRole } from '@/lib/dev-profile';
 import type { Me, Role, StudyLang } from '@/state/me';
 
+import { clubLive, findClub, findMeet, myClubRoles } from './club-roles';
 import { useMeetStore, type ClubSched } from './meet-store';
+
+// 순수 판정은 club-roles (UI 를 안 불러서 api 가짜 서버도 써요) — 화면은 여기서 그대로 불러요
+export { clubLive, findClub, findMeet, myClubRoles };
 
 export const useAllMeets = () => {
   const mine = useMeetStore((s) => s.myMeets);
   return mine.length ? [...mine, ...MEETS] : MEETS;
 };
-/** 운영 중인 동아리 (승인됐고 · 거절 · 닫힘이 아니에요) */
-export const clubLive = (c: Club) => !c.wait && !c.rejected && !c.closed;
 
 /** 목록에 보이는 동아리: 내가 만든 것 중 운영 중인 것 + 예시 (검토 중 · 거절은 '내가 신청한 동아리' 카드에만) */
 export const useAllClubs = () => {
@@ -57,21 +58,10 @@ export const useAllClubs = () => {
  * 코호스트: 그 동아리 호스트가 나를 코호스트로 정했고 동아리가 운영 중일 때. 동아리가 닫히면 같이 없어져요.
  * badge: 마이 · 프로필 이름 옆 뱃지 (호스트가 먼저). 0개가 되면 null — 기록은 meet-store hostLog 에 남아요.
  */
-/** 개발용 '운영 중인 동아리' (모임 역할을 호스트 · 코호스트로 골랐을 때) */
-const DEV_RUN_CLUB = 'cl4';
-
 export function useMyClubRoles(myName: string) {
   const mine = useMeetStore((s) => s.myClubs);
   const cohost = useMeetStore((s) => s.cohost);
-  const real = mine.filter((c) => clubLive(c));
-  const all = [...mine, ...CLUBS];
-  const realCo = all.filter((c) => clubLive(c) && !c.mine && (cohost[c.id] ?? []).includes(myName));
-  // 개발용: 마이 '개발 · 사람'에서 모임 역할을 호스트 · 코호스트로 고르면, 예시 동아리 하나를 운영 중인 것으로 봐요 (뱃지 · 내 모임 확인용)
-  const devClub = __DEV__ && (devClubRole === 'host' || devClubRole === 'co') ? CLUBS.find((c) => c.id === DEV_RUN_CLUB) : undefined;
-  const hostOf = devClub && devClubRole === 'host' ? [...real, devClub] : real;
-  const coOf = devClub && devClubRole === 'co' ? [...realCo, devClub] : realCo;
-  const badge: 'host' | 'co' | null = hostOf.length ? 'host' : coOf.length ? 'co' : null;
-  return { hostOf, coOf, badge };
+  return myClubRoles(myName, mine, cohost);
 }
 /**
  * 번개 장소를 누구에게 얼마나 보여 줄지 (안전). see: 가게 이름 · 지도 주소 · 상세 주소 · 복사까지 다 봐요.
@@ -84,8 +74,6 @@ export function useMeetSee(m: Meet, role: Role) {
   const asked = useMeetStore((s) => !!s.asked[m.id]);
   return { joined, asked, see: !!m.mine || joined || role === 'manager' };
 }
-export const findMeet = (id: string, mine: Meet[]) => mine.find((m) => m.id === id) ?? MEETS.find((m) => m.id === id);
-export const findClub = (id: string, mine: Club[]) => mine.find((c) => c.id === id) ?? CLUBS.find((c) => c.id === id);
 
 /** 고른 지점의 것만 · '전 지점' 행사는 늘 (프로토타입 lgBrOk — 여러 지점이면 '가산,연신내' 처럼 쉼표로) */
 export const branchOk = (br: string, branch: string) => branchMatches(branch, br);

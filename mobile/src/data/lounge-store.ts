@@ -151,6 +151,9 @@ export const postComments = (s: LoungeState, p: { id: string; c0?: 0 }) => s.cmt
 export const addPostComment = (p: { id: string; c0?: 0 }, author: string, text: string) =>
   patch((s) => ({ cmts: { ...s.cmts, [p.id]: [...postComments(s, p), { id: `${p.id}-${Date.now()}`, author, text, time: '방금', mine: true, likes: 0 }] } }));
 
+/** 글 댓글 목록을 통째로 바꿔요 (가짜 서버의 답글 · 댓글 하트 — api/use-community) */
+export const setPostComments = (id: string, list: Comment[]) => patch((s) => ({ cmts: { ...s.cmts, [id]: list } }));
+
 // ---- 글 · 동행 · 해외 카드 올리기 ----
 export const addPost = (p: Post) => patch((s) => ({ feed: [{ ...p, at: p.at ?? Date.now() }, ...s.feed], sub: { ...s.sub, com: 'all' } }));
 export const addTrip = (t: Trip) => patch((s) => ({ feed: [{ ...t, at: t.at ?? Date.now() }, ...s.feed], sub: { ...s.sub, trip: 'trip' }, cc: t.cc, tab: 'trip' }));

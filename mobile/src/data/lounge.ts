@@ -381,5 +381,6 @@ export function branchOk(brs: string[], br: string | undefined) {
   if (!brs.length) return true;
   const b = br ?? '';
   if (!b || b.includes('전 지점')) return true;
-  return brs.some((x) => b.includes(x));
+  // 서버 지점 이름은 '가산점', 예시 글은 '가산' 처럼 섞여 있어요 — 끝의 '점'은 빼고 견줘요
+  return brs.some((x) => b.includes(x.replace(/점$/, '')));
 }

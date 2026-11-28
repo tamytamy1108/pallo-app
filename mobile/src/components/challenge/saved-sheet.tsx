@@ -1,7 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
+import { apiErrorMessage } from '@/api/errors';
+import { useSavedChallenges } from '@/api/use-my-activity';
 import { Pressable } from '@/components/ui/pressable';
 import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -22,15 +25,20 @@ export const useSavedChallengeCount = () => savedChallenges(useChallengeState())
 
 /** 마이 > 찜한 챌린지: 챌린지 카드 · 표현 창의 하트로 모아요. 누르면 그 챌린지로 */
 export function SavedChallengesSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const s = useChallengeState();
-  const list = savedChallenges(s);
+  // GET /me/saved-challenges (api/use-my-activity) — 하트(찜 · 찜 취소)는 아직 기기 상태
+  const q = useSavedChallenges(open);
+  const list = q.list ?? [];
   const go = (p: Challenge) => {
     runAfterSheetClose(() => openChallenge(p));
     onClose();
   };
   return (
-    <Sheet open={open} onClose={onClose} title={`찜한 챌린지 ${list.length}개`} label="찜한 챌린지">
-      {list.length ? (
+    <Sheet open={open} onClose={onClose} title={q.list ? `찜한 챌린지 ${list.length}개` : '찜한 챌린지'} label="찜한 챌린지">
+      {q.isPending ? (
+        <LoadingState />
+      ) : q.isError ? (
+        <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
+      ) : list.length ? (
         list.map((p, i) => (
           <View key={p.id} style={[styles.row, i > 0 && styles.line]}>
             <Pressable onPress={() => go(p)} accessibilityRole="button" accessibilityLabel={`${isExpr(p) ? p.hl : p.name} 열기`} style={styles.main}>

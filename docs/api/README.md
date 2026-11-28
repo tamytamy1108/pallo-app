@@ -5,7 +5,7 @@
 
 | 파일 | 내용 |
 |---|---|
-| [`openapi.yaml`](openapi.yaml) | API 305개: 요청 · 응답 모양, 쓰는 화면, 규칙 · 누가 부를 수 있나(역할) |
+| [`openapi.yaml`](openapi.yaml) | API 309개: 요청 · 응답 모양, 쓰는 화면, 규칙 · 누가 부를 수 있나(역할) |
 | [`screens.md`](screens.md) | 화면 67개마다 무슨 API를 부르는지 · 지금 가짜 데이터가 어디 있는지 · 열린 질문 |
 | [`index.html`](index.html) | Swagger UI로 보기 |
 
@@ -21,11 +21,11 @@ cd docs/api && npx -y http-server -p 8090 .
 
 | 값 | 개수 | 뜻 |
 |---|---:|---|
-| `existing` | 94 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
+| `existing` | 97 | 이미 있는 API를 그대로 써요. `x-backend` 에 컨트롤러 · DTO 이름. 앱이 이 모양에 맞춰요 |
 | `change` | 47 | 있는 API에 필드 · 동작을 더해야 해요. **`x-gap` 에 적은 것만** 고치면 돼요 |
-| `new` | 164 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
+| `new` | 165 | 아직 없어요. 경로 · 모양은 제안이라 바꿔도 돼요 (바꾸면 이 문서를 같이 고쳐 주세요) |
 
-`existing` · `change` 141개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음). `x-backend` 에 `/app/api/v2` 가 적힌 것(41개)이 새 앱 경로에 이미 있는 것이에요.
+`existing` · `change` 144개는 백엔드 실제 경로(`@*Mapping`)와 하나씩 대조했어요 (모두 있음). `x-backend` 에 `/app/api/v2` 가 적힌 것(41개)이 새 앱 경로에 이미 있는 것이에요.
 각 API에 붙은 다른 표시: `x-screens`(쓰는 화면 파일) · `x-app-code`(지금 가짜 데이터 위치) · `x-inventory`(예전 목록 `docs/appendix/api-inventory.md` 번호, `docs/frontend/api-additions.md` A번호).
 
 묶음별 개수는 [`screens.md` 맨 위 표](screens.md#한눈에)에 있어요. 큰 덩어리로 보면:

@@ -1,5 +1,5 @@
 import { Image, type ImageProps } from 'expo-image';
-import { memo, useId, useMemo, useState } from 'react';
+import { Fragment, memo, useId, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { css, useReducedMotion } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Stop } from 'react-native-svg';
@@ -7,7 +7,8 @@ import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Stop } from 'rea
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { AV_BG, AV_COLOR_HEX, AV_ITEM, memberAvatar, type Avatar, type AvItem } from '@/data/my';
+import { AV_BG, AV_COLOR_HEX, memberAvatar, type Avatar, type AvItem, type AvLayer } from '@/data/my';
+import { avItem, useAvArt, useAvBgs, useStageArt, type AvArtLayer } from '@/state/av-catalog';
 import { getMe } from '@/state/me';
 import { useMyAvatar } from '@/state/avatar';
 
@@ -17,7 +18,9 @@ import { AV_ART, AV_BG_ART, AV_BODY, AV_GEO, AV_HAIR_FILL, AV_HAIR_FRONT, AV_TIN
  * 꾸민 캐릭터 그리기 (프로토타입 avCharHTML · avStage · lgFace).
  * 몸은 원본 3D PNG 그대로 — 추천 색은 색마다 원본, 직접 고른 색은 노랑 원본의 노랑 몸 픽셀만 같은 계산으로 바꿔요.
  * 아이템은 캐릭터 원본 좌표 위에 그린 그림(scripts/av-art)을 뜬 PNG 라 눈 · 팔 · 다리 자리에 꼭 맞아요.
- * 겹침: 날개 · 망토 · 손에 든 것 · 헤어 → 모자(캐릭터 뒤) · 몸 · 칠한 옷 · 눈 · 깜빡임 · 앞머리(모자 없을 때) · 앞 아이템. 효과(fx)는 무대에서 캐릭터 위에.
+ * 겹침: 날개 · 망토 · 손에 든 것 · 헤어 → 모자(캐릭터 뒤) · 몸 · 칠한 옷 · 눈 · 깜빡임 · 앞머리(모자 없을 때) · 앞 아이템. 무대는 배경 → 배경 효과(fx) → 캐릭터 순(서버 CharacterLayer: bg 0 · fx 50 · 캐릭터 100~).
+ * 겹침은 숫자 z 하나로 정해요(백엔드 설계 문서 6장): 몸 200 · 깜빡임 500 은 고정, 번들 그림은 자리 이름을 z 로(뒤 100 · 칠한 옷 300 · 눈 400 · 앞머리 600 · 앞 700).
+ * 서버 카탈로그(state/av-catalog)에 그림이 있는 아이템은 그 레이어들(주소 · 자리 · z · 칠할 색)로 그리고, 없으면 번들 그림으로 그려요 — 둘이 섞여도 같은 줄에 z 순서로 서요.
  */
 
 /**
@@ -43,7 +46,7 @@ export const bodyHex = (color: string) => (color[0] === '#' ? color : AV_COLOR_H
 /** 입은 아이템 (모자 > 헤어 > 나머지 순으로 뒤에서 앞으로) */
 const wornItems = (a: Avatar) =>
   Object.values(a.eq)
-    .map((id) => (id ? AV_ITEM[id] : undefined))
+    .map((id) => (id ? avItem(id) : undefined))
     .filter((i): i is AvItem => !!i)
     .sort((x, y) => (x.hat ? 2 : x.hair ? 1 : 0) - (y.hat ? 2 : y.hair ? 1 : 0));
 
@@ -172,12 +175,27 @@ function HairFront({ it, cover, hc, w, h }: { it: AvItem; cover?: AvItem; hc: st
   const clipY = cover.clipY ?? 40;
   const bangsBottom = (g.front[1] + g.front[3]) * 332;
   if (bangsBottom - clipY < MIN_BANGS_BELOW_HAT) return null;
+  return (
+    <ClipBelow clipY={clipY} w={w} h={h}>
+      {bangs}
+    </ClipBelow>
+  );
+}
+
+/** 모자 아랫선(clipY, 캐릭터 좌표) 아래만 보여 줘요 — 머리를 덮는 모자를 쓸 때 앞머리 */
+function ClipBelow({ clipY, w, h, children }: { clipY: number; w: number; h: number; children: ReactNode }) {
   const top = (clipY / 332) * h;
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: -w, top, width: w * 3, height: h * 2, overflow: 'hidden' }}>
-      <View style={{ position: 'absolute', left: w, top: -top, width: w, height: h }}>{bangs}</View>
+      <View style={{ position: 'absolute', left: w, top: -top, width: w, height: h }}>{children}</View>
     </View>
   );
+}
+
+/** 서버 그림 한 장 — 몸 상자 기준 자리에 늘여 그리고, 칠할 색이 있으면 머리 색 · 몸 색으로 칠해요 */
+function ArtLayer({ l, hc, body, w, h }: { l: AvArtLayer; hc: string; body: string; w: number; h: number }) {
+  const tint = l.tint === 'hair' ? hc : l.tint === 'body' ? body : undefined;
+  return <AvImg source={{ uri: l.url }} style={rectStyle(l.rect, w, h)} contentFit="fill" tintColor={tint} />;
 }
 
 function EyeLayer({ it, color, w, h }: { it: AvItem; color: string; w: number; h: number }) {
@@ -193,21 +211,52 @@ function EyeLayer({ it, color, w, h }: { it: AvItem; color: string; w: number; h
 
 type CharProps = { av: Avatar; width: number; flip?: boolean; blink?: boolean; style?: StyleProp<ViewStyle> };
 
+/** 고정 부품 z — 몸 · 깜빡임 (서버 CharacterLayer 와 같아요) */
+const Z_BODY = 200;
+const Z_BLINK = 500;
+/** 번들 그림 자리 → z */
+const BUNDLE_Z: Record<Exclude<AvLayer, 'fx'>, number> = { back: 100, paint: 300, eye: 400, front: 700 };
+const Z_HAIR_FRONT = 600;
+/** 같은 z 면 나머지 → 헤어 → 모자 순으로 뒤에서 앞 */
+const slotRank = (i: AvItem) => (i.hat ? 2 : i.hair ? 1 : 0);
+
+type Piece = { z: number; rank: number; key: string; node: ReactNode };
+
 /** 캐릭터(몸 + 입은 아이템)만 · 배경 없이 — 상자 크기 = width × width·332/520 (아이템은 상자 밖으로 삐져나와요) */
 export const AvatarChar = memo(function AvatarChar({ av, width: w, flip = av.flip, blink = true, style }: CharProps) {
+  const art = useAvArt();
   const h = w * CHAR_RATIO;
   const its = wornItems(av);
   const hc = av.hc || '#3B2A20';
   const cover = its.find((i) => i.hat && i.cover);
+  const body = bodyHex(av.color);
+  const pieces: Piece[] = [{ z: Z_BODY, rank: 0, key: 'body', node: <Body color={av.color} w={w} h={h} /> }];
+  if (blink) pieces.push({ z: Z_BLINK, rank: 0, key: 'blink', node: <Blink color={av.color} w={w} h={h} /> });
+  for (const it of its) {
+    const rank = slotRank(it);
+    const layers = art[it.id];
+    if (layers) {
+      layers.forEach((l, n) => {
+        const img = <ArtLayer l={l} hc={hc} body={body} w={w} h={h} />;
+        const node = l.part === 'front' && cover ? <ClipBelow clipY={cover.clipY ?? 40} w={w} h={h}>{img}</ClipBelow> : img;
+        pieces.push({ z: l.z, rank, key: `${it.id}:${n}`, node });
+      });
+    } else if (it.hair) {
+      pieces.push({ z: BUNDLE_Z.back, rank, key: it.id, node: <Sticker it={it} hc={hc} w={w} h={h} /> });
+      pieces.push({ z: Z_HAIR_FRONT, rank, key: `${it.id}:front`, node: <HairFront it={it} cover={cover} hc={hc} w={w} h={h} /> });
+    } else if (it.layer === 'eye') {
+      pieces.push({ z: BUNDLE_Z.eye, rank, key: it.id, node: <EyeLayer it={it} color={av.color} w={w} h={h} /> });
+    } else if (it.layer !== 'fx') {
+      pieces.push({ z: BUNDLE_Z[it.layer], rank, key: it.id, node: <Sticker it={it} hc={hc} w={w} h={h} /> });
+    }
+  }
+  // 정렬은 안정적이라 같은 z · 같은 칸이면 적힌 순서 그대로예요
+  pieces.sort((a, b) => a.z - b.z || a.rank - b.rank);
   return (
     <View pointerEvents="none" style={[{ width: w, height: h }, flip && styles.flip, style]}>
-      {its.filter((i) => i.layer === 'back').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
-      <Body color={av.color} w={w} h={h} />
-      {its.filter((i) => i.layer === 'paint').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
-      {its.filter((i) => i.layer === 'eye').map((i) => <EyeLayer key={i.id} it={i} color={av.color} w={w} h={h} />)}
-      {blink && <Blink color={av.color} w={w} h={h} />}
-      {its.filter((i) => i.hair).map((i) => <HairFront key={i.id} it={i} cover={cover} hc={hc} w={w} h={h} />)}
-      {its.filter((i) => i.layer === 'front').map((i) => <Sticker key={i.id} it={i} hc={hc} w={w} h={h} />)}
+      {pieces.map((p) => (
+        <Fragment key={p.key}>{p.node}</Fragment>
+      ))}
     </View>
   );
 });
@@ -220,17 +269,22 @@ export function AvatarStage({ av, width, border = false, big = false, style }: S
   const iw = width - bw * 2;
   const ih = width * STAGE_RATIO - bw * 2;
   const cw = iw * 0.64;
+  const stageArt = useStageArt();
+  const bgs = useAvBgs();
   const fx = wornItems(av).filter((i) => i.layer === 'fx');
   const hexBg = av.bg[0] === '#';
-  const bg = hexBg ? null : AV_BG.find((b) => b.id === av.bg) ? av.bg : 'cream';
+  const bg = hexBg ? null : bgs.some((b) => b.id === av.bg) || AV_BG_ART[av.bg] ? av.bg : 'cream';
+  const full = { position: 'absolute' as const, left: 0, top: 0, width: iw, height: ih };
   return (
     <View style={[styles.stage, { width, height: width * STAGE_RATIO, borderWidth: bw, backgroundColor: hexBg ? av.bg : Colors.cream }, style]}>
-      {bg && <AvImg source={AV_BG_ART[bg]} style={{ position: 'absolute', left: 0, top: 0, width: iw, height: ih }} contentFit="fill" />}
-      <AvatarChar av={av} width={cw} style={{ position: 'absolute', left: iw * 0.18, top: ih * 0.9 - cw * CHAR_RATIO }} />
+      {bg && <AvImg source={stageArt['bg:' + bg] ? { uri: stageArt['bg:' + bg] } : AV_BG_ART[bg]} style={full} contentFit="fill" />}
       {fx.map((i) => {
+        // 서버 효과 그림은 무대 전체 크기 한 장
+        if (stageArt[i.id]) return <AvImg key={i.id} source={{ uri: stageArt[i.id] }} style={full} contentFit="fill" />;
         const g = AV_GEO[i.id];
         return g && g.k === 'stage' ? <AvImg key={i.id} source={AV_ART[i.id]} style={rectStyle(g.r, iw, ih)} contentFit="fill" /> : null;
       })}
+      <AvatarChar av={av} width={cw} style={{ position: 'absolute', left: iw * 0.18, top: ih * 0.9 - cw * CHAR_RATIO }} />
       {!!av.say && <SayBubble text={av.say} big={big} maxWidth={iw * 0.46} left={iw * 0.06} top={ih * 0.2} />}
     </View>
   );
@@ -249,8 +303,9 @@ function SayBubble({ text, big, maxWidth, left, top }: { text: string; big: bool
 /** 동그란 프로필 얼굴 (프로토타입 lgFace · .fc .lgf: 캐릭터를 116% 로 크게 · 위 22%) — 내 이름이면 내 캐릭터 */
 export function MemberFace({ name, size, border = 2, bg, style }: { name: string; size: number; border?: number; bg?: string; style?: StyleProp<ViewStyle> }) {
   const mine = useMyAvatar();
+  const bgs = useAvBgs();
   const av = name === getMe().name ? mine : memberAvatar(name);
-  const face = av.bg[0] === '#' ? av.bg : (AV_BG.find((b) => b.id === av.bg) ?? AV_BG[0]).face;
+  const face = av.bg[0] === '#' ? av.bg : (bgs.find((b) => b.id === av.bg) ?? AV_BG.find((b) => b.id === av.bg) ?? AV_BG[0]).face;
   const inner = size - border * 2;
   return (
     <View style={[{ width: size, height: size, borderRadius: size / 2, borderWidth: border, borderColor: Colors.ink, backgroundColor: bg ?? face, overflow: 'hidden' }, style]}>
@@ -302,7 +357,14 @@ export function ItemArt({ it, width, height, hc = '#3B2A20' }: { it: AvItem; wid
 
 /** 효과 · 배경 타일 그림 (무대 그림을 작게) */
 export function StageArt({ it, bgId, width, height }: { it?: AvItem; bgId?: string; width: number; height: number }) {
-  if (bgId) return <AvImg source={AV_BG_ART[bgId]} style={{ width, height }} contentFit="cover" />;
+  const stageArt = useStageArt();
+  if (bgId) return <AvImg source={stageArt['bg:' + bgId] ? { uri: stageArt['bg:' + bgId] } : AV_BG_ART[bgId]} style={{ width, height }} contentFit="cover" />;
+  if (it && stageArt[it.id])
+    return (
+      <View style={{ width, height, backgroundColor: Colors.cream }}>
+        <AvImg source={{ uri: stageArt[it.id] }} style={{ position: 'absolute', left: 0, top: 0, width, height }} contentFit="fill" />
+      </View>
+    );
   const g = it ? AV_GEO[it.id] : null;
   if (!it || !g || g.k !== 'stage') return null;
   return (

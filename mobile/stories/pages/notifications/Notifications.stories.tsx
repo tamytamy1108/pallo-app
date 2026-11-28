@@ -4,6 +4,7 @@ import { userEvent, within } from 'storybook/test';
 import NotificationsScreen from '@/app/(app)/notifications';
 import { ToastHost } from '@/components/ui/toast';
 import { markAllNotiRead } from '@/components/home/noti-state';
+import { setMockOptions } from '@/api/mock';
 
 import { freshDevice } from '../../_support/fresh-device';
 
@@ -12,8 +13,8 @@ const tab = (label: string) => async ({ canvasElement }: { canvasElement: HTMLEl
 };
 
 /**
- * 알림함 (/notifications) — 탭(전체 · 공지 · 학습 · 라운지 · 이벤트) · 안 읽은 알림은 노랑 바탕 + 분홍 점 · [모두 읽음] · 알림 설정.
- * 읽음은 기기에 남는 값이라 스토리마다 처음 값으로 돌려요. 비회원은 알림 설정이 흐려요.
+ * 알림함 (/notifications) — 탭(전체 · 공지, 서버 category) · 안 읽은 알림은 노랑 바탕 + 분홍 점 · [모두 읽음] · 알림 설정.
+ * 가짜 서버(api/notifications.ts)는 예시 알림의 읽음을 기기에 남겨서 스토리마다 처음 값으로 돌려요. 비회원은 알림 설정이 흐려요.
  */
 const meta = {
   title: 'Pages/Notifications',
@@ -37,11 +38,15 @@ export const Default: Story = {};
 export const AllRead: Story = { beforeEach: freshDevice(markAllNotiRead) };
 /** 비회원 — 알림 설정 흐림 */
 export const Guest: Story = { globals: { userKind: 'guest' } };
+/** 공지 탭 — 공지 게시 알림 · 공지 성격 알림만 */
 export const NoticeTab: Story = { play: tab('공지') };
-export const LearnTab: Story = { play: tab('학습') };
-export const LoungeTab: Story = { play: tab('라운지') };
-/** 이벤트 탭 */
-export const EventTab: Story = { play: tab('이벤트') };
+/** 목록을 못 받음 — [다시 시도] */
+export const LoadError: Story = {
+  beforeEach: freshDevice(() => {
+    setMockOptions({ fail: ['notifications'] });
+    return () => setMockOptions({ fail: [] });
+  }),
+};
 /** [모두 읽음] 누름 → 토스트 */
 export const MarkAllRead: Story = {
   play: async ({ canvasElement }) => {

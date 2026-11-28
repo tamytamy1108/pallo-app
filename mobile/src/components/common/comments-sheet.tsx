@@ -59,6 +59,14 @@ export type CommentsSheetProps = {
   story?: { who: string; mine?: boolean };
   /** 비었을 때 두 줄 (기본 '아직 댓글이 없어요' · '첫 댓글을 남겨 보세요.') — 후기 창 등 */
   empty?: [string, string];
+  /**
+   * 서버 댓글일 때: 창은 그대로 먼저 바꿔 보이고, 이 콜백으로 서버에 알려요 (라운지 커뮤니티 — api/use-community).
+   * onDelete 를 주면 지운 뒤 '되돌리기'는 없어요 (서버에서 이미 지워져서).
+   */
+  onLike?: (id: string) => void;
+  onReply?: (parentId: string, text: string) => void;
+  onEdit?: (id: string, text: string) => void;
+  onDelete?: (id: string) => void;
 };
 
 type Mode = { t: 'reply' | 'edit'; id: string } | null;
@@ -72,7 +80,7 @@ const newId = () => `c-new-${Date.now()}-${++seq}`;
  * 내 댓글 수정 · 삭제(되돌리기) · 아래 고정 입력칸. 비회원은 답글 · 보내기에서 체험 안내 시트가 떠요 (좋아요는 그대로).
  * 담당: 공통 부품. props 는 바꾸지 않아요(늘리기만).
  */
-export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글', author, placeholder, head, onChange, story, empty = ['아직 댓글이 없어요', '첫 댓글을 남겨 보세요.'] }: CommentsSheetProps) {
+export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글', author, placeholder, head, onChange, story, empty = ['아직 댓글이 없어요', '첫 댓글을 남겨 보세요.'], onLike, onReply, onEdit, onDelete }: CommentsSheetProps) {
   const me = useMe();
   const [own, setOwn] = useState<Comment[]>(comments);
   const [wasOpen, setWasOpen] = useState(open);
@@ -112,6 +120,7 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
   const toggleLike = (id: string) => {
     sfx('toggle');
     commit(mapDeep(latest.current, id, (c) => ({ ...c, liked: !c.liked })));
+    onLike?.(id);
   };
 
   const startReply = (c: Comment) =>
@@ -132,6 +141,11 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
     if (at < 0) return;
     setMode(null);
     commit(before.filter((x) => x.id !== c.id));
+    if (onDelete) {
+      onDelete(c.id);
+      showToast('댓글을 지웠어요');
+      return;
+    }
     showToast('댓글을 지웠어요', {
       label: '되돌리기',
       onPress: () => {
@@ -152,11 +166,13 @@ export function CommentsSheet({ open, onClose, comments, onSend, title = '댓글
       sfx('send');
       if (mode?.t === 'edit') {
         commit(L.map((c) => (c.id === mode.id ? { ...c, text: v } : c)));
+        onEdit?.(mode.id, v);
         showToast('댓글을 고쳤어요');
       } else if (mode?.t === 'reply') {
         const reply: Comment = { id: newId(), author: me.name, text: v, time: '방금', mine: true, likes: 0 };
         commit(L.map((c) => (c.id === mode.id ? { ...c, replies: [...(c.replies ?? []), reply] } : c)));
         setExpanded((e) => ({ ...e, [mode.id]: true }));
+        onReply?.(mode.id, v);
       } else {
         commit([...L, { id: newId(), author: me.name, text: v, time: '방금', mine: true, likes: 0 }]);
         onSend?.(v);

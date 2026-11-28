@@ -17,15 +17,15 @@
 | 진도 · 보상 | 0 | 0 | 7 | 7 |
 | 음성 · AI | 0 | 0 | 3 | 3 |
 | 표현함 | 2 | 2 | 0 | 4 |
-| 라운지 피드 | 7 | 5 | 7 | 19 |
+| 라운지 피드 | 7 | 5 | 8 | 20 |
 | 스토리 | 0 | 0 | 15 | 15 |
-| 번개 | 7 | 3 | 8 | 18 |
+| 번개 | 10 | 3 | 8 | 21 |
 | 동아리 | 7 | 13 | 12 | 32 |
 | 여행 · 해외살이 | 0 | 0 | 14 | 14 |
 | 신고 · 차단 | 2 | 0 | 2 | 4 |
 | 챌린지 | 11 | 5 | 9 | 25 |
 | 이벤트 | 5 | 2 | 15 | 22 |
-| 마이 | 2 | 1 | 7 | 10 |
+| 마이 | 2 | 1 | 8 | 11 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
 | 캐릭터 · 상점 | 0 | 0 | 6 | 6 |
@@ -33,7 +33,7 @@
 | 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **94** | **47** | **164** | **305** |
+| **합계** | **97** | **47** | **166** | **310** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -451,6 +451,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 |---|---|---|---|
 | 추천 탭 피드 (전체 · 인기, 글 · 번개 · 파티 · 챌린지 · 해외살이 · 동행 · 지도 카드 섞어서) | GET /lounge/feed | new | data/lounge.ts FEED (rec) |
 | 추천 탭 작은 한국 지도 숫자 | GET /lounge/map | new | data/lounge.ts MAP_SPOTS |
+| 탭 '새 글' 배지 (커뮤니티 · 챌린지 · 번개·동아리, 지점 필터 없음 · 9+) — 탭별 마지막 본 때를 앱이 보내면 그 뒤로 생긴 수 | GET /lounge/unread-counts?com=&chal=&meet= | new | api/use-lounge-new-counts.ts (가짜 서버 셈) |
 | 커뮤니티 탭 (칩 전체 · 일상 · 스터디 · 이벤트 · 여행 · 동아리 · 번개, 지점 필터) | GET /community/posts?topic=&branchCodes= | change | FEED (k=post) |
 | 지점 선택 시트 후보 | GET /hangouts/branches | change | LG_BRS · LG_BREG |
 | 해외 동행 탭 · 세계 지도 숫자 | GET /lounge/world-map?mode=live\|trip | new | trip.tsx useCountryCounts |
@@ -461,7 +462,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 번개 · 동아리 탭 본문 | 아래 '번개 · 동아리 탭' | — | components/meet/meet-tab.tsx |
 | + 버튼 '무엇을 만들까요?' | 없음 (각 화면으로 이동만) | — | components/lounge/create-sheet.tsx |
 
-기기에만 저장 (API 없음): 보던 탭 · 서브 칩 · 고른 지점(실행 중만 — 이벤트 탭 갔다 와도 유지) · 세계 지도에서 고른 나라 · 추천 지도에서 고른 지역 · 맨 위로 버튼.
+기기에만 저장 (API 없음): 탭마다 마지막으로 본 때(새 글 배지 기준 · 서버 시계로) · 보던 탭 · 서브 칩 · 고른 지점(실행 중만 — 이벤트 탭 갔다 와도 유지) · 세계 지도에서 고른 나라 · 추천 지도에서 고른 지역 · 맨 위로 버튼.
 
 ### 글 카드 — `components/lounge/post-card.tsx` (피드 · 글 하나 보기 공통)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -537,8 +538,10 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 상세 · 함께하는 멤버(인사말) | GET /hangouts/{id} | change | findMeet · membersOf · DESC |
-| 확인 체크 → 참여하기 | POST /hangouts/{id}/participants | existing | joined |
-| 참여 취소 | DELETE /hangouts/{id}/participants/me | existing | joined |
+| 확인 체크 → [참여 신청하기] (승인제 · 확정 전엔 가게 이름 · 주소 대신 시 · 구 · 역) | POST /hangouts/{id}/participants | existing | meet-store askJoin |
+| [수락 기다리는 중] → 신청 취소 · [참여 확정] → 참여 취소 | DELETE /hangouts/{id}/participants/me | existing | meet-store leaveMeet |
+| 호스트: '참여 신청 N명' 목록 | GET /hangouts/{id}/join-requests | existing | meet-store reqs |
+| 호스트: [수락] · [거절] (사유 선택) | POST /hangouts/{id}/join-requests/{participantId}/approve · reject | existing | meet-store decideReq |
 | 내 인사 남기기 · 고치기 · 지우기 | PUT · DELETE /hangouts/{id}/participants/me/greeting | new | mhi |
 | 호스트 [모집 닫기] [되돌리기] | POST · DELETE /hangouts/{id}/close | new | updateMyMeet(closed) |
 | 꽉 참 → [빈자리 알림 받기] | POST · DELETE /hangouts/{id}/waitlist | new | vac |
@@ -774,10 +777,11 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 내 이름 · 지점 · 역할 · 레벨 (앱 전체 useMe) | GET /me | change | state/me.ts ME0 |
 | 캐릭터 카드 · 숫자 4칸(회원: 연속 학습 · 이번 주 랭킹 · 참여 중인 모임 · 받은 배지 / 프로: 이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요) · 팔로잉/팔로워 수 · 스파크 · 배지 미리보기 · 내 활동 개수(찜한 챌린지 포함) — 칸이 null 이면 안 그려요 | GET /me/mypage (v2 MyPageV2Response) | existing | api/my-page.ts · api/use-my-page.ts (가짜 서버 mockMyPage) |
 | 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /ranking?scope=member&period=week | new | data/my.ts rankPeople |
-| 내 모임 시트 | GET /me/activities | existing | state/me.ts joinedMeets |
-| 찜한 모임 시트 | (라운지 찜 API 몫) | — | state/me.ts savedMeets |
+| 내 모임 시트 — 동아리 · 번개 · 이벤트 탭 (챌린지 탭 · 제안한 이벤트는 아직 기기 상태) | GET /me/meets?box=JOINED (v2 MyMeetsV2Response) | existing | api/my-activity.ts · api/use-my-activity.ts useMyMeets (가짜 서버 = meet-store) |
+| 찜한 모임 시트 | GET /me/meets?box=SAVED | existing (늘 빈 목록 — 찜 도메인 없음) | useMyMeets · meetLines |
+| 찜한 챌린지 시트 (하트 = 찜 토글은 기기 상태) | GET /me/saved-challenges (v2 SavedChallengesV2Response) | existing (늘 빈 목록 — 찜 도메인 없음) | useSavedChallenges (가짜 서버 = data/challenge saved) |
 | 내가 쓴 글 → 라운지로 | (라운지 몫) | — | state/me.ts postCount |
-| 내 표현함 개수 | GET /me/mypage (summary.savedExpressionCount) · 목록은 학습 도메인 표현함 API | change | state/expressions useSavedCount |
+| 내 표현함 목록 (`app/me/expressions.tsx` — 찾기 · 나온 곳 칩은 받은 첫 쪽 100개 안에서) · 개수는 GET /me/mypage activity.savedExpressionCount | GET /me/expressions?page=&size= (PageResponse<MyExpressionV2Response>) | existing (표현 노트 · 나온 곳 · 고친 문장은 null) | useMyExpressions (가짜 서버 = state/expressions) |
 | PRO'S NOTE 카드(새 노트 n · 최근 받은/보낸 노트 · n/m명 읽음) · 내 수업(프로, 이번 주 맡은 세션) · 내 스터디(이용권 · 듣는 팀 · 리더) — 서버가 준 칸만 | GET /me/mypage (proNote · myClasses · study) | existing | components/account/pro-note-card.tsx · my-class-card.tsx · my-study-card.tsx |
 | 스텝 숫자 칸 참여한 세션 → 참여한 세션 시트 (전체 · 이번 달 · 달마다 기록 · 대타/참여 · +스파크) | GET /me/pro-sessions (A34) | new | api/pro-sessions.ts · components/account/pro-sessions-sheet.tsx |
 | 지점 안내 (회원만 보여요) | 아래 컴포넌트 | | |
@@ -834,7 +838,8 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 신청서 정보 (남은 횟수 · 지금 팀 · 같은 지점 옮길 수 있는 팀 · 날짜 범위 · 대기 요청) | GET /me/course-change | change | data/account.ts getMembership · MY_TEAMS · teamsOf · CHANGE_MIN |
-| 잠깐 쉬어가기 — 시작일 → 돌아올 스터디(그대로 · 같은 레벨 다른 팀) → 복귀일 · 사유 꼭 (2026-11-27) | POST /me/deferral-requests | change | store.ts submitChangeRequest · data/account.ts REST_MIN_DAYS · REST_REASONS · sameLevelTeams |
+| 잠깐 쉬어가기 신청서 — 내 스터디 · 남은 횟수 · 돌아올 후보(같은 언어) · 날짜 규칙 · 사유 칩(마스터데이터 DEFERRAL_REASON) · 대기 건 | GET /me/deferral-requests/form | new | data/account.ts getMembership · MY_TEAMS · sameLevelTeams · REST_* · CLOSED_WEEKDAY |
+| 잠깐 쉬어가기 — 시작일 → 돌아올 스터디(그대로 · 같은 언어 다른 수업) → 복귀일 → 사유(코드 + 5자) (2026-11-28) | POST /me/deferral-requests (returnDate · reasonCode · reason · returnChanges) | change | store.ts submitChangeRequest |
 | 팀 바꾸기 (SWAP) · 팀 하나 더하기 (ADD) | POST /me/course-change-requests | existing | submitChangeRequest |
 | 지점 옮기기 — 권역별 지점 | GET /me/branch-transfer/branches?sourceBranchId= | existing | BRANCHES · BRANCH_REGIONS |
 | 지점 옮기기 — 그 지점 팀 | GET /me/branch-transfer/branches/{code}/courses | new | teamsOf(branch) |
@@ -843,7 +848,11 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 기기에만 저장 (API 없음): 단계(pick · form · confirm) · 요약 문장(앱이 고른 값으로 만들어요).
 열린 질문:
 - 새 일정 하한: 앱 문구 '오늘 + 2주' vs 백엔드 수업 변경 MIN_LEAD_DAYS=3 · 지점 이동 MIN_LEAD_DAYS · 연기 '다음 날부터'. 하나로 정해서 minEffectiveDate 로 내려 주세요.
-- 쉬어가기는 이제 모든 스터디를 함께 쉬어요 (멤버십 단위 — 백엔드와 같음, 2026-11-27). 대신 돌아올 때 스터디마다 같은 레벨 다른 팀을 고를 수 있어요 → returnTeams 를 연기 신청에 같이 받을지, 연기 승인 뒤 팀 변경 요청을 따로 만들지.
+- (정함 2026-11-28) 쉬어가기 설계:
+  - 돌아올 수업은 연기 신청에 같이 받아 자식 테이블 deferral_return_changes 에 저장해요. 실제 복귀를 처리할 때 이 값을 읽어 옮겨요. 승인 때 예약 변경을 미리 만들지 않으니, 기간을 고치거나 중간에 취소해도 맞출 게 없어요.
+  - 복귀 때 옮길 수업에 갈 수 없으면 그 쌍만 건너뛰고(SKIPPED) 원래 수업 그대로 둬요. 수업 변경 횟수는 실제로 옮길 때만 쓰고, 해당 지점에 알림을 보내요.
+  - 돌아올 후보는 같은 지점 · 같은 언어만 봐요. 레벨은 Course 에 없어서 나중에 정해요.
+  - 사유는 마스터데이터 DEFERRAL_REASON 하나예요. 1달 넘게도 같은 목록이고, 특별한 경우인지는 운영진이 판단해요.
 - 연기 · 변경 '남은 횟수'가 연기 · 팀 변경 · 지점 이동을 한 주머니로 세는지 (앱 PLANS.changes 는 하나) vs 백엔드 remainingChanges(수업 변경)만.
 - 팀 변경과 연기를 한 번에 ('연기 + 지점 이동' 조합 · 07-my.md) — 지금 화면은 종류 하나만 고르니 두 건으로 나눠 보내도 되는지.
 - 대기 요청은 회원당 1건(수업 변경) — 연기 · 지점 이동 대기와 동시에 있어도 되는지.
