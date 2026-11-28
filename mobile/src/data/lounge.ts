@@ -78,6 +78,8 @@ export type Post = {
   rec?: boolean;
   cat?: PostCat;
   who: string;
+  /** 글쓴이 회원 code — 프로필을 열 때 (없으면 이름으로: 예시 글) */
+  whoCode?: string;
   av: string;
   avc?: string;
   br: string;

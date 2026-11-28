@@ -19,6 +19,9 @@ colors:
   lang-ja: "#F06593"
   lang-zh: "#EA373F"
   lang-es: "#69BE5F"
+  rate-high: "#2E8B57"
+  rate-mid: "#C25E00"
+  rate-low: "#D23B3B"
 typography:
   display:
     fontFamily: "Unbounded, Noto Sans KR, sans-serif"

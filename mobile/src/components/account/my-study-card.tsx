@@ -44,7 +44,13 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
   const reqClasses = reqHead ? reqHead.split(' · ') : [];
   const reqInfo = reqTail ?? '';
   const [askCancel, setAskCancel] = useState(false);
-  const teams = study.teams.slice().sort((p, q) => firstDay(p) - firstDay(q));
+  // 두 지점을 같이 다니면 지점 안내 보드처럼 위 칸에서 지점을 골라 그 지점 팀만 봐요 (내 지점이 먼저)
+  const brOf = (t: MyPageStudyTeam) => t.branchName ?? study.branchName;
+  const branches = [...new Set([study.branchName, ...study.teams.map(brOf)])].filter((b) => study.teams.some((t) => brOf(t) === b));
+  const [br, setBr] = useState(branches[0] ?? study.branchName);
+  const teams = study.teams
+    .filter((t) => branches.length < 2 || brOf(t) === br)
+    .sort((p, q) => firstDay(p) - firstDay(q));
   const period = `${dot(study.startDate)} ~ ${dot(study.endDate)}`;
   const weekly = study.teams.reduce((a, t) => a + t.days.length, 0);
 
@@ -73,9 +79,31 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
             </View>
             {/* 연기 · 변경은 한 횟수를 같이 써요 — 둘로 나눠 보이지 않고 남은 횟수 하나만 (BFF 는 아직 두 칸이라 연기 칸 값을 써요) */}
             <KV k="연기 · 변경" v={leftText(study.remainingHoldingCount)} />
-            <KV k="팀" v={`${study.teams.length}팀 · 주 ${weekly}회`} />
+            {/* 멤버십 정책 (PREMIUM = 최대 3팀 · 주 4회) — 서버가 안 주면 지금 팀 수 · 요일 수 */}
+            <KV k="팀" v={study.planRule ?? `${study.teams.length}팀 · 주 ${weekly}회`} />
           </View>
         </View>
+
+        {branches.length > 1 ? (
+          <View style={styles.seg} accessibilityRole="tablist">
+            {branches.map((b) => {
+              const on = b === br;
+              return (
+                <Pressable
+                  key={b}
+                  onPress={() => {
+                    sfx('tap');
+                    setBr(b);
+                  }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  style={[styles.segBtn, on && styles.segOn]}>
+                  <PText style={[styles.segT, on && styles.segTOn]}>{b}</PText>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
 
         <View style={styles.tl}>
           <View style={styles.tlLine} />
@@ -92,7 +120,7 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
                 </View>
                 <View style={styles.tx}>
                   <PText style={styles.txB}>{t.courseTitle}</PText>
-                  <PText style={styles.txS}>{t.leaderName ? `${study.branchName} · ${t.leaderName} 프로` : study.branchName}</PText>
+                  <PText style={styles.txS}>{brOf(t)}</PText>
                 </View>
               </View>
             );
@@ -191,6 +219,12 @@ function KV({ k, v }: { k: string; v: string }) {
 }
 
 const styles = StyleSheet.create({
+  // 지점 고르기 칸 (지점 안내 보드 BranchSeg 와 같은 모양)
+  seg: { flexDirection: 'row', gap: 4, marginTop: 14, padding: 4, borderRadius: 14, backgroundColor: '#EFE8D8' },
+  segBtn: { flex: 1, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  segOn: { backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.ink },
+  segT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18, color: Colors.inkSub },
+  segTOn: { color: Colors.ink },
   wrap: { gap: 12 },
   flex: { flex: 1 },
   secTitle: { marginTop: 6, marginHorizontal: 2, fontFamily: Font.display, fontSize: 17, lineHeight: 24 },

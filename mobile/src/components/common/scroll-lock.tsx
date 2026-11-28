@@ -11,7 +11,7 @@ import { canUse } from '@/state/access';
 import { lockView } from '@/state/lock-hits';
 import { useMe } from '@/state/me';
 
-export type LockScreen = 'lounge' | 'event' | 'my';
+export type LockScreen = 'lounge' | 'event' | 'my' | 'detail';
 
 const LOCK_TOAST = '지점 회원이 되면 다 볼 수 있어요';
 /** 화면마다 '잠긴 칸이 보이는지' 재는 함수 (화면의 onScroll 이 checkScrollLock 으로 불러요) */
@@ -23,7 +23,7 @@ export function checkScrollLock(screen: LockScreen) {
 }
 
 /**
- * 스크롤 잠김 (09-onboarding '회원 · 비회원 권한'): 라운지(모든 탭) · 이벤트 · 마이 공통.
+ * 스크롤 잠김 (09-onboarding '회원 · 비회원 권한'): 라운지(모든 탭) · 이벤트 · 마이 · 상세(이벤트 · 번개 · 동아리 · 챌린지) 공통.
  * 회원은 그대로. 비회원은 children 을 peek 높이까지만 보여 주고, 아래쪽을 크림색으로 흐리게 덮은 뒤
  * '지점 회원이 되면 다 볼 수 있어요' 칸(누구냐에 따라 버튼이 달라요 · MemberLock)을 붙여요.
  * 흐린 곳을 누르면 늘 체험 안내 시트 (memberGate '끝까지 보려면'). 잠긴 칸까지 스크롤하면 잠김 1번 — 화면에 들어올 때마다 한 번만,

@@ -27,13 +27,13 @@
 | 이벤트 | 5 | 2 | 15 | 22 |
 | 마이 | 5 | 1 | 8 | 14 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
-| 랭킹 · 배지 | 3 | 0 | 2 | 5 |
+| 랭킹 · 배지 | 2 | 1 | 2 | 5 |
 | 캐릭터 · 상점 | 2 | 0 | 4 | 6 |
 | 수강 · 결제 | 8 | 7 | 7 | 22 |
 | 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **109** | **46** | **164** | **319** |
+| **합계** | **108** | **47** | **164** | **319** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -792,13 +792,14 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 
 기기에만 저장 (API 없음): '기기에 저장한 기록 지우기' · '디자인 부품 보기' (개발용 입구, 출시 전 삭제). 스크롤로 잠김 칸을 본 수(3 · 6 · 9 번째 권유 시트 · state/lock-hits.ts).
 
-### 캐릭터 카드 · 팔로우 시트 · 배지 시트 · 스파크 시트 — `components/my/my-hero.tsx` · `my-sheets.tsx` · `my-blocks.tsx`
+### 캐릭터 카드 · 팔로우 시트 · 배지 모두 보기 · 스파크 시트 — `components/my/my-hero.tsx` · `my-sheets.tsx` · `my-blocks.tsx` · `app/me/badges.tsx` · `badge-detail-sheet.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 내 캐릭터 그리기 (로그인 뒤 서버 모습 · 가진 것을 기기에) | GET /me/avatar | existing | api/use-my-avatar.ts · state/avatar.ts saved |
 | 팔로잉 · 팔로워 목록 | GET /members/{code}/following · /followers | new | data/my.ts followLists |
 | 목록에서 팔로우 · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
-| 배지 모두 보기 (받은 것 · 못 받은 것, 콘솔 순서 · 마이 배지 칸은 앞 4칸) | GET /me/badges | existing | api/badges.ts · api/use-badges.ts |
+| 배지 모두 보기 `app/me/badges.tsx` (받은 개수 · 최근 받은 배지 · 거의 다 왔어요 2개 · 전체/받은/못 받은 칸, 콘솔 순서 · 마이 배지 칸은 앞 4칸) — 마이 '모두 보기 ›' · '받은 배지' 칸 · 배지 푸시 · 축하 시트 [배지 보기] 에서 와요 | GET /me/badges (earnedAt · A36 conditionType · threshold · progress) | change | api/use-badges.ts useMyBadges · data/my.ts MY_BADGES (cond 예시) |
+| 배지 상세 시트 (칸을 누르면): 큰 그림 · 받은 날 · 받는 방법 한 줄 · 진행 막대 '2 / 5번' · 'n번 더' · 하러 가기 버튼(못 받은 배지만) | GET /me/badges (목록에서 code 로 찾음, 따로 부르지 않음) | change | components/my/badge-detail-sheet.tsx · api/use-badges.ts useMyBadge · badgeProgress · data/badge-rules.ts (문구 · 이동할 곳) |
 | 배지 받으면 탭 화면 위 축하 시트 (앱 열 때 · 돌아올 때 · 배지 푸시 때 물어요) → 닫으면 본 것으로 | GET /me/badges/unseen · POST /me/badges/seen | existing | components/my/badge-celebrate.tsx · api/use-badges.ts |
 | 스파크 모으는 방법 (프로 · 스텝은 PRO 줄도) | GET /me/sparks (earnRules · audience) | new | data/my.ts SPARK_EARN · SPARK_EARN_PRO |
 | 프로필 카드 이름 아래 줄 '○○점 · 언어 Lv.n · 회원' + 작은 표시 ● 연동 확인 중 · ✓ 연동됨(처음 한 번 톡 튀어나옴) · 연동 안 됨 | GET /me (memberAccessLevel) · GET /me/branch-summary | existing | components/my/my-hero.tsx · state/link-events.ts myMoment |
@@ -1014,7 +1015,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 자주 묻는 질문 (찾기 · 칩 · 펼침) | GET /faq {categories, items} | existing | api/support.ts fetchFaq |
 | 내 지점 전화 (내 지점 먼저, 없으면 번호 적은 첫 지점 · 번호가 없으면 줄 없음) | GET /me/branch-guides (phone) | existing | api/use-branch-guide.ts useMyBranchContact |
 | 1:1 문의하기 (분류 · 내용 5~2000자) | POST /me/inquiries | existing | api/support.ts createInquiry |
-| 내 문의 (답변 대기 · 완료) | GET /me/inquiries | existing | api/support.ts fetchMyInquiries |
+| 내 문의 (답변 대기 · 완료) — 버그 보고(?view=bug)는 보낸 내용만 보여요: 답변 상태 · 관리자 답변은 안 그려요 (2026-11-28) | GET /me/inquiries | existing | api/support.ts fetchMyInquiries |
 
 기기에만 저장 (API 없음): [도움이 됐어요] (지금 토스트만) · 카카오톡 상담(채널 링크).
 v2 에서는 `/me/inquiries` 가 1:1 문의예요 (MobileUserInquiryController). 예전 v1 `/me/inquiries`(신청 내역)는 지점 연동은 `/me/branch-link-requests` · `/me/branch-summary`, 연기 · 수업 변경은 GET /me/course-change 로 봐요.

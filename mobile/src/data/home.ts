@@ -267,6 +267,12 @@ export type Noti = {
   action?: string;
   /** 누르면 알림 속 단계가 아니라 내가 마지막으로 공부한 곳으로 (친구 퀘스트 성공 알림) */
   toMyLast?: boolean;
+  /**
+   * 누가 받는 알림인지 — 없으면 회원만 (세션 · 프로 노트 · 모임 · 이벤트 신청 · 시즌 보상 · 지점 공지).
+   * true = 회원 · 비회원 둘 다 · 'only' = 비회원만 (연동 요청 · 체험 상담 · 환영 — 회원 알림함에는 안 보여요).
+   * 지점 연동 결과(badge)는 표시가 없어도 비회원 · 회원 모두 받아요 (noti-state forViewer).
+   */
+  guest?: boolean | 'only';
 };
 
 export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [
@@ -278,6 +284,10 @@ export const NOTI_TABS: { key: 'all' | NotiKind; label: string }[] = [
 ];
 
 const ALL_NOTIS: Noti[] = [
+  // 비회원만 (연동 전): 연동 요청 · 체험 상담 · 환영 — 회원이 되면 알림함에서 빠져요
+  { id: 'g-link', kind: 'notice', icon: 'flag', text: '지점에 연동을 요청했어요 · 지점이 확인하면 바로 알려 드려요', time: '10분 전', href: '/my', read: false, guest: 'only' },
+  { id: 'g-trial', kind: 'notice', icon: 'cal', text: '체험 상담 신청이 접수됐어요 · 지점에서 곧 연락드려요', time: '1시간 전', href: '/me/consultations', read: false, guest: 'only' },
+  { id: 'g-hello', kind: 'learn', icon: 'book', text: 'PALLO에 오신 걸 환영해요 · 1과는 무료로 끝까지 해 볼 수 있어요', time: '어제', href: '/unit/1?lv=1', read: true, guest: 'only' },
   // 받는 쪽 예시 (추가 제안 · api-additions): 팔로우한 멤버의 '같이 갈래요?' → 그 시간 · 언어로 사전 출석 시트
   { id: 'inv1', kind: 'learn', who: { name: '민준', bg: '#E3EAF8', body: 'sky' }, text: '민준님이 오늘 21:00 영어 세션에 가요. 같이 갈래요?', time: '5분 전', href: '/?attend=rsvp&slot=2&lang=0', read: false, action: '같이 가기' },
   // 팔로우한 멤버의 퀘스트 성공 → 같은 단계로 (첫 챕터 · 회원 잠금은 레슨 화면이 지켜요)

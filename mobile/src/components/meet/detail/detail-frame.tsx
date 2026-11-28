@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { Keyboard, Platform, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedKeyboard, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 
 import { BackButton } from '@/components/ui/back-button';
 import { Pressable } from '@/components/ui/pressable';
@@ -66,6 +67,9 @@ const DetailScrollContext = createContext<ScrollToTarget | null>(null);
 /** 상세 본문 안의 칸을 위 막대 바로 아래로 올려 보여 줘요 (신청 직후 '내 신청' 카드 등). 상세 틀 밖이면 아무것도 안 해요 */
 export const useDetailScrollTo = (): ScrollToTarget => useContext(DetailScrollContext) ?? (() => {});
 
+/** 비회원이 상세에서 볼 수 있는 본문 높이 (날짜 · 장소 · 참가비 줄쯤까지) */
+const DETAIL_PEEK = 240;
+
 export function DetailFrame({ id, club, posters, card, title, kicker, heading, children, cta, ctaNote, sub, tabs, tabBody, tabKey, dock }: Props) {
   const pull = usePullRefresh();
   const insets = useSafeAreaInsets();
@@ -101,6 +105,7 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
   const dockKey = useRef<string | undefined>(undefined);
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     pull.onScroll(e);
+    checkScrollLock('detail');
     yNow.current = e.nativeEvent.contentOffset.y;
     setY(e.nativeEvent.contentOffset.y);
   };
@@ -192,7 +197,12 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
           ) : null}
           {/* 탭 본문이 짧아도 탭이 위 막대 아래에 붙을 수 있게: 스크롤 칸 높이 - 붙은 막대 - 탭 줄 - 아래 여백(ScrollEnd) 만큼은 둬요 */}
           <DetailScrollContext.Provider value={scrollToTarget}>
-            <KeepVisibleContext.Provider value={Platform.OS === 'web' ? null : keepGrowing}>{tabs ? <View style={{ minHeight: Math.max(0, (scrollH || winH) - dockH - tabH - ScrollEnd) }}>{tabBody}</View> : children}</KeepVisibleContext.Provider>
+            <KeepVisibleContext.Provider value={Platform.OS === 'web' ? null : keepGrowing}>
+              {/* 비회원은 제목 아래 본문을 위쪽만 보고 '지점 회원이 되면 다 볼 수 있어요' 칸 (이벤트 · 번개 · 동아리 공통) */}
+              <ScrollLock screen="detail" peek={DETAIL_PEEK}>
+                {tabs ? <View style={{ minHeight: Math.max(0, (scrollH || winH) - dockH - tabH - ScrollEnd) }}>{tabBody}</View> : children}
+              </ScrollLock>
+            </KeepVisibleContext.Provider>
           </DetailScrollContext.Provider>
         </View>
       </ScrollView>

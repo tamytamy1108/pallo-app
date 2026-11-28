@@ -56,12 +56,13 @@ export default function SettingsScreen() {
         {/* 알림은 이름만 (설명 없이 · 2026-11-25) */}
         {/* 스터디 세션(출석)은 회원만 — 비회원에게는 줄을 안 보여요 */}
         {member && <ToggleRow title="스터디 세션 알림" value={set.nSession} onPress={() => updateSettings({ nSession: !set.nSession })} />}
-        <ToggleRow title="번개 · 이벤트 소식" value={set.nMeet} onPress={() => updateSettings({ nMeet: !set.nMeet })} />
+        {/* 비회원(연동 전 포함)은 모임 · 이벤트 참여 · 글쓰기 · 랭킹이 잠겨 있어서 그 알림 줄도 안 보여요 — 팔로우 · 마케팅만 */}
+        {member && <ToggleRow title="번개 · 이벤트 소식" value={set.nMeet} onPress={() => updateSettings({ nMeet: !set.nMeet })} />}
         {/* 라운지 알림: 예전 '동아리 채팅' 값(nClubChat)을 그대로 써요 — 동아리 채팅 · 라운지 새 소식 */}
-        <ToggleRow title="라운지 알림" value={set.nClubChat} onPress={() => updateSettings({ nClubChat: !set.nClubChat })} />
+        {member && <ToggleRow title="라운지 알림" value={set.nClubChat} onPress={() => updateSettings({ nClubChat: !set.nClubChat })} />}
         <ToggleRow title="팔로우 알림" value={set.nFriend} onPress={() => updateSettings({ nFriend: !set.nFriend })} />
-        <ToggleRow title="댓글 · 좋아요 · 인사" value={set.nCmt} onPress={() => updateSettings({ nCmt: !set.nCmt })} />
-        <ToggleRow title="랭킹 변동" value={set.nRank} onPress={() => updateSettings({ nRank: !set.nRank })} />
+        {member && <ToggleRow title="댓글 · 좋아요 · 인사" value={set.nCmt} onPress={() => updateSettings({ nCmt: !set.nCmt })} />}
+        {member && <ToggleRow title="랭킹 변동" value={set.nRank} onPress={() => updateSettings({ nRank: !set.nRank })} />}
         <ToggleRow
           title="마케팅 정보 수신"
           value={set.nMkt}
@@ -86,6 +87,9 @@ export default function SettingsScreen() {
       </Sec>
       <Sec title="도움">
         <GoRow title="자주 묻는 질문" onPress={() => go('/me/support')} />
+        {/* 비회원 · 연동 전: 마이 아래 메뉴가 없어서 상담 신청 내역 · 버그 보고는 여기서 (회원은 마이 아래 메뉴) */}
+        {member ? null : <GoRow title="상담 신청 내역" onPress={() => go('/me/consultations')} />}
+        {member ? null : <GoRow title="버그 보고" onPress={() => go('/me/support?view=bug')} />}
       </Sec>
       <View style={styles.out}>
         <Pressable onPress={() => setSheet('logout')} accessibilityRole="button" hitSlop={8}>

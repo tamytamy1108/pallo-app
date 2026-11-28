@@ -158,6 +158,14 @@ export function proRateReward(sessions: number, checks: number): ProRateReward {
     next: above ? { need: Math.max(1, Math.ceil((sessions * above.minRate) / 100) - checks), amount: above.amount, minRate: above.minRate } : null,
   };
 }
+/** 출석률 색 단계: 높음 = 보상 받는 90% 이상 · 중간 = 70~89% · 낮음 = 70% 아래 (2026-11-28) */
+export const PRO_RATE_MID_MIN = 70;
+export type ProRateLevel = 'high' | 'mid' | 'low';
+export function proRateLevel(rate: number): ProRateLevel {
+  const high = Math.min(...SPARK_PRO_RATE.map((r) => r.minRate));
+  if (rate >= high) return 'high';
+  return rate >= PRO_RATE_MID_MIN ? 'mid' : 'low';
+}
 export const SPARK_EARN_PRO: readonly (readonly [string, string])[] = [
   ['프로로 세션 참여', `+${SPARK_ATTEND}`],
   ...SPARK_PRO_RATE.map((r) => [r.minRate === 100 ? '한 달 출석률 100%' : `한 달 출석률 ${r.minRate}% 이상`, `+${r.amount}`] as const),

@@ -1,4 +1,4 @@
-import { proRateReward } from '../my';
+import { proRateLevel, proRateReward } from '../my';
 
 describe('proRateReward', () => {
   it('90% 이상이면 +150 예정, 100%까지 남은 횟수', () => {
@@ -15,5 +15,11 @@ describe('proRateReward', () => {
   });
   it('맡은 세션이 4개 아래면 보상 없음', () => {
     expect(proRateReward(3, 3)).toEqual({ kind: 'few', rate: 100 });
+  });
+});
+
+describe('proRateLevel', () => {
+  it('90 이상 높음 · 70~89 중간 · 70 아래 낮음', () => {
+    expect([100, 90, 89, 70, 69, 0].map(proRateLevel)).toEqual(['high', 'high', 'mid', 'mid', 'low', 'low']);
   });
 });

@@ -9,6 +9,11 @@ import { apiConfig } from '@/api/config';
 import { unreadNotificationsQuery } from '@/api/queries';
 import { NOTIS, type Noti } from '@/data/home';
 import { createStore } from '@/lib/store';
+import { isMember } from '@/state/access';
+import { useMe } from '@/state/me';
+
+/** 이 사람이 받는 알림인지: 회원 = 비회원 전용('only')만 빼고 전부 · 비회원 = guest 표시 알림 + 지점 연동 결과(badge) */
+const forViewer = (member: boolean) => (n: Noti) => (member ? n.guest !== 'only' : !!n.guest || !!n.badge);
 
 const store = createStore<Record<string, boolean>>(Object.fromEntries(NOTIS.map((n) => [n.id, n.read])), { persist: { key: 'noti-read' } });
 
@@ -25,7 +30,8 @@ export const useArrivedNotis = arrived.useStore;
 /** 알림함 목록: 새로 온 알림 → 원래 알림 (최신 순) */
 export function useNotiList() {
   const fresh = arrived.useStore();
-  return useMemo(() => [...fresh, ...NOTIS], [fresh]);
+  const member = useMe(isMember);
+  return useMemo(() => [...fresh, ...NOTIS].filter(forViewer(member)), [fresh, member]);
 }
 /** 기기에 남은 읽음 상태로 센 안 읽은 수 (가짜 서버 응답 · api/home.ts) */
 export const countDeviceUnread = () => unreadOf([...arrived.get(), ...NOTIS], store.get());
@@ -37,8 +43,9 @@ export const countDeviceUnread = () => unreadOf([...arrived.get(), ...NOTIS], st
  */
 export function useUnreadCount() {
   const fresh = arrived.useStore();
-  const freshUnread = store.useStore((s) => unreadOf(fresh, s));
-  const sampleUnread = store.useStore((s) => unreadOf(NOTIS, s));
+  const member = useMe(isMember);
+  const freshUnread = store.useStore((s) => unreadOf(fresh.filter(forViewer(member)), s));
+  const sampleUnread = store.useStore((s) => unreadOf(NOTIS.filter(forViewer(member)), s));
   const server = useQuery({ ...unreadNotificationsQuery(), enabled: !apiConfig.useMock });
   if (apiConfig.useMock) return sampleUnread + freshUnread;
   return (server.data?.count ?? 0) + freshUnread;

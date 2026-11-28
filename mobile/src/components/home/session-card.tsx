@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { css, cubicBezier, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { useBranchProgress } from '@/api/use-branch-progress';
 import { memberGate } from '@/components/common/trial-guide';
@@ -549,15 +549,28 @@ function StudyField({ name }: { name: string }) {
   );
 }
 
+/** 쉬는 날 달 — 노랑이 잘 보이게 통통한 초승달 */
+const FULL_MOON_PATH = 'M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a10 10 0 0 0 11 11z';
+
 export function Field({ label, value, big, divider, narrow, flex, color }: { label: string; value: string; big?: boolean; divider?: boolean; narrow?: boolean; flex?: number; color?: string }) {
   return (
     <View style={StyleSheet.flatten([styles.field, divider && styles.fieldDivider, { flex: flex ?? (narrow ? 0.8 : 1) }])}>
       <PText style={styles.fieldLabel} color={Colors.inkSub}>
         {label}
       </PText>
-      <PText style={big ? styles.fieldBig : styles.fieldValue} color={color}>
-        {value}
-      </PText>
+      {value ? (
+        <PText style={big ? styles.fieldBig : styles.fieldValue} color={color}>
+          {value}
+        </PText>
+      ) : (
+        // 값이 없으면 (쉬는 날 시작까지) 시간 대신 노란 달 (검은 테두리) · 쉬어요
+        <View style={styles.fieldRest}>
+          <Svg width={big ? 24 : 20} height={big ? 24 : 20} viewBox="0 0 24 24">
+            <Path d={FULL_MOON_PATH} fill={Colors.yellow} stroke={Colors.ink} strokeWidth={1.8} strokeLinejoin="round" />
+          </Svg>
+          <PText style={big ? styles.fieldRestTBig : styles.fieldRestT}>쉬어요</PText>
+        </View>
+      )}
     </View>
   );
 }
@@ -579,6 +592,9 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: Font.display, fontSize: 9.5, lineHeight: 12, letterSpacing: 1.5 },
   fieldBig: { marginTop: 2, fontFamily: Font.display, fontSize: 25, lineHeight: 30, letterSpacing: -0.3, fontVariant: ['tabular-nums'] },
   fieldValue: { marginTop: 2, fontFamily: Font.body900, fontSize: 15, lineHeight: 30 },
+  fieldRest: { marginTop: 2, height: 30, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  fieldRestTBig: { fontFamily: Font.body900, fontSize: 18, lineHeight: 24, color: Colors.ink },
+  fieldRestT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20, color: Colors.ink },
   main: { paddingTop: 14, paddingHorizontal: 14, paddingBottom: 16, minHeight: 150 },
   char: { position: 'absolute' },
   liveRing: { position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF4D4D' },

@@ -36,6 +36,7 @@ const IC = {
   tack: 'M9 3h6l-1 6 3 3H7l3-3zM12 12v9',
   lock: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4',
   refresh: 'M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5',
+  ticket: 'M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4zM15 7v2M15 11v2M15 15v2',
 } as const;
 export type IconName = keyof typeof IC;
 

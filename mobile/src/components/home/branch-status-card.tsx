@@ -45,7 +45,7 @@ export function Stripes() {
   );
 }
 
-export type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /** 숫자 옆 작은 글씨 (예정 6) */ sub?: string; /** 그 옆 빨간 작은 글씨 (불참 1) */ warn?: string };
+export type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /** 숫자 옆 작은 글씨 (예정 6) */ sub?: string; /** 그 옆 빨간 작은 글씨 (불참 1) */ warn?: string; /** 이름 · 숫자 색을 tone 대신 이 색으로 (출석률 높음 · 중간 · 낮음) */ color?: string; /** 칸 바탕을 tone 대신 이 색으로 (출석률 100%) */ bg?: string };
 
 /**
  * 지점 관리자 홈: 출석 카드 아래 '하남점 현황' (docs/pages/10-roles.md 4장 · 카드 시안 A 슬레이트).
@@ -118,12 +118,12 @@ export function StatCells({ cells, framed = false }: { cells: Cell[]; framed?: b
   return (
     <View style={[styles.cells, framed && styles.cellsFramed]}>
       {cells.map((c, i) => (
-        <View key={c.label} style={[styles.cell, i > 0 && styles.cellLine, c.tone === 'member' && styles.cellMember, c.tone === 'staff' && styles.cellStaff]}>
-          <PText style={styles.cellL} color={c.tone === 'pro' ? Colors.purple : c.tone === 'staff' ? Colors.yellow : Colors.inkSub} numberOfLines={1}>
+        <View key={c.label} style={[styles.cell, i > 0 && styles.cellLine, c.tone === 'member' && styles.cellMember, c.tone === 'staff' && styles.cellStaff, c.bg ? { backgroundColor: c.bg } : null]}>
+          <PText style={styles.cellL} color={c.color ?? (c.tone === 'pro' ? Colors.purple : c.tone === 'staff' ? Colors.yellow : Colors.inkSub)} numberOfLines={1}>
             {c.label}
           </PText>
           <View style={styles.cellVRow}>
-            <PText style={styles.cellV} color={c.tone === 'pro' ? Colors.purple : c.tone === 'staff' ? Colors.yellow : Colors.ink}>
+            <PText style={styles.cellV} color={c.color ?? (c.tone === 'pro' ? Colors.purple : c.tone === 'staff' ? Colors.yellow : Colors.ink)}>
               {c.value}
             </PText>
             {c.sub ? (
