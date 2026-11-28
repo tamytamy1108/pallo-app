@@ -13,6 +13,8 @@ type Rule = {
   ic: BadgeIcon;
   /** 이 기준부터는 높은 단계 배지 — 동그라미 대신 왕관 방패로 그려요 (예: 말하기 100 동그라미 · 1000 방패) */
   grandFrom?: number;
+  /** 이 기준부터는 더 센 아이콘 (예: 첫 번개 번개 · 번개 단골 꽉 찬 번개 + 불꽃) */
+  strongIc?: { from: number; ic: BadgeIcon };
   /** 값 단위 — 진행 '2 / 5번' */
   unit: string;
   /** 받는 조건 한 줄 */
@@ -31,6 +33,7 @@ export const BADGE_RULE: Record<BadgeConditionType, Rule> = {
   HANGOUT_JOIN_COUNT: {
     kind: '번개',
     ic: 'bolt',
+    strongIc: { from: 5, ic: 'boltPower' },
     unit: '번',
     how: (n) => (n === 1 ? '번개에 처음 참여하면 받아요' : `번개에 ${n}번 참여하면 받아요`),
     left: (l) => `${l}번 더 참여하면 받아요`,
@@ -91,6 +94,12 @@ export const BADGE_RULE: Record<BadgeConditionType, Rule> = {
  */
 export function badgeLeftLabel(type: BadgeConditionType, left: number): string {
   return left <= 0 ? '기준을 넘었어요 · 다음 활동 때 받아요' : BADGE_RULE[type].left(left);
+}
+
+/** 조건에 맞는 아이콘 — 기준이 크면 더 센 아이콘(strongIc) */
+export function badgeIcon(type: BadgeConditionType, threshold: number): BadgeIcon {
+  const r = BADGE_RULE[type];
+  return r.strongIc && threshold >= r.strongIc.from ? r.strongIc.ic : r.ic;
 }
 
 /** 높은 단계 배지인지 — 칸 · 상세에서 동그라미 대신 왕관 방패로 그려요 */

@@ -3,7 +3,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { BADGE_RULE } from '@/data/badge-rules';
+import { BADGE_RULE, badgeIcon } from '@/data/badge-rules';
 import type { Badge } from '@/data/my';
 
 import type { MyBadge } from './badges';
@@ -17,7 +17,7 @@ export function toBadge(
   const cond = b.conditionType && b.threshold != null ? { type: b.conditionType, threshold: b.threshold, progress: b.progress ?? null } : null;
   return {
     code: b.code,
-    ic: cond ? BADGE_RULE[cond.type].ic : 'heart',
+    ic: cond ? badgeIcon(cond.type, cond.threshold) : 'heart',
     imageUrl: b.imageUrl,
     name: b.name,
     desc: b.description,

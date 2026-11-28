@@ -15,10 +15,16 @@ import { BADGE_PATH, type Badge, type BadgeIcon, type RankRow } from '@/data/my'
 import { Lift } from './lift';
 
 /** 숫자 칸 · 배지 아이콘 (프로토타입 myIc: 굵기 2.2 선) */
+/** 번개 단골 양옆 불꽃 (24 상자) */
+const BOLT_SPARKS = 'M2.5 6.5l2.2 1.1M2 17.5l2.4-1.2M21.6 3.6l-2 1.6M22 18.5l-2.2-1.2';
+
 export function BadgeIc({ ic, size = 22, color = Colors.ink }: { ic: BadgeIcon; size?: number; color?: string }) {
+  // 번개 단골: 보라로 꽉 채운 큰 번개 + 불꽃 — 받았을 때만 보라 속 (못 받았으면 선만)
+  const filled = ic === 'boltPower' && color === Colors.ink;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-      <Path d={BADGE_PATH[ic]} />
+      <Path d={BADGE_PATH[ic]} fill={filled ? Colors.purple : 'none'} />
+      {ic === 'boltPower' ? <Path d={BOLT_SPARKS} /> : null}
     </Svg>
   );
 }
