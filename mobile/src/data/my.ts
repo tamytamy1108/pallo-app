@@ -126,19 +126,38 @@ export const SPARK_PRO_RATE = [
   { minRate: 90, amount: 150 },
 ] as const;
 export const SPARK_PRO_RATE_MIN_SESSIONS = 4;
+/** 출석률 박스가 그리는 상태 (프로만) */
+export type ProRateReward =
+  /** 맡은 세션이 SPARK_PRO_RATE_MIN_SESSIONS 개보다 적은 달 — 출석률 스파크 없음 */
+  | { kind: 'few'; rate: number }
+  | {
+      kind: 'on';
+      /** 이번 달 출석률 (0~100, 반올림 — 마이 칸과 같은 숫자) */
+      rate: number;
+      /** 이대로 끝나면 다음 달 1일에 들어올 스파크 (아직 90% 아래면 0) */
+      earned: number;
+      /** 한 단계 위 보상까지: 몇 회 더 · 얼마 (이미 100% 면 null) */
+      next: { need: number; amount: number; minRate: number } | null;
+    };
+
 /**
- * PRO'S NOTE 화면 맨 위 출석률 박스의 한 줄 (프로만): 출석률 스파크까지 남은 정도 (맡은 세션 = 이번 달 · 예정 회차 포함).
- * 예) 14개 중 13회 → '100%까지 1회 · 지금 받으면 +150'
+ * PRO'S NOTE 맨 위 출석률 박스 (프로만). 맡은 세션 = 이번 달 · 예정 회차 포함.
+ * 보상은 다음 달 1일에 들어와요 — 화면엔 '지금 받으면' 대신 '예정' · 'n회 더 출석하면' 으로 써요 (2026-11-28).
+ * 예) 14개 중 13회 → rate 93 · earned 150 · next { need 1, amount 300 }
  */
-export function proRateRewardLine(sessions: number, checks: number): string {
-  if (sessions < SPARK_PRO_RATE_MIN_SESSIONS) return `맡은 세션이 ${SPARK_PRO_RATE_MIN_SESSIONS}개 이상인 달만 출석률 스파크를 받아요`;
-  const top = SPARK_PRO_RATE[0];
-  if (checks >= sessions) return `100% 달성 · 다음 달 1일에 +${top.amount}`;
-  const rate = (checks / sessions) * 100;
-  const now = SPARK_PRO_RATE.find((r) => rate >= r.minRate);
-  if (now) return `100%까지 ${sessions - checks}회 · 지금 받으면 +${now.amount}`;
-  const low = SPARK_PRO_RATE[SPARK_PRO_RATE.length - 1];
-  return `${low.minRate}%까지 ${Math.ceil((sessions * low.minRate) / 100) - checks}회 · 채우면 +${low.amount}`;
+export function proRateReward(sessions: number, checks: number): ProRateReward {
+  // 판정은 정확한 비율로 (89.6% 는 90% 가 아니에요), 보이는 숫자는 마이 칸처럼 반올림
+  const exact = sessions ? Math.min(100, (checks / sessions) * 100) : 0;
+  const rate = Math.round(exact);
+  if (sessions < SPARK_PRO_RATE_MIN_SESSIONS) return { kind: 'few', rate };
+  const reached = SPARK_PRO_RATE.find((r) => exact >= r.minRate);
+  const above = [...SPARK_PRO_RATE].reverse().find((r) => exact < r.minRate);
+  return {
+    kind: 'on',
+    rate,
+    earned: reached?.amount ?? 0,
+    next: above ? { need: Math.max(1, Math.ceil((sessions * above.minRate) / 100) - checks), amount: above.amount, minRate: above.minRate } : null,
+  };
 }
 export const SPARK_EARN_PRO: readonly (readonly [string, string])[] = [
   ['프로로 세션 참여', `+${SPARK_ATTEND}`],
