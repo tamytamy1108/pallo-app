@@ -452,14 +452,17 @@ paths:
       tags:
         - 가입 · 온보딩
       operationId: getAssetCatalog
-      summary: 에셋 카탈로그 — 팔로로(가입 캐릭터 몸) 목록 · 그리는 기준
-      description: '화면: 가입 단계 캐릭터 고르기 · 마이 캐릭터. app-hub 에셋 관리 › 팔로로 관리에서 올린 manifest.json + PNG 를 내려요. 겹침 순서는 숫자 z.'
+      summary: 에셋 카탈로그 — 팔로로(가입 캐릭터 몸) · 꾸미기 배경 · 배경 효과 · 캐릭터 아이템 · 그리는 기준
+      description: '화면: 가입 단계 캐릭터 고르기 · 마이 캐릭터 · 마이 › 꾸미기(분류 탭 · 타일). app-hub 에셋 관리 › 팔로로 · 배경 · 배경 효과 · 캐릭터 아이템 관리에서 올린 manifest.json + PNG 를 내려요. 겹침 순서는 숫자 z (무대 배경 0~99 → 배경 효과 → 캐릭터 100~999). 배경 · 효과 · 아이템은 판매 중만, acquisition SHOP(price 스파크, 0 이면 무료) · REWARD(보상으로만, rewardLabel). 그림 주소는 서버가 준 그대로 쓰고 version 이 바뀌면 새로 받아요. 꾸미기 상점 목록(GET /avatar/items)은 이 응답의 backgrounds · effects · items 가 대신해요.'
       x-status: existing
       x-backend: MobileAssetCatalogController GET /app/api/v2/asset-catalog → MobileAssetCatalogResponse {formatVersion,
-        canvas, bodyBox, pallolos[{code, name, tint, …}]}
+        canvas, bodyBox, pallolos[{code, name, tint, isDefault, version, imageUrl, …}], stage, backgrounds[StageItem],
+        effects[StageItem], items[WearableItem {slot, acquisition, price, rewardLabel, version, layers[{url, rect, z,
+        tint, part}], hat{cover, clipY}, flipUrl}]}
       x-screens:
         - app/onboarding
-      x-app-code: api/onboarding.ts fetchAssetCatalog
+        - app/me/customize.tsx
+      x-app-code: api/onboarding.ts fetchAssetCatalog · api/use-avatar-catalog.ts · state/av-catalog.ts
       responses:
         '200':
           description: OK
@@ -505,6 +508,29 @@ paths:
                           type:
                             - string
                             - 'null'
+                  stage:
+                    type: object
+                    description: 무대 그림(배경 · 배경 효과) 캔버스 크기(px) — 그림은 무대 전체에 늘여 그려요
+                    properties:
+                      width:
+                        type: integer
+                      height:
+                        type: integer
+                  backgrounds:
+                    type: array
+                    description: 꾸미기 › 배경 탭 배경 (판매 중만, 화면 순서)
+                    items:
+                      $ref: '#/components/schemas/CatalogStageItem'
+                  effects:
+                    type: array
+                    description: 꾸미기 › 배경 탭 배경 효과 (판매 중만, 화면 순서)
+                    items:
+                      $ref: '#/components/schemas/CatalogStageItem'
+                  items:
+                    type: array
+                    description: 꾸미기 캐릭터 아이템 (판매 중만) — 칸 순서 → 화면 순서
+                    items:
+                      $ref: '#/components/schemas/CatalogWearableItem'
         '401':
           $ref: '#/components/responses/Unauthorized'
       x-domain: core
@@ -851,6 +877,8 @@ paths:
         그림(PNG · 좌표)은 지금 앱에 들어 있어요(components/character/av-assets.ts). 서버는 id · 가격 · 등급 · 잠김 · 판매 기간만 관리하고,
 
         앱에 없는 id 는 숨겨요. 새 아이템 그림을 서버에서 내려줄지는 열린 질문.
+
+        (2026-11-28) v2 에서는 GET /asset-catalog 의 backgrounds · effects · items 가 그림 · 가격 · 보상 조건까지 내려줘서 꾸미기 화면이 그걸 써요. 이 API 는 등급 · 시즌 잠김 · 판매 기간이 더 필요할 때만 — 안 만들어도 될 수 있어요.
 
         직접 고른 색('#RRGGBB' 몸 색 · 머리 색 · 단색 배경)은 무료라 목록에 없어요.
       x-status: new
@@ -5364,8 +5392,13 @@ paths:
         placeName · placeAddress · 좌표는 계속 null (area 만). 호스트에게 알림 HANGOUT_JOIN_REQUESTED.
         호스트가 수락(approveHangoutJoinRequest)하면 확정(MEMBER) · 자리 +1 · 장소가 보이고, 신청자에게 HANGOUT_JOIN_APPROVED.
 
-        409: 정원 참(신청 때 · 수락 때 둘 다 봐요) · 이미 신청 · 참여 중 · 호스트 본인 · 닫힘 · 일시중지.
-        거절(REJECTED)됐던 사람은 다시 신청할 수 있어요(PENDING 으로 돌아가요).
+        409: 정원 참(신청 때 · 수락 때 둘 다 봐요) · 이미 신청 · 참여 중 · 호스트 본인 · 닫힘 · 일시중지 ·
+        시작 3시간 전부터("시작 3시간 전부터는 신청할 수 없어요") · 두 번 거절된 사람("이 번개에는 더 신청할 수 없어요").
+
+        규칙(막 거절 · 묵히기 막기): 거절(REJECTED)됐던 사람은 한 번만 다시 신청할 수 있어요(reject_count 2 면 끝).
+        신청은 expiresAt = min(신청 + 24시간, 시작 - 3시간) 까지 — 그때까지 호스트가 답하지 않으면 서버가 EXPIRED 로 끝내고
+        신청자에게 HANGOUT_JOIN_EXPIRED. 만료된 사람은 viewerRole NONE 이고 다시 신청할 수 있어요(거절 횟수엔 안 들어가요).
+        상세 응답에 viewerRequestExpiresAt(대기일 때만) · viewerRejectReason(거절일 때 신청자용 문구) · viewerCanReapply.
       x-status: existing
       x-backend: MobileHangoutController POST /hangouts/{id}/participants →
         MobileHangoutDetailResponse (viewerRole PENDING)
@@ -5463,6 +5496,10 @@ paths:
                     requestedAt:
                       type: string
                       format: date-time
+                    expiresAt:
+                      type: string
+                      format: date-time
+                      description: 이때까지 답하지 않으면 신청이 자동으로 끝나요
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -5513,10 +5550,14 @@ paths:
       operationId: rejectHangoutJoinRequest
       summary: 번개 참여 신청 거절 (호스트만)
       description: >
-        화면: JoinRequestSection [거절]. 대기 신청만(아니면 409). 사유는 선택(500자까지, 비우면 없음) — 알림 본문에만 붙어요.
-        거절된 사람에게 HANGOUT_JOIN_REJECTED. 거절된 사람은 다시 신청할 수 있어요.
+        화면: JoinRequestSection [거절] → components/meet/detail/reject-sheet.tsx (사유 고르기). 대기 신청만(아니면 409).
+        사유 reasonCode 필수(없으면 400): SCHEDULE(정원·일정 사정) · CONDITION(모임 조건과 안 맞음) · OTHER(기타 — reasonText 필수, 300자).
+        신청자에게는 정해진 문구만 보여요(알림 · viewerRejectReason): SCHEDULE '호스트 사정(정원·일정)으로 이번엔 함께하기 어려워요' ·
+        CONDITION '모임 조건과 맞지 않아 이번엔 함께하기 어려워요' · OTHER '호스트 사정으로 이번엔 함께하기 어려워요'.
+        reasonText 는 운영진(app-hub 호스트 거절 현황 · /apphub/hangouts/join-rejections)만 봐요.
+        거절될 때마다 거절 기록(hangout_join_rejections)이 남고, 거절된 사람은 한 번만 다시 신청할 수 있어요.
       x-status: existing
-      x-backend: MobileHangoutController POST /hangouts/{id}/join-requests/{participantId}/reject (MobileHangoutRejectRequest, 몸통 생략 가능) → MobileHangoutDetailResponse
+      x-backend: MobileHangoutController POST /hangouts/{id}/join-requests/{participantId}/reject (MobileHangoutRejectRequest{reasonCode, reasonText}) → MobileHangoutDetailResponse
       x-screens:
         - app/meet/[id].tsx
       x-app-code: meet-store.ts decideReq(ok=false)
@@ -5529,17 +5570,22 @@ paths:
             type: integer
             format: int64
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [reasonCode]
               properties:
-                reason:
+                reasonCode:
+                  type: string
+                  enum: [SCHEDULE, CONDITION, OTHER]
+                reasonText:
                   type:
                     - string
                     - "null"
-                  maxLength: 500
+                  maxLength: 300
+                  description: OTHER 일 때 필수 · 운영진만 봐요
       responses:
         "200":
           description: OK
@@ -5549,6 +5595,8 @@ paths:
                 $ref: "#/components/schemas/HangoutDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "403":
           $ref: "#/components/responses/Forbidden"
         "409":
@@ -6872,13 +6920,16 @@ paths:
         화면: customize.tsx · MyHero · 프로필 · 홈 스터디 맵 (useMyAvatar)
 
         처음 가입하면 서버가 기본 모습(털 비니 · 줄무늬 티 · 나비넥타이 · 깃발 · 보라 운동화 · 노랑 · 크림 룸)과 기본 등급 아이템을 줘요.
-      x-status: new
+
+        지금 서버(2026-11-28): 저장한 적 없으면 기본 모습. owned = 값 없이 고를 수 있는 것(무료 · 판매 중) + 지금 입은 것(아이템 · 배경 효과 code, 몸 code, 'bg:'+배경 code — '#…' 직접 고른 색은 늘 무료라 빠져요). sparks 는 스파크 도메인 전까지 0. 앱은 로그인 뒤 이걸 받아 기기 저장(state/avatar)에 넣어요.
+      x-status: existing
+      x-backend: MobileAvatarV2Controller GET /app/api/v2/me/avatar → MyAvatarResponse {look, owned, sparks}
       x-inventory: "#34"
       x-screens:
         - app/me/customize.tsx
         - components/my/my-hero.tsx
         - components/character/my-character.tsx
-      x-app-code: state/avatar.ts store {saved, own} · data/my.ts avFresh · AV_OWN0
+      x-app-code: api/use-my-avatar.ts useMyAvatar · state/avatar.ts store {saved, own} · data/my.ts avFresh · AV_OWN0
       responses:
         "200":
           description: OK
@@ -6898,7 +6949,10 @@ paths:
         화면: customize.tsx [저장하기] — 새 아이템 합계가 0 일 때
 
         error: item_not_owned (안 가진 아이템이 있음 → POST /me/avatar/purchase) · invalid_request (say 14자 초과 · 없는 id)
-      x-status: new
+
+        지금 서버: equipped 는 칸(hair · eye · mitt · shoe · hat · face · wear · hand · acc · fx) → code(안 입으면 null). 요청에서 빠진 칸은 안 입은 것, 모르는 칸 이름은 400. 응답은 열 칸을 늘 다 채워요.
+      x-status: existing
+      x-backend: MobileAvatarV2Controller PUT /app/api/v2/me/avatar (MyAvatarLook {color, flip, bg, hairColor, say, equipped}) → MyAvatarResponse · 409 item_not_owned
       x-inventory: "#34"
       x-screens:
         - app/me/customize.tsx
@@ -7153,7 +7207,8 @@ paths:
       x-screens:
         - app/link-rejected.tsx
         - app/onboarding/link-wait.tsx
-      x-app-code: api/branch-link.ts fetchMyLinkRequests
+        - app/me/settings/branch.tsx
+      x-app-code: api/branch-link.ts fetchMyLinkRequests · api/use-link-requests.ts (설정 › 내 지점 — 확인 중 · 지난 요청 · 상세 시트 · 반려면 [다시 요청하기])
       responses:
         '200':
           description: OK
@@ -8657,12 +8712,15 @@ paths:
         언제: 알림함 진입 · 홈 진입/복귀(종 점만 필요하면 pageSize=1)
 
         규칙: 최신 순. 누르면 그 화면으로 — 이동 경로는 앱이 type · referenceType · referenceId 로 정해요(백엔드 방침).
+
+        v2 (2026-11-28): GET /app/api/v2/me/notifications?category=&cursor=&limit= → {items, nextCursor, unreadCount}. 공지 게시 알림(type NOTICE_PUBLISHED, meta.kind NOTICE {noticeId, noticeType} → /notice/{noticeId})이 섞여 오고, 다른 알림은 meta.kind REFERENCE {referenceType, referenceId}(참조 없으면 meta null). 모르는 kind · type 이면 제목 · 본문 · 읽음만 그려요. limit 기본 20 · 최대 50. 아래 parameters · 응답 모양은 v1 기준이에요 — v2 모양은 NotificationFeedV2 스키마.
       x-status: change
-      x-backend: MobileNotificationController GET
-        /me/notifications?page=&pageSize=&read=&keyword=
-        (MobileNotificationListResponse{rows, totalCount, unreadCount})
-      x-gap: category 쿼리(notice|learn|lounge|event) 와 응답 행 category 필드를 추가해 주세요(type →
-        탭 묶음은 서버가). 행에 actor(MemberSummary, 사람이 보낸 알림이면 얼굴) 를 추가해 주세요. type 에 학습
+      x-backend: MobileNotificationV2Controller GET /app/api/v2/me/notifications?category=&cursor=&limit= →
+        NotificationFeedResponse {items[NotificationItemResponse {id, type, category, title, body, read, createdAt,
+        meta}], nextCursor, unreadCount} (v1 MobileNotificationController GET ?page=&pageSize=&read=&keyword= →
+        {rows, totalCount, unreadCount} 도 남아 있음)
+      x-gap: v2 category 는 지금 NOTICE 하나뿐 — 학습 · 라운지 · 이벤트 탭 값을 늘려 주세요(category 없는 알림은 '전체'에만).
+        행에 actor(MemberSummary, 사람이 보낸 알림이면 얼굴) 를 추가해 주세요. type 에 학습
         알림(내일 세션 · 예습 남음) · 라운지 반응(댓글 · 챌린지 인증) · 이벤트 마감 · 공지 새 글 이 없어요 → 값 추가
         필요. 지점 연동 결과 BRANCH_LINK_APPROVED · BRANCH_LINK_REJECTED(referenceType
         BRANCH_LINK · referenceId 요청 id) 도 없어요 → 지점이 처리하면 알림 행 + 푸시를 만들어 주세요
@@ -8673,7 +8731,7 @@ paths:
       x-screens:
         - app/notifications.tsx
         - app/(tabs)/home.tsx
-      x-app-code: api/home.ts fetchNotifications · data/home.ts NOTIS · Noti ·
+      x-app-code: api/use-notifications.ts · api/home.ts fetchNotifications · data/home.ts NOTIS · Noti ·
         NOTI_TABS · components/home/noti-state.ts
       parameters:
         - name: page
@@ -8712,7 +8770,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationList"
+                description: v1 은 NotificationList, v2(/app/api/v2) 는 NotificationFeedV2
+                oneOf:
+                  - $ref: "#/components/schemas/NotificationList"
+                  - $ref: "#/components/schemas/NotificationFeedV2"
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: core
@@ -8724,8 +8785,9 @@ paths:
       summary: 알림 하나 읽음
       description: |
         화면: app/notifications.tsx (행을 누르면 읽음 → 그 화면으로)
+        v2: 공지 게시 알림이면 id 가 공지 id. 남의 알림 · 없는 알림 · 앱에 안 보이는 공지면 404, 다시 불러도 204.
       x-status: existing
-      x-backend: MobileNotificationController PATCH /me/notifications/{id}/read (204)
+      x-backend: MobileNotificationV2Controller PATCH /app/api/v2/me/notifications/{id}/read (204) (v1 MobileNotificationController 도 같은 경로)
       x-inventory: "#14"
       x-screens:
         - app/notifications.tsx
@@ -8751,24 +8813,49 @@ paths:
       summary: 모두 읽음
       description: |
         화면: app/notifications.tsx [모두 읽음] → 토스트 '모두 읽음으로 바꿨어요'
-        규칙: 지금 탭과 상관없이 내 알림 전부. category 를 주면 그 탭만(선택).
-      x-status: new
+        규칙: 지금 탭과 상관없이 내 알림 전부 (공지 게시 알림 포함). 본문 없음.
+      x-status: existing
+      x-backend: MobileNotificationV2Controller POST /app/api/v2/me/notifications/read-all (204)
       x-inventory: "#14"
       x-screens:
         - app/notifications.tsx
-      x-app-code: api/home.ts markNotificationsRead() · noti-state.ts markAllNotiRead
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                category:
-                  $ref: "#/components/schemas/NotificationCategory"
+      x-app-code: api/use-notifications.ts · noti-state.ts markAllNotiRead
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: core
+  /me/notifications/unread-count:
+    get:
+      tags:
+        - 알림 · 공지
+      operationId: getUnreadNotificationCount
+      summary: 안 읽은 알림 수 (홈 종 배지)
+      description: |
+        화면: app/(tabs)/home.tsx 종 배지 — 1분마다 · 푸시가 오면 바로 다시 세요 (api/use-foreground-push.tsx)
+        규칙: 회원 알림 + 공지 게시 알림, 탭과 상관없이. 목록 응답의 unreadCount 와 같은 값.
+      x-status: existing
+      x-backend: MobileNotificationV2Controller GET /app/api/v2/me/notifications/unread-count → UnreadNotificationCountResponse {count}
+      x-inventory: "#13"
+      x-screens:
+        - app/(tabs)/home.tsx
+        - components/home/noti-state.ts
+      x-app-code: api/use-notifications.ts · components/home/noti-state.ts useUnreadCount
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - count
+                properties:
+                  count:
+                    type: integer
+                    format: int64
+                    example: 3
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: core
@@ -13975,6 +14062,7 @@ components:
         - HANGOUT_JOIN_REQUESTED
         - HANGOUT_JOIN_APPROVED
         - HANGOUT_JOIN_REJECTED
+        - HANGOUT_JOIN_EXPIRED
         - POST_HIDDEN
         - POST_DELETED
         - COMMENT_HIDDEN
@@ -14046,6 +14134,222 @@ components:
           type: integer
           format: int64
           description: 필터와 상관없는 전체 안 읽음 수 (홈 종 점)
+    NotificationFeedV2:
+      type: object
+      description: v2 알림함 한 쪽 (GET /app/api/v2/me/notifications) — 최신순, nextCursor null 이면 끝
+      required:
+        - items
+        - unreadCount
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - title
+              - read
+              - createdAt
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: 읽음 처리에 그대로 써요. 공지 게시 알림이면 공지 id
+              type:
+                type: string
+                description: NotificationType 값 또는 NOTICE_PUBLISHED. 모르는 값도 제목 · 본문 · 읽음으로 그려요
+                example: NOTICE_PUBLISHED
+              category:
+                type:
+                  - string
+                  - "null"
+                description: 알림함 탭 — 지금은 NOTICE 하나. null 이면 '전체'에만
+                example: NOTICE
+              title:
+                type: string
+              body:
+                type:
+                  - string
+                  - "null"
+                description: 둘째 줄 (공지 게시 알림은 null)
+              read:
+                type: boolean
+              createdAt:
+                type: string
+                format: date-time
+              meta:
+                description: 종류별 추가 정보 — kind 로 모양을 구분. 없으면 null
+                oneOf:
+                  - type: object
+                    required:
+                      - kind
+                      - noticeId
+                    properties:
+                      kind:
+                        const: NOTICE
+                      noticeId:
+                        type: string
+                        format: uuid
+                      noticeType:
+                        type: string
+                        description: '[이벤트] · [업데이트] · [중요] 머리말'
+                  - type: object
+                    required:
+                      - kind
+                    properties:
+                      kind:
+                        const: REFERENCE
+                      referenceType:
+                        type: string
+                      referenceId:
+                        type: string
+                  - type: "null"
+        nextCursor:
+          type:
+            - string
+            - "null"
+        unreadCount:
+          type: integer
+          format: int64
+          description: 탭과 상관없는 안 읽은 수 (홈 종 배지 · [모두 읽음] 활성)
+    CatalogStageItem:
+      type: object
+      description: 꾸미기 무대 그림 (배경 · 배경 효과) — GET /asset-catalog
+      required:
+        - code
+        - name
+        - acquisition
+        - price
+        - version
+        - imageUrl
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        z:
+          type: integer
+          description: 겹침 순서 0~99 (무대 레이어)
+        acquisition:
+          type: string
+          enum:
+            - SHOP
+            - REWARD
+        price:
+          type: integer
+          description: 스파크 (0 이면 무료 · 보상이면 0)
+        rewardLabel:
+          type:
+            - string
+            - "null"
+          description: 보상 조건 (REWARD 만)
+        faceColor:
+          type:
+            - string
+            - "null"
+          description: 배경만 — 동그란 프로필 바탕색 #RRGGBB
+        version:
+          type: integer
+        imageUrl:
+          type: string
+          format: uri
+    CatalogWearableItem:
+      type: object
+      description: 꾸미기 캐릭터 아이템 — GET /asset-catalog. 그림 묶음(manifest.json + 공통 캔버스 PNG)
+      required:
+        - code
+        - name
+        - slot
+        - acquisition
+        - price
+        - version
+        - layers
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        slot:
+          type: string
+          enum:
+            - hair
+            - eye
+            - hat
+            - face
+            - wear
+            - mitt
+            - shoe
+            - hand
+            - acc
+        acquisition:
+          type: string
+          enum:
+            - SHOP
+            - REWARD
+        price:
+          type: integer
+          description: 스파크 (0 이면 무료 · 보상이면 0)
+        rewardLabel:
+          type:
+            - string
+            - "null"
+        version:
+          type: integer
+        layers:
+          type: array
+          description: 적힌 순서대로 그려요
+          items:
+            type: object
+            required:
+              - url
+              - rect
+              - z
+            properties:
+              url:
+                type: string
+                format: uri
+              rect:
+                type: array
+                description: 몸 상자(bodyBox) 기준 비율 [x, y, 폭, 높이]
+                items:
+                  type: number
+              z:
+                type: integer
+                description: 100~999 (몸 200 · 깜빡임 500 은 비어 있음)
+              tint:
+                type:
+                  - string
+                  - "null"
+                enum:
+                  - hair
+                  - body
+                  - null
+              part:
+                type:
+                  - string
+                  - "null"
+                enum:
+                  - back
+                  - front
+                  - null
+        hat:
+          description: 모자만 — 머리를 덮는지 · 덮으면 아랫선(캔버스 px 0~580)
+          oneOf:
+            - type: object
+              properties:
+                cover:
+                  type: boolean
+                clipY:
+                  type:
+                    - integer
+                    - "null"
+            - type: "null"
+        flipUrl:
+          type:
+            - string
+            - "null"
+          description: 좌우 반전 때 대신 쓸 그림 (글자 든 아이템)
     AppConfig:
       type: object
       required:
@@ -16987,8 +17291,9 @@ components:
           items:
             type: string
         ratio:
-          type: number
-          nullable: true
+          type:
+            - number
+            - "null"
           description: 사진 비율 가로 / 세로 (한 글의 사진 모두 같음). 사진 없으면 null
           example: 1.333
         likeCount:
@@ -17009,8 +17314,9 @@ components:
             nickname:
               type: string
             branchName:
-              type: string
-              nullable: true
+              type:
+                - string
+                - "null"
               description: 글을 올린 지점 (없으면 null)
         createdAt:
           type: string
@@ -17024,8 +17330,9 @@ components:
           items:
             $ref: "#/components/schemas/CommunityFeedPost"
         nextCursor:
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
           description: 다음 쪽 커서 — 마지막 쪽이면 null
     CommunityReaction:
       type: object

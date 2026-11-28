@@ -8,6 +8,7 @@ import type { MadeCard } from '@/data/poster-colors';
 import { apiConfig } from '@/api/config';
 import { createStore } from '@/lib/store';
 import type { Club, Meet } from '@/data/meet';
+import type { RejectCode } from './join-rules';
 
 /** 설문 답: 질문 번호 → 고른 보기 번호(하나) · 번호들(여럿) · 글(짧은 답) */
 export type SurveyAnswers = Record<number, number | number[] | string>;
@@ -23,6 +24,10 @@ type State = {
   joined: Record<string, boolean>;
   /** 참여 신청하고 호스트 승인을 기다리는 번개 (승인되면 joined 로 옮겨가요) */
   asked: Record<string, boolean>;
+  /** 신청한 때 (ms) — 24시간 · 시작 3시간 전 중 이른 때 답이 없으면 신청이 끝나요 (join-rules askDeadline) */
+  askAt: Record<string, number>;
+  /** 이 번개에서 거절된 횟수 · 마지막 사유 (2번 거절되면 더 신청 못 해요 · join-rules MAX_REJECTS) */
+  rej: Record<string, { n: number; code: RejectCode }>;
   /** 내가 연 번개에 들어온 참여 신청 (meetId → 신청한 사람 이름들). 수락 · 거절하면 빠져요 */
   reqs: Record<string, string[]>;
   /** 가입한 동아리 (신청하면 바로 가입돼요 · 승인 단계 없음) */
@@ -67,6 +72,8 @@ const SAMPLE = apiConfig.useMock;
 const MEET0: State = {
   joined: SAMPLE ? { m15: true, m16: true, m17: true, m1: true, m9: true, m6: true, m2: true, e4: true, e3: true, e6: true } : {},
   asked: SAMPLE ? { m3: true } : {},
+  askAt: SAMPLE ? { m3: Date.now() } : {},
+  rej: {},
   reqs: {},
   club: SAMPLE ? { cl1: 'in', cl2: 'in', cl10: 'in', cl4: 'in' } : {},
   cohost: {},
@@ -156,7 +163,14 @@ export const addMyMeet = (m: Meet) =>
   store.set((s) => ({ ...s, myMeets: [{ ...m, at: m.at ?? Date.now() }, ...s.myMeets], reqs: SAMPLE ? { ...s.reqs, [m.id]: SAMPLE_REQS } : s.reqs }));
 
 /** 번개 참여 신청 (승인 전엔 가게 이름 · 주소가 안 보여요) */
-export const askJoin = (id: string) => store.set((s) => ({ ...s, asked: { ...s.asked, [id]: true } }));
+export const askJoin = (id: string) => store.set((s) => ({ ...s, asked: { ...s.asked, [id]: true }, askAt: { ...s.askAt, [id]: Date.now() } }));
+/** 호스트가 내 신청을 거절함 (가짜 서버 · 개발용 흉내) — 거절 횟수가 늘고 신청은 지워져요 */
+export const rejectMyAsk = (id: string, code: RejectCode) =>
+  store.set((s) => {
+    const asked = { ...s.asked };
+    delete asked[id];
+    return { ...s, asked, rej: { ...s.rej, [id]: { n: (s.rej[id]?.n ?? 0) + 1, code } } };
+  });
 /** 신청 취소 · 참여 취소 — 둘 다 지워요 */
 export const leaveMeet = (id: string) =>
   store.set((s) => {

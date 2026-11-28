@@ -9,7 +9,9 @@ import { CopyBtn, Desc, DSec, HostRow, InfoRow, InfoRows, infoStyles, JoinReques
 import { AskSheet, JoinSheet } from '@/components/meet/detail/sheets';
 import { Bolt } from '@/components/meet/icons';
 import { Pressable } from '@/components/ui/pressable';
-import { approveMyAsk, askJoin, decideReq, leaveMeet, setText, toggleIn, updateMyMeet, useMeetStore } from '@/components/meet/meet-store';
+import { approveMyAsk, askJoin, decideReq, leaveMeet, rejectMyAsk, setText, toggleIn, updateMyMeet, useMeetStore } from '@/components/meet/meet-store';
+import { askClosed, askDeadline, deadlineText, MAX_REJECTS, meetStart, rejectPhrase } from '@/components/meet/join-rules';
+import { RejectSheet } from '@/components/meet/detail/reject-sheet';
 import { findMeet, hostName, membersOf, type Member } from '@/components/meet/model';
 import { CapBar } from '@/components/meet/parts';
 import { EmptyState } from '@/components/ui/state-view';
@@ -39,7 +41,12 @@ export default function MeetDetail() {
   const [devClosed, setDevClosed] = useState(false);
   // 참여는 승인제: 신청(asked) → 호스트가 수락하면 확정(joined). 확정 전엔 가게 이름 · 주소가 안 보여요
   const joined = useMeetStore((s) => !!s.joined[String(id)]) || devIn;
-  const asked = useMeetStore((s) => !!s.asked[String(id)]) && !joined;
+  const askedRaw = useMeetStore((s) => !!s.asked[String(id)]) && !joined;
+  const askAt = useMeetStore((s) => s.askAt[String(id)]);
+  const rej = useMeetStore((s) => s.rej[String(id)]);
+  const [rejectFor, setRejectFor] = useState<string | null>(null);
+  // 마감 · 만료 판정 기준 시각 (화면을 열 때 한 번)
+  const [now] = useState(() => Date.now());
   const reqNames = useMeetStore((s) => s.reqs[String(id)]) ?? NO_REQS;
   const saved = useMeetStore((s) => !!s.saved[String(id)]);
   const vac = useMeetStore((s) => !!s.vac[String(id)]);
@@ -58,7 +65,8 @@ export default function MeetDetail() {
   const setClosed = (v: boolean) => (m.mine ? updateMyMeet(m.id, { closed: v }) : setDevClosed(v));
   const past = isPast(m);
   const cur = m.cur + (joined ? 1 : 0);
-  const full = capFull(cur, m.max) && !joined;
+  // 신청해 둔 사람은 꽉 차도 '수락 기다리는 중'을 그대로 봐요 (빈자리 알림 대신)
+  const full = capFull(cur, m.max) && !joined && !askedRaw;
   const members = membersOf({ ...m, mine }, cur, joined || mine, myHi, { name: me.name, branch: me.branch });
   const dd = dday(m);
   // 가게 이름 · 지도 주소 · 상세 주소 · 복사는 호스트 · 참여 확정(호스트가 수락)된 사람 · 스텝만 봐요 (안전).
@@ -66,6 +74,14 @@ export default function MeetDetail() {
   const seeAddr = mine || joined || me.role === 'manager';
   const area = areaLine(m.addr, m.reg, m.place);
   const placeShown = seeAddr ? m.place : area;
+  // 승인제 규칙 (join-rules): 24시간 · 시작 3시간 전 중 이른 때 답이 없으면 신청이 끝나요 · 거절은 2번까지 · 시작 3시간 전부터 신청 마감
+  const start = meetStart(m);
+  const deadline = askDeadline(askAt ?? now, start);
+  const expired = askedRaw && now >= deadline;
+  const asked = askedRaw && !expired;
+  const rejected = !joined && !asked && !!rej;
+  const canReapply = !rej || rej.n < MAX_REJECTS;
+  const askShut = askClosed(start, now);
   const reqs: Member[] = reqNames.map((n) => {
     const seed = [...MEMBERS, ...MEMBER_POOL].find(([x]) => x === n);
     return { n, c: seed?.[1] ?? C.sky, b: seed?.[2] ?? m.br, t: '참여 신청', hi: '' };
@@ -93,11 +109,17 @@ export default function MeetDetail() {
         }, '빈자리 알림을 받으려면')
       }
     />
+  ) : joined || asked ? (
+    <MainBtn label={joined ? '참여 확정' : '수락 기다리는 중'} variant={joined ? 'done' : 'on'} onPress={() => setCancel(true)} />
+  ) : !canReapply ? (
+    <MainBtn label="이 번개는 더 신청할 수 없어요" variant="off" />
+  ) : askShut ? (
+    <MainBtn label="신청 마감 · 시작 3시간 전" variant="off" />
   ) : (
     <MainBtn
-      label={joined ? '참여 확정' : asked ? '수락 기다리는 중' : m.max > 0 ? `참여 신청하기 · 남은 자리 ${m.max - cur}` : '참여 신청하기'}
-      variant={joined ? 'done' : asked ? 'on' : 'y'}
-      onPress={() => (joined || asked ? setCancel(true) : guardMember(() => setJoin(true), '번개에 참여하려면'))}
+      label={rejected ? `다시 신청하기 · ${MAX_REJECTS - (rej?.n ?? 0)}번 남음` : expired ? '다시 신청하기' : m.max > 0 ? `참여 신청하기 · 남은 자리 ${m.max - cur}` : '참여 신청하기'}
+      variant="y"
+      onPress={() => guardMember(() => setJoin(true), '번개에 참여하려면')}
     />
   );
 
@@ -141,7 +163,15 @@ export default function MeetDetail() {
                   {m.addr2 ? <PText style={[infoStyles.sub, { fontFamily: Font.body900, color: Colors.ink }]}>{m.addr2}</PText> : null}
                 </>
               ) : (
-                <PText style={infoStyles.sub}>{asked ? '호스트가 수락하면 장소와 주소가 보여요' : '참여가 확정되면 장소와 주소가 보여요'}</PText>
+                <PText style={infoStyles.sub}>
+                  {asked
+                    ? `호스트가 수락하면 장소와 주소가 보여요 · ${deadlineText(deadline, now)}까지 답이 없으면 신청이 끝나요`
+                    : rejected && rej
+                      ? `거절됐어요 · ${rejectPhrase(rej.code)}`
+                      : expired
+                        ? '호스트가 답하지 않아 신청이 끝났어요 · 다시 신청할 수 있어요'
+                        : '참여가 확정되면 장소와 주소가 보여요'}
+                </PText>
               )
             }
             end={seeAddr ? <CopyBtn text={[m.addr || m.place, m.addr2].filter(Boolean).join(' · ')} /> : undefined}
@@ -156,8 +186,9 @@ export default function MeetDetail() {
           <JoinRequestSection
             members={reqs}
             onDecide={(n, ok) => {
-              decideReq(m.id, n, ok);
-              showToast(ok ? `${n}님 참여를 수락했어요 · 장소와 주소가 보여요` : `${n}님 신청을 거절했어요`);
+              if (!ok) return setRejectFor(n);
+              decideReq(m.id, n, true);
+              showToast(`${n}님 참여를 수락했어요 · 장소와 주소가 보여요`);
             }}
           />
         ) : null}
@@ -176,9 +207,14 @@ export default function MeetDetail() {
         />
         <SafetyNote />
         {__DEV__ && asked ? (
-          <Pressable onPress={() => approveMyAsk(m.id)} accessibilityRole="button" style={{ alignSelf: 'center', padding: 8 }}>
-            <PText style={infoStyles.sub}>개발용 · 호스트가 수락한 것처럼 보기</PText>
-          </Pressable>
+          <>
+            <Pressable onPress={() => approveMyAsk(m.id)} accessibilityRole="button" style={{ alignSelf: 'center', padding: 8 }}>
+              <PText style={infoStyles.sub}>개발용 · 호스트가 수락한 것처럼 보기</PText>
+            </Pressable>
+            <Pressable onPress={() => rejectMyAsk(m.id, 'SCHEDULE')} accessibilityRole="button" style={{ alignSelf: 'center', padding: 8 }}>
+              <PText style={infoStyles.sub}>개발용 · 호스트가 거절한 것처럼 보기</PText>
+            </Pressable>
+          </>
         ) : null}
       </DetailFrame>
 
@@ -204,6 +240,15 @@ export default function MeetDetail() {
           setCancel(false);
           leaveMeet(m.id);
           showToast(asked ? '신청을 취소했어요' : '참여를 취소했어요');
+        }}
+      />
+      <RejectSheet
+        name={rejectFor}
+        onClose={() => setRejectFor(null)}
+        onReject={(phrase) => {
+          if (rejectFor) decideReq(m.id, rejectFor, false);
+          setRejectFor(null);
+          showToast(`거절했어요 · 신청자에게는 '${phrase}' 로 보여요`);
         }}
       />
       <AskSheet
