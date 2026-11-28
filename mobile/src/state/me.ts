@@ -3,7 +3,7 @@
  * 담당: 마이 A. 다른 화면은 읽기만 해요 (useMe). 필드는 늘릴 수 있지만 이름 · 뜻은 바꾸지 않아요.
  * 기기에 남아요 (가짜 서버 · 스파크 · 포인트 · 팔로우 · 소개). 서버가 생기면 로그인 상태(api/session.tsx)가 받은 /me 로 덮어써요.
  */
-import { mockAddPendingLinkRequest, mockRejectLinkRequest } from '@/api/branch-link';
+import { mockAddPendingLinkRequest, mockApproveLinkRequest, mockRejectLinkRequest } from '@/api/branch-link';
 import { apiConfig } from '@/api/config';
 import { mockAddTrialApplication } from '@/api/trial-applications';
 import { ME } from '@/data/mock';
@@ -102,6 +102,8 @@ if (devWho) {
 function seedDevSummary(who: DevPersona) {
   if (!apiConfig.useMock) return;
   if (who === 'pending') mockAddPendingLinkRequest('하남점', '하남점', '', '');
+  // 연동된 사람: 설정 › 내 지점 '연동 이력'에 보이게 연동됨 요청 하나
+  if (who === 'linked' || who === 'pro' || who === 'manager') mockApproveLinkRequest('하남점');
   if (who === 'rejected') mockRejectLinkRequest('하남점', '등록된 번호가 달라요. 등록할 때 쓴 번호로 다시 요청해 주세요.');
   if (who === 'trial') {
     // 체험 예약: 내일 저녁 (홈 출석 카드 자리에 체험 카드)

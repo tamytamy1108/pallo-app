@@ -14,6 +14,8 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
+import { isMember } from '@/state/access';
+import { myBranches, useMe } from '@/state/me';
 import { getOnboarding, updateOnboarding } from '@/state/onboarding';
 
 const STATUS: Record<LinkRequestStatus, { label: string; variant: 'yellow' | 'soft' | 'dark' }> = {
@@ -47,22 +49,34 @@ function openLinkRequest(from?: LinkRequestRow) {
 
 /**
  * 설정 › 내 지점 (/me/settings/branch) — 내가 보낸 지점 연동 요청 전부 (가입 때 · 가입 뒤). 누구나 열어요.
- * 확인 중(최근 순) / 지난 요청(연동됨 · 반려됨, 최근 순). 줄을 누르면 요청 내용 시트 — 보낸 이름 · 번호 · 요청 · 처리 시각 · 지점이 남긴 말.
+ * 연동된 지점(회원만 · 지금 연동된 지점 모두) / 확인 중(최근 순) / 연동 이력(연동됨 · 반려됨, 최근 순). 줄을 누르면 요청 내용 시트 — 보낸 이름 · 번호 · 요청 · 처리 시각 · 지점이 남긴 말.
  * 반려된 요청이 그 지점의 가장 최근 요청이면 [다시 요청하기] (보냈던 값으로 칸을 채워 연동 요청 화면으로). 아래 '다른 지점 연동 요청하기'.
  * API: GET /me/branch-link-requests (api/use-link-requests) — mock 을 끄면 실제 서버. 상세는 목록 값으로 그려요 (서버에 단건 조회 없음).
  */
 export default function MyBranchLinksScreen() {
   const q = useMyLinkRequests();
+  const me = useMe();
+  const linked = isMember(me) ? myBranches(me) : [];
   const [open, setOpen] = useState<LinkRequestRow | null>(null);
 
   let body;
   if (q.isPending) body = <LoadingState />;
   else if (q.isError) body = <ErrorState onRetry={() => q.refetch()} />;
-  else if (!q.data.pending.length && !q.data.done.length)
+  else if (!linked.length && !q.data.pending.length && !q.data.done.length)
     body = <EmptyState title={'아직 보낸 지점 연동 요청이 없어요.'} link={{ label: '지점 연동 요청하기 ›', onPress: () => openLinkRequest() }} />;
   else
     body = (
       <>
+        {/* 지금 연동된 지점 (회원만 · 2026-11-28): 요청 이력이 없어도 보여요. 그 지점의 마지막 '연동됨' 요청이 있으면 날짜 · 누르면 요청 내용 */}
+        {linked.length ? (
+          <View>
+            <Head>연동된 지점</Head>
+            {linked.map((b) => {
+              const r = q.data.done.find((x) => x.branchName === b && x.status === 'APPROVED');
+              return <LinkedRow key={b} branch={b} r={r} onPress={r ? () => setOpen(r) : undefined} />;
+            })}
+          </View>
+        ) : null}
         {q.data.pending.length ? (
           <View>
             <Head>확인 중</Head>
@@ -73,7 +87,7 @@ export default function MyBranchLinksScreen() {
         ) : null}
         {q.data.done.length ? (
           <View>
-            <Head>지난 요청</Head>
+            <Head>연동 이력</Head>
             {q.data.done.map((r) => (
               <LinkRow key={r.id} r={r} onPress={() => setOpen(r)} />
             ))}
@@ -97,6 +111,37 @@ export default function MyBranchLinksScreen() {
         }}
       />
     </AccountPage>
+  );
+}
+
+/** 연동된 지점 한 줄: 지점 이름 + 연동된 날(요청 이력에 있으면) + 연동됨. 이력이 없으면 눌리지 않아요 */
+function LinkedRow({ branch, r, onPress }: { branch: string; r: LinkRequestRow | undefined; onPress: (() => void) | undefined }) {
+  return (
+    <Pressable
+      onPress={
+        onPress
+          ? () => {
+              sfx('tap');
+              onPress();
+            }
+          : undefined
+      }
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={`${branch} 연동됨${onPress ? ' 연동 요청 내용' : ''}`}
+      style={({ pressed }) => [styles.row, pressed && onPress && styles.pressed]}>
+      <View style={styles.flex}>
+        <PText style={styles.b} numberOfLines={1}>
+          {branch}
+        </PText>
+        {r?.decidedAt ? (
+          <PText style={styles.s} color={Colors.inkSub} numberOfLines={1}>
+            {`${day(r.decidedAt)} 연동`}
+          </PText>
+        ) : null}
+      </View>
+      <Pill label={STATUS.APPROVED.label} variant={STATUS.APPROVED.variant} />
+    </Pressable>
   );
 }
 
