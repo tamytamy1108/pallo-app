@@ -219,7 +219,7 @@ function ChangeScreen() {
   const two = LAUNCH.twoBranch ? ms.plan.twoBranch : undefined;
   const mode = two ? f.mode : 'move';
   /** 지금 다니는 지점 (두 곳이면 '두 지점 같이'가 한 곳 바꾸기가 돼요 · 한 곳을 빼려면 그 지점에 문의) */
-  const nowBranches = [...new Set(T.map((x) => x.branch))];
+  const nowBranches = [...new Set(T.map((x) => x.branch))].sort((a, b) => Number(b === MY_BRANCH) - Number(a === MY_BRANCH));
   const many = nowBranches.length > 1;
   // 끝나는 수업
   //  아예 옮기기 = 모두 · 한 지점 바꾸기 = 바꿀 지점 수업
@@ -317,7 +317,7 @@ function ChangeScreen() {
       if (mode === 'both' && many && !f.from) return { ok: false, txt: '바꿀 지점을 골라 주세요' };
       if (!f.br) return { ok: false, txt: '옮길 지점을 골라 주세요' };
       if (!f.picks.length) return { ok: false, txt: '새 지점에서 들을 팀을 골라 주세요' };
-      if (!two && f.picks.length < pickMax) return { ok: false, txt: `팀을 ${pickMax}개 골라 주세요 · 지금 ${f.picks.length}개` };
+      // 새 지점 팀은 1개만 골라도 돼요 (최대 pickMax 개)
       if (!st) return { ok: false, txt: '언제부터 바뀔지 골라 주세요' };
       if (endTeams.length && !f.gap) return { ok: false, txt: '그 전까지 들을지 쉴지 골라 주세요' };
       const label = CHANGE_KIND.branch[1];
@@ -757,15 +757,7 @@ function ChangeScreen() {
             </View>
             {nowBranches.map((b, i) => (
               <View key={b} style={[styles.mineList, i > 0 && styles.nowSplit]}>
-                {/* 등록된 내 지점은 노란 '내 지점' 이름표로 눈에 띄게 */}
-                <View style={styles.nowBrRow}>
-                  <PText style={[styles.nowBr, b === MY_BRANCH && styles.nowBrMine]}>{withJeom(b)}</PText>
-                  {b === MY_BRANCH ? (
-                    <View style={styles.slTag}>
-                      <PText style={styles.slTagT}>내 지점</PText>
-                    </View>
-                  ) : null}
-                </View>
+                <PText style={styles.nowBr}>{withJeom(b)}</PText>
                 {T.filter((x) => x.branch === b).map((t) => (
                   <StudyLine key={keyOf(t)} t={t} />
                 ))}
@@ -792,7 +784,7 @@ function ChangeScreen() {
               </View>
             </>
           ) : (
-            <PText style={styles.note}>{`지금 수업은 모두 새 지점으로 옮겨요 · 내 지점(${withJeom(MY_BRANCH)})도 새 지점으로 바뀌어요`}</PText>
+            <PText style={styles.note}>{`지금 수업은 모두 새 지점으로 옮겨요 · 내 지점(${nowBranches.map(withJeom).join(' · ')})도 새 지점으로 바뀌어요`}</PText>
           )}
           {/* 두 지점을 다니는 회원: 바꿀 지점 고르기 */}
           {mode === 'both' && many ? (
@@ -824,7 +816,13 @@ function ChangeScreen() {
                 <PText style={[styles.selT, !f.br && styles.selPh]}>{f.br ? withJeom(f.br) : '지점을 골라 주세요'}</PText>
                 <PText style={styles.selGo}>{f.br ? '바꾸기 ›' : '고르기 ›'}</PText>
               </Pressable>
-              <BranchListSheet open={brOpen} onClose={() => setBrOpen(false)} title="어느 지점으로 옮길까요?" value={f.br} hide={nowBranches} raw onPick={(b) => set({ br: b, picks: [] })} />
+              <BranchListSheet open={brOpen} onClose={() => setBrOpen(false)} title="어느 지점으로 옮길까요?"
+                value={f.br}
+                // 지금 다니는 지점(내 지점 · 하나든 둘이든)은 맨 위 '지금 내 지점' 칸에 보여요 (고를 수는 없어요)
+                current={nowBranches}
+                raw
+                onPick={(b) => set({ br: b, picks: [] })}
+              />
             </>
           ) : null}
           {mode === 'both' && !many && two === 'oneEach' ? (
@@ -850,7 +848,7 @@ function ChangeScreen() {
                     const list = matchOf(b);
                     return (
                       <View key={b} style={styles.teams}>
-                        <PText style={styles.q2}>{`${branchName(b)} · ${!two ? `${T.length}팀 골라 주세요` : max === 1 ? '1팀 골라 주세요' : '들어갈 수 있는 팀'}`}</PText>
+                        <PText style={styles.q2}>{`${branchName(b)} · ${!two ? `1팀 이상 골라 주세요 · 최대 ${max}팀` : max === 1 ? '1팀 골라 주세요' : '들어갈 수 있는 팀'}`}</PText>
                         {/* 그 지점에서 지금 듣는 팀이 있으면 이름으로 보여 줘요 (몇 팀인지 대신) */}
                         {has.length ? <PText style={styles.note}>{`지금 듣는 팀 · ${has.map(teamLabel).join(' · ')}`}</PText> : null}
                         {list.length ? (
@@ -1181,9 +1179,7 @@ const styles = StyleSheet.create({
   kindGo: { fontFamily: Font.body900, fontSize: 16, color: Colors.inkSub },
   rules: { gap: 2 },
   warn: { color: Colors.rosePink },
-  nowBrRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   nowBr: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
-  nowBrMine: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19, color: Colors.ink },
   nowSplit: { borderTopWidth: 1.5, borderColor: Colors.line, paddingTop: 10 },
   selPh: { color: Colors.inkSub },
   mineT: { fontFamily: Font.body800, fontSize: 12, color: Colors.inkSub },
