@@ -86,6 +86,8 @@ export default function MyScreen() {
   // 숫자 4칸 · PRO'S NOTE · 내 수업 · 내 스터디 · 랭킹 요약 · 배지 · 내 활동 개수 = GET /me/mypage (api/use-my-page.ts)
   const page = useMyPage();
   const my = page.data;
+  // 참여중 칸 (모두): 운영 중인 동아리가 있으면 아이콘 자리에 HOST · CO-HOST (0개가 되거나 관리자가 떼면 다시 아이콘)
+  const joined = { ic: 'users' as const, v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: goBox('joined'), tag: me.roleBadgeOff ? null : clubRole };
   // 지점 회원인지 = 마이 BFF branchMember (받기 전엔 GET /me 판정으로 — 회원에게 잠김 칸이 잠깐 비치지 않게)
   const member = my ? my.branchMember : isMember(me);
   // 프로 마이인지는 서버가 정해요 (프로 숫자 칸이 오면 프로)
@@ -155,21 +157,21 @@ export default function MyScreen() {
           <MyStats
             items={
               proStats
-                ? // 프로: 연속 학습(앱 학습 코너) · 출석률(맡은 세션 중 프로로 참여) · 보낸 노트 · 받은 고마워요 (2026-11-26)
+                ? // 프로: 연속 학습(앱 학습 코너) · 출석률(맡은 세션 중 프로로 참여) · 참여중 · 받은 고마워요
                   [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
                     // 프로 = 출석률(맡은 세션 중 · 누르면 PRO'S NOTE, 맨 위에 출석률 · 스파크까지 남은 정도) · 스텝 = 참여한 세션(프로로 출석 체크한 누적 수 — 맡은 세션이 없어서)
                     me.role === 'manager'
                       ? { ic: 'bolt', v: num(proStats.sessionsTotal, '회'), l: '참여한 세션', onPress: () => setProSessionsOpen(true) }
                       : { ic: 'bolt', v: num(proStats.attendanceRate, '%'), l: '출석률', onPress: go('/me/notes?box=sent') },
-                    { ic: 'mic', v: num(proStats.notesSent, '개'), l: '보낸 노트', onPress: go('/me/notes?box=sent') },
+                    // 보낸 노트 자리에 참여중 (2026-11-28 · 프로 · 스텝도 운영 중인 동아리면 HOST · CO-HOST 가 보이게)
+                    joined,
                     { ic: 'heart', v: num(proStats.thanksReceived, '개'), l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
                   ]
                 : [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
                     { ic: 'crown', v: num(my?.stats.weekRank, '위'), l: '이번 주 랭킹', onPress: go('/me/ranking') },
-                    // 운영 중인 동아리가 있으면 아이콘 자리에 HOST · CO-HOST (0개가 되거나 관리자가 떼면 다시 아이콘)
-                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: goBox('joined'), tag: me.roleBadgeOff ? null : clubRole },
+                    joined,
                     { ic: 'heart', v: num(my?.stats.badgeCount, '개'), l: '받은 배지', onPress: go('/me/badges') },
                   ]
             }
