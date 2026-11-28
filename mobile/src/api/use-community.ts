@@ -57,6 +57,7 @@ export function toCardPost(d: CommunityPost): Post {
     k: 'post',
     cat: CAT_OF[d.topic],
     who: d.author.nickname,
+    whoCode: d.author.code,
     av: AV[nameHash(d.author.code) % AV.length],
     br: d.author.branchName ?? '',
     role: '',

@@ -14,13 +14,16 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
-import { findMember, followLists, MEMBERS, memberAvatar, memberBio, memberLangs, MY_BADGES, nameHash, type Member } from '@/data/my';
+import { apiErrorMessage } from '@/api/errors';
+import { useMemberProfile, type MemberProfileView } from '@/api/use-member-profile';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
+import { MEMBERS, nameHash, type Avatar, type Member } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { useMyAvatar } from '@/state/avatar';
 import { toggleFollow, useMe } from '@/state/me';
 
 import { PfIcon } from './icons';
-import { profileMeetCount, ProfileMeetsSheet } from './profile-meets';
+import { ProfileMeetsSheet } from './profile-meets';
 import { Lift } from './lift';
 import { BadgeGrid } from './my-blocks';
 import { FollowSheet, MemberRow } from './my-sheets';
@@ -30,7 +33,7 @@ import { useMemberRoleTags } from '@/components/meet/model';
 const SUB_LV = ['EVERYDAY ENGLISH', 'REAL ENGLISH', 'TOPIC TALK'];
 
 /** 이번 주 포인트 달리기 (프로토타입 .pf-race.t1: 육상 트랙 · 레인 1 상대 · 레인 2 나) */
-function Race({ name, theirs, mine, width }: { name: string; theirs: number; mine: number; width: number }) {
+function Race({ name, av, theirs, mine, width }: { name: string; av: Avatar; theirs: number; mine: number; width: number }) {
   const myAv = useMyAvatar();
   const mx = Math.max(theirs, mine, 1) * 1.15;
   const rr = (v: number) => Math.max(0, Math.min(1, v / mx));
@@ -60,7 +63,7 @@ function Race({ name, theirs, mine, width }: { name: string; theirs: number; min
         </Svg>
       </View>
       <View style={[styles.rn, { left: at(a), top: 28 }]}>
-        <AvatarChar av={memberAvatar(name)} width={64} flip={false} style={styles.rnChar} />
+        <AvatarChar av={av} width={64} flip={false} style={styles.rnChar} />
       </View>
       {tag(a, 40, `${name} ${theirs}P`)}
       <View style={[styles.rn, { left: at(b), top: 108 }]}>
@@ -83,9 +86,36 @@ function H2({ title, right, big }: { title: string; right?: ReactNode; big?: boo
 /**
  * 멤버 프로필 시트 (프로토타입 openProfile · #lgSheet.tall.pfs): 캐릭터 룸 · 이름 · 학습 언어 · 지점 · 가입 연도
  * · 팔로잉 · 팔로워 · 참여 중(누르면 동아리 · 번개 · 챌린지 탭) · 함께 아는 멤버 · [팔로우] → 팔로우하면 추천 멤버 · 이번 주 포인트 달리기 · 학습 현황 · 배지 · 신고 / 차단.
- * 라운지 · 랭킹에서 얼굴을 누르면 열려요 (/me/profile/[이름]).
+ * 라운지 · 랭킹에서 얼굴을 누르면 열려요 (/me/profile/[회원 code]).
+ *
+ * 서버(GET /members/{code}/profile)에서 받는 것: 캐릭터 · 이름 · 지점 · 가입 연도 · 한 줄 소개 · 언어 · 팔로잉 · 팔로워 수 · 참여 중 ·
+ * 학습 현황 · 포인트 달리기(상대 쪽) · 받은 배지. 도메인이 없는 값은 서버가 기본값(0 · 빈 목록)으로 줘요.
+ * TODO(고도화) 아직 예시 값: 팔로우 누르기(기기 안 상태) · 팔로잉 · 팔로워 목록 · 함께 아는 멤버 · 추천 멤버 · 참여 중 목록 · 역할 표시 ·
+ * 학습 레벨 — 서버 도메인이 생기면 응답에 채우고 여기서 바꿔요. 예시 멤버(이름으로 여는 모임 · 챌린지 화면)는 실제 서버에서 찾지 못해요(404).
  */
-export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: string; open: boolean; onClose: () => void; /** 모임 줄을 누르면 (바로 그 상세로) */ onGo: (href: Href) => void; /** 시트 안에서 다른 멤버를 누르면 (같은 시트에 그 사람으로 바꿔요) */ onOpen: (name: string) => void }) {
+type ProfileSheetProps = {
+  /** 회원 code (가짜 서버는 멤버 이름) */
+  id: string;
+  open: boolean;
+  onClose: () => void;
+  /** 모임 줄을 누르면 (바로 그 상세로) */
+  onGo: (href: Href) => void;
+  /** 시트 안에서 다른 멤버를 누르면 (같은 시트에 그 사람으로 바꿔요) */
+  onOpen: (id: string) => void;
+};
+
+export function ProfileSheet({ id, open, onClose, onGo, onOpen }: ProfileSheetProps) {
+  const q = useMemberProfile(id);
+  if (q.data) return <ProfileSheetBody p={q.data} open={open} onClose={onClose} onGo={onGo} onOpen={onOpen} />;
+  return (
+    <Sheet open={open} onClose={onClose} tall label="프로필">
+      {q.isError ? <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} /> : <LoadingState />}
+    </Sheet>
+  );
+}
+
+function ProfileSheetBody({ p, open, onClose, onGo, onOpen }: Omit<ProfileSheetProps, 'id'> & { p: MemberProfileView }) {
+  const name = p.name;
   const { width: winW } = useWindowDimensions();
   const me = useMe();
   const [justFollowed, setJustFollowed] = useState(false);
@@ -94,22 +124,19 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
   const [recAll, setRecAll] = useState(false);
   const [report, setReport] = useState<'report' | 'block' | null>(null);
   const [meets, setMeets] = useState(false);
-  const meetN = profileMeetCount(name);
+  const meetN = p.meetN;
   const tags = useMemberRoleTags(name);
 
   const W = Math.min(winW, 520) - 36;
   const h = nameHash(name);
-  const br = findMember(name)?.branch ?? me.branch;
-  const langs = memberLangs(name);
-  const bio = memberBio(name);
+  const br = p.branch;
+  const langs = p.langs;
+  const bio = p.bio;
   const lv = 1 + (h % 3);
   const fol = !!me.following[name];
-  const L = followLists(name, me, me.following);
   const mut = MEMBERS.filter((m) => m.name !== name && m.name !== me.name).slice(h % 3, (h % 3) + 3);
-  const badges = MY_BADGES.filter((_, i) => (h + i) % 3 !== 0)
-    .slice(0, 4)
-    .map((b) => ({ ...b, on: true }));
-  const theirWk = 90 + ((h * 7) % 140);
+  const badges = p.badges;
+  const theirWk = p.stats.weekPoints;
   const myWk = 30 + me.weekPoints;
   const diff = Math.abs(theirWk - myWk);
   const recs: (Member & { why: string })[] = MEMBERS.filter((m) => m.name !== name && m.name !== me.name && !me.following[m.name] && !recHide[m.name])
@@ -133,7 +160,7 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
   return (
     <>
       <Sheet open={open} onClose={onClose} tall label={`${name} 프로필`} gap={10}>
-        <AvatarStage av={memberAvatar(name)} width={W} border big />
+        <AvatarStage av={p.av} width={W} border big />
         <View style={styles.id}>
           {/* 이름 옆: PRO · STAFF(계정 역할) → HOST · CO-HOST(운영 중인 동아리가 있을 때만) */}
           <View style={styles.nameRow}>
@@ -143,18 +170,18 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
           </View>
           {tags.meet ? <PText style={styles.runS}>{tags.meet === 'host' ? `동아리 ${tags.hostN}개 운영 중 · 호스트` : `동아리 ${tags.coN}개 함께 운영 중 · 코호스트`}</PText> : null}
           <PText style={styles.idS}>
-            {[...langs, br, '2026년 가입'].filter(Boolean).join(' · ')}
+            {[...langs, br, `${p.joinedYear}년 가입`].filter(Boolean).join(' · ')}
           </PText>
           {/* 한 줄 소개: 마이에서 남긴 글 그대로. 안 남긴 사람은 줄 없이 */}
           {bio ? <PText style={[styles.bio, keepAll]}>{bio}</PText> : null}
         </View>
         <View style={styles.cnt}>
-          <Pressable onPress={() => setList('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${L.fing.length}`} style={styles.cntC}>
-            <PText style={styles.cntN}>{L.fing.length}</PText>
+          <Pressable onPress={() => setList('fing')} accessibilityRole="button" accessibilityLabel={`팔로잉 ${p.following}`} style={styles.cntC}>
+            <PText style={styles.cntN}>{p.following}</PText>
             <PText style={styles.cntS}>팔로잉</PText>
           </Pressable>
-          <Pressable onPress={() => setList('fer')} accessibilityRole="button" accessibilityLabel={`팔로워 ${L.fer.length}`} style={styles.cntC}>
-            <PText style={styles.cntN}>{L.fer.length}</PText>
+          <Pressable onPress={() => setList('fer')} accessibilityRole="button" accessibilityLabel={`팔로워 ${p.followers}`} style={styles.cntC}>
+            <PText style={styles.cntN}>{p.followers}</PText>
             <PText style={styles.cntS}>팔로워</PText>
           </Pressable>
           {/* 참여 중: 동아리 · 번개 · 챌린지 (호스트인 것 포함) → 누르면 분야별 목록 시트 */}
@@ -231,7 +258,7 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
         {fol && (
           <>
             <H2 title="이번 주 포인트 달리기" right={<PText style={styles.h2B}>{diff === 0 ? `동점 · ${myWk}P` : `${diff}P 차이`}</PText>} />
-            <Race name={name} theirs={theirWk} mine={myWk} width={W} />
+            <Race name={name} av={p.av} theirs={theirWk} mine={myWk} width={W} />
             <PText style={styles.tip}>
               {diff === 0 ? (
                 <>
@@ -250,7 +277,7 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
               <View style={styles.stC}>
                 <PfIcon.fire />
                 <View>
-                  <PText style={styles.stB}>{3 + (h % 40)}일</PText>
+                  <PText style={styles.stB}>{p.stats.streakDays}일</PText>
                   <PText style={styles.stS}>연속 출석</PText>
                 </View>
               </View>
@@ -258,36 +285,41 @@ export function ProfileSheet({ name, open, onClose, onGo, onOpen }: { name: stri
                 <PfIcon.book />
                 <View style={styles.stTx}>
                   {/* 언어마다 한 줄 — 언어 이름 칸 · 레벨 칸을 따로 세워 'Lv.' 가 늘 같은 자리에서 시작해요 (언어가 3~4개여도) */}
-                  <View style={styles.lvRows}>
-                    <View>
-                      {langs.map((l) => (
-                        <PText key={l} style={[styles.stB, langs.length > 2 && styles.stBSm]}>
-                          {l}
-                        </PText>
-                      ))}
+                  {/* TODO(고도화) 언어 · 레벨은 서버가 아직 빈 목록 — 고르는 곳이 생기면 채워져요 */}
+                  {langs.length ? (
+                    <View style={styles.lvRows}>
+                      <View>
+                        {langs.map((l) => (
+                          <PText key={l} style={[styles.stB, langs.length > 2 && styles.stBSm]}>
+                            {l}
+                          </PText>
+                        ))}
+                      </View>
+                      <View>
+                        {langs.map((l, i) => (
+                          <PText key={l} style={[styles.stB, langs.length > 2 && styles.stBSm]}>
+                            {`Lv.${i ? 1 + ((h + i) % 2) : lv}`}
+                          </PText>
+                        ))}
+                      </View>
                     </View>
-                    <View>
-                      {langs.map((l, i) => (
-                        <PText key={l} style={[styles.stB, langs.length > 2 && styles.stBSm]}>
-                          {`Lv.${i ? 1 + ((h + i) % 2) : lv}`}
-                        </PText>
-                      ))}
-                    </View>
-                  </View>
-                  <PText style={styles.stS}>{langs.length > 1 ? '학습 레벨' : SUB_LV[lv - 1]}</PText>
+                  ) : (
+                    <PText style={styles.stB}>-</PText>
+                  )}
+                  <PText style={styles.stS}>{langs.length === 1 ? SUB_LV[lv - 1] : '학습 레벨'}</PText>
                 </View>
               </View>
               <View style={styles.stC}>
                 <PfIcon.cup />
                 <View>
-                  <PText style={styles.stB}>주간 {2 + (h % 9)}위</PText>
+                  <PText style={styles.stB}>{p.stats.weekRank ? `주간 ${p.stats.weekRank}위` : '순위 없음'}</PText>
                   <PText style={styles.stS}>{String(br).split(' · ')[0]} 랭킹</PText>
                 </View>
               </View>
               <View style={styles.stC}>
                 <PfIcon.star />
                 <View>
-                  <PText style={styles.stB}>{(1200 + ((h * 37) % 3000)).toLocaleString()}P</PText>
+                  <PText style={styles.stB}>{p.stats.totalPoints.toLocaleString()}P</PText>
                   <PText style={styles.stS}>누적 포인트</PText>
                 </View>
               </View>

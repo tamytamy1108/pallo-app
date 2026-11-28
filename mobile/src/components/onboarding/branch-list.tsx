@@ -35,11 +35,13 @@ const same = (a: string, b: string) => withJeom(a) === withJeom(b);
  * 지점 목록 시트 (프로토타입 .bs · 가입 단계의 '다니는 지점'): 제목 · 검색 · 권역 탭 · 권역별 묶음 카드. 하나 고르면 닫혀요.
  * raw: 데이터 이름 그대로('가산') 돌려줘요 — 기본은 보이는 이름('가산점', 가입 · 체험 예약이 저장하는 값).
  */
-export function BranchListSheet({ open, onClose, title, value, onPick, raw = false }: { open: boolean; onClose: () => void; title: string; value: string; onPick: (name: string) => void; trial?: boolean; raw?: boolean }) {
+export function BranchListSheet({ open, onClose, title, value, onPick, raw = false, mine, hide }: { open: boolean; onClose: () => void; title: string; value: string; onPick: (name: string) => void; trial?: boolean; raw?: boolean; mine?: string[]; /** 목록에서 뺄 지점 (예: 지금 다니는 지점) */ hide?: string[] }) {
   return (
     <Sheet open={open} onClose={onClose} title={title} tall>
       <BranchListPicker
         value={value}
+        mine={mine}
+        hide={hide}
         onPick={(b) => {
           onPick(raw ? b.key : b.name);
           onClose();
@@ -53,11 +55,17 @@ export function BranchListSheet({ open, onClose, title, value, onPick, raw = fal
  * 지점 하나 고르기 본문 (검색 · 권역 탭 · 권역별 묶음 카드).
  * 가입 단계 · 체험 예약 · 이벤트 제안(진행 지점) · 연기 · 팀 · 지점 변경이 같은 모양을 써요.
  */
-export function BranchListPicker({ value, onPick }: { value: string | null; onPick: (b: Branch) => void }) {
+export function BranchListPicker({ value, onPick, mine = [], hide = [] }: { value: string | null; onPick: (b: Branch) => void; /** 내 지점(수업 듣는 지점) — '내 지점'으로 표시 · 맨 위 고정 */ mine?: string[]; hide?: string[] }) {
+  const isMine = (k: string) => mine.some((m) => same(k, m));
   return (
     <PickerFrame
-      // 고른 지점이 있는 권역 · 고른 지점을 먼저 (바꾸러 들어왔을 때 지금 값이 바로 보이게)
-      sortKey={(b) => (value && same(b.key, value) ? 0 : 1)}
+      hide={(b) => hide.some((h) => same(b.key, h))}
+      // 내 지점은 맨 위 고정 · 그다음 고른 지점 (권역도 같은 순서 — 바꾸러 들어왔을 때 지금 값이 바로 보이게)
+      sortKey={(b) => {
+        // 내 지점이 맨 위 (넘겨준 순서대로 · 등록 지점이 먼저) · 그다음 고른 지점
+        const i = mine.findIndex((m) => same(b.key, m));
+        return i >= 0 ? i : value && same(b.key, value) ? mine.length : mine.length + 1;
+      }}
       row={(b, first) => {
         const on = !!value && same(b.key, value);
         return (
@@ -66,6 +74,7 @@ export function BranchListPicker({ value, onPick }: { value: string | null; onPi
             b={b}
             first={first}
             on={on}
+            mine={isMine(b.key)}
             role="radio"
             onPress={() => {
               sfx('tap');
@@ -161,13 +170,13 @@ export function BranchMultiPicker({ selected, onChange, max, allOption = false, 
 }
 
 /** 검색 · 권역 탭 · 권역별 묶음 카드 틀 (하나 · 여러 개 고르기가 같이 써요) */
-function PickerFrame({ head, row, regionEnd, sortKey, list = LIST }: { head?: ReactNode; row: (b: Branch, first: boolean) => ReactNode; regionEnd?: (rows: Branch[]) => ReactNode; sortKey?: (b: Branch) => number; list?: Branch[] }) {
+function PickerFrame({ head, row, regionEnd, sortKey, list = LIST, hide }: { head?: ReactNode; row: (b: Branch, first: boolean) => ReactNode; regionEnd?: (rows: Branch[]) => ReactNode; sortKey?: (b: Branch) => number; list?: Branch[]; hide?: (b: Branch) => boolean }) {
   const REGIONS = regionsOf(list);
   const TABS = ['전체', ...REGIONS];
   const [tab, setTab] = useState('전체');
   const [q, setQ] = useState('');
   const query = q.trim();
-  const shown = list.filter((b) => (tab === '전체' || b.region === tab) && (!query || b.name.includes(query)));
+  const shown = list.filter((b) => !hide?.(b) && (tab === '전체' || b.region === tab) && (!query || b.name.includes(query)));
   const order = (L: Branch[]) => (sortKey ? [...L].sort((a, b) => sortKey(a) - sortKey(b)) : L);
   const regions = [...REGIONS.filter((r) => shown.some((b) => b.region === r))].sort((a, b) =>
     sortKey ? Math.min(...shown.filter((x) => x.region === a).map(sortKey)) - Math.min(...shown.filter((x) => x.region === b).map(sortKey)) : 0,
@@ -186,7 +195,7 @@ function PickerFrame({ head, row, regionEnd, sortKey, list = LIST }: { head?: Re
           <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="tab" accessibilityState={{ selected: tab === t }} style={[styles.segItem, tab === t && styles.segOn]}>
             <PText style={[styles.segText, tab === t && styles.segTextOn]}>
               {t}
-              {t === '전체' ? <PText style={[styles.segCount, tab === t && styles.segTextOn]}> {list.length}</PText> : null}
+              {t === '전체' ? <PText style={[styles.segCount, tab === t && styles.segTextOn]}> {list.filter((b) => !hide?.(b)).length}</PText> : null}
             </PText>
           </Pressable>
         ))}

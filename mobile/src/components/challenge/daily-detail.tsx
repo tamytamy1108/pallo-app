@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ScrollViewInstance, type ViewInstance } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from '@/components/ui/safe-area';
+import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 
 import { BackButton } from '@/components/ui/back-button';
 import { FramedImage } from '@/components/ui/photo-frame';
@@ -146,6 +147,7 @@ export function DailyDetail({ p }: { p: Challenge }) {
         ref={scroll}
         onLayout={(e) => setScrollH(e.nativeEvent.layout.height)}
         onScroll={(e) => {
+          checkScrollLock('detail');
           scrollY.current = e.nativeEvent.contentOffset.y;
           setTitled(e.nativeEvent.contentOffset.y > dbdY + h2Bottom);
         }}
@@ -212,9 +214,12 @@ export function DailyDetail({ p }: { p: Challenge }) {
         </View>
 
         <View style={[styles.body, { minHeight: Math.max(0, scrollH - TABS_H - 24) }]}>
-          {tab === 'home' ? <HomeTab p={p} s={s} onAll={() => setTab('feed')} onThread={setThread} onReport={setReport} /> : null}
-          {tab === 'feed' ? <FeedTab p={p} s={s} onThread={setThread} onReport={setReport} onMineShown={revealMine ? revealRow : undefined} /> : null}
-          {tab === 'rank' ? <RankTab p={p} s={s} /> : null}
+          {/* 비회원은 탭 본문을 위쪽만 보고 '지점 회원이 되면 다 볼 수 있어요' 칸 (이벤트 · 번개 · 동아리 상세와 같아요) */}
+          <ScrollLock screen="detail" peek={240}>
+            {tab === 'home' ? <HomeTab p={p} s={s} onAll={() => setTab('feed')} onThread={setThread} onReport={setReport} /> : null}
+            {tab === 'feed' ? <FeedTab p={p} s={s} onThread={setThread} onReport={setReport} onMineShown={revealMine ? revealRow : undefined} /> : null}
+            {tab === 'rank' ? <RankTab p={p} s={s} /> : null}
+          </ScrollLock>
         </View>
       </ScrollView>
 

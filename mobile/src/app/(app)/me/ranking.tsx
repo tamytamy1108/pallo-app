@@ -103,17 +103,17 @@ export default function RankingScreen() {
   const q = view === 'me' ? members : branches;
   const perLabel = per === 'WEEK' ? '이번 주' : '이번 달';
 
-  // 프로필은 아직 이름으로 열어요 — 서버 연동 뒤 회원 code(p.code)로 바꿔요
-  const openProfile = (n: string, isMe?: boolean) => {
+  // 프로필은 회원 code 로 열어요 — code 가 없는 줄(비공개 · 예시 값)은 이름으로 (가짜 서버만 찾아요)
+  const openProfile = (p: RankingRow) => {
     sfx('tap');
-    router.push((isMe ? '/my' : `/me/profile/${encodeURIComponent(n)}`) as Href);
+    router.push((p.me ? '/my' : `/me/profile/${encodeURIComponent(p.code ?? p.n)}`) as Href);
   };
 
   const row = (p: RankingRow, k: number) => (
     <Animated.View key={`${p.no}-${p.n}`} style={still ? undefined : { animationName: rise, animationDuration: '500ms', animationDelay: `${50 * k}ms`, animationFillMode: 'both', animationTimingFunction: SPRING }}>
       <View style={[styles.rkRow, p.me && styles.rkMe]}>
         <PText style={styles.no}>{p.no}</PText>
-        <Pressable onPress={() => openProfile(p.n, p.me)} accessibilityRole="button" accessibilityLabel={`${p.n} 프로필`}>
+        <Pressable onPress={() => openProfile(p)} accessibilityRole="button" accessibilityLabel={`${p.n} 프로필`}>
           <MemberFace name={p.n} size={34} bg={p.c} />
         </Pressable>
         <View style={styles.nm}>
@@ -152,7 +152,7 @@ export default function RankingScreen() {
               if (!p) return <View key={i} style={styles.pod} />;
               return (
                 <View key={i} style={styles.pod}>
-                  <Pressable onPress={() => openProfile(p.n, p.me)} accessibilityRole="button" accessibilityLabel={`${i + 1}위 ${p.n} 프로필`} style={styles.podAv}>
+                  <Pressable onPress={() => openProfile(p)} accessibilityRole="button" accessibilityLabel={`${i + 1}위 ${p.n} 프로필`} style={styles.podAv}>
                     <MemberFace name={p.n} size={52} bg={p.c} />
                     <View style={styles.medal} pointerEvents="none">
                       <Medal n={i + 1} />

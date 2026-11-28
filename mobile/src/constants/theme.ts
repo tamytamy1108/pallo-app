@@ -21,6 +21,10 @@ export const Colors = {
   langJa: '#F06593',
   langZh: '#EA373F',
   langEs: '#69BE5F',
+  /** 출석률 높음(90% 이상) · 중간(70~89%) · 낮음(70% 아래) — 크림 · 흰 바탕 위 큰 숫자 대비 3:1 이상 */
+  rateHigh: '#2E8B57',
+  rateMid: '#C25E00',
+  rateLow: '#D23B3B',
 } as const;
 
 export const Radius = {

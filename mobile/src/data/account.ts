@@ -26,7 +26,7 @@ export const fmtDay = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}(${DOW[d.g
 
 // ---------- 이용권 (멤버십) ----------
 
-export type PlanKey = 'plus' | 'pro' | 'promax' | 'premium';
+export type PlanKey = 'plus' | 'pro' | 'promax' | 'cvvip' | 'premium';
 export type Plan = {
   name: string;
   /** 총 기간 = 유료 + 무료 (개월) */
@@ -43,14 +43,24 @@ export type Plan = {
   /** 프리미엄: 늘 3팀 · 팀은 바꾸기만 */
   fixed?: boolean;
   perWeekText?: string;
+  /**
+   * 두 지점 같이 다니기 (지점 이동 때 '아예 옮기기' · '두 지점 같이' 중에서 골라요 · 지점은 2곳까지)
+   * teams: 지점마다 최대 팀 수까지 (프리미엄 3팀 · 출석은 두 지점 합쳐 주 MULTI_BRANCH_WEEK_MAX회까지)
+   * oneEach: 지점마다 1팀씩 (CVVIP+ · 원래 2팀을 두 지점에 나눠 들어요)
+   */
+  twoBranch?: 'teams' | 'oneEach';
 };
+/** 두 지점을 같이 다닐 때 출석은 합쳐서 주 4회까지 */
+export const MULTI_BRANCH_WEEK_MAX = 4;
 
 // 프로토타입 PLANS: 한 달 = 주 참여 × 4회, 유료분부터 써요 · 금액은 앱에 보여 주지 않아요
 export const PLANS: Record<PlanKey, Plan> = {
-  plus: { name: '플러스', months: 5, paidMonths: 4, freeMonths: 1, perWeek: 2, total: 40, changes: 3, teams: 3 },
-  pro: { name: '프로', months: 10, paidMonths: 6, freeMonths: 4, perWeek: 2, total: 80, changes: 6, teams: 3 },
-  promax: { name: '프로맥스', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, teams: 3 },
-  premium: { name: '프리미엄', months: 24, paidMonths: 13, freeMonths: 11, perWeek: 4, total: 384, changes: Infinity, teams: 3, fixed: true, perWeekText: '주 4회 · 꼭 3팀에서' },
+  plus: { name: 'PLUS', months: 5, paidMonths: 4, freeMonths: 1, perWeek: 2, total: 40, changes: 3, teams: 3 },
+  pro: { name: 'PRO', months: 10, paidMonths: 6, freeMonths: 4, perWeek: 2, total: 80, changes: 6, teams: 3 },
+  promax: { name: 'PRO MAX', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, teams: 3 },
+  // CVVIP+: 2팀 · 기간 · 횟수 · 변경 횟수는 아직 정해지지 않아 프로맥스와 같게 둔 예시예요
+  cvvip: { name: 'CVVIP+', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, teams: 2, twoBranch: 'oneEach' },
+  premium: { name: 'PREMIUM', months: 24, paidMonths: 13, freeMonths: 11, perWeek: 4, total: 384, changes: Infinity, teams: 3, fixed: true, perWeekText: '주 4회 · 꼭 3팀에서', twoBranch: 'teams' },
 };
 
 /** 내 이용권 (프로토타입 MS) */
@@ -84,6 +94,9 @@ export const MY_TEAMS: Team[] = [
   { branch: MY_BRANCH, no: '5팀', lang: '영어', when: '월수 21:00', pro: 'Sunny', level: 'Intermediate 2' },
   { branch: '잠실점', no: '8팀', lang: '일본어', when: '토 11:00', pro: 'Ken', level: 'Intermediate 2' },
 ];
+
+/** 내 지점: 수업을 듣는 지점 모두 (두 지점을 같이 다니면 둘 다 · 등록 지점이 먼저) */
+export const MY_BRANCHES: string[] = [...new Set([MY_BRANCH, ...MY_TEAMS.map((t) => t.branch)])];
 
 /** 지점 목록 [이름, 권역] (프로토타입 LG_BRS · LG_BREG) */
 export const BRANCH_REGIONS = ['서울', '경기', '충청', '경상'] as const;
@@ -135,6 +148,26 @@ export const levelShort = (level: string) => {
   const n = level.match(/(\d+)\s*$/);
   return n ? `Lv.${n[1]}` : level;
 };
+/** 레벨 숫자 · 'Intermediate 2' → 2 (숫자가 없으면 null) */
+export const levelNo = (level: string) => {
+  const n = level.match(/(\d+)\s*$/);
+  return n ? Number(n[1]) : null;
+};
+/** 가장 낮은 · 높은 레벨 */
+export const LEVEL_MIN = 0;
+export const LEVEL_MAX = 4;
+/**
+ * 들어갈 수 있는 레벨인지. 기본은 내 레벨과 같은 팀만.
+ * 지점 이동(wide)만 맨 끝 레벨을 한 칸 넓혀요 — 레벨 0은 1까지, 레벨 4는 3까지.
+ * 다른 지점엔 맨 끝 레벨 팀이 없을 수 있어서예요 (UI 에는 이 설명을 보여 주지 않아요 · 서버도 같은 규칙으로 걸러 주세요).
+ */
+export function levelFits(mine: string, team: string, wide = false) {
+  if (mine === team) return true;
+  const a = levelNo(mine);
+  const b = levelNo(team);
+  if (!wide || a == null || b == null) return false;
+  return (a === LEVEL_MIN && b === LEVEL_MIN + 1) || (a === LEVEL_MAX && b === LEVEL_MAX - 1);
+}
 /** 같은 지점 · 같은 언어 · 같은 레벨 스터디가 있는 다른 팀 (연기 뒤 옮겨 돌아갈 곳 · 자리 수는 보지 않아요 · 이미 듣는 팀은 빼요) */
 export function sameLevelTeams(t: Team, mine: Team[]): Team[] {
   return teamsOf(t.branch).filter((x) => x.lang === t.lang && x.level === t.level && !mine.some((m) => m.branch === x.branch && m.no === x.no));
@@ -325,9 +358,9 @@ export const PASS_LOG = Array.from({ length: 12 }, (_, i) => {
 /** 결제 내역 · 최근 결제가 위로 (mem: 이용권 — 금액은 앱에 보여 주지 않아요) */
 export const PAYMENTS = [
   { d: '2026.08.14', mem: false, item: '제주 영어 캠프 1박 2일', amt: 189000, how: '카카오페이', st: '결제 완료' },
-  { d: '2026.07.01', mem: true, item: '프리미엄 · 24개월 · 384회(무료 176회 포함)', amt: 2470000, how: '신용카드 · 국민 ****21', st: '결제 완료' },
+  { d: '2026.07.01', mem: true, item: 'PREMIUM · 24개월 · 384회(무료 176회 포함)', amt: 2470000, how: '신용카드 · 국민 ****21', st: '결제 완료' },
   { d: '2026.02.20', mem: false, item: '레벨 테스트', amt: 30000, how: '카카오페이', st: '환불 완료' },
-  { d: '2026.02.01', mem: true, item: '플러스 · 5개월 · 40회(무료 8회 포함)', amt: 760000, how: '신용카드 · 국민 ****21', st: '결제 완료' },
+  { d: '2026.02.01', mem: true, item: 'PLUS · 5개월 · 40회(무료 8회 포함)', amt: 760000, how: '신용카드 · 국민 ****21', st: '결제 완료' },
 ];
 
 // ---------- 고객센터 ----------
@@ -408,6 +441,9 @@ export function getMembership() {
   };
 }
 export type MembershipInfo = ReturnType<typeof getMembership>;
+/** 멤버십 정책 한 줄 · PREMIUM = 3팀 · 주 4회 (합쳐서) · 나머지 = 1팀 · 주 2회 (팀마다) */
+export const planRuleText = (p: Plan) => (p.fixed ? `${p.teams}팀 · 주 ${p.perWeek}회` : `1팀 · 주 ${p.perWeek}회`);
+
 /** 연기 · 변경 남은 횟수 글자 (프로토타입 ppT) */
 export const changesLeftText = (pp: number) => (pp === Infinity ? '무제한' : `${pp}번`);
 

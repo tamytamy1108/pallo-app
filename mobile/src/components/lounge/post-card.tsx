@@ -35,15 +35,17 @@ import { PlacedSticker } from './story-sticker';
 const BURST_EASE = Easing.bezierFn(0.2, 0.9, 0.3, 1.3);
 
 /** 글 머리: 프로필 · 이름 · 역할 · 학습 언어 · 지점 · 시간 · ⋯ (프로토타입 lgWho) */
-export function Who({ who, av, role, sub, onMore, dark = false }: { who: string; av: string; role?: string; sub: string; onMore?: () => void; dark?: boolean }) {
+export function Who({ who, whoCode, av, role, sub, onMore, dark = false }: { who: string; /** 회원 code — 없으면 이름으로 열어요(예시 글) */ whoCode?: string; av: string; role?: string; sub: string; onMore?: () => void; dark?: boolean }) {
   const me = useMe();
+  // 내 글은 이름으로 열어 마이로 가요 (가짜 서버의 내 글 code 는 'ME')
+  const profileHref = `/me/profile/${encodeURIComponent(who === me.name ? who : (whoCode ?? who))}`;
   const langs = memberLangs(who, me.name);
   return (
     <View style={styles.who}>
-      <Pressable onPress={() => go(`/me/profile/${encodeURIComponent(who)}`)} accessibilityRole="button" accessibilityLabel={`${who} 프로필`}>
+      <Pressable onPress={() => go(profileHref)} accessibilityRole="button" accessibilityLabel={`${who} 프로필`}>
         <Face name={who} bg={av} />
       </Pressable>
-      <Pressable onPress={() => go(`/me/profile/${encodeURIComponent(who)}`)} accessibilityRole="button" accessibilityLabel={`${who} 프로필`} style={styles.nm}>
+      <Pressable onPress={() => go(profileHref)} accessibilityRole="button" accessibilityLabel={`${who} 프로필`} style={styles.nm}>
         <View style={styles.nmRow}>
           <PText style={[styles.name, dark && { color: '#fff' }]} numberOfLines={1}>
             {who}
@@ -251,7 +253,7 @@ export function PostCard({ p }: { p: Post }) {
   const [sheet, setSheet] = useState<null | 'cmt' | 'more' | 'likers'>(null);
   return (
     <View>
-      <Who who={p.who} av={p.av} role={p.role} sub={`${p.br}${p.club ? ` · ${p.club}` : ''} · ${whenLabel(p.time, p.at)}`} onMore={() => setSheet('more')} />
+      <Who who={p.who} whoCode={p.whoCode} av={p.av} role={p.role} sub={`${p.br}${p.club ? ` · ${p.club}` : ''} · ${whenLabel(p.time, p.at)}`} onMore={() => setSheet('more')} />
       <Pic p={p} />
       <Acts id={p.id} likes={p.likes} cmts={cmts.length} onCmt={() => setSheet('cmt')} onLikers={() => setSheet('likers')} />
       {/* 글 없이 올린 사진 · 사진 위 스티커로 글을 보인 글은 캡션을 따로 달지 않아요 */}
@@ -283,7 +285,7 @@ export function CommunityPostCard({ d }: { d: CommunityPost }) {
   };
   return (
     <View>
-      <Who who={p.who} av={p.av} role={p.role} sub={`${p.br ? `${p.br}${p.club ? ` · ${p.club}` : ''} · ` : ''}${whenLabel(p.time, p.at)}`} onMore={() => setSheet('more')} />
+      <Who who={p.who} whoCode={p.whoCode} av={p.av} role={p.role} sub={`${p.br ? `${p.br}${p.club ? ` · ${p.club}` : ''} · ` : ''}${whenLabel(p.time, p.at)}`} onMore={() => setSheet('more')} />
       <Pic p={p} onDoubleTap={() => (d.likedByMe ? undefined : like.mutate(d.id))} />
       <ActsView liked={d.likedByMe} saved={d.scrappedByMe} likes={d.likeCount} cmts={d.commentCount} onLike={() => like.mutate(d.id)} onSave={onSave} onCmt={() => setSheet('cmt')} />
       {p.text && !p.lbl ? (

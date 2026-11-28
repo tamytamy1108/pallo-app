@@ -259,17 +259,17 @@ export default function MyScreen() {
           </View>
         </ScrollLock>
 
-        {/* 아래 메뉴는 잠김 칸 밖 — 비회원도 상담 신청 내역 · 버그 보고에 갈 수 있게. 자주 묻는 질문은 설정 안 · 이용권 · 결제 내역 줄은 뺐어요 (2026-11-26) */}
-        <Appear kind="rise">
-          <MyList
-            rows={[
-              { label: '설정', onPress: openSettings },
-              // 상담 신청 내역은 체험 전(지점 회원이 아닌) 사람만 — 회원에게는 줄을 안 보여요
-              ...(member ? [] : [{ label: '상담 신청 내역', onPress: go('/me/consultations') }]),
-              { label: '버그 보고', onPress: go('/me/support?view=bug') },
-            ]}
-          />
-        </Appear>
+        {/* 아래 메뉴(설정 · 버그 보고)는 회원만 — 비회원 · 연동 전은 잠김 칸에서 끝나요 (설정은 위 톱니로). 자주 묻는 질문은 설정 안 · 이용권 · 결제 내역 줄은 뺐어요 */}
+        {member ? (
+          <Appear kind="rise">
+            <MyList
+              rows={[
+                { label: '설정', onPress: openSettings },
+                { label: '버그 보고', onPress: go('/me/support?view=bug') },
+              ]}
+            />
+          </Appear>
+        ) : null}
 
         {/* 개발용 입구: 개발 서버(__DEV__)에서만 보여요 — 실제 앱에는 안 나와요 */}
         {__DEV__ ? (

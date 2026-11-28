@@ -30,9 +30,12 @@ import {
   getMembership,
   monIdx,
   MY_BRANCH,
+  MY_BRANCHES,
   MY_TEAMS,
+  MULTI_BRANCH_WEEK_MAX,
   REST_LONG_MAX_MONTHS,
   LANG_COLOR,
+  levelFits,
   levelShort,
   REST_LONG_REASONS,
   REST_MIN,
@@ -60,11 +63,17 @@ import { useKeyboardShown } from '@/lib/keyboard';
  *   → ③ 복귀일(돌아갈 스터디 요일만). 최소 2주 · 금요일 휴무 · 복귀는 최대 2년 · 이용권 끝나는 날까지.
  *   1달 넘게는 출산 · 군 입대 같은 특별한 경우만 — 확인 창을 띄우고 사유를 꼭 적어요. 날짜는 아래에서 올라오는 달력 시트로 골라요.
  * 변경 횟수는 연기 · 팀 변경 · 지점 이동이 같이 써요: 연기 1번 + 옮기는 팀마다 팀 변경 1번.
+ * 팀 변경 · 지점 이동은 2주 전에 신청해요: 옮기기 전까지 지금 팀에서 듣다가 옮길지, 쉬다가(홀딩) 옮길지 꼭 골라요.
+ * 지점 이동: 보통은 아예 옮겨요(지금 수업은 모두 끝나고 새 지점 팀을 골라요). 두 지점 같이 다니기(plan.twoBranch)는
+ *   프리미엄(지점마다 3팀까지 · 출석은 합쳐 주 4회) · CVVIP+(지점마다 1팀씩)만 '아예 옮기기 · 두 지점 같이' 중에서 골라요.
+ *   등록된 지점(MY_BRANCH)은 '내 지점'으로 보여요.
  * 새 일정(팀 · 지점 변경 · 팀 추가)은 오늘 + 2주 ~ 이용권 끝나는 날 · 자리 수 · 프로 이름은 보여 주지 않아요.
  * 신청은 바로 바뀌지 않아요: 운영진 전산으로 넘어가 대기로 남고, 운영진이 확인하면 알려 줘요.
  * 맞는 API: 38 `/branches/:id/teams` · 39 `POST /me/change-requests` (api/change-requests)
  */
 
+/** 팀 · 지점: 옮기기 전까지 지금 팀에서 듣다가(keep) · 쉬다가(hold) */
+type Gap = 'keep' | 'hold';
 type Step = 'pick' | 'form' | 'confirm';
 /** 연기 뒤 이 팀으로 돌아갈지 (change = 같은 레벨의 다른 팀으로 옮겨요 · to 는 고른 팀) */
 type Back = { change: boolean; to: Team | null };
@@ -90,6 +99,13 @@ type Form = {
   mon: number;
   br: string;
   to: Team | null;
+  gap: Gap | null;
+  /** 지점 이동: 아예 옮기기(move) · 두 지점 같이(both) */
+  mode: 'move' | 'both' | null;
+  /** 지점 이동 · 두 지점을 다니는 회원: 두 지점 같이에서 바꿀 지점 */
+  from: string;
+  /** 지점 이동: 새 지점에서 고른 팀 */
+  picks: Team[];
   calOpen: boolean;
 };
 type Summary = { ok: false; txt: string } | { ok: true; label: string; st: Date; en?: Date; txt: string };
@@ -109,6 +125,10 @@ const fresh = (): Form => ({
   mon: monIdx(CHANGE_MIN),
   br: MY_BRANCH,
   to: null,
+  gap: null,
+  mode: null,
+  from: '',
+  picks: [],
   calOpen: false,
 });
 
@@ -163,8 +183,8 @@ const goMyStudy = () => router.replace({ pathname: '/my', params: { open: 'study
 
 const KIND_CARD: [ChangeKind, IconName, string, string][] = [
   ['rest', 'clock', Colors.yellow, '출장 · 여행 · 바쁜 기간 · 최소 2주부터'],
-  ['team', 'cal', '#C9B8F0', '언어 · 요일 · 시간을 바꿔요'],
-  ['branch', 'pin', Colors.sky, '이사 · 회사 이동'],
+  ['team', 'cal', '#C9B8F0', '언어 · 요일 · 시간을 바꿔요 · 2주 전 신청'],
+  ['branch', 'pin', Colors.sky, '이사 · 회사 이동 · 2주 전 신청'],
 ];
 
 function ChangeScreen() {
@@ -176,17 +196,49 @@ function ChangeScreen() {
   const [brOpen, setBrOpen] = useState(false);
   const scroll = useRef<ScrollViewInstance>(null);
   const reasonY = useRef(0);
+  const calJump = useRef(false);
   const set = (patch: Partial<Form>) => setF((p) => ({ ...p, ...patch }));
   const toTop = () => requestAnimationFrame(() => scroll.current?.scrollTo({ y: 0, animated: false }));
 
   // 고른 종류의 대상 수업 (프로토타입 cgCls) — 연기는 늘 모든 수업
-  const cls: Team[] = f.kind === 'rest' ? T : f.kind === 'add' ? [] : [T[f.cls === 'all' ? 0 : f.cls]];
+  const pickedCls = T[f.cls === 'all' ? 0 : f.cls];
+  // ----- 지점 이동 -----
+  const two = ms.plan.twoBranch;
+  const mode = two ? f.mode : 'move';
+  /** 지금 다니는 지점 (두 곳이면 '두 지점 같이'가 한 곳 바꾸기가 돼요 · 한 곳을 빼려면 그 지점에 문의) */
+  const nowBranches = [...new Set(T.map((x) => x.branch))];
+  const many = nowBranches.length > 1;
+  // 끝나는 수업
+  //  아예 옮기기 = 모두 · 한 지점 바꾸기 = 바꿀 지점 수업
+  //  두 지점 같이(지금 1곳) = 프리미엄은 없음 · CVVIP+ 는 고른 1팀
+  const endTeams =
+    mode === 'move'
+      ? T
+      : mode === 'both' && many
+          ? T.filter((x) => x.branch === f.from)
+          : mode === 'both' && two === 'oneEach'
+            ? [pickedCls]
+            : [];
+  const keptTeams = T.filter((x) => !endTeams.includes(x));
+  /** 팀을 고르는 지점 = 새 지점 */
+  const target = f.br;
+  const brs = target ? [target] : [];
+  // 그 지점에서 고를 수 있는 팀 수 (남는 수업은 빼고)
+  const perMax = (b: string) =>
+    !two ? T.length : mode === 'move' ? ms.plan.teams : two === 'oneEach' && mode === 'both' ? 1 : ms.plan.teams - keptTeams.filter((x) => x.branch === b).length;
+  const pickMax = perMax(target);
+  const picksIn = (b: string) => f.picks.filter((p) => p.branch === b);
+  const cls: Team[] = f.kind === 'rest' ? T : f.kind === 'add' ? [] : f.kind === 'branch' ? endTeams : [pickedCls];
   const pickBranch = f.kind === 'branch' ? f.br : MY_BRANCH;
   // 들어갈 수 있는 팀: 자리 있고 · 이미 듣는 팀 빼고 · 언어 순 (프로토타입 cgMatch)
   const mine = T.map((x) => x.branch + x.no);
-  const match = teamsOf(pickBranch)
-    .filter((x) => (x.seats ?? 0) > 0 && !mine.includes(x.branch + x.no))
-    .sort((p, q) => TEAM_LANGS.indexOf(p.lang) - TEAM_LANGS.indexOf(q.lang));
+  // 레벨: 내 레벨 팀만 (지점 이동은 맨 끝 레벨만 한 칸 넓혀요 — levelFits)
+  const myLevel = (f.kind === 'team' ? pickedCls : T[0]).level;
+  const matchOf = (b: string) =>
+    teamsOf(b)
+      .filter((x) => (x.seats ?? 0) > 0 && !mine.includes(x.branch + x.no) && levelFits(myLevel, x.level, f.kind === 'branch'))
+      .sort((p, q) => TEAM_LANGS.indexOf(p.lang) - TEAM_LANGS.indexOf(q.lang));
+  const match = matchOf(pickBranch);
 
   // ----- 연기: 돌아올 스터디 · 날짜 -----
   const myDays = daysOf(T);
@@ -214,7 +266,22 @@ function ChangeScreen() {
   const reasonList: readonly string[] = longRest ? REST_LONG_REASONS : REST_REASONS;
   const reasonPick = f.reason && reasonList.includes(f.reason) ? f.reason : null;
   const reasonText = f.kind === 'rest' && reasonPick ? `${reasonPick} · ${f.why.trim()}` : undefined;
+  // 새 팀 · 지점: 가장 빠른 날 = 2주 뒤부터 새 팀 수업이 있는 첫날 (금요일은 휴무 · 팀을 안 골랐으면 금요일만 빼요)
+  const newTeams = f.kind === 'branch' ? f.picks : f.to ? [f.to] : [];
+  const newDays = newTeams.length ? daysOf(newTeams) : new Set([0, 1, 2, 3, 4, 6].filter((d) => d !== CLOSED_WEEKDAY));
+  const earliest = firstOn(CHANGE_MIN, newDays);
+  const startOk = (d: Date) => d >= earliest && newDays.has(d.getDay());
   const sum = summarize();
+  // 언제부터: '가장 빠른 날' · '날짜 고르기' 중 하나만 (다른 쪽을 누르면 앞에 고른 건 풀려요)
+  const pickEarliest = () => set({ start: earliest.getTime(), calOpen: false, mon: monIdx(earliest) });
+  const openCalendar = () => {
+    if (f.calOpen) {
+      set({ calOpen: false, start: null });
+      return;
+    }
+    calJump.current = true;
+    set({ calOpen: true, start: null, mon: monIdx(earliest) });
+  };
 
   function summarize(): Summary {
     const st = f.start ? new Date(f.start) : null;
@@ -231,12 +298,31 @@ function ChangeScreen() {
       if (f.why.trim().length < REST_REASON_MIN) return { ok: false, txt: `사유를 ${REST_REASON_MIN}자 이상 적어 주세요` };
       return { ok: true, label: moves.length ? '연기 · 팀 변경' : '연기', st, en: restRt, txt };
     }
+    if (st && !startOk(st)) return { ok: false, txt: '새 팀 수업이 있는 날로 다시 골라 주세요' };
+    if (f.kind === 'branch') {
+      if (!mode) return { ok: false, txt: '어떻게 다닐지 골라 주세요' };
+      if (mode === 'both' && many && !f.from) return { ok: false, txt: '바꿀 지점을 골라 주세요' };
+      if (!f.br) return { ok: false, txt: '옮길 지점을 골라 주세요' };
+      if (!f.picks.length) return { ok: false, txt: '새 지점에서 들을 팀을 골라 주세요' };
+      if (!two && f.picks.length < pickMax) return { ok: false, txt: `팀을 ${pickMax}개 골라 주세요 · 지금 ${f.picks.length}개` };
+      if (!st) return { ok: false, txt: '언제부터 바뀔지 골라 주세요' };
+      if (endTeams.length && !f.gap) return { ok: false, txt: '그 전까지 들을지 쉴지 골라 주세요' };
+      const label = CHANGE_KIND.branch[1];
+      const labels = f.picks.map(teamLabel).join(' · ');
+      const endTxt = mode === 'move' ? '지금 수업' : endTeams.map(teamLabel).join(' · ');
+      const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(addDays(st, -1))}까지 ${endTxt}을 듣고`;
+      const keptTxt = keptTeams.length ? ` · ${keptTeams.map(teamLabel).join(' · ')}은 그대로` : '';
+      if (!endTeams.length) return { ok: true, label, st, txt: `${fmtDay(st)}부터 ${withJeom(f.br)} ${labels}도 같이 들어요 · 출석은 두 지점 합쳐 주 ${MULTI_BRANCH_WEEK_MAX}회까지` };
+      return { ok: true, label, st, txt: `${before}, ${fmtDay(st)}부터 ${withJeom(f.br)} ${labels}에서 들어요${keptTxt}` };
+    }
     if (!f.to) return { ok: false, txt: '옮길 팀을 골라 주세요' };
     if (!st) return { ok: false, txt: '언제부터 들을지 골라 주세요' };
     const label = CHANGE_KIND[f.kind][1];
+    if (f.kind !== 'add' && !f.gap) return { ok: false, txt: '옮기기 전까지 들을지 쉴지 골라 주세요' };
     if (f.kind === 'add') return { ok: true, label, st, txt: `${fmtDay(st)}부터 ${teamLabel(f.to)} 수업을 더해요 · 주 ${ms.wk}회 → ${ms.wk + ms.plan.perWeek}회` };
     const t = cls[0];
-    return { ok: true, label, st, txt: `${fmtDay(addDays(st, -1))}까지 ${teamLabel(t)}, ${fmtDay(st)}부터 ${f.to.branch === t.branch ? '' : f.to.branch + ' '}${teamLabel(f.to)}에서 들어요` };
+    const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(addDays(st, -1))}까지 ${teamLabel(t)}에서 듣고`;
+    return { ok: true, label, st, txt: `${before}, ${fmtDay(st)}부터 ${f.to.branch === t.branch ? '' : withJeom(f.to.branch) + ' '}${teamLabel(f.to)}에서 들어요` };
   }
 
   const back = () => {
@@ -317,15 +403,16 @@ function ChangeScreen() {
   const calendar = (
     <ChangeCalendar
       mon={f.mon}
-      minMon={monIdx(CHANGE_MIN)}
+      minMon={monIdx(earliest)}
       maxMon={monIdx(TODAY) + 6}
-      min={CHANGE_MIN}
+      min={earliest}
       max={ms.exp}
       start={f.start}
       end={null}
+      allow={(d) => newDays.has(d.getDay())}
       onMonth={(d) => set({ mon: f.mon + d })}
       onPick={(t) => set({ start: t })}
-      hint={`2주 뒤(${fmtDay(CHANGE_MIN)})부터 이용권 끝나는 날까지 골라요`}
+      hint={`새 팀 수업 요일(${dayNames(newDays)})에서 골라요 · ${fmtDay(earliest)}부터`}
     />
   );
 
@@ -335,6 +422,21 @@ function ChangeScreen() {
     if (!ms.plan.fixed && T.length < ms.plan.teams) cards.push(['add', 'plus', '#CDEBD0', `주 ${ms.plan.perWeek}회 더 · 횟수를 더 빨리 써요 · ${ms.plan.teams}팀까지`]);
     return (
       <AccountPage title="연기 · 팀 · 지점 변경" scrollRef={scroll} bodyStyle={styles.body}>
+        {/* 남은 변경 횟수 티켓 (연기 · 팀 변경 · 지점 이동이 같이 써요) */}
+        <View style={styles.tk} accessibilityLabel={`남은 변경 횟수 ${ms.pp === Infinity ? '무제한' : `${ms.pp}회`}`}>
+          <View style={styles.tkStub}>
+            <Icon name="ticket" size={22} />
+          </View>
+          <View style={styles.tkCut}>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <View key={i} style={styles.tkDash} />
+            ))}
+          </View>
+          <View style={styles.tkMain}>
+            <PText style={styles.tkK}>남은 변경 횟수</PText>
+            <PText style={styles.tkV}>{ms.pp === Infinity ? '무제한' : `${ms.pp}회`}</PText>
+          </View>
+        </View>
         <PText style={styles.q}>무엇을 바꿀까요?</PText>
         {cards.map(([k, ic, bg, sub]) => {
           const off = !ms.pp && k !== 'add';
@@ -349,7 +451,7 @@ function ChangeScreen() {
                   const st = firstOn(REST_MIN, myDays);
                   const rt = fitReturn(st, null, myDays);
                   setF({ ...fresh(), step: 'form', kind: k, start: st.getTime(), ret: rt.getTime(), mon: monIdx(st) });
-                } else setF({ ...fresh(), step: 'form', kind: k, cls: 0 });
+                } else setF({ ...fresh(), step: 'form', kind: k, cls: 0, br: k === 'branch' ? '' : MY_BRANCH });
                 toTop();
               }}
               accessibilityRole="button"
@@ -372,9 +474,11 @@ function ChangeScreen() {
             </Pressable>
           );
         })}
-        <PText style={styles.rule}>
-          {`연기는 최소 2주 · 금요일은 휴무예요 · 팀 · 지점의 새 일정은 2주 뒤(${fmtDay(CHANGE_MIN)})부터 시작해요 · 연기 · 팀 변경 · 지점 이동은 남은 변경 횟수(${changesLeftText(ms.pp)})를 같이 써요 · 신청하면 운영진이 확인한 뒤 바뀌어요${ms.plan.fixed ? ` · ${ms.name}은 늘 ${ms.plan.teams}팀이라 팀은 바꾸기만 돼요` : ` · 팀은 ${ms.plan.teams}팀까지 더할 수 있어요 · 지금 ${T.length}팀`}`}
-        </PText>
+        <View style={styles.rules}>
+          {['연기는 최소 2주 · 금요일은 휴무', '팀 · 지점 변경은 2주 전 신청', '운영진이 확인하면 바뀌어요'].map((line) => (
+            <PText key={line} style={styles.rule}>{`· ${line}`}</PText>
+          ))}
+        </View>
       </AccountPage>
     );
   }
@@ -384,7 +488,8 @@ function ChangeScreen() {
     const cn = cls.map((x) => x.no);
     const others = T.filter((x) => !cn.includes(x.no));
     const rows: [string, string][] = [
-      ...others.map((x): [string, string] => [teamLabel(x), '그대로']),
+      // 팀 · 지점 변경은 그대로인 스터디를 카드 안에서 보여요
+      ...(f.kind === 'add' ? others.map((x): [string, string] => [teamLabel(x), '그대로']) : []),
       ...(f.kind === 'add' ? [['주 참여', `주 ${ms.wk}회 → ${ms.wk + ms.plan.perWeek}회`] as [string, string]] : []),
       ...(uses > 0
         ? [
@@ -400,25 +505,24 @@ function ChangeScreen() {
         {f.kind === 'rest' && sum.en ? (
           <RestCard st={sum.st} rt={sum.en} teams={T} back={targets} />
         ) : (
-        <Box style={styles.baw}>
-          {f.kind === 'add' && f.to ? (
-            <>
-              <PText style={styles.baS}>{`${fmtDay(sum.st)}부터 더해요`}</PText>
-              <PText style={styles.baB}>{teamLabel(f.to)}</PText>
-              <PText style={styles.baS}>{f.to.branch}</PText>
-            </>
-          ) : f.to ? (
-            <>
-              <PText style={styles.baS}>{`${fmtDay(addDays(sum.st, -1))}까지`}</PText>
-              <PText style={styles.baB}>{teamLabel(cls[0])}</PText>
-              <PText style={styles.baS}>{cls[0].branch}</PText>
-              <Tag icon="back" label={CHANGE_KIND[f.kind][1]} />
-              <PText style={styles.baS}>{`${fmtDay(sum.st)}부터`}</PText>
-              <PText style={styles.baB}>{teamLabel(f.to)}</PText>
-              <PText style={styles.baS}>{f.to.branch}</PText>
-            </>
-          ) : null}
-        </Box>
+        f.kind === 'add' && f.to ? (
+          <Box style={styles.baw}>
+            <PText style={styles.baS}>{`${fmtDay(sum.st)}부터 더해요`}</PText>
+            <PText style={styles.baB}>{teamLabel(f.to)}</PText>
+            <PText style={styles.baS}>{f.to.branch}</PText>
+          </Box>
+        ) : (
+          <ChangeCard
+            kind={f.kind === 'branch' ? (mode === 'both' ? (many ? '지점 이동 · 한 지점 바꾸기' : '지점 이동 · 두 지점 같이') : '지점 이동') : CHANGE_KIND[f.kind][1]}
+            st={sum.st}
+            ending={cls}
+            kept={f.kind === 'branch' ? keptTeams : T.filter((x) => !cls.includes(x))}
+            next={f.kind === 'branch' ? f.picks : f.to ? [f.to] : []}
+            all={cls.length === T.length}
+            hold={f.gap === 'hold'}
+            weekMax={f.kind === 'branch' && mode === 'both' && two === 'teams' ? MULTI_BRANCH_WEEK_MAX : null}
+          />
+        )
         )}
         {rows.length > 0 && (
           <Box style={styles.rows}>
@@ -498,12 +602,6 @@ function ChangeScreen() {
               ))}
             </View>
           </Box>
-          <View style={styles.left}>
-            <PText style={styles.leftK}>연기 · 팀 변경 · 지점 이동 남은 변경 횟수</PText>
-            <View style={styles.pill}>
-              <PText style={styles.pillT}>{ms.pp === Infinity ? '무제한' : `${ms.pp}회`}</PText>
-            </View>
-          </View>
           <PText style={styles.note}>신청은 최소 2주부터 · 금요일은 휴무예요</PText>
 
           <Q n={1} text="언제부터 쉴까요?" />
@@ -636,20 +734,58 @@ function ChangeScreen() {
           />
         </>
       ) : (
+        k === 'branch' ? (
         <>
-          {k !== 'add' ? (
+          {/* 지금 듣는 팀 (지점별) — 무엇이 바뀌는지 보면서 고르게 */}
+          <PText style={styles.q}>지금 듣는 팀</PText>
+          <Box style={styles.nowBox}>
+            {nowBranches.map((b) => (
+              <View key={b} style={styles.nowRow}>
+                <PText style={styles.nowBr}>{withJeom(b)}</PText>
+                <PText style={styles.nowT}>{T.filter((x) => x.branch === b).map(teamLabel).join('\n')}</PText>
+              </View>
+            ))}
+          </Box>
+          {two ? (
             <>
-              <PText style={styles.q}>{`어떤 수업을 ${k === 'branch' ? '옮길까요' : '바꿀까요'}?`}</PText>
-              <View style={styles.chips}>
-                {T.map((x, i) => (
-                  <ChoiceChip key={x.no} label={teamLabel(x)} on={(f.cls === 'all' ? 0 : f.cls) === i} onPress={() => set({ cls: i, to: null })} />
-                ))}
+              <PText style={styles.q}>어떻게 다닐까요?</PText>
+              <View style={styles.teams} accessibilityRole="radiogroup">
+                <Opt title="아예 옮겨요" sub="앞으로 새 지점에서만 들어요" on={f.mode === 'move'} onPress={() => set({ mode: 'move', from: '', br: '', picks: [] })} />
+                <Opt
+                  title="두 지점 같이 다녀요"
+                  sub={
+                    many
+                      ? `${nowBranches.map(withJeom).join(' · ')} 중 한 곳을 바꿔요`
+                      : two === 'teams'
+                        ? '지금 수업은 그대로 · 2개 지점 병행해요'
+                        : '2개 지점 병행해요 · 지점마다 1팀씩'
+                  }
+                  on={f.mode === 'both'}
+                  onPress={() => set({ mode: 'both', from: '', br: '', picks: [] })}
+                />
               </View>
             </>
-          ) : null}
-          {k === 'branch' ? (
+          ) : (
+            <PText style={styles.note}>지점은 1곳만 · 지금 수업은 모두 새 지점으로 옮겨요</PText>
+          )}
+          {/* 두 지점을 다니는 회원: 바꿀 지점 고르기 */}
+          {mode === 'both' && many ? (
             <>
-              <PText style={styles.q}>어느 지점으로요?</PText>
+              <PText style={styles.q}>어느 지점을 바꿀까요?</PText>
+              <View style={styles.chips}>
+                {nowBranches.map((b) => (
+                  <ChoiceChip key={b} label={withJeom(b)} on={f.from === b} onPress={() => set({ from: b, picks: [] })} />
+                ))}
+              </View>
+              {f.from && endTeams.length ? (
+                <PText style={styles.note}>{`${endTeams.map(teamLabel).join(' · ')} 수업은 끝나요`}</PText>
+              ) : null}
+            </>
+          ) : null}
+          {/* 새 지점 고르기 (지금 다니는 지점은 목록에서 빼요) */}
+          {mode && (!many || mode !== 'both' || f.from) ? (
+            <>
+              <PText style={styles.q}>{mode === 'both' ? (many ? '어느 지점으로 바꿀까요?' : '어느 지점을 더 다닐까요?') : two ? '어느 지점으로 옮길까요?' : '어느 지점으로요?'}</PText>
               {/* 지점 고르기는 가입 단계와 같은 시트로 (검색 · 권역 탭 · 권역별 카드) */}
               <Pressable
                 onPress={() => {
@@ -657,73 +793,156 @@ function ChangeScreen() {
                   setBrOpen(true);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={`옮길 지점 ${withJeom(f.br)} · 바꾸기`}
+                accessibilityLabel={f.br ? `옮길 지점 ${withJeom(f.br)} · 바꾸기` : '옮길 지점 고르기'}
                 style={({ pressed }) => [styles.sel, pressed && styles.selPressed]}>
-                <PText style={styles.selT}>{withJeom(f.br)}</PText>
-                <PText style={styles.selGo}>바꾸기 ›</PText>
+                <PText style={[styles.selT, !f.br && styles.selPh]}>{f.br ? withJeom(f.br) : '지점을 골라 주세요'}</PText>
+                <PText style={styles.selGo}>{f.br ? '바꾸기 ›' : '고르기 ›'}</PText>
               </Pressable>
-              <BranchListSheet
-                open={brOpen}
-                onClose={() => setBrOpen(false)}
-                title="어느 지점으로 옮길까요?"
-                value={f.br}
-                raw
-                onPick={(b) => set({ br: b, to: null })}
-              />
+              <BranchListSheet open={brOpen} onClose={() => setBrOpen(false)} title="어느 지점으로 옮길까요?" value={f.br} hide={nowBranches} raw onPick={(b) => set({ br: b, picks: [] })} />
+            </>
+          ) : null}
+          {mode === 'both' && !many && two === 'oneEach' ? (
+            <>
+              <PText style={styles.q}>어떤 수업을 옮길까요?</PText>
+              <View style={styles.chips}>
+                {T.map((x, i) => (
+                  <ChoiceChip key={keyOf(x)} label={teamLabel(x)} on={(f.cls === 'all' ? 0 : f.cls) === i} onPress={() => set({ cls: i, picks: [] })} />
+                ))}
+              </View>
+              <PText style={styles.note}>{`지금 · ${branchName(pickedCls.branch)} · ${levelShort(pickedCls.level)} · 나머지 수업은 그대로`}</PText>
+            </>
+          ) : null}
+          {target && mode ? (
+            <>
+              {pickMax > 0 ? (
+                <>
+                  <PText style={styles.q}>어느 팀으로 갈까요?</PText>
+                  {brs.map((b) => {
+                    const max = perMax(b);
+                    const got = picksIn(b);
+                    const has = keptTeams.filter((x) => x.branch === b);
+                    const list = matchOf(b);
+                    return (
+                      <View key={b} style={styles.teams}>
+                        <PText style={styles.q2}>{`${branchName(b)} · ${!two ? `${T.length}팀 골라 주세요` : max === 1 ? '1팀 골라 주세요' : '들어갈 수 있는 팀'}`}</PText>
+                        {/* 그 지점에서 지금 듣는 팀이 있으면 이름으로 보여 줘요 (몇 팀인지 대신) */}
+                        {has.length ? <PText style={styles.note}>{`지금 듣는 팀 · ${has.map(teamLabel).join(' · ')}`}</PText> : null}
+                        {list.length ? (
+                          list.map((x) => {
+                            const on = f.picks.some((q) => keyOf(q) === keyOf(x));
+                            return (
+                              <Opt
+                                key={keyOf(x)}
+                                title={teamLabel(x)}
+                                sub={levelShort(x.level)}
+                                on={on}
+                                // 다 골랐으면 나머지 팀은 눌리지 않아요 (1팀만 고를 때는 바꿔 골라요)
+                                disabled={!on && max > 1 && got.length >= max}
+                                onPress={() =>
+                                  set({
+                                    picks: on ? f.picks.filter((q) => keyOf(q) !== keyOf(x)) : max === 1 ? [...f.picks.filter((q) => q.branch !== b), x] : [...f.picks, x],
+                                  })
+                                }
+                              />
+                            );
+                          })
+                        ) : (
+                          <PText style={styles.empty}>지금 들어갈 수 있는 팀이 없어요 · 운영진에게 문의해 주세요</PText>
+                        )}
+                      </View>
+                    );
+                  })}
+                </>
+              ) : null}
+              <PText style={styles.q}>언제부터 새 지점에서 들을까요?</PText>
+              <PText style={styles.note}>{`2주 전에 신청해야 해요 · 가장 빨리 ${fmtDay(earliest)}부터`}</PText>
+              <View style={styles.chips}>
+                <ChoiceChip label={`${fmtDay(earliest)} · 가장 빠른 날`} on={!f.calOpen && f.start === earliest.getTime()} onPress={pickEarliest} />
+                <ChoiceChip label="날짜 고르기" on={f.calOpen} onPress={openCalendar} />
+              </View>
+              {f.calOpen ? (
+                <View
+                  onLayout={(e) => {
+                    // 날짜 고르기를 눌렀을 때만 달력으로 내려가요 (달을 넘길 때는 그대로)
+                    if (!calJump.current) return;
+                    calJump.current = false;
+                    const y = e.nativeEvent.layout.y;
+                    setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, y - 60), animated: true }), 50);
+                  }}>
+                  {calendar}
+                </View>
+              ) : null}
+              {endTeams.length ? <GapPick gap={f.gap} start={f.start} onPick={(g) => set({ gap: g })} /> : null}
+            </>
+          ) : null}
+        </>
+        ) : (
+        <>
+          {k !== 'add' ? (
+            <>
+              <PText style={styles.q}>어떤 수업을 바꿀까요?</PText>
+              <View style={styles.chips}>
+                {T.map((x, i) => (
+                  <ChoiceChip key={x.no} label={teamLabel(x)} on={(f.cls === 'all' ? 0 : f.cls) === i} onPress={() => set({ cls: i, to: null })} />
+                ))}
+              </View>
+              <PText style={styles.note}>{`지금 · ${branchName(cls[0].branch)} · ${levelShort(cls[0].level)}`}</PText>
             </>
           ) : null}
           <PText style={styles.q}>{k === 'add' ? '어느 팀을 더할까요?' : '어느 팀으로 갈까요?'}</PText>
-          <PText style={styles.q2}>{`${withJeom(pickBranch)} · 들어갈 수 있는 팀`}</PText>
+          <PText style={styles.q2}>{`${branchName(pickBranch)} · 들어갈 수 있는 팀`}</PText>
           <View style={styles.teams} accessibilityRole="radiogroup">
             {match.length ? (
               match.map((x) => {
                 const on = !!f.to && f.to.branch === x.branch && f.to.no === x.no;
-                return (
-                  <Pressable
-                    key={x.no}
-                    onPress={() => {
-                      sfx('tap');
-                      haptic('select');
-                      set({ to: x });
-                    }}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: on }}>
-                    <Lift radius={16} dx={on ? 2 : 0} dy={on ? 2 : 0} color={Colors.purple}>
-                      <View style={[styles.team, on && styles.teamOn]}>
-                        <View style={[styles.rd, on && styles.rdOn]} />
-                        <PText style={styles.teamB}>{teamLabel(x)}</PText>
-                      </View>
-                    </Lift>
-                  </Pressable>
-                );
+                return <Opt key={x.no} title={teamLabel(x)} sub={levelShort(x.level)} on={on} onPress={() => set({ to: x })} />;
               })
             ) : (
               <PText style={styles.empty}>지금 들어갈 수 있는 팀이 없어요 · 운영진에게 문의해 주세요</PText>
             )}
           </View>
-          <PText style={styles.q}>언제부터요?</PText>
+          <PText style={styles.q}>{k === 'add' ? '언제부터요?' : '언제부터 새 팀에서 들을까요?'}</PText>
+          {k !== 'add' ? <PText style={styles.note}>{`2주 전에 신청해야 해요 · 가장 빨리 ${fmtDay(earliest)}부터`}</PText> : null}
           <View style={styles.chips}>
-            <ChoiceChip label={`${fmtDay(CHANGE_MIN)} · 가장 빠른 날`} on={f.start === CHANGE_MIN.getTime()} onPress={() => set({ start: CHANGE_MIN.getTime(), calOpen: false })} />
-            <ChoiceChip label="날짜 고르기" on={f.calOpen} onPress={() => set({ calOpen: !f.calOpen })} />
+            <ChoiceChip label={`${fmtDay(earliest)} · 가장 빠른 날`} on={!f.calOpen && f.start === earliest.getTime()} onPress={pickEarliest} />
+            <ChoiceChip label="날짜 고르기" on={f.calOpen} onPress={openCalendar} />
           </View>
-          {f.calOpen ? calendar : null}
+          {f.calOpen ? (
+            <View
+              onLayout={(e) => {
+                // 날짜 고르기를 눌렀을 때만 달력으로 내려가요 (달을 넘길 때는 그대로)
+                if (!calJump.current) return;
+                calJump.current = false;
+                const y = e.nativeEvent.layout.y;
+                setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, y - 60), animated: true }), 50);
+              }}>
+              {calendar}
+            </View>
+          ) : null}
+          {k !== 'add' ? <GapPick gap={f.gap} start={f.start} onPick={(g) => set({ gap: g })} /> : null}
         </>
+        )
       )}
     </AccountPage>
   );
 }
 
-/** 쉬어요 · 팀 변경 표시 (프로토타입 .cg-ba .tag — 아이콘을 -90° 돌려 아래 화살표처럼) */
-function Tag({ icon, label }: { icon: IconName; label: string }) {
+/** 옮기기 전까지: 지금 팀에서 듣다가 · 쉬다가(홀딩) */
+function GapPick({ gap, start, onPick }: { gap: Gap | null; start: number | null; onPick: (g: Gap) => void }) {
+  const st = start ? new Date(start) : null;
   return (
-    <View style={styles.tag}>
-      <View style={styles.tagIc}>
-        <Icon name={icon} size={16} color={Colors.purple} />
+    <>
+      <PText style={styles.q}>옮기기 전까지는요?</PText>
+      <View style={styles.teams} accessibilityRole="radiogroup">
+        <Opt title="지금 팀에서 듣다가 옮겨요" sub={st ? `${fmtDay(addDays(st, -1))}까지 지금 팀에서 들어요` : '옮기는 날 전날까지 들어요'} on={gap === 'keep'} onPress={() => onPick('keep')} />
+        <Opt title="쉬다가 옮겨요 (홀딩)" sub={st ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬어요` : '내일부터 옮기는 날 전날까지 쉬어요'} on={gap === 'hold'} onPress={() => onPick('hold')} />
       </View>
-      <PText style={styles.tagText}>{label}</PText>
-    </View>
+    </>
   );
 }
+
+/** 지점 이름 · 내 지점(수업 듣는 지점)이면 '(내 지점)' */
+const branchName = (b: string) => `${withJeom(b)}${MY_BRANCHES.includes(b) ? '(내 지점)' : ''}`;
 
 /** 스터디 한 줄 — 언어 색 이름표 · 요일 시간 · 오른쪽 레벨 (또는 이름표 글) */
 function StudyLine({ t, big, tag }: { t: Team; big?: boolean; tag?: string }) {
@@ -801,6 +1020,45 @@ function RestCard({ st, rt, teams, back }: { st: Date; rt: Date; teams: Team[]; 
   );
 }
 
+/**
+ * 팀 변경 · 지점 이동 요약 카드 (신청 확인) — 꼭 필요한 것만:
+ * 위 보라 띠 = 언제부터 · 어느 지점, 가운데 = 새 스터디, 아래 회색 줄 = 지금 스터디는 어떻게 되는지 한두 줄.
+ */
+function ChangeCard({ kind, sub, st, ending, kept, next, all, hold, weekMax }: { kind: string; sub?: string; st: Date; ending: Team[]; kept: Team[]; next: Team[]; all: boolean; hold: boolean; weekMax: number | null }) {
+  const last = addDays(st, -1);
+  const where = sub ?? (next[0] ? `${withJeom(next[0].branch)}에서 들어요` : '');
+  const endWho = all ? '지금 스터디' : ending.map(teamLabel).join(' · ');
+  const notes = [
+    ending.length ? (hold ? `${endWho}는 ${fmtDay(REST_MIN)}~${fmtDay(last)} 쉬고 끝나요` : `${endWho}는 ${fmtDay(last)}까지 듣고 끝나요`) : null,
+    kept.length ? `${kept.map(teamLabel).join(' · ')}는 그대로예요` : null,
+    weekMax ? `출석은 두 지점 합쳐 주 ${weekMax}회까지예요` : null,
+  ].filter((x): x is string => !!x);
+  return (
+    <Box style={styles.rc}>
+      <View style={styles.rcTop}>
+        <PText style={styles.rcK}>{kind}</PText>
+        <PText style={styles.rcBig}>{`${fmtDay(st)}부터`}</PText>
+        {where ? <PText style={styles.cgSub}>{where}</PText> : null}
+      </View>
+      {next.length ? (
+        <View style={styles.rcSec}>
+          <PText style={styles.rcK2}>새 스터디</PText>
+          {next.map((t) => (
+            <StudyLine key={keyOf(t)} t={t} />
+          ))}
+        </View>
+      ) : null}
+      {notes.length ? (
+        <View style={styles.cgNotes}>
+          {notes.map((n) => (
+            <PText key={n} style={styles.cgNote}>{`· ${n}`}</PText>
+          ))}
+        </View>
+      ) : null}
+    </Box>
+  );
+}
+
 /** 번호 붙은 질문 (연기 ① ② ③) */
 function Q({ n, text, req }: { n: number; text: string; req?: boolean }) {
   return (
@@ -864,9 +1122,12 @@ function Foot({ note, label, ok, onPress }: { note: string; label: string; ok: b
   const insets = useSafeAreaInsets();
   const kb = useKeyboardShown();
   return (
-    <View style={[styles.foot, { paddingBottom: 18 + (kb ? 0 : insets.bottom) }]}>
+    <View>
+      {/* 안내 한 줄은 아래 바 선 위에 (바 안에는 버튼만) */}
       {note ? <PText style={styles.footNote}>{note}</PText> : null}
-      <Button label={label} wide disabled={!ok} onPress={onPress} />
+      <View style={[styles.foot, { paddingBottom: 18 + (kb ? 0 : insets.bottom) }]}>
+        <Button label={label} wide disabled={!ok} onPress={onPress} />
+      </View>
     </View>
   );
 }
@@ -886,6 +1147,14 @@ const styles = StyleSheet.create({
   kindB: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22 },
   kindS: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   kindGo: { fontFamily: Font.body900, fontSize: 16, color: Colors.inkSub },
+  rules: { gap: 2 },
+  warn: { color: Colors.rosePink },
+  nowBox: { paddingVertical: 10, paddingHorizontal: 14, gap: 8 },
+  nowRow: { flexDirection: 'row', gap: 12 },
+  nowBr: { width: 56, fontFamily: Font.body800, fontSize: 12.5, lineHeight: 20, color: Colors.inkSub },
+  nowT: { flex: 1, fontFamily: Font.body800, fontSize: 13.5, lineHeight: 20, color: Colors.ink },
+  selPh: { color: Colors.inkSub },
+  mineT: { fontFamily: Font.body800, fontSize: 12, color: Colors.inkSub },
   rule: { paddingHorizontal: 2, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 20.6, color: Colors.inkSub },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center' },
   reasonRow: { marginHorizontal: -16, flexGrow: 0 },
@@ -896,8 +1165,13 @@ const styles = StyleSheet.create({
   mineK: { fontFamily: Font.body900, fontSize: 16, lineHeight: 22 },
   mineN: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   mineList: { gap: 2, paddingTop: 4, paddingBottom: 12, paddingHorizontal: 16 },
-  left: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  leftK: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
+  tk: { marginTop: 14, flexDirection: 'row', alignItems: 'stretch', borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, overflow: 'hidden', backgroundColor: Colors.white },
+  tkStub: { width: 50, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.yellow },
+  tkCut: { width: 2, justifyContent: 'space-evenly', backgroundColor: Colors.yellow },
+  tkDash: { width: 2, height: 5, backgroundColor: Colors.ink },
+  tkMain: { flex: 1, paddingVertical: 9, paddingHorizontal: 14 },
+  tkK: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
+  tkV: { fontFamily: Font.body900, fontSize: 18, lineHeight: 25, color: Colors.ink },
   pill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 10, backgroundColor: Colors.lavender },
   pillT: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
   sl: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
@@ -906,6 +1180,9 @@ const styles = StyleSheet.create({
   slTag: { flexShrink: 0, paddingVertical: 2, paddingHorizontal: 8, borderRadius: 9, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.yellow },
   slTagT: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.ink },
   backHead: { marginTop: 8, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
+  cgSub: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 19, color: Colors.purple },
+  cgNotes: { gap: 2, marginHorizontal: 16, marginBottom: 14, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
+  cgNote: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   rc: { padding: 0, overflow: 'hidden' },
   rcTop: { gap: 4, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: Colors.lavender, borderBottomWidth: 2, borderColor: Colors.ink },
   rcK: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.purple },
@@ -969,7 +1246,7 @@ const styles = StyleSheet.create({
   rowV: { flexShrink: 1, textAlign: 'right', fontFamily: Font.body900, fontSize: 13.5, lineHeight: 20 },
   msg: { minHeight: 88, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: Colors.white, fontFamily: Font.body600, fontSize: 14, color: Colors.ink, textAlignVertical: 'top' },
   foot: { gap: 8, paddingTop: 12, paddingHorizontal: 16, backgroundColor: Colors.cream, borderTopWidth: 2, borderColor: Colors.ink },
-  footNote: { paddingHorizontal: 2, fontFamily: Font.body700, fontSize: 13, lineHeight: 19 },
+  footNote: { paddingHorizontal: 18, paddingVertical: 8, backgroundColor: Colors.cream, fontFamily: Font.body700, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   ds: { fontFamily: Font.body700, fontSize: 15, lineHeight: 23, color: Colors.inkSub },
   ds2: { marginTop: 10 },
 });

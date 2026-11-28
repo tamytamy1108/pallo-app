@@ -17,8 +17,8 @@ import { EASE } from '@/lib/motion';
 const TOP_ZONE = 40;
 /** 이만큼 넘게 움직여야 방향으로 쳐요 (손가락 떨림 무시) */
 const MOVE = 4;
-/** 스크롤이 멈추고 이만큼 지나면 다시 나와요 (ms) */
-const SHOW_AFTER = 700;
+/** 스크롤이 멈추고 이만큼 지나면 다시 나와요 (ms) — 스크롤 알림 간격(64ms)보다 조금 길게: 멈추자마자 나와요 */
+const SHOW_AFTER = 150;
 /** 맨 아래에서 이만큼 안이면 숨은 채로 (버튼 높이 60 + 여유) */
 const END_ZONE = 90;
 /** 숨을 때 아래로 내려가는 거리 */

@@ -17,8 +17,10 @@ import { fetchMe } from './me';
 import type { NotificationCategory } from './notifications';
 import { fetchMyLinkRequests } from './branch-link';
 import { fetchBranchSummary } from './branch-summary';
+import { fetchChallengeCategories, fetchChallengeLounge } from './challenges';
 import { fetchBranchToday } from './branch-today';
 import { fetchMyExpressions, fetchMyMeets, fetchSavedChallenges, type MyMeetBox } from './my-activity';
+import { fetchMemberProfile } from './member-profile';
 import { fetchMyPage } from './my-page';
 import { fetchBranchRanking, fetchMemberRanking, type RankingPeriod } from './ranking';
 import { fetchProSessions } from './pro-sessions';
@@ -41,6 +43,8 @@ export const queryKeys = {
   badgesAll: ['me', 'badges'] as const,
   myBadges: ['me', 'badges', 'list'] as const,
   unseenBadges: ['me', 'badges', 'unseen'] as const,
+  /** 남의 프로필 시트 (회원 code) */
+  memberProfile: (code: string) => ['members', code, 'profile'] as const,
   /** PALLO 랭킹 — 포인트가 바뀌면 ranking 으로 둘 다 다시 받아요 */
   ranking: ['ranking'] as const,
   memberRanking: (period: RankingPeriod) => ['ranking', 'members', period] as const,
@@ -91,6 +95,12 @@ export const queryKeys = {
   /** 추천 탭 — 커뮤니티 글 캐시 아래에 둬요 (하트 · 스크랩을 누르면 두 탭 캐시를 함께 바꾸게) */
   communityRecommended: (pick: string, branchCodes: string[]) => ['community', 'posts', 'recommended', pick, branchCodes.join(',')] as const,
   communityComments: (postId: string) => ['community', 'comments', postId] as const,
+  /** 라운지 챌린지 탭 — 참여 · 인증 뒤 challengesAll 로 모든 분류를 다시 받아요 */
+  challengesAll: ['challenges'] as const,
+  /** 라운지 목록 전체(모든 분류) — 찜 하트를 캐시에서 바로 고칠 때 */
+  challengeLoungeAll: ['challenges', 'lounge'] as const,
+  challengeLounge: (category: string | null) => ['challenges', 'lounge', category ?? 'all'] as const,
+  challengeCategories: ['challenges', 'categories'] as const,
   situationMaps: ['library', 'maps'] as const,
   bookShelf: ['library', 'books'] as const,
   lesson: (id: string) => ['lessons', id] as const,
@@ -125,10 +135,18 @@ export const memberRankingQuery = (period: RankingPeriod) =>
 /** GET /ranking/branches — 지점 대항전 (api/ranking.ts) */
 export const branchRankingQuery = (period: RankingPeriod) =>
   queryOptions({ queryKey: queryKeys.branchRanking(period), queryFn: ({ signal }) => fetchBranchRanking(period, { signal }) });
+/** GET /members/{code}/profile — 남의 프로필 시트 한 장 (api/member-profile.ts) */
+export const memberProfileQuery = (code: string) => queryOptions({ queryKey: queryKeys.memberProfile(code), queryFn: ({ signal }) => fetchMemberProfile(code, { signal }) });
 /** 34 GET /me/avatar — 내 캐릭터 (api/use-my-avatar) */
 export const myAvatarQuery = () => queryOptions({ queryKey: queryKeys.myAvatar, queryFn: ({ signal }) => fetchMyAvatar({ signal }) });
 /** 마이 › 내 모임 · 찜한 모임 (api/my-activity) */
 export const myMeetsQuery = (box: MyMeetBox) => queryOptions({ queryKey: queryKeys.myMeets(box), queryFn: ({ signal }) => fetchMyMeets(box, { signal }) });
+/** GET /challenges/lounge — 라운지 챌린지 탭 (api/challenges.ts) */
+export const challengeLoungeQuery = (category: string | null) =>
+  queryOptions({ queryKey: queryKeys.challengeLounge(category), queryFn: ({ signal }) => fetchChallengeLounge(category, { signal }) });
+/** GET /challenges/categories — 챌린지 분류 칩 (자주 안 바뀌어요) */
+export const challengeCategoriesQuery = () =>
+  queryOptions({ queryKey: queryKeys.challengeCategories, queryFn: ({ signal }) => fetchChallengeCategories({ signal }), staleTime: CONTENT_STALE_MS });
 /** 마이 › 찜한 챌린지 */
 export const savedChallengesQuery = () => queryOptions({ queryKey: queryKeys.savedChallenges, queryFn: ({ signal }) => fetchSavedChallenges({ signal }) });
 /** 마이 › 내 표현함 (첫 쪽 100개 — 찾기 · 나온 곳 거르기를 서버로 옮기면 쪽 넘기기로 바꿔요) */

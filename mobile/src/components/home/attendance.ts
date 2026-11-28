@@ -153,7 +153,8 @@ export function todayTeam(a: Attend, m: number): OpenTeam | null {
 /** 위 칸: 오늘 스터디 이름 · 시작까지(진행 중) 남은 시간 */
 export function countOf(a: Attend, d: Date) {
   const team = todayTeam(a, minuteOf(d));
-  if (!team) return { name: '스터디 쉬는 날', label: '시작까지', value: '--:--' };
+  // 쉬는 날은 시간 대신 빈 값 — 칸(Field)이 달 아이콘 · '쉬어요'를 그려요 (--:-- 는 고장 난 시계처럼 보여요)
+  if (!team) return { name: '스터디 쉬는 날', label: '시작까지', value: '' };
   const name = teamName(team);
   const diff = SLOTS[team.slot].start * 60 - secondOf(d);
   if (diff <= 0) {

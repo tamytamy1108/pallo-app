@@ -225,8 +225,8 @@ tags:
     description: 화면 app/me/profile/[id].tsx · components/my/profile-sheet.tsx ·
       components/my/my-sheets.tsx (FollowSheet) — 멤버 프로필 · 팔로우 (A6)
   - name: 랭킹 · 배지
-    description: 화면 app/me/ranking.tsx · components/my/my-blocks.tsx (RankSummary ·
-      BadgeGrid) · BadgeSheet
+    description: 화면 app/me/ranking.tsx · app/me/badges.tsx · components/my/my-blocks.tsx (RankSummary ·
+      BadgeGrid) · components/my/badge-detail-sheet.tsx · badge-celebrate.tsx
   - name: 캐릭터 · 상점
     description: 화면 app/me/customize.tsx · components/character/** · state/avatar.ts
       · state/ledger.ts — 꾸미기 · 스파크 상점 · 스파크/포인트 장부 (A3)
@@ -7124,19 +7124,29 @@ paths:
       operationId: listMyBadges
       summary: 배지 모두 보기 (앱에 보이는 배지 전부 + 받은 것)
       description: >
-        화면: 마이 배지 칸 [모두 보기] → BadgeSheet. 받은 것 · 못 받은 것 한 목록, 순서는 콘솔(app-hub)에서 정한 순서.
+        화면: 배지 모두 보기 app/me/badges.tsx (마이 배지 '모두 보기 ›' · '받은 배지' 숫자 칸 · 배지 푸시 · 축하 시트 [배지 보기]) —
+        받은 개수 · 최근 받은 배지(earnedAt 가장 늦은 것) · 거의 다 왔어요(못 받은 배지 중 progress/threshold 큰 순 2개) · 전체/받은/못 받은 칸.
+        칸을 누르면 배지 상세 시트(components/my/badge-detail-sheet.tsx): 받는 방법 한 줄 · 진행 막대 'progress / threshold' · 하러 가기 버튼.
+        받은 것 · 못 받은 것 한 목록, 순서는 콘솔(app-hub)에서 정한 순서.
         마이 탭 배지 칸(GET /me/mypage badges)은 이 목록의 앞 4칸이에요.
 
         규칙(서버가 지급): 지금은 번개 참여 확정 · 동아리 정식 멤버 · 한 글 좋아요 수로 받아요. 받으면 인앱 알림 BADGE_EARNED(referenceId = 배지 코드) + 푸시(type BADGE).
         그 밖의 배지(연속 학습 · 따라 말하기 · 주간 TOP 3 등)는 그 도메인이 생기면 붙여요.
-      x-status: existing
-      x-inventory: "#33"
+      x-status: change
+      x-inventory: "#33 · A36"
       x-backend: MobileBadgeV2Controller GET /app/api/v2/me/badges → List<MyBadgeV2Response{code, name, description, imageUrl, earned, earnedAt}>
+      x-gap: >
+        (A36) 항목마다 conditionType(콘솔 AppBadgeConditionType 그대로) · threshold(콘솔 기준 숫자) · progress(지금 내 값, 셀 수 없으면 null)를 더해 주세요.
+        progress 는 지급 판정과 같은 값 — 번개 · 동아리: app_badge_progress 그 유형 줄 수 · 한 글 좋아요: 내 글 중 가장 많은 좋아요 수 ·
+        주간 랭킹: 지난주 확정 내 순위(낮을수록 좋음) · 연속 학습 · 따라 말하기: 학습 기록 도메인 전까지 null. 받은 배지도 progress 를 보내요.
+        셋 다 없어도 앱은 설명 글만 보여요 (docs/frontend/api-additions.md '배지 — 받는 방법 · 진행').
       x-screens:
         - app/(tabs)/my.tsx
+        - app/me/badges.tsx
+        - components/my/badge-detail-sheet.tsx
         - components/my/my-sheets.tsx
         - components/my/my-blocks.tsx
-      x-app-code: api/badges.ts fetchMyBadges · api/use-badges.ts
+      x-app-code: api/badges.ts fetchMyBadges · api/use-badges.ts (useMyBadges · useMyBadge · badgeProgress) · data/badge-rules.ts · data/my.ts MY_BADGES
       responses:
         "200":
           description: OK
@@ -22297,6 +22307,35 @@ components:
             - "null"
           format: date-time
           description: 받은 시각 — 못 받았으면 null
+        conditionType:
+          description: (A36 · 서버에 더할 칸 — GET /me/badges 에서만) 받는 조건 유형, 콘솔 AppBadgeConditionType 그대로. 없으면 앱은 설명 글만 보여요
+          oneOf:
+            - $ref: "#/components/schemas/BadgeConditionType"
+            - type: "null"
+        threshold:
+          type:
+            - integer
+            - "null"
+          description: (A36) 콘솔 기준 숫자 — 예 번개 5번이면 5, 주간 TOP 3 이면 3
+          example: 5
+        progress:
+          type:
+            - integer
+            - "null"
+          description: >
+            (A36) 지금 내 값 (지급 판정과 같은 값, 받은 배지도 보내요). WEEKLY_RANK_TOP 은 지난주 확정 내 순위(낮을수록 좋아서 앱은 막대 대신 '지난주 n위').
+            서버가 아직 셀 수 없는 유형(STUDY_STREAK_DAYS · SHADOWING_SENTENCE_COUNT)은 null.
+          example: 2
+    BadgeConditionType:
+      type: string
+      description: 배지 달성 조건 유형 (백엔드 AppBadgeConditionType · 앱 data/my.ts BadgeConditionType · 문구 data/badge-rules.ts)
+      enum:
+        - STUDY_STREAK_DAYS
+        - HANGOUT_JOIN_COUNT
+        - CLUB_JOIN_COUNT
+        - SHADOWING_SENTENCE_COUNT
+        - WEEKLY_RANK_TOP
+        - POST_LIKES_ON_ONE_POST
     AvatarCategory:
       type: string
       description: 헤어 · 눈 · 장갑 · 신발 · 모자 · 얼굴 · 옷 · 손 · 액세서리 · 배경 효과 (data/my.ts AvCat)
