@@ -107,7 +107,7 @@ export default function MyScreen() {
     if (!toStudy || studyY.current == null) return;
     setToStudy(false);
     const y = studyY.current;
-    requestAnimationFrame(() => scroll.current?.scrollTo({ y: Math.max(0, y - 12), animated: true }));
+    setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, y - 12), animated: true }), 120);
   }, [toStudy]);
 
   // 카드 폭 = 놓인 자리 폭 - 그림자 4 (재기 전에는 화면 - 양쪽 16 - 그림자 4).
@@ -188,20 +188,23 @@ export default function MyScreen() {
             </View>
           </Appear>
         ) : my?.study ? (
-          <Appear kind="rise" delay={100}>
-            <View
-              onLayout={(e) => {
-                studyY.current = e.nativeEvent.layout.y;
-                if (toStudy) {
-                  setToStudy(false);
-                  scroll.current?.scrollTo({ y: Math.max(0, e.nativeEvent.layout.y - 12), animated: true });
-                }
-              }}>
+          // 자리 재기는 Appear 바깥에서 — 안에서 재면 Appear 안 기준(≈0)이라 맨 위로 가 버려요
+          <View
+            onLayout={(e) => {
+              studyY.current = e.nativeEvent.layout.y;
+              if (toStudy) {
+                setToStudy(false);
+                const y = e.nativeEvent.layout.y;
+                // 탭 스크롤 기억(이전 자리 되돌리기)보다 늦게 내려가요
+                setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, y - 12), animated: true }), 120);
+              }
+            }}>
+            <Appear kind="rise" delay={100}>
               {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
               <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
               <MyStudyCard study={my.study} title={false} />
-            </View>
-          </Appear>
+            </Appear>
+          </View>
         ) : null}
         {member && (
           <Appear kind="rise" delay={120}>
