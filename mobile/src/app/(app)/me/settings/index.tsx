@@ -74,7 +74,8 @@ export default function SettingsScreen() {
         />
       </Sec>
       <Sec title="소리">
-        <ToggleRow title="효과음" sub="정답 · 오답 소리" value={sound} onPress={() => setSfxOn(!sound)} />
+        {/* 끄면 앱 안 효과음이 모두 꺼져요 — 버튼 누를 때 '톡' · 정답 · 오답 · 축하 (@/lib/feedback). 문장 읽어 주기는 따로 (레슨 · 듣기 버튼) */}
+        <ToggleRow title="효과음" sub="버튼 누를 때 소리 · 정답 · 오답 소리" value={sound} onPress={() => setSfxOn(!sound)} silent />
       </Sec>
       <Sec title="안전">
         {/* 예전 저장에는 이 값이 없어요 → 없으면 켜진 걸로 (state/quest-share) */}
@@ -162,12 +163,14 @@ function GoRow({ title, value, onPress }: { title: string; value?: string; onPre
   );
 }
 
-function ToggleRow({ title, sub, value, onPress }: { title: string; sub?: string; value: boolean; onPress: () => void }) {
+/** silent: 효과음 줄 — 누른 뒤의 켜짐 · 꺼짐에 맞춰 소리를 내요 (켜면 '띵', 끄면 조용히) */
+function ToggleRow({ title, sub, value, onPress, silent }: { title: string; sub?: string; value: boolean; onPress: () => void; silent?: boolean }) {
   return (
     <Pressable
       onPress={() => {
-        sfx('toggle');
+        if (!silent) sfx('toggle');
         onPress();
+        if (silent && !value) sfx('toggle');
       }}
       accessibilityRole="switch"
       accessibilityState={{ checked: value }}
