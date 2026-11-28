@@ -64,10 +64,10 @@ export function SoundButton({ off, onPress }: { off: boolean; onPress: () => voi
 
 /** 진행 막대 (노랑 · 스피킹 퀴즈 위 줄에서도 써요) */
 /**
- * 진행 막대가 늘어날 때 스프링: 살짝만 튕기고 멈춰요 (감쇠비 0.8).
- * Reanimated 4 기본 스프링은 stiffness 900 · mass 4 라, damping 만 18 로 주면 감쇠비 0.15 로 크게 출렁였어요.
+ * 진행 막대가 늘어날 때 스프링: 한 번 또잉 튕기고 멈춰요 (감쇠비 0.5 · 늘어난 만큼의 16% 정도 넘쳤다 돌아와요).
+ * Reanimated 4 기본 스프링은 stiffness 900 · mass 4 라, damping 만 18 로 주면 감쇠비 0.15 로 너무 출렁였고 0.8 은 너무 밋밋했어요.
  */
-const BAR_SPRING = { stiffness: 900, mass: 4, damping: 96 } as const;
+const BAR_SPRING = { stiffness: 900, mass: 4, damping: 60 } as const;
 
 export function ProgressBar({ value }: { value: number }) {
   const fill = useAnimatedStyle(() => ({ width: withSpring(`${Math.max(0, Math.min(1, value)) * 100}%`, BAR_SPRING) }));
