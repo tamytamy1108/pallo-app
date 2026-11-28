@@ -25,8 +25,8 @@ colors:
   match-ok: "#DDF3E2"
   match-ok-line: "#2E9E5B"
   match-ok-ink: "#1D6B3B"
-  match-bad: "#FBD5DC"
-  match-bad-line: "#D83A56"
+  match-bad: "#FBE1E8"
+  match-bad-line: "#C2416B"
   match-bad-ink: "#A3243C"
 typography:
   display:

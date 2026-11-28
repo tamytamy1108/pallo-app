@@ -63,16 +63,10 @@ export function WordCard({ word, state = 'pool', focus = false, shake = 0, wave,
     <Animated.View style={move}>
       <Animated.View style={[styles.ring, ring]} pointerEvents="none" />
       <Animated.View style={[styles.card, linked && styles.linked, (said || hint) && styles.lit, hint && still && styles.hintStill, (linked || pressed) && styles.down, shake > 0 && styles.wrong]}>
-        <PText style={StyleSheet.flatten([styles.text, focus && styles.focus])} color={shake > 0 ? '#A3243C' : Colors.ink}>
+        <PText style={StyleSheet.flatten([styles.text, focus && styles.focus])} color={shake > 0 ? Colors.matchBadInk : Colors.ink}>
           {word}
         </PText>
-        {shake > 0 && (
-          <View style={styles.badge}>
-            <Svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke={Colors.white} strokeWidth={3.6} strokeLinecap="round">
-              <Path d="M7 7l10 10M17 7 7 17" />
-            </Svg>
-          </View>
-        )}
+        {shake > 0 && <WrongBadge />}
       </Animated.View>
     </Animated.View>
   );
@@ -82,6 +76,17 @@ export function WordCard({ word, state = 'pool', focus = false, shake = 0, wave,
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={word} hitSlop={4}>
       {({ pressed }) => body(pressed)}
     </Pressable>
+  );
+}
+
+/** 틀린 카드 오른쪽 위 × (단어 카드 · 짝 맞추기 카드가 같이 써요) */
+export function WrongBadge() {
+  return (
+    <View style={styles.badge} pointerEvents="none">
+      <Svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke={Colors.white} strokeWidth={3.6} strokeLinecap="round">
+        <Path d="M7 7l10 10M17 7 7 17" />
+      </Svg>
+    </View>
   );
 }
 
@@ -103,7 +108,7 @@ const styles = StyleSheet.create({
   hintStill: { borderWidth: 3, borderBottomWidth: 5 },
   ring: { position: 'absolute', top: -6, left: -6, right: -6, bottom: -3, borderRadius: 18, backgroundColor: 'rgba(255, 226, 0, 0.45)' },
   // 틀렸을 때: 분홍 바탕 · 점선 테두리 · 그림자 없이 눌린 모양 · 오른쪽 위 × (프로토타입 #lesson .sh-w.shake)
-  wrong: { backgroundColor: '#FBE1E8', borderStyle: 'dashed', borderColor: '#C2416B', borderBottomWidth: 2, marginTop: 3 },
+  wrong: { backgroundColor: Colors.matchBad, borderStyle: 'dashed', borderColor: Colors.matchBadLine, borderBottomWidth: 2, marginTop: 3 },
   badge: {
     position: 'absolute',
     top: -9,
@@ -113,7 +118,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 2,
     borderColor: Colors.white,
-    backgroundColor: '#C2416B',
+    backgroundColor: Colors.matchBadLine,
     alignItems: 'center',
     justifyContent: 'center',
   },

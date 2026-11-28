@@ -1,5 +1,5 @@
 import { router, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -43,25 +43,41 @@ function PanelHead({ title, about }: { title: string; about: string }) {
 }
 
 /** 커리큘럼: 고른 레벨의 과 목록 (처음부터 전부 · 접기 없음) */
-export function CurrPanel({ book }: { book: Book }) {
+/**
+ * 교재 과 목록. focusNo 를 주면 그 과 줄이 놓인 자리(판 안 y)를 onFocusY 로 한 번 알려요 — 스터디 맵 '교재 보기'가 그 과까지 내려가요.
+ */
+export function CurrPanel({ book, focusNo, onFocusY }: { book: Book; focusNo?: number; onFocusY?: (y: number) => void }) {
   const L = book.study;
   // 비회원은 교재마다 첫 과만 (state/access)
   const allOpen = useMe((m) => canUse(m, 'allChapters'));
+  const [listY, setListY] = useState<number | null>(null);
+  const [rowY, setRowY] = useState<number | null>(null);
+  const focusCb = useRef(onFocusY);
+  useEffect(() => {
+    focusCb.current = onFocusY;
+  });
+  // 줄 자리를 다 재면 한 번 알려요
+  useEffect(() => {
+    if (focusNo == null || listY == null || rowY == null) return;
+    focusCb.current?.(listY + rowY);
+  }, [focusNo, listY, rowY]);
   return (
     <PanelCard>
       <PanelHead title={`${book.lab ?? book.l} · ${book.jp ? book.n : book.s}`} about={L ? L.about : '예습 · 복습 커밍순'} />
       {book.mine && L && <ContinueCard L={L} />}
       {L ? (
-        <View style={styles.lessons}>
-          {L.lessons.map((ls) =>
-            !ls.data ? (
-              <LockRow key={ls.no} no={noLabel(L, ls.no)} title={ls.title} sub={ls.pats ? ls.pats.join(' · ') : ls.sub} />
-            ) : !allOpen && !isFreeChapter(ls.no) ? (
-              <MemberRow key={ls.no} no={noLabel(L, ls.no)} title={ls.title} sub={ls.pats ? ls.pats.join(' · ') : ls.sub} onPress={() => lockedChapter(`${ls.no}과`, levelFirstDone(L))} />
-            ) : (
-              <LessonRow key={ls.no} L={L} ls={ls} />
-            ),
-          )}
+        <View style={styles.lessons} onLayout={(e) => setListY(e.nativeEvent.layout.y)}>
+          {L.lessons.map((ls) => (
+            <View key={ls.no} onLayout={ls.no === focusNo ? (e) => setRowY(e.nativeEvent.layout.y) : undefined}>
+              {!ls.data ? (
+                <LockRow no={noLabel(L, ls.no)} title={ls.title} sub={ls.pats ? ls.pats.join(' · ') : ls.sub} />
+              ) : !allOpen && !isFreeChapter(ls.no) ? (
+                <MemberRow no={noLabel(L, ls.no)} title={ls.title} sub={ls.pats ? ls.pats.join(' · ') : ls.sub} onPress={() => lockedChapter(`${ls.no}과`, levelFirstDone(L))} />
+              ) : (
+                <LessonRow L={L} ls={ls} />
+              )}
+            </View>
+          ))}
         </View>
       ) : (
         <EmptyBlock title="이 섬은 아직 구름에 가려 있어요" sub="교재 소개와 목차는 먼저 볼 수 있어요." button="교재 소개 보기" onPress={() => router.push(`/book/${book.id}` as Href)} />

@@ -25,12 +25,12 @@ export const Colors = {
   rateHigh: '#2E8B57',
   rateMid: '#C25E00',
   rateLow: '#D23B3B',
-  /** 짝 맞추기 카드 (모든 레벨 · 상황 맵 Bank 같아요): 고른 카드 = yellow · 맞힌 짝 = 초록 · 틀린 짝 = 분홍 */
+  /** 짝 맞추기 카드 (모든 레벨 · 상황 맵 Bank 같아요): 고른 카드 = yellow · 맞힌 짝 = 초록 · 틀린 짝 = 단어 카드 오답과 같은 분홍 점선 + × */
   matchOk: '#DDF3E2',
   matchOkLine: '#2E9E5B',
   matchOkInk: '#1D6B3B',
-  matchBad: '#FBD5DC',
-  matchBadLine: '#D83A56',
+  matchBad: '#FBE1E8',
+  matchBadLine: '#C2416B',
   matchBadInk: '#A3243C',
   /** 마이 숫자 칸 아이콘 선 (파스텔 · 2026-11-28): 불꽃 · 왕관/번개 · 하트. 사람(참여중)은 sky */
   pastelCoral: '#F29A8A',
