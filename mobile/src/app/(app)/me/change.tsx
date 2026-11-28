@@ -757,7 +757,15 @@ function ChangeScreen() {
             </View>
             {nowBranches.map((b, i) => (
               <View key={b} style={[styles.mineList, i > 0 && styles.nowSplit]}>
-                <PText style={styles.nowBr}>{withJeom(b)}</PText>
+                {/* 등록된 내 지점은 노란 '내 지점' 이름표로 눈에 띄게 */}
+                <View style={styles.nowBrRow}>
+                  <PText style={[styles.nowBr, b === MY_BRANCH && styles.nowBrMine]}>{withJeom(b)}</PText>
+                  {b === MY_BRANCH ? (
+                    <View style={styles.slTag}>
+                      <PText style={styles.slTagT}>내 지점</PText>
+                    </View>
+                  ) : null}
+                </View>
                 {T.filter((x) => x.branch === b).map((t) => (
                   <StudyLine key={keyOf(t)} t={t} />
                 ))}
@@ -784,7 +792,7 @@ function ChangeScreen() {
               </View>
             </>
           ) : (
-            <PText style={styles.note}>지점은 1곳만 · 지금 수업은 모두 새 지점으로 옮겨요</PText>
+            <PText style={styles.note}>{`지금 수업은 모두 새 지점으로 옮겨요 · 내 지점(${withJeom(MY_BRANCH)})도 새 지점으로 바뀌어요`}</PText>
           )}
           {/* 두 지점을 다니는 회원: 바꿀 지점 고르기 */}
           {mode === 'both' && many ? (
@@ -1173,7 +1181,9 @@ const styles = StyleSheet.create({
   kindGo: { fontFamily: Font.body900, fontSize: 16, color: Colors.inkSub },
   rules: { gap: 2 },
   warn: { color: Colors.rosePink },
+  nowBrRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   nowBr: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
+  nowBrMine: { fontFamily: Font.body900, fontSize: 13.5, lineHeight: 19, color: Colors.ink },
   nowSplit: { borderTopWidth: 1.5, borderColor: Colors.line, paddingTop: 10 },
   selPh: { color: Colors.inkSub },
   mineT: { fontFamily: Font.body800, fontSize: 12, color: Colors.inkSub },
