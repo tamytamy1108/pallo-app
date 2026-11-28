@@ -35,7 +35,8 @@ function lids(spec, col = '#FFE200') {
   }).join('');
 }
 function charHTML(eq, hc = '#3B2A20', flip = false) {
-  const its = eq.map((id) => A.ITEMS.find((i) => i.id === id)).filter(Boolean);
+  // 신발은 늘 옷 위 (앱 avatar.tsx 와 같아요)
+  const its = eq.map((id) => A.ITEMS.find((i) => i.id === id)).filter(Boolean).sort((a, b) => (a.cat === 'shoe') - (b.cat === 'shoe'));
   const cover = its.find((i) => i.hat && i.cover);
   let h = '';
   for (const it of its) {

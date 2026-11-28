@@ -7,7 +7,7 @@ import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, Stop } from 'rea
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { AV_BG, AV_COLOR_HEX, memberAvatar, type Avatar, type AvItem, type AvLayer } from '@/data/my';
+import { AV_BG, AV_COLOR_HEX, memberAvatar, type Avatar, type AvCat, type AvItem, type AvLayer } from '@/data/my';
 import { avItem, useAvArt, useAvBgs, useStageArt, type AvArtLayer } from '@/state/av-catalog';
 import { getMe } from '@/state/me';
 import { useMyAvatar } from '@/state/avatar';
@@ -217,10 +217,10 @@ const Z_BLINK = 500;
 /** 번들 그림 자리 → z */
 const BUNDLE_Z: Record<Exclude<AvLayer, 'fx'>, number> = { back: 100, paint: 300, eye: 400, front: 700 };
 const Z_HAIR_FRONT = 600;
-/** 같은 z 면 나머지 → 헤어 → 모자 순으로 뒤에서 앞 */
-const slotRank = (i: AvItem) => (i.hat ? 2 : i.hair ? 1 : 0);
+/** 같은 z 면 나머지 → 신발 → 헤어 → 모자 순으로 뒤에서 앞 — 신발은 늘 옷 위에 신어요(긴 옷 · 바지 밑단이 신발을 덮지 않게) */
+const slotRank = (i: AvItem) => (i.hat ? 3 : i.hair ? 2 : i.cat === 'shoe' ? 1 : 0);
 
-type Piece = { z: number; rank: number; key: string; node: ReactNode };
+type Piece = { z: number; rank: number; key: string; node: ReactNode; cat?: AvCat };
 
 /** 캐릭터(몸 + 입은 아이템)만 · 배경 없이 — 상자 크기 = width × width·332/520 (아이템은 상자 밖으로 삐져나와요) */
 export const AvatarChar = memo(function AvatarChar({ av, width: w, flip = av.flip, blink = true, style }: CharProps) {
@@ -239,7 +239,7 @@ export const AvatarChar = memo(function AvatarChar({ av, width: w, flip = av.fli
       layers.forEach((l, n) => {
         const img = <ArtLayer l={l} hc={hc} body={body} w={w} h={h} />;
         const node = l.part === 'front' && cover ? <ClipBelow clipY={cover.clipY ?? 40} w={w} h={h}>{img}</ClipBelow> : img;
-        pieces.push({ z: l.z, rank, key: `${it.id}:${n}`, node });
+        pieces.push({ z: l.z, rank, key: `${it.id}:${n}`, node, cat: it.cat });
       });
     } else if (it.hair) {
       pieces.push({ z: BUNDLE_Z.back, rank, key: it.id, node: <Sticker it={it} hc={hc} w={w} h={h} /> });
@@ -247,9 +247,12 @@ export const AvatarChar = memo(function AvatarChar({ av, width: w, flip = av.fli
     } else if (it.layer === 'eye') {
       pieces.push({ z: BUNDLE_Z.eye, rank, key: it.id, node: <EyeLayer it={it} color={av.color} w={w} h={h} /> });
     } else if (it.layer !== 'fx') {
-      pieces.push({ z: BUNDLE_Z[it.layer], rank, key: it.id, node: <Sticker it={it} hc={hc} w={w} h={h} /> });
+      pieces.push({ z: BUNDLE_Z[it.layer], rank, key: it.id, node: <Sticker it={it} hc={hc} w={w} h={h} />, cat: it.cat });
     }
   }
+  // 신발은 늘 옷 위: 서버가 옷에 신발보다 큰 z 를 줘도 신발을 옷의 가장 위 z(눈 아래)까지 올려요 — 같은 z 면 slotRank 로 신발이 앞
+  const wearZ = pieces.filter((p) => p.cat === 'wear' && p.z < BUNDLE_Z.eye).reduce((m, p) => Math.max(m, p.z), 0);
+  for (const p of pieces) if (p.cat === 'shoe' && p.z < wearZ) p.z = wearZ;
   // 정렬은 안정적이라 같은 z · 같은 칸이면 적힌 순서 그대로예요
   pieces.sort((a, b) => a.z - b.z || a.rank - b.rank);
   return (
