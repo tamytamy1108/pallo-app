@@ -868,7 +868,13 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | '○○ 신청 · 운영진 확인 중' | GET /me/course-change (pendingRequest · pendingDeferral · pendingBranchTransfer) | change | store.ts useChangeRequest |
 | [신청 취소] | PUT /me/course-change-requests/{id}/cancel · /me/deferral-requests/{id}/cancel · /me/branch-transfer-requests/{id}/cancel | existing | cancelChangeRequest |
 
-`app/me/study.tsx`: 같은 카드만 보여 줘요 (추가 API 없음).
+`app/me/study.tsx` (마이 › 내 스터디 '전체 보기'): 같은 카드 + 아래 '지난 신청' (2026-11-28 추가).
+
+| 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 지난 신청 — 연기 · 팀 변경 · 지점 이동 (최근 순 · 종류 · 상태 승인/반려/취소 · 신청한 날 · 신청 글 · 반려 사유) | GET /me/change-requests/history | new | api/change-requests.ts SAMPLE_HISTORY (목업) |
+
+열린 질문: 세 신청(deferral · course-change · branch-transfer)을 한 목록으로 내려 줄 수 있는지 · 신청 글(txt)을 서버가 그대로 저장해 돌려줄지, 아니면 필드(지금 팀 · 새 팀 · 날짜)로 줄지.
 
 ### 진도 시트 — `components/my/course-progress.tsx`
 팀별 진도(교재 · 단계)는 학습 도메인(bookShelfQuery · progress) 몫. 팀 목록만 GET /me/memberships courses 를 써요.
