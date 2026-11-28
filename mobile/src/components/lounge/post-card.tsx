@@ -180,7 +180,7 @@ function Pic({ p, onDoubleTap }: { p: Post; onDoubleTap?: () => void }) {
     const op = t === 0 ? 0 : kfc(t, [0, 30, 70, 100], [0, 1, 1, 0], BURST_EASE);
     return { opacity: op, transform: [{ scale: sc }] };
   });
-  // 사진 칸: 가로는 카드 폭 그대로, 세로는 글의 틀 비율(ratio · 4:5 ~ 1.91:1)로 — 모든 장이 같은 틀, 장마다 맞춘 확대 · 위치(frames)대로 그려요
+  // 사진 칸: 가로는 카드 폭 그대로, 세로는 글의 틀 비율(ratio · 3:4 ~ 1.91:1)로 — 모든 장이 같은 틀, 장마다 맞춘 확대 · 위치(frames)대로 그려요
   const imgAt = (k: number) => p.imgs?.[k] ?? p.imgs?.[0];
   const img = imgAt(0);
   // 사진(그림)은 본 장 + 바로 다음 장까지만 그려요. 7장짜리 글이 처음부터 7장을 다 풀어 그려서

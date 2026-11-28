@@ -21,7 +21,7 @@ export type CommunityPost = {
   body: string;
   /** 사진 주소(서버 FQDN 그대로) — 올린 순서. 없으면 [] */
   images: string[];
-  /** 사진 비율 가로 / 세로 (사진 없으면 null) — 게시물 틀 비율 (4:5 ~ 1.91:1, 앱이 그릴 때 한 번 더 맞춰요) */
+  /** 사진 비율 가로 / 세로 (사진 없으면 null) — 게시물 틀 비율 (3:4 ~ 1.91:1, 앱이 그릴 때 한 번 더 맞춰요) */
   ratio: number | null;
   /**
    * images 와 같은 순서로 장마다 맞춘 확대 · 위치 (lib/photo-framing PhotoFraming). 아직 서버에 없는 칸 — 앱 쪽 제안(옵션).
