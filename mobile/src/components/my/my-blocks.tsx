@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
 import { MemberFace } from '@/components/character/avatar';
@@ -144,20 +144,54 @@ function GrandShield({ on, size }: { on: boolean; size: number }) {
   );
 }
 
+/** 색을 흰색 쪽으로 섞어 밝게 (0~1) — 입체 배지의 안쪽 원 */
+function lighten(hex: string, t: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * t);
+  const r = mix((n >> 16) & 255);
+  const g = mix((n >> 8) & 255);
+  const bl = mix(n & 255);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1)}`;
+}
+
+/** 입체 동그라미 (받은 아이콘 배지 · 120 상자): 바깥 색 고리 → 얇은 잉크 선 → 밝은 안쪽 원 → 왼쪽 위 흰 반짝임 (은빛 방패와 같은 결) */
+function RaisedCircle({ bg, size }: { bg: string; size: number }) {
+  const line = (2 * 120) / size;
+  return (
+    <Svg width={size} height={size} viewBox="0 0 120 120" style={StyleSheet.absoluteFill}>
+      <Circle cx={60} cy={60} r={60 - line / 2} fill={bg} stroke={Colors.ink} strokeWidth={line} />
+      <Circle cx={60} cy={60} r={45} fill={lighten(bg, 0.55)} stroke={Colors.ink} strokeWidth={line * 0.6} />
+      <Path d="M27.4 44.8A36 36 0 0 1 47.7 26.2" fill="none" stroke={Colors.white} strokeWidth={Math.max(6, (3 * 120) / size)} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 /**
- * 배지 동그라미 하나 (칸 · 상세 시트 같이 써요) — 못 받은 건 흐리게.
- * 높은 단계 배지(말하기 1000 등 · data/badge-rules isGrandBadge)는 동그라미 대신 왕관 방패로 그려요.
- * 서버 그림(imageUrl)이 있으면 그림이 먼저예요 — 방패는 그림이 없을 때만.
+ * 배지 동그라미 하나 (칸 · 상세 시트 같이 써요).
+ * 받은 아이콘 배지는 입체 동그라미, 못 받은 건 납작한 회색이에요.
+ * 높은 단계 배지(말하기 1000 등 · data/badge-rules isGrandBadge)는 동그라미 대신 은빛 왕관 방패로 그려요.
+ * 서버 그림(imageUrl)이 있으면 그림이 먼저예요 — 입체 · 방패는 그림이 없을 때만.
  */
 export function BadgeArt({ b, bg, size = 52, iconSize = 22 }: { b: Badge; bg: string; size?: number; iconSize?: number }) {
   const img = Math.round(size * 0.85);
   if (!b.imageUrl && isGrandBadge(b.cond)) return <GrandShield on={b.on} size={size} />;
+  if (!b.imageUrl && b.on) {
+    return (
+      <View style={[styles.bdRaised, { width: size, height: size }]}>
+        <RaisedCircle bg={bg} size={size} />
+        {/* 아이콘도 겹친 칸으로 — 원(겹친 칸) 위에 그려지게 */}
+        <View style={styles.bdRaisedIc}>
+          <BadgeIc ic={b.ic} size={iconSize} color={Colors.ink} />
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={[styles.bdIc, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }, !b.on && styles.bdOff]}>
       {b.imageUrl ? (
         <Image source={b.imageUrl} style={[{ width: img, height: img }, !b.on && styles.bdImgOff]} contentFit="contain" accessible={false} />
       ) : (
-        <BadgeIc ic={b.ic} size={iconSize} color={b.on ? Colors.ink : '#A39C8E'} />
+        <BadgeIc ic={b.ic} size={iconSize} color="#A39C8E" />
       )}
     </View>
   );
@@ -250,6 +284,8 @@ const styles = StyleSheet.create({
   bd: { width: '25%', alignItems: 'center', gap: 4, paddingHorizontal: 4 },
   bdIc: { width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   bdOff: { backgroundColor: '#EDE7DA', borderColor: '#C9C1B1' },
+  bdRaised: { alignItems: 'center', justifyContent: 'center' },
+  bdRaisedIc: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   bdPressed: { opacity: 0.6 },
   bdImgOff: { opacity: 0.35 },
   bdName: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, textAlign: 'center' },
