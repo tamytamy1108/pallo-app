@@ -23,7 +23,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Help: Story = {};
-/** 연동된 지점이 없음(비회원) — '내 지점 전화' 줄이 빠져요 */
+/** 연동된 지점이 없음(비회원) — '더 도움이 필요하면' 칸(내 지점 전화만 있어요)이 통째로 빠져요 */
 export const HelpNoLinkedBranch: Story = { parameters: { ...at(), queries: [[branchGuidesQuery().queryKey, []]] } };
 /** 자주 묻는 질문만 (?view=faq) */
 export const FaqOnly: Story = { parameters: at({ view: 'faq' }) };

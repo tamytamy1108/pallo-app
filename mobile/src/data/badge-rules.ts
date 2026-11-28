@@ -9,7 +9,10 @@ import type { BadgeConditionType, BadgeIcon } from './my';
 type Rule = {
   /** 분류 (상세 시트 '받는 방법' 위 작은 글) */
   kind: string;
+  /** 칸 · 상세의 아이콘 (그림이 없을 때) */
   ic: BadgeIcon;
+  /** 이 기준부터는 높은 단계 배지 — 동그라미 대신 왕관 방패로 그려요 (예: 말하기 100 동그라미 · 1000 방패) */
+  grandFrom?: number;
   /** 값 단위 — 진행 '2 / 5번' */
   unit: string;
   /** 받는 조건 한 줄 */
@@ -64,6 +67,7 @@ export const BADGE_RULE: Record<BadgeConditionType, Rule> = {
   SHADOWING_SENTENCE_COUNT: {
     kind: '말하기',
     ic: 'mic',
+    grandFrom: 1000,
     unit: '문장',
     how: (n) => `따라 말하기 ${n}문장을 채우면 받아요`,
     left: (l) => `${l}문장 더 따라 말하면 받아요`,
@@ -81,6 +85,19 @@ export const BADGE_RULE: Record<BadgeConditionType, Rule> = {
     lowerIsBetter: true,
   },
 };
+
+/**
+ * 남은 만큼 한 줄. 기준을 이미 넘었는데 아직 못 받았으면(새 배지 · 기준을 낮춘 배지 — 소급 지급 없음) '다음 활동 때'.
+ */
+export function badgeLeftLabel(type: BadgeConditionType, left: number): string {
+  return left <= 0 ? '기준을 넘었어요 · 다음 활동 때 받아요' : BADGE_RULE[type].left(left);
+}
+
+/** 높은 단계 배지인지 — 칸 · 상세에서 동그라미 대신 왕관 방패로 그려요 */
+export function isGrandBadge(cond: { type: BadgeConditionType; threshold: number } | null | undefined): boolean {
+  const from = cond ? BADGE_RULE[cond.type].grandFrom : undefined;
+  return !!cond && from != null && cond.threshold >= from;
+}
 
 /** 배지 모두 보기 아래 '배지는 이렇게 받아요' — 모든 배지에 같은 규칙 (서버 AppBadgeAwardService) */
 export const BADGE_GUIDE: { t: string; d: string }[] = [

@@ -159,6 +159,11 @@ function retMax(st: Date, exp: Date) {
   const a = addMonths(st, REST_LONG_MAX_MONTHS);
   return a < exp ? a : exp;
 }
+/**
+ * 지금 팀에서 듣다가 옮길 때 마지막 날 = 새 팀이 시작하는 주(월~일)의 전 주 일요일.
+ * 새 팀이 화요일에 시작해도 그 주 월요일 옛 팀 수업은 안 들어요 — 한 주에 옛 팀 · 새 팀을 겹쳐 들어 주 횟수를 넘지 않게.
+ */
+const keepLast = (st: Date) => addDays(st, -((st.getDay() + 6) % 7) - 1);
 /** 쉬는 날 수 (시작일 ~ 복귀 전날) */
 const restDays = (st: Date, rt: Date) => Math.round((rt.getTime() - st.getTime()) / 864e5);
 const isLong = (st: Date, rt: Date) => rt > addMonths(st, 1);
@@ -310,7 +315,7 @@ function ChangeScreen() {
       const label = CHANGE_KIND.branch[1];
       const labels = f.picks.map(teamLabel).join(' · ');
       const endTxt = mode === 'move' ? '지금 수업' : endTeams.map(teamLabel).join(' · ');
-      const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(addDays(st, -1))}까지 ${endTxt}을 듣고`;
+      const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(keepLast(st))}까지 ${endTxt}을 듣고`;
       const keptTxt = keptTeams.length ? ` · ${keptTeams.map(teamLabel).join(' · ')}은 그대로` : '';
       if (!endTeams.length) return { ok: true, label, st, txt: `${fmtDay(st)}부터 ${withJeom(f.br)} ${labels}도 같이 들어요 · 출석은 두 지점 합쳐 주 ${MULTI_BRANCH_WEEK_MAX}회까지` };
       return { ok: true, label, st, txt: `${before}, ${fmtDay(st)}부터 ${withJeom(f.br)} ${labels}에서 들어요${keptTxt}` };
@@ -321,7 +326,7 @@ function ChangeScreen() {
     if (f.kind !== 'add' && !f.gap) return { ok: false, txt: '옮기기 전까지 들을지 쉴지 골라 주세요' };
     if (f.kind === 'add') return { ok: true, label, st, txt: `${fmtDay(st)}부터 ${teamLabel(f.to)} 수업을 더해요 · 주 ${ms.wk}회 → ${ms.wk + ms.plan.perWeek}회` };
     const t = cls[0];
-    const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(addDays(st, -1))}까지 ${teamLabel(t)}에서 듣고`;
+    const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(keepLast(st))}까지 ${teamLabel(t)}에서 듣고`;
     return { ok: true, label, st, txt: `${before}, ${fmtDay(st)}부터 ${f.to.branch === t.branch ? '' : withJeom(f.to.branch) + ' '}${teamLabel(f.to)}에서 들어요` };
   }
 
@@ -934,7 +939,7 @@ function GapPick({ gap, start, onPick }: { gap: Gap | null; start: number | null
     <>
       <PText style={styles.q}>옮기기 전까지는요?</PText>
       <View style={styles.teams} accessibilityRole="radiogroup">
-        <Opt title="지금 팀에서 듣다가 옮겨요" sub={st ? `${fmtDay(addDays(st, -1))}까지 지금 팀에서 들어요` : '옮기는 날 전날까지 들어요'} on={gap === 'keep'} onPress={() => onPick('keep')} />
+        <Opt title="지금 팀에서 듣다가 옮겨요" sub={st ? `${fmtDay(keepLast(st))}까지 지금 팀에서 들어요` : '새 팀이 시작하는 주의 전 주까지 들어요'} on={gap === 'keep'} onPress={() => onPick('keep')} />
         <Opt title="쉬다가 옮겨요 (홀딩)" sub={st ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬어요` : '내일부터 옮기는 날 전날까지 쉬어요'} on={gap === 'hold'} onPress={() => onPick('hold')} />
       </View>
     </>
@@ -998,9 +1003,6 @@ function RestCard({ st, rt, teams, back }: { st: Date; rt: Date; teams: Team[]; 
         ))}
       </View>
       <View style={styles.rcRet}>
-        <View style={styles.tagIc}>
-          <Icon name="back" size={16} color={Colors.purple} />
-        </View>
         <PText style={styles.rcRetT}>{`${fmtDay(rt)} 복귀`}</PText>
       </View>
       <View style={styles.rcSec}>
@@ -1029,7 +1031,7 @@ function ChangeCard({ kind, sub, st, ending, kept, next, all, hold, weekMax }: {
   const where = sub ?? (next[0] ? `${withJeom(next[0].branch)}에서 들어요` : '');
   const endWho = all ? '지금 스터디' : ending.map(teamLabel).join(' · ');
   const notes = [
-    ending.length ? (hold ? `${endWho}는 ${fmtDay(REST_MIN)}~${fmtDay(last)} 쉬고 끝나요` : `${endWho}는 ${fmtDay(last)}까지 듣고 끝나요`) : null,
+    ending.length ? (hold ? `${endWho}는 ${fmtDay(REST_MIN)}~${fmtDay(last)} 쉬고 끝나요` : `${endWho}는 ${fmtDay(keepLast(st))}까지 듣고 끝나요`) : null,
     kept.length ? `${kept.map(teamLabel).join(' · ')}는 그대로예요` : null,
     weekMax ? `출석은 두 지점 합쳐 주 ${weekMax}회까지예요` : null,
   ].filter((x): x is string => !!x);
@@ -1068,7 +1070,7 @@ function Q({ n, text, req }: { n: number; text: string; req?: boolean }) {
       </View>
       <PText style={styles.qText} accessibilityRole="header">
         {text}
-        {req ? <PText style={styles.req}> 필수</PText> : null}
+        {req ? <PText style={styles.req}> *</PText> : null}
       </PText>
     </View>
   );
@@ -1218,7 +1220,7 @@ const styles = StyleSheet.create({
   resS: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   longTag: { paddingVertical: 1, paddingHorizontal: 7, borderRadius: 8, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.yellow },
   longTagT: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.ink },
-  req: { fontFamily: Font.body800, fontSize: 12, color: Colors.rosePink },
+  req: { fontFamily: Font.body900, color: '#E5484D' },
   sel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 52, paddingHorizontal: 16, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white },
   selPressed: { backgroundColor: '#F6F1E4' },
   selT: { fontFamily: Font.body900, fontSize: 15.5, lineHeight: 21, color: Colors.purple },
@@ -1237,7 +1239,6 @@ const styles = StyleSheet.create({
   baS: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   baB: { fontFamily: Font.body900, fontSize: 17, lineHeight: 24 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 10 },
-  tagIc: { transform: [{ rotate: '-90deg' }] },
   tagText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.purple },
   rows: { paddingVertical: 2, paddingHorizontal: 14 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingVertical: 11 },

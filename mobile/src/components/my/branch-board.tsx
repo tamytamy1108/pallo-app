@@ -20,7 +20,7 @@ import { branchGuidesQuery } from '@/api/queries';
 import { ErrorState } from '@/components/ui/state-view';
 import { toBranchBoard, type BranchBoard as Board, type BranchItem, type Partner, type PartnerLink, type PartnerLinkKind, type PartnerPoster } from '@/data/my';
 import { sfx } from '@/lib/feedback';
-import { openMap, openTel } from '@/lib/open-out';
+import { copyTel, openMap, openTel } from '@/lib/open-out';
 import { fitPhoto, PhotoViewer, type PhotoBox } from '@/components/ui/photo-viewer';
 
 import { CourseProgressSheet } from './course-progress';
@@ -261,6 +261,11 @@ function BranchInfoSheet({ open, onClose, boards, B, onSel }: { open: boolean; o
                     </Pressable>
                   ))}
                 </View>
+                {x.act?.[0] === 'tel' && (
+                  <Pressable onPress={() => copyTel(x.act?.[1] ?? '')} accessibilityRole="button" accessibilityLabel={`${x.t} 번호 복사`} style={styles.liGo}>
+                    <PText style={styles.liGoT}>복사</PText>
+                  </Pressable>
+                )}
                 {x.act && (
                   <Pressable onPress={() => act(x)} accessibilityRole="button" style={styles.liGo}>
                     <PText style={styles.liGoT}>{x.act[0] === 'map' ? '지도' : '전화'}</PText>
@@ -343,7 +348,7 @@ function Partners({ list, small, onPick }: { list: Partner[]; small?: boolean; o
   );
 }
 
-type InfoRow = { icon: ReactNode; t: string; s?: string; go?: { label: string; run: () => void } };
+type InfoRow = { icon: ReactNode; t: string; s?: string; go?: { label: string; run: () => void }; copy?: { label: string; run: () => void } };
 
 /** 링크 종류별 아이콘 · 기본 이름 · 설명 */
 const LINK_KIND: Record<PartnerLinkKind, { t: string; s: string; icon: ReactNode }> = {
@@ -437,7 +442,7 @@ function PartnerSheet({ partner: p, open, branch, onClose }: { partner: Partner 
   const rest = p.b.replace(pct, '').trim();
   const rows: InfoRow[] = [];
   if (p.addr) rows.push({ icon: <BrIc k="loc" size={18} />, t: p.addr, go: { label: '지도', run: () => openMap(p.addr ?? p.n) } });
-  if (p.tel) rows.push({ icon: <BrIc k="tel" size={18} />, t: p.tel, go: { label: '전화', run: () => openTel(p.tel ?? '') } });
+  if (p.tel) rows.push({ icon: <BrIc k="tel" size={18} />, t: p.tel, go: { label: '전화', run: () => openTel(p.tel ?? '') }, copy: { label: '복사', run: () => copyTel(p.tel ?? '') } });
   if (p.hrs) rows.push({ icon: <BrIc k="clk" size={18} />, t: p.hrs, s: '영업 시간' });
   // 추가 정보: 네이버 플레이스 · 인스타그램 · 카카오톡 채널 · 홈페이지
   for (const l of p.links ?? []) rows.push(linkRow(l));
@@ -500,6 +505,7 @@ function PartnerSheet({ partner: p, open, branch, onClose }: { partner: Partner 
                   <PText style={styles.prT}>{r.t}</PText>
                   {!!r.s && <PText style={styles.prS}>{r.s}</PText>}
                 </View>
+                {r.copy && <PartnerGo go={r.copy} name={p.n} />}
                 {r.go && <PartnerGo go={r.go} name={p.n} />}
               </View>
             ))}

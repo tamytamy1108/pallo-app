@@ -8,7 +8,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
-import { BADGE_RULE, earnedDateLabel } from '@/data/badge-rules';
+import { BADGE_RULE, badgeLeftLabel, earnedDateLabel } from '@/data/badge-rules';
 import type { Badge } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 
@@ -96,7 +96,7 @@ export function BadgeDetailSheet({ open, onClose }: { open: BadgeOpen | null; on
                   <View style={styles.track} accessible accessibilityRole="progressbar" accessibilityLabel={`${prog.need}${rule.unit} 중 ${prog.cur}${rule.unit}`} accessibilityValue={{ min: 0, max: prog.need, now: prog.cur }}>
                     <View style={[styles.fill, { width: `${Math.max(prog.ratio * 100, prog.cur > 0 ? 6 : 0)}%` }]} />
                   </View>
-                  <PText style={styles.left}>{b.on ? '기준을 채웠어요' : rule.left(prog.left)}</PText>
+                  <PText style={styles.left}>{b.on ? '기준을 채웠어요' : badgeLeftLabel(b.cond.type, prog.left)}</PText>
                 </View>
               ) : rule.lowerIsBetter && b.cond.progress != null && !b.on ? (
                 <PText style={styles.left}>{`지난주 내 순위는 ${b.cond.progress}위였어요`}</PText>

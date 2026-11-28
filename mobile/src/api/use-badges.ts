@@ -41,8 +41,6 @@ export function badgeProgress(b: Badge): BadgeProgress | null {
   return { cur, need, left: Math.max(0, need - cur), ratio: Math.min(1, cur / need) };
 }
 
-export type BadgeFilter = 'all' | 'on' | 'off';
-
 export type MyBadgesView = {
   list: Badge[];
   earned: number;
