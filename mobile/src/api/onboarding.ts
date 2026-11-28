@@ -105,7 +105,29 @@ export type BranchPublicGuide = {
 };
 
 export type Pallolo = { code: string; name: string; tint: string; isDefault: boolean; version: number; imageUrl: string };
-export type AssetCatalog = { formatVersion: number; canvas: { width: number; height: number }; bodyBox: { x: number; y: number; width: number; height: number }; pallolos: Pallolo[] };
+export type CatalogRarity = 'BASIC' | 'COMMON' | 'RARE' | 'EPIC' | 'SEASON';
+type CatalogSale = { code: string; name: string; rarity: CatalogRarity; acquisition: 'SHOP' | 'REWARD'; price: number; rewardLabel: string | null; version: number };
+/** 꾸미기 배경 · 배경 효과 — 무대 크기 그림 한 장 (z: 배경 0 · 효과 50) */
+export type CatalogStageItem = CatalogSale & { z: number; faceColor: string | null; imageUrl: string };
+/** 꾸미기 캐릭터 아이템 — 묶음의 레이어들 (rect = 몸 상자 기준 비율 · z 오름차순으로 겹쳐요) */
+export type CatalogWearable = CatalogSale & {
+  slot: string;
+  layers: { url: string; rect: number[]; z: number; tint: 'hair' | 'body' | null; part: 'back' | 'front' | null }[];
+  /** 모자만: 머리를 덮는지 · 덮으면 아랫선(캔버스 px) */
+  hat: { cover: boolean; clipY: number | null } | null;
+  flipUrl: string | null;
+};
+/** 꾸미기 목록(stage 부터)은 서버만 보내요 — 가짜 서버는 안 보내서 앱 번들을 써요 (state/av-catalog.ts) */
+export type AssetCatalog = {
+  formatVersion: number;
+  canvas: { width: number; height: number };
+  bodyBox: { x: number; y: number; width: number; height: number };
+  pallolos: Pallolo[];
+  stage?: { width: number; height: number };
+  backgrounds?: CatalogStageItem[];
+  effects?: CatalogStageItem[];
+  items?: CatalogWearable[];
+};
 
 export type OnboardingBody = {
   consents: { versionId: string; agreed: boolean }[];

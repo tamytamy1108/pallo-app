@@ -9,8 +9,8 @@ import type { Href } from 'expo-router';
 import type { PushBannerMsg } from '@/components/ui/push-banner';
 import type { PushMessage } from '@/lib/push';
 
-/** 알림 종류 → 누르면 갈 화면. 모르는 종류 · 종류 없음이면 누르면 닫히기만 */
-function hrefOf(type: unknown, referenceId: unknown): Href | undefined {
+/** 알림 종류 → 누르면 갈 화면. 모르는 종류 · 종류 없음이면 누르면 닫히기만 (알림함 줄도 같은 규칙 · use-notifications.ts) */
+export function hrefOf(type: unknown, referenceId: unknown): Href | undefined {
   switch (type) {
     case 'PROS_NOTE':
       return typeof referenceId === 'string' && referenceId ? (`/me/notes/${encodeURIComponent(referenceId)}` as Href) : '/me/notes';

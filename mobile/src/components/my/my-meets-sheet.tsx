@@ -5,16 +5,19 @@ import { StyleSheet, View } from 'react-native';
 import { splitEvents } from '@/components/event/event-model';
 import { EventRow } from '@/components/event/event-row';
 import { ProposalCard } from '@/components/event/proposal-cards';
+import { apiErrorMessage } from '@/api/errors';
+import { useMyMeets } from '@/api/use-my-activity';
 import { ClubRow } from '@/components/meet/club-list';
 import { useMeetStore } from '@/components/meet/meet-store';
 import { Button } from '@/components/ui/button';
 import { Pressable } from '@/components/ui/pressable';
 import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { EVENTS, type EventItem } from '@/data/events';
-import { CLUBS, isPast, MEETS, type Club, type Meet } from '@/data/meet';
+import { CLUBS, isPast, MEETS, type Club } from '@/data/meet';
 import { openChallenge } from '@/components/challenge/cards';
 import { ChCover } from '@/components/challenge/cover';
 import { useMyClubRoles } from '@/components/meet/model';
@@ -30,8 +33,6 @@ export const MY_MEET_ORDER: [MyMeetTab, string][] = [
   ['event', '이벤트'],
 ];
 
-/** 번개를 이벤트 한 줄 모양으로 (포스터 · 종류 '번개' · 지점 · D-day · 남은 자리) */
-const asRow = (m: Meet): EventItem => ({ id: m.id, ev: 'party', kind: '번개', br: m.br, day: m.day, mon: m.mon, wd: m.wd, title: m.title, place: m.place, host: m.host, cur: m.cur, max: m.max });
 
 /** 내 동아리: 운영 중(호스트 · 코호스트)이 먼저, 그다음 가입한 곳 (겹치면 운영 중에만) */
 function useMyClubs() {
@@ -77,12 +78,16 @@ export function useMyMeetCounts() {
  */
 export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean; onClose: () => void; start?: MyMeetTab }) {
   const [tab, setTab] = useState<MyMeetTab>(start);
-  const joined = useMeetStore((s) => s.joined);
+  // 동아리 · 번개 · 이벤트 = GET /me/meets?box=JOINED (api/use-my-activity) · 챌린지 · 제안한 이벤트는 아직 기기 상태
+  const mine = useMyMeets('JOINED', open);
   const props = useMeetStore((s) => s.props);
-  const clubs = useMyClubs();
   const chals = useMyChallenges();
-  const meets = splitEvents(MEETS.filter((m) => joined[m.id]).map(asRow));
-  const events = splitEvents(EVENTS.filter((e) => joined[e.id]));
+  const clubs = {
+    run: (mine.view?.clubs ?? []).flatMap((r) => (r.role ? [{ c: r.c, role: r.role }] : [])),
+    joined: (mine.view?.clubs ?? []).filter((r) => !r.role).map((r) => r.c),
+  };
+  const meets = splitEvents(mine.view?.meetups ?? []);
+  const events = splitEvents(mine.view?.events ?? []);
   const n: Record<MyMeetTab, number> = {
     club: clubs.run.length + clubs.joined.length,
     meet: meets.up.length + meets.past.length,
@@ -115,7 +120,13 @@ export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean;
         ))}
       </View>
 
-      {tab === 'club' ? (
+      {tab !== 'chal' && mine.isPending ? (
+        <LoadingState />
+      ) : tab !== 'chal' && mine.isError ? (
+        <ErrorState message={apiErrorMessage(mine.error)} onRetry={() => mine.refetch()} />
+      ) : null}
+
+      {tab === 'club' && mine.view ? (
         n.club ? (
           <>
             {clubs.run.length ? (
@@ -142,7 +153,7 @@ export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean;
         )
       ) : null}
 
-      {tab === 'meet' ? (
+      {tab === 'meet' && mine.view ? (
         n.meet ? (
           <>
             <Group title="다가오는 번개" rows={meets.up} render={(e) => <EventRow key={e.id} e={e} feeLabel="각자 계산" onOpen={() => go(`/meet/${e.id}`)} />} />
@@ -180,7 +191,7 @@ export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean;
         )
       ) : null}
 
-      {tab === 'event' ? (
+      {tab === 'event' && mine.view ? (
         n.event || props.length ? (
           <>
             <Group title="다가오는 이벤트" rows={events.up} render={(e) => <EventRow key={e.id} e={e} onOpen={() => go(`/events/${e.id}`)} />} />

@@ -18,10 +18,15 @@ import { sfx } from '@/lib/feedback';
 export const withJeom = (n: string) => (n.endsWith('점') ? n : `${n}점`);
 /** 지점 한 곳: key 는 데이터 이름 그대로(거르기 · 저장용), name 은 보이는 이름 */
 const LIST = BRANCHES.map(([key, region]) => ({ key, name: withJeom(key), region }));
-const ALL_KEYS = LIST.map((b) => b.key);
-const TABS = ['전체', ...BRANCH_REGIONS] as const;
-type Tab = (typeof TABS)[number];
-type Branch = (typeof LIST)[number];
+/** 고르는 지점 한 곳 — 서버 지점 목록을 쓸 때는 branches prop 으로 넘겨요 (api/use-lounge-branches) */
+export type PickBranch = { key: string; name: string; region: string };
+type Branch = PickBranch;
+/** 권역 탭 순서: 알려진 권역 먼저, 나머지는 목록 순서대로 */
+const regionsOf = (list: Branch[]) => {
+  const all = [...new Set(list.map((b) => b.region))];
+  const known: string[] = BRANCH_REGIONS.filter((r) => all.includes(r));
+  return [...known, ...all.filter((r) => !known.includes(r))];
+};
 
 /** 같은 지점인지 ('가산' = '가산점') */
 const same = (a: string, b: string) => withJeom(a) === withJeom(b);
@@ -83,13 +88,17 @@ type MultiProps = {
   allOption?: boolean;
   /** '내 지점' 표시할 곳 */
   mine?: string[];
+  /** 고를 지점 목록 (없으면 앱 안 예시 목록) */
+  branches?: PickBranch[];
 };
 
 /**
  * 지점 여러 곳 고르기 본문 — BranchListPicker 와 같은 모양에 체크만 여러 개.
  * 라운지 · 이벤트 '어느 지점을 볼까요?'(allOption) · 설정 '내 지점'(max 2)이 써요. 돌려주는 이름은 데이터 이름 그대로.
  */
-export function BranchMultiPicker({ selected, onChange, max, allOption = false, mine = [] }: MultiProps) {
+export function BranchMultiPicker({ selected, onChange, max, allOption = false, mine = [], branches }: MultiProps) {
+  const list = branches ?? LIST;
+  const ALL_KEYS = list.map((b) => b.key);
   const keys = new Set(ALL_KEYS.filter((k) => selected.some((s) => same(k, s))));
   const has = (k: string) => keys.has(k);
   const emit = (next: Set<string>) => onChange(ALL_KEYS.filter((k) => next.has(k)));
@@ -145,19 +154,22 @@ export function BranchMultiPicker({ selected, onChange, max, allOption = false, 
       }
       // 내 지점이 있는 권역 · 내 지점을 먼저
       sortKey={(b) => (isMine(b.key) ? 0 : 1)}
+      list={list}
       row={(b, first) => <BranchRow key={b.key} b={b} first={first} on={has(b.key)} mine={isMine(b.key)} role="checkbox" onPress={() => toggle(b.key)} />}
     />
   );
 }
 
 /** 검색 · 권역 탭 · 권역별 묶음 카드 틀 (하나 · 여러 개 고르기가 같이 써요) */
-function PickerFrame({ head, row, regionEnd, sortKey }: { head?: ReactNode; row: (b: Branch, first: boolean) => ReactNode; regionEnd?: (rows: Branch[]) => ReactNode; sortKey?: (b: Branch) => number }) {
-  const [tab, setTab] = useState<Tab>('전체');
+function PickerFrame({ head, row, regionEnd, sortKey, list = LIST }: { head?: ReactNode; row: (b: Branch, first: boolean) => ReactNode; regionEnd?: (rows: Branch[]) => ReactNode; sortKey?: (b: Branch) => number; list?: Branch[] }) {
+  const REGIONS = regionsOf(list);
+  const TABS = ['전체', ...REGIONS];
+  const [tab, setTab] = useState('전체');
   const [q, setQ] = useState('');
   const query = q.trim();
-  const shown = LIST.filter((b) => (tab === '전체' || b.region === tab) && (!query || b.name.includes(query)));
+  const shown = list.filter((b) => (tab === '전체' || b.region === tab) && (!query || b.name.includes(query)));
   const order = (L: Branch[]) => (sortKey ? [...L].sort((a, b) => sortKey(a) - sortKey(b)) : L);
-  const regions = [...BRANCH_REGIONS.filter((r) => shown.some((b) => b.region === r))].sort((a, b) =>
+  const regions = [...REGIONS.filter((r) => shown.some((b) => b.region === r))].sort((a, b) =>
     sortKey ? Math.min(...shown.filter((x) => x.region === a).map(sortKey)) - Math.min(...shown.filter((x) => x.region === b).map(sortKey)) : 0,
   );
   return (
@@ -174,7 +186,7 @@ function PickerFrame({ head, row, regionEnd, sortKey }: { head?: ReactNode; row:
           <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="tab" accessibilityState={{ selected: tab === t }} style={[styles.segItem, tab === t && styles.segOn]}>
             <PText style={[styles.segText, tab === t && styles.segTextOn]}>
               {t}
-              {t === '전체' ? <PText style={[styles.segCount, tab === t && styles.segTextOn]}> {LIST.length}</PText> : null}
+              {t === '전체' ? <PText style={[styles.segCount, tab === t && styles.segTextOn]}> {list.length}</PText> : null}
             </PText>
           </Pressable>
         ))}

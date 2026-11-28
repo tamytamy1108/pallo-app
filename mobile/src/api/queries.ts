@@ -10,11 +10,14 @@ import { toSituationMaps, type MapRow } from '@/data/maps';
 import { fetchSignupOptions } from './auth';
 import type { PageParams } from './client';
 import { fetchBookShelf, fetchPatternLesson, fetchSceneContent, fetchSituationMaps, fetchUnit34, lessonContentId } from './learn';
-import { fetchLaunchPopups, fetchLoungeHighlights, fetchNotice, fetchNotices, fetchTodaySessions } from './home';
+import { fetchLaunchPopups, fetchLoungeHighlights, fetchNotice, fetchNotices, fetchTodaySessions, fetchUnreadNotificationCount } from './home';
+import { fetchMyAvatar } from './avatar';
 import { fetchMe } from './me';
+import type { NotificationCategory } from './notifications';
 import { fetchMyLinkRequests } from './branch-link';
 import { fetchBranchSummary } from './branch-summary';
 import { fetchBranchToday } from './branch-today';
+import { fetchMyExpressions, fetchMyMeets, fetchSavedChallenges, type MyMeetBox } from './my-activity';
 import { fetchMyPage } from './my-page';
 import { fetchProSessions } from './pro-sessions';
 import { fetchProsNote, type ProsNoteBox } from './pros-notes';
@@ -23,6 +26,7 @@ import { fetchFaq, fetchMyInquiries } from './support';
 import { fetchReportReasons } from './reports';
 import { fetchEventCategories, fetchMyEventProposals } from './event-proposals';
 import { fetchEvent, fetchEvents } from './events';
+import { fetchLoungeUnreadCounts, type LoungeUnreadCounts, type LoungeUnreadSince } from './lounge';
 import { fetchMyTrialApplications } from './trial-applications';
 import { fetchAssetCatalog, fetchBranchOptions, fetchBranchPublicGuide, fetchOnboardingInfo, fetchTrialSlots, roundLatLng, type LatLng } from './onboarding';
 
@@ -31,6 +35,12 @@ export const queryKeys = {
   linkRequests: ['me', 'branch-link-requests'] as const,
   branchSummary: ['me', 'branch-summary'] as const,
   myPage: ['me', 'mypage'] as const,
+  /** 내 캐릭터 — 저장한 모습 · 가진 것 (api/use-my-avatar 가 state/avatar 에 넣어요) */
+  myAvatar: ['me', 'avatar'] as const,
+  /** 마이 › 내 활동 목록 (내 모임 · 찜한 모임 · 찜한 챌린지 · 내 표현함) */
+  myMeets: (box: MyMeetBox) => ['me', 'meets', box] as const,
+  savedChallenges: ['me', 'saved-challenges'] as const,
+  myExpressions: ['me', 'expressions'] as const,
   proSessions: ['me', 'pro-sessions'] as const,
   prosNote: (id: string) => ['me', 'pros-notes', id] as const,
   /** 노트 목록 — 열람 뒤 'list' 아래를 통째로 다시 받아요 (NEW 표시) */
@@ -47,6 +57,10 @@ export const queryKeys = {
   assetCatalog: ['asset-catalog'] as const,
   sessionsToday: ['sessions', 'today'] as const,
   branchToday: ['manager', 'branch', 'today'] as const,
+  unreadNotifications: ['me', 'notifications', 'unread-count'] as const,
+  /** 알림함 목록 — 읽음 뒤 'list' 아래(모든 탭)를 통째로 다시 받아요 */
+  notificationsAll: ['me', 'notifications', 'list'] as const,
+  notifications: (category: NotificationCategory | null) => ['me', 'notifications', 'list', category ?? 'all'] as const,
   notices: (params: PageParams = {}) => ['notices', 'list', params] as const,
   notice: (id: string) => ['notices', 'detail', id] as const,
   loungeHighlights: ['lounge', 'highlights'] as const,
@@ -59,6 +73,12 @@ export const queryKeys = {
   /** 이벤트 탭 — 목록 · 상세가 이 키 아래라 이걸로 다시 받으면 다 새로 받아요 */
   events: ['events'] as const,
   event: (id: string) => ['events', id] as const,
+  /** 라운지 탭 '새 글' 배지 — 보내는 기준 시각은 키에 넣지 않아요 (탭을 바꿀 때마다 다시 받지 않게) */
+  loungeUnreadCounts: ['lounge', 'unread-counts'] as const,
+  /** 커뮤니티 탭 (글 · 댓글 모두 — 하트 · 스크랩 · 댓글을 단 뒤 한 번에 다시 받을 때) */
+  communityAll: ['community'] as const,
+  communityPosts: (topic: string | null, branchCodes: string[]) => ['community', 'posts', topic ?? 'all', branchCodes.join(',')] as const,
+  communityComments: (postId: string) => ['community', 'comments', postId] as const,
   situationMaps: ['library', 'maps'] as const,
   bookShelf: ['library', 'books'] as const,
   lesson: (id: string) => ['lessons', id] as const,
@@ -83,6 +103,14 @@ export const branchSummaryQuery = () => queryOptions({ queryKey: queryKeys.branc
 
 /** GET /me/mypage — 마이 탭 숫자 · 랭킹 요약 · 배지 · 내 활동 개수 (api/my-page.ts) */
 export const myPageQuery = () => queryOptions({ queryKey: queryKeys.myPage, queryFn: ({ signal }) => fetchMyPage({ signal }) });
+/** 34 GET /me/avatar — 내 캐릭터 (api/use-my-avatar) */
+export const myAvatarQuery = () => queryOptions({ queryKey: queryKeys.myAvatar, queryFn: ({ signal }) => fetchMyAvatar({ signal }) });
+/** 마이 › 내 모임 · 찜한 모임 (api/my-activity) */
+export const myMeetsQuery = (box: MyMeetBox) => queryOptions({ queryKey: queryKeys.myMeets(box), queryFn: ({ signal }) => fetchMyMeets(box, { signal }) });
+/** 마이 › 찜한 챌린지 */
+export const savedChallengesQuery = () => queryOptions({ queryKey: queryKeys.savedChallenges, queryFn: ({ signal }) => fetchSavedChallenges({ signal }) });
+/** 마이 › 내 표현함 (첫 쪽 100개 — 찾기 · 나온 곳 거르기를 서버로 옮기면 쪽 넘기기로 바꿔요) */
+export const myExpressionsQuery = () => queryOptions({ queryKey: queryKeys.myExpressions, queryFn: ({ signal }) => fetchMyExpressions({ signal }) });
 /** A34 /me/pro-sessions — 참여한 세션 (스텝 마이) */
 export const proSessionsQuery = () => queryOptions({ queryKey: queryKeys.proSessions, queryFn: ({ signal }) => fetchProSessions({ signal }) });
 
@@ -122,6 +150,21 @@ export const sessionsTodayQuery = () => queryOptions({ queryKey: queryKeys.sessi
 export const branchTodayQuery = () =>
   queryOptions({ queryKey: queryKeys.branchToday, queryFn: ({ signal }) => fetchBranchToday({ signal }), refetchInterval: 30_000 });
 
+/** 안 읽은 알림을 다시 세는 주기 (1분) */
+export const UNREAD_POLL_MS = 60_000;
+
+/**
+ * GET /me/notifications/unread-count — 홈 종 배지. 1분마다 다시 받아요.
+ * 앱이 뒤로 가 있는 동안은 쉬고(focusManager · query-client.ts), 앞으로 돌아오면 바로 다시 받아요.
+ */
+export const unreadNotificationsQuery = () =>
+  queryOptions({
+    queryKey: queryKeys.unreadNotifications,
+    queryFn: ({ signal }) => fetchUnreadNotificationCount({ signal }),
+    refetchInterval: UNREAD_POLL_MS,
+    staleTime: UNREAD_POLL_MS,
+  });
+
 /** 12 /notices (첫 페이지) */
 export const noticesQuery = (params: PageParams = {}) => queryOptions({ queryKey: queryKeys.notices(params), queryFn: ({ signal }) => fetchNotices(params, { signal }) });
 
@@ -152,6 +195,22 @@ export const eventProposalsQuery = () => queryOptions({ queryKey: queryKeys.even
 
 /** GET /events — 이벤트 탭 목록 (오늘 이후 열린 이벤트) */
 export const eventsQuery = () => queryOptions({ queryKey: queryKeys.events, queryFn: ({ signal }) => fetchEvents({ signal }) });
+
+/** 받은 수 + 그때 보낸 기준 시각 (보낸 뒤 그 탭을 열었으면 화면은 0 으로 봐요) */
+export type LoungeUnreadResult = LoungeUnreadCounts & { sent: LoungeUnreadSince };
+
+/**
+ * GET /lounge/unread-counts — 라운지 탭 배지. 부를 때마다 getSince() 로 그때의 '마지막으로 본 때'를 읽어 보내요.
+ * 주기적으로 다시 세지 않아요 — 라운지로 돌아올 때 · 당겨서 새로고침할 때만 (api/use-lounge-new-counts).
+ */
+export const loungeUnreadCountsQuery = (getSince: () => LoungeUnreadSince) =>
+  queryOptions({
+    queryKey: queryKeys.loungeUnreadCounts,
+    queryFn: async ({ signal }): Promise<LoungeUnreadResult> => {
+      const sent = getSince();
+      return { ...(await fetchLoungeUnreadCounts(sent, { signal })), sent };
+    },
+  });
 
 /** GET /events/{id} — 이벤트 상세 */
 export const eventQuery = (id: string) => queryOptions({ queryKey: queryKeys.event(id), queryFn: ({ signal }) => fetchEvent(id, { signal }) });

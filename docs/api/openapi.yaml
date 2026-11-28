@@ -3348,62 +3348,67 @@ paths:
       tags:
         - 라운지 피드
       operationId: listCommunityPosts
-      summary: 커뮤니티 글 목록 (커뮤니티 탭 · 해외살이 이야기)
+      summary: 커뮤니티 글 목록 (커뮤니티 탭)
       description: >
-        화면: app/(tabs)/lounge.tsx Feed (tab=com · 칩 전체/일상/스터디/이벤트/여행/동아리/번개) ·
-        해외 동행 탭 '해외살이 이야기'(category=OVERSEAS_LIFE)
+        화면: app/(tabs)/lounge.tsx CommunityFeed (tab=com · 칩 전체/일상/스터디/이벤트/여행/동아리/번개 · 지점 선택)
 
-        언제: 탭 진입 · 칩/지점/나라 바꿈 · 무한 스크롤
+        언제: 탭 진입 · 칩/지점 바꿈 · 아래로 내려 끝에 가까워질 때(다음 쪽) · 당겨서 새로고침
 
-        규칙: 최신순(공지 고정 글 먼저). 차단 · 숨김 글 제외(서버). topic=club 은 동아리 글(club 이 있는 글 포함). '전 지점' 글은 지점 필터와 상관없이 보여요.
-      x-status: change
-      x-backend: PostController GET /community/posts?category=&cursor=&size= →
-        PostFeedResponse{posts[PostSummaryResponse], hasNext, nextCursor}
-      x-gap: >
-        1) category 를 선택으로(없으면 PALLO_LOUNGE+BRANCH_LOUNGE 둘 다) · 2)
-        topic(daily|study|event|travel|club|meet) 필터 추가
-
-        3) branchCodes 여러 개 필터 추가 · 4) countryCode 필터(OVERSEAS_LIFE) 추가
-
-        5) 카드에 본문 전체 · 사진 전부 · 비율 · 표현 · 작성자 역할/지점/아바타 · 내 좋아요/저장 여부가 필요 → PostSummaryResponse 에 필드 추가(LoungePostSummary 참고)
+        규칙: 활성 멤버십 회원만(아니면 403). 카테고리 · 지점 · 공개범위와 상관없이 모든 글, 최신순(createdAt, id).
+        지운 글은 빼고, 관리자가 숨긴 글은 작성자 본인에게만. branch 를 주면 그 지점 글 + 지점 없는 글만.
+        차단한 멤버 글은 지금은 앱이 빼요. 해외살이 이야기(OVERSEAS_LIFE)는 아직 이 API 를 쓰지 않아요.
+      x-status: existing
+      x-backend: MobileCommunityPostController GET /app/api/v2/community/posts?topic=&branch=&cursor=&size= →
+        CommunityPostPageResponse{items[CommunityPostResponse], nextCursor}
       x-inventory: "#49"
       x-screens:
         - app/(tabs)/lounge.tsx
         - components/lounge/post-card.tsx
-      x-app-code: data/lounge.ts FEED (k=post · k=abroad) · lounge-store.ts feed
+      x-app-code: api/use-community.ts useCommunityFeed · api/community.ts fetchCommunityPosts
       parameters:
-        - name: category
-          in: query
-          required: false
-          description: 게시판. 비우면 PALLO_LOUNGE + BRANCH_LOUNGE (커뮤니티 탭)
-          schema:
-            $ref: "#/components/schemas/CommunityPostCategory"
         - name: topic
           in: query
           required: false
-          description: 커뮤니티 칩. 비우면 전체
+          description: 주제 칩. 비우면 전체. 모르는 값은 400
           schema:
-            $ref: "#/components/schemas/CommunityPostTopic"
-        - name: countryCode
+            type: string
+            enum: [DAILY, STUDY, EVENT, TRAVEL, CLUB, MEETUP]
+        - name: branch
           in: query
           required: false
-          description: 해외살이 이야기 나라 필터 (세계 지도에서 고른 나라)
+          description: 지점 선택 시트에서 고른 지점 code (쉼표로 여러 곳). 비우면 전체 지점. 지점 없는 글은 늘 포함
+          style: form
+          explode: false
           schema:
-            $ref: "#/components/schemas/AbroadCountryCode"
-        - $ref: "#/components/parameters/LoungeBranchCodes"
-        - $ref: "#/components/parameters/Cursor"
-        - $ref: "#/components/parameters/Size"
+            type: array
+            items:
+              type: string
+        - name: cursor
+          in: query
+          required: false
+          description: 이전 응답의 nextCursor. 깨진 값은 400
+          schema:
+            type: string
+        - name: size
+          in: query
+          required: false
+          description: 한 쪽 글 수 (기본 20, 1~50 으로 잘라요)
+          schema:
+            type: integer
+            default: 20
       responses:
         "200":
-          description: OK (백엔드 기존 모양 유지 — posts · hasNext · nextCursor)
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CommunityPostFeed"
+                $ref: "#/components/schemas/CommunityFeedPage"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-domain: lounge
     post:
       tags:
@@ -3488,30 +3493,39 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-domain: lounge
-  "/community/posts/{postId}/bookmark":
+  "/community/posts/{postId}/scrap":
     post:
       tags:
         - 라운지 피드
-      operationId: toggleCommunityPostBookmark
-      summary: 글 저장(라운지 저장함) 토글
+      operationId: toggleCommunityPostScrap
+      summary: 글 스크랩(라운지 저장함) 토글
       description: >
-        화면: components/lounge/post-card.tsx 저장 버튼 → '라운지 저장함에 담았어요' / '저장을
+        화면: components/lounge/post-card.tsx CommunityPostCard 저장 버튼 → '라운지 저장함에 담았어요' / '저장을
         취소했어요'
 
-        언제: 저장 버튼 누를 때. 앱은 누르기 전 isBookmarked 로 문구를 골라요.
+        언제: 저장 버튼 누를 때. 앱은 누르기 전 scrappedByMe 로 문구를 골라요.
+
+        규칙: 활성 멤버십 회원만(아니면 403). 지운 글 · 남의 숨긴 글은 404. count 는 글의 스크랩 수.
       x-status: existing
-      x-backend: PostController POST /community/posts/{postId}/bookmark (토글) → 204
+      x-backend: MobileCommunityReactionController POST /app/api/v2/community/posts/{postId}/scrap (토글) →
+        CommunityReactionResponse{on, count}
       x-inventory: "#74"
       x-screens:
         - components/lounge/post-card.tsx
-      x-app-code: lounge-store.ts toggleSave · saved
+      x-app-code: api/use-community.ts useToggleCommunityScrap
       parameters:
         - $ref: "#/components/parameters/CommunityPostId"
       responses:
-        "204":
-          $ref: "#/components/responses/NoContent"
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityReaction"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
       x-domain: lounge
@@ -3525,14 +3539,16 @@ paths:
         화면: components/common/comments-sheet.tsx (글 카드 💬 · 해외살이 카드)
         언제: 댓글 창 열 때 · 더 보기
         규칙: 최상위 댓글 페이지(1부터), 최신순 고정, 답글은 각 스레드에 오래된 순. 카드의 💬 숫자는 commentCount.
+        활성 멤버십 회원만 — 목록 · 달기 · 고치기 · 지우기 · 댓글 하트 모두 (아니면 403).
+        앱은 창을 열 때 한 번에 50개(size=50)를 받아요.
       x-status: existing
-      x-backend: CommentController GET /community/posts/{postId}/comments?page=&size=
-        → CommentListResponse
+      x-backend: MobileCommunityCommentController GET /app/api/v2/community/posts/{postId}/comments?page=&size=
+        → CommentListResponse (공용 댓글)
       x-inventory: "#53"
       x-screens:
         - components/common/comments-sheet.tsx
         - components/lounge/post-card.tsx
-      x-app-code: lounge-store.ts postComments · LG_CMTS
+      x-app-code: api/use-community.ts useCommunityComments
       parameters:
         - $ref: "#/components/parameters/CommunityPostId"
         - $ref: "#/components/parameters/CommentPage"
@@ -3558,12 +3574,12 @@ paths:
         화면: components/common/comments-sheet.tsx 보내기 (답글 모드면 parentId)
         규칙: 답글은 1단까지(서버 강제). 비회원(체험)은 앱이 먼저 막아요.
       x-status: existing
-      x-backend: CommentController POST /community/posts/{postId}/comments
+      x-backend: MobileCommunityCommentController POST /app/api/v2/community/posts/{postId}/comments
         (CommentCreateRequest) → CommentResponse
       x-inventory: "#53"
       x-screens:
         - components/common/comments-sheet.tsx
-      x-app-code: lounge-store.ts addPostComment
+      x-app-code: api/use-community.ts useAddCommunityComment
       parameters:
         - $ref: "#/components/parameters/CommunityPostId"
       requestBody:
@@ -3594,12 +3610,12 @@ paths:
       summary: 내 댓글 고치기
       description: "화면: components/common/comments-sheet.tsx 내 댓글 ⋯ → 수정"
       x-status: existing
-      x-backend: CommentController PUT /community/posts/{postId}/comments/{commentId}
+      x-backend: MobileCommunityCommentController PUT /app/api/v2/community/posts/{postId}/comments/{commentId}
         (CommentUpdateRequest) → CommentResponse
       x-inventory: "#54"
       x-screens:
         - components/common/comments-sheet.tsx
-      x-app-code: comments-sheet.tsx onChange (edit)
+      x-app-code: api/use-community.ts useEditCommunityComment (comments-sheet onEdit)
       parameters:
         - $ref: "#/components/parameters/CommunityPostId"
         - $ref: "#/components/parameters/CommentId"
@@ -3629,15 +3645,15 @@ paths:
       operationId: deleteCommunityPostComment
       summary: 내 댓글 지우기
       description: |
-        화면: components/common/comments-sheet.tsx 내 댓글 ⋯ → 삭제 [되돌리기]
-        규칙: 앱은 되돌리기 토스트가 사라진 뒤에 보내요(서버 복구 API 없음). 소프트 삭제 — 스레드 자리는 남아요.
+        화면: components/common/comments-sheet.tsx 내 댓글 ⋯ → 삭제
+        규칙: 누르자마자 보내요 — 서버 복구 API 가 없어 커뮤니티 댓글 창엔 [되돌리기]가 없어요. 소프트 삭제 — 스레드 자리는 남아요.
       x-status: existing
-      x-backend: CommentController DELETE
-        /community/posts/{postId}/comments/{commentId} → 204
+      x-backend: MobileCommunityCommentController DELETE
+        /app/api/v2/community/posts/{postId}/comments/{commentId} → 204
       x-inventory: "#54"
       x-screens:
         - components/common/comments-sheet.tsx
-      x-app-code: comments-sheet.tsx onChange (delete)
+      x-app-code: api/use-community.ts useDeleteCommunityComment (comments-sheet onDelete)
       parameters:
         - $ref: "#/components/parameters/CommunityPostId"
         - $ref: "#/components/parameters/CommentId"
@@ -3657,12 +3673,12 @@ paths:
       summary: 댓글 좋아요 토글
       description: "화면: components/common/comments-sheet.tsx 댓글 ♡"
       x-status: existing
-      x-backend: CommentController POST
-        /community/posts/{postId}/comments/{commentId}/like → CommentResponse
+      x-backend: MobileCommunityCommentController POST
+        /app/api/v2/community/posts/{postId}/comments/{commentId}/like → CommentResponse
       x-inventory: "#53"
       x-screens:
         - components/common/comments-sheet.tsx
-      x-app-code: comments-sheet.tsx (liked · likes)
+      x-app-code: api/use-community.ts useToggleCommunityCommentLike (comments-sheet onLike)
       parameters:
         - $ref: "#/components/parameters/CommunityPostId"
         - $ref: "#/components/parameters/CommentId"
@@ -3749,34 +3765,29 @@ paths:
       description: |
         화면: components/lounge/post-card.tsx ♡ 버튼 · 사진 두 번 누르기(좋아요만 켜기)
         언제: ♡ 누를 때 · 사진 두 번 탭
-      x-status: change
-      x-backend: PostController POST /community/posts/{postId}/like (토글) → 204
-      x-gap: >
-        1) 두 번 탭은 '켜기만' 이라 토글로는 못 해요 → 본문 { liked: true|false } 를 받으면 그 상태로
-        맞추기(멱등), 없으면 지금처럼 토글.
 
-        2) 응답을 204 대신 { liked, likeCount } 로 (빠르게 여러 번 눌러도 숫자가 맞게).
+        규칙: 누를 때마다 켜고 꺼요. 사진 두 번 탭은 '켜기만'이라 앱이 아직 안 누른 글(likedByMe=false)일 때만 보내요.
+        활성 멤버십 회원만(아니면 403). 응답의 count 로 숫자를 맞춰요.
+      x-status: existing
+      x-backend: MobileCommunityReactionController POST /app/api/v2/community/posts/{postId}/like (토글) →
+        CommunityReactionResponse{on, count}
       x-inventory: "#52"
       x-screens:
         - components/lounge/post-card.tsx
-      x-app-code: lounge-store.ts toggleLike · likeOn · liked
+      x-app-code: api/use-community.ts useToggleCommunityLike
       parameters:
         - $ref: "#/components/parameters/CommunityPostId"
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LikeSetRequest"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LikeState"
+                $ref: "#/components/schemas/CommunityReaction"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
       x-domain: lounge
@@ -5355,7 +5366,7 @@ paths:
 
         409: 정원 참(신청 때 · 수락 때 둘 다 봐요) · 이미 신청 · 참여 중 · 호스트 본인 · 닫힘 · 일시중지.
         거절(REJECTED)됐던 사람은 다시 신청할 수 있어요(PENDING 으로 돌아가요).
-      x-status: change
+      x-status: existing
       x-backend: MobileHangoutController POST /hangouts/{id}/participants →
         MobileHangoutDetailResponse (viewerRole PENDING)
       x-inventory: "#60"
@@ -5388,7 +5399,7 @@ paths:
 
         PENDING 이면 신청만 지워요(자리 그대로). APPROVED 면 자리 -1. 거절(REJECTED) · 호스트는 409.
         다시 참여하려면 신청부터 다시 해요(호스트 승인 필요).
-      x-status: change
+      x-status: existing
       x-backend: MobileHangoutController DELETE /hangouts/{id}/participants/me →
         MobileHangoutDetailResponse
       x-inventory: "#60"
@@ -5419,7 +5430,7 @@ paths:
         화면: app/meet/[id].tsx (내가 연 번개) '참여 신청 N명' — 한 줄마다 [수락][거절]
         (components/meet/detail/detail-parts.tsx JoinRequestSection). 대기(PENDING) 신청만, 먼저 온 순.
         호스트가 아니면 403.
-      x-status: new
+      x-status: existing
       x-backend: MobileHangoutController GET /hangouts/{id}/join-requests → List<MobileHangoutJoinRequestResponse>
       x-screens:
         - app/meet/[id].tsx
@@ -5466,7 +5477,7 @@ paths:
       description: >
         화면: JoinRequestSection [수락]. 대기 신청만(아니면 409) · 정원이 차면 409 (신청은 대기로 남아요) · 다른 번개의 신청 id 면 404.
         수락하면 확정(MEMBER) · 자리 +1 · 그 사람에게 장소 · 주소가 보이고 알림 HANGOUT_JOIN_APPROVED.
-      x-status: new
+      x-status: existing
       x-backend: MobileHangoutController POST /hangouts/{id}/join-requests/{participantId}/approve → MobileHangoutDetailResponse (호스트 화면)
       x-screens:
         - app/meet/[id].tsx
@@ -5504,7 +5515,7 @@ paths:
       description: >
         화면: JoinRequestSection [거절]. 대기 신청만(아니면 409). 사유는 선택(500자까지, 비우면 없음) — 알림 본문에만 붙어요.
         거절된 사람에게 HANGOUT_JOIN_REJECTED. 거절된 사람은 다시 신청할 수 있어요.
-      x-status: new
+      x-status: existing
       x-backend: MobileHangoutController POST /hangouts/{id}/join-requests/{participantId}/reject (MobileHangoutRejectRequest, 몸통 생략 가능) → MobileHangoutDetailResponse
       x-screens:
         - app/meet/[id].tsx
@@ -6353,6 +6364,74 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/LoungeRegionCount"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: lounge
+  /lounge/unread-counts:
+    get:
+      tags:
+        - 라운지 피드
+      operationId: getLoungeUnreadCounts
+      summary: 라운지 탭별 '새 글' 수 (탭 배지)
+      description: >
+        화면: app/(tabs)/lounge.tsx Tabs (탭 글자 오른쪽 위 노랑 숫자)
+
+        언제: 라운지 진입 · 다른 화면에서 라운지로 돌아옴 · 당겨서 새로고침 (주기적으로 부르지 않아요)
+
+        규칙 (서버가 계산 · 서버는 아무것도 저장하지 않아요):
+
+        - 탭마다 '마지막으로 본 때'는 앱이 기기에 두고 쿼리로 보내요. 서버는 그 시각 **뒤에 만들어진** 것만 세요 (createdAt > 보낸 시각).
+
+        - 보내지 않은 탭은 0 (처음 설치 · 처음 여는 탭). 앱은 응답의 serverTime 을 그 탭의 '본 때'로 남겨요.
+
+        - serverTime 은 서버 지금 시각이에요. 앱은 기기 시계와의 차이를 기억해서 '본 때'를 서버 시계로 남겨요 (기기 시계가 틀려도 맞게).
+
+        - 무엇을 세나: com = 커뮤니티 글(커뮤니티 탭에 보이는 글 전부) · chal = 챌린지(열린 것 · 승인된 것) ·
+        meet = 번개(hangout) + 동아리(ACTIVE) **합계**.
+
+        - 빼는 것: 내가 만든 것 · 내가 차단했거나 나를 차단한 멤버 · 프로/지점 관리자가 숨긴 글 · 지운 것 · 출시 때 꺼진 종류(표현 챌린지 등).
+
+        - 지점 필터는 넣지 않아요: 고른 지점과 상관없이 전체에서 세요.
+
+        - 탭마다 10개까지만 세면 돼요 (화면은 9+ 까지만 보여요). 10 이 오면 9+.
+
+        - 추천 탭 · 해외 동행 탭(출시 때 꺼짐)은 배지가 없어요.
+      x-status: new
+      x-screens:
+        - app/(tabs)/lounge.tsx
+      x-app-code: api/use-lounge-new-counts.ts (가짜 서버 셈 · 본 때 저장) · api/lounge.ts fetchLoungeUnreadCounts
+      parameters:
+        - name: com
+          in: query
+          required: false
+          description: 커뮤니티 탭을 마지막으로 본 때 (UTC ISO). 없으면 com = 0
+          schema:
+            type: string
+            format: date-time
+            example: "2026-11-27T09:30:00Z"
+        - name: chal
+          in: query
+          required: false
+          description: 챌린지 탭을 마지막으로 본 때 (UTC ISO). 없으면 chal = 0
+          schema:
+            type: string
+            format: date-time
+        - name: meet
+          in: query
+          required: false
+          description: 번개 · 동아리 탭을 마지막으로 본 때 (UTC ISO). 없으면 meet = 0
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoungeUnreadCounts"
+        "400":
+          description: 시각 모양이 틀림 (error=invalid_since)
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: lounge
@@ -7633,17 +7712,23 @@ paths:
       description: >
         화면: change.tsx — 종류 '잠깐 쉬어가기' · pass.tsx [연기 · 변경 신청]
 
-        흐름(2026-11-27, 567296791): 시작일(내 스터디 요일만) → 돌아올 때 스터디(스터디마다 그대로 · 또는 같은 지점 · 같은 언어 · 같은 레벨의 다른 팀) → 복귀일(돌아갈 스터디 요일만). 수업 고르기 없이 모든 스터디를 함께 쉬어요 (멤버십 단위 — 백엔드와 같아짐).
+        흐름(2026-11-27, 567296791): 시작일(내 스터디 요일만) → 돌아올 때 스터디(스터디마다 그대로 · 또는 같은 지점 · 같은 언어의 다른 수업) → 복귀일(돌아갈 스터디 요일만) → 사유. 수업 고르기 없이 모든 스터디를 함께 쉬어요 (멤버십 단위).
 
-        규칙: 최소 2주(14일) · 금요일 휴무라 시작 · 복귀로 못 골라요 · 복귀는 2년 안 · 이용권 끝나는 날 안. 사유는 기간과 상관없이 꼭 적어요 (2주 ~ 1달: 출장 · 여행 · 바쁜 일정 · 건강 · 그 밖의 사유 / 1달 넘게: 출산 · 군 입대 · 그 밖의 사유 + 5자 이상 · 운영진 확인). 변경 횟수는 연기 · 팀 변경 · 지점 이동이 같이 써요: 연기 1번 + 옮기는 팀마다 1번.
+        규칙(서버가 검증, 값은 GET /me/deferral-requests/form 의 rules): 최소 14일 · 금요일(휴무 요일)은 시작 · 복귀로 못 골라요 · 시작은 내 수업 요일 · 복귀는 돌아갈 수업 요일 · 복귀는 시작 + 24달 · 최대 유효기간 안. 사유는 기간과 상관없이 마스터데이터 DEFERRAL_REASON 에서 고르고 5자 이상 자세히 (1달 넘게도 같은 목록 — 특별한 경우인지는 운영진이 승인 · 반려로 판단, 서버가 막지 않음).
 
-        deferEndDate = 복귀일 - 1일. 쉬는 동안 남은 횟수가 줄지 않고 끝나는 날이 뒤로 밀려요.
+        횟수: 연기 1번(recordHolding) + returnChanges 쌍마다 수업 변경 1번. 연기는 접수 때 쓰고, 수업 변경은 복귀해 실제로 옮길 때 써요(대기 중인 쌍은 남은 수업 변경 횟수에서 미리 빠져요 — 그래서 반려 · 취소 · 건너뜀 때 되돌릴 게 없어요). 합산 풀 멤버십은 풀에서 1 + n.
 
-        error: illegal_operation (당일 연기 · 기간 역전 · 최소 기간 · 연기 횟수 다 씀)
+        돌아올 수업(설계 2026-11-28): 쌍을 자식 테이블 deferral_return_changes(PENDING)에 저장해 두고, 승인 때는 아무것도 만들지 않아요. 실제 복귀를 처리할 때(deferral-resumption 스케줄러 · 중도 취소로 바로 복귀 포함) 같은 트랜잭션에서 이 값을 읽어 from 배정을 빼고 to 배정을 넣어요(APPLIED) — 예약 수업 변경과 같은 배정 변경 로직. 그래서 관리자가 기간을 고치거나 중간에 취소해도 따로 맞출 게 없어요. 그때 to 수업에 갈 수 없으면(수업이 없어짐 등) 그 쌍만 SKIPPED · 원래 수업 그대로 · 수업 변경 횟수는 쓰지 않고 해당 지점에 알림(NotificationEvent DEFERRAL_RETURN_CHANGE_SKIPPED). 복귀 자체는 막지 않아요.
+
+        deferEndDate = returnDate - 1 (서버가 계산).
+
+        error: illegal_operation (당일 연기 · 기간 · 요일 · 최소 기간 · 상한 · 사유 · 옮길 수업 · 횟수 다 씀) · 기간이 겹치는 대기 · 승인 건
       x-status: change
       x-gap: >
-        추가: reasonCode(사유 종류) · reason 필수(지금은 null 가능) · returnTeams[{fromTeamId, toTeamId}]
-        (돌아올 때 옮길 팀 — 안 옮기면 빼요, 옮기는 팀마다 변경 횟수 1번 더 씀) · 금요일 · 최소 14일 검증
+        appv2 로 옮기기(지금 api/app MobileDeferralRequestController) · deferEndDate → returnDate ·
+        reasonCode(DEFERRAL_REASON 마스터데이터, membership_deferral_requests.reason_item_id FK) · reason 필수 5자 ·
+        returnChanges[{fromCourseId, toCourseId}] → deferral_return_changes 자식 테이블 · 금요일 · 수업 요일 · 최소 14일(app.deferral.min-days 10 → 14) · 24달 상한 검증 ·
+        복귀 때 적용 · 건너뛰면 지점 알림
       x-demo-blocked: true
       x-roles-note: manager · hq 는 403 demo_account (보여 주기 모드) · hq 는 화면 자체를 열지 않아요 · pro 는 회원처럼 돼요 (2026-11-26)
       x-backend: MobileDeferralRequestController POST /me/deferral-requests
@@ -7673,14 +7758,41 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
       x-domain: my
+  /me/deferral-requests/form:
+    get:
+      tags:
+        - 수강 · 결제
+      operationId: getDeferralForm
+      summary: 연기 신청서 정보 (대상 멤버십 · 남은 횟수 · 수업과 돌아올 후보 · 날짜 규칙 · 사유 목록 · 대기 건)
+      description: >
+        화면: change.tsx — 종류 '잠깐 쉬어가기' (내 스터디 · 남은 변경 횟수 · ① 시작 달력 · ② 돌아올 스터디 · ③ 복귀 달력 · ④ 사유 칩)
+
+        사유 칩은 마스터데이터 DEFERRAL_REASON 활성 항목이에요 (app-hub 데이터 관리에서 편집 · 쓰인 항목은 못 지우고 비활성으로 숨김). 기간이 1달을 넘어도 같은 목록.
+
+        returnOptions 는 같은 지점 · 같은 언어 · 이미 듣는 수업 빼고 (레벨은 Course 에 없어 아직 안 봐요, 2026-11-28).
+      x-status: new
+      x-backend: (새로) api/appv2/deferral GET /app/api/v2/me/deferral-requests/form
+      x-screens:
+        - app/me/change.tsx
+      x-app-code: data/account.ts getMembership · MY_TEAMS · sameLevelTeams · REST_MIN · REST_MIN_DAYS · REST_REASONS · REST_LONG_REASONS(지워요) · REST_REASON_MIN · REST_LONG_MAX_MONTHS · CLOSED_WEEKDAY
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeferralForm"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: my
   "/me/deferral-requests/{id}/cancel":
     put:
       tags:
         - 수강 · 결제
       operationId: cancelDeferralRequest
       summary: 연기 신청 취소
-      description: "화면: my-study-card.tsx [신청 취소]. 남의 것 404 · 처리된 건 409"
-      x-status: existing
+      description: "화면: my-study-card.tsx [신청 취소]. 남의 것 404 · 처리된 건 409. (추가) 대기 중인 returnChanges 쌍도 함께 CANCELED 로 접혀요(수업 변경 횟수는 복귀 때 쓰니 되돌릴 게 없어요)"
+      x-status: change
       x-backend: MobileDeferralRequestController PUT /me/deferral-requests/{id}/cancel
       x-screens:
         - components/account/my-study-card.tsx
@@ -8382,6 +8494,155 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+      x-domain: my
+  /me/meets:
+    get:
+      tags:
+        - 마이
+      operationId: listMyMeets
+      summary: 내 모임 · 찜한 모임 (동아리 · 번개 · 이벤트 칸별)
+      description: |
+        화면: 마이 › 내 활동 › 내 모임 시트(box=JOINED) · 찜한 모임 시트(box=SAVED)
+        규칙: JOINED = 동아리(방장인 활동 중 동아리 먼저 → 정식 멤버로 가입한 것) · 번개(내가 연 것 → 참여한 것, 지난 것 포함 — 다가오는/지난 나누기는 앱).
+        이벤트 참여 · 모임 찜은 도메인이 없어 빈 목록 (마이 탭 activity.savedMeetCount = 0 과 같아요). myRole CO_HOST 는 동아리 코호스트가 생기기 전까지 안 와요.
+      x-status: existing
+      x-backend: MobileMyActivityV2Controller GET /app/api/v2/me/meets → MyMeetsV2Response
+      x-screens:
+        - components/my/my-meets-sheet.tsx
+        - components/my/my-sheets.tsx
+      x-app-code: api/my-activity.ts fetchMyMeets · api/use-my-activity.ts useMyMeets
+      parameters:
+        - name: box
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [JOINED, SAVED]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [clubs, meetups, events]
+                properties:
+                  clubs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        categoryLabel: { type: [string, 'null'] }
+                        imageUrl: { type: [string, 'null'] }
+                        memberCount: { type: integer }
+                        maxMembers: { type: [integer, 'null'], description: null 이면 인원 제한 없음 }
+                        nextMeetDate: { type: [string, 'null'], format: date }
+                        nextMeetTime: { type: [string, 'null'], example: '19:30:00' }
+                        nextMeetPlace: { type: [string, 'null'] }
+                        myRole: { type: string, enum: [HOST, CO_HOST, MEMBER] }
+                  meetups:
+                    type: array
+                    items: { $ref: '#/components/schemas/MyGatheringItem' }
+                  events:
+                    type: array
+                    description: 이벤트 신청 도메인 전까지 빈 목록
+                    items: { $ref: '#/components/schemas/MyGatheringItem' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: my
+  /me/saved-challenges:
+    get:
+      tags:
+        - 마이
+      operationId: listSavedChallenges
+      summary: 찜한 챌린지
+      description: |
+        화면: 마이 › 내 활동 › 찜한 챌린지 시트 (최근 찜한 게 앞)
+        규칙: 챌린지 찜 도메인이 없어 늘 빈 목록 (마이 탭 activity.savedChallengeCount = 0 과 같아요). 모양만 먼저 정했어요.
+      x-status: existing
+      x-backend: MobileMyActivityV2Controller GET /app/api/v2/me/saved-challenges → SavedChallengesV2Response
+      x-screens:
+        - components/challenge/saved-sheet.tsx
+      x-app-code: api/my-activity.ts fetchSavedChallenges · api/use-my-activity.ts useSavedChallenges
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [challenges]
+                properties:
+                  challenges:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        title: { type: string }
+                        categoryCode: { type: [string, 'null'] }
+                        categoryLabel: { type: [string, 'null'] }
+                        imageUrl: { type: [string, 'null'] }
+                        startDate: { type: [string, 'null'], format: date }
+                        endDate: { type: [string, 'null'], format: date }
+                        verifyCycle: { type: [string, 'null'], enum: [DAILY, THREE_PER_WEEK, WEEKLY, null] }
+                        participantCount: { type: integer }
+                        hostedByMe: { type: boolean }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      x-domain: my
+  /me/expressions:
+    get:
+      tags:
+        - 마이
+      operationId: listMyExpressions
+      summary: 내 표현함 (최근 저장순)
+      description: |
+        화면: app/me/expressions.tsx
+        규칙: 지금은 표현 노트(AI 첨삭에서 저장)를 그대로 내려요 — sourceKind · sourceTitle · fixedSentence 는 null. 레슨 · 상황 · 리스닝 룸 저장이 서버로 오면 채워요.
+        앱은 첫 쪽 100개를 받아 그 안에서 찾기 · 나온 곳 칩으로 걸러요 (서버 검색 파라미터는 다음 단계).
+      x-status: existing
+      x-backend: MobileMyActivityV2Controller GET /app/api/v2/me/expressions → PageResponse<MyExpressionV2Response>
+      x-screens:
+        - app/me/expressions.tsx
+      x-app-code: api/my-activity.ts fetchMyExpressions · api/use-my-activity.ts useMyExpressions
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: 1부터
+          schema: { type: integer, default: 1 }
+        - name: size
+          in: query
+          required: false
+          schema: { type: integer, default: 50, maximum: 100 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rows, totalCount]
+                properties:
+                  rows:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        expression: { type: string, description: 핵심 표현 }
+                        meaning: { type: [string, 'null'] }
+                        example: { type: [string, 'null'], description: 예문 (저장한 문장) }
+                        fixedSentence: { type: [string, 'null'] }
+                        sourceKind: { type: [string, 'null'], enum: [BOOK, SITUATION, FREE_TALK, LISTENING, null] }
+                        sourceTitle: { type: [string, 'null'] }
+                        savedAt: { type: string, format: date-time }
+                  totalCount: { type: integer }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       x-domain: my
   /me/notifications:
     get:
@@ -16706,6 +16967,108 @@ components:
           type: integer
           description: 활동 중 동아리 수
           example: 4
+    CommunityFeedPost:
+      type: object
+      description: 커뮤니티 탭 카드 한 장 — 백엔드 CommunityPostResponse
+      required: [id, topic, body, images, ratio, likeCount, commentCount, likedByMe, scrappedByMe, author, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        topic:
+          type: string
+          enum: [DAILY, STUDY, EVENT, TRAVEL, CLUB, MEETUP]
+        body:
+          type: string
+          description: 본문 전체
+        images:
+          type: array
+          description: 사진 주소(서버 FQDN 그대로) — 올린 순서. 없으면 []
+          items:
+            type: string
+        ratio:
+          type: number
+          nullable: true
+          description: 사진 비율 가로 / 세로 (한 글의 사진 모두 같음). 사진 없으면 null
+          example: 1.333
+        likeCount:
+          type: integer
+        commentCount:
+          type: integer
+          description: 답글 포함
+        likedByMe:
+          type: boolean
+        scrappedByMe:
+          type: boolean
+        author:
+          type: object
+          required: [code, nickname, branchName]
+          properties:
+            code:
+              type: string
+            nickname:
+              type: string
+            branchName:
+              type: string
+              nullable: true
+              description: 글을 올린 지점 (없으면 null)
+        createdAt:
+          type: string
+          format: date-time
+    CommunityFeedPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommunityFeedPost"
+        nextCursor:
+          type: string
+          nullable: true
+          description: 다음 쪽 커서 — 마지막 쪽이면 null
+    CommunityReaction:
+      type: object
+      description: 하트 · 스크랩 토글 결과 (백엔드 CommunityReactionResponse)
+      required: [on, count]
+      properties:
+        on:
+          type: boolean
+          description: 누른 뒤 내가 켠 상태인지
+        count:
+          type: integer
+          description: 글의 하트 수 · 스크랩 수 (모든 사람)
+    LoungeUnreadCounts:
+      type: object
+      required:
+        - com
+        - chal
+        - meet
+        - serverTime
+      properties:
+        com:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: 커뮤니티 새 글 수 (10 = 10개 이상)
+          example: 3
+        chal:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: 새 챌린지 수
+          example: 1
+        meet:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: 새 번개 + 새 동아리 수
+          example: 2
+        serverTime:
+          type: string
+          format: date-time
+          description: 서버가 센 때 (UTC ISO) — 앱은 이 시계로 '본 때'를 남겨요
+          example: "2026-11-28T01:05:00Z"
     CommunityPostCategory:
       type: string
       description: 백엔드 PostCategory (게시판). 커뮤니티 탭은 PALLO_LOUNGE · BRANCH_LOUNGE, 해외살이
@@ -21003,6 +21366,22 @@ components:
         myWeekPoints:
           type: integer
           description: "'이번 주 포인트 달리기' 비교용 내 포인트"
+    MyGatheringItem:
+      type: object
+      description: 내 모임 · 찜한 모임의 날짜가 있는 모임 한 줄 (번개 · 이벤트 공통)
+      properties:
+        id: { type: string }
+        title: { type: string }
+        categoryLabel: { type: [string, 'null'], description: 이벤트 분류 이름 — 번개는 null }
+        branchName: { type: [string, 'null'] }
+        date: { type: string, format: date }
+        time: { type: [string, 'null'], example: '19:30:00' }
+        place: { type: [string, 'null'] }
+        participantCount: { type: integer }
+        capacity: { type: [integer, 'null'], description: null 이면 인원 제한 없음 }
+        fee: { type: [integer, 'null'], description: 1인 참가비(원) — null 이면 무료 · 각자 계산 }
+        imageUrl: { type: [string, 'null'] }
+        hostedByMe: { type: boolean }
     MyPage:
       type: object
       description: 마이 BFF (GET /me/mypage · /me/mypage/{code}). profile · joinedClubs
@@ -22215,13 +22594,175 @@ components:
             - "null"
           maxLength: 500
           description: 운영진에게 남길 말
+    DeferralForm:
+      type: object
+      description: |
+        (새로) 연기 신청서 정보 — GET /me/deferral-requests/form. 화면 상수(REST_* · CLOSED_WEEKDAY) · sameLevelTeams · getMembership 을 대신해요.
+        달력에서 요일에 맞추는 계산(firstOn · fitReturn)은 앱이 해요 — 서버는 POST 에서 같은 규칙으로 다시 검증해요.
+      required: [membership, remaining, courses, rules, reasons, pending, blocked]
+      properties:
+        membership:
+          type:
+            - object
+            - "null"
+          description: 연기 대상 멤버십 (MembershipPolicy.decideDeferralOf) — 없으면 null · blocked=NO_MEMBERSHIP
+          required: [id, name, maxEndDate]
+          properties:
+            id:
+              type: integer
+              format: int64
+            name:
+              type: string
+            maxEndDate:
+              type:
+                - string
+                - "null"
+              format: date
+              description: 최대 유효기간 (membership.maxEndDate) — 복귀일 상한. null 이면 상한 없음
+        remaining:
+          type: object
+          description: 남은 횟수 (ChangeAllowance) — null 이면 무제한. 연기 1번 + 옮기는 수업마다 수업 변경 1번
+          properties:
+            holding:
+              type:
+                - integer
+                - "null"
+            courseChange:
+              type:
+                - integer
+                - "null"
+            combined:
+              type:
+                - integer
+                - "null"
+              description: 합산 공유 풀을 쓰는 멤버십이면 남은 풀 · 아니면 null
+        courses:
+          type: array
+          description: 지금 듣는 수업 (모두 함께 쉬어요)
+          items:
+            $ref: "#/components/schemas/DeferralCourse"
+        rules:
+          type: object
+          required: [closedWeekdays, minStart, maxStart, minDays, longAfterMonths, maxMonths, detailMinLength]
+          properties:
+            closedWeekdays:
+              type: array
+              items:
+                type: string
+                example: FRIDAY
+              description: 시작 · 복귀로 못 고르는 요일 (금요일 정기휴일)
+            minStart:
+              type: string
+              format: date
+              description: 가장 빠른 시작일 (내일)
+            maxStart:
+              type: string
+              format: date
+              description: 가장 늦은 시작일 (오늘 + 6달 · 최대 유효기간 - minDays 중 이른 날)
+            minDays:
+              type: integer
+              example: 14
+              description: 최소 쉬는 날 수 (시작일 ~ 복귀 전날) — 서버 app.deferral.min-days
+            longAfterMonths:
+              type: integer
+              example: 1
+              description: 이 달 수를 넘으면 '1달 넘게' — 앱은 확인 창 · 안내만 띄우고, 승인은 운영진이 판단해요 (서버가 막지 않음)
+            maxMonths:
+              type: integer
+              example: 24
+              description: 복귀일 상한 (시작 + n달 · 최대 유효기간 중 이른 날)
+            detailMinLength:
+              type: integer
+              example: 5
+        reasons:
+          type: array
+          description: 연기 사유 선택지 — 마스터데이터 DEFERRAL_REASON 활성 항목 (sortOrder 순). 기간과 상관없이 같은 목록
+          items:
+            $ref: "#/components/schemas/DeferralReason"
+        pending:
+          oneOf:
+            - $ref: "#/components/schemas/DeferralRequest"
+            - type: "null"
+          description: 대기 중인 연기 신청 (있으면 신청 대신 내 스터디 카드의 '신청 중')
+        blocked:
+          type:
+            - string
+            - "null"
+          enum: [NO_MEMBERSHIP, NOT_ALLOWED, NO_REMAINING, PENDING_EXISTS, null]
+          description: 신청할 수 없는 이유 — 있으면 종류 카드를 흐리게
+    DeferralReason:
+      type: object
+      description: 연기 사유 한 개 (마스터데이터 DEFERRAL_REASON)
+      required:
+        - code
+        - label
+      properties:
+        code:
+          type: string
+          example: BUSINESS_TRIP
+        label:
+          type: string
+          example: 출장
+    DeferralCourse:
+      type: object
+      description: 연기 화면의 수업 한 줄 (MobileCourseChangeCourseResponse 모양 + returnOptions)
+      required: [id, title, languageCode, languageLabel, days, time]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        languageCode:
+          type: string
+        languageLabel:
+          type: string
+        days:
+          type: array
+          items:
+            type: string
+            example: TUESDAY
+        time:
+          type: string
+          example: "19:30"
+        returnOptions:
+          type: array
+          description: |
+            돌아올 때 옮겨 갈 수 있는 수업 — 같은 지점 · 같은 언어 · 이미 듣는 수업 빼고 (레벨은 아직 안 봐요, 2026-11-28).
+            courses 에만 있어요 (returnOptions 안의 수업에는 없음)
+          items:
+            $ref: "#/components/schemas/DeferralCourse"
+    DeferralReturnChange:
+      type: object
+      description: 돌아올 때 옮기는 수업 한 쌍 (deferral_return_changes 한 행)
+      required: [from, to, status]
+      properties:
+        from:
+          $ref: "#/components/schemas/DeferralCourse"
+        to:
+          $ref: "#/components/schemas/DeferralCourse"
+        status:
+          type: string
+          enum: [PENDING, APPLIED, SKIPPED]
+          description: PENDING = 복귀 전 · APPLIED = 복귀 때 옮김 · SKIPPED = 복귀 때 옮길 수 없어 원래 수업 그대로 (지점에 알림)
+        skipReason:
+          type:
+            - string
+            - "null"
+        appliedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
     DeferralCreate:
       type: object
-      description: 백엔드 MobileDeferralCreateRequest + (추가) 사유 종류 · 돌아올 팀
+      description: 백엔드 MobileDeferralCreateRequest — (바뀜) deferEndDate 대신 returnDate · reasonCode · returnChanges
       required:
         - membershipId
         - deferStartDate
-        - deferEndDate
+        - returnDate
+        - reasonCode
+        - reason
       properties:
         membershipId:
           type: integer
@@ -22229,34 +22770,38 @@ components:
         deferStartDate:
           type: string
           format: date
-        deferEndDate:
+          description: 쉬기 시작하는 날 — 내 수업 요일 중 하나 · 휴무 요일 아님 · minStart ~ maxStart
+        returnDate:
           type: string
           format: date
-          description: 복귀일 - 1일 (최소 14일 · 금요일은 시작 · 복귀로 못 골라요)
+          description: 복귀하는 날 — 돌아갈 수업 요일 중 하나 · 휴무 요일 아님 · 시작 + minDays 이후 · 상한 안. 서버가 deferEndDate = returnDate - 1 로 저장
         reasonCode:
           type: string
-          description: (추가) 사유 종류 — 2주 ~ 1달 TRIP · TRAVEL · BUSY · HEALTH · OTHER / 1달 넘게 CHILDBIRTH · MILITARY · OTHER
-          enum: [TRIP, TRAVEL, BUSY, HEALTH, CHILDBIRTH, MILITARY, OTHER]
+          description: 마스터데이터 DEFERRAL_REASON 의 code (활성 항목만 · 없으면 409)
+          example: BUSINESS_TRIP
         reason:
-          type:
-            - string
-            - "null"
+          type: string
+          minLength: 5
           maxLength: 1000
-          description: 자세한 사유 — 앱은 늘 적게 해요 (1달 넘게는 5자 이상). (추가) 서버도 필수로
-        returnTeams:
+          description: 자세한 사유 — 필수 (앞뒤 공백 빼고 detailMinLength 자 이상)
+        returnChanges:
           type: array
-          description: (추가) 돌아올 때 다른 팀으로 옮길 스터디 — 같은 지점 · 같은 언어 · 같은 레벨 팀만, 이미 듣는 팀 빼고. 그대로 돌아가면 빼요. 옮기는 팀마다 변경 횟수 1번
+          description: |
+            돌아올 때 다른 수업으로 옮길 쌍 — 그대로 돌아가면 빼요 (빈 배열 가능). 옮기는 쌍마다 수업 변경 1번.
+            to 는 그 수업의 returnOptions 안 · from 은 지금 듣는 수업 · from · to 각각 겹치면 안 돼요
           items:
             type: object
-            required: [fromTeamId, toTeamId]
+            required: [fromCourseId, toCourseId]
             properties:
-              fromTeamId:
+              fromCourseId:
                 type: string
-              toTeamId:
+                format: uuid
+              toCourseId:
                 type: string
+                format: uuid
     DeferralRequest:
       type: object
-      description: 백엔드 MobileDeferralRequestResponse 그대로
+      description: 백엔드 MobileDeferralRequestResponse + (추가) returnDate · reasonCode · reasonLabel · returnChanges
       required:
         - id
         - membershipName
@@ -22265,9 +22810,30 @@ components:
         - branchName
         - deferStartDate
         - deferEndDate
+        - returnDate
+        - returnChanges
         - status
         - appliedAt
       properties:
+        returnDate:
+          type: string
+          format: date
+          description: (추가) deferEndDate + 1일
+        reasonCode:
+          type:
+            - string
+            - "null"
+          description: (추가) DEFERRAL_REASON code — 콘솔 대신 접수 건은 null 일 수 있어요
+        reasonLabel:
+          type:
+            - string
+            - "null"
+          description: (추가) 신청 때 고른 사유 이름 (사유가 나중에 비활성이 돼도 그대로)
+        returnChanges:
+          type: array
+          description: (추가) 돌아올 때 옮기는 수업 — 없으면 빈 배열
+          items:
+            $ref: "#/components/schemas/DeferralReturnChange"
         id:
           type: string
           format: uuid

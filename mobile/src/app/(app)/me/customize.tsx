@@ -15,20 +15,18 @@ import { SparkSheet } from '@/components/my/my-sheets';
 import { PageTop } from '@/components/my/page-top';
 import { PText } from '@/components/ui/text';
 import { INSUFFICIENT_SPARKS, PRICE_CHANGED, purchaseAvatar, saveAvatar } from '@/api/avatar';
+import { useSyncAvatarCatalog } from '@/api/use-avatar-catalog';
 import { apiErrorMessage, isApiError } from '@/api/errors';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import {
-  AV_BG,
   AV_CATS,
-  AV_ITEMS,
   AV_RARE_C,
   AV_SW,
   AVC_LIST,
   BG_SW,
-  HAIR,
   HAIR_SW,
   SAY_IDEAS,
   type AvCat,
@@ -38,6 +36,7 @@ import {
   type AvTab,
 } from '@/data/my';
 import { sfx } from '@/lib/feedback';
+import { useAvBgs, useAvItems } from '@/state/av-catalog';
 import { avatarChanged, avatarCost, cloneAvatar, getMyAvatar, isOwned, useMyAvatar, useOwned } from '@/state/avatar';
 import { getMe, useMe } from '@/state/me';
 import { useRewards } from '@/state/rewards';
@@ -55,12 +54,18 @@ type LeaveAction = Parameters<NonNullable<Parameters<typeof usePreventRemove>[1]
 /**
  * 꾸미기 · 스파크 상점 (프로토타입 renderMyPush 'shop'): 위 줄 · 붙어 있는 미리보기(좌우 · 랜덤 · 원래대로 · 초기화)
  * · 분류 탭 → 타일 칸 → 아래 고정 [사고 저장하기]. 저장하기 전에는 아무 데도 반영되지 않아요.
+ * 아이템 · 배경 · 배경 효과 목록과 그림은 서버 에셋 카탈로그(app-hub '에셋 관리' · 판매 중만 · 화면 순서)를 따르고,
+ * 가짜 서버면 앱 번들을 써요 (state/av-catalog). 화면을 열 때 카탈로그가 오래됐으면 다시 받아요.
  */
 export default function CustomizeScreen() {
   const { width } = useWindowDimensions();
   const me = useMe();
   const saved = useMyAvatar();
   const own = useOwned();
+  useSyncAvatarCatalog();
+  const items = useAvItems();
+  const bgs = useAvBgs();
+  const hairs = items.filter((i) => i.hair);
   // ?try=santa: 받은 시즌 보상을 입힌 채로 열어요 (받은 창 · 알림의 '입어 보기'). 저장은 직접
   const { try: tryReward } = useLocalSearchParams<{ try?: string }>();
   const rewards = useRewards();
@@ -138,13 +143,15 @@ export default function CustomizeScreen() {
     }
     if (k === 'rand') {
       edit((x) => {
+        // 서버 목록에 그 칸 아이템이 하나도 없으면 비워 둬요
         (['eye', 'hat', 'face', 'wear', 'mitt', 'shoe', 'hand', 'acc', 'fx'] as AvCat[]).forEach((c) => {
-          const L = AV_ITEMS.filter((i) => i.cat === c && !i.lock && !i.hair);
-          x.eq[c] = Math.random() < 0.25 ? null : pk(L).id;
+          const L = items.filter((i) => i.cat === c && !i.lock && !i.hair);
+          x.eq[c] = Math.random() < 0.25 || !L.length ? null : pk(L).id;
         });
         x.color = Math.random() < 0.5 ? pk(AVC_LIST.filter((k2) => !k2[2]))[0] : pk(AV_SW);
-        x.bg = pk(AV_BG.filter((b) => !b.lock)).id;
-        x.eq.hair = Math.random() < 0.3 ? null : pk(HAIR).id;
+        const openBgs = bgs.filter((b) => !b.lock);
+        if (openBgs.length) x.bg = pk(openBgs).id;
+        x.eq.hair = Math.random() < 0.3 || !hairs.length ? null : pk(hairs).id;
         x.hc = pk(HAIR_SW);
       });
       setGen((g) => g + 1);
@@ -255,7 +262,7 @@ export default function CustomizeScreen() {
               </View>
             </Lift>
           </Pressable>
-          {HAIR.map((i) => tile(i.id, i.name, i.price, i.rare, d.eq.hair === i.id, itemArt(i)))}
+          {hairs.map((i) => tile(i.id, i.name, i.price, i.rare, d.eq.hair === i.id, itemArt(i), i.lock))}
         </View>
       </>
     );
@@ -265,7 +272,7 @@ export default function CustomizeScreen() {
         <ColorPick key={`b${gen}`} title="단색 배경 · 무료" cur={d.bg} swatches={BG_SW} onPick={(hex) => edit((x) => void (x.bg = hex))} />
         {sub('꾸며진 배경')}
         <View style={styles.tiles}>
-          {AV_BG.map((b) =>
+          {bgs.map((b) =>
             tile(
               'bg:' + b.id,
               b.name,
@@ -280,7 +287,7 @@ export default function CustomizeScreen() {
           )}
         </View>
         {sub('배경 효과')}
-        <View style={styles.tiles}>{AV_ITEMS.filter((i) => i.cat === 'fx').map((i) => tile(i.id, i.name, i.price, i.rare, d.eq.fx === i.id, itemArt(i), i.lock))}</View>
+        <View style={styles.tiles}>{items.filter((i) => i.cat === 'fx').map((i) => tile(i.id, i.name, i.price, i.rare, d.eq.fx === i.id, itemArt(i), i.lock))}</View>
       </>
     );
   } else if (cat === 'say') {
@@ -309,7 +316,7 @@ export default function CustomizeScreen() {
     );
   } else {
     const c = cat;
-    grid = <View style={styles.tiles}>{AV_ITEMS.filter((i) => i.cat === c).map((i) => tile(i.id, i.name, i.price, i.rare, d.eq[c] === i.id, itemArt(i), i.lock))}</View>;
+    grid = <View style={styles.tiles}>{items.filter((i) => i.cat === c).map((i) => tile(i.id, i.name, i.price, i.rare, d.eq[c] === i.id, itemArt(i), i.lock))}</View>;
   }
 
   return (

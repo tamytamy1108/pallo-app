@@ -7,7 +7,7 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { BranchMultiPicker, withJeom } from '@/components/onboarding/branch-list';
-import { LG_BRS } from '@/data/lounge';
+import { useLoungeBranches } from '@/api/use-lounge-branches';
 import { useMe } from '@/state/me';
 
 import { LgIcon } from './icons';
@@ -15,8 +15,8 @@ import { LgButton } from './lg-button';
 
 /** value 를 지점 목록으로: '전체' → [] · '가산' → ['가산'] · '가산,연신내' → 두 곳 */
 export const branchList = (value: string) => (value === '전체' || !value ? [] : value.split(','));
-/** 지점 목록을 value 로 (아무것도 · 모두 고르면 '전체') */
-export const branchValue = (brs: string[]) => (!brs.length || brs.length === LG_BRS.length ? '전체' : brs.join(','));
+/** 지점 목록을 value 로 (아무것도 안 고르면 '전체' — 모두 고른 건 시트가 적용할 때 '전체'로 바꿔요) */
+export const branchValue = (brs: string[]) => (!brs.length ? '전체' : brs.join(','));
 /**
  * 이 글 · 모임이 고른 지점에 맞는지 (프로토타입 lgBrOk). 지점 글자에 고른 지점이 들어 있으면 보여요.
  * '전 지점' 행사와 지점이 없는 글은 늘 보여요. 두 지점을 다니는 멤버('영등포 · 연신내')는 하나만 맞아도 보여요.
@@ -26,7 +26,8 @@ export function branchMatches(value: string, br: string | undefined) {
   if (!brs.length) return true;
   const b = br ?? '';
   if (!b || b.includes('전 지점')) return true;
-  return brs.some((x) => b.includes(x));
+  // 서버 지점 이름은 '가산점', 예시 데이터는 '가산' 처럼 섞여 있어요 — 끝의 '점'은 빼고 견줘요
+  return brs.some((x) => b.includes(x.replace(/점$/, '')));
 }
 
 /**
@@ -59,9 +60,13 @@ export function BranchSelect({ value, onChange, title = '어느 지점 글을 �
  */
 function BranchSheet({ open, title, initial, onClose, onClosed, onApply }: { open: boolean; title: string; initial: string[]; onClose: () => void; onClosed: () => void; onApply: (brs: string[]) => void }) {
   const me = useMe();
+  // 지점은 서버 목록 (GET /branches · 라운지 · 이벤트 공통)
+  const branches = useLoungeBranches();
+  const total = branches.length;
   const [pick, setPick] = useState<string[]>(initial);
+  const all = !pick.length || pick.length === total;
   const apply = () => {
-    onApply(pick.length === LG_BRS.length ? [] : pick);
+    onApply(pick.length === total ? [] : pick);
     onClose();
   };
   return (
@@ -71,8 +76,8 @@ function BranchSheet({ open, title, initial, onClose, onClosed, onApply }: { ope
       onClosed={onClosed}
       title={title}
       tall
-      footer={<LgButton label={!pick.length || pick.length === LG_BRS.length ? '적용하기 · 전체 지점' : `적용하기 · ${pick.length}곳`} wide height={52} fontSize={15.5} onPress={apply} />}>
-      <BranchMultiPicker selected={pick} onChange={setPick} allOption mine={me.branch.split(' · ')} />
+      footer={<LgButton label={all ? '적용하기 · 전체 지점' : `적용하기 · ${pick.length}곳`} wide height={52} fontSize={15.5} onPress={apply} />}>
+      <BranchMultiPicker selected={pick} onChange={setPick} allOption mine={me.branch.split(' · ')} branches={branches} />
     </Sheet>
   );
 }

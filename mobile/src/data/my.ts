@@ -11,10 +11,10 @@ import { AV_BG, AV_BODIES, AV_ITEMS } from './av-items';
 
 // ---------------------------------------------------------------- 꾸미기 (스파크 상점)
 
-/** fx = 배경 효과 (배경 탭에서 골라요 · 무대 위에 겹쳐요) */
+/** fx = 배경 효과 (배경 탭에서 골라요 · 배경 위, 캐릭터 뒤에 겹쳐요) */
 export type AvCat = 'hair' | 'eye' | 'mitt' | 'shoe' | 'hat' | 'face' | 'wear' | 'hand' | 'acc' | 'fx';
 export type AvRare = '기본' | '일반' | '레어' | '에픽' | '시즌';
-/** back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 덧그림 · fx: 배경 위 효과 */
+/** back: 캐릭터 뒤 · front: 앞 · paint: 몸에 칠한 옷 · eye: 눈 위 덧그림 · fx: 배경 위 · 캐릭터 뒤 효과 */
 export type AvLayer = 'back' | 'front' | 'paint' | 'eye' | 'fx';
 export type AvItem = {
   id: string;
@@ -126,6 +126,20 @@ export const SPARK_PRO_RATE = [
   { minRate: 90, amount: 150 },
 ] as const;
 export const SPARK_PRO_RATE_MIN_SESSIONS = 4;
+/**
+ * 출석률 칸을 누른 시트의 한 줄: 출석률 스파크까지 남은 정도 (맡은 세션 = 이번 달 · 예정 회차 포함).
+ * 예) 14개 중 13회 → '100%까지 1회 · 지금 받으면 +150'
+ */
+export function proRateRewardLine(sessions: number, checks: number): string {
+  if (sessions < SPARK_PRO_RATE_MIN_SESSIONS) return `맡은 세션이 ${SPARK_PRO_RATE_MIN_SESSIONS}개 이상인 달만 출석률 스파크를 받아요`;
+  const top = SPARK_PRO_RATE[0];
+  if (checks >= sessions) return `100% 달성 · 다음 달 1일에 +${top.amount}`;
+  const rate = (checks / sessions) * 100;
+  const now = SPARK_PRO_RATE.find((r) => rate >= r.minRate);
+  if (now) return `100%까지 ${sessions - checks}회 · 지금 받으면 +${now.amount}`;
+  const low = SPARK_PRO_RATE[SPARK_PRO_RATE.length - 1];
+  return `${low.minRate}%까지 ${Math.ceil((sessions * low.minRate) / 100) - checks}회 · 채우면 +${low.amount}`;
+}
 export const SPARK_EARN_PRO: readonly (readonly [string, string])[] = [
   ['프로로 세션 참여', `+${SPARK_ATTEND}`],
   ...SPARK_PRO_RATE.map((r) => [r.minRate === 100 ? '한 달 출석률 100%' : `한 달 출석률 ${r.minRate}% 이상`, `+${r.amount}`] as const),

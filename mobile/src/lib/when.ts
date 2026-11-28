@@ -35,7 +35,7 @@ export function agoLabel(at: number, now = Date.now()): string {
 }
 
 /** 예시 데이터의 '10분 전' · '어제' · '6일 전' 같은 글을 지난 시간(ms)으로 — 못 읽으면 null */
-function parseAgo(time: string): number | null {
+export function parseAgo(time: string): number | null {
   if (time === '방금') return 0;
   if (time === '어제') return DAY;
   const m = /^(\d+)\s*(분|시간|일|주)\s*전$/.exec(time.trim());

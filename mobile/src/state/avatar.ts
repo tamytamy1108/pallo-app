@@ -5,6 +5,7 @@
  */
 import { AV_BG, AV_ITEM, AV_OWN0, AVC_LIST, avFresh, type AvCat, type Avatar } from '@/data/my';
 import { createStore } from '@/lib/store';
+import { avBgs, avItem } from '@/state/av-catalog';
 import { award } from '@/state/ledger';
 import { getMe } from '@/state/me';
 
@@ -38,6 +39,7 @@ function loadAvatar(saved: unknown, initial: AvatarState): AvatarState {
 export const useMyAvatar = () => store.useStore((s) => s.saved);
 export const getMyAvatar = () => store.get().saved;
 export const useOwned = () => store.useStore((s) => s.own);
+export const getOwned = () => store.get().own;
 
 /** 직접 고른 색('#…')은 무료 · 나머지는 가진 것만 (프로토타입 avOwn) */
 export const isOwned = (own: readonly string[], key: string) => key[0] === '#' || key.startsWith('bg:#') || own.includes(key);
@@ -56,14 +58,14 @@ export function avatarCost(d: Avatar, own: readonly string[]) {
     }
   }
   if (!isOwned(own, 'bg:' + d.bg)) {
-    const b = AV_BG.find((k) => k.id === d.bg);
+    const b = avBgs().find((k) => k.id === d.bg);
     if (b) {
       cost += b.price;
       need.push(b.name);
     }
   }
   Object.values(d.eq).forEach((id) => {
-    const it = id ? AV_ITEM[id] : null;
+    const it = id ? avItem(id) : null;
     if (it && !isOwned(own, it.id)) {
       cost += it.price;
       need.push(it.name);

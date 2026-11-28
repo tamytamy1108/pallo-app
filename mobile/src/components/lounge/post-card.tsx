@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { GrowInput } from '@/components/ui/grow-input';
 import { FramedImage } from '@/components/ui/photo-frame';
 import { Pressable } from '@/components/ui/pressable';
-import { CommentsSheet } from '@/components/common/comments-sheet';
+import type { CommunityPost } from '@/api/community';
+import { toCardPost, useAddCommunityComment, useCommunityComments, useDeleteCommunityComment, useEditCommunityComment, useToggleCommunityCommentLike, useToggleCommunityLike, useToggleCommunityScrap } from '@/api/use-community';
+import { type Comment, CommentsSheet } from '@/components/common/comments-sheet';
 import { type ReportMenuItem, ReportSheet } from '@/components/common/report-sheet';
 import { guardMember } from '@/components/common/trial-guide';
 import { Sheet } from '@/components/ui/sheet';
@@ -74,15 +76,36 @@ export function Who({ who, av, role, sub, onMore, dark = false }: { who: string;
 function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number; cmts: number; onCmt: () => void; onLikers: () => void }) {
   const liked = useLounge((s) => !!s.liked[id]);
   const saved = useLounge((s) => !!s.saved[id]);
-  const n = likes + (liked ? 1 : 0);
+  return (
+    <ActsView
+      liked={liked}
+      saved={saved}
+      likes={likes + (liked ? 1 : 0)}
+      cmts={cmts}
+      onLike={() => toggleLike(id)}
+      onSave={() => (toggleSave(id) ? showToast('라운지 저장함에 담았어요', seeAt(SEE.savedPosts)) : showToast('저장을 취소했어요'))}
+      onCmt={onCmt}
+      onLikers={onLikers}
+    />
+  );
+}
+
+/** 하트 · 댓글 · 저장 줄 그리기만 — likes 는 내 하트까지 더한 전체 수. onLikers 가 없으면 수만 보여요 */
+function ActsView({ liked, saved, likes, cmts, onLike, onSave, onCmt, onLikers }: { liked: boolean; saved: boolean; likes: number; cmts: number; onLike: () => void; onSave: () => void; onCmt: () => void; onLikers?: () => void }) {
   return (
     <View style={styles.acts}>
-      <PopButton label="좋아요" pressed={liked} onPress={() => toggleLike(id)} popKey={liked ? 1 : 0}>
+      <PopButton label="좋아요" pressed={liked} onPress={onLike} popKey={liked ? 1 : 0}>
         <HeartPop on={liked}><LgIcon name="heart" size={25} fill={liked ? LG_C.pk : 'none'} /></HeartPop>
       </PopButton>
-      <Pressable onPress={onLikers} accessibilityRole="button" accessibilityLabel="좋아요 누른 사람 보기" style={styles.cnt}>
-        <PText style={styles.cntText}>{n || ''}</PText>
-      </Pressable>
+      {onLikers ? (
+        <Pressable onPress={onLikers} accessibilityRole="button" accessibilityLabel="좋아요 누른 사람 보기" style={styles.cnt}>
+          <PText style={styles.cntText}>{likes || ''}</PText>
+        </Pressable>
+      ) : (
+        <View style={styles.cnt} accessibilityLabel={`좋아요 ${likes}개`}>
+          <PText style={styles.cntText}>{likes || ''}</PText>
+        </View>
+      )}
       <Pressable onPress={onCmt} accessibilityRole="button" accessibilityLabel="댓글" style={styles.ib}>
         <LgIcon name="cmt" size={24} />
       </Pressable>
@@ -90,7 +113,7 @@ function Acts({ id, likes, cmts, onCmt, onLikers }: { id: string; likes: number;
         <PText style={styles.cntText}>{cmts || ''}</PText>
       </Pressable>
       <View style={styles.sp} />
-      <Pressable onPress={() => (toggleSave(id) ? showToast('라운지 저장함에 담았어요', seeAt(SEE.savedPosts)) : showToast('저장을 취소했어요'))} accessibilityRole="button" accessibilityLabel="저장" accessibilityState={{ selected: saved }} style={styles.ib}>
+      <Pressable onPress={onSave} accessibilityRole="button" accessibilityLabel="저장" accessibilityState={{ selected: saved }} style={styles.ib}>
         <HeartPop on={saved}><LgIcon name="save" size={23} fill={saved ? LG_C.y : 'none'} /></HeartPop>
       </Pressable>
     </View>
@@ -118,7 +141,7 @@ function PopButton({ label, pressed, onPress, popKey, children }: { label: strin
 }
 
 /** 사진 칸: 옆으로 밀면 (왼쪽 · 오른쪽) 한 장씩 넘어가요 · 두 번 누르면 좋아요(하트 터짐) (프로토타입 lgPic) */
-function Pic({ p }: { p: Post }) {
+function Pic({ p, onDoubleTap }: { p: Post; onDoubleTap?: () => void }) {
   const [i, setI] = useState(0);
   const [w, setW] = useState(0);
   const pager = useRef<ScrollViewInstance>(null);
@@ -131,7 +154,8 @@ function Pic({ p }: { p: Post }) {
     const now = Date.now();
     if (now - lastTap.current < 320) {
       lastTap.current = 0;
-      likeOn(p.id);
+      if (onDoubleTap) onDoubleTap();
+      else likeOn(p.id);
       if (!still) burst.set(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: 800, easing: Easing.linear })));
       return;
     }
@@ -239,6 +263,62 @@ export function PostCard({ p }: { p: Post }) {
       <PostMenu open={sheet === 'more'} id={p.id} who={p.who} onClose={() => setSheet(null)} />
       <LikersSheet open={sheet === 'likers'} id={p.id} who={p.who} likes={p.likes} onClose={() => setSheet(null)} />
     </View>
+  );
+}
+
+/**
+ * 커뮤니티 탭 카드 — 서버 글(GET /community/posts) 그대로. PostCard 와 같은 모양에 하트 · 스크랩 · 댓글이 서버로 가요 (api/use-community).
+ * 좋아요 누른 사람 목록은 아직 API 가 없어서 수만 보여요.
+ */
+export function CommunityPostCard({ d }: { d: CommunityPost }) {
+  const p = useMemo(() => toCardPost(d), [d]);
+  const like = useToggleCommunityLike();
+  const scrap = useToggleCommunityScrap();
+  const [sheet, setSheet] = useState<null | 'cmt' | 'more'>(null);
+  const onSave = () => {
+    showToast(d.scrappedByMe ? '저장을 취소했어요' : '라운지 저장함에 담았어요');
+    scrap.mutate(d.id);
+  };
+  return (
+    <View>
+      <Who who={p.who} av={p.av} role={p.role} sub={`${p.br ? `${p.br}${p.club ? ` · ${p.club}` : ''} · ` : ''}${whenLabel(p.time, p.at)}`} onMore={() => setSheet('more')} />
+      <Pic p={p} onDoubleTap={() => (d.likedByMe ? undefined : like.mutate(d.id))} />
+      <ActsView liked={d.likedByMe} saved={d.scrappedByMe} likes={d.likeCount} cmts={d.commentCount} onLike={() => like.mutate(d.id)} onSave={onSave} onCmt={() => setSheet('cmt')} />
+      {p.text && !p.lbl ? (
+        <PText style={styles.capt}>
+          <PText style={styles.captWho}>{p.who} </PText>
+          {p.text}
+        </PText>
+      ) : null}
+      <CommunityCommentsSheet open={sheet === 'cmt'} postId={d.id} author={p.who} onClose={() => setSheet(null)} />
+      <PostMenu open={sheet === 'more'} id={p.id} who={p.who} onClose={() => setSheet(null)} />
+    </View>
+  );
+}
+
+/** 커뮤니티 글 댓글 창 — 서버 목록을 보여주고, 보내기 · 답글 · 고치기 · 지우기 · 하트를 서버로 */
+function CommunityCommentsSheet({ open, postId, author, onClose }: { open: boolean; postId: string; author: string; onClose: () => void }) {
+  const { comments } = useCommunityComments(postId, open);
+  const add = useAddCommunityComment(postId);
+  const edit = useEditCommunityComment(postId);
+  const del = useDeleteCommunityComment(postId);
+  const likeC = useToggleCommunityCommentLike(postId);
+  // 창이 먼저 바꿔 보인 목록 — 서버 목록이 새로 오면 그걸로 바꿔요
+  const [local, setLocal] = useState<{ base: Comment[]; list: Comment[] } | null>(null);
+  const list = local && local.base === comments ? local.list : comments;
+  return (
+    <CommentsSheet
+      open={open}
+      onClose={onClose}
+      comments={list}
+      author={author}
+      onChange={(next) => setLocal({ base: comments, list: next })}
+      onSend={(t) => add.mutate({ content: t })}
+      onReply={(parentId, t) => add.mutate({ content: t, parentId })}
+      onEdit={(commentId, t) => edit.mutate({ commentId, content: t })}
+      onDelete={(commentId) => del.mutate(commentId)}
+      onLike={(commentId) => likeC.mutate(commentId)}
+    />
   );
 }
 

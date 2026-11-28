@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { memo, type ReactNode, startTransition, useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from 'react';
-import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
+import { type NativeScrollEvent, type NativeSyntheticEvent, ActivityIndicator, ScrollView, type ScrollViewInstance, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from '@/components/ui/safe-area';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,9 +16,10 @@ import { CreateSheet, type CreateKind } from '@/components/lounge/create-sheet';
 import { LgIcon } from '@/components/lounge/icons';
 import { MiniMapCard } from '@/components/lounge/korea-map';
 import { LgIn } from '@/components/lounge/lg-in';
-import { BADGE_TABS, enterLoungeTab, leaveLoungeTab, useNewCounts } from '@/components/lounge/new-posts';
+import { enterLoungeTab, leaveLoungeTab, useNewCounts } from '@/api/use-lounge-new-counts';
+import { useCommunityFeed } from '@/api/use-community';
 import { go } from '@/components/lounge/nav';
-import { AbroadCard, PostCard } from '@/components/lounge/post-card';
+import { AbroadCard, CommunityPostCard, PostCard } from '@/components/lounge/post-card';
 import { RecChalCard, RecMeetCard } from '@/components/lounge/rec-cards';
 import { Section } from '@/components/lounge/section';
 import { StoryRow } from '@/components/lounge/story-row';
@@ -65,7 +66,7 @@ export default function LoungeScreen() {
       router.setParams({ tab: undefined });
     }, [params.tab]),
   );
-  // 새 글 배지: 탭을 열면 그 탭 배지를 지우고(남아 있던 수는 '새 글 N개' 버튼으로), 떠날 때 한 번 더 본 걸로 해요
+  // 새 글 배지: 탭을 열면 그 탭 배지를 지우고, 떠날 때 한 번 더 본 걸로 해요 (수는 서버가 세요 — api/use-lounge-new-counts)
   useFocusEffect(
     useCallback(() => {
       enterLoungeTab(tab);
@@ -121,6 +122,8 @@ export default function LoungeScreen() {
     fab.onScroll(y);
     if (y > 360 !== scrolled) setScrolled(y > 360);
     checkScrollLock('lounge');
+    const { layoutMeasurement, contentSize } = e.nativeEvent;
+    if (y + layoutMeasurement.height >= contentSize.height - NEAR_END_PX) nearEnd.forEach((f) => f());
   };
   // 고른 칸은 시트가 다 닫힌 뒤에 열어요. 닫히는 중에 다른 화면 · 시트를 열면 아이폰에서 아무 일도 안 일어나요
   const picked = useRef<CreateKind | null>(null);
@@ -245,7 +248,8 @@ function Tabs({ tab, counts, onPick }: { tab: LoungeTab; counts: Record<LoungeTa
         accessibilityRole="tablist">
         {LG_TABS.map(([k, l]) => {
           const on = tab === k;
-          const n = BADGE_TABS.includes(k) ? counts[k] : 0;
+          // 배지 없는 탭(추천)은 늘 0
+          const n = counts[k];
           // 새로 올라온 수 (번개 · 동아리도 다른 탭처럼 숫자)
           const badge = n ? (n > 9 ? '9+' : String(n)) : null;
           return (
@@ -424,11 +428,10 @@ function Feed({ tab, brs, onMakeTrip, onRegAbroad }: { tab: LoungeTab; brs: stri
     );
   }
 
-  const items =
-    tab === 'com'
-      ? F.filter((p) => p.k === 'post' && (sub.com === 'all' || (sub.com === 'club' && (!!p.club || p.cat === 'club')) || p.cat === sub.com))
-      : F.filter((p) => 'rec' in p && p.rec && (sub.all === 'all' || (p.k !== 'map' && ((p.k === 'post' || p.k === 'abroad' ? p.likes >= 60 : false) || p.k === 'meet'))));
-  if (!items.length) return <View style={styles.feed}>{tab === 'com' ? <Empty text={'아직 글이 없어요.\n위 + 버튼으로 첫 글을 올려 보세요.'} /> : null}</View>;
+  // 커뮤니티 탭은 서버 글 (주제 · 지점은 서버가 걸러요 — api/use-community)
+  if (tab === 'com') return <CommunityFeed brs={brs} />;
+  const items = F.filter((p) => 'rec' in p && p.rec && (sub.all === 'all' || (p.k !== 'map' && ((p.k === 'post' || p.k === 'abroad' ? p.likes >= 60 : false) || p.k === 'meet'))));
+  if (!items.length) return <View style={styles.feed} />;
   return (
     <View style={styles.feed}>
       {items.map((p, i) => (
@@ -436,6 +439,41 @@ function Feed({ tab, brs, onMakeTrip, onRegAbroad }: { tab: LoungeTab; brs: stri
           <FeedCard p={p} />
         </LgIn>
       ))}
+    </View>
+  );
+}
+
+/** 라운지 스크롤이 끝에 가까워지면 부르는 것들 (커뮤니티 탭 다음 쪽) */
+const nearEnd = new Set<() => void>();
+/** 끝에서 이만큼 남으면 다음 쪽을 미리 받아요 */
+const NEAR_END_PX = 900;
+
+/** 커뮤니티 탭 피드 — 서버 글 최신순, 끝에 가까워지면 다음 쪽 (차단한 사람 · 숨긴 사람 글은 빼요) */
+function CommunityFeed({ brs }: { brs: string[] }) {
+  const sub = useLounge((s) => s.sub.com);
+  const active = useLounge((s) => s.tab === 'com');
+  const blocked = useBlockedNames();
+  const hidden = useLounge((s) => s.hidden);
+  const { q, posts, loadMore } = useCommunityFeed(sub, brs);
+  useEffect(() => {
+    if (!active) return;
+    nearEnd.add(loadMore);
+    return () => {
+      nearEnd.delete(loadMore);
+    };
+  }, [active, loadMore]);
+  const shown = posts.filter((d) => !blocked.includes(d.author.nickname) && !hidden[d.author.nickname]);
+  if (q.isPending) return <View style={styles.feed}><ActivityIndicator style={styles.spin} color={Colors.inkSub} /></View>;
+  if (q.isError && !posts.length) return <View style={styles.feed}><Empty text={'글을 불러오지 못했어요.\n아래로 당겨 다시 시도해 주세요.'} /></View>;
+  if (!shown.length) return <View style={styles.feed}><Empty text={'아직 글이 없어요.\n위 + 버튼으로 첫 글을 올려 보세요.'} /></View>;
+  return (
+    <View style={styles.feed}>
+      {shown.map((d, i) => (
+        <LgIn key={d.id} delay={Math.min(i, 4) * 50}>
+          <CommunityPostCard d={d} />
+        </LgIn>
+      ))}
+      {q.isFetchingNextPage ? <ActivityIndicator style={styles.spin} color={Colors.inkSub} /> : null}
     </View>
   );
 }
@@ -506,6 +544,7 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: Colors.lavender, borderColor: Colors.purple },
   chipText: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17, color: Colors.inkSub },
   feed: { paddingTop: 12, paddingHorizontal: 16, gap: 22 },
+  spin: { paddingVertical: 30 },
   empty: { textAlign: 'center', paddingVertical: 30, paddingHorizontal: 10, fontFamily: Font.body700, fontSize: 14, lineHeight: 22, color: Colors.inkSub },
   fabHit: { position: 'absolute', right: 16 },
   fab: { width: 60, height: 60, borderRadius: 30, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center', boxShadow: `0px 5px 0px ${Colors.ink}` },

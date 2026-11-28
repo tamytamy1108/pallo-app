@@ -6,6 +6,7 @@ import { setSfxOn } from '@/lib/feedback';
 import { setNoListen, setNoSpeak } from '@/state/learn-prefs';
 
 import { fresh } from '../../../my/_state';
+import { LINK_REQUESTS_KEY, LINK_SAMPLE, seedLinkRequests } from '../_link-requests';
 
 /**
  * 설정 (/me/settings) — 계정 · 알림 · 학습 · 공개 범위 · 이용권 · 도움 · 로그아웃/탈퇴. 켜고 끄기는 기기에 남는 설정 값.
@@ -67,9 +68,8 @@ export const NickSheet: Story = {
     await userEvent.click(await canvas.findByText('닉네임 · 한 줄 소개'));
   },
 };
-/** 내 지점 시트 */
-export const BranchSheet: Story = {
-  play: async ({ canvas, userEvent }) => {
-    await userEvent.click(await canvas.findByText('내 지점'));
-  },
+/** 계정 칸 '내 지점' 줄 — 확인 중인 연동 요청이 있으면 '확인 중 N'. 누르면 /me/settings/branch (Pages/Me/MyBranchLinks) */
+export const MyBranchRow: Story = {
+  parameters: { queries: [[LINK_REQUESTS_KEY, LINK_SAMPLE]] },
+  beforeEach: fresh({}, seedLinkRequests(LINK_SAMPLE)),
 };

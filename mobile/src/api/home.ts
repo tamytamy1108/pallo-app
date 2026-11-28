@@ -3,8 +3,8 @@
  * 가짜 서버 값은 data/home.ts · data/mock.ts · components/home/attendance.ts 에 있어요.
  */
 import { getAttend, myTeams, sendAttendance as markAttendance, sendRsvp as markRsvp, type Attend } from '@/components/home/attendance';
-import { markAllNotiRead, markNotiRead } from '@/components/home/noti-state';
-import { LANGS, LAUNCH_POPUPS, LOUNGE_HIGHLIGHTS, MY_LANG, MY_SLOT, NOTIS, QR_AFTER, QR_BEFORE, SLOTS, ATTEND_POINTS, type LaunchPopup, type LoungeHighlight, type Noti } from '@/data/home';
+import { countDeviceUnread } from '@/components/home/noti-state';
+import { LANGS, LAUNCH_POPUPS, LOUNGE_HIGHLIGHTS, MY_LANG, MY_SLOT, QR_AFTER, QR_BEFORE, SLOTS, ATTEND_POINTS, type LaunchPopup, type LoungeHighlight } from '@/data/home';
 import { NOTICE_DETAILS, NOTICES, type Notice, type NoticeDetail } from '@/data/mock';
 
 import { http, type Page, type PageParams } from './client';
@@ -110,22 +110,14 @@ export function setNoticePinned({ id, pinned }: { id: string; pinned: boolean })
   return pinned ? http.put(path) : http.delete(path);
 }
 
-/* ───────── 알림함 ───────── */
+/* ───────── 알림함 (목록 · 읽음은 api/notifications.ts) ───────── */
 
-/** 13 GET /me/notifications?kind= */
-export function fetchNotifications(params: PageParams & { kind?: Noti['kind'] } = {}, { signal }: Opts = {}): Promise<Page<Noti>> {
-  if (apiConfig.useMock) return mock('notifications', () => pageOf(params.kind ? NOTIS.filter((n) => n.kind === params.kind) : NOTIS, params));
-  return http.get('/me/notifications', { query: params, signal });
-}
+export type UnreadNotificationCount = { count: number };
 
-/** 14 POST /me/notifications/read — ids 를 주면 그것만, 없으면 모두 읽음 */
-export function markNotificationsRead(ids?: string[]): Promise<void> {
-  if (apiConfig.useMock)
-    return mock('notificationsRead', () => {
-      if (ids) ids.forEach(markNotiRead);
-      else markAllNotiRead();
-    });
-  return http.post('/me/notifications/read', ids ? { ids } : { all: true });
+/** GET /me/notifications/unread-count — 안 읽은 내 알림 수 (홈 종 배지 · 1분마다). 백엔드 MobileNotificationV2Controller */
+export function fetchUnreadNotificationCount({ signal }: Opts = {}): Promise<UnreadNotificationCount> {
+  if (apiConfig.useMock) return mock('notificationsUnreadCount', () => ({ count: countDeviceUnread() }));
+  return http.get('/me/notifications/unread-count', { signal });
 }
 
 /* ───────── 라운지 미리보기 · 시작 팝업 ───────── */

@@ -14,7 +14,10 @@ import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { exprCard, exprFrom, useSavedExpressions, type ExpressionFrom, type SavedExpression } from '@/state/expressions';
+import { exprCard, exprFrom, type ExpressionFrom, type SavedExpression } from '@/state/expressions';
+import { apiErrorMessage } from '@/api/errors';
+import { useMyExpressions } from '@/api/use-my-activity';
+import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 
 /** 나온 곳 4가지 (프로토타입 CH_SRC: 이름 · 아이콘) */
@@ -62,7 +65,9 @@ function ExprCard({ x, on, onToggle, all }: { x: SavedExpression; on: boolean; o
  * 학습 중 저장한 표현 카드 · 7개부터 찾기 칸 · 나온 곳 칩 · 'n개 더 보기'. 1개 이상 고르면 아래 [챌린지 열기] → 챌린지 만들기.
  */
 export default function ExpressionsScreen() {
-  const all = useSavedExpressions();
+  // GET /me/expressions (api/use-my-activity) — 찾기 · 나온 곳 칩은 받은 첫 쪽 안에서 거르고, 저장 취소는 아직 기기 상태
+  const exprs = useMyExpressions();
+  const all = exprs.list ?? [];
   const [sel, setSel] = useState<string[]>([]);
   const [q, setQ] = useState('');
   const [chip, setChip] = useState<'all' | ExpressionFrom>('all');
@@ -133,7 +138,11 @@ export default function ExpressionsScreen() {
           </>
         )}
 
-        {!all.length ? (
+        {exprs.isPending ? (
+          <LoadingState />
+        ) : exprs.isError ? (
+          <ErrorState message={apiErrorMessage(exprs.error)} onRetry={() => exprs.refetch()} />
+        ) : !all.length ? (
           <PText style={styles.empty}>{'아직 저장한 표현이 없어요.\n학습 중에 저장 버튼을 누르면\n여기서 불러올 수 있어요.'}</PText>
         ) : !list.length ? (
           <PText style={styles.empty}>‘{q}’에 맞는 표현이 없어요.</PText>

@@ -184,7 +184,13 @@ export default function MyScreen() {
           <Appear kind="rise" delay={100}>
             <View style={styles.stack}>
               <SecHead title="내 수업" />
-              <MyClassCard classes={my.myClasses.thisWeek} open={classOpen} onOpen={setClassOpen} />
+              <MyClassCard
+                classes={my.myClasses.thisWeek}
+                open={classOpen}
+                onOpen={setClassOpen}
+                // 프로만: 출석률 칸에서 열면 위에 출석률 · 스파크까지 남은 정도
+                rate={proStats && me.role !== 'manager' ? { sessions: proStats.sessionsThisMonth, checks: proStats.attendanceChecks, percent: proStats.attendanceRate ?? null } : undefined}
+              />
             </View>
           </Appear>
         ) : my?.study ? (

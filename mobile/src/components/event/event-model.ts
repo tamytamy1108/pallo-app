@@ -11,7 +11,7 @@ export const findEvent = (id: string) => EVENTS.find((e) => e.id === id);
 /** 서버 분류 코드 → 칩 종류 (나머지는 '전체'에서만) */
 const KIND_OF: Record<string, EventItem['ev']> = { PARTY: 'party', CLASS: 'class', TRIP: 'trip' };
 /** 정원 무관일 때 계산용 정원 (화면에는 '인원 무관'으로만 보여요) */
-const NO_CAP = 9999;
+export const NO_CAP = 9999;
 
 /**
  * 서버 이벤트(GET /events) → 이벤트 한 줄. 멤버가 제안해 열린 이벤트면 주최가 그 멤버(hostMember)예요.
