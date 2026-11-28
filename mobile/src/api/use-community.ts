@@ -8,7 +8,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteD
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { Comment } from '@/components/common/comments-sheet';
-import { LG_C, nameHash, type ComSub, type Post, type PostCat } from '@/data/lounge';
+import { LG_C, nameHash, type AllSub, type ComSub, type Post, type PostCat } from '@/data/lounge';
 import { addPostComment, findItem, getLounge, postComments, setPostComments, toggleLike, toggleSave, useLounge } from '@/data/lounge-store';
 import { agoLabel, parseAgo, whenLabel } from '@/lib/when';
 
@@ -18,6 +18,7 @@ import {
   editCommunityComment,
   fetchCommunityComments,
   fetchCommunityPosts,
+  fetchRecommendedPosts,
   setCommunityMock,
   toggleCommunityCommentLike,
   toggleCommunityLike,
@@ -27,6 +28,7 @@ import {
   type CommunityPost,
   type CommunityPostPage,
   type CommunityTopic,
+  type RecommendPick,
 } from './community';
 import { apiConfig } from './config';
 import { queryKeys } from './queries';
@@ -96,14 +98,41 @@ type FeedCache = InfiniteData<CommunityPostPage, string | null>;
  * 당겨서 새로고침은 화면의 usePullRefresh 가 켜진 쿼리를 모두 다시 받아요.
  */
 export function useCommunityFeed(sub: ComSub, branchNames: string[]) {
+  const topic = topicOfSub(sub);
+  return usePostFeed(branchNames, (codes) => ({
+    queryKey: queryKeys.communityPosts(topic, codes),
+    fetch: (cursor, signal) => fetchCommunityPosts({ topic, branchCodes: codes, cursor }, { signal }),
+  }));
+}
+
+/** 추천 탭 서브 칩 → 서버 pick */
+export const pickOfSub = (sub: AllSub): RecommendPick => (sub === 'hot' ? 'HOT' : 'ALL');
+
+/**
+ * 추천 탭 피드 — 지금은 커뮤니티 글만 (번개 · 이벤트 · 지도 카드는 나중에). 순서는 서버가 정해요:
+ * 전체 = 최신순, 인기 = 최근 7일 하트 많은 순. 고른 지점은 커뮤니티 탭과 같이 걸러요.
+ */
+export function useRecommendedFeed(sub: AllSub, branchNames: string[]) {
+  const pick = pickOfSub(sub);
+  return usePostFeed(branchNames, (codes) => ({
+    queryKey: queryKeys.communityRecommended(pick, codes),
+    fetch: (cursor, signal) => fetchRecommendedPosts({ pick, branchCodes: codes, cursor }, { signal }),
+  }));
+}
+
+/** 글 피드 공통 — 지점 이름 → 코드, 쪽 넘김, 가짜 서버에서 새 글을 올리면 다시 받기 */
+function usePostFeed(
+  branchNames: string[],
+  make: (codes: string[]) => { queryKey: readonly unknown[]; fetch: (cursor: string | null, signal: AbortSignal) => Promise<CommunityPostPage> },
+) {
   const branches = useLoungeBranches();
   const codes = useMemo(() => branchCodesOf(branches, branchNames), [branches, branchNames]);
   // 지점을 골랐는데 목록을 아직 못 받았으면 기다려요 (전체가 잠깐 보였다가 바뀌지 않게)
   const waiting = branchNames.length > 0 && branches.length === 0;
-  const topic = topicOfSub(sub);
+  const { queryKey, fetch } = make(codes);
   const q = useInfiniteQuery({
-    queryKey: queryKeys.communityPosts(topic, codes),
-    queryFn: ({ pageParam, signal }) => fetchCommunityPosts({ topic, branchCodes: codes, cursor: pageParam }, { signal }),
+    queryKey,
+    queryFn: ({ pageParam, signal }) => fetch(pageParam, signal),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
     enabled: !waiting,
@@ -280,18 +309,38 @@ const mockPost = (id: string) => {
   return p;
 };
 
+/** 지점 없는 글 · '전 지점' 글은 늘 보여요. 두 지점('영등포 · 연신내')은 하나만 맞아도 */
+const mockInBranches = (p: Post, branchCodes: string[]) =>
+  !branchCodes.length || !p.br || p.br.includes('전 지점') || p.br.split(' · ').some((b) => branchCodes.some((c) => sameBranch(c, b)));
+
+/** 가짜 서버 한 쪽 — cursor 는 몇 번째부터인지 */
+function mockPage(all: Post[], cursor: string | null | undefined) {
+  const from = cursor ? Number(cursor) : 0;
+  const items = all.slice(from, from + MOCK_PAGE).map(mockPostDto);
+  return { items, nextCursor: from + MOCK_PAGE < all.length ? String(from + MOCK_PAGE) : null };
+}
+
+/** 가짜 서버 '인기' 기간 (서버 HOT_WINDOW 와 같게) */
+const MOCK_HOT_MS = 7 * 24 * 3600_000;
+
 setCommunityMock({
   feed: ({ topic, branchCodes = [], cursor }) => {
     const all = mockPosts().filter((p) => {
       const t = p.club ? 'CLUB' : TOPIC_OF[p.cat ?? 'daily'];
       if (topic && !(t === topic || (topic === 'CLUB' && p.cat === 'club'))) return false;
-      // 지점 없는 글 · '전 지점' 글은 늘 보여요. 두 지점('영등포 · 연신내')은 하나만 맞아도
-      if (!branchCodes.length || !p.br || p.br.includes('전 지점')) return true;
-      return p.br.split(' · ').some((b) => branchCodes.some((c) => sameBranch(c, b)));
+      return mockInBranches(p, branchCodes);
     });
-    const from = cursor ? Number(cursor) : 0;
-    const items = all.slice(from, from + MOCK_PAGE).map(mockPostDto);
-    return { items, nextCursor: from + MOCK_PAGE < all.length ? String(from + MOCK_PAGE) : null };
+    return mockPage(all, cursor);
+  },
+  recommended: ({ pick, branchCodes = [], cursor }) => {
+    const all = mockPosts().filter((p) => mockInBranches(p, branchCodes));
+    if (pick !== 'HOT') return mockPage(all, cursor);
+    // 서버처럼: 최근 7일 글을 하트 많은 순, 같으면 최신순
+    const dto = new Map(all.map((p) => [p.id, mockPostDto(p)]));
+    const at = (p: Post) => Date.parse(dto.get(p.id)!.createdAt);
+    const likes = (p: Post) => dto.get(p.id)!.likeCount;
+    const hot = all.filter((p) => Date.now() - at(p) <= MOCK_HOT_MS).sort((a, b) => likes(b) - likes(a) || at(b) - at(a));
+    return mockPage(hot, cursor);
   },
   like: (id) => {
     const p = mockPost(id);

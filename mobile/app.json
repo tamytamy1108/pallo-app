@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.academy.pallo"
+      "bundleIdentifier": "com.academy.pallo",
+      "infoPlist": {
+        "CFBundleDisplayName": "PALLO",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.academy.pallo",

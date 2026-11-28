@@ -1,8 +1,9 @@
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps, type TabsDescriptor, type TabsSlotRenderOptions } from 'expo-router/ui';
 import { router, useIsFocused, usePathname } from 'expo-router';
-import { type ReactNode, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Animated, { css, cubicBezier, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { Platform, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -47,9 +48,11 @@ export default function TabBar() {
           떼기를 켜면 숨은 라이브러리가 창에서 빠져 iOS 에서 GL 판이 안 만들어지거나, 두 화면을 붙여 두면 홈이 안 그려졌어요 */}
       <TabSlot style={styles.slot} detachInactiveScreens={false} renderFn={(d, o) => renderTab(d, o, libReady)} />
       <TabList asChild>
-        <View style={StyleSheet.flatten([styles.bar, { bottom: Math.max(insets.bottom, 12) }])} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
+        <View style={StyleSheet.flatten([styles.bar, LIQUID ? styles.barLiquid : [styles.barFrost, webBlur], { bottom: Math.max(insets.bottom, 12) }])} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
           {/* 고른 탭 알약: 누른 탭으로 스프링처럼 살짝 지나쳤다 돌아오며 미끄러져요 (프로토타입 .tab-ind · transform .45s var(--spring)) */}
-          {slotW ? <Animated.View pointerEvents="none" style={[styles.ind, { width: slotW, transform: [{ translateX: at * slotW }] }, indSlide]} /> : null}
+          {/* 아이폰(iOS 26~)은 시스템 유리(Liquid Glass)를 그대로 깔아요 */}
+          {LIQUID ? <GlassView pointerEvents="none" glassEffectStyle="regular" style={styles.glass} /> : null}
+          {slotW ? <TabIndicator at={at} slotW={slotW} /> : null}
           {TABS.map((t) => (
             <TabTrigger key={t.name} name={t.name} href={t.href} asChild>
               <TabButton tab={t.name} icon={t.d} label={t.label} />
@@ -118,7 +121,41 @@ function renderTab(descriptor: TabsDescriptor, { isFocused, loaded }: TabsSlotRe
 const PAGE_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 
 /** 프로토타입 --spring: cubic-bezier(.2,.9,.3,1.3) — 끝에서 살짝 지나쳤다 돌아와요 */
-const indSlide = css.create({ t: { transitionProperty: 'transform', transitionDuration: '280ms', transitionTimingFunction: cubicBezier(0.2, 0.9, 0.3, 1.3) } }).t;
+const IND_EASE = Easing.bezier(0.2, 0.9, 0.3, 1.3);
+
+/**
+ * 고른 탭 알약. 지나쳤다 돌아오는 건 그대로지만, 맨 왼쪽(홈) · 맨 오른쪽(마이) 탭으로 갈 때
+ * 탭 칸 밖(화면 밖)으로 튀어 나가지 않게 가로 위치를 첫 칸 ~ 끝 칸 사이로 묶어 둬요.
+ */
+function TabIndicator({ at, slotW }: { at: number; slotW: number }) {
+  const still = useReducedMotion();
+  const x = useSharedValue(at * slotW);
+  // 젤리: 움직이기 시작하면 옆으로 늘어나며 납작해졌다가, 멈추면 몇 번 출렁이며 돌아와요
+  const squish = useSharedValue(0);
+  const lastW = useRef(slotW);
+  useEffect(() => {
+    const to = at * slotW;
+    // 처음 자리 잡기 · 탭 칸 크기가 바뀐 때는 미끄러지지 않고 바로
+    if (still || lastW.current !== slotW) x.set(to);
+    else {
+      x.set(withTiming(to, { duration: 280, easing: IND_EASE }));
+      squish.set(withSequence(withTiming(1, { duration: 120, easing: Easing.out(Easing.quad) }), withSpring(0, JELLY)));
+    }
+    lastW.current = slotW;
+  }, [at, slotW, still, x, squish]);
+  const maxX = (TABS.length - 1) * slotW;
+  const slide = useAnimatedStyle(() => ({
+    transform: [{ translateX: Math.min(maxX, Math.max(0, x.get())) }, { scaleX: 1 + 0.12 * squish.get() }, { scaleY: 1 - 0.1 * squish.get() }],
+  }));
+  return <Animated.View pointerEvents="none" style={[styles.ind, { width: slotW }, slide]} />;
+}
+
+/** 출렁임: 덜 잡아서(damping 낮게) 두세 번 흔들리고 멈춰요 */
+const JELLY = { damping: 7, stiffness: 260, mass: 0.6 };
+
+/** iOS 26 유리 탭 바처럼: 시스템 유리를 쓸 수 있으면 쓰고, 아니면 반투명 + (웹) 뒤 흐리기 */
+const LIQUID = isLiquidGlassAvailable();
+const webBlur = Platform.OS === 'web' ? ({ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as ViewStyle) : null;
 
 /** 길 이름(index · library …) → 탭 이름 */
 const tabNameOf = (route: string): TabName | null => TABS.find((t) => t.name === route || (t.name === 'home' && route === 'index'))?.name ?? null;
@@ -197,17 +234,18 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 30,
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1,
-    borderColor: 'rgba(30,26,43,0.06)',
     shadowColor: Colors.ink,
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.1,
     shadowRadius: 16,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
+  /** 유리 대신: 비치는 흰색 + 가장자리 흰 빛 한 줄 */
+  barFrost: { backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)' },
+  barLiquid: { backgroundColor: 'transparent' },
+  glass: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 30 },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: 24 },
-  ind: { position: 'absolute', top: 6, bottom: 6, left: 6, borderRadius: 24, backgroundColor: '#ECEAE6' },
+  ind: { position: 'absolute', top: 6, bottom: 6, left: 6, borderRadius: 24, backgroundColor: 'rgba(120,120,128,0.14)' },
   pressed: { transform: [{ scale: 0.92 }] },
   label: { fontSize: 11.5, fontWeight: '600', color: '#3A3A48' },
   labelOn: { fontWeight: '900', color: Colors.ink },

@@ -5,8 +5,8 @@
  *
  * branchMember 가 false 면 랭킹 윗부분 아래를 '지점 회원이 되면 열려요' 칸으로 가려요 (GET /me memberAccessLevel 과 같은 판정 · UNREGISTERED 만 비회원).
  * 칸(proStats · proNote · myClasses · study · badges)이 null 이면 화면이 그 칸을 그리지 않아요 —
- * proStats · myClasses 가 오면 프로 마이(숫자 4칸 · 내 수업), proNote.sent 가 오면 [보낸 노트] 탭. 배지 칸은 도메인이 없어 지금 늘 null.
- * 칸 안의 숫자 중 도메인이 아직 없는 것(연속 학습 · 배지 수 · 스파크 · 팔로우 · 찜한 모임 · 찜한 챌린지 · 출석 체크 · 고마워요)은 0.
+ * proStats · myClasses 가 오면 프로 마이(숫자 4칸 · 내 수업), proNote.sent 가 오면 [보낸 노트] 탭. 배지 칸은 앱에 보이는 배지가 하나도 없을 때만 null.
+ * 칸 안의 숫자 중 도메인이 아직 없는 것(연속 학습 · 스파크 · 팔로우 · 찜한 모임 · 찜한 챌린지 · 출석 체크 · 고마워요)은 0.
  * 칸 안의 null 은 '없음'일 때만 — 캐릭터 안 고름(avatar) · 이번 주 순위 없음 · 노트 없음(latest) · 테이블 모름(tableName) · 제한 없음(remaining*).
  * 랭킹은 지금 서버도 예시 값이에요 (1~3위 고정 · 나는 순위 없음). 랭킹을 구현하면서 바꿔요.
  *
@@ -69,8 +69,8 @@ export type MyPage = {
   myClasses: { weekStart: string; thisWeek: MyPageProClass[] } | null;
   /** 내 스터디 (이용권 · 듣는 팀) — 이용 중인 멤버십이 없으면 null */
   study: MyPageStudy | null;
-  /** 받은 배지 미리보기 (최대 4 · 받은 것 먼저) — 배지 도메인 전까지 서버는 null (칸을 안 그려요) */
-  badges: { code: string; name: string; description: string; icon: string; earned: boolean }[] | null;
+  /** 배지 미리보기 — 배지 모두 보기(GET /me/badges)와 같은 순서의 앞 4칸 (받은 것 · 못 받은 것). 보이는 배지가 없으면 null (칸을 안 그려요) */
+  badges: { code: string; name: string; description: string; imageUrl: string | null; earned: boolean }[] | null;
   activity: {
     joinedMeetCount: number;
     savedMeetCount: number;
@@ -269,7 +269,8 @@ export function mockMyPage(): MyPage {
   const myRank = me.weekPoints > 0 ? rows.findIndex((r) => r.me) + 1 : null;
   // 팔로우 수는 팔로우 목록 시트(followLists)와 같은 수
   const lists = followLists(me.name, me, me.following);
-  const badges = [...MY_BADGES].sort((a, b) => Number(b.on) - Number(a.on));
+  // 서버처럼 배지 모두 보기와 같은 순서의 앞 4칸
+  const badges = MY_BADGES;
   const today = new Date();
   const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
   const pro = isProLike(me.role);
@@ -296,7 +297,7 @@ export function mockMyPage(): MyPage {
         .map((r, i) => ({ rank: i + 1, code: null, displayName: r.n, branchName: r.b, points: r.pt })),
       me: { rank: myRank, points: me.weekPoints },
     },
-    badges: badges.slice(0, 4).map((b) => ({ code: b.name, name: b.name, description: b.desc, icon: b.ic, earned: b.on })),
+    badges: badges.slice(0, 4).map((b) => ({ code: b.code, name: b.name, description: b.desc, imageUrl: null, earned: b.on })),
     activity: {
       joinedMeetCount: me.joinedMeets,
       savedMeetCount: me.savedMeets,

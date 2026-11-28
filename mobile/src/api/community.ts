@@ -46,6 +46,17 @@ export type CommunityFeedParams = {
   size?: number;
 };
 
+/** 추천 탭 서브 칩 — 순서는 서버가 정해요 (지금: ALL = 최신순, HOT = 최근 7일 하트 많은 순) */
+export type RecommendPick = 'ALL' | 'HOT';
+
+export type RecommendedParams = {
+  pick: RecommendPick;
+  /** 지점 코드 — 비었으면 전체 지점 */
+  branchCodes?: string[];
+  cursor?: string | null;
+  size?: number;
+};
+
 /** 하트 · 스크랩 토글 결과: 누른 뒤 내 상태 · 글 전체 수 */
 export type CommunityReaction = { on: boolean; count: number };
 
@@ -88,6 +99,7 @@ export const COMMUNITY_COMMENT_PAGE = 50;
  */
 export type CommunityMockServer = {
   feed: (p: CommunityFeedParams) => CommunityPostPage;
+  recommended: (p: RecommendedParams) => CommunityPostPage;
   like: (postId: string) => CommunityReaction;
   scrap: (postId: string) => CommunityReaction;
   comments: (postId: string) => CommunityCommentList;
@@ -98,6 +110,7 @@ export type CommunityMockServer = {
 };
 const empty: CommunityMockServer = {
   feed: () => ({ items: [], nextCursor: null }),
+  recommended: () => ({ items: [], nextCursor: null }),
   like: () => ({ on: false, count: 0 }),
   scrap: () => ({ on: false, count: 0 }),
   comments: () => ({ rows: [], totalCount: 0, commentCount: 0 }),
@@ -128,6 +141,20 @@ export function fetchCommunityPosts(p: CommunityFeedParams, { signal }: Opts = {
     signal,
     query: {
       topic: p.topic ?? undefined,
+      branch: p.branchCodes?.length ? p.branchCodes.join(',') : undefined,
+      cursor: p.cursor ?? undefined,
+      size: p.size,
+    },
+  });
+}
+
+/** GET /community/posts/recommended?pick=&branch=&cursor=&size= — 추천 탭 한 쪽 (받은 순서 그대로 그려요) */
+export function fetchRecommendedPosts(p: RecommendedParams, { signal }: Opts = {}): Promise<CommunityPostPage> {
+  if (apiConfig.useMock) return mock('communityRecommended', () => mockServer.recommended(p));
+  return http.get('/community/posts/recommended', {
+    signal,
+    query: {
+      pick: p.pick,
       branch: p.branchCodes?.length ? p.branchCodes.join(',') : undefined,
       cursor: p.cursor ?? undefined,
       size: p.size,

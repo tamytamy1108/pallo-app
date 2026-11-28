@@ -14,13 +14,11 @@ import { guardMember } from '@/components/common/trial-guide';
 import { BranchSelect, branchList, branchValue } from '@/components/lounge/branch-select';
 import { CreateSheet, type CreateKind } from '@/components/lounge/create-sheet';
 import { LgIcon } from '@/components/lounge/icons';
-import { MiniMapCard } from '@/components/lounge/korea-map';
 import { LgIn } from '@/components/lounge/lg-in';
 import { enterLoungeTab, leaveLoungeTab, useNewCounts } from '@/api/use-lounge-new-counts';
-import { useCommunityFeed } from '@/api/use-community';
+import { useCommunityFeed, useRecommendedFeed } from '@/api/use-community';
 import { go } from '@/components/lounge/nav';
-import { AbroadCard, CommunityPostCard, PostCard } from '@/components/lounge/post-card';
-import { RecChalCard, RecMeetCard } from '@/components/lounge/rec-cards';
+import { AbroadCard, CommunityPostCard } from '@/components/lounge/post-card';
 import { Section } from '@/components/lounge/section';
 import { StoryRow } from '@/components/lounge/story-row';
 import { LAUNCH } from '@/constants/launch';
@@ -430,19 +428,9 @@ function Feed({ tab, brs, onMakeTrip, onRegAbroad }: { tab: LoungeTab; brs: stri
     );
   }
 
-  // 커뮤니티 탭은 서버 글 (주제 · 지점은 서버가 걸러요 — api/use-community)
+  // 커뮤니티 · 추천 탭은 서버 글 (주제 · 지점 · 순서는 서버가 정해요 — api/use-community)
   if (tab === 'com') return <CommunityFeed brs={brs} />;
-  const items = F.filter((p) => 'rec' in p && p.rec && (sub.all === 'all' || (p.k !== 'map' && ((p.k === 'post' || p.k === 'abroad' ? p.likes >= 60 : false) || p.k === 'meet'))));
-  if (!items.length) return <View style={styles.feed} />;
-  return (
-    <View style={styles.feed}>
-      {items.map((p, i) => (
-        <LgIn key={p.id} delay={Math.min(i, 4) * 50}>
-          <FeedCard p={p} />
-        </LgIn>
-      ))}
-    </View>
-  );
+  return <RecommendedFeed brs={brs} />;
 }
 
 /** 라운지 스크롤이 끝에 가까워지면 부르는 것들 (커뮤니티 탭 다음 쪽) */
@@ -450,13 +438,30 @@ const nearEnd = new Set<() => void>();
 /** 끝에서 이만큼 남으면 다음 쪽을 미리 받아요 */
 const NEAR_END_PX = 900;
 
-/** 커뮤니티 탭 피드 — 서버 글 최신순, 끝에 가까워지면 다음 쪽 (차단한 사람 · 숨긴 사람 글은 빼요) */
+const NO_POSTS = '아직 글이 없어요.\n위 + 버튼으로 첫 글을 올려 보세요.';
+
+/** 커뮤니티 탭 피드 — 서버 글 최신순 (주제 칩으로 걸러요) */
 function CommunityFeed({ brs }: { brs: string[] }) {
   const sub = useLounge((s) => s.sub.com);
   const active = useLounge((s) => s.tab === 'com');
+  return <PostFeed feed={useCommunityFeed(sub, brs)} active={active} empty={NO_POSTS} />;
+}
+
+/**
+ * 추천 탭 피드 — 지금은 커뮤니티 글만, 서버가 정한 순서대로 (전체 = 최신순 · 인기 = 최근 7일 하트 순).
+ * 번개 · 파티 · 작은 지도 카드는 그 API 가 생기면 다시 섞어요.
+ */
+function RecommendedFeed({ brs }: { brs: string[] }) {
+  const sub = useLounge((s) => s.sub.all);
+  const active = useLounge((s) => s.tab === 'all');
+  return <PostFeed feed={useRecommendedFeed(sub, brs)} active={active} empty={sub === 'hot' ? '최근 7일 동안 올라온 글이 없어요.' : NO_POSTS} />;
+}
+
+/** 서버 글 목록 — 끝에 가까워지면 다음 쪽 (차단한 사람 · 숨긴 사람 글은 빼요) */
+function PostFeed({ feed, active, empty }: { feed: ReturnType<typeof useCommunityFeed>; active: boolean; empty: string }) {
   const blocked = useBlockedNames();
   const hidden = useLounge((s) => s.hidden);
-  const { q, posts, loadMore } = useCommunityFeed(sub, brs);
+  const { q, posts, loadMore } = feed;
   useEffect(() => {
     if (!active) return;
     nearEnd.add(loadMore);
@@ -467,7 +472,7 @@ function CommunityFeed({ brs }: { brs: string[] }) {
   const shown = posts.filter((d) => !blocked.includes(d.author.nickname) && !hidden[d.author.nickname]);
   if (q.isPending) return <View style={styles.feed}><ActivityIndicator style={styles.spin} color={Colors.inkSub} /></View>;
   if (q.isError && !posts.length) return <View style={styles.feed}><Empty text={'글을 불러오지 못했어요.\n아래로 당겨 다시 시도해 주세요.'} /></View>;
-  if (!shown.length) return <View style={styles.feed}><Empty text={'아직 글이 없어요.\n위 + 버튼으로 첫 글을 올려 보세요.'} /></View>;
+  if (!shown.length) return <View style={styles.feed}><Empty text={empty} /></View>;
   return (
     <View style={styles.feed}>
       {shown.map((d, i) => (
@@ -482,23 +487,6 @@ function CommunityFeed({ brs }: { brs: string[] }) {
 
 /** 출시 때 안 여는 기능의 카드는 추천에도 안 섞어요 (constants/launch) — 표현 챌린지 · 동행 · 해외살이 */
 const launched = (p: FeedItem) => (p.k === 'chal' ? LAUNCH.exprChallenge : p.k === 'trip' || p.k === 'abroad' ? LAUNCH.trip : true);
-
-function FeedCard({ p }: { p: FeedItem }) {
-  switch (p.k) {
-    case 'post':
-      return <PostCard p={p} />;
-    case 'abroad':
-      return <AbroadCard p={p} />;
-    case 'meet':
-      return <RecMeetCard p={p} />;
-    case 'chal':
-      return <RecChalCard p={p} />;
-    case 'map':
-      return <MiniMapCard />;
-    case 'trip':
-      return <TripCard p={p} />;
-  }
-}
 
 function Empty({ text }: { text: string }) {
   return <PText style={styles.empty}>{text}</PText>;

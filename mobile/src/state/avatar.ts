@@ -26,7 +26,7 @@ function loadAvatar(saved: unknown, initial: AvatarState): AvatarState {
     const id = a.eq[cat];
     if (id === null || (typeof id === 'string' && AV_ITEM[id])) eq[cat] = id;
   });
-  const color = typeof a.color === 'string' && (a.color[0] === '#' || AVC_LIST.some((c) => c[0] === a.color)) ? a.color : fresh.color;
+  const color = typeof a.color === 'string' && AVC_LIST.some((c) => c[0] === a.color) ? a.color : fresh.color;
   const bg = typeof a.bg === 'string' && (a.bg[0] === '#' || AV_BG.some((b) => b.id === a.bg)) ? a.bg : fresh.bg;
   const own = Array.isArray(s.own) ? [...new Set([...AV_OWN0, ...s.own.filter((k): k is string => typeof k === 'string')])] : initial.own;
   return {
@@ -41,22 +41,15 @@ export const getMyAvatar = () => store.get().saved;
 export const useOwned = () => store.useStore((s) => s.own);
 export const getOwned = () => store.get().own;
 
-/** 직접 고른 색('#…')은 무료 · 나머지는 가진 것만 (프로토타입 avOwn) */
-export const isOwned = (own: readonly string[], key: string) => key[0] === '#' || key.startsWith('bg:#') || own.includes(key);
+/** 직접 고른 배경 색('bg:#…')은 무료 · 나머지는 가진 것만 (프로토타입 avOwn) */
+export const isOwned = (own: readonly string[], key: string) => key.startsWith('bg:#') || own.includes(key);
 
 export const cloneAvatar = (a: Avatar): Avatar => ({ ...a, eq: { ...a.eq } });
 
-/** 새로 사야 하는 것 합계 · 이름 (프로토타입 avCost) */
+/** 새로 사야 하는 것 합계 · 이름 (프로토타입 avCost) — 몸(팔로로)은 꾸미기에서 바꾸지 않아요 */
 export function avatarCost(d: Avatar, own: readonly string[]) {
   let cost = 0;
   const need: string[] = [];
-  if (!isOwned(own, d.color)) {
-    const c = AVC_LIST.find((k) => k[0] === d.color);
-    if (c) {
-      cost += c[2];
-      need.push(c[1]);
-    }
-  }
   if (!isOwned(own, 'bg:' + d.bg)) {
     const b = avBgs().find((k) => k.id === d.bg);
     if (b) {
@@ -91,7 +84,7 @@ export function buyAndSave(d: Avatar): { ok: true; cost: number; need: string[] 
   const { cost, need } = avatarCost(d, own);
   const sparks = getMe().sparks;
   if (cost > sparks) return { ok: false, short: cost - sparks };
-  const add = [d.color, 'bg:' + d.bg, ...Object.values(d.eq).filter((x): x is string => !!x)].filter((k) => !isOwned(own, k));
+  const add = ['bg:' + d.bg, ...Object.values(d.eq).filter((x): x is string => !!x)].filter((k) => !isOwned(own, k));
   award({ id: `shop:${Date.now()}`, type: 'shop', currency: 'sparks', amount: -cost });
   store.set({ saved: cloneAvatar(d), own: [...own, ...add] });
   return { ok: true, cost, need };

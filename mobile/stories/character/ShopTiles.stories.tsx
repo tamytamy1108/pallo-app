@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { StyleSheet, View } from 'react-native';
 
-import { BodyArt, ItemArt, StageArt } from '@/components/character/avatar';
+import { ItemArt, StageArt } from '@/components/character/avatar';
 import { PText } from '@/components/ui/text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { AV_BG, AV_ITEMS, AVC_LIST, HAIR_SW } from '@/data/my';
+import { AV_BG, AV_ITEMS, HAIR_SW } from '@/data/my';
 
 import { padded } from '../_support/padded';
 
@@ -21,7 +21,7 @@ function Tile({ name, children }: { name: string; children: React.ReactNode }) {
   );
 }
 
-/** 꾸미기 상점 타일 그림 — 아이템(ItemArt) · 효과 · 배경(StageArt) · 몸 색(BodyArt). */
+/** 꾸미기 상점 타일 그림 — 아이템(ItemArt) · 효과 · 배경(StageArt). */
 const meta = {
   title: 'Character/ShopTiles',
   component: ItemArt,
@@ -86,19 +86,6 @@ export const Backgrounds: Story = {
     </View>
   ),
 };
-/** 몸 색 타일 */
-export const BodyColors: Story = {
-  render: () => (
-    <View style={styles.grid}>
-      {[...AVC_LIST.map((c) => c[0]), '#E5484D', '#2F6FD0'].map((c) => (
-        <Tile key={c} name={c}>
-          <BodyArt color={c} width={TILE} />
-        </Tile>
-      ))}
-    </View>
-  ),
-};
-
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.tight },
   cell: { width: TILE, gap: Spacing.tight / 2 },

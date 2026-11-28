@@ -4,8 +4,12 @@ import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
+import { apiErrorMessage } from '@/api/errors';
+import type { RankingPeriod } from '@/api/ranking';
+import { useBranchRanking, useMemberRanking, type BranchRankingView, type MemberRankingView, type RankingRow } from '@/api/use-ranking';
 import { Pressable } from '@/components/ui/pressable';
 import { TopBar } from '@/components/ui/top-bar';
 import { SCREEN } from '@/lib/transitions';
@@ -14,14 +18,13 @@ import { ExprRows } from '@/components/my/expr-rows';
 import { Lift } from '@/components/my/lift';
 import { Appear } from '@/components/ui/appear';
 import { Raised } from '@/components/ui/raised';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
-import { useScrollEndPad } from '@/components/ui/scroll-end';
-import { RANK_COLORS, rankPeople, type RankRow } from '@/data/my';
+import { RANK_COLORS } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
-import { useMe } from '@/state/me';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 const INK = Colors.ink;
@@ -87,35 +90,29 @@ const POD = [
  * 프로토타입은 탭 화면이라 아래 탭 바가 보여요 — 앱은 마이 위로 쌓이는 화면이에요.
  */
 export default function RankingScreen() {
-  const endPad = useScrollEndPad();
   const pull = usePullRefresh();
   // 움직임 줄이기면 시상대 · 막대 · 순위 줄이 바로 다 보여요
   const still = useReducedMotion();
-  const me = useMe();
+  const insets = useSafeAreaInsets();
   const marks = useSavedExpressions();
   const [view, setView] = useState<'me' | 'br'>('me');
-  const [per, setPer] = useState<'w' | 'm'>('w');
+  const [per, setPer] = useState<RankingPeriod>('WEEK');
+  // 보고 있는 탭만 받아요 (순위 · 합계 · 남은 점수는 서버가 정해요)
+  const members = useMemberRanking(per, view === 'me');
+  const branches = useBranchRanking(per, view === 'br');
+  const q = view === 'me' ? members : branches;
+  const perLabel = per === 'WEEK' ? '이번 주' : '이번 달';
 
-  const people = rankPeople(per, me);
-  const myRank = people.findIndex((p) => p.me) + 1;
-  const mine = people[myRank - 1];
-
-  // 지점 대항전: 지점별 합계
-  const sums = new Map<string, number>();
-  people.forEach((p) => sums.set(p.b, (sums.get(p.b) ?? 0) + p.pt));
-  const brList = [...sums.entries()].sort((a, b) => b[1] - a[1]);
-  const max = brList[0]?.[1] || 1;
-  const myB = brList.findIndex(([b]) => b === me.branch) + 1;
-
+  // 프로필은 아직 이름으로 열어요 — 서버 연동 뒤 회원 code(p.code)로 바꿔요
   const openProfile = (n: string, isMe?: boolean) => {
     sfx('tap');
     router.push((isMe ? '/my' : `/me/profile/${encodeURIComponent(n)}`) as Href);
   };
 
-  const row = (p: RankRow, no: number, k: number) => (
-    <Animated.View key={`${p.n}-${no}`} style={still ? undefined : { animationName: rise, animationDuration: '500ms', animationDelay: `${50 * k}ms`, animationFillMode: 'both', animationTimingFunction: SPRING }}>
+  const row = (p: RankingRow, k: number) => (
+    <Animated.View key={`${p.no}-${p.n}`} style={still ? undefined : { animationName: rise, animationDuration: '500ms', animationDelay: `${50 * k}ms`, animationFillMode: 'both', animationTimingFunction: SPRING }}>
       <View style={[styles.rkRow, p.me && styles.rkMe]}>
-        <PText style={styles.no}>{no}</PText>
+        <PText style={styles.no}>{p.no}</PText>
         <Pressable onPress={() => openProfile(p.n, p.me)} accessibilityRole="button" accessibilityLabel={`${p.n} 프로필`}>
           <MemberFace name={p.n} size={34} bg={p.c} />
         </Pressable>
@@ -133,14 +130,112 @@ export default function RankingScreen() {
     </Animated.View>
   );
 
-  const far = myRank > 11;
-  const near = far ? people.slice(myRank - 2, myRank + 1) : [];
+  const mineBand = (label: string, rank: number | null, points: number) => (
+    <View style={styles.mine}>
+      <PalloFace />
+      <PText style={styles.mineT}>{label}</PText>
+      <PText style={styles.mineB}>{rank ? `${rank}위` : '–'}</PText>
+      <PText style={styles.minePt}>{points.toLocaleString()}P</PText>
+    </View>
+  );
+
+  const memberBody = (d: MemberRankingView) => (
+    <>
+      {mineBand('내 순위', d.myRank, d.myPoints)}
+      {d.top.length === 0 ? (
+        <EmptyState title={`아직 ${perLabel} 랭킹이 없어요`} compact />
+      ) : (
+        <View key={`me-${per}`}>
+          <View style={styles.podium}>
+            {[1, 0, 2].map((i) => {
+              const p = d.top[i];
+              if (!p) return <View key={i} style={styles.pod} />;
+              return (
+                <View key={i} style={styles.pod}>
+                  <Pressable onPress={() => openProfile(p.n, p.me)} accessibilityRole="button" accessibilityLabel={`${i + 1}위 ${p.n} 프로필`} style={styles.podAv}>
+                    <MemberFace name={p.n} size={52} bg={p.c} />
+                    <View style={styles.medal} pointerEvents="none">
+                      <Medal n={i + 1} />
+                    </View>
+                  </Pressable>
+                  <PText style={styles.podNm} numberOfLines={1}>
+                    {p.me ? '나 · ' : ''}
+                    {p.n}
+                  </PText>
+                  <PText style={styles.podPt}>{p.pt.toLocaleString()}P</PText>
+                  <Animated.View
+                    style={[
+                      styles.blk,
+                      { height: POD[i].h, backgroundColor: POD[i].bg },
+                      still ? null : { animationName: grow, animationDuration: '700ms', animationDelay: `${100 + i * 80}ms`, animationFillMode: 'both', animationTimingFunction: SPRING },
+                    ]}>
+                    <PText style={styles.blkT}>{i + 1}</PText>
+                  </Animated.View>
+                </View>
+              );
+            })}
+          </View>
+          {d.top.length > 3 || d.around.length > 0 ? (
+            <View style={styles.rkList}>
+              {d.top.slice(3).map((p, k) => row(p, k))}
+              {d.gap && (
+                <View style={styles.gap}>
+                  {[0, 1, 2].map((i) => (
+                    <View key={i} style={styles.gapDot} />
+                  ))}
+                </View>
+              )}
+              {d.around.map((p, k) => row(p, 7 + k))}
+              {d.pointsToTop10 != null && (
+                <PText style={styles.up}>
+                  10위까지 <PText style={styles.upB}>{d.pointsToTop10.toLocaleString()}P</PText> 남았어요
+                </PText>
+              )}
+            </View>
+          ) : null}
+        </View>
+      )}
+    </>
+  );
+
+  const branchBody = (d: BranchRankingView) => (
+    <>
+      {mineBand(d.myBranch ? `우리 지점 (${d.myBranch.name})` : '우리 지점', d.myBranch?.rank ?? null, d.myBranch?.points ?? 0)}
+      {d.rows.length === 0 ? (
+        <EmptyState title={`아직 ${perLabel} 지점 대항전 기록이 없어요`} compact />
+      ) : (
+        <View key={`br-${per}`} style={[styles.rkList, styles.rkListBr]}>
+          {d.rows.map((b, k) => (
+            <View key={b.code} style={[styles.rkRow, b.mine && styles.rkMe]}>
+              <View style={styles.noBox}>{b.no <= 3 ? <Medal n={b.no} size={26} /> : <PText style={styles.no}>{b.no}</PText>}</View>
+              <View style={styles.nm}>
+                <PText style={styles.nmT} numberOfLines={1}>
+                  {b.name}
+                  {b.mine ? ' · 우리 지점' : ''}
+                </PText>
+                <View style={styles.bar}>
+                  <Animated.View
+                    style={[
+                      styles.barFill,
+                      { width: `${Math.round(b.ratio * 100)}%`, backgroundColor: b.mine ? Colors.ink : RANK_COLORS[k % RANK_COLORS.length] },
+                      still ? null : { animationName: barIn, animationDuration: '800ms', animationDelay: `${100 + 60 * k}ms`, animationFillMode: 'both', animationTimingFunction: EASE },
+                    ]}
+                  />
+                </View>
+              </View>
+              <PText style={styles.pt}>{b.pt.toLocaleString()}P</PText>
+            </View>
+          ))}
+        </View>
+      )}
+    </>
+  );
 
   return (
     <View style={styles.screen}>
       <Stack.Screen options={SCREEN.push} />
       <TopBar title="랭킹 · 퀘스트" fallback="/my" backLabel="마이로 돌아가기" safeTop />
-      <ScrollView {...pull.scrollProps} contentContainerStyle={[styles.body, { paddingTop: 16, paddingBottom: endPad }]}>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={[styles.body, { paddingTop: 16, paddingBottom: insets.bottom + 60 }]}>
 
         <Appear kind="rise">
           <Raised radius={Radius.card}>
@@ -164,8 +259,8 @@ export default function RankingScreen() {
               <View style={styles.period}>
                 {(
                   [
-                    ['w', '이번 주'],
-                    ['m', '이번 달'],
+                    ['WEEK', '이번 주'],
+                    ['MONTH', '이번 달'],
                   ] as const
                 ).map(([k, l]) => (
                   <Pressable key={k} onPress={() => setPer(k)} accessibilityRole="button" accessibilityState={{ selected: per === k }} style={[styles.perBtn, per === k && styles.perOn]}>
@@ -175,88 +270,14 @@ export default function RankingScreen() {
                 <PText style={styles.perNote}>전 지점 · 포인트 기준</PText>
               </View>
 
-              <View style={styles.mine}>
-                <PalloFace />
-                <PText style={styles.mineT}>{view === 'me' ? '내 순위' : `우리 지점 (${me.branch})`}</PText>
-                <PText style={styles.mineB}>{view === 'me' ? myRank : myB}위</PText>
-                <PText style={styles.minePt}>{(view === 'me' ? mine.pt : (sums.get(me.branch) ?? 0)).toLocaleString()}P</PText>
-              </View>
-
-              {view === 'me' ? (
-                <View key={`me-${per}`}>
-                  <View style={styles.podium}>
-                    {[1, 0, 2].map((i) => {
-                      const p = people[i];
-                      return (
-                        <View key={i} style={styles.pod}>
-                          <Pressable onPress={() => openProfile(p.n, p.me)} accessibilityRole="button" accessibilityLabel={`${i + 1}위 ${p.n} 프로필`} style={styles.podAv}>
-                            <MemberFace name={p.n} size={52} bg={p.c} />
-                            <View style={styles.medal} pointerEvents="none">
-                              <Medal n={i + 1} />
-                            </View>
-                          </Pressable>
-                          <PText style={styles.podNm} numberOfLines={1}>
-                            {p.me ? '나 · ' : ''}
-                            {p.n}
-                          </PText>
-                          <PText style={styles.podPt}>{p.pt.toLocaleString()}P</PText>
-                          <Animated.View
-                            style={[
-                              styles.blk,
-                              { height: POD[i].h, backgroundColor: POD[i].bg },
-                              still ? null : { animationName: grow, animationDuration: '700ms', animationDelay: `${100 + i * 80}ms`, animationFillMode: 'both', animationTimingFunction: SPRING },
-                            ]}>
-                            <PText style={styles.blkT}>{i + 1}</PText>
-                          </Animated.View>
-                        </View>
-                      );
-                    })}
-                  </View>
-                  <View style={styles.rkList}>
-                    {people.slice(3, 10).map((p, k) => row(p, k + 4, k))}
-                    {myRank === 11 && row(people[10], 11, 7)}
-                    {far && (
-                      <>
-                        <View style={styles.gap}>
-                          {[0, 1, 2].map((i) => (
-                            <View key={i} style={styles.gapDot} />
-                          ))}
-                        </View>
-                        {near.map((p, k) => row(p, myRank - 1 + k, 8 + k))}
-                        <PText style={styles.up}>
-                          10위까지 <PText style={styles.upB}>{(people[9].pt - mine.pt + 1).toLocaleString()}P</PText> 남았어요
-                        </PText>
-                      </>
-                    )}
-                  </View>
-                </View>
+              {q.isPending ? (
+                <LoadingState />
+              ) : q.isError ? (
+                <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
+              ) : view === 'me' ? (
+                members.data && memberBody(members.data)
               ) : (
-                <View key={`br-${per}`} style={[styles.rkList, styles.rkListBr]}>
-                  {brList.map(([b, pt], k) => {
-                    const us = b === me.branch;
-                    return (
-                      <View key={b} style={[styles.rkRow, us && styles.rkMe]}>
-                        <View style={styles.noBox}>{k < 3 ? <Medal n={k + 1} size={26} /> : <PText style={styles.no}>{k + 1}</PText>}</View>
-                        <View style={styles.nm}>
-                          <PText style={styles.nmT} numberOfLines={1}>
-                            {b}
-                            {us ? ' · 우리 지점' : ''}
-                          </PText>
-                          <View style={styles.bar}>
-                            <Animated.View
-                              style={[
-                                styles.barFill,
-                                { width: `${Math.round((pt / max) * 100)}%`, backgroundColor: us ? Colors.ink : RANK_COLORS[k % RANK_COLORS.length] },
-                                still ? null : { animationName: barIn, animationDuration: '800ms', animationDelay: `${100 + 60 * k}ms`, animationFillMode: 'both', animationTimingFunction: EASE },
-                              ]}
-                            />
-                          </View>
-                        </View>
-                        <PText style={styles.pt}>{pt.toLocaleString()}P</PText>
-                      </View>
-                    );
-                  })}
-                </View>
+                branches.data && branchBody(branches.data)
               )}
             </View>
           </Raised>

@@ -112,7 +112,7 @@ export default function NotificationsScreen() {
         })}
       </View>
 
-      <ScrollView refreshControl={pullRefresh} contentContainerStyle={[styles.body, { paddingBottom: endPad }]}>
+      <ScrollView {...pullRefresh.scrollProps} contentContainerStyle={[styles.body, { paddingBottom: endPad }]}>
         {rows.length ? (
           <>
             {rows.map((n) => (

@@ -880,7 +880,7 @@ paths:
 
         (2026-11-28) v2 에서는 GET /asset-catalog 의 backgrounds · effects · items 가 그림 · 가격 · 보상 조건까지 내려줘서 꾸미기 화면이 그걸 써요. 이 API 는 등급 · 시즌 잠김 · 판매 기간이 더 필요할 때만 — 안 만들어도 될 수 있어요.
 
-        직접 고른 색('#RRGGBB' 몸 색 · 머리 색 · 단색 배경)은 무료라 목록에 없어요.
+        직접 고른 색('#RRGGBB' 머리 색 · 단색 배경)은 무료라 목록에 없어요. 몸 색은 꾸미기에서 빠졌어요(2026-11-28) — 몸은 가입 때 고른 팔로로 그대로.
       x-status: new
       x-inventory: "#35"
       x-screens:
@@ -3479,6 +3479,75 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoungePostSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-domain: lounge
+  /community/posts/recommended:
+    get:
+      tags:
+        - 라운지 피드
+      operationId: listRecommendedCommunityPosts
+      summary: 추천 탭 글 목록 (전체 · 인기)
+      description: >
+        화면: app/(tabs)/lounge.tsx RecommendedFeed (tab=all · 칩 전체/인기 · 지점 선택)
+
+        언제: 탭 진입 · 칩/지점 바꿈 · 아래로 내려 끝에 가까워질 때(다음 쪽) · 당겨서 새로고침
+
+        규칙: 순서는 서버가 정해요 — 앱은 받은 순서대로 그려요. 지금은 가장 단순한 규칙이고 나중에 서버에서 고도화해요:
+        ALL = 모든 글 최신순(커뮤니티 '전체'와 같음), HOT = 최근 7일 안에 올린 글을 하트 많은 순(같으면 최신순).
+        지금은 커뮤니티 글만 — 번개 · 파티 · 작은 지도 카드는 그 API 가 생기면 섞어요.
+        활성 멤버십 · 숨김 · 지운 글 · 지점 거르기 규칙은 GET /community/posts 와 같아요.
+        cursor 는 칩마다 모양이 달라 다른 칩의 cursor 를 넘기면 400.
+      x-status: existing
+      x-backend: MobileCommunityPostController GET /app/api/v2/community/posts/recommended?pick=&branch=&cursor=&size= →
+        CommunityPostPageResponse{items[CommunityPostResponse], nextCursor}
+      x-screens:
+        - app/(tabs)/lounge.tsx
+        - components/lounge/post-card.tsx
+      x-app-code: api/use-community.ts useRecommendedFeed · api/community.ts fetchRecommendedPosts
+      parameters:
+        - name: pick
+          in: query
+          required: false
+          description: 서브 칩. 비우면 ALL. 모르는 값은 400
+          schema:
+            type: string
+            enum: [ALL, HOT]
+            default: ALL
+        - name: branch
+          in: query
+          required: false
+          description: 지점 선택 시트에서 고른 지점 code (쉼표로 여러 곳). 비우면 전체 지점. 지점 없는 글은 늘 포함
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: cursor
+          in: query
+          required: false
+          description: 같은 pick 의 이전 응답 nextCursor. 깨진 값 · 다른 칩의 값은 400
+          schema:
+            type: string
+        - name: size
+          in: query
+          required: false
+          description: 한 쪽 글 수 (기본 20, 1~50 으로 잘라요)
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityFeedPage"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -6986,7 +7055,7 @@ paths:
       description: >
         화면: customize.tsx 아래 '새 아이템 n개 · ✦합계' → [사고 저장하기]
 
-        규칙(서버가 계산): 안 가진 것(몸 색 · 배경 · 장착 아이템)의 가격 합계를 스파크에서 빼고, 장부에 type=shop 한 줄(-합계), 가진 목록에 더하고, 모습을 저장. 한 트랜잭션.
+        규칙(서버가 계산): 안 가진 것(배경 · 장착 아이템)의 가격 합계를 스파크에서 빼고, 장부에 type=shop 한 줄(-합계), 가진 목록에 더하고, 모습을 저장. 한 트랜잭션.
 
         같은 clientRequestId 로 다시 보내면 두 번 빼지 않아요.
 
@@ -7053,18 +7122,21 @@ paths:
       tags:
         - 랭킹 · 배지
       operationId: listMyBadges
-      summary: 배지 (전체 + 받은 것)
+      summary: 배지 모두 보기 (앱에 보이는 배지 전부 + 받은 것)
       description: >
-        화면: 마이 배지 미리보기 · BadgeSheet (모두 보기)
+        화면: 마이 배지 칸 [모두 보기] → BadgeSheet. 받은 것 · 못 받은 것 한 목록, 순서는 콘솔(app-hub)에서 정한 순서.
+        마이 탭 배지 칸(GET /me/mypage badges)은 이 목록의 앞 4칸이에요.
 
-        규칙(서버가 계산 · 지급): 7일 연속 · 첫 번개 · 동아리 첫 가입 · 따라 말하기 100문장 · 북클럽 한 권 완독 · 주간 TOP 3 · 좋아요 50개 글 · 동행 첫 참여.
-      x-status: new
+        규칙(서버가 지급): 지금은 번개 참여 확정 · 동아리 정식 멤버 · 한 글 좋아요 수로 받아요. 받으면 인앱 알림 BADGE_EARNED(referenceId = 배지 코드) + 푸시(type BADGE).
+        그 밖의 배지(연속 학습 · 따라 말하기 · 주간 TOP 3 등)는 그 도메인이 생기면 붙여요.
+      x-status: existing
       x-inventory: "#33"
+      x-backend: MobileBadgeV2Controller GET /app/api/v2/me/badges → List<MyBadgeV2Response{code, name, description, imageUrl, earned, earnedAt}>
       x-screens:
         - app/(tabs)/my.tsx
         - components/my/my-sheets.tsx
         - components/my/my-blocks.tsx
-      x-app-code: data/my.ts MY_BADGES
+      x-app-code: api/badges.ts fetchMyBadges · api/use-badges.ts
       responses:
         "200":
           description: OK
@@ -7074,6 +7146,73 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MyBadge"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: my
+  /me/badges/unseen:
+    get:
+      tags:
+        - 랭킹 · 배지
+      operationId: listUnseenBadges
+      summary: 아직 축하 화면을 안 본 배지
+      description: >
+        화면: components/my/badge-celebrate.tsx — 탭 화면 위 축하 시트.
+
+        언제: 앱이 열릴 때 · 앞으로 돌아올 때 · 배지 푸시를 받았을 때. 푸시를 꺼 둔 사람도 축하 화면을 보게 하려고 따로 물어요.
+
+        받은 순, 없으면 빈 목록. 띄운 배지는 POST /me/badges/seen 으로 표시해요.
+      x-status: existing
+      x-backend: MobileBadgeV2Controller GET /app/api/v2/me/badges/unseen → List<MyBadgeV2Response>
+      x-screens:
+        - app/(tabs)/_layout.tsx
+        - components/my/badge-celebrate.tsx
+      x-app-code: api/badges.ts fetchUnseenBadges · api/use-badges.ts
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MyBadge"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: my
+  /me/badges/seen:
+    post:
+      tags:
+        - 랭킹 · 배지
+      operationId: markBadgesSeen
+      summary: 축하 화면을 본 배지 표시
+      description: >
+        화면: 축하 시트를 닫을 때. 앱이 띄운 배지 코드만 보내요(그 사이 새로 받은 배지는 다음에 또 떠요).
+
+        규칙: 멱등 — 받지 않은 코드 · 이미 본 배지는 건너뛰어요. codes 는 1~100개(비면 400).
+      x-status: existing
+      x-backend: MobileBadgeV2Controller POST /app/api/v2/me/badges/seen (MyBadgeSeenRequest{codes}) → 204
+      x-screens:
+        - components/my/badge-celebrate.tsx
+      x-app-code: api/badges.ts markBadgesSeen · api/use-badges.ts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codes]
+              properties:
+                codes:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: string
+      responses:
+        "204":
+          description: 표시함 (몸통 없음)
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
@@ -8484,10 +8623,11 @@ paths:
                           type:
                             - string
                             - 'null'
-                        icon:
+                        imageUrl:
                           type:
                             - string
                             - 'null'
+                          description: 256×256 투명 배경 PNG (예전 icon 대신)
                         earned:
                           type: boolean
                   activity:
@@ -10756,65 +10896,86 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
-  /ranking:
+  /ranking/members:
     get:
       tags:
         - 랭킹 · 배지
-      operationId: getRanking
-      summary: PALLO 랭킹 (개인 · 지점 대항전 × 이번 주 · 이번 달)
+      operationId: getMemberRanking
+      summary: PALLO 랭킹 — 개인 (이번 주 · 이번 달)
       description: >
-        화면: app/me/ranking.tsx · 마이 RankSummary(시상대 1~3위 + 내 순위) · 숫자 칸 '이번 주 랭킹
-        n위'
+        화면: app/me/ranking.tsx [개인] 탭 (내 순위 띠 · 시상대 1~3위 · 4~10위 · 10위 밖이면 내 근처 줄 · '10위까지 n P').
 
-        규칙(서버가 계산): 포인트 = 포인트 장부 합계 (퀘스트 단계 xp · 빠른 답 보너스 · 출석 30P 등). 주 = 월요일 0시 KST ~ 일요일, 달 = 1일 ~ 말일.
+        규칙(서버가 계산): 포인트 = 포인트 장부 합계 (퀘스트 단계 xp · 빠른 답 보너스 · 출석 30P 등). 같은 점수면 먼저 도달한 사람이 위.
+        이 기간 포인트가 0 인 사람은 순위에 없어요(me.rank null · 마이 요약 GET /me/mypage ranking.me.rank 와 같은 판정).
+        top = 1~10위. around = 10위 밖일 때만 — 11위면 나 한 줄, 12위부터는 내 앞 · 나 · 내 뒤(꼴찌면 뒤 없음).
+        이름 · 지점 공개 규칙은 마이 요약 랭킹 칸과 같아요('랭킹에 내 이름 보이기' 끔 → code null · '익명 회원', 본인에게는 그대로).
+        순위 · 합계 · 남은 점수는 서버가 정하고 화면은 받은 대로 그려요. 학습 · 출석하면 바로 바뀌어야 해요(캐시 짧게).
 
-        같은 점수면 먼저 도달한 사람이 위. '랭킹에 내 이름 보이기'를 끈 회원은 anonymous=true · member=null ('익명 회원'), 본인에게는 그대로.
-
-        지점 대항전 = 그 지점 회원 포인트 합계 (두 지점 회원은 어느 쪽에 넣을지 열린 질문).
-
-        학습 · 출석하면 바로 바뀌어야 해요 (캐시 짧게).
+        (2026-11-28) 예전 GET /ranking?scope= 하나였는데, 개인 · 지점 대항전은 응답 모양이 달라 경로를 둘로 나눴어요 (앱 api/ranking.ts).
       x-status: new
       x-inventory: "#31"
       x-screens:
         - app/me/ranking.tsx
-        - app/(tabs)/my.tsx
-        - components/my/my-blocks.tsx
-      x-app-code: data/my.ts RANK_PEOPLE · rankPeople · MY_MONTH_BASE ·
-        state/ledger.ts awardPoints
+      x-app-code: api/ranking.ts fetchMemberRanking · api/use-ranking.ts (가짜 서버 mockMemberRanking = data/my.ts rankPeople + state/me weekPoints)
       parameters:
-        - name: scope
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - member
-              - branch
-            default: member
         - name: period
           in: query
           required: false
+          description: WEEK = 이번 주(KST 월요일 0시부터) · MONTH = 이번 달(KST 1일 0시부터)
           schema:
             type: string
             enum:
-              - week
-              - month
-            default: week
-        - name: size
-          in: query
-          required: false
-          description: 위에서 몇 명(몇 지점)까지
-          schema:
-            type: integer
-            default: 50
-            maximum: 100
+              - WEEK
+              - MONTH
+            default: WEEK
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RankingBoard"
+                $ref: "#/components/schemas/MemberRanking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: my
+  /ranking/branches:
+    get:
+      tags:
+        - 랭킹 · 배지
+      operationId: getBranchRanking
+      summary: PALLO 랭킹 — 지점 대항전 (이번 주 · 이번 달)
+      description: >
+        화면: app/me/ranking.tsx [지점 대항전] 탭 (지점별 합계 막대 · 우리 지점 강조).
+
+        규칙(서버가 계산): 지점 점수 = 그 지점 회원 포인트 합계. 1위부터 전 지점. 앱이 합산하지 않아요.
+        myBranch = 우리 지점(지점 회원이 아니면 null). 두 지점 회원은 어느 쪽에 넣을지 열린 질문(README 정할 것).
+      x-status: new
+      x-inventory: "#31"
+      x-screens:
+        - app/me/ranking.tsx
+      x-app-code: api/ranking.ts fetchBranchRanking · api/use-ranking.ts (가짜 서버 mockBranchRanking)
+      parameters:
+        - name: period
+          in: query
+          required: false
+          description: WEEK = 이번 주(KST 월요일 0시부터) · MONTH = 이번 달(KST 1일 0시부터)
+          schema:
+            type: string
+            enum:
+              - WEEK
+              - MONTH
+            default: WEEK
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BranchRanking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: my
@@ -14070,6 +14231,7 @@ components:
         - PROS_NOTE_RECEIVED
         - EVENT_PROPOSAL_APPROVED
         - EVENT_PROPOSAL_REJECTED
+        - BADGE_EARNED
         - SYSTEM
       example: PROS_NOTE_RECEIVED
     Notification:
@@ -18417,6 +18579,21 @@ components:
           type: boolean
         viewerRole:
           $ref: "#/components/schemas/GroupViewerRole"
+        viewerRequestExpiresAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: 내 신청 응답 기한 — viewerRole PENDING 일 때만, 그 밖엔 null. 지나면 서버가 EXPIRED 로 끝내요
+        viewerRejectReason:
+          type:
+            - string
+            - "null"
+          description: 거절 사유 고정 문구 — viewerRole REJECTED 일 때만 (호스트가 쓴 reasonText 는 절대 안 와요)
+          example: 호스트 사정(정원·일정)으로 이번엔 함께하기 어려워요
+        viewerCanReapply:
+          type: boolean
+          description: 다시 신청할 수 있는지 — 관계 없음(만료 포함)이거나, 거절됐지만 기회(1번)가 남았을 때 true
         createdAt:
           type: string
           format: date-time
@@ -21949,141 +22126,169 @@ components:
           type: string
           description: 추천 이유 한 줄
           example: 같은 하남점 토요일 세션
-    RankingRow:
+    RankingEntry:
       type: object
+      description: 랭킹 한 줄 (앱 api/ranking.ts RankingEntry = 마이 요약 랭킹 칸 MyPageRankEntry + isMe)
       required:
         - rank
+        - displayName
         - points
-        - anonymous
         - isMe
       properties:
         rank:
           type: integer
           example: 1
-        member:
-          description: 익명이면 null
-          oneOf:
-            - $ref: "#/components/schemas/MemberSummary"
-            - type: "null"
-        avatar:
-          oneOf:
-            - $ref: "#/components/schemas/AvatarLook"
-            - type: "null"
-        branchLabel:
+        code:
           type:
             - string
             - "null"
-          description: 지점 (두 곳이면 '영등포 · 연신내')
+          description: 회원 code — 이름을 숨긴 회원이면 null
+        displayName:
+          type: string
+          description: 이름 (숨긴 회원은 '익명 회원')
+          example: 민지
+        branchName:
+          type:
+            - string
+            - "null"
+          description: 지점 (숨겼거나 없으면 null)
           example: 영등포
         points:
           type: integer
           example: 420
-        anonymous:
-          type: boolean
-          description: "'랭킹에 내 이름 보이기' 끔 → '익명 회원'"
         isMe:
           type: boolean
-    BranchRankingRow:
+          description: 나인지 — 내 줄을 노랗게 칠해요
+    MemberRanking:
       type: object
       required:
-        - rank
-        - branch
-        - points
-        - isMine
-      properties:
-        rank:
-          type: integer
-        branch:
-          $ref: "#/components/schemas/BranchRef"
-        points:
-          type: integer
-          description: 지점 회원 포인트 합계
-        isMine:
-          type: boolean
-    RankingBoard:
-      type: object
-      required:
-        - scope
         - period
         - periodStart
-        - periodEnd
+        - top
+        - me
+        - around
       properties:
-        scope:
-          type: string
-          enum:
-            - member
-            - branch
         period:
           type: string
           enum:
-            - week
-            - month
+            - WEEK
+            - MONTH
         periodStart:
           type: string
           format: date
+          description: 기간 시작 (KST)
           example: 2026-11-23
-        periodEnd:
-          type: string
-          format: date
-          example: 2026-11-29
+        top:
+          type: array
+          description: 1~10위 (사람이 적으면 그만큼)
+          items:
+            $ref: "#/components/schemas/RankingEntry"
         me:
-          description: 내 순위 띠 (scope=member). 순위 밖이면 rank 는 null
           type: object
+          required:
+            - points
           properties:
             rank:
               type:
                 - integer
                 - "null"
+              description: 이 기간 포인트가 0 이면 null
             points:
               type: integer
-            branchName:
-              type:
-                - string
-                - "null"
-        myBranchRank:
+        around:
+          type: array
+          description: 10위 밖일 때 내 근처 줄 (11위 = 나 한 줄, 12위부터 = 앞 · 나 · 뒤). 10위 안이거나 순위가 없으면 빈 목록
+          items:
+            $ref: "#/components/schemas/RankingEntry"
+        pointsToTop10:
           type:
             - integer
             - "null"
-          description: scope=branch 일 때 우리 지점 순위
-        rows:
-          type: array
-          items:
-            $ref: "#/components/schemas/RankingRow"
-          description: scope=member (1~3위 시상대 + 4위 이하)
-        branchRows:
-          type: array
-          items:
-            $ref: "#/components/schemas/BranchRankingRow"
-          description: scope=branch
-    MyBadge:
+          description: 10위가 되려면 더 필요한 포인트 — 10위 안이거나 순위가 없으면 null
+    BranchRankingEntry:
       type: object
       required:
-        - id
-        - icon
+        - rank
+        - branchCode
+        - branchName
+        - points
+        - isMine
+      properties:
+        rank:
+          type: integer
+        branchCode:
+          type: string
+        branchName:
+          type: string
+        points:
+          type: integer
+          description: 지점 회원 포인트 합계
+        isMine:
+          type: boolean
+    BranchRanking:
+      type: object
+      required:
+        - period
+        - periodStart
+        - branches
+      properties:
+        period:
+          type: string
+          enum:
+            - WEEK
+            - MONTH
+        periodStart:
+          type: string
+          format: date
+        branches:
+          type: array
+          description: 1위부터 전 지점
+          items:
+            $ref: "#/components/schemas/BranchRankingEntry"
+        myBranch:
+          description: 우리 지점 — 지점 회원이 아니면 null
+          oneOf:
+            - type: object
+              required:
+                - branchCode
+                - branchName
+                - points
+              properties:
+                branchCode:
+                  type: string
+                branchName:
+                  type: string
+                rank:
+                  type:
+                    - integer
+                    - "null"
+                points:
+                  type: integer
+            - type: "null"
+    MyBadge:
+      type: object
+      description: 백엔드 MyBadgeV2Response 그대로 (앱 api/badges.ts MyBadge)
+      required:
+        - code
         - name
         - description
         - earned
       properties:
-        id:
+        code:
           type: string
-          example: streak-7
-        icon:
-          type: string
-          enum:
-            - flame
-            - bolt
-            - users
-            - mic
-            - book
-            - crown
-            - heart
-            - plane
+          description: 배지 코드 — 알림 referenceId · 본 것으로 보낼 때 쓰는 키
+          example: first-meetup
         name:
           type: string
-          example: 7일 연속
+          example: 첫 번개
         description:
           type: string
-          example: 7일 연속 학습
+          example: 번개에 처음 참여했어요
+        imageUrl:
+          type:
+            - string
+            - "null"
+          description: 256×256 투명 배경 PNG
         earned:
           type: boolean
         earnedAt:
@@ -22091,6 +22296,7 @@ components:
             - string
             - "null"
           format: date-time
+          description: 받은 시각 — 못 받았으면 null
     AvatarCategory:
       type: string
       description: 헤어 · 눈 · 장갑 · 신발 · 모자 · 얼굴 · 옷 · 손 · 액세서리 · 배경 효과 (data/my.ts AvCat)
@@ -22117,8 +22323,8 @@ components:
     AvatarLook:
       type: object
       description: >
-        꾸민 모습 (data/my.ts Avatar). color · bg · hairColor 는 카탈로그 id 이거나 직접 고른
-        '#RRGGBB'(무료).
+        꾸민 모습 (data/my.ts Avatar). bg · hairColor 는 카탈로그 id 이거나 직접 고른
+        '#RRGGBB'(무료). color 는 팔로로 code 만 — 직접 고른 몸 색은 없어졌어요(2026-11-28, '#RRGGBB' 를 보내면 400).
 
         앱 필드 이름: hairColor = hc · equipped = eq.
       required:
@@ -22131,7 +22337,7 @@ components:
       properties:
         color:
           type: string
-          description: 몸 색
+          description: 몸 — 팔로로 code (가입 때 고른 것 그대로, 꾸미기에서 못 바꿔요)
           example: yellow
         flip:
           type: boolean
@@ -22291,7 +22497,6 @@ components:
       required:
         - items
         - backgrounds
-        - bodyColors
       properties:
         items:
           type: array
@@ -22301,25 +22506,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AvatarShopBackground"
-        bodyColors:
-          type: array
-          description: 추천 몸 색 (data/my.ts AVC_LIST) — 추천 6색 무료, 속눈썹 퍼플만 400
-          items:
-            type: object
-            required:
-              - id
-              - name
-              - price
-            properties:
-              id:
-                type: string
-                example: purple-lash
-              name:
-                type: string
-                example: 속눈썹 퍼플
-              price:
-                type: integer
-                example: 400
     MyAvatarState:
       type: object
       required:

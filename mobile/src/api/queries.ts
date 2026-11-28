@@ -12,6 +12,7 @@ import type { PageParams } from './client';
 import { fetchBookShelf, fetchPatternLesson, fetchSceneContent, fetchSituationMaps, fetchUnit34, lessonContentId } from './learn';
 import { fetchLaunchPopups, fetchLoungeHighlights, fetchNotice, fetchNotices, fetchTodaySessions, fetchUnreadNotificationCount } from './home';
 import { fetchMyAvatar } from './avatar';
+import { fetchMyBadges, fetchUnseenBadges } from './badges';
 import { fetchMe } from './me';
 import type { NotificationCategory } from './notifications';
 import { fetchMyLinkRequests } from './branch-link';
@@ -19,6 +20,7 @@ import { fetchBranchSummary } from './branch-summary';
 import { fetchBranchToday } from './branch-today';
 import { fetchMyExpressions, fetchMyMeets, fetchSavedChallenges, type MyMeetBox } from './my-activity';
 import { fetchMyPage } from './my-page';
+import { fetchBranchRanking, fetchMemberRanking, type RankingPeriod } from './ranking';
 import { fetchProSessions } from './pro-sessions';
 import { fetchProsNote, type ProsNoteBox } from './pros-notes';
 import { fetchBranchGuides } from './branch-guide';
@@ -35,6 +37,14 @@ export const queryKeys = {
   linkRequests: ['me', 'branch-link-requests'] as const,
   branchSummary: ['me', 'branch-summary'] as const,
   myPage: ['me', 'mypage'] as const,
+  /** 내 배지 — 모두 보기 · 안 본 배지(축하 시트). badgesAll 로 둘 다 다시 받아요 */
+  badgesAll: ['me', 'badges'] as const,
+  myBadges: ['me', 'badges', 'list'] as const,
+  unseenBadges: ['me', 'badges', 'unseen'] as const,
+  /** PALLO 랭킹 — 포인트가 바뀌면 ranking 으로 둘 다 다시 받아요 */
+  ranking: ['ranking'] as const,
+  memberRanking: (period: RankingPeriod) => ['ranking', 'members', period] as const,
+  branchRanking: (period: RankingPeriod) => ['ranking', 'branches', period] as const,
   /** 내 캐릭터 — 저장한 모습 · 가진 것 (api/use-my-avatar 가 state/avatar 에 넣어요) */
   myAvatar: ['me', 'avatar'] as const,
   /** 마이 › 내 활동 목록 (내 모임 · 찜한 모임 · 찜한 챌린지 · 내 표현함) */
@@ -78,6 +88,8 @@ export const queryKeys = {
   /** 커뮤니티 탭 (글 · 댓글 모두 — 하트 · 스크랩 · 댓글을 단 뒤 한 번에 다시 받을 때) */
   communityAll: ['community'] as const,
   communityPosts: (topic: string | null, branchCodes: string[]) => ['community', 'posts', topic ?? 'all', branchCodes.join(',')] as const,
+  /** 추천 탭 — 커뮤니티 글 캐시 아래에 둬요 (하트 · 스크랩을 누르면 두 탭 캐시를 함께 바꾸게) */
+  communityRecommended: (pick: string, branchCodes: string[]) => ['community', 'posts', 'recommended', pick, branchCodes.join(',')] as const,
   communityComments: (postId: string) => ['community', 'comments', postId] as const,
   situationMaps: ['library', 'maps'] as const,
   bookShelf: ['library', 'books'] as const,
@@ -103,6 +115,16 @@ export const branchSummaryQuery = () => queryOptions({ queryKey: queryKeys.branc
 
 /** GET /me/mypage — 마이 탭 숫자 · 랭킹 요약 · 배지 · 내 활동 개수 (api/my-page.ts) */
 export const myPageQuery = () => queryOptions({ queryKey: queryKeys.myPage, queryFn: ({ signal }) => fetchMyPage({ signal }) });
+/** GET /me/badges — 배지 모두 보기 (api/badges.ts) */
+export const myBadgesQuery = () => queryOptions({ queryKey: queryKeys.myBadges, queryFn: ({ signal }) => fetchMyBadges({ signal }) });
+/** GET /me/badges/unseen — 축하 시트를 띄울 배지. 앱이 앞으로 돌아오면 다시 받아요(query-client focusManager) */
+export const unseenBadgesQuery = () => queryOptions({ queryKey: queryKeys.unseenBadges, queryFn: ({ signal }) => fetchUnseenBadges({ signal }), staleTime: 0 });
+/** GET /ranking/members — 개인 랭킹 (api/ranking.ts) */
+export const memberRankingQuery = (period: RankingPeriod) =>
+  queryOptions({ queryKey: queryKeys.memberRanking(period), queryFn: ({ signal }) => fetchMemberRanking(period, { signal }) });
+/** GET /ranking/branches — 지점 대항전 (api/ranking.ts) */
+export const branchRankingQuery = (period: RankingPeriod) =>
+  queryOptions({ queryKey: queryKeys.branchRanking(period), queryFn: ({ signal }) => fetchBranchRanking(period, { signal }) });
 /** 34 GET /me/avatar — 내 캐릭터 (api/use-my-avatar) */
 export const myAvatarQuery = () => queryOptions({ queryKey: queryKeys.myAvatar, queryFn: ({ signal }) => fetchMyAvatar({ signal }) });
 /** 마이 › 내 모임 · 찜한 모임 (api/my-activity) */

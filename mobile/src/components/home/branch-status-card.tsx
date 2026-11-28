@@ -33,7 +33,7 @@ function nextLine(v: BranchTodayView) {
 const STRIPE_H = 16 + LINE; // 위 테두리(LINE)가 줄무늬 위에 덮여요
 const STRIPE = 12;
 const BAR_W = STRIPE / Math.sin((55 * Math.PI) / 180);
-function Stripes() {
+export function Stripes() {
   const [w, setW] = useState(0);
   const n = w ? Math.ceil((w + STRIPE_H) / (BAR_W * 2)) + 2 : 0;
   return (
@@ -45,7 +45,7 @@ function Stripes() {
   );
 }
 
-type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /** 숫자 옆 작은 글씨 (예정 6) */ sub?: string; /** 그 옆 빨간 작은 글씨 (불참 1) */ warn?: string };
+export type Cell = { label: string; value: string; tone?: 'pro' | 'staff' | 'member'; /** 숫자 옆 작은 글씨 (예정 6) */ sub?: string; /** 그 옆 빨간 작은 글씨 (불참 1) */ warn?: string };
 
 /**
  * 지점 관리자 홈: 출석 카드 아래 '하남점 현황' (docs/pages/10-roles.md 4장 · 카드 시안 A 슬레이트).
@@ -109,7 +109,7 @@ export function BranchStatusCard() {
  * 카드 테두리를 내용 위에 덮어 그려요. 테두리를 바깥 View 에 두면 둥근 모서리 · 위 선에서
  * 안쪽 칸(줄무늬 · 검정 · 노랑 칸) 바탕과 선 사이에 얇은 틈이 비쳐 선이 끊겨 보여요.
  */
-function FrameLine({ radius }: { radius: number }) {
+export function FrameLine({ radius }: { radius: number }) {
   return <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.frame, { borderRadius: radius }]} />;
 }
 

@@ -7,7 +7,7 @@ import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type Scro
 import { Pressable } from '@/components/ui/pressable';
 import { SCREEN } from '@/lib/transitions';
 import { BottomBar } from '@/components/bottom-bar';
-import { AvatarStage, BodyArt, ItemArt, StageArt } from '@/components/character/avatar';
+import { AvatarStage, ItemArt, StageArt } from '@/components/character/avatar';
 import { ColorPick } from '@/components/my/color-pick';
 import { LgIcon, SparkIcon } from '@/components/my/icons';
 import { Lift } from '@/components/my/lift';
@@ -24,8 +24,6 @@ import { Colors, ScrollEnd } from '@/constants/theme';
 import {
   AV_CATS,
   AV_RARE_C,
-  AV_SW,
-  AVC_LIST,
   BG_SW,
   HAIR_SW,
   SAY_IDEAS,
@@ -70,7 +68,7 @@ export default function CustomizeScreen() {
   const { try: tryReward } = useLocalSearchParams<{ try?: string }>();
   const rewards = useRewards();
   const [d, setD] = useState<Avatar>(() => (tryReward && REWARD[tryReward] ? wearReward(getMyAvatar(), REWARD[tryReward].items) : cloneAvatar(getMyAvatar())));
-  const [cat, setCat] = useState<AvTab>('char');
+  const [cat, setCat] = useState<AvTab>('hair');
   const [gen, setGen] = useState(0); // 색 막대를 다시 맞출 때 (원래대로 · 초기화 · 랜덤)
   const [earn, setEarn] = useState(false);
   const [ask, setAsk] = useState(false); // 사기 전 확인
@@ -118,8 +116,7 @@ export default function CustomizeScreen() {
     }
     sfx('tap');
     edit((x) => {
-      if (cat === 'char') x.color = key;
-      else if (key.startsWith('bg:')) x.bg = key.slice(3);
+      if (key.startsWith('bg:')) x.bg = key.slice(3);
       else if (key.startsWith('fx-')) x.eq.fx = x.eq.fx === key ? null : key;
       else if (cat !== 'say' && cat !== 'bg') x.eq[cat] = x.eq[cat] === key ? null : key;
     });
@@ -136,7 +133,7 @@ export default function CustomizeScreen() {
     if (k === 'clear') {
       edit((x) => {
         (Object.keys(x.eq) as AvCat[]).forEach((c) => (x.eq[c] = null));
-        Object.assign(x, { color: 'yellow', bg: 'cream', flip: false, say: '' });
+        Object.assign(x, { bg: 'cream', flip: false, say: '' });
       });
       setGen((g) => g + 1);
       showToast('아무것도 안 입은 모습이에요 · 저장하기를 누르면 바뀌어요');
@@ -148,7 +145,6 @@ export default function CustomizeScreen() {
           const L = items.filter((i) => i.cat === c && !i.lock && !i.hair);
           x.eq[c] = Math.random() < 0.25 || !L.length ? null : pk(L).id;
         });
-        x.color = Math.random() < 0.5 ? pk(AVC_LIST.filter((k2) => !k2[2]))[0] : pk(AV_SW);
         const openBgs = bgs.filter((b) => !b.lock);
         if (openBgs.length) x.bg = pk(openBgs).id;
         x.eq.hair = Math.random() < 0.3 || !hairs.length ? null : pk(hairs).id;
@@ -235,15 +231,7 @@ export default function CustomizeScreen() {
   );
 
   let grid: ReactNode;
-  if (cat === 'char') {
-    grid = (
-      <>
-        <ColorPick key={`c${gen}`} title="내 맘대로 몸 색 · 무료" cur={d.color} swatches={AV_SW} onPick={(hex) => edit((x) => void (x.color = hex))} />
-        {sub('추천 색')}
-        <View style={styles.tiles}>{AVC_LIST.map(([k, n, pr, rare]) => tile(k, n, pr, rare, d.color === k, <BodyArt color={k} width={Math.min(artW * 0.92, 58 / (332 / 520))} />))}</View>
-      </>
-    );
-  } else if (cat === 'hair') {
+  if (cat === 'hair') {
     grid = (
       <>
         <ColorPick key={`h${gen}`} title="머리 색 · 무료" cur={d.hc} swatches={HAIR_SW} onPick={(hex) => edit((x) => void (x.hc = hex))} />
