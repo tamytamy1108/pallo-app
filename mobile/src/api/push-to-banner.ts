@@ -19,9 +19,9 @@ export function hrefOf(type: unknown, referenceId: unknown): Href | undefined {
     // 이벤트 제안 확정 · 반려 — 이벤트 탭 맨 위 '내가 제안한 이벤트' 카드에서 결과 · 매니저 메모를 봐요
     case 'EVENT_PROPOSAL':
       return '/event';
-    // 배지 받음 — 마이 탭 배지 칸 (축하 시트는 탭 화면 위에 저절로 떠요 · components/my/badge-celebrate)
+    // 배지 받음 — 배지 모두 보기 (축하 시트는 탭 화면 위에 저절로 떠요 · components/my/badge-celebrate)
     case 'BADGE':
-      return '/my';
+      return '/me/badges';
     // 연기 요청 · 지점 이동 요청 결과는 아직 앱 상세 화면이 없어 알림함으로
     case 'DEFERRAL_REQUEST':
     case 'BRANCH_TRANSFER_REQUEST':

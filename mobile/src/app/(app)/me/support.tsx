@@ -27,7 +27,8 @@ import { openTel } from '@/lib/open-out';
  *   (내 지점 전화는 연동된 지점이 콘솔 지점 안내에 적은 번호 — GET /me/branch-guides. 연동 전이거나 번호가 없으면 줄을 빼요)
  * - ?view=faq: 자주 묻는 질문만 · ?view=ask(&type=분류 코드): 1:1 문의 (문의하기 · 내 문의)
  * - ?view=ask&tab=list: 내 문의 탭부터 — 답변 알림(USER_INQUIRY)을 누르면 여기로 와요
- * - ?view=bug: 버그 보고 (마이 › 버그 보고) — 1:1 문의와 같은 화면, 분류는 '앱 오류'로 정해져 있어요
+ * - ?view=bug: 버그 보고 (마이 › 버그 보고) — 1:1 문의와 같은 화면, 분류는 '앱 오류'로 정해져 있어요.
+ *   보낸 사람은 내 문의 기록(보낸 내용)만 봐요 — 관리자 답변 · 답변 상태는 보여 주지 않아요 (2026-11-28)
  * 데이터: 93 GET `/faq` · 94 GET · POST `/me/inquiries` (api/support — FAQ 내용 · 분류는 app-hub FAQ 관리에서 본사가 정해요)
  */
 /** 버그 보고가 보내는 문의 분류 (app-hub FAQ 분류 '앱 오류') */
@@ -116,7 +117,8 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
 
 /**
  * 1:1 문의 (프로토타입 askHTML): 문의하기(분류 · 내용) / 내 문의(답변 대기 · 답변 완료, 펼쳐서 내용 · 답 보기).
- * bug: 버그 보고 — 제목 · 탭 이름만 바꾸고 분류 고르기는 숨겨요 (type 의 '앱 오류'로 보내요)
+ * bug: 버그 보고 — 제목 · 탭 이름만 바꾸고 분류 고르기는 숨겨요 (type 의 '앱 오류'로 보내요).
+ *   내 문의는 보낸 내용만 — 답변 대기/완료 · 관리자 답변 줄은 빼요
  */
 function AskView({ type, startOnList, bug = false }: { type?: string; startOnList: boolean; bug?: boolean }) {
   const faq = useQuery(faqQuery());
@@ -143,7 +145,7 @@ function AskView({ type, startOnList, bug = false }: { type?: string; startOnLis
           setText('');
           setTab('list');
           sfx('save');
-          showToast(bug ? '알려 줘서 고마워요 · 고치면 알림으로 알려 드려요' : '문의를 보냈어요 · 답이 오면 알림으로 알려 드려요');
+          showToast(bug ? '알려 줘서 고마워요' : '문의를 보냈어요 · 답이 오면 알림으로 알려 드려요');
         },
         onError: (e) => showToast(apiErrorMessage(e)),
       },
@@ -198,12 +200,12 @@ function AskView({ type, startOnList, bug = false }: { type?: string; startOnLis
                 accessibilityState={{ expanded: on }}>
                 <PText style={styles.tg}>{`${x.categoryLabel ?? '기타'} · ${inquiryDate(x.createdAt)}`}</PText>
                 <PText style={styles.qB}>{x.title}</PText>
-                <PText style={[styles.st, x.status === 'ANSWERED' ? styles.stOk : null]}>{INQUIRY_STATUS_LABEL[x.status]}</PText>
+                {bug ? null : <PText style={[styles.st, x.status === 'ANSWERED' ? styles.stOk : null]}>{INQUIRY_STATUS_LABEL[x.status]}</PText>}
               </Pressable>
               {on ? (
                 <>
                   <PText style={styles.mine}>{x.content}</PText>
-                  <PText style={styles.a}>{x.answer ?? '답변을 기다리고 있어요. 답이 오면 알림으로 알려 드려요.'}</PText>
+                  {bug ? null : <PText style={styles.a}>{x.answer ?? '답변을 기다리고 있어요. 답이 오면 알림으로 알려 드려요.'}</PText>}
                 </>
               ) : null}
             </View>

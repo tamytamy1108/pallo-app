@@ -51,6 +51,7 @@
 | A33 | (관리자) POST · DELETE | `/admin/clubs/:id/warnings` · `/admin/clubs/:id` · `/admin/challenges/:id/warnings` · `/admin/challenges/:id` | **활동 없음 · 저조 경고 · 닫기**. 서버가 활동을 세서 관리자 웹에 후보를 보여 주고, 관리자가 경고 알림(`club_warning` · `challenge_warning`, n/최대)을 보내요. 닫으면 `club_closed` 알림 + 호스트 · 코호스트 자격 끝. 아래 '활동 없음 · 저조 규칙' | `data/host-rules.ts` |
 | A34 | GET | `/me/pro-sessions?cursor=&limit=` | **참여한 세션 기록** (스텝 · 프로): '프로로 참여'로 출석한 세션 `{ total, thisMonth, items: [{ sessionId, date, time, teamName, languageLabel, branchName, kind: COVER \| JOIN, sparks }], nextCursor }`. 스텝 마이 '참여한 세션' 칸을 누르면 열려요. `total` = 마이 `proStats.sessionsTotal` | `api/pro-sessions.ts` · `components/account/pro-sessions-sheet.tsx` |
 | A35 | (기존 A3 에 추가) | `GET /me/sparks` `earnRules[].audience` · 서버 지급 2가지 | **프로 · 스텝 스파크**: 프로로 참여 +50 · 한 달 출석률 우수 (아래 '스파크 지급 기준') | `data/my.ts` `SPARK_EARN_PRO` · `components/my/my-sheets.tsx` |
+| A36 | (기존 `GET /me/badges` 에 추가) | 항목에 `conditionType` · `threshold` · `progress` | **배지 받는 방법 · 진행**: 배지 상세 시트에 '번개에 5번 참여하면 받아요 · 2 / 5번' 을 그려요. 아래 '배지 — 받는 방법 · 진행 (A36)' | `api/badges.ts` · `data/badge-rules.ts` · `components/my/badge-detail-sheet.tsx` · `app/me/badges.tsx` |
 
 > 인증 2-a: 기존 2 `/auth/phone/verify` 앞에 **인증번호 보내기** `POST /auth/phone/code` 가 하나 더 필요해요 (`src/api/auth.ts` `sendPhoneCode`).
 
@@ -155,6 +156,44 @@
 ```
 
 - 앱 샘플: 지금은 서버가 없어서 진행은 0, 개발 서버에서 `마이?reward=santa` 로 지급을 흉내 내요 (`?reward=reset` 은 처음으로).
+
+### 배지 — 받는 방법 · 진행 (A36 · 2026-11-28)
+
+지급은 이미 서버가 해요(`AppBadgeAwardService` — 번개 · 동아리 확정 · 좋아요 이벤트). 앱은 **받는 방법과 지금 어디까지 왔는지**를 보여 주려고, `GET /me/badges` 항목에 세 칸을 더해 주세요. 셋 다 없어도 앱은 깨지지 않고 설명 글만 보여요.
+
+| 칸 | 값 | 설명 |
+|---|---|---|
+| `conditionType` | `AppBadgeConditionType` 이름 | 콘솔에서 고른 조건 유형 그대로 |
+| `threshold` | 숫자 | 콘솔 기준 숫자 그대로 |
+| `progress` | 숫자 \| null | 지금 내 값. 받은 배지도 보내 주세요(받은 뒤에도 더 쌓인 값). 셀 수 없는 유형은 `null` |
+
+`progress` 세는 법 (지급 판정과 같은 값):
+
+| 유형 | progress |
+|---|---|
+| `HANGOUT_JOIN_COUNT` · `CLUB_JOIN_COUNT` | `app_badge_progress` 에서 그 유형 줄 수 (`countOf`) |
+| `POST_LIKES_ON_ONE_POST` | 내 글 중 좋아요가 가장 많은 글의 좋아요 수 |
+| `WEEKLY_RANK_TOP` | 지난주 확정 내 순위 (없으면 null) — 낮을수록 좋아서 앱은 막대 대신 '지난주 n위' 로 보여요 |
+| `STUDY_STREAK_DAYS` · `SHADOWING_SENTENCE_COUNT` | 학습 기록 도메인 전까지 `null` — 앱은 '진행은 곧 여기서 볼 수 있어요' |
+
+```json
+{ "code": "hangout-5", "name": "번개 단골", "description": "번개 5번 참여", "imageUrl": "https://…/a.png",
+  "earned": false, "earnedAt": null, "conditionType": "HANGOUT_JOIN_COUNT", "threshold": 5, "progress": 2 }
+```
+
+앱 화면 (2026-11-28):
+
+- **배지 모두 보기** `/me/badges` (마이 배지 '모두 보기 ›' · '받은 배지' 숫자 칸 · 배지 푸시 · 축하 시트 [배지 보기]): 받은 개수 · 최근 받은 배지 → **거의 다 왔어요**(못 받은 배지 중 진행이 큰 순 2개) → 전체 · 받은 · 못 받은 칸 → **배지는 이렇게 받아요**(아래 공통 규칙 5줄).
+- **배지 상세 시트** (칸을 누르면): 큰 그림 · 받은 날 · 받는 방법 한 줄 · 진행 막대 `2 / 5번` · `3번 더 참여하면 받아요` · 세는 법 · [번개 보러 가기] 같은 하러 가기 버튼 (못 받은 배지만).
+- 배지 푸시(`BADGE`)를 누르면 마이 대신 `/me/badges` 로 가요.
+
+공통 규칙 (서버 그대로 — 화면 '배지는 이렇게 받아요'):
+
+1. 활동이 기준에 닿는 순간 저절로 받아요 (신청 없음).
+2. 받으면 알림 + 푸시 한 건, 앱을 열면 축하 화면 (푸시를 꺼 두어도 축하 화면은 떠요).
+3. 같은 번개 · 동아리는 한 번만 세고, 빠지거나 나가도 줄지 않아요 (누적). 연 번개 · 만든 동아리도 세요.
+4. 받은 배지는 회수하지 않아요 (배지를 숨겨도 받은 사람에겐 남아요).
+5. 소급 지급 없음 — 새 배지 · 기준을 낮춘 배지는 이미 넘은 회원도 **다음 활동 때** 받아요.
 
 ### 응답 모양 예시 (앱이 지금 쓰는 모양)
 

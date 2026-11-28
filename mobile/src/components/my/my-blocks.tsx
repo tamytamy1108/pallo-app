@@ -106,27 +106,63 @@ export function RankSummary({ podium, myRank, myPoints, branch, onPress }: { pod
 }
 
 const BADGE_BG = [Colors.yellow, Colors.rosePink, Colors.sky, '#CDEBD0'];
+/** 배지 동그라미 바탕색 — 칸 순서대로 노랑 · 분홍 · 하늘 · 민트 (상세 시트도 같은 색) */
+export const badgeBg = (i: number) => BADGE_BG[((i % 4) + 4) % 4];
+
+/** 배지 동그라미 하나 (칸 · 상세 시트 같이 써요) — 못 받은 건 흐리게 */
+export function BadgeArt({ b, bg, size = 52, iconSize = 22 }: { b: Badge; bg: string; size?: number; iconSize?: number }) {
+  const img = Math.round(size * 0.85);
+  return (
+    <View style={[styles.bdIc, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }, !b.on && styles.bdOff]}>
+      {b.imageUrl ? (
+        <Image source={b.imageUrl} style={[{ width: img, height: img }, !b.on && styles.bdImgOff]} contentFit="contain" accessible={false} />
+      ) : (
+        <BadgeIc ic={b.ic} size={iconSize} color={b.on ? Colors.ink : '#A39C8E'} />
+      )}
+    </View>
+  );
+}
 
 /**
  * 배지 칸 (프로토타입 .my-badges: 4칸 · 동그라미 색은 차례로 노랑 · 분홍 · 하늘 · 민트 · 못 받은 건 흐리게).
  * 서버 배지는 그림(256×256 투명 PNG)을 동그라미 안에 채워 그리고, 그림이 없는 예시 배지는 아이콘으로 그려요.
+ * onPress 를 주면 칸을 눌러 배지 상세(받는 방법 · 진행)를 열어요. colorIndex 는 칸 색을 목록 전체 순서로 맞출 때 (거르기 뒤에도 같은 색).
  */
-export function BadgeGrid({ list, desc = false, iconSize = 22 }: { list: Badge[]; desc?: boolean; iconSize?: number }) {
+export function BadgeGrid({
+  list,
+  desc = false,
+  iconSize = 22,
+  onPress,
+  colorIndex,
+}: {
+  list: Badge[];
+  desc?: boolean;
+  iconSize?: number;
+  onPress?: (b: Badge, i: number) => void;
+  colorIndex?: (b: Badge, i: number) => number;
+}) {
   return (
     <View style={[styles.badges, desc && styles.badgesAll]}>
-      {list.map((b, i) => (
-        <View key={b.code} style={styles.bd} accessible accessibilityLabel={`${b.name}${b.on ? '' : ' · 아직 못 받았어요'}`}>
-          <View style={[styles.bdIc, { backgroundColor: BADGE_BG[i % 4] }, !b.on && styles.bdOff]}>
-            {b.imageUrl ? (
-              <Image source={b.imageUrl} style={[styles.bdImg, !b.on && styles.bdImgOff]} contentFit="contain" accessible={false} />
-            ) : (
-              <BadgeIc ic={b.ic} size={iconSize} color={b.on ? Colors.ink : '#A39C8E'} />
-            )}
+      {list.map((b, i) => {
+        const ci = colorIndex ? colorIndex(b, i) : i;
+        const label = `${b.name}${b.on ? '' : ' · 아직 못 받았어요'}`;
+        const body = (
+          <>
+            <BadgeArt b={b} bg={badgeBg(ci)} iconSize={iconSize} />
+            <PText style={[styles.bdName, !b.on && styles.bdNameOff]}>{b.name}</PText>
+            {desc && <PText style={styles.bdDesc}>{b.desc}</PText>}
+          </>
+        );
+        return onPress ? (
+          <Pressable key={b.code} onPress={() => onPress(b, ci)} accessibilityRole="button" accessibilityLabel={label} accessibilityHint="받는 방법을 열어요" style={({ pressed }) => [styles.bd, pressed && styles.bdPressed]}>
+            {body}
+          </Pressable>
+        ) : (
+          <View key={b.code} style={styles.bd} accessible accessibilityLabel={label}>
+            {body}
           </View>
-          <PText style={[styles.bdName, !b.on && styles.bdNameOff]}>{b.name}</PText>
-          {desc && <PText style={styles.bdDesc}>{b.desc}</PText>}
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -174,7 +210,7 @@ const styles = StyleSheet.create({
   bd: { width: '25%', alignItems: 'center', gap: 4, paddingHorizontal: 4 },
   bdIc: { width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   bdOff: { backgroundColor: '#EDE7DA', borderColor: '#C9C1B1' },
-  bdImg: { width: 44, height: 44 },
+  bdPressed: { opacity: 0.6 },
   bdImgOff: { opacity: 0.35 },
   bdName: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, textAlign: 'center' },
   bdNameOff: { color: '#A39C8E' },

@@ -19,7 +19,7 @@ describe('푸시 → 배너', () => {
     ['DEFERRAL_REQUEST', 'd1', '/notifications'],
     ['BRANCH_TRANSFER_REQUEST', 't1', '/notifications'],
     ['PROS_NOTE', undefined, '/me/notes'],
-    ['BADGE', 'first-hangout', '/my'],
+    ['BADGE', 'first-hangout', '/me/badges'],
   ])('종류 %s → %s', (type, referenceId, href) => {
     const data: Record<string, string> = { type };
     if (referenceId) data.referenceId = referenceId;

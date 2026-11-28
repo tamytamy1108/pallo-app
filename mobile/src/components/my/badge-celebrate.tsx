@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useSegments } from 'expo-router';
+import { router, useSegments } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -19,6 +19,7 @@ import { BadgeIc } from './my-blocks';
  * 앱을 열 때 · 앞으로 돌아올 때 · 배지 푸시가 왔을 때 다시 물어요 (푸시는 꺼 두었을 수 있어서 이 시트가 확실한 길이에요).
  * 탭 화면을 보고 있을 때만 띄워요 — 레슨 · 글쓰기처럼 위에 겹친 화면 도중이면 그 화면을 닫고 탭으로 돌아왔을 때 떠요.
  * 닫으면(확인 · 끌어내리기) 띄웠던 배지만 본 것으로 보내요 — 그 사이 새로 받은 배지는 다음에 또 떠요.
+ * [배지 보기] 를 누르면 닫힌 뒤 배지 모두 보기로 가요 (다음 배지까지 얼마나 남았는지).
  * 본 것으로 보내기가 실패해도 이번에는 다시 띄우지 않고, 다음에 앱을 열 때 다시 떠요.
  */
 export function BadgeCelebrateHost() {
@@ -28,6 +29,8 @@ export function BadgeCelebrateHost() {
   const onTab = (useSegments() as string[]).includes('(tabs)');
   // 이번에 띄웠던 코드 — 본 것으로 보내기 전에 다시 받아도 같은 배지를 또 띄우지 않게
   const handled = useRef(new Set<string>());
+  // [배지 보기] — 시트가 다 닫힌 뒤 옮겨요
+  const goAll = useRef(false);
 
   useEffect(() => {
     if (shown || !onTab || !unseen.data) return;
@@ -49,12 +52,25 @@ export function BadgeCelebrateHost() {
     <Sheet
       open={!!shown}
       onClose={close}
+      onClosed={() => {
+        if (goAll.current) router.push('/me/badges');
+        goAll.current = false;
+      }}
       title={title}
       label="새 배지"
       footer={
-        <View>
+        <>
+          <Button
+            label="배지 보기"
+            variant="secondary"
+            wide
+            onPress={() => {
+              goAll.current = true;
+              close();
+            }}
+          />
           <Button label="좋아요" wide onPress={close} />
-        </View>
+        </>
       }>
       <View style={styles.list}>
         {(shown ?? []).map((b) => (
