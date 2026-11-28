@@ -76,22 +76,24 @@ export function UnitSummary({ L, ls }: { L: StudyLevel; ls: Lesson }) {
   const d = ls.data;
   if (!d) return null;
   const rows: [string, string][] =
-    d.kind === 'pattern'
-      ? d.patterns.map((p) => [p.p, p.m])
-      : d.kind === 'topic'
-        ? [
-            [`DAILY TOPIC · ${ls.title}`, '질문 6개 · 키워드 12개'],
-            [`TOPIC · ${d.topicTitle}`, '지문 낭독 · USEFUL EXPRESSIONS 6개'],
-          ]
-        : [
-            [`FREE TALK · ${ls.title}`, '질문 5 · SAY IT BETTER 5'],
-            [d.q, d.qKo],
-          ];
-  const pdf = d.kind === 'pattern' ? undefined : d.pdf;
+    d.kind === 'basic'
+      ? d.bases.map((b) => [b.p, b.m])
+      : d.kind === 'pattern'
+        ? d.patterns.map((p) => [p.p, p.m])
+        : d.kind === 'topic'
+          ? [
+              [`DAILY TOPIC · ${ls.title}`, '질문 6개 · 키워드 12개'],
+              [`TOPIC · ${d.topicTitle}`, '지문 낭독 · USEFUL EXPRESSIONS 6개'],
+            ]
+          : [
+              [`FREE TALK · ${ls.title}`, '질문 5 · SAY IT BETTER 5'],
+              [d.q, d.qKo],
+            ];
+  const pdf = d.kind === 'pattern' || d.kind === 'basic' ? undefined : d.pdf;
   return (
     <Raised radius={22} style={styles.tight}>
       <View style={styles.sum}>
-        <PText style={styles.sumH}>{L.kind === 'pattern' ? '오늘의 패턴' : '이번 회차'}</PText>
+        <PText style={styles.sumH}>{L.kind === 'basic' ? '오늘의 기본 문장' : L.kind === 'pattern' ? '오늘의 패턴' : '이번 회차'}</PText>
         {rows.map(([b, s], i) => (
           <View key={i} style={styles.pl}>
             <View style={styles.plI}>

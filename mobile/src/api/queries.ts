@@ -9,7 +9,7 @@ import { toSituationMaps, type MapRow } from '@/data/maps';
 
 import { fetchSignupOptions } from './auth';
 import type { PageParams } from './client';
-import { fetchBookShelf, fetchPatternLesson, fetchSceneContent, fetchSituationMaps, fetchUnit34, lessonContentId } from './learn';
+import { fetchBasicLesson, fetchBookShelf, fetchPatternLesson, fetchSceneContent, fetchSituationMaps, fetchUnit34, lessonContentId } from './learn';
 import { fetchLaunchPopups, fetchLoungeHighlights, fetchNotice, fetchNotices, fetchTodaySessions, fetchUnreadNotificationCount } from './home';
 import { fetchMyAvatar } from './avatar';
 import { fetchMyBadges, fetchUnseenBadges } from './badges';
@@ -274,6 +274,10 @@ export const situationMapsQuery = () =>
 
 /** 17 /library/books — 언어별 책장 */
 export const bookShelfQuery = () => queryOptions({ queryKey: queryKeys.bookShelf, queryFn: ({ signal }) => fetchBookShelf({ signal }), staleTime: CONTENT_STALE_MS });
+
+/** 18 /lessons/:id — Lv.0 한 과 */
+export const basicLessonQuery = (unit: number) =>
+  queryOptions({ queryKey: queryKeys.lesson(lessonContentId(0, unit)), queryFn: ({ signal }) => fetchBasicLesson(unit, { signal }), staleTime: CONTENT_STALE_MS });
 
 /** 18 /lessons/:id — Lv.1 · 2 한 과 */
 export const patternLessonQuery = (lv: number, unit: number) =>

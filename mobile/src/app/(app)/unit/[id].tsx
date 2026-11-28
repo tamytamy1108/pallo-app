@@ -77,7 +77,7 @@ function UnitBody({ L, ls }: { L: StudyLevel; ls: Lesson }) {
   const list = steps[stage];
   const nextId = list.find((s) => !isDone(stepKey(L.lv, ls.no, s.id)))?.id;
   const items = listenItemsOf(unitId(L.lv, ls.no));
-  const unit = L.kind === 'pattern' ? '과' : '회차';
+  const unit = L.kind === 'pattern' || L.kind === 'basic' ? '과' : '회차';
   const popKey = pop ? stepKey(L.lv, ls.no, pop.s.id) : '';
 
   return (

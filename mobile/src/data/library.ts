@@ -7,12 +7,13 @@
  */
 import { Colors } from '@/constants/theme';
 
+import { BASIC_STEPS } from './lesson-lv0';
 import { STUDY_LEVELS } from './library-lessons';
 import { LISTEN_ITEMS } from './library-listen';
 import { localSceneListenItems, sceneIdOf, type Scene, type SituationMap, type SoonMap } from './situation';
 
 export type StageKey = 'pre' | 'main' | 'post';
-export type StudyKind = 'pattern' | 'topic' | 'debate';
+export type StudyKind = 'basic' | 'pattern' | 'topic' | 'debate';
 
 /** 단계 하나 (xp = 처음 끝낼 때 받는 포인트) */
 export type Step = { id: string; t: string; d: string; min: number; xp: number };
@@ -21,6 +22,8 @@ export type Pdf = { path: string; name: string; size: string };
 
 /** 과 화면 위 요약 카드에 쓰는 것만 (과 콘텐츠 전체는 레슨 화면이 따로 받아요) */
 export type LessonSummary =
+  /** Lv.0 왕기초: 오늘의 기본 문장 3개 (be동사 · 일반동사 · 조동사) */
+  | { kind: 'basic'; bases: { p: string; m: string }[] }
   | { kind: 'pattern'; patterns: { p: string; m: string }[]; bankName: string; actTitle: string }
   | { kind: 'topic'; topicTitle: string; pdf?: Pdf }
   | { kind: 'debate'; q: string; qKo: string; pdf?: Pdf };
@@ -44,10 +47,9 @@ export const LANGS = [
   { ko: '스페인어', g: 'ES', color: Colors.langEs, ink: Colors.ink },
 ] as const;
 
-/** 가짜 서버 값: 언어별 책장 (프로토타입 LIB). 영어는 Lv.0 (잠김) + 교재 4권, 일본어는 표지만, 중국어 · 스페인어는 아직 없어요 */
+/** 가짜 서버 값: 언어별 책장 (프로토타입 LIB). 영어는 교재 5권 (Lv.0 ~ 4), 일본어는 표지만, 중국어 · 스페인어는 아직 없어요 */
 export const BOOKS: Book[][] = [
   [
-    { id: 'en-0', n: 'PALLO', l: 'Lv.0', s: 'HELLO ENGLISH', c: '#4A82C8' },
     ...STUDY_LEVELS.map((L) => ({ id: `en-${L.lv}`, n: 'PALLO', l: `Lv.${L.lv}`, s: L.series, c: L.c, study: L, mine: L.lv === 1 })),
   ],
   [
@@ -79,6 +81,8 @@ export const sceneOpen = (s: Scene) => !!s.contentId;
  * 단계 id 는 레슨 화면 주소에 그대로 써요 — Lv.1 · 2 의 상황 활동만 프로토타입 'act' 대신 레슨 A 경로 id 'sit'.
  */
 export const STUDY_STEPS: Record<StudyKind, Record<StageKey, Step[]>> = {
+  /** Lv.0 HELLO ENGLISH (data/lesson-lv0) */
+  basic: BASIC_STEPS,
   pattern: {
     pre: [
       { id: 'pat', t: '오늘의 패턴', d: '패턴 카드 · 예문 듣고 따라 말하기', min: 5, xp: 5 },

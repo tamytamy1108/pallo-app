@@ -3,9 +3,12 @@
  * (Lv.1 · 2 패턴 예문 · 대화문 · Bank / Lv.3 키워드 예문 · 지문 / Lv.4 FREE TALK · SAY IT BETTER · KEY).
  * 맞는 API: 24 `/lessons/:id/listen-items`. 키 = '레벨-과 번호'. 상황 장면 문장은 @/data/situation 의 sceneListenItems 에서 와요.
  */
+import { LESSONS0_ALL, listen0 } from './lesson-lv0';
 import type { ListenItem } from './library';
 
 export const LISTEN_ITEMS: Record<string, ListenItem[]> = {
+  // Lv.0: 기본 문장 3개 + 문장 연습 25문장 (data/lesson-lv0)
+  ...Object.fromEntries(LESSONS0_ALL.map((D) => [`0-${D.unit}`, listen0(D)])),
   "1-1": [
     {"en":"I'd like to order an iced latte.","ko":"아이스 라테 한 잔을 주문하고 싶어요.","tag":"I'd like to"},
     {"en":"I'd like to sit somewhere quiet.","ko":"좀 조용한 곳에 앉고 싶어요.","tag":"I'd like to"},

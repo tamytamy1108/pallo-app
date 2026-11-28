@@ -7,6 +7,32 @@ import type { StudyLevel } from './library';
 
 export const STUDY_LEVELS: StudyLevel[] = [
   {
+    lv: 0,
+    series: "HELLO ENGLISH",
+    c: "#4A82C8",
+    kind: "basic",
+    total: 16,
+    about: "기본 문장 3개 · Our Story · 문장 변형",
+    lessons: [
+      {"no":1,"title":"Nice to meet you!","sub":"처음 만나서 반가워요","pats":["I am happy.","I study English.","I can speak English."],"data":{"kind":"basic","bases":[{"p":"I am happy.","m":"be동사 · 나는 행복해요"},{"p":"I study English.","m":"일반동사 · 나는 영어를 공부해요"},{"p":"I can speak English.","m":"조동사 · 나는 영어를 말할 수 있어요"}]}},
+      {"no":2,"title":"How is your day?","sub":"오늘 컨디션 어때요?","pats":["I am sleepy.","I drink water.","I can walk."],"data":{"kind":"basic","bases":[{"p":"I am sleepy.","m":"be동사 · 나는 졸려요"},{"p":"I drink water.","m":"일반동사 · 나는 물을 마셔요"},{"p":"I can walk.","m":"조동사 · 나는 걸을 수 있어요"}]}},
+      {"no":3,"title":"My family","sub":"우리 가족"},
+      {"no":4,"title":"My friend","sub":"내 친구"},
+      {"no":5,"title":"At a café","sub":"카페에서"},
+      {"no":6,"title":"My day","sub":"나의 하루"},
+      {"no":7,"title":"Food","sub":"음식과 배달"},
+      {"no":8,"title":"My phone","sub":"내 휴대폰"},
+      {"no":9,"title":"Movies and dramas","sub":"영화와 드라마"},
+      {"no":10,"title":"Shopping","sub":"쇼핑"},
+      {"no":11,"title":"My hobby","sub":"나의 취미"},
+      {"no":12,"title":"Exercise","sub":"운동"},
+      {"no":13,"title":"My weekend","sub":"나의 주말"},
+      {"no":14,"title":"My town","sub":"우리 동네"},
+      {"no":15,"title":"Travel","sub":"여행"},
+      {"no":16,"title":"My plan for this year","sub":"올해 나의 계획"},
+    ],
+  },
+  {
     lv: 1,
     series: "EVERYDAY ENGLISH",
     c: "#138A9E",

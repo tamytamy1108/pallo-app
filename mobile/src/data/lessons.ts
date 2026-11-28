@@ -79,11 +79,14 @@ export const stepDef = (id: string) => STEP_DEFS.find((s) => s.id === id || (id 
 /** 단계 이름 (프로토타입 stepTitle: Bank 는 과마다 이름이 달라요) */
 export const stepTitle = (s: StepDef, D: LessonData) => (s.id === 'bank' ? `${D.bankName} 퀴즈` : s.id === 'sit' ? D.actTitle || s.t : s.t);
 
-/** 다음에 할 단계: 같은 구역에서 안 한 단계 → 다음 구역 (프로토타입 finishStep 의 nxt) */
-export function nextStepAfter(cur: StepDef, isDone: (id: StepId) => boolean) {
+/** 단계 하나의 공통 모양 (Lv.1 · 2 StepDef · Lv.0 Step0Def) */
+export type AnyStepDef = { id: string; stage: Stage; t: string; d: string; xp: number };
+
+/** 다음에 할 단계: 같은 구역에서 안 한 단계 → 다음 구역 (프로토타입 finishStep 의 nxt). defs = 그 레벨의 단계 목록 */
+export function nextStepAfter<S extends AnyStepDef>(cur: S, isDone: (id: S['id']) => boolean, defs: readonly S[]) {
   const order: Stage[] = ['pre', 'main', 'post'];
   for (const st of order.slice(order.indexOf(cur.stage))) {
-    const n = STEP_DEFS.find((s) => s.stage === st && s.id !== cur.id && !isDone(s.id));
+    const n = defs.find((s) => s.stage === st && s.id !== cur.id && !isDone(s.id));
     if (n) return n;
   }
   return null;

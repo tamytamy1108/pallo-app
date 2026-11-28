@@ -25,6 +25,7 @@ import { canUse, type Feature } from '@/state/access';
 import { memberGate } from '@/components/common/trial-guide';
 import { getMe } from '@/state/me';
 import { getLastStep } from '@/state/progress';
+import { lessonBase } from '@/components/library/open-step';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 /**
@@ -44,7 +45,7 @@ const MEMBER_HREFS: [string, Feature, string][] = [
 function myLastHref() {
   const l = getLastStep();
   if (!l) return '/home';
-  return `${l.lv <= 2 ? '/lesson' : '/lesson34'}/${l.step}?lv=${l.lv}&unit=${l.unit}`;
+  return `${lessonBase(l.lv)}/${l.step}?lv=${l.lv}&unit=${l.unit}`;
 }
 
 export default function NotificationsScreen() {

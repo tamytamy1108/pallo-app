@@ -146,7 +146,7 @@ export const MY_BOOK = {
   lessonCount: 20,
   weekLessons: [5, 6],
   /** 레벨마다 이번 주 반 진도 = 늘 두 과 (월화토 A과 · 수목일 B과 · 임시 · 반 진도 API 가 생기면 서버 값으로). 홈 스터디 맵이 보고 있는 레벨 것을 보여요 */
-  weekByLevel: { 1: [5, 6], 2: [5, 6], 3: [101, 102], 4: [101, 102] } as Record<number, number[]>,
+  weekByLevel: { 0: [1, 2], 1: [5, 6], 2: [5, 6], 3: [101, 102], 4: [101, 102] } as Record<number, number[]>,
   titles: { 1: 'Cafe Complaint', 2: 'Operation Cookbook' } as Record<number, string>,
   doneSteps: [] as string[],
 };

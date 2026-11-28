@@ -16,6 +16,7 @@ export default function AppLayout() {
       <Stack.Screen name="notice/[id]" />
       {/* 레슨 · 듣기는 아래에서 올라와요 (탭 바 없이) */}
       <Stack.Screen name="lesson/[step]" options={SCREEN.rise} />
+      <Stack.Screen name="lesson0/[step]" options={SCREEN.rise} />
       <Stack.Screen name="lesson34/[step]" options={SCREEN.rise} />
       <Stack.Screen name="listening" options={SCREEN.rise} />
       <Stack.Screen name="story/[id]" options={SCREEN.fade} />
