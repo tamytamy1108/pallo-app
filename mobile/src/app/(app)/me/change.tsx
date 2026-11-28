@@ -273,6 +273,7 @@ function ChangeScreen() {
   const useEnd = usableEnd(ms.start, ms.plan.usableMonths);
   const [overAsk, setOverAsk] = useState(false);
   const [riskAsk, setRiskAsk] = useState(false);
+  const [noRestAsk, setNoRestAsk] = useState(false);
   const restRisk = (() => {
     if (f.kind !== 'rest' || !f.start || !f.ret || !useEnd) return null;
     const st = new Date(f.start);
@@ -481,14 +482,21 @@ function ChangeScreen() {
           </View>
         </View>
         <PText style={styles.q}>무엇을 바꿀까요?</PText>
-        {cards.map(([k, ic, bg, sub]) => {
+        {cards.map(([k, ic, bg, sub0]) => {
           const off = !ms.pp && k !== 'add';
+          // 연기가 안 되는 멤버십 (CVVIP+): 흐리게 보이지만 누르면 안내 창
+          const noRest = k === 'rest' && !!ms.plan.noRest;
+          const sub = noRest ? `${ms.name} 멤버십은 연기할 수 없어요` : sub0;
           return (
             <Pressable
               key={k}
               disabled={off}
               onPress={() => {
                 sfx('tap');
+                if (noRest) {
+                  setNoRestAsk(true);
+                  return;
+                }
                 if (k === 'rest') {
                   // 연기는 가장 빠른 수업 날부터 2주가 처음부터 골라져 있어요
                   const st = firstOn(REST_MIN, myDays);
@@ -498,8 +506,8 @@ function ChangeScreen() {
                 toTop();
               }}
               accessibilityRole="button"
-              accessibilityState={{ disabled: off }}
-              style={off ? styles.dim : undefined}>
+              accessibilityState={{ disabled: off || noRest }}
+              style={off || noRest ? styles.dim : undefined}>
               {({ pressed }) => (
                 <Lift radius={22} pressed={pressed}>
                   <View style={styles.kind}>
@@ -522,6 +530,14 @@ function ChangeScreen() {
             <PText key={line} style={styles.rule}>{`· ${line}`}</PText>
           ))}
         </View>
+        <ConfirmDialog
+          open={noRestAsk}
+          title="연기 신청을 할 수 없어요"
+          message={`${ms.name} 멤버십은 연기(잠깐 쉬어가기)를 신청할 수 없어요. 팀 바꾸기 · 지점 옮기기는 할 수 있어요.`}
+          confirmLabel="확인"
+          onConfirm={() => setNoRestAsk(false)}
+          onCancel={() => setNoRestAsk(false)}
+        />
       </AccountPage>
     );
   }

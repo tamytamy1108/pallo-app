@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
+import { ROLE_LABEL, RoleTag, type RoleKind } from '@/components/common/role-tag';
 import { Pressable } from '@/components/ui/pressable';
 import { MemberFace } from '@/components/character/avatar';
 import { Raised } from '@/components/ui/raised';
@@ -46,15 +47,23 @@ export function SecHead({ title, more, onMore }: { title: string; more?: string;
 }
 
 /** 숫자 4칸 (프로토타입 .my-stats .tile: 흰 칸 · 잉크 2px · 작은 그림자) */
-export function MyStats({ items }: { items: { ic: BadgeIcon; v: string; l: string; onPress: () => void }[] }) {
+/** tag: 아이콘 자리에 역할 글자 (참여중 칸 = 운영 중인 동아리가 있으면 HOST · CO-HOST) */
+export function MyStats({ items }: { items: { ic: BadgeIcon; v: string; l: string; onPress: () => void; tag?: RoleKind | null }[] }) {
   return (
     <View style={styles.stats}>
       {items.map((x) => (
-        <Pressable key={x.l} onPress={x.onPress} accessibilityRole="button" accessibilityLabel={`${x.l} ${x.v}`} style={styles.statWrap}>
+        <Pressable key={x.l} onPress={x.onPress} accessibilityRole="button" accessibilityLabel={`${x.l} ${x.v}${x.tag ? ` · ${ROLE_LABEL[x.tag]}` : ''}`} style={styles.statWrap}>
           {({ pressed }) => (
             <Lift radius={16} pressed={pressed}>
               <View style={styles.stat}>
-                <BadgeIc ic={x.ic} size={18} color={Colors.purple} />
+                {/* 역할 글자는 아이콘과 같은 높이(18)에 — 칸 높이가 다른 칸과 같아요 */}
+                {x.tag ? (
+                  <View style={styles.statTag}>
+                    <RoleTag kind={x.tag} flush />
+                  </View>
+                ) : (
+                  <BadgeIc ic={x.ic} size={18} color={Colors.purple} />
+                )}
                 <PText style={styles.statV}>{x.v}</PText>
                 <PText style={styles.statL} numberOfLines={1}>
                   {x.l}
@@ -272,6 +281,7 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: 8, marginRight: 2 },
   statWrap: { flex: 1, minWidth: 0 },
   stat: { alignItems: 'center', gap: 2, paddingVertical: 10, paddingHorizontal: 2, borderWidth: 2, borderColor: Colors.ink, borderRadius: 16, backgroundColor: Colors.white },
+  statTag: { height: 18, justifyContent: 'center' },
   statV: { fontFamily: Font.display, fontSize: 16, lineHeight: 22 },
   statL: { fontFamily: Font.body800, fontSize: 11, lineHeight: 16, color: Colors.inkSub },
   rankCard: { padding: 16, borderWidth: 2, borderColor: Colors.ink, borderRadius: Radius.card, backgroundColor: Colors.white },

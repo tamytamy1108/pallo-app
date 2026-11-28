@@ -11,6 +11,7 @@ import { MyStudyCard } from '@/components/account/my-study-card';
 import { MyClassCard } from '@/components/account/my-class-card';
 import { ProSessionsSheet } from '@/components/account/pro-sessions-sheet';
 import { MemberLock } from '@/components/common/member-lock';
+import { useMyClubRoles } from '@/components/meet/model';
 import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { ProNoteCard } from '@/components/account/pro-note-card';
 import { BranchBoard } from '@/components/my/branch-board';
@@ -75,6 +76,8 @@ export default function MyScreen() {
     else grantReward(dev.reward);
   }, [dev.reward]);
   const me = useMe();
+  // 운영 중인 동아리: HOST · CO-HOST 는 '참여중' 칸에 붙어요 (이름 옆이 아니라)
+  const clubRole = useMyClubRoles(me.name).badge;
   const [classOpen, setClassOpen] = useState(false);
   // 스텝 '참여한 세션' 칸 → 프로로 참여한 세션 기록 (스텝은 맡은 세션이 없어서 담당팀 대신)
   const [proSessionsOpen, setProSessionsOpen] = useState(false);
@@ -165,7 +168,8 @@ export default function MyScreen() {
                 : [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
                     { ic: 'crown', v: num(my?.stats.weekRank, '위'), l: '이번 주 랭킹', onPress: go('/me/ranking') },
-                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: goBox('joined') },
+                    // 운영 중인 동아리가 있으면 아이콘 자리에 HOST · CO-HOST (0개가 되거나 관리자가 떼면 다시 아이콘)
+                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: goBox('joined'), tag: me.roleBadgeOff ? null : clubRole },
                     { ic: 'heart', v: num(my?.stats.badgeCount, '개'), l: '받은 배지', onPress: go('/me/badges') },
                   ]
             }
