@@ -50,6 +50,7 @@ function openLinkRequest(from?: LinkRequestRow) {
 /**
  * 설정 › 내 지점 (/me/settings/branch) — 내가 보낸 지점 연동 요청 전부 (가입 때 · 가입 뒤). 누구나 열어요.
  * 연동된 지점(회원만 · 지금 연동된 지점 모두) / 확인 중(최근 순) / 연동 이력(연동됨 · 반려됨, 최근 순). 줄을 누르면 요청 내용 시트 — 보낸 이름 · 번호 · 요청 · 처리 시각 · 지점이 남긴 말.
+ * 이미 연동된 회원은 결과만: 연동된 지점 + 연동 이력 (확인 중 · 다른 지점 요청 · 다시 요청하기 없음 — 지점 하나만 연동되면 돼요).
  * 반려된 요청이 그 지점의 가장 최근 요청이면 [다시 요청하기] (보냈던 값으로 칸을 채워 연동 요청 화면으로). 아래 '다른 지점 연동 요청하기'.
  * API: GET /me/branch-link-requests (api/use-link-requests) — mock 을 끄면 실제 서버. 상세는 목록 값으로 그려요 (서버에 단건 조회 없음).
  */
@@ -77,7 +78,8 @@ export default function MyBranchLinksScreen() {
             })}
           </View>
         ) : null}
-        {q.data.pending.length ? (
+        {/* 이미 연동된 회원은 연동 결과(연동됨 · 반려됨)만 — 확인 중 요청 · 다른 지점 요청 · 다시 요청하기는 안 보여요 (2026-11-28) */}
+        {!linked.length && q.data.pending.length ? (
           <View>
             <Head>확인 중</Head>
             {q.data.pending.map((r) => (
@@ -93,9 +95,11 @@ export default function MyBranchLinksScreen() {
             ))}
           </View>
         ) : null}
-        <View style={styles.more}>
-          <TextLink label="다른 지점 연동 요청하기 ›" onPress={() => openLinkRequest()} />
-        </View>
+        {!linked.length ? (
+          <View style={styles.more}>
+            <TextLink label="다른 지점 연동 요청하기 ›" onPress={() => openLinkRequest()} />
+          </View>
+        ) : null}
       </>
     );
 
@@ -104,6 +108,7 @@ export default function MyBranchLinksScreen() {
       {body}
       <LinkSheet
         r={open}
+        retryable={!linked.length}
         onClose={() => setOpen(null)}
         onRetry={(r) => {
           setOpen(null);
@@ -170,7 +175,9 @@ function LinkRow({ r, onPress }: { r: LinkRequestRow; onPress: () => void }) {
   );
 }
 
-function LinkSheet({ r, onClose, onRetry }: { r: LinkRequestRow | null; onClose: () => void; onRetry: (r: LinkRequestRow) => void }) {
+/** retryable: 아직 연동된 지점이 없을 때만 반려된 요청을 [다시 요청하기] (연동된 회원은 결과만 봐요) */
+function LinkSheet({ r, retryable, onClose, onRetry }: { r: LinkRequestRow | null; retryable: boolean; onClose: () => void; onRetry: (r: LinkRequestRow) => void }) {
+  const retry = retryable && !!r?.canRetry;
   const rows: [string, string][] = r
     ? [
         ['지점', r.branchName],
@@ -189,15 +196,17 @@ function LinkSheet({ r, onClose, onRetry }: { r: LinkRequestRow | null; onClose:
       ? '지점에서 등록된 이름 · 번호로 회원을 찾고 있어요. 연동되면 알려 드려요.'
       : r.status === 'APPROVED'
         ? '이 지점 회원으로 연동됐어요. 출석 · 스터디를 앱에서 볼 수 있어요.'
-        : r.canRetry
-          ? '지점에 등록한 이름 · 번호와 같게 고쳐서 다시 요청해 보세요.'
-          : '이 지점에는 이 뒤에 다시 보낸 요청이 있어요.';
+        : !retryable
+          ? '이미 연동된 지점이 있어서 다시 요청하지 않아도 돼요.'
+          : r.canRetry
+            ? '지점에 등록한 이름 · 번호와 같게 고쳐서 다시 요청해 보세요.'
+            : '이 지점에는 이 뒤에 다시 보낸 요청이 있어요.';
   return (
     <Sheet
       open={!!r}
       onClose={onClose}
       title="연동 요청 내용"
-      footer={r?.canRetry ? <Button label="다시 요청하기" wide onPress={() => onRetry(r)} /> : <Button label="확인" wide onPress={onClose} />}>
+      footer={retry && r ? <Button label="다시 요청하기" wide onPress={() => onRetry(r)} /> : <Button label="확인" wide onPress={onClose} />}>
       {r ? (
         <>
           <View style={styles.card}>

@@ -4,7 +4,7 @@ import { showPushBanner } from '@/components/ui/push-banner';
 import type { LinkResult } from '@/state/link-events';
 
 const COPY: Record<LinkResult, { title: (b: string) => string; body: (note: string) => string; href: Href }> = {
-  linked: { title: (b) => `${b} 연동이 끝났어요`, body: () => '이제 출석 · 내 팀 · 이용권을 쓸 수 있어요', href: '/my' },
+  linked: { title: (b) => `${b} 연동이 끝났어요`, body: () => '이제 출석 · 내 팀 · 이용권을 쓸 수 있어요', href: '/me/settings/branch' },
   // 반려: 알림함 줄과 같은 말 · 사유를 그대로
   rejected: { title: (b) => `${b} 연동이 반려됐어요`, body: (note) => `사유: ${note}`, href: '/link-rejected' },
 };
