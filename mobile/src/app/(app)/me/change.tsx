@@ -7,6 +7,7 @@ import { ChipScroll } from '@/components/ui/chip-scroll';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { ChangeCalendar } from '@/components/account/change-calendar';
+import { RequestSummary } from '@/components/account/request-summary';
 import { AccountPage, Box, ChoiceChip, Icon, Lift, type IconName } from '@/components/account/parts';
 import { BranchListSheet, withJeom } from '@/components/onboarding/branch-list';
 import { Button } from '@/components/ui/button';
@@ -565,7 +566,7 @@ function ChangeScreen() {
             </View>
           }>
           {/* 연기는 기간 · 스터디를 카드로 크게 (글 두 줄 대신) */}
-          {f.kind === 'rest' && sum.en ? <RestCard st={sum.st} rt={sum.en} teams={T} back={targets} /> : <PText style={styles.ds}>{sent?.txt}</PText>}
+          {f.kind === 'rest' && sum.en ? <RestCard st={sum.st} rt={sum.en} teams={T} back={targets} /> : <RequestSummary txt={sent?.txt ?? ''} />}
           <PText style={[styles.ds, styles.ds2]}>아직 확정은 아니에요 · 지금은 관리자 확인 대기 중이에요. 관리자가 확인한 뒤 알림으로 알려 드려요. 확정 전에는 마이 페이지에서 취소할 수 있어요.</PText>
         </Sheet>
       </AccountPage>

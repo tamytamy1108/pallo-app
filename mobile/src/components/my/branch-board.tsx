@@ -604,9 +604,10 @@ const styles = StyleSheet.create({
   val: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', maxWidth: '100%', marginTop: 6 },
   valCode: { flexShrink: 1, fontFamily: Font.body900, fontSize: 13, lineHeight: 18, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: '#F3EEE2', overflow: 'hidden' },
   valCi: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3EEE2' },
-  liGo: { alignSelf: 'center', height: 30, paddingHorizontal: 12, borderRadius: 15, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, justifyContent: 'center' },
+  // 열기 · 지도: 복사 · 전화 아이콘 버튼과 같은 연한 베이지 (2026-11-28 — 노랑은 너무 진해서)
+  liGo: { alignSelf: 'center', height: 28, paddingHorizontal: 11, borderRadius: 9, backgroundColor: '#F3EEE2', justifyContent: 'center' },
   liBtns: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: 8 },
-  liGoT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
+  liGoT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16, color: Colors.purple },
   pdHd: { height: 150, overflow: 'hidden', justifyContent: 'flex-end', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink },
   pdW: { position: 'absolute', right: 14, top: 10, fontFamily: Font.display, fontSize: 30, lineHeight: 36, color: Colors.white, opacity: 0.25 },
   pdTitle: { flexDirection: 'row', alignItems: 'center', gap: 10 },
