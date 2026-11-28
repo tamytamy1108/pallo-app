@@ -798,9 +798,20 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 내 캐릭터 그리기 (로그인 뒤 서버 모습 · 가진 것을 기기에) | GET /me/avatar | existing | api/use-my-avatar.ts · state/avatar.ts saved |
 | 팔로잉 · 팔로워 목록 | GET /members/{code}/following · /followers | new | data/my.ts followLists |
 | 목록에서 팔로우 · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
-| 배지 모두 보기 `app/me/badges.tsx` (받은 개수 · 최근 받은 배지 · 거의 다 왔어요 2개 · 전체/받은/못 받은 칸, 콘솔 순서 · 마이 배지 칸은 앞 4칸) — 마이 '모두 보기 ›' · '받은 배지' 칸 · 배지 푸시 · 축하 시트 [배지 보기] 에서 와요 | GET /me/badges (earnedAt · A36 conditionType · threshold · progress) | change | api/use-badges.ts useMyBadges · data/my.ts MY_BADGES (cond 예시) |
-| 배지 상세 시트 (칸을 누르면): 큰 그림 · 받은 날 · 받는 방법 한 줄 · 진행 막대 '2 / 5번' · 'n번 더' · 하러 가기 버튼(못 받은 배지만) | GET /me/badges (목록에서 code 로 찾음, 따로 부르지 않음) | change | components/my/badge-detail-sheet.tsx · api/use-badges.ts useMyBadge · badgeProgress · data/badge-rules.ts (문구 · 이동할 곳) |
-| 배지 받으면 탭 화면 위 축하 시트 (앱 열 때 · 돌아올 때 · 배지 푸시 때 물어요) → 닫으면 본 것으로 | GET /me/badges/unseen · POST /me/badges/seen | existing | components/my/badge-celebrate.tsx · api/use-badges.ts |
+| 마이 배지 칸 (앞 4칸) — 칸을 누르면 배지 상세 시트 · '모두 보기 ›' · '받은 배지' 숫자 칸은 배지 모두 보기 화면으로 | GET /me/mypage (badges) · GET /me/badges | existing | app/(app)/(tabs)/my.tsx · components/my/my-blocks.tsx |
+| 배지 받으면 탭 화면 위 축하 시트 (앱 열 때 · 돌아올 때 · 배지 푸시 때 물어요) → [배지 보기] 는 배지 모두 보기로 · 닫으면 본 것으로 | GET /me/badges/unseen · POST /me/badges/seen | existing | components/my/badge-celebrate.tsx · api/use-badges.ts |
+
+### 배지 모두 보기 — `app/me/badges.tsx` · `components/my/badge-detail-sheet.tsx`
+| 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 받은 개수 · 최근 받은 배지(없으면 '아직 없어요 · 첫 배지를 기다려요') · 진행 막대 | GET /me/badges (earned · earnedAt) | existing | api/use-badges.ts useMyBadges (latest) |
+| 거의 다 왔어요 — 못 받은 배지 중 진행이 큰 순 2개 · '3번 더 참여하면 받아요' (기준을 넘었는데 못 받았으면 '다음 활동 때 받아요') | GET /me/badges (conditionType · threshold · progress) | change (A36) | api/use-badges.ts badgeProgress · data/badge-rules.ts |
+| 모든 배지 칸 (콘솔 순서) · 칸을 누르면 상세 | GET /me/badges | existing | components/my/my-blocks.tsx BadgeGrid |
+| 배지 상세 시트 — 받은 날 · 받는 방법 한 줄 · 진행 막대 · 세는 법 · [번개 보러 가기] 같은 하러 가기(못 받은 배지만) | GET /me/badges (conditionType · threshold · progress) | change (A36) | components/my/badge-detail-sheet.tsx · data/badge-rules.ts BADGE_RULE |
+| 배지는 이렇게 받아요 (공통 규칙 5줄) | — (서버 규칙을 글로) | — | data/badge-rules.ts BADGE_GUIDE |
+
+배지 그림: 서버 그림(imageUrl)이 배지 전체예요 — 둘레 동그라미 없이 그대로, 못 받았으면 흐리게. 그림이 없으면 앱이 입체 동그라미 + 아이콘으로 그리고, 높은 단계(말하기 1000~)는 은빛 왕관 방패, 번개 5번~ 은 센 번개. 운영용 그림 8개: docs/frontend/badge-art.
+열린 질문: A36 세 칸(conditionType · threshold · progress)을 언제 내려 줄지. 연속 학습 · 따라 말하기 · 주간 랭킹 배지 판정(학습 기록 · 개인 랭킹 도메인 뒤).
 | 스파크 모으는 방법 (프로 · 스텝은 PRO 줄도) | GET /me/sparks (earnRules · audience) | new | data/my.ts SPARK_EARN · SPARK_EARN_PRO |
 | 프로필 카드 이름 아래 줄 '○○점 · 언어 Lv.n · 회원' + 작은 표시 ● 연동 확인 중 · ✓ 연동됨(처음 한 번 톡 튀어나옴) · 연동 안 됨 | GET /me (memberAccessLevel) · GET /me/branch-summary | existing | components/my/my-hero.tsx · state/link-events.ts myMoment |
 
