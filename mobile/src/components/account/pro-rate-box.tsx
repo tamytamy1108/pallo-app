@@ -69,12 +69,12 @@ export function ProRateBox() {
         accessibilityLabel={`${month}월 출석률 ${rate}% · 출석 ${stats.attendanceChecks}회 / 맡은 세션 ${stats.sessionsThisMonth}개${earned ? ` · 스파크 +${earned} 예정` : ''} · ${line}`}>
         <Stripes />
         {perfect ? (
-          // 머리줄은 평소처럼 흰 바탕 + 오른쪽에 초록 '왕관 100% 달성' 배지 (2026-11-28 노란 줄 · 반짝이 줄은 별로라 바꿈)
+          // 머리줄은 평소처럼 흰 바탕 + 오른쪽에 초록 '왕관 개근 프로' 배지 (2026-11-28 노란 줄 · 반짝이 줄은 별로라 바꿈)
           <View style={[styles.head, styles.headPerfect]}>
             <PText style={styles.title}>{`${month}월 출석률`}</PText>
             <View style={styles.badge}>
               <MeetIcon name="crown" size={14} color={Colors.ink} fill={Colors.yellow} strokeWidth={2} />
-              <PText style={styles.badgeT}>100% 달성</PText>
+              <PText style={styles.badgeT}>개근 프로</PText>
             </View>
           </View>
         ) : (
