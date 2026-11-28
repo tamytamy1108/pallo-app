@@ -20,7 +20,7 @@ import { apiErrorMessage, isApiError } from '@/api/errors';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, ScrollEnd } from '@/constants/theme';
 import {
   AV_CATS,
   AV_RARE_C,
@@ -375,7 +375,7 @@ export default function CustomizeScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.grid} keyboardShouldPersistTaps="handled">
+      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={[styles.grid, { paddingBottom: ScrollEnd }]} keyboardShouldPersistTaps="handled">
         {grid}
       </ScrollView>
 
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   catOn: { backgroundColor: Colors.ink },
   catT: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
   catTOn: { color: Colors.white },
-  grid: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
+  grid: { paddingTop: 12, paddingHorizontal: 16, gap: 10 },
   sub: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18, color: Colors.inkSub, marginTop: 6, marginHorizontal: 2, marginBottom: -2 },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile: { alignItems: 'center', gap: 4, paddingTop: 8, paddingHorizontal: 6, paddingBottom: 10, borderWidth: 2, borderColor: Colors.line, borderRadius: 16, backgroundColor: Colors.white },

@@ -21,12 +21,12 @@ import type { WorldSC } from '@/components/library/world/scenes';
 import { Raised } from '@/components/ui/raised';
 import { ErrorState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
+import { Colors, Spacing, TabHeadTop, TabScrollEnd } from '@/constants/theme';
 import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
 import { useLastStep } from '@/state/progress';
-import { useTabReselect } from '@/lib/tab-reselect';
+import { useTabScrollMemory } from '@/lib/tab-reselect';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 const LANG_INDEX = { en: 0, ja: 1, zh: 2, es: 3 } as const;
@@ -49,7 +49,8 @@ export default function LibraryScreen() {
   // 비회원은 맵마다 첫 챕터만 (state/access)
   const allOpen = useMe((m) => canUse(m, 'allChapters'));
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('library', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
+  // 탭을 다시 누르면 맨 위로 · 다른 탭에 다녀오면 보던 자리 그대로 (lib/tab-reselect)
+  const keepY = useTabScrollMemory('library', scroll);
   const [showTop, setShowTop] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   // 지도가 화면 위로 다 올라가면 3D 그리기를 멈춰요 (폰 배터리)
@@ -126,6 +127,7 @@ export default function LibraryScreen() {
       {/* 만지거나 스크롤하는 동안은 지도 미리 만들기(화면이 잠깐 멈춤)를 미뤄요 */}
       <ScrollView refreshControl={pull.refreshControl} onScrollBeginDrag={pull.onScrollBeginDrag} onScrollEndDrag={pull.onScrollEndDrag} ref={scroll} contentContainerStyle={styles.body} onTouchStart={noteLibTouch} onScroll={(e) => {
           pull.onScroll(e);
+          keepY(e.nativeEvent.contentOffset.y);
           noteLibTouch();
           const y = e.nativeEvent.contentOffset.y;
           setShowTop(y > 360);
@@ -179,7 +181,7 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabScrollEnd, gap: Spacing.stack },
   menuBack: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 5 },
   flat: { aspectRatio: 340 / 430, borderWidth: 2, borderColor: Colors.ink, borderRadius: 26, overflow: 'hidden', backgroundColor: '#BFE4EC' },
 });

@@ -4,6 +4,8 @@
  * 활성 멤버십이 있는 회원은 지점 · 공개범위와 상관없이 모든 글을 봐요. 하트 · 스크랩 · 댓글 · 댓글 하트도 같은 기준이에요
  * (멤버십이 끝났거나 없으면 403). 지점 거르기를 주면 그 지점 글 + 지점 없는 글만 와요.
  */
+import type { PhotoFraming } from '@/lib/photo-framing';
+
 import { http } from './client';
 import { apiConfig } from './config';
 import { mock } from './mock';
@@ -19,8 +21,13 @@ export type CommunityPost = {
   body: string;
   /** 사진 주소(서버 FQDN 그대로) — 올린 순서. 없으면 [] */
   images: string[];
-  /** 사진 비율 가로 / 세로 (사진 없으면 null) */
+  /** 사진 비율 가로 / 세로 (사진 없으면 null) — 게시물 틀 비율 (4:5 ~ 1.91:1, 앱이 그릴 때 한 번 더 맞춰요) */
   ratio: number | null;
+  /**
+   * images 와 같은 순서로 장마다 맞춘 확대 · 위치 (lib/photo-framing PhotoFraming). 아직 서버에 없는 칸 — 앱 쪽 제안(옵션).
+   * 없으면 장마다 틀 가운데로 꽉 채워(cover) 그려요.
+   */
+  frames?: PhotoFraming[] | null;
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;

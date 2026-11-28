@@ -13,6 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 import { NOTICE_TAG, noticeDate } from '@/data/mock';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
@@ -22,12 +23,13 @@ import { usePullRefresh } from '@/components/ui/pull-refresh';
  * 데이터: 12 GET /notices (첫 20개 · 더 받기는 공지가 많아지면 useInfiniteQuery 로)
  */
 export default function NoticeListScreen() {
+  const endPad = useScrollEndPad();
   const pull = usePullRefresh();
   const { data, isPending, isError, error, refetch } = useQuery(noticesQuery());
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar title="공지사항" />
-      <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body}>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={[styles.body, { paddingBottom: endPad }]}>
         {isPending ? (
           <LoadingState />
         ) : isError ? (
@@ -69,7 +71,7 @@ function Row({ id, tag, pinned, title, meta }: { id: string; tag: string; pinned
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingTop: 4, paddingHorizontal: 16, paddingBottom: 110 },
+  body: { paddingTop: 4, paddingHorizontal: 16 },
   row: { paddingVertical: 14, borderBottomWidth: 1.5, borderColor: Colors.line },
   rowPressed: { opacity: 0.7 },
   tg: { flexDirection: 'row', alignItems: 'center', gap: 3 },

@@ -16,7 +16,6 @@ import { useSession } from '@/api/session';
 import { preloadAllAvatarArt, preloadMyAvatar } from '@/components/character/preload-art';
 import { FLAT_MAPS } from '@/components/library/world/flat-maps';
 import { TrialGuideHost } from '@/components/common/trial-guide';
-import { SeeSheetHost } from '@/components/common/see-sheets';
 import { DevNotch } from '@/components/dev-notch';
 import { ErrorState } from '@/components/ui/state-view';
 import { TightTopInsets } from '@/components/ui/safe-area';
@@ -127,8 +126,6 @@ function RootNavigator() {
         {/* 꾸미기 아이템 · 배경 목록과 그림을 서버 카탈로그로 맞춰요 (state/av-catalog) */}
         {signedIn && !onboarding ? <AvatarCatalogSync /> : null}
         {signedIn && !onboarding ? <MyAvatarSync /> : null}
-        {/* 토스트 [보러가기] 목록 시트 (찜한 모임 · 찜한 챌린지 · 라운지 저장함 등): 보던 화면 위에 바로 떠요 (lib/see) */}
-        {signedIn && !onboarding ? <SeeSheetHost /> : null}
         </TightTopInsets>
       </DevNotch>
     </GestureHandlerRootView>

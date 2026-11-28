@@ -8,6 +8,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 import { haptic, sfx } from '@/lib/feedback';
 import { SCENE_STEPS, sceneIdOf, sceneListenItems, sceneStepKey, stepTitle, type Scene, type SceneStep, type SceneWithContent, type SceneStepId, type SituationMap } from '@/data/situation';
 import { useIsDone, useSavedPos } from '@/state/progress';
@@ -44,6 +45,7 @@ export function HubTop({ map, onBack, onList }: { map: SituationMap; onBack: () 
 
 /** 장면 화면 본문 */
 export function HubBody({ map, scene, onLevel, onListen, onStep }: { map: SituationMap; scene: SceneWithContent; onLevel: () => void; onListen: () => void; onStep: (s: SceneStep) => void }) {
+  const endPad = useScrollEndPad();
   const lv = useQuizLevel();
   const c = scene.content;
   const id = sceneIdOf(map.id, scene.no);
@@ -52,7 +54,7 @@ export function HubBody({ map, scene, onLevel, onListen, onStep }: { map: Situat
   if (!c) return null;
   const items = sceneListenItems(scene, c).length;
   return (
-    <ScrollView style={styles.flex} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.flex} contentContainerStyle={[styles.body, { paddingBottom: endPad }]} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <Drop dx={3} dy={3} radius={8}>
           <View style={[styles.cover, { backgroundColor: map.c }]}>
@@ -314,7 +316,7 @@ const styles = StyleSheet.create({
   mid: { flex: 1, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   midText: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
   dn: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
-  body: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 40, gap: 10 },
+  body: { paddingHorizontal: 16, paddingTop: 6, gap: 10 },
   hero: { flexDirection: 'row', gap: 14, alignItems: 'flex-end' },
   cover: { width: 76, height: 102, borderRadius: 8, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', paddingTop: 10 },
   coverN: { fontFamily: SERIF, fontSize: 18, lineHeight: 18 },

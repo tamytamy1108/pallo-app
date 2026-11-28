@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { FramedImage } from '@/components/ui/photo-frame';
-import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -16,48 +15,50 @@ import { PIC_BG } from './pics';
 
 type Saved = Post | Abroad;
 
-/**
- * 라운지 저장함: 글 아래 책갈피(저장)로 모은 글 (최근에 저장한 게 위). 누르면 그 글 하나 보기(/post/[id]) — 지금 화면 위에 쌓여요.
- * 토스트 '라운지 저장함에 담았어요' [보러가기] 로 열려요 (lib/see · SeeSheetHost).
- */
-export function SavedPostsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** 라운지 저장함에 모은 글 (최근에 저장한 게 위) — 없어진 글 · 글이 아닌 것은 빼요 */
+export function useSavedPosts(): Saved[] {
   const saved = useLounge((s) => s.saved);
   const feed = useLounge((s) => s.feed);
   const byId = new Map(feed.map((p) => [p.id, p]));
-  const list = Object.keys(saved)
+  return Object.keys(saved)
     .filter((id) => saved[id])
     .reverse()
     .map((id) => byId.get(id))
     .filter((p): p is Saved => !!p && (p.k === 'post' || p.k === 'abroad'));
-  const go = (id: string) => {
-    runAfterSheetClose(() => router.push({ pathname: '/post/[id]', params: { id } }));
-    onClose();
-  };
+}
+
+/** 저장함 화면 위 줄 제목 ('라운지 저장함 3개') */
+export const useSavedPostsTitle = () => `라운지 저장함 ${useSavedPosts().length}개`;
+
+/**
+ * 라운지 저장함 목록 몸통: 글 아래 책갈피(저장)로 모은 글. 누르면 그 글 하나 보기(/post/[id]) — 지금 화면 위에 쌓여요.
+ * 토스트 '라운지 저장함에 담았어요' [보러가기] 는 저장함 화면(/me/saved?box=posts)을 열어요 (lib/see) — 그 화면의 몸통이에요.
+ */
+export function SavedPostsList() {
+  const list = useSavedPosts();
+  const go = (id: string) => router.push({ pathname: '/post/[id]', params: { id } });
+  if (!list.length) return <PText style={styles.empty}>{'라운지 글 아래 책갈피를 누르면 여기 모여요.'}</PText>;
   return (
-    <Sheet open={open} onClose={onClose} title={`라운지 저장함 ${list.length}개`} label="라운지 저장함">
-      {list.length ? (
-        list.map((p, i) => (
-          <View key={p.id} style={[styles.row, i > 0 && styles.line]}>
-            <Pressable onPress={() => go(p.id)} accessibilityRole="button" accessibilityLabel={`${p.who}의 글 열기`} style={styles.main}>
-              <Thumb p={p} />
-              <View style={styles.tx}>
-                <PText numberOfLines={1} style={styles.t}>
-                  {p.k === 'abroad' ? p.title : p.text || `${p.who}의 사진`}
-                </PText>
-                <PText numberOfLines={1} style={styles.sub}>
-                  {`${p.who} · ${p.br} · ${whenLabel(p.time, p.at)}`}
-                </PText>
-              </View>
-            </Pressable>
-            <Pressable onPress={() => toggleSave(p.id)} accessibilityRole="button" accessibilityLabel="저장 취소" accessibilityState={{ selected: true }} hitSlop={6} style={styles.save}>
-              <LgIcon name="save" size={21} fill={LG_C.y} />
-            </Pressable>
-          </View>
-        ))
-      ) : (
-        <PText style={styles.empty}>{'라운지 글 아래 책갈피를 누르면 여기 모여요.'}</PText>
-      )}
-    </Sheet>
+    <>
+      {list.map((p, i) => (
+        <View key={p.id} style={[styles.row, i > 0 && styles.line]}>
+          <Pressable onPress={() => go(p.id)} accessibilityRole="button" accessibilityLabel={`${p.who}의 글 열기`} style={styles.main}>
+            <Thumb p={p} />
+            <View style={styles.tx}>
+              <PText numberOfLines={1} style={styles.t}>
+                {p.k === 'abroad' ? p.title : p.text || `${p.who}의 사진`}
+              </PText>
+              <PText numberOfLines={1} style={styles.sub}>
+                {`${p.who} · ${p.br} · ${whenLabel(p.time, p.at)}`}
+              </PText>
+            </View>
+          </Pressable>
+          <Pressable onPress={() => toggleSave(p.id)} accessibilityRole="button" accessibilityLabel="저장 취소" accessibilityState={{ selected: true }} hitSlop={6} style={styles.save}>
+            <LgIcon name="save" size={21} fill={LG_C.y} />
+          </Pressable>
+        </View>
+      ))}
+    </>
   );
 }
 

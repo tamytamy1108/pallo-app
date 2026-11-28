@@ -18,6 +18,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 import { NOTICE_TAG, noticeDate, type NoticeDetail } from '@/data/mock';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
@@ -77,12 +78,13 @@ function PinButton({ notice }: { notice: NoticeDetail }) {
 }
 
 function Detail({ notice }: { notice: NoticeDetail }) {
+  const endPad = useScrollEndPad();
   const pull = usePullRefresh();
   const paragraphs = notice.content.split(/\n+/).filter((p) => p.trim());
   const { data: popups } = useQuery(popupsQuery());
   const popup = popups?.find((p) => p.resourceType === 'NOTICE' && p.resourceId === notice.id);
   return (
-    <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body}>
+    <ScrollView {...pull.scrollProps} contentContainerStyle={[styles.body, { paddingBottom: endPad }]}>
       {popup && (
         <View style={styles.posterBox}>
           <View style={styles.posterShadow} />
@@ -115,7 +117,7 @@ function Detail({ notice }: { notice: NoticeDetail }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 40, gap: 4 },
+  body: { paddingHorizontal: 18, paddingTop: 16, gap: 4 },
   // 팝업 카드처럼 검은 테두리 + 오른쪽 아래 그림자
   posterBox: { marginBottom: 18, marginRight: 4 },
   posterShadow: { position: 'absolute', left: 4, top: 4, right: -4, bottom: -4, borderRadius: 20, backgroundColor: Colors.ink },

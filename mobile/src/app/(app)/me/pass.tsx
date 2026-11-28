@@ -109,7 +109,7 @@ function PassScreen() {
 }
 
 const styles = StyleSheet.create({
-  body: { paddingTop: 4, paddingBottom: 40 },
+  body: { paddingTop: 4 },
   card: { padding: 16 },
   small: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   big: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },

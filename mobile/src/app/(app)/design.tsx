@@ -8,13 +8,15 @@ import { Card } from '@/components/ui/card';
 import { Chip, Pill } from '@/components/ui/pill';
 import { PText } from '@/components/ui/text';
 import { Colors, Spacing } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 
 /** 개발용: 디자인 부품 모음. 프로토타입과 나란히 놓고 같은지 확인하는 화면이에요. */
 export default function DesignScreen() {
+  const endPad = useScrollEndPad();
   const [lang, setLang] = useState('영어');
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.body}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: endPad }]}>
         <Button label="← 닫기" variant="ghost" onPress={() => router.back()} />
 
         <Section title="글자">
@@ -90,7 +92,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { padding: Spacing.gutter, gap: Spacing.feed, paddingBottom: 60 },
+  body: { padding: Spacing.gutter, gap: Spacing.feed },
   section: { gap: Spacing.stack },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
 });

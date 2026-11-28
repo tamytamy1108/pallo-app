@@ -12,7 +12,7 @@ import { PageTop } from '@/components/my/page-top';
 import { Button } from '@/components/ui/button';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, ScrollEnd } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { exprCard, exprFrom, type ExpressionFrom, type SavedExpression } from '@/state/expressions';
 import { apiErrorMessage } from '@/api/errors';
@@ -96,7 +96,7 @@ export default function ExpressionsScreen() {
     <View style={styles.screen}>
       <Stack.Screen options={SCREEN.push} />
       <PageTop title="내 표현함" />
-      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView automaticallyAdjustKeyboardInsets contentContainerStyle={[styles.body, { paddingBottom: ScrollEnd }]} keyboardShouldPersistTaps="handled">
         {tools && (
           <>
             <View style={styles.find}>
@@ -176,7 +176,7 @@ export default function ExpressionsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingTop: 8, paddingHorizontal: 16, paddingBottom: 24 },
+  body: { paddingTop: 8, paddingHorizontal: 16 },
   find: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 14, marginVertical: 8, borderWidth: 2, borderColor: Colors.ink, borderRadius: 22, backgroundColor: Colors.white },
   findIn: { flex: 1, minWidth: 0, fontFamily: Font.body700, fontSize: 14, color: Colors.ink, paddingVertical: 0 },
   chips: { gap: 6, marginBottom: 10 },

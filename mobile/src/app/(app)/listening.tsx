@@ -20,6 +20,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 import { findLevel, lessonName, listenItemsOf, listenItemsOfLevel, listenItemsOfMap, parseUnitId, type ListenItem } from '@/data/library';
 import { findScene, localSceneListenItems } from '@/data/situation';
 import { sfx } from '@/lib/feedback';
@@ -77,6 +78,7 @@ const shuffle = (n: number, seed: number) => {
 };
 
 export default function ListeningScreen() {
+  const endPad = useScrollEndPad();
   const { title, items: all } = useSource();
   const P = listenPrefs.useStore();
   const { noListen } = useLearnPrefs();
@@ -195,7 +197,7 @@ export default function ListeningScreen() {
       <ScrollView
         ref={scroll}
         style={styles.bodyBox}
-        contentContainerStyle={styles.body}
+        contentContainerStyle={[styles.body, { paddingBottom: endPad }]}
         stickyHeaderIndices={[0]}
         onScroll={(e) => {
           scrollY.current = e.nativeEvent.contentOffset.y;
@@ -363,7 +365,7 @@ const styles = StyleSheet.create({
   count: { fontFamily: Font.display, fontSize: 13, lineHeight: 16 },
   kick: { marginTop: 20, paddingHorizontal: 20, fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   bodyBox: { marginTop: 14 },
-  body: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
+  body: { paddingHorizontal: 20, gap: 14 },
   stick: { backgroundColor: Colors.cream },
   tight: { marginBottom: 0 },
   np: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 24, backgroundColor: Colors.purple, paddingVertical: 14, paddingHorizontal: 16, gap: 8 },

@@ -28,11 +28,11 @@ import { AbroadRegSheet, PeopleRow, PersonSheet, TripCard, TripMakeSheet, WorldM
 import { MeetTab } from '@/components/meet/meet-tab';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors, Spacing, TabHeadTop } from '@/constants/theme';
+import { Colors, Spacing, TabHeadTop, TabScrollEnd } from '@/constants/theme';
 import { ALL_SUBS, type AbroadPerson, branchOk, COM_SUBS, type FeedItem, LG_TABS, type LoungeTab, TRIP_SUBS } from '@/data/lounge';
 import { setAllSub, setBranches, setComSub, setLoungeTab, setTripMode, useLounge } from '@/data/lounge-store';
 import { EASE } from '@/lib/motion';
-import { useTabReselect } from '@/lib/tab-reselect';
+import { useTabScrollMemory } from '@/lib/tab-reselect';
 import { useCenterChip } from '@/lib/center-chip';
 import { useHideOnScroll } from '@/components/ui/hide-on-scroll';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
@@ -78,7 +78,8 @@ export default function LoungeScreen() {
   const region = useLounge((s) => s.region);
   const insets = useSafeAreaInsets();
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('lounge', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
+  // 탭을 다시 누르면 맨 위로 · 다른 탭에 다녀오면 보던 자리 그대로 (lib/tab-reselect)
+  const keepY = useTabScrollMemory('lounge', scroll);
   const tabsY = useRef(0);
   const [scrolled, setScrolled] = useState(false);
   const [sheet, setSheetRaw] = useState<null | 'create' | 'trip' | 'abroad'>(null);
@@ -118,8 +119,9 @@ export default function LoungeScreen() {
   const fab = useHideOnScroll();
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     pull.onScroll(e);
+    keepY(e.nativeEvent.contentOffset.y);
     const y = e.nativeEvent.contentOffset.y;
-    fab.onScroll(y);
+    fab.onScroll(e.nativeEvent);
     if (y > 360 !== scrolled) setScrolled(y > 360);
     checkScrollLock('lounge');
     const { layoutMeasurement, contentSize } = e.nativeEvent;
@@ -520,8 +522,9 @@ function ToTop({ show, bottom, onPress }: { show: boolean; bottom: number; onPre
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  hiddenTab: { position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 },
-  page: { paddingTop: TabHeadTop, paddingBottom: 190 },
+  // 높이 0 · 넘치는 건 잘라요 — 안 자르면 숨은 탭(긴 추천 피드)만큼 웹 스크롤이 더 내려가서, 챌린지 · 번개/동아리 탭 끝 아래로 빈 화면이 계속 나왔어요 (2026-11-28)
+  hiddenTab: { position: 'absolute', top: 0, left: 0, right: 0, height: 0, overflow: 'hidden', opacity: 0 },
+  page: { paddingTop: TabHeadTop, paddingBottom: TabScrollEnd },
   // 첫 줄(제목) · 둘째 줄(탭) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (홈 · 라이브러리 · 마이와 같게)
   hd: { paddingHorizontal: Spacing.gutter, height: 44, justifyContent: 'center', marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },
   // 탭 밑줄이 라이브러리(스터디 맵 | 상황 맵) 밑줄과 같은 높이에 와요

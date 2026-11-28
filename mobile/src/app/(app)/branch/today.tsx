@@ -187,7 +187,7 @@ function DoneGroup({ rows }: { rows: SessionRow[] }) {
 }
 
 const styles = StyleSheet.create({
-  body: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 40, gap: 14 },
+  body: { paddingHorizontal: 16, paddingTop: 14, gap: 14 },
   group: { gap: 14 },
   groupSoon: { opacity: 0.45 },
   slot: { gap: 8 },

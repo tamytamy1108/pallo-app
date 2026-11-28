@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import { apiErrorMessage } from '@/api/errors';
 import { useSavedChallenges } from '@/api/use-my-activity';
 import { Pressable } from '@/components/ui/pressable';
-import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -23,42 +22,40 @@ export const savedChallenges = (s: ChView): Challenge[] =>
 
 export const useSavedChallengeCount = () => savedChallenges(useChallengeState()).length;
 
-/** 마이 > 찜한 챌린지: 챌린지 카드 · 표현 창의 하트로 모아요. 누르면 그 챌린지로 */
-export function SavedChallengesSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** 저장함 화면 위 줄 제목: 받으면 개수까지 ('찜한 챌린지 3개') — 목록과 같은 쿼리라 한 번만 받아요 */
+export function useSavedChallengesTitle() {
+  const q = useSavedChallenges(true);
+  return q.list ? `찜한 챌린지 ${q.list.length}개` : '찜한 챌린지';
+}
+
+/** 찜한 챌린지 목록 몸통: 챌린지 카드 · 표현 창의 하트로 모아요. 누르면 그 챌린지가 지금 화면 위에 쌓여요 (저장함 화면 /me/saved?box=challenges 의 몸통) */
+export function SavedChallengesList() {
   // GET /me/saved-challenges (api/use-my-activity) — 하트(찜 · 찜 취소)는 아직 기기 상태
-  const q = useSavedChallenges(open);
+  const q = useSavedChallenges(true);
   const list = q.list ?? [];
-  const go = (p: Challenge) => {
-    runAfterSheetClose(() => openChallenge(p));
-    onClose();
-  };
+  const go = (p: Challenge) => openChallenge(p);
+  if (q.isPending) return <LoadingState />;
+  if (q.isError) return <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />;
+  if (!list.length) return <PText style={styles.empty}>{'챌린지 카드의 하트를 누르면 여기 모여요.'}</PText>;
   return (
-    <Sheet open={open} onClose={onClose} title={q.list ? `찜한 챌린지 ${list.length}개` : '찜한 챌린지'} label="찜한 챌린지">
-      {q.isPending ? (
-        <LoadingState />
-      ) : q.isError ? (
-        <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
-      ) : list.length ? (
-        list.map((p, i) => (
-          <View key={p.id} style={[styles.row, i > 0 && styles.line]}>
-            <Pressable onPress={() => go(p)} accessibilityRole="button" accessibilityLabel={`${isExpr(p) ? p.hl : p.name} 열기`} style={styles.main}>
-              <ChCover p={p} size={42} style={styles.cover} />
-              <View style={styles.tx}>
-                <PText numberOfLines={1} style={styles.t}>
-                  {isExpr(p) ? p.hl || p.name : p.name}
-                </PText>
-                <PText numberOfLines={1} style={styles.sub}>
-                  {isExpr(p) ? `표현 챌린지 · ${meaningOf(p)}` : planText(p)}
-                </PText>
-              </View>
-            </Pressable>
-            <SaveHeart id={p.id} size={32} />
-          </View>
-        ))
-      ) : (
-        <PText style={styles.empty}>{'챌린지 카드의 하트를 누르면 여기 모여요.'}</PText>
-      )}
-    </Sheet>
+    <>
+      {list.map((p, i) => (
+        <View key={p.id} style={[styles.row, i > 0 && styles.line]}>
+          <Pressable onPress={() => go(p)} accessibilityRole="button" accessibilityLabel={`${isExpr(p) ? p.hl : p.name} 열기`} style={styles.main}>
+            <ChCover p={p} size={42} style={styles.cover} />
+            <View style={styles.tx}>
+              <PText numberOfLines={1} style={styles.t}>
+                {isExpr(p) ? p.hl || p.name : p.name}
+              </PText>
+              <PText numberOfLines={1} style={styles.sub}>
+                {isExpr(p) ? `표현 챌린지 · ${meaningOf(p)}` : planText(p)}
+              </PText>
+            </View>
+          </Pressable>
+          <SaveHeart id={p.id} size={32} />
+        </View>
+      ))}
+    </>
   );
 }
 

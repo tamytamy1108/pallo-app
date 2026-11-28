@@ -122,7 +122,7 @@ export default function LangLevelScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   pressed: { opacity: 0.7 },
-  body: { paddingTop: 4, paddingBottom: 40 },
+  body: { paddingTop: 4 },
   card: { padding: 16 },
   small: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   big: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6, marginTop: 2 },

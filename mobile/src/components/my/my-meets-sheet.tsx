@@ -11,7 +11,6 @@ import { ClubRow } from '@/components/meet/club-list';
 import { useMeetStore } from '@/components/meet/meet-store';
 import { Button } from '@/components/ui/button';
 import { Pressable } from '@/components/ui/pressable';
-import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -73,13 +72,14 @@ export function useMyMeetCounts() {
 /**
  * 마이 › 참여 중인 모임 · 내 모임: [동아리] 운영 중 · 가입한 · [번개] 다가오는 · 지난 · [챌린지] 참여 중 · [이벤트] 다가오는 · 지난 · 제안한 이벤트.
  * 순서는 동아리 → 번개 → 챌린지 → 이벤트 (MY_MEET_ORDER). 동아리 안에서는 내가 운영하는 동아리가 가장 먼저예요.
- * 누르면 시트를 닫고 그 상세로. 제안은 이벤트 탭 위 '내가 제안한 이벤트'와 같은 카드 (취소 · 되돌리기).
+ * 누르면 그 상세가 지금 화면 위에 쌓여요. 제안은 이벤트 탭 위 '내가 제안한 이벤트'와 같은 카드 (취소 · 되돌리기).
+ * 저장함 화면(/me/saved?box=joined)의 몸통이에요 (마이 '내 모임' · '참여중' · 토스트 [보러가기]).
  * 맞는 API: 내 번개 · 동아리 · 챌린지 · 이벤트 목록 · `/me/roles`(A32) (지금은 기기에 남긴 가짜 상태)
  */
-export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean; onClose: () => void; start?: MyMeetTab }) {
+export function MyMeetsList({ start = 'club' }: { start?: MyMeetTab }) {
   const [tab, setTab] = useState<MyMeetTab>(start);
   // 동아리 · 번개 · 이벤트 = GET /me/meets?box=JOINED (api/use-my-activity) · 챌린지 · 제안한 이벤트는 아직 기기 상태
-  const mine = useMyMeets('JOINED', open);
+  const mine = useMyMeets('JOINED', true);
   const props = useMeetStore((s) => s.props);
   const chals = useMyChallenges();
   const clubs = {
@@ -94,26 +94,21 @@ export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean;
     chal: chals.length,
     event: events.up.length + events.past.length,
   };
-  // 열 때마다 고른 탭부터 (비었으면 순서대로 뭔가 있는 첫 탭으로)
-  const [wasOpen, setWasOpen] = useState(open);
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) {
+  // 목록을 처음 받으면 고른 탭부터 (비었으면 순서대로 뭔가 있는 첫 탭으로)
+  const ready = !!mine.view;
+  const [wasReady, setWasReady] = useState(false);
+  if (ready !== wasReady) {
+    setWasReady(ready);
+    if (ready) {
       const has = (t: MyMeetTab) => n[t] > 0 || (t === 'event' && props.length > 0);
       setTab(has(start) ? start : (MY_MEET_ORDER.map(([k]) => k).find(has) ?? start));
     }
   }
-  const go = (href: Href) => {
-    onClose();
-    runAfterSheetClose(() => router.push(href));
-  };
-  const goChal = (p: Challenge) => {
-    onClose();
-    runAfterSheetClose(() => openChallenge(p));
-  };
+  const go = (href: Href) => router.push(href);
+  const goChal = (p: Challenge) => openChallenge(p);
 
   return (
-    <Sheet open={open} onClose={onClose} title="내 모임" label="내 모임" tall>
+    <>
       <View style={styles.seg} accessibilityRole="tablist">
         {MY_MEET_ORDER.map(([k, l]) => (
           <SegItem key={k} on={tab === k} label={l} n={n[k]} onPress={() => setTab(k)} />
@@ -208,7 +203,7 @@ export function MyMeetsSheet({ open, onClose, start = 'club' }: { open: boolean;
           <Empty title="아직 참여한 이벤트가 없어요" sub="파티 · 클래스 · 여행에 참여하면 여기 모여요." button="이벤트 보러 가기" onPress={() => go('/event')} />
         )
       ) : null}
-    </Sheet>
+    </>
   );
 }
 

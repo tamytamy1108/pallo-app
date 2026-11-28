@@ -12,7 +12,7 @@ import { BottomBar } from '@/components/bottom-bar';
 import { useKeyboardShown } from '@/lib/keyboard';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors, TAB_ROW_H } from '@/constants/theme';
+import { Colors, ScrollEnd, TAB_ROW_H } from '@/constants/theme';
 import { EASE } from '@/lib/motion';
 import { PhotoViewer } from '@/components/ui/photo-viewer';
 import { KeepVisibleContext, useShowFocusedOnKeyboard } from '@/components/ui/form-scroll';
@@ -166,7 +166,8 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
           dockKey.current = dock ? tabKey : undefined;
           if (sameDock && h > was && yNow.current + (scrollH || winH) >= was - 80) scroll.current?.scrollToEnd({ animated: true });
         }}
-        contentContainerStyle={{ paddingBottom: 8 }}
+        // 맨 아래 여백 = 본문 아래 24 + 이만큼 = ScrollEnd (모든 화면과 같게 · 아래 신청 바 위로)
+        contentContainerStyle={{ paddingBottom: ScrollEnd - DBD_BOTTOM }}
         // 인사 · 댓글 입력칸을 누르면 키보드 위로 올려 보여요 (iOS) · 끌어내리면 키보드가 내려가요
         // 아래 입력 줄(dock)이 있으면 그 줄이 키보드만큼 올라가며 본문 칸을 줄여요 (자동 여백까지 더하면 두 번 올라가요)
         automaticallyAdjustKeyboardInsets={!dock}
@@ -189,9 +190,9 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
               {tabs}
             </View>
           ) : null}
-          {/* 탭 본문이 짧아도 탭이 위 막대 아래에 붙을 수 있게: 스크롤 칸 높이 - 붙은 막대 - 탭 줄 - 아래 여백(본문 24 + 스크롤 24) 만큼은 둬요 */}
+          {/* 탭 본문이 짧아도 탭이 위 막대 아래에 붙을 수 있게: 스크롤 칸 높이 - 붙은 막대 - 탭 줄 - 아래 여백(ScrollEnd) 만큼은 둬요 */}
           <DetailScrollContext.Provider value={scrollToTarget}>
-            <KeepVisibleContext.Provider value={Platform.OS === 'web' ? null : keepGrowing}>{tabs ? <View style={{ minHeight: Math.max(0, (scrollH || winH) - dockH - tabH - 48) }}>{tabBody}</View> : children}</KeepVisibleContext.Provider>
+            <KeepVisibleContext.Provider value={Platform.OS === 'web' ? null : keepGrowing}>{tabs ? <View style={{ minHeight: Math.max(0, (scrollH || winH) - dockH - tabH - ScrollEnd) }}>{tabBody}</View> : children}</KeepVisibleContext.Provider>
           </DetailScrollContext.Provider>
         </View>
       </ScrollView>
@@ -230,6 +231,8 @@ export function DetailFrame({ id, club, posters, card, title, kicker, heading, c
  * 안드로이드도 화면 끝까지 그리는(edge-to-edge) 앱이라 창이 줄지 않아요 → 아이폰과 똑같이 키보드 높이만큼 올려요 (2026-11-26 에뮬레이터에서 가려짐 확인).
  */
 const DOCK_GAP = 8;
+/** 본문 칸 아래 여백 (스크롤 아래 여백과 더해 ScrollEnd) */
+const DBD_BOTTOM = 24;
 function DockBar({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const kb = useAnimatedKeyboard();
@@ -311,7 +314,7 @@ const styles = StyleSheet.create({
   poster: { width: '100%', borderBottomWidth: 2, borderColor: Colors.ink, overflow: 'hidden' },
   pw: { left: 20, bottom: 22 },
   ex: { position: 'absolute', right: 12, bottom: 12, zIndex: 3, fontFamily: Font.display, fontSize: 10.5, lineHeight: 14, color: '#fff', backgroundColor: 'rgba(30,26,43,0.55)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, overflow: 'hidden' },
-  dbd: { paddingTop: 18, paddingHorizontal: 18, paddingBottom: 24 },
+  dbd: { paddingTop: 18, paddingHorizontal: 18, paddingBottom: DBD_BOTTOM },
   dk: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 19 },
   h2: { fontFamily: Font.body900, fontSize: 24, lineHeight: 31.2, letterSpacing: -0.5, marginTop: 6 },
   dtop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, zIndex: 3 },

@@ -332,7 +332,7 @@ function Tile({ icon, title, n, unit, preview, sv, onPress }: { icon: ReactNode;
 }
 
 const styles = StyleSheet.create({
-  body: { paddingTop: 8, paddingBottom: 110, gap: 12 },
+  body: { paddingTop: 8, gap: 12 },
   intro: { fontFamily: Font.body700, fontSize: 13, lineHeight: 20, color: Colors.inkSub },
   wait: { paddingVertical: 14, paddingHorizontal: 16, gap: 2 },
   waitB: { fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },

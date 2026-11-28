@@ -872,7 +872,7 @@ function Foot({ note, label, ok, onPress }: { note: string; label: string; ok: b
 }
 
 const styles = StyleSheet.create({
-  body: { paddingTop: 8, paddingBottom: 40, gap: 10 },
+  body: { paddingTop: 8, gap: 10 },
   dim: { opacity: 0.45 },
   q: { marginTop: 14, fontFamily: Font.body900, fontSize: 17, lineHeight: 24 },
   q2: { marginTop: 8, fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },

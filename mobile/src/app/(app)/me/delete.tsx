@@ -72,7 +72,7 @@ export default function DeleteAccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  body: { paddingTop: 18, paddingBottom: 40, gap: 4 },
+  body: { paddingTop: 18, gap: 4 },
   h: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
   ds: { marginTop: 6, fontFamily: Font.body700, fontSize: 15, lineHeight: 23, color: Colors.inkSub },
   lb: { marginTop: 22, marginBottom: 4, fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },

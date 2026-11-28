@@ -19,6 +19,7 @@ import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 import { sfx } from '@/lib/feedback';
 import { canUse, type Feature } from '@/state/access';
 import { memberGate } from '@/components/common/trial-guide';
@@ -47,6 +48,7 @@ function myLastHref() {
 }
 
 export default function NotificationsScreen() {
+  const endPad = useScrollEndPad();
   const pullRefresh = usePullRefresh();
   const [tab, setTab] = useState<NotificationCategory | null>(null);
   const unread = useUnreadCount();
@@ -110,7 +112,7 @@ export default function NotificationsScreen() {
         })}
       </View>
 
-      <ScrollView refreshControl={pullRefresh} contentContainerStyle={styles.body}>
+      <ScrollView refreshControl={pullRefresh} contentContainerStyle={[styles.body, { paddingBottom: endPad }]}>
         {rows.length ? (
           <>
             {rows.map((n) => (
@@ -198,7 +200,7 @@ const styles = StyleSheet.create({
   tab: { paddingTop: 6, paddingBottom: 10 },
   tabText: { fontFamily: Font.body900, fontSize: 14.5, lineHeight: 20 },
   tabBar: { position: 'absolute', left: 0, right: 0, bottom: -1.5, height: 3, borderRadius: 2, backgroundColor: Colors.ink },
-  body: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 110 },
+  body: { paddingTop: 12, paddingHorizontal: 16 },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12, paddingHorizontal: 10, marginHorizontal: -10, marginTop: 2, borderRadius: 14 },
   rowNew: { backgroundColor: '#FFF8CC' },
   rowPressed: { opacity: 0.7 },
