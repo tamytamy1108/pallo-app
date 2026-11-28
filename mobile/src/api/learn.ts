@@ -2,6 +2,7 @@
  * 학습 API (api-inventory 16 · 17 · 18). 가짜 서버 값은 data/maps · data/library* · data/lessons* · data/situation-content 에 있어요.
  * 진도 · 저장 · 완료(19 ~ 22) · 표현함(29) · 설정(30)은 아직 state/* 를 그대로 써요 (docs/frontend/api-layer.md 체크리스트).
  */
+import { getLesson0, type Lesson0 } from '@/data/lesson-lv0';
 import { getLesson, type LessonData } from '@/data/lessons';
 import { findUnit34, type Unit34 } from '@/data/lessons34';
 import { BOOKS, type Book } from '@/data/library';
@@ -37,6 +38,17 @@ export function fetchBookShelf({ signal }: Opts = {}): Promise<Book[][]> {
 export const lessonContentId = (lv: number, unit: number) => `${lv}-${unit}`;
 
 const lessonPath = (id: string) => `/lessons/${encodeURIComponent(id)}`;
+
+/** 18 GET /lessons/:id — Lv.0 HELLO ENGLISH 한 과 (id '0-과'). 없으면 ApiError(404 · isNotFound) */
+export function fetchBasicLesson(unit: number, { signal }: Opts = {}): Promise<Lesson0> {
+  if (apiConfig.useMock)
+    return mock('lesson', () => {
+      const D = getLesson0(unit);
+      if (!D) throw mockNotFound();
+      return D;
+    });
+  return http.get(lessonPath(lessonContentId(0, unit)), { signal });
+}
 
 /** 18 GET /lessons/:id — Lv.1 · 2 패턴 교재 한 과. 없으면 ApiError(404 · isNotFound) */
 export function fetchPatternLesson(lv: number, unit: number, { signal }: Opts = {}): Promise<LessonData> {

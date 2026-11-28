@@ -23,17 +23,17 @@
 | 동아리 | 7 | 13 | 12 | 32 |
 | 여행 · 해외살이 | 0 | 0 | 14 | 14 |
 | 신고 · 차단 | 2 | 0 | 2 | 4 |
-| 챌린지 | 11 | 5 | 9 | 25 |
+| 챌린지 | 15 | 5 | 7 | 27 |
 | 이벤트 | 5 | 2 | 15 | 22 |
 | 마이 | 5 | 1 | 8 | 14 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 2 | 1 | 2 | 5 |
 | 캐릭터 · 상점 | 2 | 0 | 4 | 6 |
-| 수강 · 결제 | 8 | 7 | 7 | 22 |
+| 수강 · 결제 | 8 | 7 | 8 | 23 |
 | 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **108** | **47** | **164** | **319** |
+| **합계** | **112** | **47** | **163** | **322** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -649,12 +649,15 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 
 ## community2 — 챌린지 · 이벤트 화면별 API
 
-백엔드: 챌린지는 `MobileChallengeController` (`/challenges`) 가 일상 챌린지 뼈대(목록 · 상세 · 참여 · 인증 · 좋아요 · 인증 댓글)를 이미 가지고 있어요. 이벤트는 백엔드에 아예 없어요 (`api/app` 어디에도 event 없음) → 모두 new.
+백엔드: 라운지 탭 · 분류 · 참여 · 찜은 v2(`MobileChallengeLoungeV2Controller` · `MobileChallengeMembershipV2Controller` · `MobileChallengeSaveV2Controller`, 2026-11-28)로 옮겼어요. 나머지는 v1 `MobileChallengeController` (`/challenges`) 가 일상 챌린지 뼈대(목록 · 상세 · 참여 · 인증 · 좋아요 · 인증 댓글)를 이미 가지고 있어요. 이벤트는 백엔드에 아예 없어요 (`api/app` 어디에도 event 없음) → 모두 new.
 
 ### 라운지 '챌린지' 탭 — `components/challenge/challenge-tab.tsx` (라운지 `app/(tabs)/lounge.tsx` 안)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 핫 TOP3 · 표현 챌린지 줄 · 참여 중 · 진행 중 · 곧 시작 보기 | GET /challenges?kind=&category=&branch= | change | data/challenge.ts CHALLENGES · hotScore · isPre |
+| 핫 · 진행 중 · 참여 중 · 곧 시작 · 오늘 인증 N개 남았어요 (2026-11-28 서버 BFF) | GET /challenges/lounge?category= (v2) | existing | api/challenges.ts fetchChallengeLounge · api/use-challenge-lounge.ts |
+| 분류 칩 (마스터데이터 CHALLENGE_CATEGORY) | GET /challenges/categories (v2) | existing | api/challenges.ts fetchChallengeCategories |
+| 카드 [참여하기] (누구나=바로 참여 · 승인제=승인 대기) · 하트 찜 | POST /challenges/{id}/members · PUT · DELETE /challenges/{id}/save (v2) | existing | api/challenges.ts joinChallenge · setChallengeSaved |
+| 표현 챌린지 줄 · 지점 거르기 · 검색 | GET /challenges?kind=&category=&branch=&q= | change | data/challenge.ts CHALLENGES · hotScore · isPre |
 | 표현 필터 검색 (표현 · 뜻 · 예문 · 연 사람 · 출처) | GET /challenges?kind=expression&q= | change | challenge-tab.tsx ExprSearch |
 | 카드 [오늘 인증] → 인증 시트 | POST /challenges/{id}/verifications | change | addCheckin |
 | 카드 '인증 완료' 다시 눌러 취소 | DELETE /challenges/{id}/verifications/{postId} | existing | toggleChecked |
@@ -667,7 +670,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 |---|---|---|---|
 | 진행 카드 · 홈 탭(가이드 · 기간 · 주기 · 방법 · 호스트 · 멤버 · 내 인증 7일 · 최근 인증) | GET /challenges/{id} | change | findChallenge · dayOf · weekOf · feedOf |
 | [참여하기] / [도전 신청하기] → 응원 시트 | POST /challenges/{id}/members | existing | toggleJoin |
-| [찜] | POST · DELETE /challenges/{id}/save | new | toggleSaved |
+| [찜] | PUT · DELETE /challenges/{id}/save (v2) | existing | api/challenges.ts setChallengeSaved |
 | 인증 탭 피드 | GET /challenges/{id}/verifications?page= | change (aspectRatio) | feedOf |
 | 인증 좋아요 | POST · DELETE /challenges/{id}/verifications/{postId}/likes | existing | toggleLiked |
 | 답글 창 보기 · 달기 | GET · POST /challenges/{id}/verifications/{postId}/comments | existing | checkinReplies · addCheckinReply |
@@ -781,7 +784,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /me/mypage (ranking — 지금은 서버도 예시 값, 랭킹 구현 때 GET /ranking/members 와 같은 판정으로) | existing | api/my-page.ts ranking |
 | 내 모임 시트 — 동아리 · 번개 · 이벤트 탭 (챌린지 탭 · 제안한 이벤트는 아직 기기 상태) | GET /me/meets?box=JOINED (v2 MyMeetsV2Response) | existing | api/my-activity.ts · api/use-my-activity.ts useMyMeets (가짜 서버 = meet-store) |
 | 찜한 모임 시트 | GET /me/meets?box=SAVED | existing (늘 빈 목록 — 찜 도메인 없음) | useMyMeets · meetLines |
-| 찜한 챌린지 시트 (하트 = 찜 토글은 기기 상태) | GET /me/saved-challenges (v2 SavedChallengesV2Response) | existing (늘 빈 목록 — 찜 도메인 없음) | useSavedChallenges (가짜 서버 = data/challenge saved) |
+| 찜한 챌린지 시트 (하트 = PUT · DELETE /challenges/{id}/save) | GET /me/saved-challenges (v2 SavedChallengesV2Response) | existing (찜 도메인 생김 2026-11-28) | useSavedChallenges (가짜 서버 = data/challenge saved) |
 | 내가 쓴 글 → 라운지로 | (라운지 몫) | — | state/me.ts postCount |
 | 내 표현함 목록 (`app/me/expressions.tsx` — 찾기 · 나온 곳 칩은 받은 첫 쪽 100개 안에서) · 개수는 GET /me/mypage activity.savedExpressionCount | GET /me/expressions?page=&size= (PageResponse<MyExpressionV2Response>) | existing (표현 노트 · 나온 곳 · 고친 문장은 null) | useMyExpressions (가짜 서버 = state/expressions) |
 | PRO'S NOTE 카드(새 노트 n · 최근 받은/보낸 노트 · n/m명 읽음) · 내 수업(프로, 이번 주 맡은 세션) · 내 스터디(이용권 · 듣는 팀 · 리더) — 서버가 준 칸만 | GET /me/mypage (proNote · myClasses · study) | existing | components/account/pro-note-card.tsx · my-class-card.tsx · my-study-card.tsx |
@@ -818,8 +821,8 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 멤버 프로필 — `app/me/profile/[id].tsx` · `components/my/profile-sheet.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 캐릭터 룸 · 이름 · @아이디 · 지점 · 학습 언어 · 팔로잉/팔로워 · 함께 아는 멤버 · 이번 주 포인트 비교 · 학습 현황 · 배지 · 동아리 | GET /me/mypage/{code} | change | data/my.ts findMember · memberAvatar · memberHandle · memberLangs · nameHash |
-| 한 줄 소개 (그 사람이 마이에서 남긴 글 · 안 남겼으면 줄 숨김) | GET /me/mypage/{code} (profile.bio) | existing | data/my.ts memberBio |
+| 캐릭터 룸 · 이름 · @아이디 · 지점 · 학습 언어 · 팔로잉/팔로워 · 함께 아는 멤버 · 이번 주 포인트 비교 · 학습 현황 · 배지 · 동아리 | GET /members/{code}/profile (v2) | change | api/member-profile.ts · api/use-member-profile.ts (함께 아는 멤버 · 역할 표시 · 학습 언어는 아직 예시 · 기본값) |
+| 한 줄 소개 (그 사람이 마이에서 남긴 글 · 안 남겼으면 줄 숨김) | GET /members/{code}/profile (bio) | change | data/my.ts memberBio |
 | [팔로우] · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
 | 팔로우 직후 추천 멤버 · 추천 멤버 n명 시트 | GET /me/follow-recommendations?basedOn= | new | profile-sheet.tsx recs |
 | 팔로잉 · 팔로워 시트 | GET /members/{code}/following · /followers | new | followLists |
@@ -846,7 +849,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 |---|---|---|---|
 | 개인 × 이번 주 / 이번 달 (내 순위 띠 · 시상대 · 4~10위 · 10위 밖 내 근처 줄 · 10위까지 남은 점수) | GET /ranking/members?period=WEEK\|MONTH | new | api/ranking.ts · api/use-ranking.ts (가짜 서버 rankPeople) |
 | 지점 대항전 (지점별 합계 막대 · 우리 지점 강조 — 합산은 서버) | GET /ranking/branches?period=WEEK\|MONTH | new | api/ranking.ts · api/use-ranking.ts (가짜 서버 mockBranchRanking) |
-| 얼굴 누르면 프로필 | GET /me/mypage/{code} | change | — |
+| 얼굴 누르면 프로필 | GET /members/{code}/profile | change | — |
 | 챌린지 카드 · 내 표현함 | (챌린지 · 학습 도메인 몫) | — | state/expressions |
 
 ### 연기 · 팀 · 지점 변경 — `app/me/change.tsx`

@@ -1362,6 +1362,103 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
       x-domain: community2
+  /challenges/categories:
+    get:
+      tags:
+        - 챌린지
+      operationId: listChallengeCategories
+      summary: 챌린지 분류 칩
+      description: |
+        화면: 라운지 '챌린지' 탭 위 분류 칩 (components/challenge/challenge-tab.tsx)
+        규칙: 활성 CHALLENGE_CATEGORY 마스터데이터를 콘솔 정렬 순서대로. 앱은 분류 목록을 따로 들고 있지 않아요 — code 를 GET /challenges/lounge 의 category 로 그대로 보내요.
+      x-status: existing
+      x-backend: MobileChallengeLoungeV2Controller GET /app/api/v2/challenges/categories → List<ChallengeCategoryResponse>
+      x-screens:
+        - components/challenge/challenge-tab.tsx
+      x-app-code: api/challenges.ts fetchChallengeCategories · api/use-challenge-lounge.ts
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [code, label]
+                  properties:
+                    code:
+                      type: string
+                      example: STUDY
+                    label:
+                      type: string
+                      example: 공부 습관
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: community2
+  /challenges/lounge:
+    get:
+      tags:
+        - 챌린지
+      operationId: getChallengeLounge
+      summary: 라운지 챌린지 탭 (BFF) — 핫 · 진행 중 · 참여 중 · 곧 시작 · 오늘 남은 인증 수
+      description: |
+        화면: 라운지 '챌린지' 탭 (components/challenge/challenge-tab.tsx · lounge-cards.tsx)
+        언제: 챌린지 탭 진입 · 분류 칩 바꿀 때 · 참여 · 찜 뒤
+        규칙 (나누기 · 정렬은 서버, 앱은 받은 순서대로 그려요):
+        - hot: 참여자 많은 순 → 오늘 인증 많은 순, 최대 3개. 참여 여부와 상관없어 다른 칸에도 같이 나올 수 있어요. 카드 tag 는 HOT · NEW
+        - running: 진행 중 · 내가 참여 안 함 (참여자 많은 순)
+        - joined: 내가 참여 중(호스트 · 정식 참여), 시작 전 포함 (최근 참여 순)
+        - upcoming: 곧 시작 · 내가 참여 안 함 (시작일 가까운 순)
+        - todayLeftCount: 참여 중 · 진행 중 가운데 오늘 아직 인증 안 한 수 ('오늘 인증 N개 남았어요')
+        - 끝났거나 활동 중(ACTIVE)이 아닌 챌린지는 안 나와요. 챌린지는 지점에 안 묶여서 지점 파라미터가 없어요 (category 로만 거름)
+        GET /challenges (옛 v1 모양 · hot/joined/recommended) 대신 새 앱은 이걸 불러요. 표현 챌린지 · 검색(q)은 아직 이 응답에 없어요.
+      x-status: existing
+      x-backend: MobileChallengeLoungeV2Controller GET /app/api/v2/challenges/lounge → MobileChallengeLoungeResponse {hot, running, joined, upcoming, todayLeftCount}
+      x-screens:
+        - app/(tabs)/lounge.tsx
+        - components/challenge/challenge-tab.tsx
+        - components/challenge/lounge-cards.tsx
+      x-app-code: api/challenges.ts fetchChallengeLounge (가짜 서버 mockLounge) · api/use-challenge-lounge.ts
+      parameters:
+        - name: category
+          in: query
+          required: false
+          description: 분류 code (GET /challenges/categories). 비우면 전 분류
+          schema:
+            type: string
+            example: STUDY
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hot, running, joined, upcoming, todayLeftCount]
+                properties:
+                  hot:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChallengeLoungeCard"
+                  running:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChallengeLoungeCard"
+                  joined:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChallengeLoungeCard"
+                  upcoming:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChallengeLoungeCard"
+                  todayLeftCount:
+                    type: integer
+                    example: 2
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: community2
   /challenges:
     get:
       tags:
@@ -1369,6 +1466,8 @@ paths:
       operationId: listChallenges
       summary: 챌린지 탭 — 핫 TOP3 · 참여 중 · 진행 중 · 곧 시작
       description: >
+        (2026-11-28) 새 앱 라운지 탭은 이제 GET /challenges/lounge (v2) 를 불러요. 이 API 는 표현 챌린지 · 검색(q) · 카드 추가 항목(x-gap)을 위해 남겨 둬요.
+
         화면: 라운지 '챌린지' 탭 (components/challenge/challenge-tab.tsx · cards.tsx
         HotBox · DailyCard · ExprCard)
 
@@ -1734,10 +1833,12 @@ paths:
 
         규칙: 진행 중이면 바로 참여(OPEN). 시작 전(UPCOMING)이면 '도전 신청' — 같은 호출, 시작하면 알림. 표현 챌린지는 이 호출 없이 문장을 달면 자동 참여.
 
+        누구나 참여(OPEN)면 바로 정식 참여(viewerRole=MEMBER), 승인제면 승인 대기(PENDING) — 호스트가 승인할 때 정원을 마지막으로 봐요.
+
         error: already_joined(409) · challenge_ended(409) · capacity_full(409)
       x-status: existing
-      x-backend: MobileChallengeController POST /challenges/{id}/members →
-        MobileChallengeDetailResponse
+      x-backend: MobileChallengeMembershipV2Controller POST /app/api/v2/challenges/{id}/members →
+        MobileChallengeDetailResponse (v1 에서 옮겨 왔어요 · v1 에는 더 없어요)
       x-inventory: "#82"
       x-screens:
         - components/challenge/daily-detail.tsx
@@ -1769,8 +1870,8 @@ paths:
         화면: 카드의 '신청 완료'를 다시 누를 때 (challenge-tab.tsx onCheck — 시작 전 신청 취소
         '취소했어요'). 호스트는 못 나가요.
       x-status: existing
-      x-backend: MobileChallengeController DELETE /challenges/{id}/members/me →
-        MobileChallengeDetailResponse
+      x-backend: MobileChallengeMembershipV2Controller DELETE /app/api/v2/challenges/{id}/members/me →
+        MobileChallengeDetailResponse (신청 대기면 신청 취소 · 정식이면 탈퇴)
       x-screens:
         - components/challenge/challenge-tab.tsx
       x-app-code: data/challenge.ts toggleJoin · toggleChecked
@@ -1821,17 +1922,20 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-domain: community2
   "/challenges/{id}/save":
-    post:
+    put:
       tags:
         - 챌린지
       operationId: saveChallenge
       summary: 챌린지 찜
       description: |
-        화면: daily-detail.tsx 아래 고정 [찜] ('저장했어요'). 멱등.
-      x-status: new
+        화면: daily-detail.tsx 아래 고정 [찜] ('저장했어요') · 라운지 카드 하트 (lounge-cards.tsx). 멱등.
+        규칙: 볼 수 있는 챌린지면 누구나(참여 여부 무관). 승인 전 · 중지된 챌린지는 404. 찜 여부는 카드 saved, 목록은 GET /me/saved-challenges.
+      x-status: existing
+      x-backend: MobileChallengeSaveV2Controller PUT /app/api/v2/challenges/{id}/save → 204
       x-screens:
         - components/challenge/daily-detail.tsx
-      x-app-code: data/challenge.ts toggleSaved · ChState.saved
+        - components/challenge/lounge-cards.tsx
+      x-app-code: api/challenges.ts setChallengeSaved · data/challenge.ts toggleSaved
       parameters:
         - $ref: "#/components/parameters/PathId"
       responses:
@@ -1847,11 +1951,13 @@ paths:
         - 챌린지
       operationId: unsaveChallenge
       summary: 챌린지 찜 취소
-      description: 화면 daily-detail.tsx [찜] 다시 누름 ('저장을 취소했어요'). 멱등.
-      x-status: new
+      description: 화면 daily-detail.tsx [찜] · 카드 하트 다시 누름 ('저장을 취소했어요'). 멱등 — 찜하지 않았어도 204.
+      x-status: existing
+      x-backend: MobileChallengeSaveV2Controller DELETE /app/api/v2/challenges/{id}/save → 204
       x-screens:
         - components/challenge/daily-detail.tsx
-      x-app-code: data/challenge.ts toggleSaved
+        - components/challenge/lounge-cards.tsx
+      x-app-code: api/challenges.ts setChallengeSaved
       parameters:
         - $ref: "#/components/parameters/PathId"
       responses:
@@ -7800,6 +7906,79 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
       x-domain: core
+  /me/change-requests/history:
+    get:
+      tags:
+        - 수강 · 결제
+      operationId: listChangeRequestHistory
+      summary: 지난 신청 (연기 · 팀 변경 · 지점 이동)
+      description: |
+        화면: 마이 › 내 스터디 '전체 보기' (app/me/study.tsx) 카드 아래 '지난 신청'
+        규칙: 연기(deferral) · 팀 변경(course-change) · 지점 이동(branch-transfer) 신청을 한 목록으로, 최근 신청 순. 끝난 것(승인 · 반려 · 취소)만 — 확인 중인 신청은 내 스터디 카드가 따로 보여요.
+        반려면 운영진이 남긴 사유(reason). txt 는 앱이 만든 신청 글 그대로 (RequestSummary 가 '지금' · '바뀌면' 두 묶음으로 읽어요).
+      x-status: new
+      x-screens:
+        - app/me/study.tsx
+        - components/account/request-summary.tsx
+      x-app-code: api/change-requests.ts fetchChangeHistory · useChangeHistory (SAMPLE_HISTORY 목업)
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rows, nextCursor]
+                properties:
+                  rows:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, kind, label, txt, requestedAt, status]
+                      properties:
+                        id:
+                          type: string
+                        kind:
+                          type: string
+                          enum: [DEFERRAL, COURSE_CHANGE, BRANCH_TRANSFER, COURSE_ADD]
+                        label:
+                          type: string
+                          example: 지점 이동
+                          description: 화면 이름표 ('연기' · '팀 변경' · '지점 이동' · '팀 추가')
+                        txt:
+                          type: string
+                          example: "일본어 토 오전 11시 → 일본어 토 오후 2시\n8/30(일)까지 지금 팀 · 9/5(토)부터 강남점"
+                          description: 신청 글 그대로 (두 줄)
+                        requestedAt:
+                          type: string
+                          format: date
+                        status:
+                          type: string
+                          enum: [APPROVED, REJECTED, CANCELED]
+                        reason:
+                          type:
+                            - string
+                            - "null"
+                          description: 반려 사유 (운영진이 남긴 말)
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      x-domain: my
   /me/course-change:
     get:
       tags:
@@ -8661,31 +8840,31 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
       x-domain: my
-  "/me/mypage/{code}":
+  "/members/{code}/profile":
     get:
       tags:
         - 프로필 · 팔로우
       operationId: getMemberProfile
-      summary: 멤버 프로필 (다른 회원)
+      summary: 멤버 프로필 시트 (다른 회원)
       description: >
-        화면: app/me/profile/[id].tsx → components/my/profile-sheet.tsx (라운지 ·
-        랭킹에서 얼굴 누르면)
+        화면: app/me/profile/[id].tsx → components/my/profile-sheet.tsx (라운지 · 랭킹 · 모임에서 얼굴 누르면)
 
-        지금 앱 주소는 이름(/me/profile/Hyun)이라 회원 code 로 바꿔요.
+        시트 한 장(캐릭터 · 이름 · 지점 · 가입 시각 · 한 줄 소개 · 숫자 · 받은 배지)을 한 번에 줘요. 없는 code 는 404.
 
-        규칙: 상대의 '프로필 공개'(전체 · 같은 지점만 · 함께한 모임 멤버만)에 안 맞으면 summary · badges · joinedClubs 를 비우고 visible=false.
+        규칙: badges 는 받은 배지만 (콘솔 순서 · 못 받은 배지는 남에게 안 보여요). joinedMeetCount 는 마이 탭 숫자 칸과 같은 기준(안 끝난 번개 + 정식 멤버인 활동 중 동아리).
 
-        '내 지점 보이기'를 끈 사람은 branchName 이 null. 차단한 · 차단당한 사이면 404.
+        도메인이 아직 없는 값은 기본값 — languages 빈 목록 · follow 0 · 0 · false · stats 0 · null. 앱은 받은 값을 그대로 그려요.
       x-status: change
-      x-backend: MyPageController GET /me/mypage/{code} → MyPageResponse
-      x-gap: avatar · summary · badges · relation(팔로우 여부 · 함께 아는 멤버 · 이번 주 포인트 비교) ·
-        handle · languages 레벨 · visible 추가
+      x-backend: MobileMemberProfileV2Controller GET /app/api/v2/members/{code}/profile → MemberProfileV2Response (예전 MyPageController GET /me/mypage/{code} 대신)
+      x-gap: >
+        1) languages(배우는 언어 · 레벨) · follow(팔로우 도메인) · stats(연속 출석 · 이번 주 순위 · 포인트) 를 실제 값으로.
+
+        2) 응답에 없음: 함께 아는 멤버 · 추천 멤버 · 계정 역할 표시(PRO · STAFF · HOST) · 차단(차단 사이면 404) · 프로필 공개 범위(visible) · '내 지점 보이기' 끔이면 branchName null.
       x-inventory: "#7"
       x-screens:
         - app/me/profile/[id].tsx
         - components/my/profile-sheet.tsx
-      x-app-code: data/my.ts findMember · memberAvatar · memberHandle · memberLangs ·
-        nameHash (전부 가짜 계산)
+      x-app-code: api/member-profile.ts fetchMemberProfile · api/use-member-profile.ts (함께 아는 멤버 · 역할 표시는 아직 data/my.ts 예시 값)
       parameters:
         - name: code
           in: path
@@ -8699,7 +8878,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MyPage"
+                $ref: "#/components/schemas/MemberProfile"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -8770,7 +8949,7 @@ paths:
       summary: 찜한 챌린지
       description: |
         화면: 마이 › 내 활동 › 찜한 챌린지 시트 (최근 찜한 게 앞)
-        규칙: 챌린지 찜 도메인이 없어 늘 빈 목록 (마이 탭 activity.savedChallengeCount = 0 과 같아요). 모양만 먼저 정했어요.
+        규칙: 볼 수 있는(ACTIVE) 챌린지만 — 끝난 챌린지도 찜을 풀기 전까지 남아요. 개수는 마이 탭 activity.savedChallengeCount 와 같아요 (2026-11-28 찜 도메인 생김 · PUT /challenges/{id}/save).
       x-status: existing
       x-backend: MobileMyActivityV2Controller GET /app/api/v2/me/saved-challenges → SavedChallengesV2Response
       x-screens:
@@ -21883,7 +22062,7 @@ components:
         hostedByMe: { type: boolean }
     MyPage:
       type: object
-      description: 마이 BFF (GET /me/mypage · /me/mypage/{code}). profile · joinedClubs
+      description: 마이 BFF (GET /me/mypage · 예전 /me/mypage/{code} — 남의 프로필은 이제 GET /members/{code}/profile). profile · joinedClubs
         는 지금 그대로, 나머지 추가
       required:
         - profile
@@ -23131,6 +23310,146 @@ components:
             - "null"
           maxLength: 500
           description: 운영진에게 남길 말
+    MemberProfile:
+      type: object
+      description: 남의 프로필 시트 (GET /members/{code}/profile · 백엔드 MemberProfileV2Response)
+      required: [code, displayName, joinedAt, languages, follow, joinedMeetCount, stats, badges]
+      properties:
+        code:
+          type: string
+        displayName:
+          type: string
+          description: 닉네임 (없으면 정해진 가명)
+        avatar:
+          type:
+            - object
+            - "null"
+          description: 꾸민 캐릭터 (MyAvatarLook) — 아직 안 골랐으면 null
+        branchName:
+          type:
+            - string
+            - "null"
+          description: 연동된 지점 (여러 곳이면 첫 지점) — 없으면 null
+        joinedAt:
+          type: string
+          format: date-time
+        bio:
+          type:
+            - string
+            - "null"
+        languages:
+          type: array
+          description: 배우는 언어 — 지금은 늘 빈 목록
+          items:
+            type: string
+        follow:
+          type: object
+          required: [following, followers, viewerFollowing]
+          properties:
+            following:
+              type: integer
+            followers:
+              type: integer
+            viewerFollowing:
+              type: boolean
+        joinedMeetCount:
+          type: integer
+        stats:
+          type: object
+          required: [streakDays, weekPoints, totalPoints]
+          properties:
+            streakDays:
+              type: integer
+            weekRank:
+              type:
+                - integer
+                - "null"
+            weekPoints:
+              type: integer
+            totalPoints:
+              type: integer
+        badges:
+          type: array
+          description: 받은 배지만 (콘솔 순서)
+          items:
+            type: object
+            required: [code, name, imageUrl]
+            properties:
+              code:
+                type: string
+              name:
+                type: string
+              description:
+                type:
+                  - string
+                  - "null"
+              imageUrl:
+                type: string
+                description: 256×256 투명 PNG
+    ChallengeLoungeCard:
+      type: object
+      description: 라운지 챌린지 카드 한 장 (백엔드 MobileChallengeSummaryResponse · 앱 api/challenges.ts ChallengeSummary)
+      required: [id, title, category, categoryLabel, progress, startDate, endDate, participantCount, todayVerifiedCount, elapsedPercent, verifyCycle, viewerRole, verifiedToday, saved]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        category:
+          type: string
+          description: 분류 code (CHALLENGE_CATEGORY)
+        categoryLabel:
+          type: string
+        tagline:
+          type:
+            - string
+            - "null"
+        imagePath:
+          type:
+            - string
+            - "null"
+        thumbnailPath:
+          type:
+            - string
+            - "null"
+          description: 카드용 작은 그림 — 없으면 imagePath
+        tag:
+          type:
+            - string
+            - "null"
+          enum: [HOT, NEW, null]
+        progress:
+          type: string
+          enum: [UPCOMING, ONGOING, ENDED]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        dDay:
+          type:
+            - integer
+            - "null"
+          description: 시작 전이면 시작까지, 진행 중이면 끝까지 남은 날
+        participantCount:
+          type: integer
+        todayVerifiedCount:
+          type: integer
+        elapsedPercent:
+          type: integer
+          description: 기간 대비 지난 비율 0~100
+        verifyCycle:
+          type: string
+          enum: [DAILY, THREE_PER_WEEK, WEEKLY]
+        viewerRole:
+          type: string
+          enum: [HOST, MEMBER, PENDING, REJECTED, KICKED, NONE]
+        verifiedToday:
+          type: boolean
+        saved:
+          type: boolean
+          description: 내가 찜했는지 (카드 하트 · 참여 여부와 무관)
     DeferralForm:
       type: object
       description: |
@@ -23225,8 +23544,17 @@ components:
           type:
             - string
             - "null"
-          enum: [NO_MEMBERSHIP, NOT_ALLOWED, NO_REMAINING, PENDING_EXISTS, null]
-          description: 신청할 수 없는 이유 — 있으면 종류 카드를 흐리게
+          enum: [NO_MEMBERSHIP, NOT_ALLOWED, NOT_DEFERRABLE, NO_REMAINING, USABLE_PERIOD_ENDED, PENDING_EXISTS, null]
+          description: >
+            신청할 수 없는 이유 — 있으면 종류 카드를 흐리게.
+            NOT_DEFERRABLE: 연기가 없는 멤버십 (CVVIP+ · 앱 Plan.noRest — 누르면 '연기 신청을 할 수 없어요' 안내, 2026-11-28).
+            USABLE_PERIOD_ENDED: 사용 가능 기간(PLUS 7.5개월 · PRO 15개월 · PRO MAX · PREMIUM 3년 · CVVIP+ 무제한)이 지남.
+        usableUntil:
+          type:
+            - string
+            - "null"
+          format: date
+          description: (2026-11-28) 연기 · 변경 사용 가능 기간이 끝나는 날 (시작 + usableMonths, 7.5개월은 7달 + 15일) — 무제한이면 null. 시작일 · 복귀일이 이 날을 넘으면 안 돼요 (앱 usableEnd)
     DeferralReason:
       type: object
       description: 연기 사유 한 개 (마스터데이터 DEFERRAL_REASON)

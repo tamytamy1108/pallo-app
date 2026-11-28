@@ -8,6 +8,7 @@ import Svg, { Circle, Defs, Path, Pattern, Rect } from 'react-native-svg';
 import { bookShelfQuery } from '@/api/queries';
 import { lockedChapter } from '@/components/common/trial-guide';
 import { pickIsland, setLib } from '@/components/library/library-state';
+import { lessonBase } from '@/components/library/open-step';
 import { Pressable } from '@/components/ui/pressable';
 import { XmasBackLayer, XmasGarland } from '@/components/home/christmas';
 import { CurrentFx, NodeHop, Rider } from '@/components/home/map-current';
@@ -50,15 +51,13 @@ const LOCK_PATH = 'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3';
 const ZIG = [-1, 0, 1, 0]; // 왼쪽 → 가운데 → 오른쪽 → 가운데 … 꼬불꼬불 (프로토타입과 같아요)
 /** 내 교재 레벨 (MY_BOOK.level 'Lv.1' → 1) — 아직 아무 단계도 안 열었을 때 홈 맵 레벨 */
 const MY_LV = Number(MY_BOOK.level.replace('Lv.', ''));
-/** Lv.0 HELLO ENGLISH 표지 색 (data/library 책장과 같아요) */
-const LV0_COLOR = '#4A82C8';
 
 /**
  * 레벨 하나의 맵 재료. 맵 모양은 레벨이 달라도 같고, 정류장 수 · 이름만 그 레벨의 예습 · 본학습 · 복습 단계 (STUDY_STEPS) 그대로
  * (Lv.1 · 2 패턴형 8개 · Lv.3 토픽형 10개 · Lv.4 토론형 9개). 위 칩 = 그 레벨 교재의 과 (Lv.3 토픽 번호 · Lv.4 회차).
  */
 function makeLevelMap(lvWanted: number) {
-  const L = STUDY_LEVELS.find((x) => x.lv === lvWanted) ?? STUDY_LEVELS[0];
+  const L = STUDY_LEVELS.find((x) => x.lv === lvWanted) ?? STUDY_LEVELS.find((x) => x.lv === MY_LV) ?? STUDY_LEVELS[0];
   const lv = L.lv;
   const steps = STAGES.flatMap((g) => STUDY_STEPS[L.kind][g.key].map((s) => ({ id: s.id, stage: g.key, title: s.t, min: s.min, xp: s.xp })));
   const units = L.lessons.map((ls) => ls.no);
@@ -72,10 +71,10 @@ function makeLevelMap(lvWanted: number) {
   /** 과의 단계마다 끝냈는지. count 는 다시 읽을 때를 알리는 값이에요 (끝낸 수가 바뀌면 새로 읽어요) */
   const readDone = (unit: number, count: number) => steps.map((s) => count > 0 && isDone(stepKey(lv, unit, s.id)));
   const stageOf = (i: number) => STAGES.findIndex((g) => g.key === steps[i].stage);
-  const stepHref = (unit: number, step: string) => (lv <= 2 ? `/lesson/${step}?lv=${lv}&unit=${unit}` : `/lesson34/${step}?lv=${lv}&unit=${unit}`);
+  const stepHref = (unit: number, step: string) => `${lessonBase(lv)}/${step}?lv=${lv}&unit=${unit}`;
   /** 이번 주 반 진도 (과 번호들) · 칩 글자: 패턴형 '5 & 6챕터', 토픽 · 토론형 '#101 & #102' · '1회 & 2회' */
   const week = (lv === MY_LV ? MY_BOOK.weekLessons : MY_BOOK.weekByLevel[lv]) ?? [];
-  const weekText = L.kind === 'pattern' ? `${week.join(' & ')}챕터` : week.map(chipLabel).join(' & ');
+  const weekText = L.kind === 'pattern' || L.kind === 'basic' ? `${week.join(' & ')}챕터` : week.map(chipLabel).join(' & ');
   /** 과 제목만 (보상 화면) */
   const unitTitle = (n: number) => L.lessons.find((x) => x.no === n)?.title ?? '';
   return { lv, steps, units, unitName, unitTitle, chipLabel, readDone, stageOf, stepHref, week, weekText };
@@ -435,33 +434,6 @@ export function StudyMap() {
       {/* 스터디 맵 · Lv 칩: 레벨 바꾸기 */}
       <Sheet open={lvOpen} onClose={() => setLvOpen(false)} title="스터디 맵 레벨" label="스터디 맵 레벨 바꾸기">
         <View style={styles.lvList}>
-          {/* Lv.0 HELLO ENGLISH: 교재가 아직 없어 맵을 그릴 수 없어요 (라이브러리 · 전체 진도에서도 '준비 중') */}
-          <Pressable
-            onPress={() => {
-              sfx('tap');
-              showToast('Lv.0 교재는 준비 중이에요 · 들어오면 맵이 열려요');
-            }}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: false, disabled: true }}
-            accessibilityLabel="Lv.0 HELLO ENGLISH · 준비 중">
-            {({ pressed }) => (
-              <View style={StyleSheet.flatten([styles.lvRow, styles.lvRowOff, pressed && styles.pillPressed])}>
-                <View style={StyleSheet.flatten([styles.lvDot, { backgroundColor: LV0_COLOR }])}>
-                  <PText style={styles.lvDotT} color={Colors.white}>
-                    0
-                  </PText>
-                </View>
-                <View style={styles.lvTx}>
-                  <PText style={styles.lvName} numberOfLines={1}>
-                    HELLO ENGLISH
-                  </PText>
-                  <PText style={styles.lvAbout} numberOfLines={1}>
-                    왕기초 · 교재 준비 중
-                  </PText>
-                </View>
-              </View>
-            )}
-          </Pressable>
           {STUDY_LEVELS.map((L) => {
             const on = L.lv === LV;
             return (
@@ -681,7 +653,6 @@ const styles = StyleSheet.create({
   pillPressed: { opacity: 0.7 },
   lvList: { gap: 8 },
   lvRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 16, borderWidth: 2, borderColor: Colors.line, backgroundColor: Colors.white },
-  lvRowOff: { opacity: 0.55 },
   lvRowOn: { borderColor: Colors.ink, backgroundColor: Colors.yellow },
   lvDot: { width: 34, height: 34, borderRadius: 11, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   lvDotT: { fontFamily: Font.display, fontSize: 15, lineHeight: 19 },

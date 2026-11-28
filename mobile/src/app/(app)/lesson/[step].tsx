@@ -19,7 +19,7 @@ import { Screen } from '@/components/screen';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
-import { bankTasks, chalFinishTasks, dialogueTasks, patternTasks, stepDef, stepTitle, storyTasks, type LessonData, type StepDef, type Task } from '@/data/lessons';
+import { bankTasks, chalFinishTasks, dialogueTasks, patternTasks, stepDef, stepTitle, STEP_DEFS, storyTasks, type LessonData, type StepDef, type Task } from '@/data/lessons';
 import { setLastStep, stepKey } from '@/state/progress';
 import { ChapterGate } from '@/components/common/member-lock';
 
@@ -70,7 +70,7 @@ function LessonState({ children }: { children: ReactNode }) {
 }
 
 function StepScreen({ D, step, resume }: { D: LessonData; step: StepDef; resume?: 'resume' | 'restart' }) {
-  const { finish, cel, goHome, goNext } = useStepFinish(D.lv, D.unit, step);
+  const { finish, cel, goHome, goNext } = useStepFinish(D.lv, D.unit, step, STEP_DEFS);
   const skey = stepKey(D.lv, D.unit, step.id);
   // 홈 스터디 맵이 마지막으로 연 단계에서 시작해요
   useEffect(() => setLastStep(D.lv, D.unit, step.id), [D.lv, D.unit, step.id]);
