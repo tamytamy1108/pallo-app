@@ -135,8 +135,8 @@ function Card({ label, en, done, sel, bad, onPress }: { label: string; en?: bool
       {({ pressed }) => (
         <View style={done && styles.okWrap}>
           {!done && !bad && !pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.mcShadow]} /> : null}
-          <View style={[styles.mc, (sel || done) && { backgroundColor: Colors.yellow }, bad && styles.mcBad, (done || (pressed && !bad)) && { transform: [{ translateY: done ? 4 : 3 }] }]}>
-            <PText style={[styles.mcText, en ? styles.mcEn : null]} color={bad ? '#8A6170' : Colors.ink}>
+          <View style={[styles.mc, sel && !done && styles.mcSel, done && styles.mcOk, bad && styles.mcBad, (done || (pressed && !bad)) && { transform: [{ translateY: done ? 4 : 3 }] }]}>
+            <PText style={[styles.mcText, en ? styles.mcEn : null]} color={done ? Colors.matchOkInk : bad ? Colors.matchBadInk : Colors.ink}>
               {label}
             </PText>
           </View>
@@ -220,9 +220,11 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', gap: 10 },
   col: { flex: 1, gap: 7 },
   mcShadow: { top: 4, bottom: -4, borderRadius: 18, backgroundColor: Colors.ink },
-  okWrap: { opacity: 0.45 },
+  okWrap: { opacity: 0.72 },
   mc: { minHeight: 56, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 18, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
-  mcBad: { backgroundColor: '#F6D3DC', borderStyle: 'dashed' },
+  mcSel: { backgroundColor: Colors.yellow },
+  mcOk: { backgroundColor: Colors.matchOk, borderColor: Colors.matchOkLine },
+  mcBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine },
   mcText: { fontFamily: Font.body800, fontSize: 15, lineHeight: 15 * 1.3, textAlign: 'center' },
   mcEn: { fontFamily: Font.display },
   res: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },

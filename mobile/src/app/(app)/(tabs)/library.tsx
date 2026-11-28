@@ -13,7 +13,7 @@ import { EmptyIsland } from '@/components/library/empty-island';
 import { LibHead, MapTabs, SitChips } from '@/components/library/lib-head';
 import { CurrPanel, EmptyBlock, PanelCard, SitPanel, levelProgress } from '@/components/library/lib-panel';
 import { LibraryWorld, noteLibTouch, type LibWorld } from '@/components/library/library-world';
-import { islandFor, libStore, markMapSeen, nextSceneNo, pickIsland, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
+import { islandFor, libStore, markMapSeen, nextLessonNo, nextSceneNo, pickIsland, sceneDone, setLib, useProgressVersion } from '@/components/library/library-state';
 import { ToTop } from '@/components/library/to-top';
 import { FLAT_MAPS } from '@/components/library/world/flat-maps';
 import { MAP_PRESETS } from '@/components/library/world/presets';
@@ -22,7 +22,7 @@ import { Raised } from '@/components/ui/raised';
 import { ErrorState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabHeadTop, TabScrollEnd } from '@/constants/theme';
-import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
+import { LANGS, bookTag, mapLang, sceneId, sceneOpen, unitId, type Book, type SituationMap } from '@/data/library';
 import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
 import { useLastStep } from '@/state/progress';
@@ -118,7 +118,16 @@ export default function LibraryScreen() {
       router.push(`/scene/${sceneId(sitMap.id, no)}` as Href);
       return;
     }
+    // 스터디 맵 '교재 보기': 그 섬을 고르고, 지금 풀어야 할 과 화면으로 바로 가요 (비회원은 첫 과까지만)
     pickIsland(no - 1);
+    const L = books[no - 1]?.study;
+    const next = L ? nextLessonNo(L) : null;
+    if (!L || next == null) return;
+    if (!allOpen && !isFreeChapter(next)) {
+      lockedChapter(`${next}과`, true);
+      return;
+    }
+    router.push(`/unit/${unitId(L.lv, next)}` as Href);
   };
 
   const langLabel = LANGS[st.lang].ko;
