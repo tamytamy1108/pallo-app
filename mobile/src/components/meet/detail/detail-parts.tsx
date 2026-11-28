@@ -246,7 +246,7 @@ export function JoinRequestSection({ members, onDecide }: { members: Member[]; o
   return (
     <>
       <DSec>참여 신청 {members.length}명</DSec>
-      <PText style={styles.hi0}>수락하면 이 사람에게 장소와 주소가 보여요.</PText>
+      <PText style={styles.hi0}>수락하면 이 사람에게 장소와 주소가 보여요. 24시간 안에(모임 3시간 전까지) 답하지 않으면 신청이 자동으로 끝나요. 거절할 땐 사유를 골라요.</PText>
       <View>
         {members.map((m, i) => (
           <MemberRow

@@ -1,6 +1,6 @@
 # 화면별 API 지도
 
-앱 `mobile/src/app/` 의 화면 67개를 하나씩 열어 **서버가 필요한 곳**을 적었어요. API 자세한 모양은 [`openapi.yaml`](openapi.yaml) (Swagger)에 있어요.
+앱 `mobile/src/app/` 의 화면 68개를 하나씩 열어 **서버가 필요한 곳**을 적었어요. API 자세한 모양은 [`openapi.yaml`](openapi.yaml) (Swagger)에 있어요.
 상태: `existing` 이미 있음 · `change` 있는 것에 필드 · 동작 추가 · `new` 새로 필요. 경로는 `/app/api/v2` 뒤에 붙어요 (새 앱 · 2026-11. 아직 v2 로 안 옮긴 예전 API 는 `/app/api/v1`, 공개 API는 `/public/api/v1`).
 
 ## 한눈에
@@ -9,7 +9,7 @@
 |---|---:|---:|---:|---:|
 | 인증 · 시작 | 11 | 4 | 3 | 18 |
 | 홈 | 6 | 2 | 3 | 11 |
-| 알림 · 공지 | 5 | 1 | 1 | 7 |
+| 알림 · 공지 | 7 | 1 | 0 | 8 |
 | 공통 · 설정값 | 7 | 1 | 1 | 9 |
 | 가입 · 온보딩 | 5 | 0 | 4 | 9 |
 | 라이브러리 | 1 | 0 | 3 | 4 |
@@ -17,7 +17,7 @@
 | 진도 · 보상 | 0 | 0 | 7 | 7 |
 | 음성 · AI | 0 | 0 | 3 | 3 |
 | 표현함 | 2 | 2 | 0 | 4 |
-| 라운지 피드 | 7 | 5 | 8 | 20 |
+| 라운지 피드 | 9 | 3 | 8 | 20 |
 | 스토리 | 0 | 0 | 15 | 15 |
 | 번개 | 10 | 3 | 8 | 21 |
 | 동아리 | 7 | 13 | 12 | 32 |
@@ -25,15 +25,15 @@
 | 신고 · 차단 | 2 | 0 | 2 | 4 |
 | 챌린지 | 11 | 5 | 9 | 25 |
 | 이벤트 | 5 | 2 | 15 | 22 |
-| 마이 | 2 | 1 | 8 | 11 |
+| 마이 | 5 | 1 | 8 | 14 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
 | 랭킹 · 배지 | 0 | 0 | 2 | 2 |
-| 캐릭터 · 상점 | 0 | 0 | 6 | 6 |
-| 수강 · 결제 | 9 | 6 | 6 | 21 |
+| 캐릭터 · 상점 | 2 | 0 | 4 | 6 |
+| 수강 · 결제 | 8 | 7 | 7 | 22 |
 | 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **97** | **47** | **166** | **310** |
+| **합계** | **105** | **46** | **164** | **315** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -110,7 +110,7 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
 | 인사 Hey {이름} | GET /me (nickname) | change | state/me.ts name |
-| 종 분홍 점 | GET /me/notifications?pageSize=1 → unreadCount | change | noti-state.ts useUnreadCount |
+| 종 분홍 점 (1분마다 · 푸시 오면 바로) | GET /me/notifications/unread-count → {count} | existing | noti-state.ts useUnreadCount · api/use-notifications.ts |
 | Notice board 띠 (3개 순환) | GET /notices?limit=3 | existing | data/mock.ts BOARD_NOTICES |
 | 오늘 스터디 카드 (스터디 회원) | GET /study/courses?date=오늘 | change (qrOpensAt · qrClosesAt · regular) | data/home.ts SLOTS · MY_SLOT · MY_LANG · attendance.ts |
 | 오늘 스터디 자리를 누구냐에 따라 (components/home/home-card.tsx): 회원 출석 카드 · 연동 대기 잠긴 라벤더 · 못 찾음 '다시 요청하기' · 체험 D-n · 둘러보기 카드 | GET /me (memberAccessLevel) · GET /me/branch-summary | existing | state/access.ts userKind · api/use-branch-progress.ts |
@@ -146,9 +146,9 @@ Apple · Google 버튼 · '먼저 둘러볼게요'는 없앴어요 (2026-11-24).
 ### 알림함 — `app/notifications.tsx` (+ `components/home/noti-state.ts`)
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 목록 · 탭(전체 · 공지 · 학습 · 라운지 · 이벤트) | GET /me/notifications?category=&page= | change (category · actor · type 추가) | data/home.ts NOTIS · NOTI_TABS |
-| 행 누르기 → 읽음 → 이동 | PATCH /me/notifications/{id}/read | existing | noti-state.ts markNotiRead · Noti.href (→ type+reference 로 앱이 경로 계산) |
-| 모두 읽음 | POST /me/notifications/read-all | new | noti-state.ts markAllNotiRead |
+| 목록 · 탭(전체 · 공지) — 공지 게시 알림은 [이벤트] · [업데이트] · [중요] 머리말 → 공지 상세 | GET /me/notifications?category=&cursor=&limit= → {items, nextCursor, unreadCount} (v2, meta.kind NOTICE · REFERENCE) | change (학습 · 라운지 · 이벤트 탭 값 · actor 추가) | api/use-notifications.ts · data/home.ts NOTI_TABS |
+| 행 누르기 → 읽음 → 이동 | PATCH /me/notifications/{id}/read (v2) | existing | noti-state.ts markNotiRead · Noti.href (→ type+reference 로 앱이 경로 계산) |
+| 모두 읽음 | POST /me/notifications/read-all (v2 · 탭 상관없이) | existing | noti-state.ts markAllNotiRead |
 | 알림 설정 (톱니) — 비회원은 흐리게 · 누르면 체험 안내 시트 | my 도메인 (설정 › 알림) | — | /me/settings?section=noti · state/access.ts canUse('settings') |
 | 지점 연동 결과 알림 (연동됨 ✓ → /my · 못 찾음 ? → /link-rejected) | GET /me/notifications (type BRANCH_LINK_APPROVED · BRANCH_LINK_REJECTED) | change | state/link-events.ts addNoti · LinkBadge |
 | 회원 전용 화면 알림(/me/notes · pass · study · change)을 비회원이 누름 | 없음 (앱이 memberGate) | — | MEMBER_HREFS |
@@ -769,7 +769,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 
 ## 마이 도메인 — 화면별 API
 
-경로는 모두 `/app/api/v1` 기준 (약관 3개만 `/public/api/v1`). 상태: existing 12 · change 12 · new 44.
+경로는 모두 `/app/api/v1` 기준 (약관 3개만 `/public/api/v1`). 상태: existing 21 · change 10 · new 40.
 
 ### 마이 탭 — `app/(tabs)/my.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
@@ -793,7 +793,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 캐릭터 카드 · 팔로우 시트 · 배지 시트 · 스파크 시트 — `components/my/my-hero.tsx` · `my-sheets.tsx` · `my-blocks.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 내 캐릭터 그리기 | GET /me/avatar (또는 /me/mypage avatar) | new | state/avatar.ts saved |
+| 내 캐릭터 그리기 (로그인 뒤 서버 모습 · 가진 것을 기기에) | GET /me/avatar | existing | api/use-my-avatar.ts · state/avatar.ts saved |
 | 팔로잉 · 팔로워 목록 | GET /members/{code}/following · /followers | new | data/my.ts followLists |
 | 목록에서 팔로우 · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
 | 배지 모두 보기 | GET /me/badges | new | data/my.ts MY_BADGES |
@@ -815,9 +815,9 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 꾸미기 (스파크 상점) — `app/me/customize.tsx` · `components/character/**` · `state/avatar.ts` · `state/ledger.ts`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 분류 탭 · 타일 (이름 · 가격 · 등급 · 시즌 잠김) | GET /avatar/items | new | data/av-items.ts AV_ITEMS · AV_BG · data/my.ts AVC_LIST |
-| 저장된 모습 · 가진 것 · 스파크 잔액 | GET /me/avatar | new | state/avatar.ts {saved, own} · state/me.ts sparks |
-| [저장하기] (새로 살 것 0개) | PUT /me/avatar | new | buyAndSave (cost 0) |
+| 분류 탭 · 타일 (이름 · 가격 · 보상 잠김 · 그림) | GET /asset-catalog (backgrounds · effects · items) — 등급 · 시즌은 GET /avatar/items(new) 가 필요할 때만 | existing | data/av-items.ts AV_ITEMS · AV_BG · data/my.ts AVC_LIST |
+| 저장된 모습 · 가진 것 · 스파크 잔액 (스파크는 아직 0) | GET /me/avatar | existing | state/avatar.ts {saved, own} · state/me.ts sparks |
+| [저장하기] (새로 살 것 0개) | PUT /me/avatar (409 item_not_owned) | existing | buyAndSave (cost 0) |
 | [사고 저장하기] (스파크 차감 + 저장 한 번에) | POST /me/avatar/purchase | new | state/avatar.ts avatarCost · buyAndSave · ledger award(shop) |
 | 위 스파크 잔액 → 모으는 방법 | GET /me/sparks | new | SPARK_EARN |
 | (장부 내역 — 지금 화면 없음, 원장 확인용) | GET /me/rewards?currency= | new | state/ledger.ts events |
@@ -936,7 +936,14 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 닉네임 · 한 줄 소개 저장 | PATCH /me/profile | change | updateMe · updateSettings({bio}) |
 | 내 지점 (매니저 확인) 선택지 | GET /me/branch-link-requests/branches | change (region) | BRANCHES |
 | 내 지점 저장 → 요청 | POST /me/branch-link-requests | change | updateSettings({branches}) |
-| 내 지점 요청 상태 | GET /me/branch-link-requests · GET /me/branch-summary | existing | settings.branches |
+| 내 지점 요청 상태 · 계정 칸 '내 지점'(확인 중 N) → /me/settings/branch | GET /me/branch-link-requests · GET /me/branch-summary | existing | settings.branches |
+
+### 설정 › 내 지점 — `app/me/settings/branch.tsx`
+| 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
+|---|---|---|---|
+| 확인 중 · 지난 요청(연동됨 · 반려됨) 목록 | GET /me/branch-link-requests | existing | api/use-link-requests.ts splitLinkRequests |
+| 줄 누르기 → 요청 내용 시트 (지점 · 이름 · 번호 · 반려 이유 — 옛 앱 요청은 이름 · 번호 숨김) | (목록 응답 그대로) | existing | |
+| 그 지점의 가장 최근 반려면 [다시 요청하기] (보냈던 값 채움) | POST /me/branch-link-requests | existing | |
 | 학습 언어 · 레벨 값 | GET /me/study-level (또는 /me) | new | set.lang · me.level |
 | 로그인 계정 값 | GET /me/auth-providers | new | useLogins |
 | 알림 7개 · 광고 동의(날짜 기록) · 프로필 공개 · 랭킹 이름 · 지점 보이기 · 하루 목표 | GET · PATCH /me/settings | new | SETTINGS_DEFAULT · updateSettings · setMarketing |
