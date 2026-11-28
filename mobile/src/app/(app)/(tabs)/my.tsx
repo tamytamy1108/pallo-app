@@ -18,7 +18,8 @@ import { DevPersonaPill } from '@/components/my/dev-persona';
 import { GearIcon, LgIcon } from '@/components/my/icons';
 import { BadgeGrid, MyList, MyStats, RankSummary, SecHead } from '@/components/my/my-blocks';
 import { MyHero } from '@/components/my/my-hero';
-import { BadgeSheet, FollowSheet } from '@/components/my/my-sheets';
+import { FollowSheet } from '@/components/my/my-sheets';
+import { BadgeDetailSheet, type BadgeOpen } from '@/components/my/badge-detail-sheet';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/dialog';
@@ -87,7 +88,7 @@ export default function MyScreen() {
   // 프로 마이인지는 서버가 정해요 (프로 숫자 칸이 오면 프로)
   const proStats = my?.proStats ?? null;
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
-  const [badges, setBadges] = useState(false);
+  const [badge, setBadge] = useState<BadgeOpen | null>(null);
   const [askReset, setAskReset] = useState(false);
   // /my?open=study 는 렌더 중에 이전 값과 비교해 한 번만 받고, 주소의 open 은 지워요
   const [seenOpen, setSeenOpen] = useState<string | undefined>(undefined);
@@ -165,7 +166,7 @@ export default function MyScreen() {
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
                     { ic: 'crown', v: num(my?.stats.weekRank, '위'), l: '이번 주 랭킹', onPress: go('/me/ranking') },
                     { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: goBox('joined') },
-                    { ic: 'heart', v: num(my?.stats.badgeCount, '개'), l: '받은 배지', onPress: () => setBadges(true) },
+                    { ic: 'heart', v: num(my?.stats.badgeCount, '개'), l: '받은 배지', onPress: go('/me/badges') },
                   ]
             }
           />
@@ -225,8 +226,11 @@ export default function MyScreen() {
             {/* 배지: 서버가 칸을 안 주면(null) 안 그려요 · 받은 게 하나도 없으면(빈 목록) 칸은 두고 빈 상태 문구 */}
             {my?.badges && (
               <>
-                <SecHead title="배지" more="모두 보기 ›" onMore={() => setBadges(true)} />
-                <Appear kind="rise">{my.badges.length ? <BadgeGrid list={my.badges} /> : <EmptyState title="아직 받은 배지가 없어요" compact />}</Appear>
+                <SecHead title="배지" more="모두 보기 ›" onMore={go('/me/badges')} />
+                {/* 칸을 누르면 그 배지의 받는 방법 · 진행 (상세 시트) */}
+                <Appear kind="rise">
+                  {my.badges.length ? <BadgeGrid list={my.badges} onPress={(b, i) => setBadge({ badge: b, colorIndex: i })} /> : <EmptyState title="아직 받은 배지가 없어요" compact />}
+                </Appear>
               </>
             )}
 
@@ -276,7 +280,7 @@ export default function MyScreen() {
       </ScrollView>
 
       <FollowSheet name={follow ? me.name : null} tab={follow ?? 'fer'} onTab={setFollow} onClose={() => setFollow(null)} />
-      <BadgeSheet open={badges} onClose={() => setBadges(false)} />
+      <BadgeDetailSheet open={badge} onClose={() => setBadge(null)} />
       <ProSessionsSheet open={proSessionsOpen} onClose={() => setProSessionsOpen(false)} />
       <ConfirmDialog
         open={askReset}

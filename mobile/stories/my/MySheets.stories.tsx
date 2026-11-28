@@ -1,27 +1,26 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { fn } from 'storybook/test';
 
-import { BadgeSheet, FollowSheet, MeetsSheet, SparkSheet } from '@/components/my/my-sheets';
+import { FollowSheet, MeetsSheet, SparkSheet } from '@/components/my/my-sheets';
 import { ME } from '@/data/mock';
 
 import { followingOf, fresh } from './_state';
 
 /**
- * 마이 시트 — 배지 모두 · 스파크 모으는 법 · 내 모임/찜한 모임 · 팔로워/팔로잉 목록 · 멤버 한 줄.
+ * 마이 시트 — 스파크 모으는 법 · 내 모임/찜한 모임 · 팔로워/팔로잉 목록 · 멤버 한 줄.
  * 시트는 열린 상태로 그린다.
  */
 const meta = {
   title: 'My/Sheets',
-  component: BadgeSheet,
+  component: SparkSheet,
   args: { open: true, onClose: fn() },
   beforeEach: fresh(),
-} satisfies Meta<typeof BadgeSheet>;
+} satisfies Meta<typeof SparkSheet>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Badges: Story = {};
-export const Spark: Story = { render: (args) => <SparkSheet {...args} /> };
+export const Spark: Story = {};
 
 /** 내 모임 — 0개 (빈 문구) */
 export const MeetsJoinedEmpty: Story = { render: () => <MeetsSheet kind="joined" onClose={fn()} /> };
