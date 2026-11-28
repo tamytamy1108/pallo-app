@@ -10,7 +10,7 @@ import { useMyBranchContact } from '@/api/use-branch-guide';
 import { useCreateInquiry } from '@/api/use-create-inquiry';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
-import { AccountPage, Box, ChoiceChip, Head, Icon, TextLink, UnderTabs, type IconName } from '@/components/account/parts';
+import { AccountPage, Box, ChoiceChip, Head, Icon, TextLink, UnderTabs } from '@/components/account/parts';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
@@ -18,13 +18,14 @@ import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { openTel } from '@/lib/open-out';
+import { copyTel, openTel } from '@/lib/open-out';
 
 /**
  * 자주 묻는 질문 (프로토타입 helpHTML · askHTML). 설정 › 자주 묻는 질문으로 들어와요.
- * - 기본: 자주 묻는 질문(펼치는 답 · 도움이 됐어요 / 문의하기) + 1:1 문의 · 카카오톡 상담 · 내 지점 전화
+ * - 기본: 자주 묻는 질문(펼치는 답 · 도움이 됐어요 / 문의하기) + '더 도움이 필요하면' 칸엔 내 지점 전화만
  *   (2026-11-26: 질문이 몇 개뿐이라 찾기 · 분류 칩은 뺐어요. 질문 내용은 app-hub FAQ 관리에서 본사가 정해요)
- *   (내 지점 전화는 연동된 지점이 콘솔 지점 안내에 적은 번호 — GET /me/branch-guides. 연동 전이거나 번호가 없으면 줄을 빼요)
+ *   (2026-11-28: 1:1 문의하기 · 카카오톡 상담 줄은 뺐어요 — 지점 연락처만 남겨요)
+ *   (내 지점 전화는 연동된 지점이 콘솔 지점 안내에 적은 번호 — GET /me/branch-guides. 연동 전이거나 번호가 없으면 칸째 빼요)
  * - ?view=faq: 자주 묻는 질문만 · ?view=ask(&type=분류 코드): 1:1 문의 (문의하기 · 내 문의)
  * - ?view=ask&tab=list: 내 문의 탭부터 — 답변 알림(USER_INQUIRY)을 누르면 여기로 와요
  * - ?view=bug: 버그 보고 (마이 › 버그 보고) — 1:1 문의와 같은 화면, 분류는 '앱 오류'로 정해져 있어요.
@@ -44,20 +45,12 @@ export default function SupportScreen() {
 function HelpView({ faqOnly }: { faqOnly: boolean }) {
   const contact = useMyBranchContact().data ?? null;
   const faq = useQuery(faqQuery());
-  // 문의 건수는 '더 도움이 필요하면' 칸에만 보여요
-  const inquiries = useQuery({ ...myInquiriesQuery(), enabled: !faqOnly });
   const [openQ, setOpenQ] = useState<string | null>(null);
   const L = faq.data?.items ?? [];
   const ask = () => {
     sfx('tap');
     router.push({ pathname: '/me/support', params: { view: 'ask' } });
   };
-  const askSub = inquiries.data ? `보통 하루 안에 답해요 · 내 문의 ${inquiries.data.length}건` : '보통 하루 안에 답해요';
-  const ways: [IconName, string, string, () => void][] = [
-    ['edit', '1:1 문의하기', askSub, ask],
-    ['cmt', '카카오톡 상담', '평일 10:00 ~ 19:00', () => showToast('카카오톡 PALLO 채널로 이어져요')],
-    ...(contact ? [['phone', '내 지점 전화', `${contact.branchName} · ${contact.phone}`, () => openTel(contact.phone)] as [IconName, string, string, () => void]] : []),
-  ];
 
   return (
     <AccountPage title="자주 묻는 질문" bodyStyle={styles.body}>
@@ -94,20 +87,25 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
       ) : (
         <PText style={styles.empty}>{'아직 올라온 질문이 없어요.\n1:1 문의로 물어봐 주세요.'}</PText>
       )}
-      {faqOnly ? null : (
+      {faqOnly || !contact ? null : (
         <>
           <Head>더 도움이 필요하면</Head>
           <Box style={styles.go}>
-            {ways.map(([ic, b, s, on], i) => (
-              <Pressable key={b} onPress={on} accessibilityRole="button" style={({ pressed }) => [styles.goRow, i > 0 && styles.line, pressed && styles.pressed]}>
-                <Icon name={ic} size={18} color={Colors.inkSub} />
-                <View style={styles.flex}>
-                  <PText style={styles.goB}>{b}</PText>
-                  <PText style={styles.goS}>{s}</PText>
-                </View>
-                <PText style={styles.chev}>›</PText>
-              </Pressable>
-            ))}
+            <View style={styles.goRow}>
+              <Icon name="phone" size={18} color={Colors.inkSub} />
+              <View style={styles.flex}>
+                <PText style={styles.goB}>내 지점 전화</PText>
+                <PText style={styles.goS}>{`${contact.branchName} · ${contact.phone}`}</PText>
+              </View>
+              <View style={styles.pillRow}>
+                <Pressable onPress={() => copyTel(contact.phone)} accessibilityRole="button" accessibilityLabel={`${contact.branchName} 번호 복사`} hitSlop={6} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+                  <PText style={styles.pillT}>복사</PText>
+                </Pressable>
+                <Pressable onPress={() => openTel(contact.phone)} accessibilityRole="button" accessibilityLabel={`${contact.branchName}에 전화하기`} hitSlop={6} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
+                  <PText style={styles.pillT}>전화</PText>
+                </Pressable>
+              </View>
+            </View>
           </Box>
         </>
       )}
@@ -231,10 +229,11 @@ const styles = StyleSheet.create({
   empty: { paddingVertical: 30, textAlign: 'center', fontFamily: Font.body700, fontSize: 14, lineHeight: 21, color: Colors.inkSub },
   go: { paddingVertical: 2, paddingHorizontal: 14 },
   goRow: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 66, paddingVertical: 10 },
-  line: { borderTopWidth: 1.5, borderColor: Colors.line },
   goB: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   goS: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
-  chev: { fontFamily: Font.body900, fontSize: 15, color: Colors.inkSub },
+  pillRow: { flexDirection: 'row', gap: 6 },
+  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 2, borderColor: Colors.ink },
+  pillT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17 },
   askBody: { paddingTop: 0 },
   tabsBleed: { marginHorizontal: -16, marginBottom: 8 },
   lb: { marginTop: 10, marginBottom: 8, fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },

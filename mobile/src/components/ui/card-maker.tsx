@@ -116,7 +116,7 @@ export function CardMaker({ value, onChange, hasPhoto, listPreview, defaultColor
                   onChangeText={(t) => setWord(i, t)}
                   maxLength={maxLength}
                   autoCorrect={false}
-                  placeholder={i ? `${example[i] ?? ''} (선택)` : `${example[i] ?? ''} (필수)`}
+                  placeholder={i ? `${example[i] ?? ''} (선택)` : `${example[i] ?? ''} *`}
                   placeholderTextColor="#9B94A6"
                   accessibilityLabel={`카드 문구 ${i ? '둘째' : '첫'} 줄`}
                   style={styles.in}

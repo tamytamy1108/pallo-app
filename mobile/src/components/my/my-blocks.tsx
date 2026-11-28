@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
 import { MemberFace } from '@/components/character/avatar';
@@ -9,6 +9,7 @@ import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
+import { isGrandBadge } from '@/data/badge-rules';
 import { BADGE_PATH, type Badge, type BadgeIcon, type RankRow } from '@/data/my';
 
 import { Lift } from './lift';
@@ -109,9 +110,36 @@ const BADGE_BG = [Colors.yellow, Colors.rosePink, Colors.sky, '#CDEBD0'];
 /** 배지 동그라미 바탕색 — 칸 순서대로 노랑 · 분홍 · 하늘 · 민트 (상세 시트도 같은 색) */
 export const badgeBg = (i: number) => BADGE_BG[((i % 4) + 4) % 4];
 
-/** 배지 동그라미 하나 (칸 · 상세 시트 같이 써요) — 못 받은 건 흐리게 */
+/** 왕관 방패 (높은 단계 배지 · 120 상자): 보라 방패 + 노란 왕관 + 흰 마이크 */
+const SHIELD = 'M60 22 98 32v28c0 26-18 42-38 50-20-8-38-24-38-50V32z';
+const CROWN = 'M40 28 44 8l10 11 6-14 6 14 10-11 4 20z';
+const SHIELD_MIC = 'M45 59a15 15 0 0 0 30 0M60 74v8M53 82h14';
+
+/** 높은 단계 배지 그림 — 동그라미와 같은 정사각 상자 안에 그려서 칸 크기 · 이름 줄이 그대로예요. 못 받았으면 회색 */
+function GrandShield({ on, size }: { on: boolean; size: number }) {
+  // 잉크 선은 어느 크기에서나 동그라미 테두리와 같은 2pt, 마이크 선은 2.2pt 이상
+  const line = (2 * 110) / size;
+  const mic = Math.max(4.5, (2.4 * 110) / size);
+  const ink = on ? Colors.ink : '#C9C1B1';
+  return (
+    // 방패 · 왕관이 차지하는 칸(가로 22~98 · 세로 4~110)에 맞춰 여백을 줄여요 — 동그라미와 비슷한 크기로 보이게
+    <Svg width={size} height={size} viewBox="5 2 110 110">
+      <Path d={SHIELD} fill={on ? Colors.purple : '#EDE7DA'} stroke={ink} strokeWidth={line} strokeLinejoin="round" />
+      <Path d={CROWN} fill={on ? Colors.yellow : '#E3DCCB'} stroke={ink} strokeWidth={line} strokeLinejoin="round" />
+      <Rect x={53} y={42} width={14} height={24} rx={7} fill="none" stroke={on ? Colors.white : '#A39C8E'} strokeWidth={mic} />
+      <Path d={SHIELD_MIC} fill="none" stroke={on ? Colors.white : '#A39C8E'} strokeWidth={mic} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/**
+ * 배지 동그라미 하나 (칸 · 상세 시트 같이 써요) — 못 받은 건 흐리게.
+ * 높은 단계 배지(말하기 1000 등 · data/badge-rules isGrandBadge)는 동그라미 대신 왕관 방패로 그려요.
+ * 서버 그림(imageUrl)이 있으면 그림이 먼저예요 — 방패는 그림이 없을 때만.
+ */
 export function BadgeArt({ b, bg, size = 52, iconSize = 22 }: { b: Badge; bg: string; size?: number; iconSize?: number }) {
   const img = Math.round(size * 0.85);
+  if (!b.imageUrl && isGrandBadge(b.cond)) return <GrandShield on={b.on} size={size} />;
   return (
     <View style={[styles.bdIc, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }, !b.on && styles.bdOff]}>
       {b.imageUrl ? (
