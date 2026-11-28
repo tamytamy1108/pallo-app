@@ -284,7 +284,7 @@ export function followLists(name: string, me: { name: string; branch: string }, 
 
 // ---------------------------------------------------------------- 배지
 
-export type BadgeIcon = 'flame' | 'bolt' | 'users' | 'mic' | 'book' | 'crown' | 'heart' | 'plane';
+export type BadgeIcon = 'flame' | 'bolt' | 'boltPower' | 'users' | 'mic' | 'book' | 'crown' | 'heart' | 'plane';
 
 /**
  * 배지 달성 조건 유형 — 서버(AppBadgeConditionType)가 판정할 줄 아는 것만. 받는 방법 문구 · 이동할 곳은 data/badge-rules.ts.
@@ -325,7 +325,7 @@ export const MY_BADGES: Badge[] = [
   { code: 'first-hangout', ic: 'bolt', imageUrl: null, name: '첫 번개', desc: '번개 첫 참여', on: true, earnedAt: '2026-11-08T10:30:00Z', cond: { type: 'HANGOUT_JOIN_COUNT', threshold: 1, progress: 2 } },
   { code: 'first-club', ic: 'users', imageUrl: null, name: '동아리 멤버', desc: '동아리 첫 가입', on: false, earnedAt: null, cond: { type: 'CLUB_JOIN_COUNT', threshold: 1, progress: 0 } },
   { code: 'speak-100', ic: 'mic', imageUrl: null, name: '말하기 100', desc: '따라 말하기 100문장', on: true, earnedAt: '2026-11-25T09:00:00Z', cond: { type: 'SHADOWING_SENTENCE_COUNT', threshold: 100, progress: 100 } },
-  { code: 'hangout-5', ic: 'bolt', imageUrl: null, name: '번개 단골', desc: '번개 5번 참여', on: false, earnedAt: null, cond: { type: 'HANGOUT_JOIN_COUNT', threshold: 5, progress: 2 } },
+  { code: 'hangout-5', ic: 'boltPower', imageUrl: null, name: '번개 단골', desc: '번개 5번 참여', on: false, earnedAt: null, cond: { type: 'HANGOUT_JOIN_COUNT', threshold: 5, progress: 2 } },
   { code: 'weekly-top-3', ic: 'crown', imageUrl: null, name: '주간 TOP 3', desc: '주간 랭킹 3위 안', on: false, earnedAt: null, cond: { type: 'WEEKLY_RANK_TOP', threshold: 3, progress: null } },
   { code: 'popular-post', ic: 'heart', imageUrl: null, name: '인기 글', desc: '좋아요 50개 받은 글', on: false, earnedAt: null, cond: { type: 'POST_LIKES_ON_ONE_POST', threshold: 50, progress: 38 } },
   { code: 'speak-1000', ic: 'mic', imageUrl: null, name: '말하기 1000', desc: '따라 말하기 1000문장', on: false, earnedAt: null, cond: { type: 'SHADOWING_SENTENCE_COUNT', threshold: 1000, progress: 214 } },
@@ -334,6 +334,8 @@ export const MY_BADGES: Badge[] = [
 export const BADGE_PATH: Record<BadgeIcon, string> = {
   flame: 'M12 3c2 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 3 3 5 1-2 1-6 1-9z',
   bolt: 'M13 2 4 14h7l-1 8 9-12h-7z',
+  /** 번개 단골 — 더 크고 보라로 꽉 찬 번개 + 양옆으로 튀는 불꽃 (첫 번개보다 한 단계 위) */
+  boltPower: 'M13.5 1.5 4 13.5h6.5L9 22.5l10-13h-6.5z',
   users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M16 3a4 4 0 0 1 0 8M18 14a6 6 0 0 1 4 7',
   mic: 'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3',
   book: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5V5.5',

@@ -38,10 +38,13 @@ describe('서버 배지 → 배지 칸', () => {
     ).toEqual({ code: 'first-hangout', ic: 'heart', imageUrl: 'https://cdn.example/badge-images/a.png', name: '첫 번개', desc: '번개 첫 참여', on: false, earnedAt: null, cond: null });
   });
 
-  it('조건 · 진행이 오면 cond 로 모으고, 아이콘은 조건 유형 것으로', () => {
+  it('조건 · 진행이 오면 cond 로 모으고, 아이콘은 조건 유형 · 기준 숫자로', () => {
     const b = toBadge({ code: 'hangout-5', name: '번개 단골', description: '번개 5번 참여', imageUrl: null, earned: false, earnedAt: null, conditionType: 'HANGOUT_JOIN_COUNT', threshold: 5, progress: 2 });
-    expect(b.ic).toBe('bolt');
+    // 번개 5번부터는 더 센 번개 아이콘 (번개 단골)
+    expect(b.ic).toBe('boltPower');
     expect(b.cond).toEqual({ type: 'HANGOUT_JOIN_COUNT', threshold: 5, progress: 2 });
+    const first = toBadge({ code: 'first-hangout', name: '첫 번개', description: '번개 첫 참여', imageUrl: null, earned: true, earnedAt: null, conditionType: 'HANGOUT_JOIN_COUNT', threshold: 1, progress: 1 });
+    expect(first.ic).toBe('bolt');
   });
 });
 
