@@ -17,8 +17,15 @@ const forViewer = (member: boolean) => (n: Noti) => (member ? n.guest !== 'only'
 
 const store = createStore<Record<string, boolean>>(Object.fromEntries(NOTIS.map((n) => [n.id, n.read])), { persist: { key: 'noti-read' } });
 
-/** 앱을 쓰는 동안 새로 도착한 알림 (푸시 · 지점 연동 결과). 목록 맨 위에 쌓여요 */
-const arrived = createStore<Noti[]>([]);
+/** 기기에 남기는 새 알림 수 (오래된 것부터 빠져요) */
+const KEEP_ARRIVED = 50;
+
+/**
+ * 앱을 쓰는 동안 새로 도착한 알림 (푸시 · 지점 연동 결과 · 동아리 · 번개 거절). 목록 맨 위에 쌓여요.
+ * 가짜 서버일 땐 기기에 남겨서 앱을 껐다 켜도 보여요. 실서버면 서버 알림함(/me/notifications)이 같은 알림을 갖고 있어서
+ * 남기지 않아요 (남기면 다시 켰을 때 두 줄씩 보여요).
+ */
+const arrived = createStore<Noti[]>([], apiConfig.useMock ? { persist: { key: 'noti-arrived', save: (l) => l.slice(0, KEEP_ARRIVED) } } : {});
 
 const unreadOf = (list: Noti[], read: Record<string, boolean>) => list.filter((n) => !read[n.id]).length;
 
@@ -53,9 +60,10 @@ export function useUnreadCount() {
 export const markNotiRead = (id: string) => store.set((s) => (s[id] ? s : { ...s, [id]: true }));
 export const markAllNotiRead = () => store.set(() => Object.fromEntries([...arrived.get(), ...NOTIS].map((n) => [n.id, true])));
 
-/** 새 알림 받기 (안 읽음으로 맨 위에). 같은 id 면 바꿔 끼워요 */
+/** 새 알림 받기 (안 읽음으로 맨 위에). 같은 id 면 바꿔 끼워요. 생긴 때(at)를 남겨서 다시 켜도 '3분 전'처럼 맞게 보여요 */
 export function addNoti(n: Noti) {
-  arrived.set((l) => [n, ...l.filter((x) => x.id !== n.id)]);
+  const fresh = { ...n, at: n.at ?? Date.now() };
+  arrived.set((l) => [fresh, ...l.filter((x) => x.id !== n.id)]);
   store.set((s) => ({ ...s, [n.id]: n.read }));
 }
 

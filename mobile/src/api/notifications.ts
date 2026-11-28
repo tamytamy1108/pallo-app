@@ -9,6 +9,7 @@
  */
 import { getArrivedNotis, getNotiReadMap, markAllNotiRead, markNotiRead } from '@/components/home/noti-state';
 import { NOTIS, type Noti, type NotiIcon } from '@/data/home';
+import { agoLabel } from '@/lib/when';
 
 import { http, type Page } from './client';
 import { apiConfig } from './config';
@@ -73,9 +74,9 @@ export function localNotificationItem(n: Noti, read: boolean): NotificationItem 
     title: n.text,
     body: null,
     read,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(n.at ?? Date.now()).toISOString(),
     meta: noticeId ? { kind: 'NOTICE', noticeId, noticeType: 'GENERAL' } : null,
-    extras: { time: n.time, href: n.href, icon: n.icon, who: n.who, badge: n.badge, action: n.action, toMyLast: n.toMyLast },
+    extras: { time: n.at ? agoLabel(n.at) : n.time, href: n.href, icon: n.icon, who: n.who, badge: n.badge, action: n.action, toMyLast: n.toMyLast },
   };
 }
 

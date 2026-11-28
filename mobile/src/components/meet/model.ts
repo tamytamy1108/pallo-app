@@ -99,7 +99,7 @@ export const clubCat = (c: Club) => CLUB_CATS.find((k) => k[0] === c.cc);
 /** 최근 대화 · 최근 30일 가입 · 새로 생긴 (프로토타입 lgClubX) */
 export const clubX = (c: Club) => {
   const h = hashId(c.id);
-  return { act: c.mine ? '방금 만듦' : CLUB_ACT[h % 6], j30: c.mine ? 0 : 1 + (h % 5), fresh: !!(c.mine || c.wait) };
+  return { act: c.mine ? 'NEW' : CLUB_ACT[h % 6], j30: c.mine ? 0 : 1 + (h % 5), fresh: !!(c.mine || c.wait) };
 };
 /** '영어로 이야기해요' · 언어 무관이면 '어떤 언어든 함께해요' */
 export const clubLangLine = (c: Club) => (c.lang === '무관' || c.lang === '언어 무관' ? '어떤 언어든 함께해요' : `${c.lang}로 이야기해요`);
