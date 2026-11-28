@@ -1049,7 +1049,9 @@ function ChangeCard({ kind, sub, st, ending, kept, next, all, hold, weekMax }: {
   const last = addDays(st, -1);
   // 지점이 바뀔 때만 '○○점에서 들어요' (같은 지점 팀 변경이면 지점 줄은 빼요)
   const moved = next.some((t) => !ending.some((e) => e.branch === t.branch));
-  const where = sub ?? (moved && next[0] ? `${withJeom(next[0].branch)}에서 들어요` : '');
+  // 새 지점 이름은 흰 이름표(핀 · 굵게)로 눈에 띄게 — 지점이 바뀔 때만
+  const newBr = !sub && moved && next[0] ? withJeom(next[0].branch) : null;
+  const where = sub ?? '';
   const until = hold ? `${fmtDay(REST_MIN)}~${fmtDay(last)} 쉬고 끝나요` : `${fmtDay(keepLast(st))}까지 듣고 끝나요`;
   const notes = [
     kept.length ? `${kept.map(teamLabel).join(' · ')}는 그대로예요` : null,
@@ -1061,6 +1063,15 @@ function ChangeCard({ kind, sub, st, ending, kept, next, all, hold, weekMax }: {
         <PText style={styles.rcK}>{kind}</PText>
         <PText style={styles.rcBig}>{`${fmtDay(st)}부터`}</PText>
         {where ? <PText style={styles.cgSub}>{where}</PText> : null}
+        {newBr ? (
+          <View style={styles.brRow}>
+            <View style={styles.brPill}>
+              <Icon name="pin" size={16} />
+              <PText style={styles.brPillT}>{newBr}</PText>
+            </View>
+            <PText style={styles.cgSub}>에서 들어요</PText>
+          </View>
+        ) : null}
       </View>
       {ending.length ? (
         <View style={styles.rcSec}>
@@ -1209,6 +1220,9 @@ const styles = StyleSheet.create({
   slTagT: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, color: Colors.ink },
   backHead: { marginTop: 8, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
   cgSub: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 19, color: Colors.purple },
+  brRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  brPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingLeft: 8, paddingRight: 10, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.ink, backgroundColor: Colors.white },
+  brPillT: { fontFamily: Font.body900, fontSize: 16, lineHeight: 21, color: Colors.ink },
   cgNotes: { gap: 2, marginHorizontal: 16, marginBottom: 14, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
   cgNote: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   rc: { padding: 0, overflow: 'hidden' },
