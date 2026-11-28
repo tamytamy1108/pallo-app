@@ -747,13 +747,20 @@ function ChangeScreen() {
       ) : (
         k === 'branch' ? (
         <>
-          {/* 지금 듣는 팀 (지점별) — 무엇이 바뀌는지 보면서 고르게 */}
-          <PText style={styles.q}>지금 듣는 팀</PText>
-          <Box style={styles.nowBox}>
-            {nowBranches.map((b) => (
-              <View key={b} style={styles.nowRow}>
+          {/* 지금 듣는 팀 — 연기의 '내 스터디' 칸과 같은 모양 (언어 이름표 · 요일 시간 · 레벨), 지점마다 묶어요 */}
+          <Box style={styles.mine}>
+            <View style={styles.mineHead}>
+              <PText style={styles.mineK} accessibilityRole="header">
+                지금 듣는 팀
+              </PText>
+              <PText style={styles.mineN}>{`${T.length}개`}</PText>
+            </View>
+            {nowBranches.map((b, i) => (
+              <View key={b} style={[styles.mineList, i > 0 && styles.nowSplit]}>
                 <PText style={styles.nowBr}>{withJeom(b)}</PText>
-                <PText style={styles.nowT}>{T.filter((x) => x.branch === b).map(teamLabel).join('\n')}</PText>
+                {T.filter((x) => x.branch === b).map((t) => (
+                  <StudyLine key={keyOf(t)} t={t} />
+                ))}
               </View>
             ))}
           </Box>
@@ -1166,10 +1173,8 @@ const styles = StyleSheet.create({
   kindGo: { fontFamily: Font.body900, fontSize: 16, color: Colors.inkSub },
   rules: { gap: 2 },
   warn: { color: Colors.rosePink },
-  nowBox: { paddingVertical: 10, paddingHorizontal: 14, gap: 8 },
-  nowRow: { flexDirection: 'row', gap: 12 },
-  nowBr: { width: 56, fontFamily: Font.body800, fontSize: 12.5, lineHeight: 20, color: Colors.inkSub },
-  nowT: { flex: 1, fontFamily: Font.body800, fontSize: 13.5, lineHeight: 20, color: Colors.ink },
+  nowBr: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
+  nowSplit: { borderTopWidth: 1.5, borderColor: Colors.line, paddingTop: 10 },
   selPh: { color: Colors.inkSub },
   mineT: { fontFamily: Font.body800, fontSize: 12, color: Colors.inkSub },
   rule: { paddingHorizontal: 2, fontFamily: Font.body700, fontSize: 12.5, lineHeight: 20.6, color: Colors.inkSub },
