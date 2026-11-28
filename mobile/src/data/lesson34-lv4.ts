@@ -8,7 +8,7 @@ import type { Lv4Unit } from '@/data/lessons34';
 export const LV4_HW: Lv4Unit = {
   ice: [
     { en: 'Have you ever celebrated Halloween?', ko: '핼러윈을 기념해 본 적이 있나요?', hint: 'Yes, I went to a Halloween party in Itaewon a few years ago.' },
-    { en: 'What’s a costume you’ve worn, or one you’d love to pull off?', ko: '입어 본 코스튬, 혹은 한번 멋지게 소화해 보고 싶은 코스튬은?', hint: 'I’d love to pull off a vampire costume with fake fangs.' }
+    { en: 'What’s a costume you’ve worn, or one you’d love to pull off?', ko: '입어 본 코스튬이나, 한번 멋지게 소화해 보고 싶은 코스튬이 있나요?', hint: 'I’d love to pull off a vampire costume with fake fangs.' }
   ],
   free: [
     { bg: 'Halloween has no historical roots in Korea, yet every October, streets, cafés, and theme parks fill up with pumpkins, costumes, and themed events.', en: 'Why do you think Halloween took off in Korea despite having no roots?', ko: '뿌리가 없는데도 핼러윈이 한국에서 유행한 이유는 뭘까요?' },
@@ -47,21 +47,21 @@ export const LV4_HW: Lv4Unit = {
 /** #101 The Present (교재 PDF 그대로: FREE TALK 5 · KEY 12 · SAY IT BETTER 5 / DEBATE: Should concerts go phone-free?) */
 export const LV4_101: Lv4Unit = {
   ice: [
-    { en: 'What’s the last small thing that made you smile?', ko: '최근에 나를 웃게 한 작은 일은?', hint: 'A stranger held the door for me this morning, and it made my day.' },
+    { en: 'What’s the last small thing that made you smile?', ko: '최근에 나를 웃게 한 작은 일은 무엇인가요?', hint: 'A stranger held the door for me this morning, and it made my day.' },
     { en: 'How much would you pay for one extra hour in the day?', ko: '하루에 한 시간이 더 생긴다면 얼마를 낼 건가요?', hint: 'Honestly, I’d pay a lot, maybe 50 dollars, just to sleep more.' }
   ],
   free: [
-    { bg: 'A Harvard study found that our minds wander almost half the time, and many of us eat, scroll, and half-listen to a podcast all on autopilot.', en: 'On a scale of 1 (fully here) to 10 (miles away), where are you in the shower, on the bus, or during a movie? What pulls you fully into the moment?', ko: '1(완전히 여기) ~ 10(딴생각) 중 샤워할 때 · 버스에서 · 영화 볼 때 나는 몇 점? 나를 지금 이 순간으로 끌어오는 건?' },
-    { bg: '“Day in my life” vlogs follow people from morning coffee to bedtime, and many viewers now try to romanticize their lives, treating the walk home like a movie scene.', en: 'If you filmed your own “day in my life” vlog, what would it be full of, and which moment would you most want to show?', ko: '내 “day in my life” 브이로그를 찍는다면 무엇으로 가득할까요? 가장 보여 주고 싶은 순간은?' },
-    { bg: 'Psychologists call it “anticipatory nostalgia”: missing a moment before it’s even over, like the last night of a trip or the final episode of a favorite show. It may help us savor a good thing while it lasts.', en: 'What do people do to stretch out a good moment, like one more photo or one more round? Which habit do you secretly love?', ko: '좋은 순간을 늘리려고 사람들은 뭘 할까요? (사진 한 장 더, 한 판 더) 내가 몰래 좋아하는 습관은?' },
-    { bg: 'There’s a name for “I’ll be happy when…”: the “arrival fallacy.” We expect lasting joy once we pass the exam or land the job, but the thrill fades and we move the goalposts on ourselves.', en: 'Make the best case for “I’ll be happy when…”: when does chasing the next goal help us, and when should we stop and enjoy the view?', ko: '“~하면 행복할 거야”를 최대한 변호해 보세요. 다음 목표를 좇는 게 도움이 될 때는? 멈추고 즐겨야 할 때는?' },
-    { bg: 'In one well-known study, people who wrote down a few things they were grateful for each week felt more optimistic about their lives. Yet we rarely count our blessings: Wi-Fi, hot water, and a friend who always has our back go unnoticed until they’re gone.', en: 'What would you miss first if it vanished for a week, and what would you do instead?', ko: '일주일 동안 사라진다면 가장 먼저 그리울 것은? 그동안 대신 뭘 할 건가요?' }
+    { bg: 'A Harvard study found that our minds wander almost half the time, and many of us eat, scroll, and half-listen to a podcast all on autopilot.', en: 'On a scale of 1 (fully here) to 10 (miles away), where are you in the shower, on the bus, or during a movie? What pulls you fully into the moment?', ko: '1점(지금 여기에 온전히 있음)부터 10점(딴생각에 푹 빠짐)까지라면, 샤워할 때 · 버스 안에서 · 영화를 볼 때 나는 몇 점인가요? 나를 지금 이 순간에 온전히 머물게 해 주는 건 무엇인가요?' },
+    { bg: '“Day in my life” vlogs follow people from morning coffee to bedtime, and many viewers now try to romanticize their lives, treating the walk home like a movie scene.', en: 'If you filmed your own “day in my life” vlog, what would it be full of, and which moment would you most want to show?', ko: '나만의 “day in my life” 브이로그를 찍는다면 어떤 장면들로 채워질까요? 그중 가장 보여 주고 싶은 순간은 언제인가요?' },
+    { bg: 'Psychologists call it “anticipatory nostalgia”: missing a moment before it’s even over, like the last night of a trip or the final episode of a favorite show. It may help us savor a good thing while it lasts.', en: 'What do people do to stretch out a good moment, like one more photo or one more round? Which habit do you secretly love?', ko: '사진 한 장 더, 한 판 더처럼 사람들은 좋은 순간을 늘리려고 무엇을 하나요? 남몰래 좋아하는 나만의 습관이 있나요?' },
+    { bg: 'There’s a name for “I’ll be happy when…”: the “arrival fallacy.” We expect lasting joy once we pass the exam or land the job, but the thrill fades and we move the goalposts on ourselves.', en: 'Make the best case for “I’ll be happy when…”: when does chasing the next goal help us, and when should we stop and enjoy the view?', ko: '“~하면 행복해질 거예요”라는 생각을 최대한 편들어 보세요. 다음 목표를 좇는 게 도움이 될 때는 언제이고, 멈춰서 지금을 즐겨야 할 때는 언제인가요?' },
+    { bg: 'In one well-known study, people who wrote down a few things they were grateful for each week felt more optimistic about their lives. Yet we rarely count our blessings: Wi-Fi, hot water, and a friend who always has our back go unnoticed until they’re gone.', en: 'What would you miss first if it vanished for a week, and what would you do instead?', ko: '일주일 동안 사라진다면 가장 먼저 아쉬울 것은 무엇인가요? 그동안 대신 무엇을 할 건가요?' }
   ],
   better: [
     ['I’m trying to do too much at once.', 'I’m stretched too thin right now.', '회사에서 일을 더 맡기 어려울 때 정중하게'],
     ['My days are pretty much the same.', 'My days run like clockwork.', '아주 규칙적이고 순조롭게'],
     ['I know I’ll miss this someday.', 'I’ll look back on this time fondly.', '따뜻하고 세련되게 · 송별 메일 · 스피치'],
-    ['Don’t wait to enjoy life until you’re promoted.', 'Don’t put your life on hold for a promotion.', '커리어 조언 · 미래 목표 때문에 삶을 미루지 마'],
+    ['Don’t wait to enjoy life until you’re promoted.', 'Don’t put your life on hold for a promotion.', '커리어 조언 · 승진 때문에 지금의 삶을 미루지 말라고 할 때'],
     ['I don’t say thanks enough.', 'I should express my appreciation more often.', '격식 · 감사 메일 · 스피치 · 리뷰']
   ],
   key: [
