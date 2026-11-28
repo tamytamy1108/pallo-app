@@ -49,14 +49,14 @@ export function SecHead({ title, more, onMore }: { title: string; more?: string;
 /** 숫자 4칸 (프로토타입 .my-stats .tile: 흰 칸 · 잉크 2px · 작은 그림자) */
 /**
  * 숫자 칸 아이콘 색 — 칸마다 달라요 (2026-11-28). 한 줄에 같이 나오는 칸끼리는 색이 겹치지 않아요
- * (회원: 불꽃 · 왕관 · 사람 · 하트 / 프로 · 스텝: 불꽃 · 번개 · 사람 · 하트). 흰 칸 위에서 잘 보이는 진한 색만 써요.
+ * (회원: 불꽃 · 왕관 · 사람 · 하트 / 프로 · 스텝: 불꽃 · 번개 · 사람 · 하트). 아이콘 선만 파스텔이에요 (칸 · 숫자는 그대로).
  */
 const STAT_COLOR: Partial<Record<BadgeIcon, string>> = {
-  flame: Colors.langZh,
-  crown: Colors.rateMid,
-  bolt: Colors.rateMid,
-  users: Colors.langEn,
-  heart: Colors.langJa,
+  flame: Colors.pastelCoral,
+  crown: Colors.pastelGold,
+  bolt: Colors.pastelGold,
+  users: Colors.sky,
+  heart: Colors.pastelPink,
 };
 
 /** tag: 아이콘 자리에 역할 글자 (참여중 칸 = 운영 중인 동아리가 있으면 HOST · CO-HOST) */
