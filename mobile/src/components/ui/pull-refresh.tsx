@@ -7,15 +7,15 @@ import { sfx } from '@/lib/feedback';
 
 // 받아 오기가 아주 빨리 끝나도 도는 표시가 깜빡 사라지지 않게 이만큼은 보여 줘요
 const MIN_SPIN_MS = 600;
-// 맨 위에서 이만큼(pt) 더 끌어 내리면 '쭈욱' 소리 — 살짝 닿기만 한 건 빼요
+// 맨 위에서 이만큼(pt) 더 끌어 내리면 '뽀옹' 소리 — 살짝 닿기만 한 건 빼요
 const PULL_SOUND_PT = 10;
 
 type ScrollEvent = NativeSyntheticEvent<NativeScrollEvent>;
 
 /**
  * 화면을 아래로 끌어 내렸다 놓으면 새로고침해요: 지금 화면에 쓰이는 서버 데이터를 다시 받아요.
- * 끌어 내리기 시작하면 '쭈욱', 새로고침이 시작되면 '뾱' 효과음이 나요 (설정 › 효과음을 끄면 조용히).
- * '쭈욱'은 맨 위보다 더 끌려 내려가는 걸 스크롤 위치로 알아채요 — 아이폰만 (안드로이드는 화면이 늘어나지 않아 '뾱'만).
+ * 끌어 내리기 시작하면 '뽀옹', 새로고침이 시작되면 '뾱' 효과음이 나요 (설정 › 효과음을 끄면 조용히).
+ * '뽀옹'은 맨 위보다 더 끌려 내려가는 걸 스크롤 위치로 알아채요 — 아이폰만 (안드로이드는 화면이 늘어나지 않아 '뾱'만).
  *
  * 세로 ScrollView 에 `{...pull.scrollProps}` 로 펼쳐 넘겨요.
  * 화면에 자기 onScroll 이 따로 있으면 refreshControl · onScrollBeginDrag · onScrollEndDrag 를 넘기고, 자기 onScroll 안에서 pull.onScroll(e) 를 불러요.
