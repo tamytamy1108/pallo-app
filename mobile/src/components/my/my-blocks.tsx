@@ -110,8 +110,14 @@ const BADGE_BG = [Colors.yellow, Colors.rosePink, Colors.sky, '#CDEBD0'];
 /** 배지 동그라미 바탕색 — 칸 순서대로 노랑 · 분홍 · 하늘 · 민트 (상세 시트도 같은 색) */
 export const badgeBg = (i: number) => BADGE_BG[((i % 4) + 4) % 4];
 
-/** 왕관 방패 (높은 단계 배지 · 120 상자): 보라 방패 + 노란 왕관 + 흰 마이크 */
+/** 왕관 방패 (높은 단계 배지 · 120 상자): 은빛 방패(안쪽 한 겹 더 밝게 · 비스듬한 반짝임) + 노란 왕관 + 잉크 마이크 */
 const SHIELD = 'M60 22 98 32v28c0 26-18 42-38 50-20-8-38-24-38-50V32z';
+/** 안쪽 방패 — 바깥 방패를 0.8배로 줄인 것 (은빛 테두리가 한 겹 보여요) */
+const SHIELD_IN = 'M60 30 90.4 38v22.4c0 20.8-14.4 33.6-30.4 40-16-6.4-30.4-19.2-30.4-40V38z';
+/** 왼쪽 위 비스듬한 반짝임 */
+const SHINE = 'M35 41 44 38.5 37 72 31.5 66z';
+const SILVER = '#B9C0CC';
+const SILVER_LIGHT = '#E4E8EF';
 const CROWN = 'M40 28 44 8l10 11 6-14 6 14 10-11 4 20z';
 const SHIELD_MIC = 'M45 59a15 15 0 0 0 30 0M60 74v8M53 82h14';
 
@@ -124,10 +130,16 @@ function GrandShield({ on, size }: { on: boolean; size: number }) {
   return (
     // 방패 · 왕관이 차지하는 칸(가로 22~98 · 세로 4~110)에 맞춰 여백을 줄여요 — 동그라미와 비슷한 크기로 보이게
     <Svg width={size} height={size} viewBox="5 2 110 110">
-      <Path d={SHIELD} fill={on ? Colors.purple : '#EDE7DA'} stroke={ink} strokeWidth={line} strokeLinejoin="round" />
+      <Path d={SHIELD} fill={on ? SILVER : '#EDE7DA'} stroke={ink} strokeWidth={line} strokeLinejoin="round" />
+      {on ? (
+        <>
+          <Path d={SHIELD_IN} fill={SILVER_LIGHT} stroke={ink} strokeWidth={line * 0.6} strokeLinejoin="round" />
+          <Path d={SHINE} fill={Colors.white} />
+        </>
+      ) : null}
       <Path d={CROWN} fill={on ? Colors.yellow : '#E3DCCB'} stroke={ink} strokeWidth={line} strokeLinejoin="round" />
-      <Rect x={53} y={42} width={14} height={24} rx={7} fill="none" stroke={on ? Colors.white : '#A39C8E'} strokeWidth={mic} />
-      <Path d={SHIELD_MIC} fill="none" stroke={on ? Colors.white : '#A39C8E'} strokeWidth={mic} strokeLinecap="round" />
+      <Rect x={53} y={42} width={14} height={24} rx={7} fill="none" stroke={on ? Colors.ink : '#A39C8E'} strokeWidth={mic} />
+      <Path d={SHIELD_MIC} fill="none" stroke={on ? Colors.ink : '#A39C8E'} strokeWidth={mic} strokeLinecap="round" />
     </Svg>
   );
 }
