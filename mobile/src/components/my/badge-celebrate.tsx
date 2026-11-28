@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { router, useSegments } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,7 +11,7 @@ import { Colors } from '@/constants/theme';
 import type { Badge } from '@/data/my';
 import { haptic, sfx } from '@/lib/feedback';
 
-import { BadgeIc } from './my-blocks';
+import { BadgeArt } from './my-blocks';
 
 /**
  * 새 배지 축하 시트 — 서버가 준 '안 본 배지'(GET /me/badges/unseen)가 있으면 탭 화면 위에 띄워요.
@@ -75,9 +74,8 @@ export function BadgeCelebrateHost() {
       <View style={styles.list}>
         {(shown ?? []).map((b) => (
           <View key={b.code} style={styles.row} accessible accessibilityLabel={`${b.name} 배지 · ${b.desc}`}>
-            <View style={styles.art}>
-              {b.imageUrl ? <Image source={b.imageUrl} style={styles.img} contentFit="contain" accessible={false} /> : <BadgeIc ic={b.ic} size={40} />}
-            </View>
+            {/* 칸 · 상세와 같은 배지 그림 (서버 그림이면 그림 그대로, 없으면 입체 동그라미 · 방패) */}
+            <BadgeArt b={b} bg={Colors.yellow} size={128} iconSize={54} />
             <PText style={styles.name}>{b.name}</PText>
             <PText style={styles.desc}>{b.desc}</PText>
           </View>
@@ -90,8 +88,6 @@ export function BadgeCelebrateHost() {
 const styles = StyleSheet.create({
   list: { gap: 18, paddingVertical: 8 },
   row: { alignItems: 'center', gap: 6 },
-  art: { width: 128, height: 128, borderRadius: 64, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, alignItems: 'center', justifyContent: 'center' },
-  img: { width: 108, height: 108 },
   name: { fontFamily: Font.display, fontSize: 18, lineHeight: 24, textAlign: 'center' },
   desc: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19, color: Colors.inkSub, textAlign: 'center' },
 });

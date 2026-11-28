@@ -170,12 +170,15 @@ function RaisedCircle({ bg, size }: { bg: string; size: number }) {
  * 배지 동그라미 하나 (칸 · 상세 시트 같이 써요).
  * 받은 아이콘 배지는 입체 동그라미, 못 받은 건 납작한 회색이에요.
  * 높은 단계 배지(말하기 1000 등 · data/badge-rules isGrandBadge)는 동그라미 대신 은빛 왕관 방패로 그려요.
- * 서버 그림(imageUrl)이 있으면 그림이 먼저예요 — 입체 · 방패는 그림이 없을 때만.
+ * 서버 그림(imageUrl)이 있으면 그림이 배지 전체예요 — 콘솔 미리보기처럼 둘레에 동그라미를 따로 그리지 않아요(못 받았으면 흐리게).
+ * 입체 동그라미 · 방패는 그림이 없을 때만 (운영 그림 원본: docs/frontend/badge-art).
  */
 export function BadgeArt({ b, bg, size = 52, iconSize = 22 }: { b: Badge; bg: string; size?: number; iconSize?: number }) {
-  const img = Math.round(size * 0.85);
-  if (!b.imageUrl && isGrandBadge(b.cond)) return <GrandShield on={b.on} size={size} />;
-  if (!b.imageUrl && b.on) {
+  if (b.imageUrl) {
+    return <Image source={b.imageUrl} style={[{ width: size, height: size }, !b.on && styles.bdImgOff]} contentFit="contain" accessible={false} />;
+  }
+  if (isGrandBadge(b.cond)) return <GrandShield on={b.on} size={size} />;
+  if (b.on) {
     return (
       <View style={[styles.bdRaised, { width: size, height: size }]}>
         <RaisedCircle bg={bg} size={size} />
@@ -187,19 +190,15 @@ export function BadgeArt({ b, bg, size = 52, iconSize = 22 }: { b: Badge; bg: st
     );
   }
   return (
-    <View style={[styles.bdIc, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }, !b.on && styles.bdOff]}>
-      {b.imageUrl ? (
-        <Image source={b.imageUrl} style={[{ width: img, height: img }, !b.on && styles.bdImgOff]} contentFit="contain" accessible={false} />
-      ) : (
-        <BadgeIc ic={b.ic} size={iconSize} color="#A39C8E" />
-      )}
+    <View style={[styles.bdIc, styles.bdOff, { width: size, height: size, borderRadius: size / 2 }]}>
+      <BadgeIc ic={b.ic} size={iconSize} color="#A39C8E" />
     </View>
   );
 }
 
 /**
  * 배지 칸 (프로토타입 .my-badges: 4칸 · 동그라미 색은 차례로 노랑 · 분홍 · 하늘 · 민트 · 못 받은 건 흐리게).
- * 서버 배지는 그림(256×256 투명 PNG)을 동그라미 안에 채워 그리고, 그림이 없는 예시 배지는 아이콘으로 그려요.
+ * 서버 배지는 그림(256×256 투명 PNG)이 배지 전체예요. 그림이 없는 예시 배지는 아이콘 + 입체 동그라미로 그려요.
  * onPress 를 주면 칸을 눌러 배지 상세(받는 방법 · 진행)를 열어요. colorIndex 는 칸 색을 목록 전체 순서로 맞출 때 (거르기 뒤에도 같은 색).
  */
 export function BadgeGrid({
