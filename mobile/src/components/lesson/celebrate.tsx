@@ -281,7 +281,7 @@ function Rewards({ result, look }: { result: CelebrateResult; look: Look }) {
 }
 
 /**
- * 무대: 조명(위에서 바닥까지 · 아래로 옅어짐) + 바닥(빛 웅덩이 · 레벨은 흰 발판 3개) + 팔로.
+ * 무대: 조명(위에서 바닥까지 · 아래로 옅어짐) + 바닥(칸 안은 분홍 타원 · 화면 전체는 빛 웅덩이 · 레벨은 흰 발판 3개) + 팔로.
  * step 은 테두리 있는 칸, 그 밖은 화면 전체(조명은 화면 맨 위부터).
  */
 function StageView({ tier, look, full, topInset, children }: { tier: CelebrateTier; look: Look; full: boolean; topInset: number; children: ReactNode }) {
@@ -312,7 +312,7 @@ function StageView({ tier, look, full, topInset, children }: { tier: CelebrateTi
           {tier === 'level' ? (
             <Pills box={box} floorY={floorY} />
           ) : (
-            <Floor look={look} box={box} floorY={floorY} />
+            <Floor look={look} box={box} floorY={floorY} card={!full} />
           )}
           {tier === 'session' || tier === 'level' ? <Confetti big /> : tier === 'zone' ? <Confetti big={false} /> : null}
           <Performer tier={tier} look={look} box={box} floorY={floorY} charW={charW} />
@@ -323,10 +323,16 @@ function StageView({ tier, look, full, topInset, children }: { tier: CelebrateTi
   );
 }
 
-/** 무대 바닥 (빛 웅덩이): 조명이 바닥에 닿은 둥근 빛 + 발밑 그림자 */
-function Floor({ look, box, floorY }: { look: Look; box: { w: number; h: number }; floorY: number }) {
+/** 무대 바닥: 칸 안 무대(단계 완료)는 분홍 타원 · 화면 전체 무대는 빛 웅덩이(조명이 바닥에 닿은 둥근 빛 + 발밑 그림자) */
+function Floor({ look, box, floorY, card }: { look: Look; box: { w: number; h: number }; floorY: number; card: boolean }) {
   const W = box.w;
   const eh = box.h * 0.055;
+  if (card)
+    return (
+      <Svg pointerEvents="none" style={{ position: 'absolute', left: W * 0.09, top: floorY - eh }} width={W * 0.82} height={eh * 2}>
+        <Ellipse cx={W * 0.41} cy={eh} rx={W * 0.41 - 1.5} ry={eh - 1.5} fill="#D0798E" stroke={Colors.ink} strokeWidth={2.5} />
+      </Svg>
+    );
   return (
     <Svg pointerEvents="none" style={{ position: 'absolute', left: 0, top: floorY - eh * 1.6 }} width={W} height={eh * 3.2}>
       <Ellipse cx={W / 2} cy={eh * 1.6} rx={W * 0.42} ry={eh * 1.4} fill={look.light} fillOpacity={0.28} />
