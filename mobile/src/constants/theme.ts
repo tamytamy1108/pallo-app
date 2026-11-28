@@ -25,6 +25,10 @@ export const Colors = {
   rateHigh: '#2E8B57',
   rateMid: '#C25E00',
   rateLow: '#D23B3B',
+  /** 마이 숫자 칸 아이콘 선 (파스텔 · 2026-11-28): 불꽃 · 왕관/번개 · 하트. 사람(참여중)은 sky */
+  pastelCoral: '#F29A8A',
+  pastelGold: '#EDB54A',
+  pastelPink: '#EF9BB4',
 } as const;
 
 export const Radius = {
