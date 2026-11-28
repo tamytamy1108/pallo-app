@@ -1,4 +1,5 @@
 import { router, type Href } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -13,6 +14,7 @@ import { apiErrorMessage } from '@/api/errors';
 import { meetLines, useMyMeets } from '@/api/use-my-activity';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { sfx } from '@/lib/feedback';
+import { leaveSheet, stay, type Leave } from '@/lib/see';
 import { isProLike, toggleFollow, useMe } from '@/state/me';
 
 import { BadgeGrid } from './my-blocks';
@@ -76,24 +78,36 @@ export function SparkSheet({ open, onClose }: { open: boolean; onClose: () => vo
   );
 }
 
-/** 내 모임 · 찜한 모임: GET /me/meets?box= (api/use-my-activity) — 동아리 → 번개 → 이벤트 순 */
-export function MeetsSheet({ kind, onClose }: { kind: 'joined' | 'saved' | null; onClose: () => void }) {
-  const q = useMyMeets(kind === 'joined' ? 'JOINED' : 'SAVED', !!kind);
-  const items = q.view ? meetLines(q.view) : [];
-  const n = items.length;
+type MeetsKind = 'joined' | 'saved';
+
+/** 내 모임 · 찜한 모임 목록 값: GET /me/meets?box= (api/use-my-activity) — 동아리 → 번개 → 이벤트 순 */
+function useMeetsBox(kind: MeetsKind, enabled = true) {
+  const q = useMyMeets(kind === 'joined' ? 'JOINED' : 'SAVED', enabled);
+  return { q, items: q.view ? meetLines(q.view) : [] };
+}
+
+/** 위 줄 제목: 받으면 개수까지 ('찜한 모임 3개') — 시트 · 저장함 화면이 같이 써요 (같은 쿼리라 한 번만 받아요) */
+export function useMeetsTitle(kind: MeetsKind, enabled = true) {
+  const { q, items } = useMeetsBox(kind, enabled);
+  const label = kind === 'saved' ? '찜한 모임' : '내 모임';
+  return q.view ? `${label} ${items.length}개` : label;
+}
+
+/** 내 모임 · 찜한 모임 목록 몸통 (시트 · 저장함 화면이 같이 써요). 줄을 누르면 그 상세가 지금 화면 위에 쌓여요 */
+export function MeetsList({ kind, leave = stay, enabled = true }: { kind: MeetsKind; leave?: Leave; enabled?: boolean }) {
+  const { q, items } = useMeetsBox(kind, enabled);
   const open = (href: Href) => {
     sfx('tap');
-    onClose();
-    runAfterSheetClose(() => router.push(href));
+    leave(() => router.push(href));
   };
   return (
-    <Sheet open={!!kind} onClose={onClose} title={q.view ? (kind === 'saved' ? `찜한 모임 ${n}개` : `내 모임 ${n}개`) : kind === 'saved' ? '찜한 모임' : '내 모임'} label={kind === 'saved' ? '찜한 모임' : '내 모임'}>
+    <>
       {kind === 'joined' && <Ds>가입한 동아리 · 참여한 번개 · 이벤트</Ds>}
       {q.isPending ? (
         <LoadingState />
       ) : q.isError ? (
         <ErrorState message={apiErrorMessage(q.error)} onRetry={() => q.refetch()} />
-      ) : n === 0 ? (
+      ) : items.length === 0 ? (
         <PText style={styles.empty}>{kind === 'saved' ? '상세 화면의 하트를 누르면 여기 모여요.' : '아직 참여한 모임이 없어요.\n라운지에서 번개나 동아리를 찾아보세요!'}</PText>
       ) : (
         <View style={styles.mlist}>
@@ -113,6 +127,20 @@ export function MeetsSheet({ kind, onClose }: { kind: 'joined' | 'saved' | null;
           ))}
         </View>
       )}
+    </>
+  );
+}
+
+/** 내 모임 · 찜한 모임 시트 (스토리 · 시트로 보고 싶을 때). 마이 · 토스트 [보러가기] 는 저장함 화면(/me/saved)을 열어요 */
+export function MeetsSheet({ kind, onClose }: { kind: MeetsKind | null; onClose: () => void }) {
+  // 닫히는 동안에도 열었던 목록을 그대로 그려요
+  const [last, setLast] = useState<MeetsKind>(kind ?? 'saved');
+  if (kind && kind !== last) setLast(kind);
+  const k = kind ?? last;
+  const title = useMeetsTitle(k, !!kind);
+  return (
+    <Sheet open={!!kind} onClose={onClose} title={title} label={k === 'saved' ? '찜한 모임' : '내 모임'}>
+      <MeetsList kind={k} enabled={!!kind} leave={leaveSheet(onClose)} />
     </Sheet>
   );
 }

@@ -68,6 +68,8 @@ export function toCardPost(d: CommunityPost): Post {
     ...extra,
     // 가짜 예시 글은 사진 대신 그림이라 장 수는 예시 그대로
     ...(extra && !d.images.length && seed && seed.k === 'post' ? { n: seed.n } : null),
+    // 서버가 장마다 맞춘 값을 주면 그걸로 (가짜 예시 값보다 먼저)
+    ...(d.frames?.length ? { frames: d.frames } : null),
   };
 }
 

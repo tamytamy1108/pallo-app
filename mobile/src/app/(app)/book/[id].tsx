@@ -17,7 +17,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, ScrollEnd } from '@/constants/theme';
 import { findBook } from '@/data/library';
 import { sfx } from '@/lib/feedback';
 
@@ -48,7 +48,7 @@ export default function BookScreen() {
         <EmptyState title="교재를 찾을 수 없어요" />
       ) : (
         <>
-          <ScrollView contentContainerStyle={styles.body}>
+          <ScrollView contentContainerStyle={[styles.body, { paddingBottom: ScrollEnd }]}>
             <View style={styles.hero}>
               <Raised radius={8} style={styles.coverWrap}>
                 <MiniCover width={110} color={b.c} n={b.n} l={b.l} s={b.s} jp={jp} />
@@ -111,7 +111,7 @@ function LgButton({ label, white = false, onPress }: { label: string; white?: bo
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: 16, paddingBottom: 30 },
+  body: { paddingHorizontal: 16 },
   hero: { flexDirection: 'row', gap: 14, marginTop: 12 },
   coverWrap: { marginRight: 0, marginBottom: 0 },
   tx: { flex: 1, minWidth: 0 },

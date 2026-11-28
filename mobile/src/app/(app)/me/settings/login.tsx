@@ -91,7 +91,7 @@ export default function LoginAccountScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   pressed: { opacity: 0.7 },
-  body: { paddingTop: 4, paddingBottom: 40 },
+  body: { paddingTop: 4 },
   h1: { marginTop: 22 },
   go: { paddingVertical: 2, paddingHorizontal: 14 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 66, paddingVertical: 10 },

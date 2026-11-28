@@ -231,7 +231,7 @@ function Field({ label, value, onChange, placeholder, max, grow }: { label: stri
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  body: { paddingTop: 8, paddingBottom: 40, gap: 6 },
+  body: { paddingTop: 8, gap: 6 },
   h: { marginTop: 14, marginBottom: 2, marginHorizontal: 4, fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
   card: { paddingVertical: 2, paddingHorizontal: 14 },
   line: { borderTopWidth: 1.5, borderColor: Colors.line },

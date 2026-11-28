@@ -18,6 +18,7 @@ import { Colors } from '@/constants/theme';
 import { type Abroad, LANG_COLOR, LG_C, LG_LIKERS, memberLangs, nameHash, type Post } from '@/data/lounge';
 import { addPostComment, hideMember, likeOn, postComments, toggleLike, toggleSave, unhideMember, useLounge } from '@/data/lounge-store';
 import { kfc, SPRING } from '@/lib/motion';
+import { clampPostRatio } from '@/lib/photo-framing';
 import { seeAt, SEE } from '@/lib/see';
 import { whenLabel } from '@/lib/when';
 import { useMe } from '@/state/me';
@@ -179,6 +180,7 @@ function Pic({ p, onDoubleTap }: { p: Post; onDoubleTap?: () => void }) {
     const op = t === 0 ? 0 : kfc(t, [0, 30, 70, 100], [0, 1, 1, 0], BURST_EASE);
     return { opacity: op, transform: [{ scale: sc }] };
   });
+  // 사진 칸: 가로는 카드 폭 그대로, 세로는 글의 틀 비율(ratio · 4:5 ~ 1.91:1)로 — 모든 장이 같은 틀, 장마다 맞춘 확대 · 위치(frames)대로 그려요
   const imgAt = (k: number) => p.imgs?.[k] ?? p.imgs?.[0];
   const img = imgAt(0);
   // 사진(그림)은 본 장 + 바로 다음 장까지만 그려요. 7장짜리 글이 처음부터 7장을 다 풀어 그려서
@@ -196,7 +198,7 @@ function Pic({ p, onDoubleTap }: { p: Post; onDoubleTap?: () => void }) {
           accessibilityActions={many ? [{ name: 'increment' }, { name: 'decrement' }] : undefined}
           onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
           onLayout={(e) => setW(e.nativeEvent.layout.width - 4)}
-          style={[styles.pic, img ? { aspectRatio: p.ratio ?? 1, height: undefined, backgroundColor: Colors.line } : { backgroundColor: PIC_BG[p.pic ?? 'party'] }]}>
+          style={[styles.pic, img ? { aspectRatio: clampPostRatio(p.ratio), backgroundColor: Colors.line } : [styles.picDrawn, { backgroundColor: PIC_BG[p.pic ?? 'party'] }]]}>
           <ScrollView
             ref={pager}
             horizontal
@@ -446,7 +448,9 @@ const styles = StyleSheet.create({
   sub: { fontFamily: Font.body700, fontSize: 11.5, lineHeight: 13.8, color: Colors.inkSub, marginTop: 2 },
   ib: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   picShadow: { borderRadius: 20, boxShadow: `4px 4px 0px ${Colors.ink}` },
-  pic: { height: 330, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink, overflow: 'hidden' },
+  // 높이는 그림 글만 — 사진 글은 비율(aspectRatio)로. 높이를 같이 두면 웹에서 비율이 안 먹어서 모든 사진 글이 330 높이로 보였어요
+  pic: { borderRadius: 20, borderWidth: 2, borderColor: Colors.ink, overflow: 'hidden' },
+  picDrawn: { height: 330 },
   // 한 장 — 그림이 옆 장으로 넘치지 않게 잘라요
   page: { height: '100%', overflow: 'hidden' },
   picCnt: { position: 'absolute', right: 12, top: 12, backgroundColor: Colors.ink, borderRadius: 10, paddingVertical: 4, paddingHorizontal: 8 },

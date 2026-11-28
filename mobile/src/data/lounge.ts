@@ -92,6 +92,7 @@ export type Post = {
   frames?: PhotoFraming[];
   /** 스토리에서 함께 올린 글이면 첫 장 위 글 스티커 자리 · 색 (글은 text) */
   lbl?: StickerSpot;
+  /** 사진 틀 비율 가로 / 세로 — 첫 장 비율을 4:5 ~ 1.91:1 안으로 맞춘 값, 모든 장이 이 틀 (lib/photo-framing clampPostRatio) */
   ratio?: number;
   n: number;
   likes: number;

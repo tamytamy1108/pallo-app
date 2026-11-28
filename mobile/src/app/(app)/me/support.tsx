@@ -217,7 +217,7 @@ function AskView({ type, startOnList, bug = false }: { type?: string; startOnLis
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   pressed: { opacity: 0.7 },
-  body: { paddingTop: 14, paddingBottom: 40 },
+  body: { paddingTop: 14 },
   q: { paddingVertical: 16, borderBottomWidth: 1.5, borderColor: Colors.line },
   tg: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
   qB: { marginTop: 3, fontFamily: Font.body900, fontSize: 15.5, lineHeight: 22 },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   goB: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   goS: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   chev: { fontFamily: Font.body900, fontSize: 15, color: Colors.inkSub },
-  askBody: { paddingTop: 0, paddingBottom: 40 },
+  askBody: { paddingTop: 0 },
   tabsBleed: { marginHorizontal: -16, marginBottom: 8 },
   lb: { marginTop: 10, marginBottom: 8, fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },
   lb2: { marginTop: 0 },

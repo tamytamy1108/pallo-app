@@ -20,6 +20,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 import { STAGES, STAGE_COLOR, STAGE_KO, STUDY_STEPS, findLevel, listenItemsOf, parseUnitId, stepTitle, unitId, type StageKey, type Step, type StudyLevel, type Lesson } from '@/data/library';
 import { sfx } from '@/lib/feedback';
 import { isDone, stepKey, useDoneCount, useIsDone, useSavedPos } from '@/state/progress';
@@ -64,6 +65,7 @@ function UnitScreen() {
 }
 
 function UnitBody({ L, ls }: { L: StudyLevel; ls: Lesson }) {
+  const endPad = useScrollEndPad();
   const pull = usePullRefresh();
   useDoneCount(`${L.lv}:${ls.no}:`);
   const steps = STUDY_STEPS[L.kind];
@@ -82,7 +84,7 @@ function UnitBody({ L, ls }: { L: StudyLevel; ls: Lesson }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Stack.Screen options={SCREEN.push} />
       <TopBar title={`LV.${L.lv} ${L.series}`} onList={() => setSheet(true)} />
-      <ScrollView {...pull.scrollProps} contentContainerStyle={styles.body}>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={[styles.body, { paddingBottom: endPad }]}>
         <UnitHero L={L} ls={ls} />
         <UnitSummary L={L} ls={ls} />
         <ListenCard sub={`이 ${unit} 문장 ${items.length}개 · 영어→뜻 · 따라 말하기`} onPress={() => router.push(`/listening?unit=${unitId(L.lv, ls.no)}` as Href)} />
@@ -214,7 +216,7 @@ const styles = StyleSheet.create({
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   mid: { flex: 1, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 },
   midText: { flexShrink: 1, fontFamily: Font.body900, fontSize: 14, lineHeight: 20 },
-  body: { paddingTop: 6, paddingHorizontal: 16, paddingBottom: 40, gap: 10 },
+  body: { paddingTop: 6, paddingHorizontal: 16, gap: 10 },
   note: { marginTop: -4, marginHorizontal: 2, fontFamily: Font.body700, fontSize: 13, lineHeight: 20.15, color: Colors.inkSub },
   seg: { flexDirection: 'row', gap: 6, padding: 5, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white },
   segBtn: { flex: 1, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },

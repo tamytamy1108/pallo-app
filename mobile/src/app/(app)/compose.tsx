@@ -17,20 +17,20 @@ import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { LG_C, LG_PCAT } from '@/data/lounge';
 import { addPost, getLounge, setLoungeTab } from '@/data/lounge-store';
-import { plainFraming, type PhotoFraming } from '@/lib/photo-framing';
+import { clampPostRatio, plainFraming, type PhotoFraming } from '@/lib/photo-framing';
 import { useMe } from '@/state/me';
 
 /*
  * 글쓰기 2단계 (프로토타입 lgPostNew · lgPostStep1 · lgPostStep2).
- * ① 새 게시물: 앨범(한 번에 최대 10장) · 사진 찍기 → 원본 비율로 미리 보기 (4:6 ~ 1.91:1 안으로 맞춤),
- *    두 손가락 확대(최대 4배) · 한 손가락 이동, ⤢ = 원본 비율 ↔ 1:1 (모든 사진 같은 비율), 아래 줄에서 사진 바꾸기 · 꾹 눌러 끌어 순서 바꾸기 · + · 사진 빼기.
+ * ① 새 게시물: 앨범(한 번에 최대 10장) · 사진 찍기 → 인스타그램처럼 틀 가로는 칸 폭 그대로, 세로는 첫 장 비율 따라 (4:5 ~ 1.91:1 안으로 맞춤).
+ *    여러 장이면 모든 장이 첫 장과 같은 틀 — 장마다 두 손가락 확대(최대 4배) · 한 손가락 이동으로 보일 곳을 골라요.
+ *    아래 줄에서 사진 바꾸기 · 꾹 눌러 끌어 순서 바꾸기(첫 장이 바뀌면 틀 비율도 새 첫 장 따라) · + · 사진 빼기.
+ *    맞춘 값은 글의 frames(장마다 확대 · 위치) · ratio(틀 비율)로 남아 피드 · 상세 · 저장함이 똑같이 그려요.
  * ② 글쓰기: 글 칸 → '어떤 글인가요?'. ‹ 로 돌아가도 사진 · 카테고리 · 글이 남아요.
  * 사진 올리기(긴 변 1080px로 줄여 업로드)는 백엔드 Q-T7 — 지금은 기기 안 주소 그대로 가짜 글에 붙여요.
  */
 const MAX_N = 10;
 const MAX_MB = 20;
-const R_MIN = 4 / 6;
-const R_MAX = 1.91;
 
 /** 고른 사진 · 맞춘 모양 (확대 · 위치 — 원본 비율은 framing.aspect) */
 type Draft = { uri: string; framing: PhotoFraming };
@@ -41,8 +41,6 @@ export default function ComposeScreen() {
   const [step, setStep] = useState<1 | 2>(1);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [di, setDi] = useState(0);
-  const [r, setR] = useState(1);
-  const [rOrig, setROrig] = useState(1);
   const [cat, setCat] = useState('일상');
   const [text, setText] = useState('');
 
@@ -54,13 +52,8 @@ export default function ComposeScreen() {
     if (okAll.length > room) notes.push(`최대 ${MAX_N}장까지라 ${okAll.length - room}장은 빼고 넣었어요`);
     const got = okAll.slice(0, Math.max(0, room)).map((a): Draft => ({ uri: a.uri, framing: plainFraming(a.width, a.height) }));
     if (!got.length) return showToast(notes[0] ?? `사진은 ${MAX_N}장까지 넣을 수 있어요`);
-    // 첫 사진의 원본 비율이 게시물 비율이 돼요 (한계 밖이면 한계로)
-    if (!drafts.length) {
-      const r0 = Math.min(R_MAX, Math.max(R_MIN, got[0].framing.aspect));
-      setR(r0);
-      setROrig(r0);
-      setDi(0);
-    } else setDi(drafts.length);
+    // 새로 넣은 첫 장을 바로 맞추게 골라 둬요
+    setDi(drafts.length);
     setDrafts([...drafts, ...got]);
     if (notes.length) showToast(notes.join(' · '));
   };
@@ -87,11 +80,8 @@ export default function ComposeScreen() {
     setDrafts(L);
     setDi(Math.min(di, Math.max(0, L.length - 1)));
   };
-  // 비율을 바꿔도 맞춘 확대 · 위치는 사진 기준이라 그대로 (새 틀 안으로만 다시 맞춰요)
-  const toggleRatio = () => {
-    const alt = Math.abs(rOrig - 1) < 0.01 ? R_MIN : rOrig;
-    setR(Math.abs(r - 1) < 0.01 ? alt : 1);
-  };
+  // 틀 비율 = 첫 장 원본 비율 (한계 밖이면 한계로). 첫 장이 바뀌어도 맞춘 확대 · 위치는 사진 기준이라 그대로 (새 틀 안으로만 다시 맞춰요)
+  const r = clampPostRatio(drafts[0]?.framing.aspect);
   // 순서를 바꿔도 지금 맞추던 사진은 그대로 골라져 있어요
   const reorder = (next: Draft[]) => {
     const now = drafts[di];
@@ -157,7 +147,7 @@ export default function ComposeScreen() {
           cur ? (
             <View>
               {/* 사진(주소)이 같으면 같은 틀 — 순서를 바꿔 번호만 바뀌어도 다시 불러오지 않아요 */}
-              <CropFrame key={cur.uri} d={cur} r={r} onChange={(f) => reframe(di, f)} onToggleRatio={toggleRatio} onRemove={removeCur} />
+              <CropFrame key={cur.uri} d={cur} r={r} onChange={(f) => reframe(di, f)} onRemove={removeCur} />
               {/* 아래 사진 줄: 누르면 그 사진 맞추기 · 꾹 눌러 끌면 순서 바꾸기 (첫 장이 게시물 첫 사진) */}
               <PhotoReorderRow
                 items={drafts}
@@ -254,25 +244,15 @@ export default function ComposeScreen() {
   );
 }
 
-/** 사진 칸 크기 (틀 테두리 2 포함 전 안쪽) — 세로 4:6 이 340 높이, 정사각 · 가로가 300 폭에 꼭 맞아요 */
-const STAGE_W = 300;
-const STAGE_H = 340;
-
 /**
- * 사진 맞추기 틀 (원본 비율 4:6 ~ 1.91:1): 두 손가락 확대(최대 4배) · 한 손가락 이동 · 두 번 눌러 처음대로.
- * 사진 칸은 늘 같은 크기 — 사진 비율 · 비율 바꾸기에 따라 틀만 칸 가운데서 바뀌고, 아래 사진 줄 · 시트 높이는 그대로예요.
+ * 사진 맞추기 틀 (게시물 틀 비율 r = 첫 장 비율, 4:5 ~ 1.91:1): 두 손가락 확대(최대 4배) · 한 손가락 이동 · 두 번 눌러 처음대로.
+ * 피드 카드 사진 칸과 같은 모양 — 가로는 칸 폭 그대로(넘치지 않아요), 세로는 폭 / r. 사진이 틀보다 길면 넘친 쪽이 잘려 보여요.
  */
-function CropFrame({ d, r, onChange, onToggleRatio, onRemove }: { d: Draft; r: number; onChange: (f: PhotoFraming) => void; onToggleRatio: () => void; onRemove: () => void }) {
-  const FW = Math.min(STAGE_W, STAGE_H * r);
+function CropFrame({ d, r, onChange, onRemove }: { d: Draft; r: number; onChange: (f: PhotoFraming) => void; onRemove: () => void }) {
   return (
-    <View style={styles.stage}>
-      <PhotoFrame uri={d.uri} framing={d.framing} onChange={onChange} style={[styles.prev, { width: FW + 4, height: FW / r + 4 }]} accessibilityLabel="올릴 사진 미리 보기 · 끌어서 위치 맞추기">
-        <Pressable onPress={onToggleRatio} accessibilityRole="button" accessibilityLabel="비율 바꾸기 · 원본 비율 ↔ 1:1 정사각형" style={styles.ratio}>
-          <LgIcon name="ratio" size={16} color="#fff" sw={2.6} />
-        </Pressable>
-        <LgButton label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={onRemove} style={styles.unimg} />
-      </PhotoFrame>
-    </View>
+    <PhotoFrame uri={d.uri} framing={d.framing} onChange={onChange} style={[styles.prev, { aspectRatio: r }]} accessibilityLabel="올릴 사진 미리 보기 · 끌어서 위치 맞추기">
+      <LgButton label="사진 빼기" tone="white" height={34} fontSize={12.5} onPress={onRemove} style={styles.unimg} />
+    </PhotoFrame>
   );
 }
 
@@ -291,30 +271,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   photoText: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18 },
-  stage: {
-    width: STAGE_W + 4,
-    height: STAGE_H + 4,
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // 피드 카드 사진 칸(post-card styles.pic)과 같은 테두리 · 모서리 — 미리 보기 = 올린 모양
   prev: {
+    width: '100%',
     borderWidth: 2,
     borderColor: Colors.ink,
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: Colors.ink,
-  },
-  ratio: {
-    position: 'absolute',
-    left: 10,
-    bottom: 10,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(30,26,43,0.72)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   unimg: { position: 'absolute', right: 10, bottom: 10 },
   strip: {

@@ -34,13 +34,13 @@ import { Logo } from '@/components/logo';
 import { Appear } from '@/components/ui/appear';
 import { Raised } from '@/components/ui/raised';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
+import { Colors, Spacing, TabHeadTop, TabScrollEnd } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
 import { branchSessionAt } from '@/data/branch-today';
 import { LANGS, SLOTS } from '@/data/home';
 import { shouldAskInvite } from '@/state/invite-prompt';
 import { getMe, isProLike, useMe } from '@/state/me';
-import { useTabReselect } from '@/lib/tab-reselect';
+import { useTabScrollMemory } from '@/lib/tab-reselect';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 const BELL = 'M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0';
@@ -59,7 +59,8 @@ export default function HomeScreen() {
   const role = useMe((m) => m.role);
   const unread = useUnreadCount();
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('home', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
+  // 탭을 다시 누르면 맨 위로 · 다른 탭에 다녀오면 보던 자리 그대로 (lib/tab-reselect)
+  const keepY = useTabScrollMemory('home', scroll);
   const mapY = useRef(0);
   const mapH = useRef(0);
   const viewH = useRef(0);
@@ -170,6 +171,7 @@ export default function HomeScreen() {
         // 스터디 맵 카드가 화면 밖으로 나가면 카드 장식 움직임을 멈춰요 (스크롤이 부드럽게)
         onScroll={(e) => {
           pull.onScroll(e);
+          keepY(e.nativeEvent.contentOffset.y);
           const y = e.nativeEvent.contentOffset.y;
           setDecoOnScreen(y + viewH.current > mapY.current && y < mapY.current + mapH.current);
         }}
@@ -261,7 +263,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
   center: { justifyContent: 'center' },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 40, gap: Spacing.stack },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabScrollEnd, gap: Spacing.stack },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   // .icon-btn.has-dot::after: 안 읽은 알림이 있으면 분홍 점

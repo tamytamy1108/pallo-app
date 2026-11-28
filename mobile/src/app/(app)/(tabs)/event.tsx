@@ -18,11 +18,11 @@ import { Icon } from '@/components/meet/icons';
 import { branchOk } from '@/components/meet/model';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
+import { Colors, Spacing, TabHeadTop, TabScrollEnd } from '@/constants/theme';
 import { EVENT_FILTERS, EVENTS, type EventKind } from '@/data/events';
 import { useServerEvents } from '@/api/use-events';
 import { useMe } from '@/state/me';
-import { useTabReselect } from '@/lib/tab-reselect';
+import { useTabScrollMemory } from '@/lib/tab-reselect';
 import { ChipScroll } from '@/components/ui/chip-scroll';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
@@ -40,7 +40,8 @@ export default function EventScreen() {
   const scroll = useRef<ScrollViewInstance>(null);
   // 오른쪽 아래 [오픈하기]: 스크롤하는 동안 숨겨서 목록 카드를 가리지 않게 (라운지 + 버튼과 같은 동작)
   const fab = useHideOnScroll();
-  useTabReselect('event', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
+  // 탭을 다시 누르면 맨 위로 · 다른 탭에 다녀오면 보던 자리 그대로 (lib/tab-reselect)
+  const keepY = useTabScrollMemory('event', scroll);
   const role = useMe((m) => m.role);
   const [branch, setBranch] = useState('전체');
   const [kind, setKind] = useState<EventKind | 'all'>('all');
@@ -62,7 +63,8 @@ export default function EventScreen() {
         contentContainerStyle={styles.page}
         onScroll={(e) => {
           pull.onScroll(e);
-          fab.onScroll(e.nativeEvent.contentOffset.y);
+          keepY(e.nativeEvent.contentOffset.y);
+          fab.onScroll(e.nativeEvent);
           checkScrollLock('event');
         }}
         scrollEventThrottle={64}>
@@ -140,7 +142,7 @@ function TabBtn({ on, label, n, onPress }: { on: boolean; label: string; n?: num
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  page: { paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 80 },
+  page: { paddingTop: TabHeadTop, paddingBottom: TabScrollEnd },
   // 첫 줄(제목) · 둘째 줄(칩) 자리는 다섯 탭이 같아요: 제목 줄 44 · 그 아래 Spacing.stack (칩 줄 안쪽 위 12 를 빼요)
   hd: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: Spacing.gutter, marginTop: Spacing.headDrop, marginBottom: -Spacing.headDrop },
   subs: { flexGrow: 0, marginTop: Spacing.stack - 12 },

@@ -15,7 +15,7 @@ import { BottomBar } from '@/components/bottom-bar';
 import { Sink } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
-import { Colors } from '@/constants/theme';
+import { Colors, ScrollEnd } from '@/constants/theme';
 import { haptic, sfx } from '@/lib/feedback';
 import { useKeyboardShown } from '@/lib/keyboard';
 
@@ -69,6 +69,9 @@ export function AccountPage({ title, onBack, right, children, footer, bottom, bo
   // 글 칸을 눌러 키보드가 올라오면 그 칸이 키보드 · 아래 바 위로 다 보이게 (시트와 같은 방식 · ui/form-scroll)
   const [formScroll, formBox, onFormScroll, , keepCaret, showFocused] = useFormScroll(undefined, scrollRef);
   useShowFocusedOnKeyboard(formBox, showFocused);
+  // 아래 고정 바(footer · bottom)가 있으면 바가 이미 아래 안전 영역을 가져요 — 여백은 바 위로 ScrollEnd 만
+  const insets = useSafeAreaInsets();
+  const endPad = (footer || bottom ? 0 : insets.bottom) + ScrollEnd;
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar title={title} onBack={onBack} right={right} fallback="/my" />
@@ -78,7 +81,7 @@ export function AccountPage({ title, onBack, right, children, footer, bottom, bo
           <View style={[styles.flex, bodyStyle]}>{children}</View>
         ) : (
           <View ref={formBox} collapsable={false} style={styles.flex}>
-            <ScrollView ref={formScroll} onScroll={onFormScroll} scrollEventThrottle={32} style={styles.flex} contentContainerStyle={[styles.body, bodyStyle]} keyboardShouldPersistTaps="handled">
+            <ScrollView ref={formScroll} onScroll={onFormScroll} scrollEventThrottle={32} style={styles.flex} contentContainerStyle={[styles.body, bodyStyle, { paddingBottom: endPad }]} keyboardShouldPersistTaps="handled">
               <KeepVisibleContext.Provider value={keepCaret}>{children}</KeepVisibleContext.Provider>
             </ScrollView>
           </View>
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   bar: { flexDirection: 'row', gap: 10, paddingTop: 12, paddingHorizontal: 16, backgroundColor: Colors.cream, borderTopWidth: 2, borderColor: Colors.ink },
   pressed: { transform: [{ scale: 0.96 }] },
-  body: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40 },
+  body: { paddingHorizontal: 16, paddingTop: 8 },
   box: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 22 },
   head: { marginTop: 22, marginBottom: 8, fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   link: { paddingVertical: 6, paddingHorizontal: 2, alignSelf: 'flex-start' },

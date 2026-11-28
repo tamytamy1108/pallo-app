@@ -67,7 +67,7 @@ export default function VersionScreen() {
 }
 
 const styles = StyleSheet.create({
-  body: { paddingTop: 0, paddingBottom: 40 },
+  body: { paddingTop: 0 },
   hero: { alignItems: 'center', paddingTop: 24, paddingBottom: 4 },
   img: { width: 96, height: 62 },
   brand: { marginTop: 10, fontFamily: Font.display, fontSize: 22, lineHeight: 26 },

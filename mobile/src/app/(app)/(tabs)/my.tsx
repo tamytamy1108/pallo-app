@@ -10,7 +10,6 @@ import { Pressable } from '@/components/ui/pressable';
 import { MyStudyCard } from '@/components/account/my-study-card';
 import { MyClassCard } from '@/components/account/my-class-card';
 import { ProSessionsSheet } from '@/components/account/pro-sessions-sheet';
-import { SavedChallengesSheet } from '@/components/challenge/saved-sheet';
 import { MemberLock } from '@/components/common/member-lock';
 import { checkScrollLock, ScrollLock } from '@/components/common/scroll-lock';
 import { ProNoteCard } from '@/components/account/pro-note-card';
@@ -19,8 +18,7 @@ import { DevPersonaPill } from '@/components/my/dev-persona';
 import { GearIcon, LgIcon } from '@/components/my/icons';
 import { BadgeGrid, MyList, MyStats, RankSummary, SecHead } from '@/components/my/my-blocks';
 import { MyHero } from '@/components/my/my-hero';
-import { MyMeetsSheet } from '@/components/my/my-meets-sheet';
-import { BadgeSheet, FollowSheet, MeetsSheet } from '@/components/my/my-sheets';
+import { BadgeSheet, FollowSheet } from '@/components/my/my-sheets';
 import { Appear } from '@/components/ui/appear';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/dialog';
@@ -28,19 +26,25 @@ import { Raised, SHADOW_OFFSET } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
-import { Colors, Spacing, TabBarSpace, TabHeadTop } from '@/constants/theme';
+import { Colors, Spacing, TabHeadTop, TabScrollEnd } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
+import { savedBoxHref, type SavedBox } from '@/lib/see';
 import { clearSavedData } from '@/lib/store';
 import { isMember } from '@/state/access';
 import { useMe } from '@/state/me';
 import { grantReward, resetRewards } from '@/state/rewards';
-import { useTabReselect } from '@/lib/tab-reselect';
+import { useTabScrollMemory } from '@/lib/tab-reselect';
 import { usePullRefresh } from '@/components/ui/pull-refresh';
 
 // 마이 B 화면(설정 · 고객센터 · 이용권)은 아직 없을 수 있어서 주소 타입을 넓혀 둬요
 const go = (href: string) => () => {
   sfx('tap');
   router.push(href as Href);
+};
+/** 내 모임 · 찜한 모임 · 찜한 챌린지 = 저장함 화면 (토스트 [보러가기] 와 같은 곳 · lib/see) */
+const goBox = (box: SavedBox) => () => {
+  sfx('tap');
+  router.push(savedBoxHref(box));
 };
 
 /**
@@ -57,7 +61,8 @@ const num = (v: number | null | undefined, unit: string) => (v == null ? '–' :
 export default function MyScreen() {
   const pull = usePullRefresh();
   const scroll = useRef<ScrollViewInstance>(null);
-  useTabReselect('my', (animated) => scroll.current?.scrollTo({ y: 0, animated }));
+  // 탭을 다시 누르면 맨 위로 · 다른 탭에 다녀오면 보던 자리 그대로 (lib/tab-reselect)
+  const keepY = useTabScrollMemory('my', scroll);
   const { width } = useWindowDimensions();
   // 개발용 ?link= · ?name= (웹에서만)
   const dev = useLocalSearchParams<{ link?: string; name?: string; trial?: string; reward?: string; open?: string }>();
@@ -83,12 +88,8 @@ export default function MyScreen() {
   const proStats = my?.proStats ?? null;
   const [follow, setFollow] = useState<'fing' | 'fer' | null>(null);
   const [badges, setBadges] = useState(false);
-  const [meets, setMeets] = useState<'joined' | 'saved' | null>(null);
-  const [chals, setChals] = useState(false);
   const [askReset, setAskReset] = useState(false);
-  const [myMeetsOpen, setMyMeetsOpen] = useState(false);
-  // 토스트 [보러가기] → /my?open=saved-meets · joined-meets · saved-challenges 로 오면 그 목록 시트를 바로 열어요
-  // (렌더 중에 이전 값과 비교해 한 번만 열고, 주소의 open 은 지워요)
+  // /my?open=study 는 렌더 중에 이전 값과 비교해 한 번만 받고, 주소의 open 은 지워요
   const [seenOpen, setSeenOpen] = useState<string | undefined>(undefined);
   // /my?open=study (연기 · 변경 신청 뒤 확인) → 내 스터디 칸까지 내려가요 (칸 자리를 재면 그때 내려가요)
   const studyY = useRef<number | null>(null);
@@ -96,9 +97,6 @@ export default function MyScreen() {
   if (dev.open !== seenOpen) {
     setSeenOpen(dev.open);
     if (dev.open === 'study') setToStudy(true);
-    if (dev.open === 'saved-meets') setMeets('saved');
-    else if (dev.open === 'joined-meets') setMyMeetsOpen(true);
-    else if (dev.open === 'saved-challenges') setChals(true);
   }
   useEffect(() => {
     if (dev.open) router.setParams({ open: undefined });
@@ -120,6 +118,7 @@ export default function MyScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView refreshControl={pull.refreshControl} onScrollBeginDrag={pull.onScrollBeginDrag} onScrollEndDrag={pull.onScrollEndDrag} ref={scroll} contentContainerStyle={styles.body} onScroll={(e) => {
           pull.onScroll(e);
+          keepY(e.nativeEvent.contentOffset.y);
           checkScrollLock('my');
         }} scrollEventThrottle={64}>
         <Appear kind="rise" style={styles.head}>
@@ -165,7 +164,7 @@ export default function MyScreen() {
                 : [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
                     { ic: 'crown', v: num(my?.stats.weekRank, '위'), l: '이번 주 랭킹', onPress: go('/me/ranking') },
-                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: () => setMyMeetsOpen(true) },
+                    { ic: 'users', v: num(my?.stats.joinedMeetCount, '개'), l: '참여중', onPress: goBox('joined') },
                     { ic: 'heart', v: num(my?.stats.badgeCount, '개'), l: '받은 배지', onPress: () => setBadges(true) },
                   ]
             }
@@ -241,9 +240,9 @@ export default function MyScreen() {
             <Appear kind="rise">
               <MyList
                 rows={[
-                  { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: num(my?.activity.joinedMeetCount, '개'), onPress: () => setMyMeetsOpen(true) },
-                  { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: num(my?.activity.savedMeetCount, '개'), onPress: () => setMeets('saved') },
-                  { label: '찜한 챌린지', icon: <LgIcon name="heart" size={18} />, value: num(my?.activity.savedChallengeCount, '개'), onPress: () => setChals(true) },
+                  { label: '내 모임', icon: <LgIcon name="users" size={18} />, value: num(my?.activity.joinedMeetCount, '개'), onPress: goBox('joined') },
+                  { label: '찜한 모임', icon: <LgIcon name="heart" size={18} />, value: num(my?.activity.savedMeetCount, '개'), onPress: goBox('meets') },
+                  { label: '찜한 챌린지', icon: <LgIcon name="heart" size={18} />, value: num(my?.activity.savedChallengeCount, '개'), onPress: goBox('challenges') },
                   {
                     label: '내가 쓴 글',
                     icon: <LgIcon name="image" size={18} />,
@@ -284,9 +283,6 @@ export default function MyScreen() {
 
       <FollowSheet name={follow ? me.name : null} tab={follow ?? 'fer'} onTab={setFollow} onClose={() => setFollow(null)} />
       <BadgeSheet open={badges} onClose={() => setBadges(false)} />
-      <MeetsSheet kind={meets} onClose={() => setMeets(null)} />
-      <MyMeetsSheet open={myMeetsOpen} onClose={() => setMyMeetsOpen(false)} />
-      <SavedChallengesSheet open={chals} onClose={() => setChals(false)} />
       <ProSessionsSheet open={proSessionsOpen} onClose={() => setProSessionsOpen(false)} />
       <ConfirmDialog
         open={askReset}
@@ -307,7 +303,7 @@ export default function MyScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
-  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabBarSpace + 54, gap: Spacing.stack },
+  body: { paddingHorizontal: Spacing.gutter, paddingTop: TabHeadTop, paddingBottom: TabScrollEnd, gap: Spacing.stack },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 44, marginTop: Spacing.headDrop, marginBottom: 4 - Spacing.headDrop },
   headR: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },

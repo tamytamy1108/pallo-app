@@ -4,7 +4,6 @@ import { Stack } from 'expo-router/js-stack';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { css, cubicBezier, useReducedMotion } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
@@ -18,6 +17,7 @@ import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors, Radius } from '@/constants/theme';
+import { useScrollEndPad } from '@/components/ui/scroll-end';
 import { RANK_COLORS, rankPeople, type RankRow } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { useSavedExpressions } from '@/state/expressions';
@@ -87,10 +87,10 @@ const POD = [
  * 프로토타입은 탭 화면이라 아래 탭 바가 보여요 — 앱은 마이 위로 쌓이는 화면이에요.
  */
 export default function RankingScreen() {
+  const endPad = useScrollEndPad();
   const pull = usePullRefresh();
   // 움직임 줄이기면 시상대 · 막대 · 순위 줄이 바로 다 보여요
   const still = useReducedMotion();
-  const insets = useSafeAreaInsets();
   const me = useMe();
   const marks = useSavedExpressions();
   const [view, setView] = useState<'me' | 'br'>('me');
@@ -140,7 +140,7 @@ export default function RankingScreen() {
     <View style={styles.screen}>
       <Stack.Screen options={SCREEN.push} />
       <TopBar title="랭킹 · 퀘스트" fallback="/my" backLabel="마이로 돌아가기" safeTop />
-      <ScrollView {...pull.scrollProps} contentContainerStyle={[styles.body, { paddingTop: 16, paddingBottom: insets.bottom + 60 }]}>
+      <ScrollView {...pull.scrollProps} contentContainerStyle={[styles.body, { paddingTop: 16, paddingBottom: endPad }]}>
 
         <Appear kind="rise">
           <Raised radius={Radius.card}>

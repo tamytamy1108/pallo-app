@@ -29,7 +29,7 @@ function MyStudyScreen() {
 }
 
 const styles = StyleSheet.create({
-  body: { paddingTop: 16, paddingBottom: 40 },
+  body: { paddingTop: 16 },
 });
 
 /** 회원 전용 화면 (state/access 'myStudy'): 비회원이 알림 · 주소로 바로 들어와도 '지점 회원이 되면 열려요' 칸만 보여요 */

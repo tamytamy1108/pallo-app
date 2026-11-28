@@ -13,3 +13,14 @@ export const plainFraming = (width?: number, height?: number): PhotoFraming => (
 
 /** 처음 모양 그대로인지 (그냥 cover 로 그려도 같아요) */
 export const isPlainFraming = (f?: PhotoFraming) => !f || (f.scale <= 1.001 && Math.abs(f.x - 0.5) < 0.001 && Math.abs(f.y - 0.5) < 0.001);
+
+/*
+ * 게시물 사진 틀 비율 (가로 / 세로) — 인스타그램처럼 가로는 늘 칸 폭 그대로, 세로만 사진 따라 달라져요.
+ * 가로로 긴 사진은 1.91:1 까지, 세로로 긴 사진은 4:5 까지 — 그 밖은 이 틀 안으로 잘라 보여요(맞추기로 고른 곳).
+ * 여러 장이면 첫 장 비율 하나로 모든 장을 같은 틀에 담아요. 게시물에는 이 값이 ratio 로 남아요.
+ */
+export const POST_RATIO_MIN = 4 / 5;
+export const POST_RATIO_MAX = 1.91;
+
+/** 사진 비율 → 게시물 틀 비율 (한계 안으로). 값이 없거나 이상하면 1:1 */
+export const clampPostRatio = (aspect?: number | null) => (aspect && Number.isFinite(aspect) && aspect > 0 ? Math.min(POST_RATIO_MAX, Math.max(POST_RATIO_MIN, aspect)) : 1);

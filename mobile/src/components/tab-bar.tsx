@@ -11,7 +11,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Colors } from '@/constants/theme';
 import { SPRING } from '@/lib/motion';
 import { noteTouch, quietFor, setTabsFront } from '@/lib/quiet';
-import { emitTabReselect, flushTabEnter, markTabEnter, type TabName } from '@/lib/tab-reselect';
+import { emitTabReselect, restoreTabScroll, type TabName } from '@/lib/tab-reselect';
 
 /** 프로토타입(prototype/index.html 의 TABS)과 같은 다섯 탭 · 같은 아이콘이에요. */
 const TABS = [
@@ -127,9 +127,9 @@ function TabPage({ focused, tab, children }: { focused: boolean; tab: TabName | 
   const still = useReducedMotion();
   const fade = useSharedValue(1);
   const rise = useSharedValue(0);
-  // 탭 바로 넘어왔으면 처음 화면(맨 위)부터
+  // 다른 탭에 갔다 돌아오면 마지막으로 보던 자리로 (lib/tab-reselect)
   useEffect(() => {
-    if (focused && tab) flushTabEnter(tab);
+    if (focused && tab) restoreTabScroll(tab);
   }, [focused, tab]);
   useEffect(() => {
     if (!focused || still) return;
@@ -157,10 +157,9 @@ function TabButton({ tab, icon, label, isFocused, ref: _ref, onPress, ...props }
   return (
     <Pressable
       {...props}
-      // 이미 보고 있는 탭을 또 누르면 화면을 맨 위로
+      // 이미 보고 있는 탭을 또 누르면 화면을 맨 위로 · 다른 탭으로 갈 때는 그 탭의 보던 자리 그대로
       onPress={(e) => {
         if (isFocused) emitTabReselect(tab);
-        else markTabEnter(tab);
         onPress?.(e);
       }}
       sound="nav"

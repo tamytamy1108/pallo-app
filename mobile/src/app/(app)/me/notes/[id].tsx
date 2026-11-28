@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   missing: { padding: 20 },
   all: { alignSelf: 'center', paddingHorizontal: 4 },
-  body: { paddingTop: 8, paddingBottom: 30, gap: 12 },
+  body: { paddingTop: 8, gap: 12 },
   dh: { gap: 2, paddingVertical: 4, paddingHorizontal: 2 },
   dhB: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
   dhS: { fontFamily: Font.body700, fontSize: 13, lineHeight: 19, color: Colors.inkSub },
