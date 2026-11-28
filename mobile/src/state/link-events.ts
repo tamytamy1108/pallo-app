@@ -14,6 +14,7 @@ import { queryClient } from '@/api/query-client';
 import { showLinkPush } from '@/components/home/link-push';
 import { addNoti } from '@/components/home/noti-state';
 import { createStore } from '@/lib/store';
+import { isMember } from '@/state/access';
 import { getMe, updateMe } from '@/state/me';
 
 export type LinkResult = 'linked' | 'rejected';
@@ -55,12 +56,15 @@ export function receiveLinkResult(result: LinkResult, note = REJECT_NOTE_MOCK) {
       mockApproveLinkRequest(branch);
       updateMe({ memberAccessLevel: 'ACTIVE_MEMBER', role: 'member' });
     }
-    addNoti({ id: `link-${key}`, kind: 'notice', badge: 'ok', text: `${branch} 연동이 끝났어요. 이제 회원 기능을 쓸 수 있어요`, time: '방금', href: '/my', read: false });
+    // 누르면 설정 › 내 지점 (연동된 지점 · 연동 이력 — 연동 결과를 모아 보는 곳)
+    addNoti({ id: `link-${key}`, kind: 'notice', badge: 'ok', text: `${branch} 연동이 끝났어요. 이제 회원 기능을 쓸 수 있어요`, time: '방금', href: '/me/settings/branch', read: false });
   } else {
     // 못 찾음: 권한은 비회원 그대로 (state/access). 가짜 서버의 내 연동 요청에 반려 한 건 → 홈 반려 팝업 (components/home/link-rejected-popup)
     if (apiConfig.useMock) mockRejectLinkRequest(branch, note);
     // 다른 공지처럼 한 줄 글로: 반려 사유를 글 안에 그대로 (누르면 연동 안 됨 화면 · 다시 요청)
-    addNoti({ id: `link-${key}`, kind: 'notice', icon: 'tack', text: `${branch} 연동이 반려됐어요. 사유: ${note}`, time: '방금', href: '/link-rejected', read: false });
+    // 이미 다른 지점에 연동된 회원이면 다시 요청할 필요가 없어서 결과(설정 › 내 지점 연동 이력)로 가요
+    const href = isMember(getMe()) ? '/me/settings/branch' : '/link-rejected';
+    addNoti({ id: `link-${key}`, kind: 'notice', icon: 'tack', text: `${branch} 연동이 반려됐어요. 사유: ${note}`, time: '방금', href, read: false });
   }
   // ['me'] 아래 전부: /me(회원 등급) · 요약(연동 대기 · 반려) · 내 연동 요청
   void queryClient.invalidateQueries({ queryKey: queryKeys.me });

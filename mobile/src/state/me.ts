@@ -103,7 +103,10 @@ function seedDevSummary(who: DevPersona) {
   if (!apiConfig.useMock) return;
   if (who === 'pending') mockAddPendingLinkRequest('하남점', '하남점', '', '');
   // 연동된 사람: 설정 › 내 지점 '연동 이력'에 보이게 연동됨 요청 하나
-  if (who === 'linked' || who === 'pro' || who === 'manager') mockApproveLinkRequest('하남점');
+  if (who === 'linked' || who === 'pro' || who === 'manager') {
+    mockRejectLinkRequest('잠실점', '등록된 번호가 달라요. 등록할 때 쓴 번호로 다시 요청해 주세요.');
+    mockApproveLinkRequest('하남점');
+  }
   if (who === 'rejected') mockRejectLinkRequest('하남점', '등록된 번호가 달라요. 등록할 때 쓴 번호로 다시 요청해 주세요.');
   if (who === 'trial') {
     // 체험 예약: 내일 저녁 (홈 출석 카드 자리에 체험 카드)
