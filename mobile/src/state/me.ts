@@ -30,6 +30,8 @@ export type Me = {
    * 회원인지(state/access userKind)는 이 값 하나로 봐요. 연동 대기 · 반려 · 체험 예약은 여기 없고 서버 요약(api/use-branch-progress)에 있어요.
    */
   memberAccessLevel: MemberAccessLevel;
+  /** 등록된 지점마다 내 역할 (서버가 주면 · applyBranchRoles). 없으면 branch · role 하나예요 */
+  branchRoles?: BranchRole[];
   /** 관리자가 호스트 · 코호스트 뱃지를 뗐어요 (A32 · 동아리 운영은 그대로). 없으면 운영 중인 동아리에 따라 붙어요 */
   roleBadgeOff?: boolean;
   /** 꾸미기 상점 재화 */
@@ -144,7 +146,12 @@ export function topBranchRole(list: readonly BranchRole[]): BranchRole | null {
 /** 서버가 지점별 역할을 주면: 가장 높은 역할 · 그 지점을 내 role · branch 로 (프로면 이름 아래 줄도 프로인 지점) */
 export function applyBranchRoles(list: readonly BranchRole[]) {
   const top = topBranchRole(list);
-  if (top) updateMe({ role: top.role, branch: top.branch });
+  if (top) updateMe({ branchRoles: [...list], role: top.role, branch: top.branch });
+}
+
+/** 등록된 지점 이름들 — 이름 옆 역할을 정한 지점(me.branch)이 먼저, 나머지는 받은 순서 · 겹치면 한 번만 */
+export function myBranches(me: Pick<Me, 'branch' | 'branchRoles'>): string[] {
+  return [...new Set([me.branch, ...(me.branchRoles ?? []).map((r) => r.branch)])].filter(Boolean);
 }
 export const useMe = meStore.useStore;
 export const getMe = meStore.get;

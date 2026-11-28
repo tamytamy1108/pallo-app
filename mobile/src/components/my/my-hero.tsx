@@ -19,7 +19,7 @@ import { EASE, SPRING } from '@/lib/motion';
 import { finishMyMoment, useLinkEvents } from '@/state/link-events';
 import { useMyAvatar } from '@/state/avatar';
 import { isMember } from '@/state/access';
-import { useMe, type Me } from '@/state/me';
+import { myBranches, useMe, type Me } from '@/state/me';
 
 import { BioSheet } from './bio-sheet';
 import { DecoIcon, SparkIcon } from './icons';
@@ -29,11 +29,15 @@ const LANG_NAME = { en: '영어', ja: '일본어', zh: '중국어', es: '스페�
 /** 계정 역할 → 이름 옆 글자 (회원 · 비회원은 없음) */
 const staffKind = (role: Me['role']): RoleKind | null => (role === 'leader' ? 'pro' : role === 'manager' ? 'staff' : null);
 
-/** 프로 · 직원 이름 아래 줄 (시안 prototype/assets/roles/my-pro-1 · my-staff-1) */
+/**
+ * 프로 · 직원 이름 아래 줄 (시안 prototype/assets/roles/my-pro-1 · my-staff-1): 등록된 지점 모두 → 언어 (지점마다 짝짓지 않아요).
+ * 예: 하남점 · 잠실점 · 영어 · 일본어 / 지점 관리자는 하남점 · 잠실점 · 지점 관리자
+ */
 function staffLine(me: Me) {
-  if (me.role === 'manager') return `${me.branch} · 지점 관리자`;
+  const branches = myBranches(me);
+  if (me.role === 'manager') return [...branches, '지점 관리자'].join(' · ');
   const langs = me.teachLangs.length ? me.teachLangs : [me.lang];
-  return [me.branch, ...langs.map((l) => LANG_NAME[l])].join(' · ');
+  return [...branches, ...langs.map((l) => LANG_NAME[l])].join(' · ');
 }
 
 /**
@@ -105,12 +109,10 @@ export function MyHero({
               <PText style={styles.sub}>{staffLine(me)}</PText>
             ) : (
               <View style={styles.subRow}>
-                {/* 지점: 연동했거나 요청한 지점 · 체험 예약한 지점. 앱 구경(비회원)은 지점이 없어서 언어 · 레벨만 */}
+                {/* 지점(연동된 회원은 등록된 지점 모두 · 아니면 요청 · 체험 예약한 지점) → 언어. 레벨은 보이지 않아요 (2026-11-28).
+                    앱 구경(비회원)은 지점이 없어서 언어만 */}
                 <PText style={styles.sub}>
-                  {branch ? `${branch} · ` : ''}
-                  {LANG_NAME[me.lang]}
-                  {/* 레벨은 지점 회원(연동 요청 · 연동됨)만 — 비회원은 아직 레벨 테스트 전이에요 */}
-                  {link === 'linked' || link === 'pending' || link === 'rejected' ? ` ${me.level}` : ''}
+                  {[...(link === 'linked' ? myBranches(me) : branch ? [branch] : []), LANG_NAME[me.lang]].join(' · ')}
                   {link === 'linked' ? ' · 회원' : ''}
                 </PText>
                 {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
