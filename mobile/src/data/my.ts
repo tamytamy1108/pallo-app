@@ -127,7 +127,7 @@ export const SPARK_PRO_RATE = [
 ] as const;
 export const SPARK_PRO_RATE_MIN_SESSIONS = 4;
 /**
- * 출석률 칸을 누른 시트의 한 줄: 출석률 스파크까지 남은 정도 (맡은 세션 = 이번 달 · 예정 회차 포함).
+ * PRO'S NOTE 화면 맨 위 출석률 박스의 한 줄 (프로만): 출석률 스파크까지 남은 정도 (맡은 세션 = 이번 달 · 예정 회차 포함).
  * 예) 14개 중 13회 → '100%까지 1회 · 지금 받으면 +150'
  */
 export function proRateRewardLine(sessions: number, checks: number): string {
