@@ -73,7 +73,7 @@ const SAMPLE_HISTORY: ChangeHistoryItem[] = [
   {
     id: 'h1',
     label: '팀 변경',
-    txt: '영어 월수 7시 30분 → 영어 월수 9시\n7/26(일)까지 지금 팀 · 7/27(월)부터 새 팀',
+    txt: '영어 월수 7시 30분 → 영어 월수 9시\n7/26(일)까지 지금 팀 · 7/27(월)부터 뉴 팀',
     requestedAt: '2026-07-10',
     status: 'approved',
   },
