@@ -40,7 +40,7 @@ export type Plan = {
   changes: number;
   /**
    * 사용 가능 기간 (개월) — 이 기간 안에 남은 횟수 · 연기 · 변경을 다 써요 (멤버십마다 달라요).
-   * 정해진 값 (2026-11-28): PLUS 7.5개월 · PRO MAX 3년 · PREMIUM 3년 · CVVIP+ 무제한(Infinity). PRO 15개월은 아직 예시예요.
+   * 정해진 값 (2026-11-28): PLUS 7.5개월 · PRO 15개월 · PRO MAX 3년 · PREMIUM 3년 · CVVIP+ 무제한(Infinity).
    */
   usableMonths: number;
   /** 최대 팀 수 */
