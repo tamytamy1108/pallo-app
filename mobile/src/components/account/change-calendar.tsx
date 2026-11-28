@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
 import { PText } from '@/components/ui/text';
+import { CalArrow } from '@/components/ui/cal-arrow';
 import { isSameDay, todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -52,9 +53,9 @@ export function ChangeCalendar({ mon, minMon, maxMon, min, max, start, end, onMo
           <View key={mi} style={k > 0 ? styles.next : undefined}>
             {/* 이어 보이는 달은 위 달 머리줄의 ‹ › 로 같이 넘어가요 (앞은 첫 달에 · 뒤는 마지막 달에) */}
             <View style={styles.mh}>
-              {k === 0 ? <MonBtn label="‹" a11y="이전 달" disabled={mon <= minMon} onPress={() => onMonth(-1)} /> : <View style={styles.mbGap} />}
+              {k === 0 ? <MonBtn dir="prev" a11y="이전 달" disabled={mon <= minMon} onPress={() => onMonth(-1)} /> : <View style={styles.mbGap} />}
               <PText style={styles.mt} accessibilityRole="header">{`${y}년 ${m + 1}월`}</PText>
-              {mi === last ? <MonBtn label="›" a11y="다음 달" disabled={last >= maxMon} onPress={() => onMonth(1)} /> : <View style={styles.mbGap} />}
+              {mi === last ? <MonBtn dir="next" a11y="다음 달" disabled={last >= maxMon} onPress={() => onMonth(1)} /> : <View style={styles.mbGap} />}
             </View>
             {k === 0 ? (
               <View style={styles.wk}>
@@ -104,7 +105,7 @@ export function ChangeCalendar({ mon, minMon, maxMon, min, max, start, end, onMo
   );
 }
 
-function MonBtn({ label, a11y, disabled, onPress }: { label: string; a11y: string; disabled: boolean; onPress: () => void }) {
+function MonBtn({ dir, a11y, disabled, onPress }: { dir: 'prev' | 'next'; a11y: string; disabled: boolean; onPress: () => void }) {
   return (
     <Pressable
       disabled={disabled}
@@ -117,7 +118,7 @@ function MonBtn({ label, a11y, disabled, onPress }: { label: string; a11y: strin
       accessibilityState={{ disabled }}
       hitSlop={4}
       style={[styles.mb, disabled && styles.mbOff]}>
-      <PText style={styles.mbText}>{label}</PText>
+      <CalArrow dir={dir} />
     </Pressable>
   );
 }
@@ -130,7 +131,6 @@ const styles = StyleSheet.create({
   mbOff: { opacity: 0.3 },
   mbGap: { width: 36, height: 36 },
   next: { marginTop: 10, paddingTop: 10, borderTopWidth: 1.5, borderColor: Colors.line },
-  mbText: { fontFamily: Font.body900, fontSize: 18, lineHeight: 22 },
   wk: { flexDirection: 'row' },
   w: { flex: 1, textAlign: 'center', fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub, paddingBottom: 4 },
   sun: { color: '#D2477A' },

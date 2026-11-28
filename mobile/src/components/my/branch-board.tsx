@@ -21,7 +21,7 @@ import { ErrorState } from '@/components/ui/state-view';
 import { toBranchBoard, type BranchBoard as Board, type BranchItem, type Partner, type PartnerLink, type PartnerLinkKind, type PartnerPoster } from '@/data/my';
 import { sfx } from '@/lib/feedback';
 import { openMap, openTel } from '@/lib/open-out';
-import { CallButton, CopyButton } from '@/components/ui/contact-buttons';
+import { CallButton, CopyButton, IconSquare } from '@/components/ui/contact-buttons';
 import { fitPhoto, PhotoViewer, type PhotoBox } from '@/components/ui/photo-viewer';
 
 import { CourseProgressSheet } from './course-progress';
@@ -268,9 +268,9 @@ function BranchInfoSheet({ open, onClose, boards, B, onSel }: { open: boolean; o
                     <CallButton tel={x.act[1]} label={`${x.t} 전화하기`} />
                   </View>
                 ) : x.act ? (
-                  <Pressable onPress={() => act(x)} accessibilityRole="button" style={styles.liGo}>
-                    <PText style={styles.liGoT}>지도</PText>
-                  </Pressable>
+                  <View style={styles.liBtns}>
+                    <IconSquare icon="map" label={`${x.t} 지도`} onPress={() => act(x)} />
+                  </View>
                 ) : null}
               </View>
             ))}
@@ -349,7 +349,9 @@ function Partners({ list, small, onPick }: { list: Partner[]; small?: boolean; o
   );
 }
 
-type InfoRow = { icon: ReactNode; t: string; s?: string; go?: { label: string; run: () => void }; tel?: string };
+/** 줄 오른쪽 아이콘 버튼 (지도 · 링크 열기) */
+type PartnerAction = { label: string; icon: 'map' | 'open'; run: () => void };
+type InfoRow = { icon: ReactNode; t: string; s?: string; go?: PartnerAction; tel?: string };
 
 /** 링크 종류별 아이콘 · 기본 이름 · 설명 */
 const LINK_KIND: Record<PartnerLinkKind, { t: string; s: string; icon: ReactNode }> = {
@@ -410,13 +412,13 @@ const openLink = (url: string) => {
   Linking.openURL(url).catch(() => showToast('링크를 열 수 없어요'));
 };
 
-const linkRow = (l: PartnerLink): InfoRow => ({ icon: LINK_KIND[l.kind].icon, t: linkTitle(l), s: LINK_KIND[l.kind].s, go: { label: '열기', run: () => openLink(l.url) } });
+const linkRow = (l: PartnerLink): InfoRow => ({ icon: LINK_KIND[l.kind].icon, t: linkTitle(l), s: LINK_KIND[l.kind].s, go: { label: '열기', icon: 'open', run: () => openLink(l.url) } });
 
-function PartnerGo({ go, name }: { go: { label: string; run: () => void }; name: string }) {
+function PartnerGo({ go, name }: { go: PartnerAction; name: string }) {
   return (
-    <Pressable onPress={go.run} accessibilityRole="button" accessibilityLabel={`${name} ${go.label}`} style={styles.liGo}>
-      <PText style={styles.liGoT}>{go.label}</PText>
-    </Pressable>
+    <View style={styles.liBtns}>
+      <IconSquare icon={go.icon} label={`${name} ${go.label}`} onPress={go.run} />
+    </View>
   );
 }
 
@@ -442,7 +444,7 @@ function PartnerSheet({ partner: p, open, branch, onClose }: { partner: Partner 
   const pct = p.b.match(/\d+%/)?.[0] ?? '';
   const rest = p.b.replace(pct, '').trim();
   const rows: InfoRow[] = [];
-  if (p.addr) rows.push({ icon: <BrIc k="loc" size={18} />, t: p.addr, go: { label: '지도', run: () => openMap(p.addr ?? p.n) } });
+  if (p.addr) rows.push({ icon: <BrIc k="loc" size={18} />, t: p.addr, go: { label: '지도', icon: 'map', run: () => openMap(p.addr ?? p.n) } });
   if (p.tel) rows.push({ icon: <BrIc k="tel" size={18} />, t: p.tel, tel: p.tel });
   if (p.hrs) rows.push({ icon: <BrIc k="clk" size={18} />, t: p.hrs, s: '영업 시간' });
   // 추가 정보: 네이버 플레이스 · 인스타그램 · 카카오톡 채널 · 홈페이지
@@ -604,10 +606,7 @@ const styles = StyleSheet.create({
   val: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', maxWidth: '100%', marginTop: 6 },
   valCode: { flexShrink: 1, fontFamily: Font.body900, fontSize: 13, lineHeight: 18, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: '#F3EEE2', overflow: 'hidden' },
   valCi: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3EEE2' },
-  // 열기 · 지도: 복사 · 전화 아이콘 버튼과 같은 연한 베이지 (2026-11-28 — 노랑은 너무 진해서)
-  liGo: { alignSelf: 'center', height: 28, paddingHorizontal: 11, borderRadius: 9, backgroundColor: '#F3EEE2', justifyContent: 'center' },
   liBtns: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: 8 },
-  liGoT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16, color: Colors.purple },
   pdHd: { height: 150, overflow: 'hidden', justifyContent: 'flex-end', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink },
   pdW: { position: 'absolute', right: 14, top: 10, fontFamily: Font.display, fontSize: 30, lineHeight: 36, color: Colors.white, opacity: 0.25 },
   pdTitle: { flexDirection: 'row', alignItems: 'center', gap: 10 },
