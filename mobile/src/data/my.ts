@@ -77,13 +77,12 @@ export const AV_COLOR_HEX: Record<string, string> = {
   'purple-lash': '#493087',
   ...Object.fromEntries(AV_BODIES.map((b) => [b.id, b.lid])),
 };
-export const AV_SW = ['#FFE200', '#FFB800', '#FF7A59', '#E5484D', '#F28CB1', '#D16BD6', '#8B5CF6', '#493087', '#2F6FD0', '#7FA7E8', '#38BDF8', '#2DD4BF', '#5CBF8A', '#9BCB3C', '#B5651D', '#3A3A48', '#A7ABB8', '#FFF4D6'];
 export const HAIR_SW = ['#1E1A2B', '#3B2A20', '#7A4A2A', '#C68B4E', '#F2D16B', '#FFFFFF', '#F28CB1', '#E5484D', '#8B5CF6', '#7FA7E8', '#5CBF8A', '#A7ABB8'];
 export const BG_SW = ['#FBF6EA', '#FFF1A8', '#FFE0EA', '#E5DDF6', '#DCEBFF', '#D7F2E3', '#FFE3D6', '#F2F2F2', '#1E1A2B', '#493087', '#2F6FD0', '#5CBF8A'];
 
-export type AvTab = 'char' | AvCat | 'bg' | 'say';
+/** 몸(팔로로)은 가입 때 고른 그대로예요 — 꾸미기에는 몸 색 탭이 없어요 */
+export type AvTab = AvCat | 'bg' | 'say';
 export const AV_CATS: readonly (readonly [AvTab, string])[] = [
-  ['char', '몸 색'],
   ['hair', '헤어'],
   ['eye', '눈'],
   ['hat', '모자'],
@@ -278,16 +277,19 @@ export function followLists(name: string, me: { name: string; branch: string }, 
 // ---------------------------------------------------------------- 배지
 
 export type BadgeIcon = 'flame' | 'bolt' | 'users' | 'mic' | 'book' | 'crown' | 'heart' | 'plane';
-export type Badge = { ic: BadgeIcon; name: string; desc: string; on: boolean };
+/**
+ * 배지 한 칸. 서버 배지는 그림(imageUrl · 256×256 투명 PNG)으로 그리고, 그림이 없는 예시 배지(가짜 서버 · 남의 프로필)는 아이콘(ic)으로 그려요.
+ */
+export type Badge = { code: string; ic: BadgeIcon; imageUrl: string | null; name: string; desc: string; on: boolean };
 export const MY_BADGES: Badge[] = [
-  { ic: 'flame', name: '7일 연속', desc: '7일 연속 학습', on: true },
-  { ic: 'bolt', name: '첫 번개', desc: '번개 첫 참여', on: true },
-  { ic: 'users', name: '동아리 멤버', desc: '동아리 첫 가입', on: false },
-  { ic: 'mic', name: '말하기 100', desc: '따라 말하기 100문장', on: true },
-  { ic: 'book', name: '첫 원서', desc: '북클럽 한 권 완독', on: false },
-  { ic: 'crown', name: '주간 TOP 3', desc: '주간 랭킹 3위 안', on: false },
-  { ic: 'heart', name: '인기 글', desc: '좋아요 50개 받은 글', on: false },
-  { ic: 'plane', name: '해외 동행', desc: '동행 첫 참여', on: false },
+  { code: 'streak-7', ic: 'flame', imageUrl: null, name: '7일 연속', desc: '7일 연속 학습', on: true },
+  { code: 'first-hangout', ic: 'bolt', imageUrl: null, name: '첫 번개', desc: '번개 첫 참여', on: true },
+  { code: 'first-club', ic: 'users', imageUrl: null, name: '동아리 멤버', desc: '동아리 첫 가입', on: false },
+  { code: 'speak-100', ic: 'mic', imageUrl: null, name: '말하기 100', desc: '따라 말하기 100문장', on: true },
+  { code: 'first-book', ic: 'book', imageUrl: null, name: '첫 원서', desc: '북클럽 한 권 완독', on: false },
+  { code: 'weekly-top-3', ic: 'crown', imageUrl: null, name: '주간 TOP 3', desc: '주간 랭킹 3위 안', on: false },
+  { code: 'popular-post', ic: 'heart', imageUrl: null, name: '인기 글', desc: '좋아요 50개 받은 글', on: false },
+  { code: 'first-trip', ic: 'plane', imageUrl: null, name: '해외 동행', desc: '동행 첫 참여', on: false },
 ];
 /** 배지 · 숫자 칸 아이콘 (프로토타입 MY_BADGE_IC) */
 export const BADGE_PATH: Record<BadgeIcon, string> = {

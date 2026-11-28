@@ -1,5 +1,5 @@
 /**
- * 마이 탭 집계 (GET /me/mypage) 를 화면 부품 모양으로 바꿔 줘요 — 랭킹 시상대는 RankRow(얼굴 바탕색 포함), 배지는 Badge(아이콘 이름 확인).
+ * 마이 탭 집계 (GET /me/mypage) 를 화면 부품 모양으로 바꿔 줘요 — 랭킹 시상대는 RankRow(얼굴 바탕색 포함), 배지는 Badge(서버 그림 · api/use-badges toBadge).
  * 마이 탭은 탭이라 계속 켜져 있어서, 탭으로 돌아올 때 받아 둔 값이 오래됐으면(30초) 다시 받아요.
  * 칸(proStats · proNote · myClasses · study · badges)은 null 이면 화면이 그리지 않아요 (api/my-page.ts).
  */
@@ -9,12 +9,13 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { useNoteState } from '@/components/account/store';
 import { useChallengeState } from '@/data/challenge';
-import { BADGE_PATH, RANK_COLORS, type Badge, type BadgeIcon, type RankRow } from '@/data/my';
+import { RANK_COLORS, type Badge, type RankRow } from '@/data/my';
 import { isMember } from '@/state/access';
 import { isProLike, useMe } from '@/state/me';
 
 import { apiConfig } from './config';
 import type { MyPage } from './my-page';
+import { toBadge } from './use-badges';
 import { myPageQuery, queryKeys } from './queries';
 
 export type MyPageView = Omit<MyPage, 'ranking' | 'badges'> & {
@@ -22,8 +23,6 @@ export type MyPageView = Omit<MyPage, 'ranking' | 'badges'> & {
   /** null 이면 배지 칸을 그리지 않아요 */
   badges: Badge[] | null;
 };
-
-const isBadgeIcon = (v: string): v is BadgeIcon => v in BADGE_PATH;
 
 function toView(d: MyPage): MyPageView {
   return {
@@ -33,7 +32,7 @@ function toView(d: MyPage): MyPageView {
       myRank: d.ranking.me.rank,
       myPoints: d.ranking.me.points,
     },
-    badges: d.badges?.map((b) => ({ ic: isBadgeIcon(b.icon) ? b.icon : 'heart', name: b.name, desc: b.description, on: b.earned })) ?? null,
+    badges: d.badges?.map(toBadge) ?? null,
   };
 }
 

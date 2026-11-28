@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -106,14 +107,21 @@ export function RankSummary({ podium, myRank, myPoints, branch, onPress }: { pod
 
 const BADGE_BG = [Colors.yellow, Colors.rosePink, Colors.sky, '#CDEBD0'];
 
-/** 배지 칸 (프로토타입 .my-badges: 4칸 · 동그라미 색은 차례로 노랑 · 분홍 · 하늘 · 민트 · 못 받은 건 흐리게) */
+/**
+ * 배지 칸 (프로토타입 .my-badges: 4칸 · 동그라미 색은 차례로 노랑 · 분홍 · 하늘 · 민트 · 못 받은 건 흐리게).
+ * 서버 배지는 그림(256×256 투명 PNG)을 동그라미 안에 채워 그리고, 그림이 없는 예시 배지는 아이콘으로 그려요.
+ */
 export function BadgeGrid({ list, desc = false, iconSize = 22 }: { list: Badge[]; desc?: boolean; iconSize?: number }) {
   return (
     <View style={[styles.badges, desc && styles.badgesAll]}>
       {list.map((b, i) => (
-        <View key={b.name} style={styles.bd} accessible accessibilityLabel={`${b.name}${b.on ? '' : ' · 아직 못 받았어요'}`}>
+        <View key={b.code} style={styles.bd} accessible accessibilityLabel={`${b.name}${b.on ? '' : ' · 아직 못 받았어요'}`}>
           <View style={[styles.bdIc, { backgroundColor: BADGE_BG[i % 4] }, !b.on && styles.bdOff]}>
-            <BadgeIc ic={b.ic} size={iconSize} color={b.on ? Colors.ink : '#A39C8E'} />
+            {b.imageUrl ? (
+              <Image source={b.imageUrl} style={[styles.bdImg, !b.on && styles.bdImgOff]} contentFit="contain" accessible={false} />
+            ) : (
+              <BadgeIc ic={b.ic} size={iconSize} color={b.on ? Colors.ink : '#A39C8E'} />
+            )}
           </View>
           <PText style={[styles.bdName, !b.on && styles.bdNameOff]}>{b.name}</PText>
           {desc && <PText style={styles.bdDesc}>{b.desc}</PText>}
@@ -166,6 +174,8 @@ const styles = StyleSheet.create({
   bd: { width: '25%', alignItems: 'center', gap: 4, paddingHorizontal: 4 },
   bdIc: { width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   bdOff: { backgroundColor: '#EDE7DA', borderColor: '#C9C1B1' },
+  bdImg: { width: 44, height: 44 },
+  bdImgOff: { opacity: 0.35 },
   bdName: { fontFamily: Font.body900, fontSize: 11.5, lineHeight: 16, textAlign: 'center' },
   bdNameOff: { color: '#A39C8E' },
   bdDesc: { fontFamily: Font.body700, fontSize: 10.5, lineHeight: 14, color: Colors.inkSub, textAlign: 'center' },

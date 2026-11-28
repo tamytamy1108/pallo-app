@@ -1,6 +1,6 @@
 # 화면별 API 지도
 
-앱 `mobile/src/app/` 의 화면 68개를 하나씩 열어 **서버가 필요한 곳**을 적었어요. API 자세한 모양은 [`openapi.yaml`](openapi.yaml) (Swagger)에 있어요.
+앱 `mobile/src/app/` 의 화면 67개를 하나씩 열어 **서버가 필요한 곳**을 적었어요. API 자세한 모양은 [`openapi.yaml`](openapi.yaml) (Swagger)에 있어요.
 상태: `existing` 이미 있음 · `change` 있는 것에 필드 · 동작 추가 · `new` 새로 필요. 경로는 `/app/api/v2` 뒤에 붙어요 (새 앱 · 2026-11. 아직 v2 로 안 옮긴 예전 API 는 `/app/api/v1`, 공개 API는 `/public/api/v1`).
 
 ## 한눈에
@@ -17,7 +17,7 @@
 | 진도 · 보상 | 0 | 0 | 7 | 7 |
 | 음성 · AI | 0 | 0 | 3 | 3 |
 | 표현함 | 2 | 2 | 0 | 4 |
-| 라운지 피드 | 9 | 3 | 8 | 20 |
+| 라운지 피드 | 10 | 3 | 8 | 21 |
 | 스토리 | 0 | 0 | 15 | 15 |
 | 번개 | 10 | 3 | 8 | 21 |
 | 동아리 | 7 | 13 | 12 | 32 |
@@ -27,13 +27,13 @@
 | 이벤트 | 5 | 2 | 15 | 22 |
 | 마이 | 5 | 1 | 8 | 14 |
 | 프로필 · 팔로우 | 0 | 1 | 5 | 6 |
-| 랭킹 · 배지 | 0 | 0 | 2 | 2 |
+| 랭킹 · 배지 | 3 | 0 | 2 | 5 |
 | 캐릭터 · 상점 | 2 | 0 | 4 | 6 |
 | 수강 · 결제 | 8 | 7 | 7 | 22 |
 | 프로 노트 | 3 | 0 | 7 | 10 |
 | 설정 · 지원 | 4 | 1 | 7 | 12 |
 | 프로 · 직원 | 0 | 0 | 14 | 14 |
-| **합계** | **105** | **46** | **164** | **315** |
+| **합계** | **109** | **46** | **164** | **319** |
 
 목차: [인증 · 홈 · 알림 · 공통](#core) · [가입 · 온보딩](#onboarding) · [학습](#learn) · [라운지](#lounge) · [챌린지 · 이벤트](#community2) · [마이](#my) · [프로 · 직원 (역할별)](#staff)
 
@@ -449,8 +449,9 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 라운지 탭 — `app/(tabs)/lounge.tsx`
 | 화면에서 하는 일 | API (method path) | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 추천 탭 피드 (전체 · 인기, 글 · 번개 · 파티 · 챌린지 · 해외살이 · 동행 · 지도 카드 섞어서) | GET /lounge/feed | new | data/lounge.ts FEED (rec) |
-| 추천 탭 작은 한국 지도 숫자 | GET /lounge/map | new | data/lounge.ts MAP_SPOTS |
+| 추천 탭 피드 (전체 = 최신순 · 인기 = 최근 7일 하트 순, 지금은 커뮤니티 글만 — 순서는 서버가 정함) | GET /community/posts/recommended?pick=ALL\|HOT&branch= | existing | useRecommendedFeed |
+| 추천 탭에 번개 · 파티 · 챌린지 섞기 (번개 상세 연동 뒤) | (추천 API 응답 확장) | new | — |
+| 추천 탭 작은 한국 지도 숫자 (지금은 숨김) | GET /lounge/map | new | data/lounge.ts MAP_SPOTS |
 | 탭 '새 글' 배지 (커뮤니티 · 챌린지 · 번개·동아리, 지점 필터 없음 · 9+) — 탭별 마지막 본 때를 앱이 보내면 그 뒤로 생긴 수 | GET /lounge/unread-counts?com=&chal=&meet= | new | api/use-lounge-new-counts.ts (가짜 서버 셈) |
 | 커뮤니티 탭 (칩 전체 · 일상 · 스터디 · 이벤트 · 여행 · 동아리 · 번개, 지점 필터) | GET /community/posts?topic=&branchCodes= | change | FEED (k=post) |
 | 지점 선택 시트 후보 | GET /hangouts/branches | change | LG_BRS · LG_BREG |
@@ -541,7 +542,8 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 확인 체크 → [참여 신청하기] (승인제 · 확정 전엔 가게 이름 · 주소 대신 시 · 구 · 역) | POST /hangouts/{id}/participants | existing | meet-store askJoin |
 | [수락 기다리는 중] → 신청 취소 · [참여 확정] → 참여 취소 | DELETE /hangouts/{id}/participants/me | existing | meet-store leaveMeet |
 | 호스트: '참여 신청 N명' 목록 | GET /hangouts/{id}/join-requests | existing | meet-store reqs |
-| 호스트: [수락] · [거절] (사유 선택) | POST /hangouts/{id}/join-requests/{participantId}/approve · reject | existing | meet-store decideReq |
+| 호스트: [수락] · [거절] (사유 고르기 필수 — 정원·일정 / 조건 안 맞음 / 기타 직접 쓰기) | POST /hangouts/{id}/join-requests/{participantId}/approve · reject (reasonCode) | existing | meet-store decideReq · components/meet/detail/reject-sheet.tsx |
+| 신청자: 응답 기한 · 거절 사유 문구 · 다시 신청 가능 여부 (재신청 1번 · 24시간 · 시작 3시간 전 마감) | GET /hangouts/{id} (viewerRequestExpiresAt · viewerRejectReason · viewerCanReapply) | existing | components/meet/join-rules.ts |
 | 내 인사 남기기 · 고치기 · 지우기 | PUT · DELETE /hangouts/{id}/participants/me/greeting | new | mhi |
 | 호스트 [모집 닫기] [되돌리기] | POST · DELETE /hangouts/{id}/close | new | updateMyMeet(closed) |
 | 꽉 참 → [빈자리 알림 받기] | POST · DELETE /hangouts/{id}/waitlist | new | vac |
@@ -776,7 +778,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 |---|---|---|---|
 | 내 이름 · 지점 · 역할 · 레벨 (앱 전체 useMe) | GET /me | change | state/me.ts ME0 |
 | 캐릭터 카드 · 숫자 4칸(회원: 연속 학습 · 이번 주 랭킹 · 참여 중인 모임 · 받은 배지 / 프로: 이번 달 세션 · 출석 체크 · 보낸 노트 · 받은 고마워요) · 팔로잉/팔로워 수 · 스파크 · 배지 미리보기 · 내 활동 개수(찜한 챌린지 포함) — 칸이 null 이면 안 그려요 | GET /me/mypage (v2 MyPageV2Response) | existing | api/my-page.ts · api/use-my-page.ts (가짜 서버 mockMyPage) |
-| 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /ranking?scope=member&period=week | new | data/my.ts rankPeople |
+| 랭킹 요약 (시상대 1~3위 + 내 순위) | GET /me/mypage (ranking — 지금은 서버도 예시 값, 랭킹 구현 때 GET /ranking/members 와 같은 판정으로) | existing | api/my-page.ts ranking |
 | 내 모임 시트 — 동아리 · 번개 · 이벤트 탭 (챌린지 탭 · 제안한 이벤트는 아직 기기 상태) | GET /me/meets?box=JOINED (v2 MyMeetsV2Response) | existing | api/my-activity.ts · api/use-my-activity.ts useMyMeets (가짜 서버 = meet-store) |
 | 찜한 모임 시트 | GET /me/meets?box=SAVED | existing (늘 빈 목록 — 찜 도메인 없음) | useMyMeets · meetLines |
 | 찜한 챌린지 시트 (하트 = 찜 토글은 기기 상태) | GET /me/saved-challenges (v2 SavedChallengesV2Response) | existing (늘 빈 목록 — 찜 도메인 없음) | useSavedChallenges (가짜 서버 = data/challenge saved) |
@@ -796,7 +798,8 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 | 내 캐릭터 그리기 (로그인 뒤 서버 모습 · 가진 것을 기기에) | GET /me/avatar | existing | api/use-my-avatar.ts · state/avatar.ts saved |
 | 팔로잉 · 팔로워 목록 | GET /members/{code}/following · /followers | new | data/my.ts followLists |
 | 목록에서 팔로우 · 끊기 | POST · DELETE /members/{code}/follow | new | state/me.ts toggleFollow |
-| 배지 모두 보기 | GET /me/badges | new | data/my.ts MY_BADGES |
+| 배지 모두 보기 (받은 것 · 못 받은 것, 콘솔 순서 · 마이 배지 칸은 앞 4칸) | GET /me/badges | existing | api/badges.ts · api/use-badges.ts |
+| 배지 받으면 탭 화면 위 축하 시트 (앱 열 때 · 돌아올 때 · 배지 푸시 때 물어요) → 닫으면 본 것으로 | GET /me/badges/unseen · POST /me/badges/seen | existing | components/my/badge-celebrate.tsx · api/use-badges.ts |
 | 스파크 모으는 방법 (프로 · 스텝은 PRO 줄도) | GET /me/sparks (earnRules · audience) | new | data/my.ts SPARK_EARN · SPARK_EARN_PRO |
 | 프로필 카드 이름 아래 줄 '○○점 · 언어 Lv.n · 회원' + 작은 표시 ● 연동 확인 중 · ✓ 연동됨(처음 한 번 톡 튀어나옴) · 연동 안 됨 | GET /me (memberAccessLevel) · GET /me/branch-summary | existing | components/my/my-hero.tsx · state/link-events.ts myMoment |
 
@@ -829,8 +832,8 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 ### 랭킹 · 퀘스트 — `app/me/ranking.tsx`
 | 화면에서 하는 일 | API | 상태 | 지금 앱 데이터 |
 |---|---|---|---|
-| 개인 × 이번 주 / 이번 달 (내 순위 띠 · 시상대 · 4위 이하) | GET /ranking?scope=member&period=week\|month | new | data/my.ts RANK_PEOPLE · rankPeople · MY_MONTH_BASE |
-| 지점 대항전 (지점별 합계 막대 · 우리 지점 강조) | GET /ranking?scope=branch&period= | new | ranking.tsx sums (앱에서 합산) |
+| 개인 × 이번 주 / 이번 달 (내 순위 띠 · 시상대 · 4~10위 · 10위 밖 내 근처 줄 · 10위까지 남은 점수) | GET /ranking/members?period=WEEK\|MONTH | new | api/ranking.ts · api/use-ranking.ts (가짜 서버 rankPeople) |
+| 지점 대항전 (지점별 합계 막대 · 우리 지점 강조 — 합산은 서버) | GET /ranking/branches?period=WEEK\|MONTH | new | api/ranking.ts · api/use-ranking.ts (가짜 서버 mockBranchRanking) |
 | 얼굴 누르면 프로필 | GET /me/mypage/{code} | change | — |
 | 챌린지 카드 · 내 표현함 | (챌린지 · 학습 도메인 몫) | — | state/expressions |
 

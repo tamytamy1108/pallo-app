@@ -24,6 +24,11 @@ export function useForegroundPushBanner() {
     return onForegroundPush((message) => {
       // 푸시 = 새 알림일 수 있어요: 1분 주기를 기다리지 않고 홈 종 배지를 바로 다시 세요 (배너가 안 뜨는 데이터만 온 푸시도)
       void queryClient.invalidateQueries({ queryKey: queryKeys.unreadNotifications });
+      // 배지 푸시면 안 본 배지를 바로 물어 축하 시트를 띄우고, 마이 탭 배지 칸 · 개수도 새로 받아요
+      if (message.data?.type === 'BADGE') {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.badgesAll });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.myPage });
+      }
       const banner = pushToBanner(message);
       if (banner) showPushBanner(banner);
     });

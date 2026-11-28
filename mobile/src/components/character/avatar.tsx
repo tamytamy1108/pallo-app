@@ -374,15 +374,6 @@ export function StageArt({ it, bgId, width, height }: { it?: AvItem; bgId?: stri
   );
 }
 
-/** 몸 색 타일 (원본 색 PNG) */
-export function BodyArt({ color, width }: { color: string; width: number }) {
-  return (
-    <View style={{ width, height: width * CHAR_RATIO }}>
-      <Body color={color} w={width} h={width * CHAR_RATIO} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   abs: { position: 'absolute', left: 0, top: 0 },
   flip: { transform: [{ scaleX: -1 }] },

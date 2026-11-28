@@ -8,11 +8,12 @@ import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { followLists, MY_BADGES, SPARK_EARN, SPARK_EARN_PRO, SPARK_PRO_RATE_MIN_SESSIONS, type Member } from '@/data/my';
+import { followLists, SPARK_EARN, SPARK_EARN_PRO, SPARK_PRO_RATE_MIN_SESSIONS, type Member } from '@/data/my';
 import { REWARDS } from '@/data/rewards';
 import { apiErrorMessage } from '@/api/errors';
+import { useMyBadges } from '@/api/use-badges';
 import { meetLines, useMyMeets } from '@/api/use-my-activity';
-import { ErrorState, LoadingState } from '@/components/ui/state-view';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/state-view';
 import { sfx } from '@/lib/feedback';
 import { leaveSheet, stay, type Leave } from '@/lib/see';
 import { isProLike, toggleFollow, useMe } from '@/state/me';
@@ -25,13 +26,22 @@ function Ds({ children }: { children: string }) {
   return <PText style={styles.ds}>{children}</PText>;
 }
 
-/** 배지 모두 보기 (프로토타입 badge 시트) */
+/** 배지 모두 보기 (프로토타입 badge 시트) — 서버 GET /me/badges: 앱에 보이는 배지 전부 + 받은 배지, 못 받은 건 흐리게 */
 export function BadgeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const got = MY_BADGES.filter((b) => b.on).length;
+  const badges = useMyBadges(open);
+  const title = badges.data ? `배지 ${badges.data.earned} / ${badges.data.list.length}` : '배지';
   return (
-    <Sheet open={open} onClose={onClose} title={`배지 ${got} / ${MY_BADGES.length}`} label="배지">
-      <Ds>활동하면 배지와 스파크를 받아요.</Ds>
-      <BadgeGrid list={MY_BADGES} desc />
+    <Sheet open={open} onClose={onClose} title={title} label="배지">
+      <Ds>번개 · 동아리에 참여하고 글로 좋아요를 받으면 배지를 받아요.</Ds>
+      {badges.isPending ? (
+        <LoadingState />
+      ) : badges.isError ? (
+        <ErrorState message={apiErrorMessage(badges.error)} onRetry={() => badges.refetch()} />
+      ) : badges.data.list.length ? (
+        <BadgeGrid list={badges.data.list} desc />
+      ) : (
+        <EmptyState title="아직 준비된 배지가 없어요" compact />
+      )}
     </Sheet>
   );
 }
