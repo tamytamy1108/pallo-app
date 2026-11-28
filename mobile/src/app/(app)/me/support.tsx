@@ -8,6 +8,7 @@ import { faqQuery, myInquiriesQuery } from '@/api/queries';
 import { INQUIRY_MAX, INQUIRY_STATUS_LABEL, inquiryChoices, inquiryContentOk, inquiryDate } from '@/api/support';
 import { useMyBranchContact } from '@/api/use-branch-guide';
 import { useCreateInquiry } from '@/api/use-create-inquiry';
+import { CallButton, CopyButton } from '@/components/ui/contact-buttons';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, ChoiceChip, Head, Icon, TextLink, UnderTabs } from '@/components/account/parts';
@@ -18,7 +19,6 @@ import { showToast, showWarnToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
 import { sfx } from '@/lib/feedback';
-import { copyTel, openTel } from '@/lib/open-out';
 
 /**
  * 자주 묻는 질문 (프로토타입 helpHTML · askHTML). 설정 › 자주 묻는 질문으로 들어와요.
@@ -98,12 +98,8 @@ function HelpView({ faqOnly }: { faqOnly: boolean }) {
                 <PText style={styles.goS}>{`${contact.branchName} · ${contact.phone}`}</PText>
               </View>
               <View style={styles.pillRow}>
-                <Pressable onPress={() => copyTel(contact.phone)} accessibilityRole="button" accessibilityLabel={`${contact.branchName} 번호 복사`} hitSlop={6} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
-                  <PText style={styles.pillT}>복사</PText>
-                </Pressable>
-                <Pressable onPress={() => openTel(contact.phone)} accessibilityRole="button" accessibilityLabel={`${contact.branchName}에 전화하기`} hitSlop={6} style={({ pressed }) => [styles.pill, pressed && styles.pressed]}>
-                  <PText style={styles.pillT}>전화</PText>
-                </Pressable>
+                <CopyButton text={contact.phone} label={`${contact.branchName} 번호 복사`} />
+                <CallButton tel={contact.phone} label={`${contact.branchName}에 전화하기`} />
               </View>
             </View>
           </Box>
@@ -216,7 +212,6 @@ function AskView({ type, startOnList, bug = false }: { type?: string; startOnLis
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  pressed: { opacity: 0.7 },
   body: { paddingTop: 14 },
   q: { paddingVertical: 16, borderBottomWidth: 1.5, borderColor: Colors.line },
   tg: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 18, color: Colors.purple },
@@ -231,9 +226,7 @@ const styles = StyleSheet.create({
   goRow: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 66, paddingVertical: 10 },
   goB: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   goS: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
-  pillRow: { flexDirection: 'row', gap: 6 },
-  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 2, borderColor: Colors.ink },
-  pillT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17 },
+  pillRow: { flexDirection: 'row', gap: 8 },
   askBody: { paddingTop: 0 },
   tabsBleed: { marginHorizontal: -16, marginBottom: 8 },
   lb: { marginTop: 10, marginBottom: 8, fontFamily: Font.body900, fontSize: 13, lineHeight: 19 },

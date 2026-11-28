@@ -7,14 +7,13 @@ import { apiErrorMessage } from '@/api/errors';
 import { useCompleteOnboarding } from '@/api/session';
 import { useBranchPublicGuide, useSubmitOnboarding } from '@/api/use-onboarding';
 import { NextButton, OnbScreen } from '@/components/onboarding/parts';
-import { Pressable } from '@/components/ui/pressable';
 import { Raised } from '@/components/ui/raised';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { copyTel, openTel } from '@/lib/open-out';
+import { CallButton, CopyButton } from '@/components/ui/contact-buttons';
 import { updateOnboarding, useOnboarding } from '@/state/onboarding';
 
 /** 화면 좌우 여백 (OnbScreen 본문과 같아요) */
@@ -84,12 +83,8 @@ export default function OnboardingBranch() {
                   ic="tel"
                   end={
                     <View style={styles.calls}>
-                      <Pressable onPress={() => copyTel(g.phone ?? '')} accessibilityRole="button" accessibilityLabel={`${name} 번호 복사`} hitSlop={8} style={styles.call}>
-                        <PText style={styles.callT}>복사</PText>
-                      </Pressable>
-                      <Pressable onPress={() => openTel(g.phone ?? '')} accessibilityRole="button" accessibilityLabel={`${name}에 전화하기`} hitSlop={8} style={styles.call}>
-                        <PText style={styles.callT}>전화</PText>
-                      </Pressable>
+                      <CopyButton text={g.phone} label={`${name} 번호 복사`} />
+                      <CallButton tel={g.phone} label={`${name}에 전화하기`} />
                     </View>
                   }>
                   {g.phone}
@@ -181,7 +176,5 @@ const styles = StyleSheet.create({
   list: { marginTop: 16, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, overflow: 'hidden' },
   row: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 1.5, borderColor: Colors.line, marginTop: -1.5 },
   rowT: { flex: 1, fontFamily: Font.body700, fontSize: 14, lineHeight: 20 },
-  calls: { flexDirection: 'row', gap: 6 },
-  call: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 2, borderColor: Colors.ink },
-  callT: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 17 },
+  calls: { flexDirection: 'row', gap: 8 },
 });

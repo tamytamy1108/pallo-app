@@ -2,22 +2,18 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Pressable } from '@/components/ui/pressable';
 import { CommentsSheet, type Comment } from '@/components/common/comments-sheet';
-import { SheetDesc } from '@/components/common/sheet-parts';
 import { guardMember } from '@/components/common/trial-guide';
-import { NumberCard } from '@/components/event/account-card';
 import { accountOf, eventAddr, eventDesc, findEvent, surveyOf } from '@/components/event/event-model';
 import { MyApplication } from '@/components/event/my-application';
 import { surveyAnswerLines } from '@/components/event/survey';
 import { DetailFrame } from '@/components/meet/detail/detail-frame';
 import { CopyBtn, Desc, DSec, FeeBlock, HostRow, InfoRow, InfoRows, infoStyles, MainBtn, MemberSection, SaveBtn } from '@/components/meet/detail/detail-parts';
 import { AskSheet, JoinSheet } from '@/components/meet/detail/sheets';
-import { Icon } from '@/components/meet/icons';
 import { setAnswers, setText, toggleIn, useMeetStore } from '@/components/meet/meet-store';
 import { membersOf } from '@/components/meet/model';
 import { CapBar } from '@/components/meet/parts';
-import { Sheet } from '@/components/ui/sheet';
+import { CallButton, CopyButton, SmsButton } from '@/components/ui/contact-buttons';
 import { EmptyState, LoadingState } from '@/components/ui/state-view';
 import { useServerEvent } from '@/api/use-events';
 import { PText } from '@/components/ui/text';
@@ -32,7 +28,7 @@ import { useMe } from '@/state/me';
 
 /**
  * 이벤트 상세 (docs/pages/06-event.md '이벤트 상세' — 라운지 상세 공통 틀 + 차이).
- * 정보 줄: 날짜 · 장소(복사) · 참가비 · 인원 · 신청 설문 · 주최 · 문의(문자 버튼) → 소개 → 함께하는 멤버 → 아래 고정 [찜][참가비][참여하기].
+ * 정보 줄: 날짜 · 장소(복사) · 참가비 · 인원 · 신청 설문 · 주최 · 문의(복사 · 전화 · 문자 버튼) → 소개 → 함께하는 멤버 → 아래 고정 [찜][참가비][참여하기].
  * 신청하면 제목 바로 아래 '내 신청' 카드가 떠요.
  * 서버 이벤트(GET /events/{id})면 사진 · 카드 · 소개 · 주소 · 주최 멤버를 서버 값으로 그려요. 예시 이벤트(e1 …)는 data/events.
  * 맞는 API: 86 `/events/:id` · 88 `/events/:id/applications` · 89 `/event-applications/:id` · 찜 `/events/:id/save`
@@ -51,7 +47,6 @@ export default function EventDetail() {
   const ans = useMeetStore((s) => s.ans[key]);
   const [join, setJoin] = useState(false);
   const [cancel, setCancel] = useState(false);
-  const [sms, setSms] = useState(false);
   const [reviews, setReviews] = useState(false);
   const [cmts, setCmts] = useState<Comment[]>([]);
   // 방금 신청했으면 '내 신청' 카드로 화면을 옮겨요 (이미 신청한 채로 들어온 경우는 그대로)
@@ -155,11 +150,10 @@ export default function EventDetail() {
               main={`주최 ${tel[0]}`}
               sub={`${tel[1]}\n${tel[2].replace(' ~ ', '~')}${tel[0].includes(e.host) ? '' : ' · 담당 ' + e.host}`}
               end={
-                <View style={styles.ctbW}>
-                  <View style={styles.ctbS} />
-                  <Pressable onPress={() => setSms(true)} accessibilityRole="button" accessibilityLabel={`${tel[0]}에 문자로 문의하기`} style={styles.ctb}>
-                    <Icon name="sms" size={16} />
-                  </Pressable>
+                <View style={styles.ctBtns}>
+                  <CopyButton text={tel[1]} label={`${tel[0]} 번호 복사`} />
+                  <CallButton tel={tel[1]} label={`${tel[0]}에 전화하기`} />
+                  <SmsButton tel={tel[1]} label={`${tel[0]}에 문자 보내기`} />
                 </View>
               }
             />
@@ -212,11 +206,6 @@ export default function EventDetail() {
           showToast('참여를 취소했어요');
         }}
       />
-      {/* 문자: 번호를 보여 주고 복사 (화면을 떠나지 않아요) */}
-      <Sheet open={sms} onClose={() => setSms(false)} title="문자로 문의하기" label="문자 문의">
-        <SheetDesc>아래 번호로 문자를 보내 주세요. {tel[2]}에 답해 드려요.</SheetDesc>
-        <NumberCard top={`${tel[0]}${tel[0].includes(e.host) ? '' : ' · 담당 ' + e.host}`} no={tel[1]} note="번호를 복사해 문자로 보내 주세요" />
-      </Sheet>
       <CommentsSheet
         open={reviews}
         onClose={() => setReviews(false)}
@@ -232,7 +221,5 @@ export default function EventDetail() {
 
 const styles = StyleSheet.create({
   kick: { fontFamily: Font.body900, fontSize: 12.5, lineHeight: 19, color: Colors.purple },
-  ctbW: { width: 38, height: 38 },
-  ctbS: { position: 'absolute', top: 2, left: 2, width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.ink },
-  ctb: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
+  ctBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

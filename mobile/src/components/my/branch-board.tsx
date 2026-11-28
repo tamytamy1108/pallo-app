@@ -20,7 +20,8 @@ import { branchGuidesQuery } from '@/api/queries';
 import { ErrorState } from '@/components/ui/state-view';
 import { toBranchBoard, type BranchBoard as Board, type BranchItem, type Partner, type PartnerLink, type PartnerLinkKind, type PartnerPoster } from '@/data/my';
 import { sfx } from '@/lib/feedback';
-import { copyTel, openMap, openTel } from '@/lib/open-out';
+import { openMap, openTel } from '@/lib/open-out';
+import { CallButton, CopyButton } from '@/components/ui/contact-buttons';
 import { fitPhoto, PhotoViewer, type PhotoBox } from '@/components/ui/photo-viewer';
 
 import { CourseProgressSheet } from './course-progress';
@@ -261,16 +262,16 @@ function BranchInfoSheet({ open, onClose, boards, B, onSel }: { open: boolean; o
                     </Pressable>
                   ))}
                 </View>
-                {x.act?.[0] === 'tel' && (
-                  <Pressable onPress={() => copyTel(x.act?.[1] ?? '')} accessibilityRole="button" accessibilityLabel={`${x.t} 번호 복사`} style={styles.liGo}>
-                    <PText style={styles.liGoT}>복사</PText>
-                  </Pressable>
-                )}
-                {x.act && (
+                {x.act?.[0] === 'tel' ? (
+                  <View style={styles.liBtns}>
+                    <CopyButton text={x.act[1]} label={`${x.t} 번호 복사`} />
+                    <CallButton tel={x.act[1]} label={`${x.t} 전화하기`} />
+                  </View>
+                ) : x.act ? (
                   <Pressable onPress={() => act(x)} accessibilityRole="button" style={styles.liGo}>
-                    <PText style={styles.liGoT}>{x.act[0] === 'map' ? '지도' : '전화'}</PText>
+                    <PText style={styles.liGoT}>지도</PText>
                   </Pressable>
-                )}
+                ) : null}
               </View>
             ))}
         </View>
@@ -348,7 +349,7 @@ function Partners({ list, small, onPick }: { list: Partner[]; small?: boolean; o
   );
 }
 
-type InfoRow = { icon: ReactNode; t: string; s?: string; go?: { label: string; run: () => void }; copy?: { label: string; run: () => void } };
+type InfoRow = { icon: ReactNode; t: string; s?: string; go?: { label: string; run: () => void }; tel?: string };
 
 /** 링크 종류별 아이콘 · 기본 이름 · 설명 */
 const LINK_KIND: Record<PartnerLinkKind, { t: string; s: string; icon: ReactNode }> = {
@@ -442,7 +443,7 @@ function PartnerSheet({ partner: p, open, branch, onClose }: { partner: Partner 
   const rest = p.b.replace(pct, '').trim();
   const rows: InfoRow[] = [];
   if (p.addr) rows.push({ icon: <BrIc k="loc" size={18} />, t: p.addr, go: { label: '지도', run: () => openMap(p.addr ?? p.n) } });
-  if (p.tel) rows.push({ icon: <BrIc k="tel" size={18} />, t: p.tel, go: { label: '전화', run: () => openTel(p.tel ?? '') }, copy: { label: '복사', run: () => copyTel(p.tel ?? '') } });
+  if (p.tel) rows.push({ icon: <BrIc k="tel" size={18} />, t: p.tel, tel: p.tel });
   if (p.hrs) rows.push({ icon: <BrIc k="clk" size={18} />, t: p.hrs, s: '영업 시간' });
   // 추가 정보: 네이버 플레이스 · 인스타그램 · 카카오톡 채널 · 홈페이지
   for (const l of p.links ?? []) rows.push(linkRow(l));
@@ -505,7 +506,12 @@ function PartnerSheet({ partner: p, open, branch, onClose }: { partner: Partner 
                   <PText style={styles.prT}>{r.t}</PText>
                   {!!r.s && <PText style={styles.prS}>{r.s}</PText>}
                 </View>
-                {r.copy && <PartnerGo go={r.copy} name={p.n} />}
+                {r.tel ? (
+                  <View style={styles.liBtns}>
+                    <CopyButton text={r.tel} label={`${p.n} 번호 복사`} />
+                    <CallButton tel={r.tel} label={`${p.n} 전화하기`} />
+                  </View>
+                ) : null}
                 {r.go && <PartnerGo go={r.go} name={p.n} />}
               </View>
             ))}
@@ -599,6 +605,7 @@ const styles = StyleSheet.create({
   valCode: { flexShrink: 1, fontFamily: Font.body900, fontSize: 13, lineHeight: 18, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: '#F3EEE2', overflow: 'hidden' },
   valCi: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3EEE2' },
   liGo: { alignSelf: 'center', height: 30, paddingHorizontal: 12, borderRadius: 15, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.yellow, justifyContent: 'center' },
+  liBtns: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: 8 },
   liGoT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
   pdHd: { height: 150, overflow: 'hidden', justifyContent: 'flex-end', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink },
   pdW: { position: 'absolute', right: 14, top: 10, fontFamily: Font.display, fontSize: 30, lineHeight: 36, color: Colors.white, opacity: 0.25 },

@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { nowDate } from '@/components/home/attendance';
 import { Button } from '@/components/ui/button';
+import { CallButton, CopyButton } from '@/components/ui/contact-buttons';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -75,6 +77,7 @@ export function TrialBookingSheet({ trial, open, onClose }: { trial: TrialBookin
       }>
       <View style={styles.card}>
         <Row label="지점" value={trial.branch} />
+        <Row label="지점 번호" value={BRANCH_TEL_MOCK} end={<View style={styles.btns}><CopyButton text={BRANCH_TEL_MOCK} label={`${trial.branch} 번호 복사`} /><CallButton tel={BRANCH_TEL_MOCK} label={`${trial.branch}에 전화하기`} /></View>} />
         <Row label="날짜" value={`${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`} />
         <Row label="시간" value={trial.time} />
         <Row label="언어" value={LANG_KO[trial.lang]} />
@@ -88,13 +91,14 @@ export function TrialBookingSheet({ trial, open, onClose }: { trial: TrialBookin
   );
 }
 
-function Row({ label, value, last = false }: { label: string; value: string; last?: boolean }) {
+function Row({ label, value, last = false, end }: { label: string; value: string; last?: boolean; end?: ReactNode }) {
   return (
     <View style={[styles.row, !last && styles.rowLine]}>
       <PText style={styles.label} color={Colors.inkSub}>
         {label}
       </PText>
       <PText style={styles.value}>{value}</PText>
+      {end}
     </View>
   );
 }
@@ -105,5 +109,6 @@ const styles = StyleSheet.create({
   rowLine: { borderBottomWidth: 1.5, borderColor: Colors.line },
   label: { width: 64, fontFamily: Font.body800, fontSize: 13, lineHeight: 20 },
   value: { flex: 1, fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
+  btns: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: -4 },
   hint: { fontFamily: Font.body600, fontSize: 12.5, lineHeight: 19 },
 });
