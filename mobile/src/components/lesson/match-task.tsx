@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
+import { WrongBadge } from '@/components/lesson/word-card';
 import { FadeUp, GhostButton, TaskMsg, YellowButton } from '@/components/lesson/lesson-ui';
 import { ClockIcon, XIcon } from '@/components/lesson/icons';
 import { TaskLayout, useTask } from '@/components/lesson/task-layout';
@@ -153,6 +154,7 @@ function Card({ text, en = false, state, onPress }: { text: string; en?: boolean
             <PText style={en ? styles.mcEn : styles.mcKo} color={ok ? Colors.matchOkInk : state === 'bad' ? Colors.matchBadInk : Colors.ink}>
               {text}
             </PText>
+            {state === 'bad' && <WrongBadge />}
           </View>
         </Animated.View>
       )}
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
   mcDown: { borderBottomWidth: 2.5, marginTop: 4 },
   mcSel: { backgroundColor: Colors.yellow },
   mcOk: { backgroundColor: Colors.matchOk, borderColor: Colors.matchOkLine, borderBottomWidth: 2.5, marginTop: 4, opacity: 0.72 },
-  mcBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine, borderBottomWidth: 2.5, marginTop: 4 },
+  mcBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine, borderStyle: 'dashed', borderBottomWidth: 2.5, marginTop: 4 },
   mcEn: { fontFamily: Font.display, fontSize: 15, lineHeight: 20, textAlign: 'center' },
   mcKo: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20, textAlign: 'center' },
   footMsg: { textAlign: 'center', fontFamily: Font.body800, fontSize: 13, lineHeight: 20 },

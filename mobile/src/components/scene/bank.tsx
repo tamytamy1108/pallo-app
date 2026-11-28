@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Pressable } from '@/components/ui/pressable';
+import { WrongBadge } from '@/components/lesson/word-card';
 import { Appear } from '@/components/ui/appear';
 import { showToast } from '@/components/ui/toast';
 import { PText } from '@/components/ui/text';
@@ -139,6 +140,7 @@ function Card({ label, en, done, sel, bad, onPress }: { label: string; en?: bool
             <PText style={[styles.mcText, en ? styles.mcEn : null]} color={done ? Colors.matchOkInk : bad ? Colors.matchBadInk : Colors.ink}>
               {label}
             </PText>
+            {bad && <WrongBadge />}
           </View>
         </View>
       )}
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
   mc: { minHeight: 56, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 18, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   mcSel: { backgroundColor: Colors.yellow },
   mcOk: { backgroundColor: Colors.matchOk, borderColor: Colors.matchOkLine },
-  mcBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine },
+  mcBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine, borderStyle: 'dashed' },
   mcText: { fontFamily: Font.body800, fontSize: 15, lineHeight: 15 * 1.3, textAlign: 'center' },
   mcEn: { fontFamily: Font.display },
   res: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },

@@ -4,6 +4,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import Svg, { Path } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
+import { WrongBadge } from '@/components/lesson/word-card';
 import { Appear } from '@/components/ui/appear';
 import { PText } from '@/components/ui/text';
 import { showToast } from '@/components/ui/toast';
@@ -191,6 +192,7 @@ function Tile({ label, en, ok, sel, bad, onPress }: { label: string; en?: boolea
             <PText style={en ? styles.tileEn : styles.tileKo} color={ok ? Colors.matchOkInk : red ? Colors.matchBadInk : Colors.ink}>
               {label}
             </PText>
+            {red && <WrongBadge />}
           </View>
         </Animated.View>
       )}
@@ -298,7 +300,7 @@ const styles = StyleSheet.create({
   tileSel: { backgroundColor: Colors.yellow },
   flash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16, opacity: 0 },
   tileOk: { backgroundColor: Colors.matchOk, borderColor: Colors.matchOkLine, boxShadow: 'none' },
-  tileBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine, boxShadow: 'none' },
+  tileBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine, borderStyle: 'dashed', boxShadow: 'none' },
   tileOn: { transform: [{ translateY: 3 }], boxShadow: `0px 1px 0px ${Colors.ink}` },
   tileEn: { fontFamily: Font.display, fontSize: 15, lineHeight: 19.5, textAlign: 'center' },
   tileKo: { fontFamily: Font.body800, fontSize: 15, lineHeight: 19.5, textAlign: 'center' },

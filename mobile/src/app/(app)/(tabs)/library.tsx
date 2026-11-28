@@ -22,7 +22,7 @@ import { Raised } from '@/components/ui/raised';
 import { ErrorState } from '@/components/ui/state-view';
 import { showToast } from '@/components/ui/toast';
 import { Colors, Spacing, TabHeadTop, TabScrollEnd } from '@/constants/theme';
-import { LANGS, bookTag, mapLang, sceneId, sceneOpen, unitId, type Book, type SituationMap } from '@/data/library';
+import { LANGS, bookTag, mapLang, sceneId, sceneOpen, type Book, type SituationMap } from '@/data/library';
 import { canUse, FREE_CHAPTER, isFreeChapter } from '@/state/access';
 import { useMe } from '@/state/me';
 import { useLastStep } from '@/state/progress';
@@ -49,6 +49,9 @@ export default function LibraryScreen() {
   // 비회원은 맵마다 첫 챕터만 (state/access)
   const allOpen = useMe((m) => canUse(m, 'allChapters'));
   const scroll = useRef<ScrollViewInstance>(null);
+  /** 과 목록 판의 위치 (스크롤 내용 안 y) · '교재 보기'로 내려갈 레벨 */
+  const panelY = useRef(0);
+  const [jump, setJump] = useState<{ lv: number; at: number } | null>(null);
   // 탭을 다시 누르면 맨 위로 · 다른 탭에 다녀오면 보던 자리 그대로 (lib/tab-reselect)
   const keepY = useTabScrollMemory('library', scroll);
   const [showTop, setShowTop] = useState(false);
@@ -118,16 +121,15 @@ export default function LibraryScreen() {
       router.push(`/scene/${sceneId(sitMap.id, no)}` as Href);
       return;
     }
-    // 스터디 맵 '교재 보기': 그 섬을 고르고, 지금 풀어야 할 과 화면으로 바로 가요 (비회원은 첫 과까지만)
+    // 스터디 맵 '교재 보기': 그 섬을 고르고, 아래 과 목록에서 지금 풀어야 할 과까지 내려가요 (CurrPanel 이 그 줄 자리를 알려 주면 스크롤)
     pickIsland(no - 1);
     const L = books[no - 1]?.study;
-    const next = L ? nextLessonNo(L) : null;
-    if (!L || next == null) return;
-    if (!allOpen && !isFreeChapter(next)) {
-      lockedChapter(`${next}과`, true);
-      return;
-    }
-    router.push(`/unit/${unitId(L.lv, next)}` as Href);
+    if (L) setJump({ lv: L.lv, at: Date.now() });
+  };
+  /** 과 목록에서 그 줄 자리(목록 판 안 y)를 받으면 그만큼 내려가요 */
+  const jumpTo = (y: number) => {
+    scroll.current?.scrollTo({ y: Math.max(0, panelY.current + y - JUMP_GAP), animated: true });
+    setJump(null);
   };
 
   const langLabel = LANGS[st.lang].ko;
@@ -176,7 +178,9 @@ export default function LibraryScreen() {
             <EmptyBlock title={`${langLabel} 상황 맵 · 커밍순`} sub="여행 · 카페 맵부터 열려요." />
           </PanelCard>
         ) : book ? (
-          <CurrPanel book={book} />
+          <View onLayout={(e) => (panelY.current = e.nativeEvent.layout.y)}>
+            <CurrPanel key={jump && book.study?.lv === jump.lv ? jump.at : 'panel'} book={book} focusNo={jump && book.study?.lv === jump.lv ? (nextLessonNo(book.study) ?? undefined) : undefined} onFocusY={jumpTo} />
+          </View>
         ) : (
           <PanelCard>
             <EmptyBlock title={`${langLabel} 교재 · 커밍순`} sub="섬이 열리면 여기서 바로 예습 · 본학습 · 복습할 수 있어요." button="열리면 알림 받기" onPress={() => showToast(`${langLabel} 교재가 나오면 알려드릴게요`)} />
@@ -187,6 +191,9 @@ export default function LibraryScreen() {
     </SafeAreaView>
   );
 }
+
+/** '교재 보기'로 내려갈 때 그 과 줄 위에 남길 틈 */
+const JUMP_GAP = 16;
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.cream },
