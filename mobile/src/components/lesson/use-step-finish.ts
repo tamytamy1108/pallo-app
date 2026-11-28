@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import type { CelebrateResult } from '@/components/lesson/celebrate';
+import { buildWhere, type CelebrateResult } from '@/components/lesson/celebrate';
 import { stopSay } from '@/components/lesson/voice';
 import { lessonBase } from '@/components/library/open-step';
 import { nextStepAfter, STAGE_KO, type AnyStepDef } from '@/data/lessons';
@@ -51,9 +51,13 @@ export function useStepFinish<S extends AnyStepDef>(lv: number, unit: number, st
         timed: score?.timed,
         fast: score?.fast,
         title: unitDone ? `${unit}과 완료!` : stageDone ? `${STAGE_KO[step.stage]} 완료!` : undefined,
+        sub: unitDone ? `${defs.length}단계를 다 했어요` : stageDone && next ? `다음은 ${STAGE_KO[next.stage]} · ${next.t}` : undefined,
         big: stageDone,
         unitComplete: unitDone,
+        tier: unitDone ? 'session' : stageDone ? 'zone' : 'step',
+        zone: step.stage,
         nextPoints: next?.xp,
+        where: buildWhere(defs, done, step.id, step.t),
       },
     });
   };

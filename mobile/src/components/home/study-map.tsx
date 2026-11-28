@@ -12,7 +12,7 @@ import { lessonBase } from '@/components/library/open-step';
 import { Pressable } from '@/components/ui/pressable';
 import { XmasBackLayer, XmasGarland } from '@/components/home/christmas';
 import { CurrentFx, NodeHop, Rider } from '@/components/home/map-current';
-import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
+import { buildWhere, Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
 import { Raised } from '@/components/ui/raised';
 import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
@@ -20,13 +20,12 @@ import { showToast } from '@/components/ui/toast';
 import { Font } from '@/constants/fonts';
 import { seasonOf, XMAS } from '@/constants/season';
 import { Colors, Spacing } from '@/constants/theme';
-import { chestReward, SKIP_POINTS } from '@/data/home';
+import { chestReward } from '@/data/home';
 import { lessonName, STUDY_STEPS } from '@/data/library';
 import { STUDY_LEVELS } from '@/data/library-lessons';
 import { MY_BOOK, STAGES } from '@/data/mock';
 import { sfx } from '@/lib/feedback';
 import { useStill } from '@/lib/motion';
-import { awardPoints } from '@/state/ledger';
 import { chestKey, markChestOpened, useChestOpened } from '@/state/chest';
 import { clearPos, DAILY_GOAL, getTodayDone, isDone, markDone, setLastStep, stepKey, useDoneCount, useLastStep } from '@/state/progress';
 
@@ -229,19 +228,28 @@ export function StudyMap() {
   };
 
   const pass = (si: number) => {
-    let gained = 0;
+    // 건너뛰기 테스트 통과: 처음부터 그 구역까지 남은 단계를 완료로 (포인트는 없어요 — 다 끝낸 게 아니라서 · 오늘 목표에는 세요)
+    const skipped = new Set<string>();
     M.steps.forEach((s, i) => {
-      const key = stepKey(LV, lesson, s.id);
-      if (M.stageOf(i) <= si && markDone(key)) {
-        gained += 1;
-        awardPoints(`skip:${key}`, 'skip', SKIP_POINTS);
-      }
+      if (M.stageOf(i) <= si && markDone(stepKey(LV, lesson, s.id))) skipped.add(s.id);
     });
     setSkipStage(null);
     const allNow = M.steps.every((s) => isDone(stepKey(LV, lesson, s.id)));
-    sfx('fanfare');
-    // 프로토타입: '테스트 통과!' · 'STAGE n까지 건너뛰었어요' · 단계마다 +10P
-    setCele({ correct: 0, total: 0, points: gained * SKIP_POINTS, goalDone: Math.min(getTodayDone(), DAILY_GOAL), goalTotal: DAILY_GOAL, unitComplete: allNow });
+    const stage = STAGES[si];
+    const where = buildWhere(M.steps, (id) => isDone(stepKey(LV, lesson, id)), '', undefined, (id) => skipped.has(id));
+    setCele({
+      correct: 0,
+      total: 0,
+      points: 0,
+      goalDone: Math.min(getTodayDone(), DAILY_GOAL),
+      goalTotal: DAILY_GOAL,
+      unitComplete: allNow,
+      tier: allNow ? 'session' : 'zone',
+      zone: stage.key,
+      title: allNow ? `${lesson}${M.lv >= 3 ? '회' : '과'} 통과!` : '테스트 통과!',
+      sub: `${stage.label}까지 건너뛰었어요 · 퀘스트 ${skipped.size}개 완료`,
+      where: { ...where, label: `${stage.label}까지 건너뜀` },
+    });
   };
 
   const chestTap = () => {
