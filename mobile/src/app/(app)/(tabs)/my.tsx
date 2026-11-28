@@ -154,10 +154,10 @@ export default function MyScreen() {
                 ? // 프로: 연속 학습(앱 학습 코너) · 출석률(맡은 세션 중 프로로 참여) · 보낸 노트 · 받은 고마워요 (2026-11-26)
                   [
                     { ic: 'flame', v: num(my?.stats.streakDays, '일'), l: '연속 학습', onPress: go('/me/ranking') },
-                    // 프로 = 출석률(맡은 세션 중) · 스텝 = 참여한 세션(프로로 출석 체크한 누적 수 — 맡은 세션이 없어서)
+                    // 프로 = 출석률(맡은 세션 중 · 누르면 PRO'S NOTE, 맨 위에 출석률 · 스파크까지 남은 정도) · 스텝 = 참여한 세션(프로로 출석 체크한 누적 수 — 맡은 세션이 없어서)
                     me.role === 'manager'
                       ? { ic: 'bolt', v: num(proStats.sessionsTotal, '회'), l: '참여한 세션', onPress: () => setProSessionsOpen(true) }
-                      : { ic: 'bolt', v: num(proStats.attendanceRate, '%'), l: '출석률', onPress: () => setClassOpen(true) },
+                      : { ic: 'bolt', v: num(proStats.attendanceRate, '%'), l: '출석률', onPress: go('/me/notes?box=sent') },
                     { ic: 'mic', v: num(proStats.notesSent, '개'), l: '보낸 노트', onPress: go('/me/notes?box=sent') },
                     { ic: 'heart', v: num(proStats.thanksReceived, '개'), l: '받은 고마워요', onPress: go('/me/notes?box=sent') },
                   ]
@@ -183,13 +183,7 @@ export default function MyScreen() {
           <Appear kind="rise" delay={100}>
             <View style={styles.stack}>
               <SecHead title="내 수업" />
-              <MyClassCard
-                classes={my.myClasses.thisWeek}
-                open={classOpen}
-                onOpen={setClassOpen}
-                // 프로만: 출석률 칸에서 열면 위에 출석률 · 스파크까지 남은 정도
-                rate={proStats && me.role !== 'manager' ? { sessions: proStats.sessionsThisMonth, checks: proStats.attendanceChecks, percent: proStats.attendanceRate ?? null } : undefined}
-              />
+              <MyClassCard classes={my.myClasses.thisWeek} open={classOpen} onOpen={setClassOpen} />
             </View>
           </Appear>
         ) : my?.study ? (

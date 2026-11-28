@@ -10,6 +10,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { AccountPage, Box, Icon, Lift } from '@/components/account/parts';
 import { DiaryList } from '@/components/account/diary-list';
 import { NoteRow, savedNoteItems } from '@/components/account/pro-note-parts';
+import { ProRateBox } from '@/components/account/pro-rate-box';
 import { useNoteState } from '@/components/account/store';
 import { Button } from '@/components/ui/button';
 import { ErrorState, LoadingState } from '@/components/ui/state-view';
@@ -91,6 +92,7 @@ function SentList({ head }: { head: ReactNode }) {
   };
   return (
     <AccountPage title="PRO'S NOTE" bodyStyle={styles.body} head={head}>
+      <ProRateBox />
       <PText style={styles.intro}>내가 반에 보낸 노트예요. 몇 명이 읽었는지 볼 수 있어요.</PText>
       <NoteListBody q={q} empty={<NotesEmpty sub={'수업이 끝나고 노트를 보내면 여기 모여요.'} />}>
         {(rows) => (
@@ -201,6 +203,7 @@ function NotesList({ head }: { head?: ReactNode }) {
 
   return (
     <AccountPage title="PRO'S NOTE" bodyStyle={styles.body} head={head} scrollRef={scroll}>
+      {head ? <ProRateBox /> : null}
       <PText style={styles.intro}>수업이 끝나면 프로님이 그날 배운 표현 · 바로잡은 문장 · 질문을 정리해서 보내 줘요. 마음에 드는 건 저장해 두고 다시 봐요.</PText>
       {wait ? (
         <Box color={Colors.yellow} style={styles.wait}>

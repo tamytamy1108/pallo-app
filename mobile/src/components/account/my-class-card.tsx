@@ -5,7 +5,6 @@ import { Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { proRateRewardLine } from '@/data/my';
 
 import { Box } from './parts';
 
@@ -21,14 +20,8 @@ export function dayLabel(iso: string) {
  * 값은 마이 BFF(GET /me/mypage myClasses.thisWeek) 그대로 — 서버가 리더 배정 요일 + 실제 리딩 회차로 만들어요.
  * 테이블을 아직 모르는 회차(안 열림)는 지점 이름을 보여 줘요.
  */
-/** 프로 '출석률' 칸 숫자 (이번 달 · 마이 proStats 그대로) */
-export type ProRate = { sessions: number; checks: number; percent: number | null };
-
-/**
- * open · onOpen: 프로 마이 '출석률' 칸을 누르면 '출석률 · 담당팀' 시트.
- * 위에 출석률 · 출석 수와 출석률 스파크까지 남은 정도, 아래 이번 주 담당팀 (2026-11-27)
- */
-export function MyClassCard({ classes, open: all, onOpen: setAll, rate }: { classes: MyPageProClass[]; open: boolean; onOpen: (v: boolean) => void; rate?: ProRate }) {
+/** open · onOpen: 마이 숫자 칸(이번 달 세션 · 출석 체크)을 누르면 '담당팀' 시트 (이번 주) */
+export function MyClassCard({ classes, open: all, onOpen: setAll }: { classes: MyPageProClass[]; open: boolean; onOpen: (v: boolean) => void }) {
   return (
     <>
       <Box style={styles.card}>
@@ -44,13 +37,7 @@ export function MyClassCard({ classes, open: all, onOpen: setAll, rate }: { clas
         )}
       </Box>
       {/* 숫자 칸(이번 달 세션 · 출석 체크)을 누르면: 담당팀 — 이번 주 맡은 세션 */}
-      <Sheet open={all} onClose={() => setAll(false)} title={rate ? '출석률 · 담당팀' : '담당팀'} label="담당팀">
-        {rate ? (
-          <View style={styles.rate}>
-            <PText style={styles.rateB}>{`출석률 ${rate.percent ?? '–'}% · 출석 ${rate.checks}`}</PText>
-            <PText style={styles.rateS}>{proRateRewardLine(rate.sessions, rate.checks)}</PText>
-          </View>
-        ) : null}
+      <Sheet open={all} onClose={() => setAll(false)} title="담당팀" label="담당팀">
         <View style={styles.wk}>
           {classes.map((c, i) => (
             <ClassRow key={c.courseId + c.date} c={c} first={i === 0} />
@@ -89,7 +76,4 @@ const styles = StyleSheet.create({
   s: { fontFamily: Font.body700, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
   n: { fontFamily: Font.body900, fontSize: 13, lineHeight: 18, color: Colors.purple },
   wk: { gap: 2 },
-  rate: { gap: 4, padding: 14, borderWidth: 2, borderColor: Colors.ink, borderRadius: 14, backgroundColor: Colors.white },
-  rateB: { fontFamily: Font.body900, fontSize: 17, lineHeight: 24 },
-  rateS: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19, color: Colors.purple },
 });
