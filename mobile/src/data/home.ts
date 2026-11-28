@@ -258,6 +258,8 @@ export type Noti = {
   who?: { name: string; bg: string; body: MemberBody };
   text: string;
   time: string;
+  /** 생긴 때 (ms) — 기기에서 생긴 알림만. 있으면 time 대신 이걸로 '3분 전' · '어제' 를 매번 다시 계산해요 */
+  at?: number;
   /** 누르면 갈 화면 */
   href: string;
   read: boolean;

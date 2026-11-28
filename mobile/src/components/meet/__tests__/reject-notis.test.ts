@@ -1,3 +1,4 @@
+import { localNotificationItem } from '@/api/notifications';
 import { getArrivedNotis } from '@/components/home/noti-state';
 import { CLUBS } from '@/data/meet';
 
@@ -29,5 +30,14 @@ describe('거절되면 알림함에도 한 줄', () => {
     const n = getArrivedNotis()[0]!;
     expect(n.text).toBe(`‘퇴근 후 영어 맥주 번개’ 번개 참여 신청이 거절됐어요. 사유: ${rejectPhrase('CONDITION')}`);
     expect(n.href).toBe('/meet/m-x');
+  });
+
+  it('생긴 때를 남겨서 시간이 지나면 \'N분 전\'으로 보여요', () => {
+    const n = getArrivedNotis()[0]!;
+    expect(n.at).toEqual(expect.any(Number));
+    expect(localNotificationItem(n, false).extras?.time).toBe('방금');
+    const later = jest.spyOn(Date, 'now').mockReturnValue(n.at! + 5 * 60_000);
+    expect(localNotificationItem(n, false).extras?.time).toBe('5분 전');
+    later.mockRestore();
   });
 });

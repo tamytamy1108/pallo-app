@@ -23,7 +23,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 /** 내가 가입함 — 멤버 수 +1 */
 export const Joined: Story = { beforeEach: meetState(() => setClubState(CLUB_FREE.id, 'in')) };
-/** 내가 만든 동아리 — NEW · '방금 만듦' */
+/** 내가 만든 동아리 — NEW · 활동 줄도 'NEW' */
 export const Mine: Story = { args: { c: myClub('u-mine') } };
 /** 승인 대기 — NEW */
 export const Waiting: Story = { args: { c: myClub('u-wait', true) } };
