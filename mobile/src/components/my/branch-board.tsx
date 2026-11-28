@@ -354,14 +354,15 @@ type PartnerAction = { label: string; icon: 'map' | 'open'; run: () => void };
 type InfoRow = { icon: ReactNode; t: string; s?: string; go?: PartnerAction; tel?: string };
 
 /** 링크 종류별 아이콘 · 기본 이름 · 설명 */
+/** 링크 아이콘은 전부 검정 선 (2026-11-28 — 브랜드 색 로고를 섞지 않아요) */
 const LINK_KIND: Record<PartnerLinkKind, { t: string; s: string; icon: ReactNode }> = {
   naver: {
     t: '네이버 플레이스',
     s: '리뷰 · 메뉴 · 길찾기',
     icon: (
-      <Svg width={18} height={18} viewBox="0 0 24 24">
-        <Rect x={2} y={2} width={20} height={20} rx={6} fill="#03C75A" />
-        <Path d="M8 7h2.6l2.8 4.3V7H16v10h-2.6l-2.8-4.3V17H8z" fill="#fff" />
+      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+        <Rect x={3} y={3} width={18} height={18} rx={5} />
+        <Path d="M9 16V8l6 8V8" />
       </Svg>
     ),
   },
@@ -380,9 +381,8 @@ const LINK_KIND: Record<PartnerLinkKind, { t: string; s: string; icon: ReactNode
     t: '카카오톡 채널',
     s: '문의 · 예약',
     icon: (
-      <Svg width={18} height={18} viewBox="0 0 24 24">
-        <Rect x={2} y={2} width={20} height={20} rx={6} fill="#FEE500" />
-        <Path d="M12 6.5c-3.6 0-6.5 2.2-6.5 5 0 1.8 1.2 3.4 3 4.3l-.6 2.4 2.7-1.8c.5.1.9.1 1.4.1 3.6 0 6.5-2.2 6.5-5s-2.9-5-6.5-5z" fill="#1E1A2B" />
+      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={Colors.ink} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+        <Path d="M12 4.5c-4.7 0-8.5 2.9-8.5 6.5 0 2.3 1.6 4.4 4 5.5l-.8 3.3 3.6-2.4c.6.1 1.1.1 1.7.1 4.7 0 8.5-2.9 8.5-6.5S16.7 4.5 12 4.5z" />
       </Svg>
     ),
   },
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   cpT: { fontFamily: Font.body800, fontSize: 13, lineHeight: 19 },
   pdRows: { overflow: 'hidden', borderWidth: 2, borderColor: Colors.line, borderRadius: 16, backgroundColor: Colors.white },
   pr: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 12 },
-  prIc: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.cream },
+  prIc: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3EEE2' },
   prT: { fontFamily: Font.body800, fontSize: 13.5, lineHeight: 19 },
   prS: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub },
   ph: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 4, marginBottom: 8 },

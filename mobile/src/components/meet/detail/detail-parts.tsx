@@ -29,7 +29,7 @@ export function InfoRows({ children }: { children: ReactNode }) {
   return <View style={styles.rows}>{children}</View>;
 }
 
-/** 정보 한 줄: 연보라 아이콘 칸 · 글 · 작은 글 · 오른쪽 버튼 */
+/** 정보 한 줄: 베이지 아이콘 칸 · 글 · 작은 글 · 오른쪽 버튼 */
 export function InfoRow({ icon, main, sub, end, first }: { icon: IconName; main: ReactNode; sub?: ReactNode; end?: ReactNode; first?: boolean }) {
   return (
     <View style={[styles.row, !first && styles.rowLine]}>
@@ -301,7 +301,8 @@ const styles = StyleSheet.create({
   hostName: { flexDirection: 'row', alignItems: 'center' },
   hostTag: { fontFamily: Font.body900, fontSize: 11.5, color: Colors.purple },
   hostGo: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 18, color: Colors.inkSub },
-  ic: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.lavender, alignItems: 'center', justifyContent: 'center' },
+  // 아이콘 칸: 연한 베이지 + 검정 선 (2026-11-28 — 연보라에서 바꿨어요, 복사 · 전화 버튼과 같은 바탕)
+  ic: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F3EEE2', alignItems: 'center', justifyContent: 'center' },
   rowTx: { flex: 1, minWidth: 0, paddingTop: 0 },
   main: infoStyles.main,
   sub: infoStyles.sub,

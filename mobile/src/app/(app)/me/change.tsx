@@ -162,13 +162,13 @@ function retMax(st: Date, exp: Date) {
   return a < exp ? a : exp;
 }
 /**
- * 지금 팀에서 듣다가 옮길 때 마지막 날 = 새 팀이 시작하는 주(월~일)의 전 주 일요일.
- * 새 팀이 화요일에 시작해도 그 주 월요일 옛 팀 수업은 안 들어요 — 한 주에 옛 팀 · 새 팀을 겹쳐 들어 주 횟수를 넘지 않게.
+ * 지금 팀에서 듣다가 옮길 때 마지막 날 = 뉴 팀이 시작하는 주(월~일)의 전 주 일요일.
+ * 뉴 팀이 화요일에 시작해도 그 주 월요일 옛 팀 수업은 안 들어요 — 한 주에 옛 팀 · 뉴 팀을 겹쳐 들어 주 횟수를 넘지 않게.
  */
 const keepLast = (st: Date) => addDays(st, -((st.getDay() + 6) % 7) - 1);
 /**
  * 팀 · 지점 변경 신청 글 (내 스터디 카드가 줄을 나눠 보여요 · 운영진도 그대로 읽어요)
- * 첫 줄 = '지금 팀 → 새 팀' (여러 팀은 · 로) · 둘째 줄 = '12/13(일)까지 지금 팀 · 12/16(수)부터 새 팀'
+ * 첫 줄 = '지금 팀 → 뉴 팀' (여러 팀은 · 로) · 둘째 줄 = '12/13(일)까지 지금 팀 · 12/16(수)부터 뉴 팀'
  */
 const moveHead = (from: Team[], to: Team[]) => `${from.map(teamLabel).join(' · ')} → ${to.map(teamLabel).join(' · ')}`;
 const moveTail = (gap: Gap | null, st: Date) => (gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬어요` : `${fmtDay(keepLast(st))}까지 지금 팀`);
@@ -280,7 +280,7 @@ function ChangeScreen() {
   const reasonList: readonly string[] = longRest ? REST_LONG_REASONS : REST_REASONS;
   const reasonPick = f.reason && reasonList.includes(f.reason) ? f.reason : null;
   const reasonText = f.kind === 'rest' && reasonPick ? `${reasonPick} · ${f.why.trim()}` : undefined;
-  // 새 팀 · 지점: 가장 빠른 날 = 2주 뒤부터 새 팀 수업이 있는 첫날 (금요일은 휴무 · 팀을 안 골랐으면 금요일만 빼요)
+  // 뉴 팀 · 지점: 가장 빠른 날 = 2주 뒤부터 뉴 팀 수업이 있는 첫날 (금요일은 휴무 · 팀을 안 골랐으면 금요일만 빼요)
   const newTeams = f.kind === 'branch' ? f.picks : f.to ? [f.to] : [];
   const newDays = newTeams.length ? daysOf(newTeams) : new Set([0, 1, 2, 3, 4, 6].filter((d) => d !== CLOSED_WEEKDAY));
   const earliest = firstOn(CHANGE_MIN, newDays);
@@ -312,7 +312,7 @@ function ChangeScreen() {
       if (f.why.trim().length < REST_REASON_MIN) return { ok: false, txt: `사유를 ${REST_REASON_MIN}자 이상 적어 주세요` };
       return { ok: true, label: moves.length ? '연기 · 팀 변경' : '연기', st, en: restRt, txt };
     }
-    if (st && !startOk(st)) return { ok: false, txt: '새 팀 수업이 있는 날로 다시 골라 주세요' };
+    if (st && !startOk(st)) return { ok: false, txt: '뉴 팀 수업이 있는 날로 다시 골라 주세요' };
     if (f.kind === 'branch') {
       if (!mode) return { ok: false, txt: '어떻게 다닐지 골라 주세요' };
       if (mode === 'both' && many && !f.from) return { ok: false, txt: '바꿀 지점을 골라 주세요' };
@@ -333,7 +333,7 @@ function ChangeScreen() {
     if (f.kind !== 'add' && !f.gap) return { ok: false, txt: '옮기기 전까지 들을지 쉴지 골라 주세요' };
     if (f.kind === 'add') return { ok: true, label, st, txt: `${fmtDay(st)}부터 ${teamLabel(f.to)} 수업을 더해요 · 주 ${ms.wk}회 → ${ms.wk + ms.plan.perWeek}회` };
     const t = cls[0];
-    return { ok: true, label, st, txt: `${moveHead([t], [f.to])}\n${moveTail(f.gap, st)} · ${fmtDay(st)}부터 새 팀${f.to.branch === t.branch ? '' : ` · ${withJeom(f.to.branch)}`}` };
+    return { ok: true, label, st, txt: `${moveHead([t], [f.to])}\n${moveTail(f.gap, st)} · ${fmtDay(st)}부터 뉴 팀${f.to.branch === t.branch ? '' : ` · ${withJeom(f.to.branch)}`}` };
   }
 
   const back = () => {
@@ -424,7 +424,7 @@ function ChangeScreen() {
       allow={(d) => newDays.has(d.getDay())}
       onMonth={(d) => set({ mon: f.mon + d })}
       onPick={(t) => set({ start: t })}
-      hint={`새 팀 수업 요일(${dayNames(newDays)})에서 골라요 · ${fmtDay(earliest)}부터`}
+      hint={`뉴 팀 수업 요일(${dayNames(newDays)})에서 골라요 · ${fmtDay(earliest)}부터`}
     />
   );
 
@@ -926,7 +926,7 @@ function ChangeScreen() {
               <PText style={styles.empty}>지금 들어갈 수 있는 팀이 없어요 · 운영진에게 문의해 주세요</PText>
             )}
           </View>
-          <PText style={styles.q}>{k === 'add' ? '언제부터요?' : '언제부터 새 팀에서 들을까요?'}</PText>
+          <PText style={styles.q}>{k === 'add' ? '언제부터요?' : '언제부터 뉴 팀에서 들을까요?'}</PText>
           {k !== 'add' ? <PText style={styles.note}>{`2주 전에 신청해야 해요 · 가장 빨리 ${fmtDay(earliest)}부터`}</PText> : null}
           <View style={styles.chips}>
             <ChoiceChip label={`${fmtDay(earliest)} · 가장 빠른 날`} on={!f.calOpen && f.start === earliest.getTime()} onPress={pickEarliest} />
@@ -959,7 +959,7 @@ function GapPick({ gap, start, onPick }: { gap: Gap | null; start: number | null
     <>
       <PText style={styles.q}>옮기기 전까지는요?</PText>
       <View style={styles.teams} accessibilityRole="radiogroup">
-        <Opt title="지금 팀에서 듣다가 옮겨요" sub={st ? `${fmtDay(keepLast(st))}까지 지금 팀에서 들어요` : '새 팀이 시작하는 주의 전 주까지 들어요'} on={gap === 'keep'} onPress={() => onPick('keep')} />
+        <Opt title="지금 팀에서 듣다가 옮겨요" sub={st ? `${fmtDay(keepLast(st))}까지 지금 팀에서 들어요` : '뉴 팀이 시작하는 주의 전 주까지 들어요'} on={gap === 'keep'} onPress={() => onPick('keep')} />
         <Opt title="쉬다가 옮겨요 (홀딩)" sub={st ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬어요` : '내일부터 옮기는 날 전날까지 쉬어요'} on={gap === 'hold'} onPress={() => onPick('hold')} />
       </View>
     </>
