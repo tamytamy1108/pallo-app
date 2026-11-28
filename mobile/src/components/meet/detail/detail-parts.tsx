@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
 import { meetRoleKind, RoleTag } from '@/components/common/role-tag';
-import * as Clipboard from 'expo-clipboard';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { CopyButton } from '@/components/ui/contact-buttons';
 import { GrowInput } from '@/components/ui/grow-input';
 import { Pressable } from '@/components/ui/pressable';
 import { keepAll } from '@/components/common/sheet-parts';
@@ -23,13 +23,6 @@ import { LgButton } from '../parts';
 /*
  * 상세 화면 조각들 (프로토타입 .lg-drows · .lg-drow · .dsec · .ddesc · .lg-mlist · .lg-mrow · .lg-hiform · .dnote · .lg-dcta).
  */
-
-/** 복사: 클립보드에 넣고 알려 줘요 (폰 · 웹 모두) */
-export function copyText(text: string, msg: string) {
-  Clipboard.setStringAsync(text)
-    .then(() => showToast(msg))
-    .catch(() => showToast('복사하지 못했어요'));
-}
 
 /** 정보 줄 묶음 (흰 칸 · 잉크 2px · 둥글기 18) */
 export function InfoRows({ children }: { children: ReactNode }) {
@@ -83,13 +76,9 @@ export const infoStyles = StyleSheet.create({
   fee0: { fontFamily: Font.body700, fontSize: 14, color: '#A39C8E', textDecorationLine: 'line-through' },
 });
 
-/** 주소 복사 (38 × 38 · 연한 테두리 · 보라 아이콘) */
+/** 주소 복사 — 앱 공통 복사 버튼 (ui/contact-buttons) */
 export function CopyBtn({ text, msg = '주소를 복사했어요', label = '주소 복사' }: { text: string; msg?: string; label?: string }) {
-  return (
-    <Pressable onPress={() => copyText(text, msg)} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [styles.copy, pressed && { transform: [{ scale: 0.94 }] }]} hitSlop={3}>
-      <Icon name="copy" size={18} color={Colors.purple} />
-    </Pressable>
-  );
+  return <CopyButton text={text} msg={msg} label={label} />;
 }
 
 /** 섹션 제목 (.dsec — 15 · 900, 위 20 아래 8) */

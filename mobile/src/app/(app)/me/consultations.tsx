@@ -1,5 +1,5 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import type { TrialApplication } from '@/api/trial-applications';
@@ -7,6 +7,7 @@ import { useTrialApplications } from '@/api/use-trial-applications';
 import { AccountPage, Head } from '@/components/account/parts';
 import { nowDate } from '@/components/home/attendance';
 import { Button } from '@/components/ui/button';
+import { CallButton, CopyButton } from '@/components/ui/contact-buttons';
 import { Pill } from '@/components/ui/pill';
 import { Pressable } from '@/components/ui/pressable';
 import { Sheet } from '@/components/ui/sheet';
@@ -134,6 +135,7 @@ function ConsultSheet({ a, onClose }: { a: TrialApplication | null; onClose: () 
         <>
           <View style={styles.card}>
             <Row label="지점" value={a.branchName} />
+            {phone ? <Row label="지점 번호" value={phone} end={<View style={styles.sBtns}><CopyButton text={phone} label={`${a.branchName} 번호 복사`} /><CallButton tel={phone} label={`${a.branchName}에 전화하기`} /></View>} /> : null}
             <Row label="날짜" value={longDate(a.date)} />
             <Row label="시간" value={a.time} />
             <Row label="언어" value={a.languageLabel} />
@@ -152,13 +154,14 @@ function ConsultSheet({ a, onClose }: { a: TrialApplication | null; onClose: () 
   );
 }
 
-function Row({ label, value, last = false }: { label: string; value: string; last?: boolean }) {
+function Row({ label, value, last = false, end }: { label: string; value: string; last?: boolean; end?: ReactNode }) {
   return (
     <View style={[styles.sRow, !last && styles.sRowLine]}>
       <PText style={styles.sLabel} color={Colors.inkSub}>
         {label}
       </PText>
       <PText style={styles.sValue}>{value}</PText>
+      {end}
     </View>
   );
 }
@@ -175,6 +178,7 @@ const styles = StyleSheet.create({
   sRow: { flexDirection: 'row', gap: 12, paddingVertical: 11 },
   sRowLine: { borderBottomWidth: 1.5, borderColor: Colors.line },
   sLabel: { width: 64, fontFamily: Font.body800, fontSize: 13, lineHeight: 20 },
+  sBtns: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: -4 },
   sValue: { flex: 1, fontFamily: Font.body800, fontSize: 14, lineHeight: 20 },
   hint: { marginTop: 12, fontFamily: Font.body600, fontSize: 12.5, lineHeight: 19 },
 });

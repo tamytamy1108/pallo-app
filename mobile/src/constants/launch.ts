@@ -11,4 +11,6 @@ export const LAUNCH = {
   trip: false,
   /** 멤버 차단 (글 메뉴 · 프로필 · 설정 › 차단한 멤버). 신고는 그대로 */
   block: false,
+  /** 지점 옮기기 › '두 지점 같이 다녀요' (프리미엄 · CVVIP+). false 면 '어떻게 다닐까요?' 없이 늘 아예 옮겨요 (2026-11-28 사용자 결정) */
+  twoBranch: false,
 } as const;

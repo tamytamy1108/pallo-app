@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { BackHandler, Keyboard, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { BackHandler, Keyboard, Platform, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChipScroll } from '@/components/ui/chip-scroll';
@@ -17,6 +17,7 @@ import { apiErrorMessage } from '@/api/errors';
 import { useRequestChange } from '@/api/change-requests';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
+import { LAUNCH } from '@/constants/launch';
 import { Colors } from '@/constants/theme';
 import {
   addDays,
@@ -164,6 +165,12 @@ function retMax(st: Date, exp: Date) {
  * 새 팀이 화요일에 시작해도 그 주 월요일 옛 팀 수업은 안 들어요 — 한 주에 옛 팀 · 새 팀을 겹쳐 들어 주 횟수를 넘지 않게.
  */
 const keepLast = (st: Date) => addDays(st, -((st.getDay() + 6) % 7) - 1);
+/**
+ * 팀 · 지점 변경 신청 글 (내 스터디 카드가 줄을 나눠 보여요 · 운영진도 그대로 읽어요)
+ * 첫 줄 = '지금 팀 → 새 팀' (여러 팀은 · 로) · 둘째 줄 = '12/13(일)까지 지금 팀 · 12/16(수)부터 새 팀'
+ */
+const moveHead = (from: Team[], to: Team[]) => `${from.map(teamLabel).join(' · ')} → ${to.map(teamLabel).join(' · ')}`;
+const moveTail = (gap: Gap | null, st: Date) => (gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬어요` : `${fmtDay(keepLast(st))}까지 지금 팀`);
 /** 쉬는 날 수 (시작일 ~ 복귀 전날) */
 const restDays = (st: Date, rt: Date) => Math.round((rt.getTime() - st.getTime()) / 864e5);
 const isLong = (st: Date, rt: Date) => rt > addMonths(st, 1);
@@ -208,7 +215,8 @@ function ChangeScreen() {
   // 고른 종류의 대상 수업 (프로토타입 cgCls) — 연기는 늘 모든 수업
   const pickedCls = T[f.cls === 'all' ? 0 : f.cls];
   // ----- 지점 이동 -----
-  const two = ms.plan.twoBranch;
+  // 두 지점 같이 다니기는 출시 때 숨겨요 (LAUNCH.twoBranch) — 숨기면 '어떻게 다닐까요?' 없이 늘 아예 옮기기
+  const two = LAUNCH.twoBranch ? ms.plan.twoBranch : undefined;
   const mode = two ? f.mode : 'move';
   /** 지금 다니는 지점 (두 곳이면 '두 지점 같이'가 한 곳 바꾸기가 돼요 · 한 곳을 빼려면 그 지점에 문의) */
   const nowBranches = [...new Set(T.map((x) => x.branch))];
@@ -314,11 +322,9 @@ function ChangeScreen() {
       if (endTeams.length && !f.gap) return { ok: false, txt: '그 전까지 들을지 쉴지 골라 주세요' };
       const label = CHANGE_KIND.branch[1];
       const labels = f.picks.map(teamLabel).join(' · ');
-      const endTxt = mode === 'move' ? '지금 수업' : endTeams.map(teamLabel).join(' · ');
-      const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(keepLast(st))}까지 ${endTxt}을 듣고`;
       const keptTxt = keptTeams.length ? ` · ${keptTeams.map(teamLabel).join(' · ')}은 그대로` : '';
       if (!endTeams.length) return { ok: true, label, st, txt: `${fmtDay(st)}부터 ${withJeom(f.br)} ${labels}도 같이 들어요 · 출석은 두 지점 합쳐 주 ${MULTI_BRANCH_WEEK_MAX}회까지` };
-      return { ok: true, label, st, txt: `${before}, ${fmtDay(st)}부터 ${withJeom(f.br)} ${labels}에서 들어요${keptTxt}` };
+      return { ok: true, label, st, txt: `${moveHead(endTeams, f.picks)}\n${moveTail(f.gap, st)} · ${fmtDay(st)}부터 ${withJeom(f.br)}${keptTxt}` };
     }
     if (!f.to) return { ok: false, txt: '옮길 팀을 골라 주세요' };
     if (!st) return { ok: false, txt: '언제부터 들을지 골라 주세요' };
@@ -326,8 +332,7 @@ function ChangeScreen() {
     if (f.kind !== 'add' && !f.gap) return { ok: false, txt: '옮기기 전까지 들을지 쉴지 골라 주세요' };
     if (f.kind === 'add') return { ok: true, label, st, txt: `${fmtDay(st)}부터 ${teamLabel(f.to)} 수업을 더해요 · 주 ${ms.wk}회 → ${ms.wk + ms.plan.perWeek}회` };
     const t = cls[0];
-    const before = f.gap === 'hold' ? `${fmtDay(REST_MIN)}~${fmtDay(addDays(st, -1))} 쉬고` : `${fmtDay(keepLast(st))}까지 ${teamLabel(t)}에서 듣고`;
-    return { ok: true, label, st, txt: `${before}, ${fmtDay(st)}부터 ${f.to.branch === t.branch ? '' : withJeom(f.to.branch) + ' '}${teamLabel(f.to)}에서 들어요` };
+    return { ok: true, label, st, txt: `${moveHead([t], [f.to])}\n${moveTail(f.gap, st)} · ${fmtDay(st)}부터 새 팀${f.to.branch === t.branch ? '' : ` · ${withJeom(f.to.branch)}`}` };
   }
 
   const back = () => {
@@ -342,6 +347,7 @@ function ChangeScreen() {
 
   // 안드로이드 뒤로 버튼도 단계부터 되돌려요
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (f.step === 'pick') return false;
       back();
@@ -1028,10 +1034,11 @@ function RestCard({ st, rt, teams, back }: { st: Date; rt: Date; teams: Team[]; 
  */
 function ChangeCard({ kind, sub, st, ending, kept, next, all, hold, weekMax }: { kind: string; sub?: string; st: Date; ending: Team[]; kept: Team[]; next: Team[]; all: boolean; hold: boolean; weekMax: number | null }) {
   const last = addDays(st, -1);
-  const where = sub ?? (next[0] ? `${withJeom(next[0].branch)}에서 들어요` : '');
-  const endWho = all ? '지금 스터디' : ending.map(teamLabel).join(' · ');
+  // 지점이 바뀔 때만 '○○점에서 들어요' (같은 지점 팀 변경이면 지점 줄은 빼요)
+  const moved = next.some((t) => !ending.some((e) => e.branch === t.branch));
+  const where = sub ?? (moved && next[0] ? `${withJeom(next[0].branch)}에서 들어요` : '');
+  const until = hold ? `${fmtDay(REST_MIN)}~${fmtDay(last)} 쉬고 끝나요` : `${fmtDay(keepLast(st))}까지 듣고 끝나요`;
   const notes = [
-    ending.length ? (hold ? `${endWho}는 ${fmtDay(REST_MIN)}~${fmtDay(last)} 쉬고 끝나요` : `${endWho}는 ${fmtDay(keepLast(st))}까지 듣고 끝나요`) : null,
     kept.length ? `${kept.map(teamLabel).join(' · ')}는 그대로예요` : null,
     weekMax ? `출석은 두 지점 합쳐 주 ${weekMax}회까지예요` : null,
   ].filter((x): x is string => !!x);
@@ -1042,6 +1049,14 @@ function ChangeCard({ kind, sub, st, ending, kept, next, all, hold, weekMax }: {
         <PText style={styles.rcBig}>{`${fmtDay(st)}부터`}</PText>
         {where ? <PText style={styles.cgSub}>{where}</PText> : null}
       </View>
+      {ending.length ? (
+        <View style={styles.rcSec}>
+          <PText style={styles.rcK2}>{`${all ? '지금 스터디' : '바뀌는 스터디'} · ${until}`}</PText>
+          {ending.map((t) => (
+            <StudyLine key={keyOf(t)} t={t} />
+          ))}
+        </View>
+      ) : null}
       {next.length ? (
         <View style={styles.rcSec}>
           <PText style={styles.rcK2}>새 스터디</PText>
