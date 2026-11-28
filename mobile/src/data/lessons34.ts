@@ -108,10 +108,20 @@ export const ORDER3: Stage[] = ['pre', 'main', 'post'];
 
 /** 회차: 데이터가 있는 회차만 (나머지는 라이브러리에서 '준비 중') */
 export type Unit34 = { lv: 3; no: number; title: string; D: Lv3Unit; sq: SpeakItem[] } | { lv: 4; no: number; title: string; D: Lv4Unit };
+/**
+ * Lv.4 는 한국어 해석 없이 보여요 (2026-11-29): 질문 · 토론 주제 · 상황 지문 · 편 이름의 해석을 비워요.
+ * KEY EXPRESSIONS 뜻 (짝 맞추기 문제) · SAY IT BETTER 쓰임 설명은 그대로 둬요. 해석 칸이 비면 화면이 그 줄을 안 그려요.
+ */
+const noKo4 = (D: Lv4Unit): Lv4Unit => ({
+  ...D,
+  ice: D.ice.map((q) => ({ ...q, ko: '' })),
+  free: D.free.map((q) => ({ ...q, ko: '' })),
+  debate: { ...D.debate, qKo: '', situationKo: '', warm: D.debate.warm?.map(([en]): [string, string] => [en, '']), A: { ...D.debate.A, ko: '' }, B: { ...D.debate.B, ko: '' } },
+});
 const UNITS: Unit34[] = [
   { lv: 3, no: 101, title: 'The Present', D: LV3_101, sq: LV3_101_SQ },
-  { lv: 4, no: 101, title: 'The Present', D: LV4_101 },
-  { lv: 4, no: 102, title: 'Behind the Mask', D: LV4_HW },
+  { lv: 4, no: 101, title: 'The Present', D: noKo4(LV4_101) },
+  { lv: 4, no: 102, title: 'Behind the Mask', D: noKo4(LV4_HW) },
 ];
 export const findUnit34 = (lv: number, no: number) => UNITS.find((u) => u.lv === lv && u.no === no);
 

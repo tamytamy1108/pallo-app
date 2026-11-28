@@ -102,9 +102,11 @@ export function ChooseBlock({ task: t }: { task: ChooseTask }) {
                   <View style={StyleSheet.flatten([styles.opt, sel && styles.optOn, pressed && styles.pressed])}>
                     <PText style={styles.qn} color={SUB}>{`Q${i + 1}`}</PText>
                     <PText style={styles.qEn}>{q.en}</PText>
-                    <PText style={styles.qKo} color={SUB}>
-                      {q.ko}
-                    </PText>
+                    {q.ko ? (
+                      <PText style={styles.qKo} color={SUB}>
+                        {q.ko}
+                      </PText>
+                    ) : null}
                   </View>
                 )}
               </Pressable>

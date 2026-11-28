@@ -300,7 +300,7 @@ const debTasks = (D: Lv4Unit, env: CornerEnv, my: 'A' | 'B'): Task34[] => {
       modelLabel: '예습 때 준비한 발언',
       ph: 'I believe ___ because ___. For example, ___.',
     },
-    R('② 반박 배틀 · 20초', 20, `I'm on side ${op}. ${opArg[0]} ${opArg[1] || ''}`, `SIDE ${op} · ${deb[op].ko}`),
+    R('② 반박 배틀 · 20초', 20, `I'm on side ${op}. ${opArg[0]} ${opArg[1] || ''}`, deb[op].ko ? `SIDE ${op} · ${deb[op].ko}` : `SIDE ${op} · ${deb[op].t}`),
     R('③ 반박 배틀 · 15초', 15, ask[0], '상대 질문에 바로 답해요'),
     R('④ 반박 배틀 · 10초', 10, ask[1], '짧고 분명하게'),
     R('⑤ 재반박 · 20초', 20, opArg[2] || opArg[opArg.length - 1], '상대 마지막 주장을 받아쳐요'),
@@ -473,7 +473,7 @@ const finalPos = (D: Lv4Unit, env: CornerEnv): Corner => ({
         ph: 'At first, I thought ___. Now I think ___ because ___.',
         save: (v) => setAfter(`${env.uk}:final`, v),
       },
-      { type: 'say', kick: '보너스 · 즉흥 룰렛', head: { k: 'BONUS', p: '처음 보는 토픽 · 15초 준비 → 1분', m: '' }, roulette: ROULETTE, prep: 15, limit: 60, need: 2, checks: DEB_CHECKS.slice(0, 3) },
+      { type: 'say', kick: '보너스 · 즉흥 룰렛', head: { k: 'BONUS', p: '처음 보는 토픽 · 15초 준비 → 1분', m: '' }, roulette: ROULETTE.map((r) => ({ ...r, ko: '' })), prep: 15, limit: 60, need: 2, checks: DEB_CHECKS.slice(0, 3) },
     ];
   },
 });

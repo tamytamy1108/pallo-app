@@ -15,6 +15,7 @@ import { haptic, sfx } from '@/lib/feedback';
 import { speak, stopSpeaking } from '@/lib/tts';
 import { useIsSaved, toggleExpression } from '@/state/expressions';
 
+import type { SlotKey } from './text';
 import type { Ask, Head } from './types';
 
 /*
@@ -164,6 +165,54 @@ export function Msg({ text, style }: { text: string; style?: StyleProp<ViewStyle
       <PText style={s.msg} color={SUB}>
         <Rich text={text} boldColor={PINK_INK} />
       </PText>
+    </View>
+  );
+}
+/** 말하기 순서 칸 이름 · 영어 실마리 (답 → 이유 → 예시 → 사회적 관점) */
+const GUIDE: Record<SlotKey, [string, string]> = {
+  choice: ['답', 'I think'],
+  reason: ['이유', 'because'],
+  example: ['예시', 'e.g.'],
+  society: ['사회적 관점', 'people'],
+};
+/**
+ * 말하기 순서 안내: ① 답 › ② 이유 › ③ 예시 › ④ 사회적 관점 칸을 차례로 잇고, 아래에 '3문장 이상' 같은 조건을 작은 알약으로.
+ * 긴 회색 한 줄(답 → 이유 → …) 대신 보여요.
+ */
+export function SplitGuide({ keys, notes }: { keys: SlotKey[]; notes: string[] }) {
+  return (
+    <View style={s.guide} accessibilityLabel={`${keys.map((k) => GUIDE[k][0]).join(', ')} 순서로 말해요${notes.length ? ` · ${notes.join(' · ')}` : ''}`}>
+      <View style={s.guideRow}>
+        {keys.map((k, i) => (
+          <View key={k} style={[s.guideItem, k === 'society' && s.guideWide]}>
+            {i > 0 ? (
+              <Svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke={SUB} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="m9 6 6 6-6 6" />
+              </Svg>
+            ) : null}
+            <View style={s.guideChip}>
+              <View style={s.guideNo}>
+                <PText style={s.guideNoT}>{i + 1}</PText>
+              </View>
+              <PText style={s.guideT} numberOfLines={1}>
+                {GUIDE[k][0]}
+              </PText>
+              <PText style={s.guideEn} color={SUB} numberOfLines={1}>
+                {GUIDE[k][1]}
+              </PText>
+            </View>
+          </View>
+        ))}
+      </View>
+      {notes.length ? (
+        <View style={s.guideNotes}>
+          {notes.map((n) => (
+            <View key={n} style={s.guidePill}>
+              <PText style={s.guidePillT}>{n}</PText>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -413,6 +462,18 @@ export const s = StyleSheet.create({
   cardhT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17, flexShrink: 1 },
   tools: { flexDirection: 'row', gap: 6 },
   msg: { fontFamily: Font.body800, fontSize: 13, lineHeight: 20.15, textAlign: 'center' },
+  guide: { alignSelf: 'stretch', alignItems: 'center', gap: 8 },
+  guideRow: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', maxWidth: 420 },
+  guideItem: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 1 },
+  guideWide: { flex: 1.3 },
+  guideChip: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2, paddingTop: 7, paddingBottom: 6, paddingHorizontal: 2, borderRadius: 14, borderWidth: 1.5, borderColor: Colors.line, backgroundColor: Colors.white },
+  guideNo: { marginBottom: 2, width: 20, height: 20, borderRadius: 10, backgroundColor: Colors.yellow, borderWidth: 1.5, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
+  guideNoT: { fontFamily: Font.display, fontSize: 10, lineHeight: 13 },
+  guideT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16, letterSpacing: -0.3 },
+  guideEn: { fontFamily: Font.body700, fontSize: 10.5, lineHeight: 14 },
+  guideNotes: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
+  guidePill: { paddingVertical: 3, paddingHorizontal: 10, borderRadius: 11, backgroundColor: Colors.lavender },
+  guidePillT: { fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.purple },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   chk: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10, rowGap: 6 },
   chkT: { fontFamily: Font.body800, fontSize: 12, lineHeight: 17 },

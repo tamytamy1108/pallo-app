@@ -15,7 +15,7 @@ import { AnsCards, ExtraView, FollowBubble, Marked, ModelCard, SplitView, TopPar
 import { Ring, RING_PURPLE, useCountdown } from '../ring';
 import { aiFix, MIN_SENT, nrm, pickOne, sentN, splitAnswer, upgradeOf, words, type Split } from '../text';
 import type { SayExtra, SayTask } from '../types';
-import { CardHead, CmpBox, EndMsg, EndNote, FootRow, GoBtn, MicKey, ModeTabs, Msg, NoSpeakToggle, SkipBtn, Spk, Stars, SUB, UsedList, sayEn } from '../ui';
+import { CardHead, CmpBox, EndMsg, EndNote, FootRow, GoBtn, MicKey, ModeTabs, Msg, NoSpeakToggle, SkipBtn, Spk, SplitGuide, Stars, SUB, UsedList, sayEn } from '../ui';
 import { PickBlock } from './pick';
 
 type Mode = 'voice' | 'write';
@@ -306,13 +306,17 @@ function SayInner({ task }: { task: SayTask }) {
         <Body>
           {top}
           {st.append ? <CmpBox label="먼저 말한 내용" text={st.append.base} /> : null}
-          <Msg
-            text={
-              st.append
-                ? `**${st.append.missing.join(' · ')}**만 이어서 써요`
-                : `${t.prompt || '영어로 내 생각을 써요'}${needSent(t) ? ` · ${MIN_SENT}문장 이상` : ''}${rt.noSpeak ? ' · 시간 제한 없이 풀어요' : ''}`
-            }
-          />
+          {!st.append && t.split ? (
+            <SplitGuide keys={t.split.keys} notes={[needSent(t) ? `${MIN_SENT}문장 이상` : '', rt.noSpeak ? '시간 제한 없이' : ''].filter(Boolean)} />
+          ) : (
+            <Msg
+              text={
+                st.append
+                  ? `**${st.append.missing.join(' · ')}**만 이어서 써요`
+                  : `${t.prompt || '영어로 내 생각을 써요'}${needSent(t) ? ` · ${MIN_SENT}문장 이상` : ''}${rt.noSpeak ? ' · 시간 제한 없이 풀어요' : ''}`
+              }
+            />
+          )}
           <GrowInput
             value={st.draft}
             onChangeText={(draft) => setSt((s) => ({ ...s, draft }))}
@@ -335,8 +339,9 @@ function SayInner({ task }: { task: SayTask }) {
     );
 
   // ---- 말하기 ----
+  const prepping = st.ph === 'ready' || st.ph === 'prep';
   const tip =
-    st.ph === 'ready' || st.ph === 'prep'
+    prepping
       ? t.prepTip || '무엇을 말할지 머릿속으로 정리해요 · 주장 → 이유 → 예시'
       : st.append
         ? `**${st.append.missing.join(' · ')}**만 이어서 말해요`
@@ -347,7 +352,7 @@ function SayInner({ task }: { task: SayTask }) {
         {top}
         {st.append ? <CmpBox label="먼저 말한 내용" text={st.append.base} /> : null}
         {ring ? <Ring left={cd.left ?? ring.total} total={ring.total} label={ring.label} color={ring.color} /> : null}
-        <Msg text={tip} />
+        {!prepping && !st.append && t.split ? <SplitGuide keys={t.split.keys} notes={needSent(t) ? [`${MIN_SENT}문장 이상`] : []} /> : <Msg text={tip} />}
         {st.ph === 'rec' || heard ? (
           <PText style={styles.said} color={heard ? Colors.ink : SUB}>
             {heard || '듣고 있어요…'}

@@ -96,7 +96,8 @@ export function FreeTalk1({
   const [C] = useState(() => free2Of(D));
   const { noSpeak } = useLearnPrefs();
   const [log, setLog] = useState<Msg[]>(() => [
-    { en: C.lines[0][0], ko: C.lines[0][1] },
+    // Lv.4 는 한국어 해석 없이 (AI 말도 영어만)
+    { en: C.lines[0][0] },
   ]);
   const [i, setI] = useState(0);
   const [fuDone, setFuDone] = useState<Record<number, 1>>({});
@@ -157,7 +158,7 @@ export function FreeTalk1({
     // 단답이면 다음으로 안 넘어가고 꼬리 질문 (한 질문에 한 번)
     if (words(v) < C.follow.min && !fuDone[i]) {
       setFuDone({ ...fuDone, [i]: 1 });
-      push(C.follow.en, C.follow.ko);
+      push(C.follow.en);
       return;
     }
     const nx = C.lines[i + 1];
@@ -173,12 +174,12 @@ export function FreeTalk1({
       const used = C.checks.filter(([, re]) => re.test(all)).length;
       if (used < C.mission.need && mtry < 2) {
         setMtry(mtry + 1);
-        push(C.mission.en, C.mission.ko);
+        push(C.mission.en);
         return;
       }
     }
     setI(i + 1);
-    if (nx) push(nx[0], nx[1]);
+    if (nx) push(nx[0]);
     if (endNow) {
       setDone(true);
       sfx("correct");
