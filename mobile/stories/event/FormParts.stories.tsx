@@ -74,7 +74,7 @@ const iso = (days: number) => {
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
 };
 
-/** 달력 · 안 고름 (오늘이 있는 달부터 · 오늘은 고를 수 없어도 연보라 테두리로 표시 · 1주 안 날짜는 흐림 · 이전 달 막힘) */
+/** 달력 · 안 고름 (고를 수 있는 첫날이 있는 달부터 · ‹ 로 오늘이 있는 달까지 넘겨 볼 수 있음 · 오늘은 숫자 밑줄 · 1주 안 날짜는 흐림) */
 export const CalendarEmpty: Story = { render: () => <Calendar initial="" /> };
 /** 달력 · 고름 */
 export const CalendarPicked: Story = { render: () => <Calendar initial={iso(10)} /> };

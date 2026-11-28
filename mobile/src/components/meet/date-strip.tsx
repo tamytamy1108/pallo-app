@@ -57,7 +57,7 @@ function DayBtn({ on, no, first, today, label, small, onPress, a11y }: { on: boo
   return (
     <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={a11y} style={[styles.btn, no && !on && styles.no, mark && todayMark.cell, on && styles.on]}>
       <PText style={[first ? styles.bFirst : styles.b, no && !on && { color: '#A39C8E' }, mark && todayMark.text, on && { color: '#fff' }]}>{label}</PText>
-      <PText style={[styles.small, mark && todayMark.text, on && { color: '#E3DCCB' }]}>{small}</PText>
+      <PText style={[styles.small, on && { color: '#E3DCCB' }]}>{small}</PText>
     </Pressable>
   );
 }

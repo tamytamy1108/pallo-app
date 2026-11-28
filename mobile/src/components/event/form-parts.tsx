@@ -157,11 +157,10 @@ export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }:
   t0.setHours(0, 0, 0, 0);
   const min = new Date(t0);
   min.setDate(t0.getDate() + minDays);
-  // 오늘이 있는 달부터 열어요 — 다른 달력처럼 오늘이 늘 보이게 (고를 수 없는 날이어도 오늘 표시). 그보다 앞 달로는 못 가요.
+  // 고를 수 있는 첫날이 있는 달부터 열어요 (2주 뒤가 다음 달이면 다음 달부터). 오늘이 있는 달은 ‹ 로 넘겨 볼 수 있고, 그보다 앞 달로는 못 가요.
   // 이미 고른 날이 있으면(제안 고치기) 그 달부터 열어요
   const [cm, setCm] = useState(() => {
-    if (!value) return 0;
-    const v = new Date(value + 'T00:00');
+    const v = value ? new Date(value + 'T00:00') : min;
     return Math.max(0, (v.getFullYear() - t0.getFullYear()) * 12 + v.getMonth() - t0.getMonth());
   });
   const max = new Date(t0);
