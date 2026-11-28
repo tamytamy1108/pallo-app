@@ -50,6 +50,7 @@ import {
   teamsOf,
   teamWeekdays,
   TODAY,
+  usableEnd,
   ymd,
   type ChangeKind,
   type Team,
@@ -184,6 +185,9 @@ function restCount(T: Team[], st: Date, rt: Date) {
   }
   return n;
 }
+/** 그 사이 들을 수 있는 수업 수 — 팀 요일로 세되 멤버십 주 횟수(wk)를 넘지 않게 */
+const classesBetween = (T: Team[], st: Date, en: Date, wk: number) =>
+  en <= st ? 0 : Math.min(restCount(T, st, en), Math.floor((restDays(st, en) / 7) * wk));
 /** 요일 이름 (월요일부터) · 예) 월 · 수 · 토 */
 const dayNames = (days: Set<number>) =>
   [1, 2, 3, 4, 5, 6, 0]
@@ -263,6 +267,23 @@ function ChangeScreen() {
     });
   const targets = targetsOf(f.back);
   const ready = targets.every((x) => !!x);
+  // 연기 · 사용 가능 기간 (2026-11-28 사용자 결정)
+  //  - 복귀일이 사용 가능 기간을 넘으면 신청할 수 없어요 (그 날을 고르면 안내 창 · 다음 버튼도 막혀요)
+  //  - 기간 안이어도 복귀 뒤 남은 횟수를 기간 안에 다 못 쓸 것 같으면, 신청 전에 '괜찮나요?' 한 번 물어요
+  const useEnd = usableEnd(ms.start, ms.plan.usableMonths);
+  const [overAsk, setOverAsk] = useState(false);
+  const [riskAsk, setRiskAsk] = useState(false);
+  const restRisk = (() => {
+    if (f.kind !== 'rest' || !f.start || !f.ret || !useEnd) return null;
+    const st = new Date(f.start);
+    const rt = new Date(f.ret);
+    if (rt > useEnd) return { over: true, msg: '' };
+    const leftAfter = Math.max(0, ms.left - classesBetween(T, TODAY, st, ms.wk));
+    const back = targets.filter((x): x is Team => !!x);
+    const canUse = classesBetween(back, rt, addDays(useEnd, 1), ms.wk);
+    if (canUse >= leftAfter) return null;
+    return { over: false, msg: `${ms.name} 사용 가능 기간은 ${ymd(useEnd)}까지예요.\n${fmtDay(rt)}에 복귀하면 기간 안에 들을 수 있는 수업은 약 ${canUse}회라, 남은 ${leftAfter}회를 다 못 쓸 수도 있어요.` };
+  })();
   const retTeams = targets.filter((x): x is Team => !!x);
   const retDays = daysOf(retTeams);
   const moves = T.flatMap((t): [Team, Team][] => {
@@ -304,6 +325,7 @@ function ChangeScreen() {
       if (!st) return { ok: false, txt: '언제부터 쉴지 골라 주세요' };
       if (!ready) return { ok: false, txt: '돌아갈 팀을 골라 주세요' };
       if (!restRt) return { ok: false, txt: '언제 돌아올지 골라 주세요' };
+      if (restRisk?.over && useEnd) return { ok: false, txt: `복귀일이 사용 가능 기간(${ymd(useEnd)}까지)을 넘어 신청할 수 없어요` };
       // 첫 줄 = 쉬는 수업 · 둘째 줄 = 며칠 · 기간 · 복귀 (+ 옮기는 팀) — 내 스터디 카드가 줄을 나눠 따로 보여요
       const moveTxt = moves.map(([a, b]) => `${teamLabel(a)} → ${teamLabel(b)}`).join(' · ');
       const txt = `${T.map(teamLabel).join(' · ')}\n${restDays(st, restRt)}일 연기 · ${fmtDay(st)}~${fmtDay(addDays(restRt, -1))} · ${fmtDay(restRt)} 복귀${moves.length ? ` · 복귀 후 ${moveTxt}` : ''}`;
@@ -358,8 +380,12 @@ function ChangeScreen() {
   });
 
   // 신청 = 운영진 전산으로 넘기기 (바로 바뀌지 않고 대기로 남아요)
-  const send = () => {
+  const send = (risked = false) => {
     if (!sum.ok || request.isPending) return;
+    if (restRisk && !restRisk.over && !risked) {
+      setRiskAsk(true);
+      return;
+    }
     // 사유를 쓰던 키보드를 내리고 결과 창을 띄워요 (키보드가 결과 창 확인 버튼을 덮지 않게)
     Keyboard.dismiss();
     const done = { label: sum.label, txt: sum.txt };
@@ -403,6 +429,11 @@ function ChangeScreen() {
       return;
     }
     const st = restSt ?? REST_MIN;
+    // 사용 가능 기간을 넘는 복귀일은 고를 수 없어요 — 안내 창
+    if (useEnd && d > useEnd) {
+      setOverAsk(true);
+      return;
+    }
     // 1달을 넘는 날을 처음 고르면 확인 창부터
     if (isLong(st, d) && !f.longOk) {
       set({ longAsk: t });
@@ -512,7 +543,7 @@ function ChangeScreen() {
       ...(reasonText ? [['사유', reasonText] as [string, string]] : []),
     ];
     return (
-      <AccountPage title="신청 확인" onBack={back} scrollRef={scroll} bodyStyle={styles.body} bottom={<Foot note="신청하면 관리자가 확인한 뒤 알림으로 알려 드려요" label={request.isPending ? '신청하는 중…' : `${sum.label} 신청하기`} ok={!request.isPending} onPress={send} />}>
+      <AccountPage title="신청 확인" onBack={back} scrollRef={scroll} bodyStyle={styles.body} bottom={<Foot note="신청하면 관리자가 확인한 뒤 알림으로 알려 드려요" label={request.isPending ? '신청하는 중…' : `${sum.label} 신청하기`} ok={!request.isPending} onPress={() => send()} />}>
         <PText style={styles.q}>이렇게 바뀌어요</PText>
         {f.kind === 'rest' && sum.en ? (
           <RestCard st={sum.st} rt={sum.en} teams={T} back={targets} />
@@ -546,6 +577,19 @@ function ChangeScreen() {
             ))}
           </Box>
         )}
+        {/* 기간 안이지만 남은 횟수를 다 못 쓸 수도 있어요 — 괜찮으면 그대로 신청 */}
+        <ConfirmDialog
+          open={riskAsk}
+          title="남은 횟수를 다 못 쓸 수도 있어요"
+          message={restRisk ? `${restRisk.msg}\n그래도 신청할까요?` : undefined}
+          cancelLabel="다시 고르기"
+          confirmLabel="그래도 신청하기"
+          onConfirm={() => {
+            setRiskAsk(false);
+            send(true);
+          }}
+          onCancel={() => setRiskAsk(false)}
+        />
         <Sheet
           open={!!sent}
           onClose={() => {
@@ -743,6 +787,15 @@ function ChangeScreen() {
               setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, reasonY.current - 12), animated: true }), 450);
             }}
             onCancel={() => set({ longAsk: null })}
+          />
+          {/* 사용 가능 기간을 넘는 복귀일 — 신청할 수 없어요 (버튼 하나) */}
+          <ConfirmDialog
+            open={overAsk}
+            title="이 날은 복귀일로 고를 수 없어요"
+            message={useEnd ? `${ms.name} 사용 가능 기간은 ${ymd(useEnd)}까지예요. 이 기간을 넘어 연기할 수는 없어요. 그 전 날로 골라 주세요.` : undefined}
+            confirmLabel="날짜 다시 고르기"
+            onConfirm={() => setOverAsk(false)}
+            onCancel={() => setOverAsk(false)}
           />
         </>
       ) : (
