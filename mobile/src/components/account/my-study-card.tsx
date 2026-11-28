@@ -70,12 +70,15 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
           <View style={styles.info}>
             <View style={styles.pl}>
               <PText style={styles.plan}>{study.membershipName}</PText>
-              <PText style={styles.period} accessibilityLabel={`기간 ${period}, ${dot(study.endDate)}까지`}>
+              {/* 이 날까지 남은 횟수를 써요 (멤버십마다 사용 가능 기간이 달라요) */}
+              <PText style={styles.periodK}>잔여 횟수 유효기간</PText>
+              <PText style={styles.period} accessibilityLabel={`잔여 횟수 유효기간 ${period}, ${dot(study.endDate)}까지`}>
                 {period}
               </PText>
             </View>
             {/* 연기 · 변경은 한 횟수를 같이 써요 — 둘로 나눠 보이지 않고 남은 횟수 하나만 (BFF 는 아직 두 칸이라 연기 칸 값을 써요) */}
-            <KV k="연기 · 변경" v={leftText(study.remainingHoldingCount)} />
+            {/* 사용 가능 기간 안에서 쓰는 횟수 — 'PREMIUM 3년간 무제한' · 'PLUS 7.5개월간 3회' */}
+            <KV k="연기 · 변경" v={`${study.usablePeriod ? `${study.usablePeriod}간 ` : ''}${leftText(study.remainingHoldingCount)}`} />
             {/* 멤버십 정책 (PREMIUM = 최대 3팀 · 주 4회) — 서버가 안 주면 지금 팀 수 · 요일 수 */}
             <KV k="팀" v={study.planRule ?? `${study.teams.length}팀 · 주 ${weekly}회`} />
           </View>
@@ -213,6 +216,7 @@ const styles = StyleSheet.create({
   info: { flex: 1, minWidth: 0 },
   pl: { gap: 2, marginBottom: 8 },
   plan: { fontFamily: Font.body900, fontSize: 18, lineHeight: 26 },
+  periodK: { fontFamily: Font.body800, fontSize: 11, lineHeight: 15, color: Colors.inkSub, marginTop: 2 },
   period: { fontFamily: Font.body700, fontSize: 12, lineHeight: 17, color: Colors.inkSub },
   kv: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingVertical: 6, borderTopWidth: 1.5, borderColor: Colors.line },
   kvK: { fontFamily: Font.body800, fontSize: 12.5, lineHeight: 19, color: Colors.inkSub },

@@ -13,7 +13,7 @@
  * 가짜 서버는 기기에 남은 값(state/me · state/expressions · data/my · data/account)으로 같은 모양을 만들어요 — 프로는 기기 역할(isProLike)로 정해요.
  */
 import { getNoteState } from '@/components/account/store';
-import { getMembership, LANG_COLOR, MY_BRANCH, MY_TEAMS, planRuleText, PRO_CLASSES, PRO_NOTES, PRO_SENT_NOTES, PRO_STATS, teamLabel, teamNameByNo, teamWeekdays, TODAY } from '@/data/account';
+import { getMembership, LANG_COLOR, MY_BRANCH, MY_TEAMS, planRuleText, usableText, PRO_CLASSES, PRO_NOTES, PRO_SENT_NOTES, PRO_STATS, teamLabel, teamNameByNo, teamWeekdays, TODAY } from '@/data/account';
 import { findChallenge, getChallengeState } from '@/data/challenge';
 import { followLists, MY_BADGES, rankPeople } from '@/data/my';
 import { isMember } from '@/state/access';
@@ -167,6 +167,8 @@ export type MyPageStudy = {
   /** 남은 연기 · 팀 변경 횟수 — null 이면 제한 없음 */
   remainingHoldingCount: number | null;
   remainingCourseChangeCount: number | null;
+  /** 사용 가능 기간 글 ('3년' · '7.5개월') — 남은 횟수 · 연기 · 변경을 이 기간 안에 써요. 없으면 기간 글 없이 횟수만 */
+  usablePeriod?: string | null;
   /** 멤버십 정책 한 줄 (예: '최대 3팀 · 주 4회') — 없으면 팀 수 · 요일 수로 보여요 */
   planRule?: string | null;
   teams: MyPageStudyTeam[];
@@ -253,6 +255,7 @@ export function mockStudy(): MyPageStudy {
     endDate: iso(ms.exp),
     remainingHoldingCount: left,
     remainingCourseChangeCount: left,
+    usablePeriod: usableText(ms.plan.usableMonths),
     planRule: planRuleText(ms.plan),
     teams: MY_TEAMS.map((t) => ({
       courseId: t.branch + t.no,
