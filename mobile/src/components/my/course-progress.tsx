@@ -185,7 +185,7 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
     <>
       <View style={[styles.hero, { backgroundColor: L.c }]}>
         <PText style={styles.heroK}>
-          Lv.{L.lv} · {lessons.length}{L.kind === 'pattern' ? '과' : '회'} · {weeks}주 과정
+          Lv.{L.lv} · {lessons.length}{L.kind === 'pattern' || L.kind === 'basic' ? '과' : '회'} · {weeks}주 과정
         </PText>
         <PText style={styles.heroT}>{L.series}</PText>
         <PText style={styles.heroS}>

@@ -188,7 +188,7 @@ function Tile({ label, en, ok, sel, bad, onPress }: { label: string; en?: boolea
         <Animated.View style={move}>
           <View style={[styles.tile, sel && styles.tileSel, ok && styles.tileOk, red && styles.tileBad, pressed && !ok && styles.tileOn]}>
             <Animated.View pointerEvents="none" style={[styles.flash, { backgroundColor: red ? '#FF9DB1' : Colors.white }, glow]} />
-            <PText style={en ? styles.tileEn : styles.tileKo} color={ok ? '#1D6B3B' : red ? '#A3243C' : Colors.ink}>
+            <PText style={en ? styles.tileEn : styles.tileKo} color={ok ? Colors.matchOkInk : red ? Colors.matchBadInk : Colors.ink}>
               {label}
             </PText>
           </View>
@@ -297,8 +297,8 @@ const styles = StyleSheet.create({
   tile: { minHeight: 56, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 18, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, boxShadow: `0px 4px 0px ${Colors.ink}`, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   tileSel: { backgroundColor: Colors.yellow },
   flash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16, opacity: 0 },
-  tileOk: { backgroundColor: '#DDF3E2', borderColor: '#2E9E5B', boxShadow: 'none' },
-  tileBad: { backgroundColor: '#FBD5DC', borderColor: '#D83A56', boxShadow: 'none' },
+  tileOk: { backgroundColor: Colors.matchOk, borderColor: Colors.matchOkLine, boxShadow: 'none' },
+  tileBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine, boxShadow: 'none' },
   tileOn: { transform: [{ translateY: 3 }], boxShadow: `0px 1px 0px ${Colors.ink}` },
   tileEn: { fontFamily: Font.display, fontSize: 15, lineHeight: 19.5, textAlign: 'center' },
   tileKo: { fontFamily: Font.body800, fontSize: 15, lineHeight: 19.5, textAlign: 'center' },

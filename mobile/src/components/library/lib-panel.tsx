@@ -284,7 +284,7 @@ export function Chevron({ color = Colors.inkSub, size = 18 }: { color?: string; 
 }
 
 /** 레벨 진도 '0/20과' (3D 이름표) */
-export const levelProgress = (L: StudyLevel) => `${levelDoneCount(L)}/${L.total ?? L.lessons.length}${L.kind === 'pattern' ? '과' : '회'}`;
+export const levelProgress = (L: StudyLevel) => `${levelDoneCount(L)}/${L.total ?? L.lessons.length}${L.kind === 'pattern' || L.kind === 'basic' ? '과' : '회'}`;
 
 const styles = StyleSheet.create({
   card: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 22, backgroundColor: Colors.white, padding: 14, gap: 12 },

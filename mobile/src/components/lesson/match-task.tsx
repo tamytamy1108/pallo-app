@@ -150,7 +150,7 @@ function Card({ text, en = false, state, onPress }: { text: string; en?: boolean
       {({ pressed }) => (
         <Animated.View style={a}>
           <View style={StyleSheet.flatten([styles.mc, state === 'sel' && styles.mcSel, ok && styles.mcOk, state === 'bad' && styles.mcBad, pressed && !ok && styles.mcDown])}>
-            <PText style={en ? styles.mcEn : styles.mcKo} color={state === 'bad' ? '#8A6170' : Colors.ink}>
+            <PText style={en ? styles.mcEn : styles.mcKo} color={ok ? Colors.matchOkInk : state === 'bad' ? Colors.matchBadInk : Colors.ink}>
               {text}
             </PText>
           </View>
@@ -303,8 +303,8 @@ const styles = StyleSheet.create({
   mc: { minHeight: 56, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 18, borderWidth: 2.5, borderColor: Colors.ink, borderBottomWidth: 6.5, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
   mcDown: { borderBottomWidth: 2.5, marginTop: 4 },
   mcSel: { backgroundColor: Colors.yellow },
-  mcOk: { backgroundColor: Colors.yellow, borderBottomWidth: 2.5, marginTop: 4, opacity: 0.45 },
-  mcBad: { backgroundColor: '#F6D3DC', borderStyle: 'dashed', borderBottomWidth: 2.5, marginTop: 4 },
+  mcOk: { backgroundColor: Colors.matchOk, borderColor: Colors.matchOkLine, borderBottomWidth: 2.5, marginTop: 4, opacity: 0.72 },
+  mcBad: { backgroundColor: Colors.matchBad, borderColor: Colors.matchBadLine, borderBottomWidth: 2.5, marginTop: 4 },
   mcEn: { fontFamily: Font.display, fontSize: 15, lineHeight: 20, textAlign: 'center' },
   mcKo: { fontFamily: Font.body900, fontSize: 15, lineHeight: 20, textAlign: 'center' },
   footMsg: { textAlign: 'center', fontFamily: Font.body800, fontSize: 13, lineHeight: 20 },

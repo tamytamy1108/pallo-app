@@ -49,6 +49,11 @@ export const useProgressVersion = () => useDoneCount('');
 
 /** 과 하나의 모든 단계를 끝냈는지 (프로토타입 lessonDone) */
 export const lessonDone = (L: StudyLevel, ls: Lesson) => STAGES.every((k) => STUDY_STEPS[L.kind][k].every((s) => isDone(stepKey(L.lv, ls.no, s.id))));
+/** 지금 풀어야 할 과 = 열린 과 중 아직 다 끝내지 않은 첫 과 (다 끝냈으면 마지막 열린 과 · 열린 과가 없으면 null) */
+export function nextLessonNo(L: StudyLevel) {
+  const open = L.lessons.filter((ls) => ls.data);
+  return (open.find((ls) => !lessonDone(L, ls)) ?? open[open.length - 1])?.no ?? null;
+}
 /** 그 레벨에서 끝낸 과 수 */
 export const levelDoneCount = (L: StudyLevel) => L.lessons.filter((ls) => ls.data && lessonDone(L, ls)).length;
 export const sceneDone = (m: SituationMap, no: number) => isDone(sceneKey(sceneId(m.id, no)));
