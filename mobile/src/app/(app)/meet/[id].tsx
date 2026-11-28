@@ -211,7 +211,7 @@ export default function MeetDetail() {
             <Pressable onPress={() => approveMyAsk(m.id)} accessibilityRole="button" style={{ alignSelf: 'center', padding: 8 }}>
               <PText style={infoStyles.sub}>개발용 · 호스트가 수락한 것처럼 보기</PText>
             </Pressable>
-            <Pressable onPress={() => rejectMyAsk(m.id, 'SCHEDULE')} accessibilityRole="button" style={{ alignSelf: 'center', padding: 8 }}>
+            <Pressable onPress={() => rejectMyAsk(m.id, 'SCHEDULE', m.title)} accessibilityRole="button" style={{ alignSelf: 'center', padding: 8 }}>
               <PText style={infoStyles.sub}>개발용 · 호스트가 거절한 것처럼 보기</PText>
             </Pressable>
           </>
