@@ -127,7 +127,7 @@ noSpeakUntil · noListenUntil (datetime, 15분) · sfx(bool) · dailyGoal(int) �
 | PointLedger | memberId · amount · reason(`attend` · `step` · …) · refId · at → 이번 주 / 이번 달 합계 |
 | RankingSnapshot | scope(`member` · `branch`) · period(`week` · `month`) · rank · points · closedAt [TBC] |
 | Streak | memberId · currentDays · lastActiveDate (학습 1개 이상 = 이어짐) |
-| Badge · MemberBadge | id · name · condition [TBC] / memberId · badgeId · earnedAt |
+| AppBadge · MobileUserBadge · AppBadgeProgress | code · name · description · conditionType · threshold · imageStorageKey(256×256 PNG) · status(DRAFT · VISIBLE · HIDDEN) · sortOrder / mobileUserId · badgeId · earnedAt · seenAt(null = 축하 화면 아직) / mobileUserId · conditionType · subjectId(번개 · 동아리) · occurredAt — 횟수는 장부 줄 수(나가도 줄지 않음) |
 | Avatar | memberId · color(프리셋 또는 자유 색) · hairColor · bg · equipped{hat, face, wear, mitt, shoe, hand, acc, hair, eye} · flip · say(14자) |
 | AvatarItem | id · cat · name · price · rarity(`basic` · `common` · `rare` · `epic` · `season`) · locked |
 | SparkLedger | memberId · amount · reason [TBC] |
