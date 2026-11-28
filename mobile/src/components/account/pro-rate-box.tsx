@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useMyPage } from '@/api/use-my-page';
 import { nowDate } from '@/components/home/attendance';
 import { FrameLine, StatCells, Stripes, type Cell } from '@/components/home/branch-status-card';
+import { Icon as MeetIcon } from '@/components/meet/icons';
 import { Raised } from '@/components/ui/raised';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
@@ -68,15 +69,12 @@ export function ProRateBox() {
         accessibilityLabel={`${month}월 출석률 ${rate}% · 출석 ${stats.attendanceChecks}회 / 맡은 세션 ${stats.sessionsThisMonth}개${earned ? ` · 스파크 +${earned} 예정` : ''} · ${line}`}>
         <Stripes />
         {perfect ? (
+          // 머리줄은 평소처럼 흰 바탕 + 오른쪽에 초록 '왕관 100% 달성' 배지 (2026-11-28 노란 줄 · 반짝이 줄은 별로라 바꿈)
           <View style={[styles.head, styles.headPerfect]}>
-            <View style={styles.titleRow}>
-              <Sparkle size={16} color={Colors.white} />
-              <PText style={styles.title}>{`${month}월 출석률 100% 달성!`}</PText>
-            </View>
-            <View style={styles.sparkles}>
-              <Sparkle size={12} color={Colors.white} />
-              <Sparkle size={18} color={Colors.rateHigh} />
-              <Sparkle size={13} color={Colors.white} />
+            <PText style={styles.title}>{`${month}월 출석률`}</PText>
+            <View style={styles.badge}>
+              <MeetIcon name="crown" size={14} color={Colors.ink} fill={Colors.yellow} strokeWidth={2} />
+              <PText style={styles.badgeT}>100% 달성</PText>
             </View>
           </View>
         ) : (
@@ -110,9 +108,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: RADIUS, backgroundColor: Colors.cream, overflow: 'hidden', paddingHorizontal: INSET, paddingBottom: INSET },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: Colors.white, borderBottomWidth: LINE, borderColor: Colors.ink },
   title: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
-  headPerfect: { alignItems: 'center', backgroundColor: Colors.yellow },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  sparkles: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  headPerfect: { alignItems: 'center', paddingVertical: 6 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.rateHigh },
+  badgeT: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16, color: Colors.white },
   only: { flexShrink: 1, fontFamily: Font.body700, fontSize: 11, lineHeight: 16, color: Colors.inkSub },
   foot: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: Colors.lavender },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: Colors.rosePink, borderWidth: 1.5, borderColor: Colors.ink },
