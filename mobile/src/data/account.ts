@@ -43,6 +43,8 @@ export type Plan = {
    * 정해진 값 (2026-11-28): PLUS 7.5개월 · PRO 15개월 · PRO MAX 3년 · PREMIUM 3년 · CVVIP+ 무제한(Infinity).
    */
   usableMonths: number;
+  /** 연기(잠깐 쉬어가기)를 할 수 없는 멤버십 (CVVIP+ · 2026-11-28) — 버튼은 흐리게 · 누르면 안내 */
+  noRest?: boolean;
   /** 최대 팀 수 */
   teams: number;
   /** 프리미엄: 늘 3팀 · 팀은 바꾸기만 */
@@ -64,7 +66,7 @@ export const PLANS: Record<PlanKey, Plan> = {
   pro: { name: 'PRO', months: 10, paidMonths: 6, freeMonths: 4, perWeek: 2, total: 80, changes: 6, usableMonths: 15, teams: 3 },
   promax: { name: 'PRO MAX', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, usableMonths: 36, teams: 3 },
   // CVVIP+: 2팀 · 기간 · 횟수 · 변경 횟수는 아직 정해지지 않아 프로맥스와 같게 둔 예시예요
-  cvvip: { name: 'CVVIP+', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, usableMonths: Infinity, teams: 2, twoBranch: 'oneEach' },
+  cvvip: { name: 'CVVIP+', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, usableMonths: Infinity, noRest: true, teams: 2, twoBranch: 'oneEach' },
   premium: { name: 'PREMIUM', months: 24, paidMonths: 13, freeMonths: 11, perWeek: 4, total: 384, changes: Infinity, usableMonths: 36, teams: 3, fixed: true, perWeekText: '주 4회 · 꼭 3팀에서', twoBranch: 'teams' },
 };
 

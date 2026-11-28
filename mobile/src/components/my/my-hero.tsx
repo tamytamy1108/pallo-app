@@ -6,7 +6,6 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay
 
 import { useBranchProgress, type BranchProgress } from '@/api/use-branch-progress';
 import { RoleTag, type RoleKind } from '@/components/common/role-tag';
-import { useMyClubRoles } from '@/components/meet/model';
 import { Pressable } from '@/components/ui/pressable';
 import { AvatarStage } from '@/components/character/avatar';
 import { Raised } from '@/components/ui/raised';
@@ -59,7 +58,6 @@ export function MyHero({
   // 붓 버튼 메뉴: 캐릭터 꾸미기 · 한 줄 소개 수정하기
   const [menu, setMenu] = useState(false);
   const staff = staffKind(me.role);
-  const clubRole = useMyClubRoles(me.name).badge;
   const member = isMember(me);
   const progress = useBranchProgress();
   const link = branchStatus(member, progress);
@@ -98,10 +96,9 @@ export function MyHero({
           <View style={styles.id}>
             <View style={styles.nameRow}>
               <PText style={styles.name}>{me.name}</PText>
-              {/* 프로 · 직원은 이름 옆에 PRO · STAFF (10-roles 8장) */}
+              {/* 프로 · 직원은 이름 옆에 PRO · STAFF (10-roles 8장). 여러 지점이면 프로가 먼저 (state/me topBranchRole).
+                  HOST · CO-HOST 는 이름 옆이 아니라 아래 '참여중' 칸에 붙어요 (2026-11-28) */}
               {staff ? <RoleTag kind={staff} big /> : null}
-              {/* 운영 중인 동아리가 있으면 HOST · CO-HOST (0개가 되거나 관리자가 떼면 없어요) */}
-              {clubRole && !me.roleBadgeOff ? <RoleTag kind={clubRole} big /> : null}
             </View>
             {staff ? (
               // 프로: 지점 · 가르치는 언어 / 지점 관리자: 지점 · 지점 관리자 — 연동 표시는 붙이지 않아요
