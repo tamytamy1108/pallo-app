@@ -77,8 +77,8 @@ export function MyStudyCard({ study, title = true }: { study: MyPageStudy; title
               </PText>
             </View>
             {/* 연기 · 변경은 한 횟수를 같이 써요 — 둘로 나눠 보이지 않고 남은 횟수 하나만 (BFF 는 아직 두 칸이라 연기 칸 값을 써요) */}
-            {/* 사용 가능 기간 안에서 쓰는 횟수 — 'PREMIUM 3년간 무제한' · 'PLUS 7.5개월간 3회' */}
-            <KV k="연기 · 변경" v={`${study.usablePeriod ? `${study.usablePeriod}간 ` : ''}${leftText(study.remainingHoldingCount)}`} />
+            {/* 남은 횟수만 ('무제한' · '3회') — 사용 가능 기간(study.usablePeriod)은 보여 주지 않아요 (2026-11-28) */}
+            <KV k="연기 · 변경" v={leftText(study.remainingHoldingCount)} />
             {/* 멤버십 정책 (PREMIUM = 최대 3팀 · 주 4회) — 서버가 안 주면 지금 팀 수 · 요일 수 */}
             <KV k="팀" v={study.planRule ?? `${study.teams.length}팀 · 주 ${weekly}회`} />
           </View>
