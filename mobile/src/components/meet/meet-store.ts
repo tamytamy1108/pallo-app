@@ -8,7 +8,8 @@ import type { MadeCard } from '@/data/poster-colors';
 import { apiConfig } from '@/api/config';
 import { createStore } from '@/lib/store';
 import type { Club, Meet } from '@/data/meet';
-import type { RejectCode } from './join-rules';
+import { addNoti } from '@/components/home/noti-state';
+import { rejectPhrase, type RejectCode } from './join-rules';
 
 /** 설문 답: 질문 번호 → 고른 보기 번호(하나) · 번호들(여럿) · 글(짧은 답) */
 export type SurveyAnswers = Record<number, number | number[] | string>;
@@ -164,13 +165,18 @@ export const addMyMeet = (m: Meet) =>
 
 /** 번개 참여 신청 (승인 전엔 가게 이름 · 주소가 안 보여요) */
 export const askJoin = (id: string) => store.set((s) => ({ ...s, asked: { ...s.asked, [id]: true }, askAt: { ...s.askAt, [id]: Date.now() } }));
-/** 호스트가 내 신청을 거절함 (가짜 서버 · 개발용 흉내) — 거절 횟수가 늘고 신청은 지워져요 */
-export const rejectMyAsk = (id: string, code: RejectCode) =>
+/**
+ * 호스트가 내 신청을 거절함 (가짜 서버 · 개발용 흉내) — 거절 횟수가 늘고 신청은 지워져요.
+ * 알림함에도 한 줄 (신청자가 보는 정해진 문구만 · 누르면 그 번개). 백엔드가 생기면 서버가 같은 알림을 보내요.
+ */
+export const rejectMyAsk = (id: string, code: RejectCode, title: string) => {
   store.set((s) => {
     const asked = { ...s.asked };
     delete asked[id];
     return { ...s, asked, rej: { ...s.rej, [id]: { n: (s.rej[id]?.n ?? 0) + 1, code } } };
   });
+  addNoti({ id: `meet-rej-${id}-${Date.now()}`, kind: 'lounge', icon: 'bolt', text: `‘${title}’ 번개 참여 신청이 거절됐어요. 사유: ${rejectPhrase(code)}`, time: '방금', href: `/meet/${id}`, read: false });
+};
 /** 신청 취소 · 참여 취소 — 둘 다 지워요 */
 export const leaveMeet = (id: string) =>
   store.set((s) => {
@@ -203,21 +209,25 @@ const patchMyClub = (s: State, id: string, patch: Partial<Club>) => s.myClubs.ma
 const endLog = (L: HostLog[], id: string, why: string, at: number) => L.map((h) => (h.clubId === id && !h.to ? { ...h, to: at, why } : h));
 
 /**
- * 관리자 결정 (동아리 만들기 신청). 승인하면 만든 사람이 호스트가 되고, 거절하면 이유와 함께 내 신청 카드에 남아요.
+ * 관리자 결정 (동아리 만들기 신청). 승인하면 만든 사람이 호스트가 되고, 거절하면 이유와 함께 내 신청 카드에 남고 알림함에도 한 줄 와요.
  * 백엔드가 생기면 관리자 웹(64 `/admin/clubs/:id/approve` · reject)이 정하고, 앱은 알림 · `/me/club-applications` 로 받아요.
  */
-export const decideMyClub = (id: string, ok: boolean, reason = '') =>
-  store.set((s) => {
-    const c = s.myClubs.find((x) => x.id === id);
-    if (!c) return s;
-    const at = Date.now();
-    if (!ok) return { ...s, myClubs: patchMyClub(s, id, { wait: false, rejected: { reason: reason || '운영 기준에 맞지 않아요', at } }) };
-    return {
-      ...s,
-      myClubs: patchMyClub(s, id, { wait: false, rejected: undefined, okAt: at }),
-      hostLog: [{ clubId: id, name: c.name, role: 'host' as const, from: at }, ...endLog(s.hostLog, id, '다시 승인', at)],
-    };
-  });
+export const decideMyClub = (id: string, ok: boolean, reason = '') => {
+  const c = store.get().myClubs.find((x) => x.id === id);
+  if (!c) return;
+  const at = Date.now();
+  if (!ok) {
+    const why = reason || '운영 기준에 맞지 않아요';
+    store.set((s) => ({ ...s, myClubs: patchMyClub(s, id, { wait: false, rejected: { reason: why, at } }) }));
+    addNoti({ id: `club-rej-${id}-${at}`, kind: 'lounge', icon: 'flag', text: `‘${c.name}’ 동아리 신청이 거절됐어요. 사유: ${why}`, time: '방금', href: `/club/${id}`, read: false });
+    return;
+  }
+  store.set((s) => ({
+    ...s,
+    myClubs: patchMyClub(s, id, { wait: false, rejected: undefined, okAt: at }),
+    hostLog: [{ clubId: id, name: c.name, role: 'host' as const, from: at }, ...endLog(s.hostLog, id, '다시 승인', at)],
+  }));
+};
 
 /**
  * 검토 중인 신청 고치기 (승인 전까지만). 고치면 지점 관리자에게 '신청 내용이 바뀌었어요' 알림이 가요.
