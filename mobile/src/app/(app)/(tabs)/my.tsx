@@ -18,7 +18,7 @@ import { BranchBoard } from '@/components/my/branch-board';
 import { DevPersonaPill } from '@/components/my/dev-persona';
 import { GearIcon, LgIcon } from '@/components/my/icons';
 import { BadgeGrid, MyList, MyStats, RankSummary, SecHead } from '@/components/my/my-blocks';
-import { MyHero } from '@/components/my/my-hero';
+import { LinkTag, MyHero } from '@/components/my/my-hero';
 import { FollowSheet } from '@/components/my/my-sheets';
 import { BadgeDetailSheet, type BadgeOpen } from '@/components/my/badge-detail-sheet';
 import { Appear } from '@/components/ui/appear';
@@ -206,8 +206,8 @@ export default function MyScreen() {
               }
             }}>
             <Appear kind="rise" delay={100}>
-              {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄) */}
-              <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} />
+              {/* 제목 옆 '전체 보기 ›' → 내 스터디 화면 (랭킹 · 배지와 같은 머리줄). 지점 연동된 회원은 제목 바로 옆에 '연동됨' */}
+              <SecHead title="내 스터디" more="전체 보기 ›" onMore={go('/me/study')} badge={member ? <LinkTag link="linked" /> : null} />
               <MyStudyCard study={my.study} title={false} />
             </Appear>
           </View>

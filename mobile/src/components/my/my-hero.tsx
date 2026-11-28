@@ -111,13 +111,10 @@ export function MyHero({
               <View style={styles.subRow}>
                 {/* 지점(연동된 회원은 등록된 지점 모두 · 아니면 요청 · 체험 예약한 지점) → 언어. 레벨은 보이지 않아요 (2026-11-28).
                     앱 구경(비회원)은 지점이 없어서 언어만 */}
-                <PText style={styles.sub}>
-                  {[...(link === 'linked' ? myBranches(me) : branch ? [branch] : []), LANG_NAME[me.lang]].join(' · ')}
-                  {link === 'linked' ? ' · 회원' : ''}
-                </PText>
-                {/* 지점 회원(연동을 요청한 사람)만: 연동됨 · 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청).
-                    비회원은 '체험 예약' · '비회원' 표시만 */}
-                {link === 'rejected' ? <LinkRequestChip /> : <LinkTag link={link} />}
+                <PText style={styles.sub}>{[...(link === 'linked' ? myBranches(me) : branch ? [branch] : []), LANG_NAME[me.lang]].join(' · ')}</PText>
+                {/* 연동된 회원은 여기 표시 없음 (지점 · 언어가 곧 회원 표시 · 연동됨은 내 스터디 제목 옆 · 설정 › 내 지점 · 2026-11-28).
+                    아직 회원이 아닌 사람만: 연동 승인 대기중 · 연동 신청하기(연동 안 됨 → 다시 신청) · 체험 예약 · 비회원 */}
+                {link === 'rejected' ? <LinkRequestChip /> : link === 'linked' ? null : <LinkTag link={link} />}
               </View>
             )}
             {/* 한 줄 소개: 글만 보여요. 쓰기 · 수정은 캐릭터 방 붓 버튼 › 한 줄 소개 수정하기 */}
@@ -190,9 +187,10 @@ function branchOf(link: BranchStatus, myBranch: string, p: BranchProgress): stri
 /**
  * 지점 연동 표시 (본인 마이에만): 흰 알약 + 잉크 테두리 + 색 점. 점 색으로 상태를 구분해요
  * — 연동됨 초록 · 승인 대기중 보라 · 체험 예약 파랑 · 비회원 회색(테두리 · 글자도 흐리게).
+ * 연동된 회원의 '연동됨'은 이름 아래가 아니라 마이 '내 스터디' 제목 옆에 붙어요 (2026-11-28).
  * 방금 연동됐으면(state/link-events myMoment) 마이가 처음 보일 때 '연동됨'이 톡 튀어나와요 (한 번만 · 움직임 줄이기면 그냥 보여요).
  */
-function LinkTag({ link }: { link: keyof typeof TAG_LABEL }) {
+export function LinkTag({ link }: { link: keyof typeof TAG_LABEL }) {
   const label = TAG_LABEL[link];
   const pop = usePopOnce(link === 'linked');
   const guest = link === 'guest';
