@@ -215,6 +215,12 @@ export function addMonths(d: Date, n: number) {
   const last = new Date(d.getFullYear(), d.getMonth() + n + 1, 0).getDate();
   return new Date(d.getFullYear(), d.getMonth() + n, Math.min(d.getDate(), last));
 }
+/** 사용 가능 기간이 끝나는 날 (시작 + usableMonths · 7.5개월은 7달 + 15일) · 무제한이면 null */
+export function usableEnd(start: Date, months: number): Date | null {
+  if (months === Infinity) return null;
+  const whole = Math.floor(months);
+  return addDays(addMonths(start, whole), Math.round((months - whole) * 30));
+}
 /** 달력 달 번호: 2026년 1월 = 0 (2027년 1월 = 12) */
 export const monIdx = (d: Date) => (d.getFullYear() - 2026) * 12 + d.getMonth();
 
