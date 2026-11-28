@@ -7,6 +7,7 @@ import { bookShelfQuery } from '@/api/queries';
 import { Pressable } from '@/components/ui/pressable';
 import { runAfterSheetClose, Sheet } from '@/components/ui/sheet';
 import { PText } from '@/components/ui/text';
+import { CalArrow } from '@/components/ui/cal-arrow';
 import { todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -195,13 +196,13 @@ function CourseBody({ onClose, L, lessons, steps }: { onClose: () => void; L: St
       <View style={styles.cal}>
         <View style={styles.calHd}>
           <Pressable onPress={() => move(-1)} disabled={!canPrev} accessibilityRole="button" accessibilityLabel="이전 달" hitSlop={8} style={[styles.calNav, !canPrev && styles.calNavOff]}>
-            <PText style={styles.calNavT}>‹</PText>
+            <CalArrow dir="prev" />
           </Pressable>
           <PText style={styles.calTitle}>
             {month.y}년 {month.m + 1}월
           </PText>
           <Pressable onPress={() => move(1)} disabled={!canNext} accessibilityRole="button" accessibilityLabel="다음 달" hitSlop={8} style={[styles.calNav, !canNext && styles.calNavOff]}>
-            <PText style={styles.calNavT}>›</PText>
+            <CalArrow dir="next" />
           </Pressable>
         </View>
         {/* 줄마다 7칸을 flex 로 나눠요 — 칸 폭을 %로 주면 반올림 때문에 7번째 칸(일)이 다음 줄로 밀려요 */}
@@ -300,7 +301,6 @@ const styles = StyleSheet.create({
   calTitle: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21, fontVariant: ['tabular-nums'] },
   calNav: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: Colors.ink, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.white },
   calNavOff: { opacity: 0.3 },
-  calNavT: { fontFamily: Font.body900, fontSize: 18, lineHeight: 22 },
   week: { flexDirection: 'row' },
   dow: { flex: 1, minWidth: 0, textAlign: 'center', fontFamily: Font.body900, fontSize: 11.5, lineHeight: 18, color: Colors.inkSub },
   dowEnd: { color: Colors.rosePink },

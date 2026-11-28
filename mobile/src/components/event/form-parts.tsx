@@ -9,6 +9,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Icon, type IconName } from '@/components/meet/icons';
 import { LgLink } from '@/components/meet/parts';
 import { PText } from '@/components/ui/text';
+import { CalArrow } from '@/components/ui/cal-arrow';
 import { todayMark } from '@/components/ui/today-mark';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
@@ -176,13 +177,13 @@ export function MonthCalendar({ value, onChange, minDays, maxDays, hint, pick }:
     <View style={styles.cal}>
       <View style={styles.calH}>
         <Pressable disabled={cm <= 0} onPress={() => setCm(cm - 1)} accessibilityRole="button" accessibilityLabel="이전 달" style={[styles.calNav, cm <= 0 && { opacity: 0.35 }]}>
-          <PText style={styles.calNavT}>‹</PText>
+          <CalArrow dir="prev" />
         </Pressable>
         <PText style={styles.calT}>
           {y}년 {m + 1}월
         </PText>
         <Pressable disabled={!nextOk} onPress={() => setCm(cm + 1)} accessibilityRole="button" accessibilityLabel="다음 달" style={[styles.calNav, !nextOk && { opacity: 0.35 }]}>
-          <PText style={styles.calNavT}>›</PText>
+          <CalArrow dir="next" />
         </Pressable>
       </View>
       <View style={styles.wk}>
@@ -240,7 +241,6 @@ const styles = StyleSheet.create({
   cal: { borderWidth: 2, borderColor: Colors.ink, borderRadius: 18, backgroundColor: '#fff', paddingTop: 12, paddingHorizontal: 10, paddingBottom: 10 },
   calH: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, paddingBottom: 8 },
   calNav: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: Colors.line, alignItems: 'center', justifyContent: 'center' },
-  calNavT: { fontFamily: Font.body900, fontSize: 18, lineHeight: 22 },
   calT: { fontFamily: Font.body900, fontSize: 15, lineHeight: 21 },
   wk: { flexDirection: 'row' },
   wkT: { flex: 1, textAlign: 'center', fontFamily: Font.body800, fontSize: 11.5, lineHeight: 16, color: Colors.inkSub, paddingBottom: 4 },
