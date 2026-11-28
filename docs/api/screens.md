@@ -877,7 +877,7 @@ Lv.1 상황 활동(그림 속 인물 → 단어 카드 대화)은 대본을 맞�
 |---|---|---|---|
 | 멤버십 이름 · 기간 · 남은 횟수 링 · 무료 포함 · 연기 · 변경 남은 횟수 · 팀 수 · 주 n회 · 팀 목록 | GET /me/memberships (ACTIVE) | change | getMembership · MY_TEAMS |
 | '○○ 신청 · 운영진 확인 중' | GET /me/course-change (pendingRequest · pendingDeferral · pendingBranchTransfer) | change | store.ts useChangeRequest |
-| '잔여 횟수 유효기간' 기간 · '연기 · 변경 3년간 무제한' (멤버십마다 사용 가능 기간이 달라요 — PLUS 7.5개월 · PREMIUM 3년) | GET /me/mypage study.usablePeriod ('3년' · '7.5개월') | new | data/account.ts PLANS.usableMonths (PRO · PRO MAX · CVVIP+ 는 예시값) |
+| '잔여 횟수 유효기간' 기간 · '연기 · 변경 3년간 무제한' (멤버십마다 사용 가능 기간이 달라요 — PLUS 7.5개월 · PRO MAX 3년 · PREMIUM 3년 · CVVIP+ 무제한) | GET /me/mypage study.usablePeriod ('3년' · '7.5개월' · 무제한이면 null) | new | data/account.ts PLANS.usableMonths (PRO 15개월은 예시값) |
 | [신청 취소] | PUT /me/course-change-requests/{id}/cancel · /me/deferral-requests/{id}/cancel · /me/branch-transfer-requests/{id}/cancel | existing | cancelChangeRequest |
 
 `app/me/study.tsx` (마이 › 내 스터디 '전체 보기'): 같은 카드 + 아래 '지난 신청' (2026-11-28 추가).

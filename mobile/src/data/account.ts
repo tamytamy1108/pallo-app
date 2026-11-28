@@ -40,7 +40,7 @@ export type Plan = {
   changes: number;
   /**
    * 사용 가능 기간 (개월) — 이 기간 안에 남은 횟수 · 연기 · 변경을 다 써요 (멤버십마다 달라요).
-   * PLUS 7.5개월 · PREMIUM 3년은 정해진 값 (2026-11-28) · 나머지는 '기간 × 1.5' 로 맞춘 예시예요 — 확인이 필요해요.
+   * 정해진 값 (2026-11-28): PLUS 7.5개월 · PRO MAX 3년 · PREMIUM 3년 · CVVIP+ 무제한(Infinity). PRO 15개월은 아직 예시예요.
    */
   usableMonths: number;
   /** 최대 팀 수 */
@@ -62,9 +62,9 @@ export const MULTI_BRANCH_WEEK_MAX = 4;
 export const PLANS: Record<PlanKey, Plan> = {
   plus: { name: 'PLUS', months: 5, paidMonths: 4, freeMonths: 1, perWeek: 2, total: 40, changes: 3, usableMonths: 7.5, teams: 3 },
   pro: { name: 'PRO', months: 10, paidMonths: 6, freeMonths: 4, perWeek: 2, total: 80, changes: 6, usableMonths: 15, teams: 3 },
-  promax: { name: 'PRO MAX', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, usableMonths: 27, teams: 3 },
+  promax: { name: 'PRO MAX', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, usableMonths: 36, teams: 3 },
   // CVVIP+: 2팀 · 기간 · 횟수 · 변경 횟수는 아직 정해지지 않아 프로맥스와 같게 둔 예시예요
-  cvvip: { name: 'CVVIP+', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, usableMonths: 27, teams: 2, twoBranch: 'oneEach' },
+  cvvip: { name: 'CVVIP+', months: 18, paidMonths: 10, freeMonths: 8, perWeek: 2, total: 144, changes: Infinity, usableMonths: Infinity, teams: 2, twoBranch: 'oneEach' },
   premium: { name: 'PREMIUM', months: 24, paidMonths: 13, freeMonths: 11, perWeek: 4, total: 384, changes: Infinity, usableMonths: 36, teams: 3, fixed: true, perWeekText: '주 4회 · 꼭 3팀에서', twoBranch: 'teams' },
 };
 
@@ -447,8 +447,8 @@ export function getMembership() {
 }
 export type MembershipInfo = ReturnType<typeof getMembership>;
 /** 멤버십 정책 한 줄 · PREMIUM = 3팀 · 주 4회 (합쳐서) · 나머지 = 1팀 · 주 2회 (팀마다) */
-/** 사용 가능 기간 글 — 12달 단위면 'n년', 아니면 'n개월' (7.5개월 · 3년) */
-export const usableText = (months: number) => (months % 12 === 0 ? `${months / 12}년` : `${months}개월`);
+/** 사용 가능 기간 글 — 12달 단위면 'n년', 아니면 'n개월' (7.5개월 · 3년) · 무제한이면 null (기간 글 없이 횟수만) */
+export const usableText = (months: number) => (months === Infinity ? null : months % 12 === 0 ? `${months / 12}년` : `${months}개월`);
 export const planRuleText = (p: Plan) => (p.fixed ? `${p.teams}팀 · 주 ${p.perWeek}회` : `1팀 · 주 ${p.perWeek}회`);
 
 /** 연기 · 변경 남은 횟수 글자 (프로토타입 ppT) */
