@@ -52,8 +52,15 @@ export function useStepFinish(sceneId: string, stepId: SceneStepId) {
         goalTotal: DAILY_GOAL,
         // 다섯 단계를 다 끝낸 순간: '장면 연습 완료!' 노랑 큰 축하 (프로토타입 stageDone · stageName = '장면 연습')
         unitComplete: stamp,
+        tier: stamp ? 'session' : 'step',
         title: stamp ? '장면 연습 완료!' : undefined,
+        sub: stamp ? '지도에 도장이 찍혔어요' : undefined,
         nextPoints: nextStep?.xp,
+        where: {
+          groups: [{ label: '장면 연습', cells: SCENE_STEPS.map((s) => (s.id === stepId ? 'now' : isDone(sceneStepKey(sceneId, s.id)) ? 'done' : 'todo')) }],
+          label: `장면 연습 ${SCENE_STEPS.findIndex((s) => s.id === stepId) + 1}/${SCENE_STEPS.length}`,
+          note: step.t,
+        },
       },
       next: nextStep?.id ?? null,
     });

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
-import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -14,59 +14,103 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, Ellipse, G, Mask, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, Ellipse, LinearGradient, Polygon, Stop } from 'react-native-svg';
 
 import { Pressable } from '@/components/ui/pressable';
-import { BrandIcon, type BrandIconName } from '@/components/lesson/brand-icons';
 import { HomeIcon } from '@/components/lesson/icons';
 import { PText } from '@/components/ui/text';
 import { Font } from '@/constants/fonts';
 import { Colors } from '@/constants/theme';
-import { CEL_TITLE, pickOne } from '@/data/lessons';
+import { pickOne, STAGE_KO, type Stage } from '@/data/lessons';
 import { haptic, sfx } from '@/lib/feedback';
 import { kfc } from '@/lib/motion';
 import { LayerModal } from '@/components/ui/sheet-stack';
 
+/**
+ * 완료 등급 (docs 완료 화면 통일안). 위로 갈수록 화려해요.
+ * step 단계 완료(칸 안 무대) · zone 구역 완료(예습 · 본학습 · 복습 · 화면 전체) · session 회차 완료(색종이) · level 레벨 완료(교재 레벨만 · 발판 점프)
+ */
+export type CelebrateTier = 'step' | 'zone' | 'session' | 'level';
+/** 지금 어디 바 한 칸: 끝냄 · 지금(방금 끝낸 단계) · 안 함 · 건너뜀(테스트 통과) */
+export type WhereCell = 'done' | 'now' | 'todo' | 'skip';
+/** 지금 어디 바: 구역 묶음(예습 · 본학습 · 복습)마다 단계 칸, 아래 한 줄('예습 3/4' · 'USEFUL EXPRESSIONS') */
+export type CelebrateWhere = { groups: { label: string; cells: WhereCell[] }[]; label: string; note?: string };
+
 export type CelebrateResult = {
-  /** 최종 점수: 맞힌 수 / 전체 (전체 0 이면 정확도 칸 없이) */
+  /** 최종 점수: 맞힌 수 / 전체 (전체 0 이면 점수 줄 없이) */
   correct: number;
   total: number;
-  /** 이번에 받은 포인트 (단계를 처음 끝낼 때만 +5 / +10 / +15, 더 빨리 풀면 그 차이만큼 보너스) */
+  /** 이번에 받은 포인트 (단계를 처음 끝낼 때만) — 0 이면 포인트 칸 없이 */
   points: number;
   /** 오늘 목표 (학습 n개 중 몇 개) */
   goalDone: number;
   goalTotal: number;
-  /** 과를 다 끝냈으면 노랑 큰 축하 */
+  /** 회차(과)를 다 끝냈어요 → tier 를 안 주면 session */
   unitComplete?: boolean;
-  /** 제한 시간이 있던 문제 수 · 그중 시간 안에 맞힌 수 → '빠른 답' 칸 */
+  /** 제한 시간이 있던 문제 수 · 그중 시간 안에 맞힌 수 → 점수 줄에 '빠른 답' */
   timed?: number;
   fast?: number;
-  /** 제목을 정해 주면 그대로 (예: '예습 완료!'). 없으면 점수에 맞춰 골라요(CEL_TITLE) */
+  /** 제목을 정해 주면 그대로 (예: '예습 완료!'). 없으면 점수로 정해요 (무작위 없이) */
   title?: string;
-  /** 노랑 바탕 큰 축하 (구역 · 과를 다 끝냈을 때) */
+  /** 구역을 다 끝냈어요 → tier 를 안 주면 zone */
   big?: boolean;
   /** [이어서 하기] 옆 다음 단계 포인트 */
   nextPoints?: number;
-  /** 제목 아래 한 줄 (예: 'STAGE 3까지 건너뛰었어요') */
+  /** 제목 아래 한 줄 (예: 'STAGE 3까지 건너뛰었어요'). 없으면 점수('6/9') */
   sub?: string;
+  /** 완료 등급 — 없으면 unitComplete · big 으로 정해요 */
+  tier?: CelebrateTier;
+  /** 무대 색을 고르는 구역 (zone 등급: 예습 노랑 · 본학습 분홍 · 복습 하늘) */
+  zone?: Stage;
+  /** 지금 어디 바 */
+  where?: CelebrateWhere;
+  /** 보상 줄에 붙는 배지 이름 (레벨 완료: 'Lv.2 배지' → 'Lv.2' · 이름 '배지') */
+  badge?: string;
 };
 
-const POSES = [
+export const tierOf = (r: CelebrateResult): CelebrateTier => r.tier ?? (r.unitComplete ? 'session' : r.big ? 'zone' : 'step');
+
+/** 단계 목록 → 지금 어디 바 (curId = 방금 끝낸 단계). note 는 바 아래 한 줄 뒤쪽 */
+export function buildWhere(steps: readonly { id: string; stage: Stage }[], done: (id: string) => boolean, curId: string, note?: string, skipped?: (id: string) => boolean): CelebrateWhere {
+  const order: Stage[] = ['pre', 'main', 'post'];
+  const groups = order
+    .map((stage) => {
+      const list = steps.filter((s) => s.stage === stage);
+      const cells = list.map((s): WhereCell => (s.id === curId ? 'now' : skipped?.(s.id) ? 'skip' : done(s.id) ? 'done' : 'todo'));
+      return { stage, label: STAGE_KO[stage], cells, n: list.findIndex((s) => s.id === curId) + 1, len: list.length };
+    })
+    .filter((g) => g.len > 0);
+  const cur = groups.find((g) => g.n > 0);
+  return { groups: groups.map((g) => ({ label: g.label, cells: g.cells })), label: cur ? `${cur.label} ${cur.n}/${cur.len}` : '', note };
+}
+
+const YELLOW_POSES = [
   require('@/assets/characters/c-upright-yellow.png'),
   require('@/assets/characters/c-upright-yellow-flip.png'),
   require('@/assets/characters/c-tilted-yellow.png'),
   require('@/assets/characters/c-tilted-yellow-flip.png'),
 ];
+const PURPLE_POSES = [require('@/assets/characters/c-upright-purple.png'), require('@/assets/characters/c-tilted-purple-flip.png')];
 const MOVES = ['hop', 'twirl', 'boing', 'wiggle', 'flip', 'lean'] as const;
 type Move = (typeof MOVES)[number];
 const RISE = Easing.bezier(0.2, 0.9, 0.3, 1.3);
 const CONFETTI = ['#FFE200', '#F28CB1', '#7FA7E8', '#5CBF8A', '#493087', '#FF7A59'];
 
+/** 무대 모양 (등급 · 구역마다) */
+type Look = { bg: string; text: string; light: string; purple: boolean; dark: boolean };
+const ZONE_BG: Record<Stage, string> = { pre: Colors.yellow, main: '#F28CB1', post: '#9DC3EE' };
+function lookOf(tier: CelebrateTier, zone: Stage | undefined): Look {
+  if (tier === 'step') return { bg: Colors.purple, text: Colors.yellow, light: '#FFFFFF', purple: false, dark: true };
+  if (tier === 'level') return { bg: '#2A1D52', text: Colors.yellow, light: Colors.yellow, purple: false, dark: true };
+  if (tier === 'session') return { bg: '#F28CB1', text: Colors.ink, light: '#FFFFFF', purple: false, dark: false };
+  const bg = ZONE_BG[zone ?? 'pre'];
+  return { bg, text: Colors.ink, light: '#FFFFFF', purple: bg === Colors.yellow, dark: false };
+}
+
 /**
- * 완료(축하) 화면 (docs/pages/03-lesson.md '완료(축하) 화면' · 프로토타입 celebrate · .celebrate).
- * 노랑 팔로가 0.5초마다 30px 통통 + 0.95초마다 춤 동작, 뒤에 세 색 빛줄기 · 컨페티,
- * 숫자 카드 한 장(포인트 · 정확도 · 빠른 답 · 오늘 목표 — 0부터 차오름), 아래 집 아이콘 + [이어서 하기]. 팡파르.
- * onNext 가 없으면(마지막 단계) 노랑 버튼만 꽉 차게. 레슨 A · B가 같이 써요. props 는 바꾸지 않아요(늘리기만).
+ * 완료(축하) 화면 — 무대 위 팔로 (docs 완료 화면 통일안 · 시안 3).
+ * step: 크림 화면 안에 보라 무대 칸 · zone / session / level: 화면 전체가 무대. 글자(제목 · 한 줄 · 보상)는 무대 안 왼쪽 위 · 아래.
+ * 맨 위 '지금 어디 바', 아래 집 아이콘 + [이어서 하기]. 팡파르. props 는 바꾸지 않아요(늘리기만).
  */
 export function Celebrate({
   visible,
@@ -79,20 +123,23 @@ export function Celebrate({
   result: CelebrateResult;
   onHome: () => void;
   onNext?: () => void;
-  /** 제목 아래 한 줄 (예: '카페 장면 완료! 지도에 도장이 찍혔어요') — 프로토타입 .cel-sub */
+  /** 제목 아래 한 줄 (예: '카페 장면 완료! 지도에 도장이 찍혔어요') */
   sub?: string;
 }) {
   const insets = useSafeAreaInsets();
-  const big = !!(result.big || result.unitComplete);
-  const sub = subProp ?? result.sub;
+  const tier = tierOf(result);
+  const look = lookOf(tier, result.zone);
+  const full = tier !== 'step';
   const title = useMemo(() => {
     if (result.title) return result.title;
     const { correct, total } = result;
-    const mood = !total ? 'good' : correct === total ? 'perfect' : correct >= Math.ceil(total / 2) ? 'good' : 'tried';
-    return pickOne(CEL_TITLE[mood]);
-    // 화면이 뜰 때 한 번만 골라요
+    if (!total) return '다 했어요!';
+    return correct === total ? '완벽해요!' : correct >= Math.ceil(total / 2) ? '좋아요!' : '괜찮아요!';
+    // 화면이 뜰 때 한 번만 정해요
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+  const score = result.total ? `${result.correct}/${result.total}${result.timed ? ` · 빠른 답 ${result.fast ?? 0}/${result.timed}` : ''}` : '';
+  const sub = subProp ?? result.sub ?? score;
 
   useEffect(() => {
     if (!visible) return;
@@ -100,38 +147,28 @@ export function Celebrate({
     haptic('success');
   }, [visible]);
 
-  const acc = result.total ? Math.round((result.correct / result.total) * 100) : null;
-  const gd = Math.min(result.goalDone, result.goalTotal);
-  const boxes: Box[] = [];
-  if (result.points) boxes.push({ k: 'pt', label: '포인트', icon: 'coin', to: result.points, fmt: (n) => `+${n}P` });
-  if (acc != null) boxes.push({ k: 'ac', label: '정확도', icon: 'target', to: acc, fmt: (n) => `${n}%`, gauge: acc });
-  if (result.timed) boxes.push({ k: 'sp', label: '빠른 답', icon: 'bolt', to: result.fast ?? 0, fmt: (n) => `${n}/${result.timed}`, gauge: ((result.fast ?? 0) / result.timed) * 100 });
-  boxes.push({ k: 'gl', label: '오늘 목표', icon: 'flag', to: gd, fmt: (n) => `${n}/${result.goalTotal}`, gauge: result.goalTotal ? (gd / result.goalTotal) * 100 : 0 });
+  const nextLabel = onNext ? '이어서 하기' : '계속하기';
+  const nextBg = full && look.bg === Colors.yellow ? Colors.white : Colors.yellow;
 
   return (
     <LayerModal visible={visible} animationType="fade" onRequestClose={onHome} statusBarTranslucent>
-      <View style={StyleSheet.flatten([styles.root, big && styles.rootBig, { paddingTop: 40 + insets.top, paddingBottom: 26 + insets.bottom }])}>
-        {visible && <Confetti big={big} />}
-        <Stage big={big} />
-        <Rise delay={380}>
-          <PText style={styles.title} accessibilityRole="header">
-            {title}
-          </PText>
-        </Rise>
-        {sub ? (
-          <Rise delay={450}>
-            <PText style={styles.sub} color={big ? Colors.ink : Colors.inkSub}>
-              {sub}
+      <View style={StyleSheet.flatten([styles.root, { backgroundColor: full ? look.bg : Colors.cream, paddingTop: 16 + insets.top, paddingBottom: 22 + insets.bottom }])}>
+        {result.where ? <WhereBar where={result.where} dark={full && look.dark} nowColor={full && look.bg === Colors.yellow ? Colors.white : Colors.yellow} /> : null}
+        <StageView tier={tier} look={look} full={full} topInset={16 + insets.top}>
+          <Rise delay={380} style={styles.words}>
+            <PText style={styles.title} color={look.text} accessibilityRole="header">
+              {title}
             </PText>
+            {sub ? (
+              <PText style={styles.sub} color={look.text}>
+                {sub}
+              </PText>
+            ) : null}
           </Rise>
-        ) : null}
-        <Rise delay={550} style={styles.boxesWrap}>
-          <View style={styles.boxes}>
-            {boxes.map((b, i) => (
-              <BoxCell key={b.k} box={b} big={big} first={i === 0} index={i} />
-            ))}
-          </View>
-        </Rise>
+          <Rise delay={650} style={styles.rewards}>
+            <Rewards result={result} look={look} />
+          </Rise>
+        </StageView>
         <Rise delay={850} style={styles.acts}>
           {onNext ? (
             <Pressable
@@ -155,10 +192,10 @@ export function Celebrate({
                 (onNext ?? onHome)();
               }}
               accessibilityRole="button"
-              accessibilityLabel={onNext ? '이어서 하기' : '계속하기'}>
+              accessibilityLabel={nextLabel}>
               {({ pressed }) => (
-                <View style={StyleSheet.flatten([styles.next, big && styles.nextBig, pressed && styles.down])}>
-                  <PText style={styles.nextText}>{onNext ? '이어서 하기' : '계속하기'}</PText>
+                <View style={StyleSheet.flatten([styles.next, { backgroundColor: nextBg }, pressed && styles.down])}>
+                  <PText style={styles.nextText}>{nextLabel}</PText>
                   {onNext && result.nextPoints ? (
                     <View style={styles.nextPts}>
                       <PText style={styles.nextPtsText} color={Colors.yellow}>
@@ -176,91 +213,209 @@ export function Celebrate({
   );
 }
 
-type Box = { k: 'pt' | 'ac' | 'sp' | 'gl'; label: string; icon: BrandIconName; to: number; fmt: (n: number) => string; gauge?: number };
-const BOX_C: Record<Box['k'], { bg: string; v: string; t: string; gaugeBg: string; fill: string }> = {
-  pt: { bg: '#FFE200', v: Colors.ink, t: Colors.ink, gaugeBg: 'rgba(30,26,43,0.14)', fill: Colors.ink },
-  ac: { bg: Colors.purple, v: Colors.white, t: '#E3D9FA', gaugeBg: 'rgba(255,255,255,0.22)', fill: Colors.yellow },
-  sp: { bg: Colors.white, v: Colors.ink, t: Colors.ink, gaugeBg: 'rgba(30,26,43,0.14)', fill: Colors.ink },
-  gl: { bg: '#9DC3EE', v: Colors.ink, t: Colors.ink, gaugeBg: 'rgba(30,26,43,0.14)', fill: Colors.ink },
-};
-
-/** 숫자 카드 한 칸: 아이콘(통) → 숫자(0부터 차오름) → 게이지(0.9초) → 이름 */
-function BoxCell({ box, big, first, index }: { box: Box; big: boolean; first: boolean; index: number }) {
-  const c = BOX_C[box.k];
-  const bg = big && box.k === 'pt' ? '#FFF3A0' : c.bg;
-  const n = useCountUp(box.to, 1050, 900);
-  const still = useReducedMotion();
-  const g = useSharedValue(still ? 1 : 0);
-  const hop = useSharedValue(still ? 1 : 0);
-  useEffect(() => {
-    if (still) return;
-    g.set(withDelay(1050, withTiming(1, { duration: 900, easing: Easing.bezier(0.2, 0.8, 0.3, 1) })));
-    hop.set(withDelay(700 + index * 120, withTiming(1, { duration: 600, easing: Easing.linear })));
-  }, [still, g, hop, index]);
-  const fill = useAnimatedStyle(() => ({ transform: [{ scaleX: g.get() }] }));
-  // cbHop: 아래에서 작게 → 살짝 위로 → 제자리
-  const emo = useAnimatedStyle(() => {
-    const p = hop.get();
-    return { opacity: kfc(p, [0, 60, 100], [0, 1, 1], HOP_EASE), transform: [{ translateY: kfc(p, [0, 60, 100], [14, -6, 0], HOP_EASE) }, { scale: kfc(p, [0, 60, 100], [0.4, 1.06, 1], HOP_EASE) }] };
-  });
+/** 지금 어디 바: 구역마다 이름 + 단계 칸 (끝냄 보라 · 지금 노랑(노랑 무대에선 흰색) · 안 함 빈 칸 · 건너뜀 연보라) */
+function WhereBar({ where, dark, nowColor }: { where: CelebrateWhere; dark: boolean; nowColor: string }) {
+  const line = dark ? Colors.white : Colors.ink;
+  const subC = dark ? '#C9BDF0' : Colors.inkSub;
   return (
-    <View style={StyleSheet.flatten([styles.cb, { backgroundColor: bg }, !first && styles.cbLine])} accessibilityLabel={`${box.label} ${box.fmt(box.to)}`}>
-      <Animated.View style={[styles.emo, emo]}>
-        <BrandIcon name={box.icon} size={30} />
-      </Animated.View>
-      <PText style={styles.cbNum} color={c.v}>
-        {box.fmt(n)}
-      </PText>
-      {box.gauge != null && (
-        <View style={StyleSheet.flatten([styles.gauge, { backgroundColor: c.gaugeBg }])}>
-          <Animated.View style={[styles.gaugeFill, { width: `${Math.max(0, Math.min(100, box.gauge))}%`, backgroundColor: c.fill }, fill]} />
-        </View>
-      )}
-      <PText style={styles.cbLabel} color={c.t}>
-        {box.label}
-      </PText>
+    <View style={styles.where} accessibilityLabel={`지금 위치 ${where.label}${where.note ? ` · ${where.note}` : ''}`}>
+      <View style={styles.whereRow}>
+        {where.groups.map((g) => (
+          <View key={g.label} style={[styles.whereGroup, { flex: g.cells.length }]}>
+            <PText style={styles.whereName} color={subC} numberOfLines={1}>
+              {g.label}
+            </PText>
+            <View style={styles.whereCells}>
+              {g.cells.map((c, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.whereCell,
+                    { borderColor: line, backgroundColor: c === 'done' ? (dark ? Colors.white : Colors.purple) : c === 'now' ? nowColor : c === 'skip' ? '#C9BDF0' : 'transparent' },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
+      {where.label ? (
+        <PText style={styles.whereLabel} color={line} numberOfLines={1}>
+          {where.label}
+          {where.note ? <PText style={styles.whereNote} color={subC}>{` · ${where.note}`}</PText> : null}
+        </PText>
+      ) : null}
     </View>
   );
 }
 
-/** cbHop cubic-bezier(.3,1.6,.5,1) — 구간마다 */
-const HOP_EASE = Easing.bezierFn(0.3, 1.6, 0.5, 1);
-
-/** 0부터 숫자를 세어 올려요 (delay 뒤 dur 동안 · 끝으로 갈수록 천천히) */
-function useCountUp(to: number, delay: number, dur: number) {
-  const still = useReducedMotion();
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (still || !to) return;
-    let raf = 0;
-    const t0 = Date.now() + delay;
-    const step = () => {
-      const k = Math.min(1, Math.max(0, (Date.now() - t0) / dur));
-      setN(Math.round(to * (1 - Math.pow(1 - k, 3))));
-      if (k < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [to, delay, dur, still]);
-  return still || !to ? to : n;
+/** 보상 줄 (형광펜 밑줄): 숫자 아래 굵은 색 밑줄 + 작은 이름. 포인트만 노랑 밑줄로 강조 */
+function Rewards({ result, look }: { result: CelebrateResult; look: Look }) {
+  const gd = Math.min(result.goalDone, result.goalTotal);
+  const full = result.goalTotal > 0 && gd >= result.goalTotal;
+  const numC = look.dark ? Colors.white : Colors.ink;
+  const subC = look.dark ? '#C9BDF0' : '#3A3450';
+  const hi = look.dark ? 'rgba(255,226,0,0.5)' : look.bg === Colors.yellow ? Colors.white : Colors.yellow;
+  const soft = look.dark ? 'rgba(255,255,255,0.22)' : 'rgba(30,26,43,0.14)';
+  const items: { k: string; num: string; label: string; mark: string; a11y: string }[] = [];
+  if (result.points) items.push({ k: 'pt', num: `+${result.points}P`, label: '포인트', mark: hi, a11y: `포인트 ${result.points}` });
+  if (result.goalTotal) items.push({ k: 'gl', num: full ? '달성!' : `${gd}/${result.goalTotal}`, label: '오늘 목표', mark: soft, a11y: `오늘 목표 ${gd}/${result.goalTotal}` });
+  if (result.badge) items.push({ k: 'bd', num: result.badge.replace(/\s*배지$/, ''), label: '배지', mark: soft, a11y: result.badge });
+  return (
+    <View style={styles.marks}>
+      {items.map((it) => (
+        <View key={it.k} style={styles.markItem} accessibilityLabel={it.a11y}>
+          <View>
+            <View style={[styles.markLine, { backgroundColor: it.mark }]} />
+            <PText style={styles.markNum} color={numC}>
+              {it.num}
+            </PText>
+          </View>
+          <PText style={styles.markLabel} color={subC}>
+            {it.label}
+          </PText>
+        </View>
+      ))}
+    </View>
+  );
 }
 
-/** 캐릭터 무대: 빛줄기(세 색 · 천천히 돌아요) + 그림자 + 통통 뛰며 춤추는 노랑 팔로 */
-function Stage({ big }: { big: boolean }) {
+/**
+ * 무대: 조명(위에서 바닥까지 · 아래로 옅어짐) + 바닥(칸 안은 분홍 타원 · 화면 전체는 빛 웅덩이 · 레벨은 흰 발판 3개) + 팔로.
+ * step 은 테두리 있는 칸, 그 밖은 화면 전체(조명은 화면 맨 위부터).
+ */
+function StageView({ tier, look, full, topInset, children }: { tier: CelebrateTier; look: Look; full: boolean; topInset: number; children: ReactNode }) {
+  const [box, setBox] = useState<{ w: number; h: number; y: number } | null>(null);
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width, height, y } = e.nativeEvent.layout;
+    setBox({ w: width, h: height, y });
+  };
+  const floorY = box ? box.h * (full ? 0.74 : 0.8) : 0;
+  // 화면 전체 무대는 조명을 화면 맨 위(바 위)부터 그려요
+  const lightTop = full && box ? -(box.y + topInset) : 0;
+  const lw = box ? box.w * 0.84 : 0;
+  const lh = floorY - lightTop;
+  const charW = box ? Math.min(box.w * (tier === 'level' ? 0.3 : 0.46), 190) : 0;
+  return (
+    <View style={[styles.stage, !full && [styles.stageCard, { backgroundColor: look.bg }]]} onLayout={onLayout}>
+      {box ? (
+        <>
+          <Svg pointerEvents="none" style={{ position: 'absolute', left: (box.w - lw) / 2, top: lightTop }} width={lw} height={lh} viewBox="0 0 100 100" preserveAspectRatio="none">
+            <Defs>
+              <LinearGradient id="stageLight" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={look.light} stopOpacity={0.6} />
+                <Stop offset="1" stopColor={look.light} stopOpacity={0.06} />
+              </LinearGradient>
+            </Defs>
+            <Polygon points="38,0 62,0 100,100 0,100" fill="url(#stageLight)" />
+          </Svg>
+          {tier === 'level' ? (
+            <Pills box={box} floorY={floorY} />
+          ) : (
+            <Floor look={look} box={box} floorY={floorY} card={!full} />
+          )}
+          {tier === 'session' || tier === 'level' ? <Confetti big /> : tier === 'zone' ? <Confetti big={false} /> : null}
+          <Performer tier={tier} look={look} box={box} floorY={floorY} charW={charW} />
+        </>
+      ) : null}
+      {children}
+    </View>
+  );
+}
+
+/** 무대 바닥: 칸 안 무대(단계 완료)는 분홍 타원 · 화면 전체 무대는 빛 웅덩이(조명이 바닥에 닿은 둥근 빛 + 발밑 그림자) */
+function Floor({ look, box, floorY, card }: { look: Look; box: { w: number; h: number }; floorY: number; card: boolean }) {
+  const W = box.w;
+  const eh = box.h * 0.055;
+  if (card)
+    return (
+      <Svg pointerEvents="none" style={{ position: 'absolute', left: W * 0.09, top: floorY - eh }} width={W * 0.82} height={eh * 2}>
+        <Ellipse cx={W * 0.41} cy={eh} rx={W * 0.41 - 1.5} ry={eh - 1.5} fill="#D0798E" stroke={Colors.ink} strokeWidth={2.5} />
+      </Svg>
+    );
+  return (
+    <Svg pointerEvents="none" style={{ position: 'absolute', left: 0, top: floorY - eh * 1.6 }} width={W} height={eh * 3.2}>
+      <Ellipse cx={W / 2} cy={eh * 1.6} rx={W * 0.42} ry={eh * 1.4} fill={look.light} fillOpacity={0.28} />
+      <Ellipse cx={W / 2} cy={eh * 1.6} rx={W * 0.2} ry={eh * 0.55} fill={Colors.ink} fillOpacity={0.22} />
+    </Svg>
+  );
+}
+
+/** 레벨 완료의 흰 발판 3개 (지금 타임어택 결과의 발판) */
+function Pills({ box, floorY }: { box: { w: number; h: number }; floorY: number }) {
+  const pw = box.w * 0.24;
+  return (
+    <>
+      {[0.06, 0.38, 0.7].map((x) => (
+        <View key={x} pointerEvents="none" style={[styles.pill, { left: box.w * x, top: floorY - 9, width: pw }]} />
+      ))}
+    </>
+  );
+}
+
+/** 팔로: step 은 제자리 통통 · zone / session 은 춤 · level 은 발판 사이를 뛰어다녀요 */
+function Performer({ tier, look, box, floorY, charW }: { tier: CelebrateTier; look: Look; box: { w: number; h: number }; floorY: number; charW: number }) {
   const still = useReducedMotion();
+  const poses = look.purple ? PURPLE_POSES : YELLOW_POSES;
+  const charH = charW * 0.72;
+  const top = floorY - charH + (tier === 'level' ? -4 : 4);
+  const left = (box.w - charW) / 2;
+  if (tier === 'level') return <Hopper src={poses[0]} left={left} top={top} w={charW} h={charH} span={box.w * 0.32} still={still} />;
+  if (tier === 'step') return <Bob src={poses[0]} left={left} top={top} w={charW} h={charH} still={still} />;
+  return <DanceFloor poses={poses} left={left} top={top} w={charW} h={charH} still={still} />;
+}
+
+/** 제자리에서 통통 (1.4초마다) */
+function Bob({ src, left, top, w, h, still }: { src: number; left: number; top: number; w: number; h: number; still: boolean }) {
+  const p = useSharedValue(0);
+  useEffect(() => {
+    if (still) return;
+    p.set(withDelay(500, withRepeat(withTiming(1, { duration: 1400, easing: Easing.linear }), -1, false)));
+    return () => cancelAnimation(p);
+  }, [still, p]);
+  const a = useAnimatedStyle(() => {
+    const t = p.get();
+    return { transform: [{ translateY: kfc(t, [0, 30, 55, 70, 100], [0, -h * 0.16, 0, 0, 0], BOB_EASE) }, { scaleX: kfc(t, [0, 55, 62, 70, 100], [1, 1, 1.07, 1, 1], BOB_EASE) }, { scaleY: kfc(t, [0, 55, 62, 70, 100], [1, 1, 0.92, 1, 1], BOB_EASE) }] };
+  });
+  return (
+    <Animated.View pointerEvents="none" style={[styles.performer, { left, top, width: w, height: h }, a]}>
+      <Image source={src} style={styles.fill} contentFit="contain" />
+    </Animated.View>
+  );
+}
+const BOB_EASE = Easing.bezierFn(0.42, 0, 0.58, 1);
+
+/** 발판 세 개 사이를 왼쪽 → 가운데 → 오른쪽 → 돌아서 다시 (3.2초) */
+function Hopper({ src, left, top, w, h, span, still }: { src: number; left: number; top: number; w: number; h: number; span: number; still: boolean }) {
+  const p = useSharedValue(0);
+  useEffect(() => {
+    if (still) return;
+    p.set(withRepeat(withTiming(1, { duration: 3200, easing: Easing.linear }), -1, false));
+    return () => cancelAnimation(p);
+  }, [still, p]);
+  const a = useAnimatedStyle(() => {
+    const t = p.get();
+    const S = [0, 6, 14, 22, 28, 36, 44, 50, 58, 66, 72, 80, 88, 100];
+    const x = kfc(t, S, [-1, -1, -0.5, 0, 0, 0.5, 1, 1, 0.5, 0, 0, -0.5, -1, -1].map((v) => v * span), BOB_EASE);
+    const y = kfc(t, S, [0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0].map((v) => v * h * 0.5), BOB_EASE);
+    const face = t < 0.47 ? 1 : -1;
+    return { transform: [{ translateX: x }, { translateY: y }, { scaleX: face }] };
+  });
+  return (
+    <Animated.View pointerEvents="none" style={[styles.performer, { left, top, width: w, height: h }, still ? null : a]}>
+      <Image source={src} style={styles.fill} contentFit="contain" />
+    </Animated.View>
+  );
+}
+
+/** 통통 뛰며 0.95초마다 춤 동작 (구역 · 회차 완료) */
+function DanceFloor({ poses, left, top, w, h, still }: { poses: number[]; left: number; top: number; w: number; h: number; still: boolean }) {
   const [pose, setPose] = useState(0);
   const [move, setMove] = useState<{ m: Move | 'in'; n: number }>({ m: 'in', n: 0 });
   const bounce = useSharedValue(0);
-  const rays = useSharedValue(still ? 1 : 0);
-  const spin = useSharedValue(0);
-
   useEffect(() => {
     if (still) return;
-    rays.set(withDelay(150, withTiming(1, { duration: 600, easing: Easing.out(Easing.ease) })));
-    spin.set(withRepeat(withTiming(360, { duration: 16000, easing: Easing.linear }), -1, false));
-    // 0.8초 뒤부터 0.5초마다 30px 통통 (위아래 번갈아)
     bounce.set(withDelay(800, withRepeat(withTiming(1, { duration: 500, easing: Easing.bezier(0.3, 0, 0.6, 1) }), -1, true)));
-    // 0.95초마다 춤 동작: 처음엔 차례대로, 그다음엔 무작위(같은 동작 연달아 X) · 두 번에 한 번 포즈도 바꿔요
     let k = 0;
     let last: Move | '' = '';
     let iv: ReturnType<typeof setInterval> | undefined;
@@ -273,7 +428,7 @@ function Stage({ big }: { big: boolean }) {
         }
         last = mv;
         k += 1;
-        if (k % 2 === 0) setPose(Math.floor(Math.random() * POSES.length));
+        if (k % 2 === 0) setPose(Math.floor(Math.random() * poses.length));
         setMove({ m: mv, n: k });
         if (mv === 'flip' || mv === 'twirl') sfx('hop');
       }, 950);
@@ -282,33 +437,18 @@ function Stage({ big }: { big: boolean }) {
       clearTimeout(start);
       clearInterval(iv);
       cancelAnimation(bounce);
-      cancelAnimation(spin);
     };
-  }, [still, bounce, rays, spin]);
-
-  const hopStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -30 * bounce.get() }] }));
-  const shadowStyle = useAnimatedStyle(() => ({ opacity: 1 - 0.55 * bounce.get(), transform: [{ scaleX: 1 - 0.45 * bounce.get() }] }));
-  const raysStyle = useAnimatedStyle(() => ({ opacity: 0.55 * rays.get(), transform: [{ scale: 0.5 + 0.5 * rays.get() }, { rotate: `${spin.get()}deg` }] }));
-
+  }, [still, bounce, poses.length]);
+  const hopStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -h * 0.18 * bounce.get() }] }));
   return (
-    <View style={styles.stage}>
-      <Animated.View style={[styles.rays, raysStyle]} pointerEvents="none">
-        <Rays big={big} />
-      </Animated.View>
-      <Animated.View style={[styles.shadow, shadowStyle]}>
-        <Svg width={150} height={18}>
-          <Ellipse cx={75} cy={9} rx={75} ry={9} fill="rgba(30,26,43,0.14)" />
-        </Svg>
-      </Animated.View>
-      <Animated.View style={hopStyle}>
-        <Dancer move={move} pose={pose} still={still} />
-      </Animated.View>
-    </View>
+    <Animated.View pointerEvents="none" style={[styles.performer, { left, top, width: w, height: h }, hopStyle]}>
+      <Dancer move={move} src={poses[pose] ?? poses[0]} still={still} />
+    </Animated.View>
   );
 }
 
 /** 춤 동작 하나 (프로토타입 celIn · dance · mvTwirl · mvFlip · mvWiggle · mvBoing · mvLean 키프레임) */
-function Dancer({ move, pose, still }: { move: { m: Move | 'in'; n: number }; pose: number; still: boolean }) {
+function Dancer({ move, src, still }: { move: { m: Move | 'in'; n: number }; src: number; still: boolean }) {
   const p = useSharedValue(still ? 1 : 0);
   const kind = useSharedValue<number>(0);
   useEffect(() => {
@@ -322,7 +462,7 @@ function Dancer({ move, pose, still }: { move: { m: Move | 'in'; n: number }; po
   const s = useAnimatedStyle(() => danceStyle(kind.get(), p.get()));
   return (
     <Animated.View style={[styles.charBox, s]}>
-      <Image source={POSES[pose]} style={pose >= 2 ? styles.charTilt : styles.char} contentFit="contain" />
+      <Image source={src} style={styles.fill} contentFit="contain" />
     </Animated.View>
   );
 }
@@ -370,43 +510,6 @@ function danceStyle(kind: number, t: number) {
       ],
     };
   return { transform: [{ translateX: kf(pct, [0, 35, 70, 100], [0, -26, 22, 0]) }, { rotate: `${kf(pct, [0, 35, 70, 100], [0, -14, 12, 0])}deg` }] };
-}
-
-/** 빛줄기: 노랑 · 분홍 · 보라 10도 줄기가 번갈아 (가운데 · 바깥은 흐리게) — 프로토타입 .cel-rays conic-gradient + mask */
-function Rays({ big }: { big: boolean }) {
-  const R = 165;
-  const wedges: { a: number; c: string; o: number }[] = [];
-  for (let base = 0; base < 360; base += 72) {
-    if (big) {
-      for (let k = 0; k < 3; k++) wedges.push({ a: base + k * 24, c: '#FFFFFF', o: 0.75 });
-    } else {
-      wedges.push({ a: base, c: '#FFE200', o: 0.55 }, { a: base + 24, c: '#D0798E', o: 0.45 }, { a: base + 48, c: '#493087', o: 0.35 });
-    }
-  }
-  const pt = (deg: number) => {
-    const r = ((deg - 90) * Math.PI) / 180;
-    return `${R + R * Math.cos(r)} ${R + R * Math.sin(r)}`;
-  };
-  return (
-    <Svg width={R * 2} height={R * 2} viewBox={`0 0 ${R * 2} ${R * 2}`}>
-      <Defs>
-        <RadialGradient id="rayFade" cx="50%" cy="50%" r="50%">
-          <Stop offset="0.25" stopColor="#fff" stopOpacity={0} />
-          <Stop offset="0.42" stopColor="#fff" stopOpacity={1} />
-          <Stop offset="0.74" stopColor="#fff" stopOpacity={0.5} />
-          <Stop offset="1" stopColor="#fff" stopOpacity={0} />
-        </RadialGradient>
-        <Mask id="rayMask">
-          <Rect x={0} y={0} width={R * 2} height={R * 2} fill="url(#rayFade)" />
-        </Mask>
-      </Defs>
-      <G mask="url(#rayMask)">
-        {wedges.map((w, i) => (
-          <Path key={i} d={`M${R} ${R} L${pt(w.a)} A${R} ${R} 0 0 1 ${pt(w.a + 10)} Z`} fill={w.c} fillOpacity={w.o} />
-        ))}
-      </G>
-    </Svg>
-  );
 }
 
 type PieceDef = { x: number; y: number; vx: number; vy: number; r: number; vr: number; w: number; h: number; c: string; dot: boolean };
@@ -485,30 +588,34 @@ function Nudge({ style, children }: { style?: object; children: React.ReactNode 
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center', paddingHorizontal: 24, backgroundColor: Colors.cream },
-  rootBig: { backgroundColor: Colors.yellow },
+  root: { flex: 1, paddingHorizontal: 20, gap: 12 },
   flex: { flex: 1, minWidth: 0 },
-  stage: { marginTop: 'auto', width: 200, height: 170, alignItems: 'center', justifyContent: 'flex-end' },
-  rays: { position: 'absolute', left: 100 - 165, top: 85 - 175, width: 330, height: 330 },
-  shadow: { position: 'absolute', bottom: 4, width: 150, height: 18 },
-  charBox: { transformOrigin: '50% 100%' },
-  char: { width: 170, height: 108 },
-  charTilt: { width: 170, height: 124 },
-  title: { marginTop: 26, fontFamily: Font.body900, fontSize: 28, lineHeight: 35, letterSpacing: -0.8, textAlign: 'center' },
-  sub: { marginTop: 6, fontFamily: Font.body700, fontSize: 13.5, lineHeight: 20, textAlign: 'center' },
-  boxesWrap: { marginTop: 24, width: '100%', maxWidth: 330 },
-  boxes: { flexDirection: 'row', borderWidth: 2.5, borderColor: Colors.ink, borderRadius: 18, overflow: 'hidden', backgroundColor: Colors.white, boxShadow: '3px 3px 0 #1E1A2B' },
-  cb: { flex: 1, minWidth: 0, alignItems: 'center', gap: 7, paddingTop: 14, paddingBottom: 12, paddingHorizontal: 2 },
-  cbLine: { borderLeftWidth: 2.5, borderColor: Colors.ink },
-  emo: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: Colors.ink, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
-  cbNum: { fontFamily: Font.display, fontSize: 20, lineHeight: 24, fontVariant: ['tabular-nums'] },
-  gauge: { width: '70%', height: 7, borderRadius: 4, overflow: 'hidden' },
-  gaugeFill: { height: '100%', borderRadius: 4, transformOrigin: 'left' },
-  cbLabel: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
-  acts: { marginTop: 'auto', width: '100%', flexDirection: 'row', alignItems: 'center', gap: 10 },
+  fill: { width: '100%', height: '100%' },
+  stage: { flex: 1, minHeight: 0 },
+  stageCard: { borderWidth: 2.5, borderColor: Colors.ink, borderRadius: 24, overflow: 'hidden' },
+  words: { position: 'absolute', left: 20, right: 20, top: 18, gap: 4, zIndex: 3 },
+  title: { fontFamily: Font.body900, fontSize: 32, lineHeight: 40, letterSpacing: -1.2 },
+  sub: { fontFamily: Font.body800, fontSize: 14, lineHeight: 20, opacity: 0.85 },
+  rewards: { position: 'absolute', left: 20, right: 16, bottom: 18, zIndex: 3 },
+  marks: { flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap', gap: 20 },
+  markItem: { gap: 2 },
+  markLine: { position: 'absolute', left: -3, right: -3, bottom: 3, height: 12, borderRadius: 3 },
+  markNum: { fontFamily: Font.display, fontSize: 22, lineHeight: 28 },
+  markLabel: { fontFamily: Font.body800, fontSize: 12, lineHeight: 16 },
+  where: { gap: 4 },
+  whereRow: { flexDirection: 'row', gap: 6 },
+  whereGroup: { minWidth: 0, gap: 3 },
+  whereName: { fontFamily: Font.body800, fontSize: 10, lineHeight: 13, textAlign: 'center' },
+  whereCells: { flexDirection: 'row', gap: 2 },
+  whereCell: { flex: 1, height: 9, borderRadius: 4, borderWidth: 1.5 },
+  whereLabel: { fontFamily: Font.body900, fontSize: 12, lineHeight: 16 },
+  whereNote: { fontFamily: Font.body700, fontSize: 12, lineHeight: 16 },
+  pill: { position: 'absolute', height: 18, borderRadius: 9, borderWidth: 2.5, borderColor: Colors.ink, backgroundColor: Colors.white },
+  performer: { position: 'absolute', zIndex: 2, transformOrigin: '50% 100%' },
+  charBox: { width: '100%', height: '100%', transformOrigin: '50% 100%' },
+  acts: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 10 },
   home: { width: 54, height: 59, borderRadius: 27, borderWidth: 2.5, borderColor: Colors.ink, borderBottomWidth: 7.5, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center' },
-  next: { height: 59, borderRadius: 28, borderWidth: 2.5, borderColor: Colors.ink, borderBottomWidth: 7.5, backgroundColor: Colors.yellow, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  nextBig: { backgroundColor: Colors.white },
+  next: { height: 59, borderRadius: 28, borderWidth: 2.5, borderColor: Colors.ink, borderBottomWidth: 7.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   down: { borderBottomWidth: 2.5, marginTop: 5 },
   nextText: { fontFamily: Font.body900, fontSize: 16, lineHeight: 21 },
   nextPts: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: Colors.ink },

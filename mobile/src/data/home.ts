@@ -63,8 +63,6 @@ export const QR_AFTER = 20;
 
 /** 출석 포인트 */
 export const ATTEND_POINTS = 30;
-/** 구간 건너뛰기(테스트 통과): 건너뛴 단계마다 +10P (프로토타입 xp: gained * 10) */
-export const SKIP_POINTS = 10;
 
 /** 챕터 완료 보상 상자에서 나오는 것 (이슈 #7) */
 export type ChestReward = {

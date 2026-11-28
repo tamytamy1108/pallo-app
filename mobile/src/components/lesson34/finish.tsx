@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import { Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
+import { buildWhere, Celebrate, type CelebrateResult } from '@/components/lesson/celebrate';
+import { STAGE_KO } from '@/data/lessons';
 import { showToast } from '@/components/ui/toast';
 import { findStep34, type Stage, type Step34 } from '@/data/lessons34';
 import { sfx } from '@/lib/feedback';
@@ -54,13 +55,22 @@ export function useStepFinish(ctx: StepCtx) {
     // 같은 단계(예습 · 본학습 · 복습)에서 먼저, 없으면 다음 단계에서
     const nx = left.find((s) => s.stage === ctx.step.stage) ?? left[0];
     setNext(nx ? nx.id : null);
+    // 완료 등급: 회차를 다 끝냈으면 회차 완료, 이 구역(예습 · 본학습 · 복습)을 다 끝냈으면 구역 완료 (처음 끝낼 때만)
+    const unitDone = first && left.length === 0;
+    const stageDone = first && all.filter((s) => s.stage === ctx.step.stage).every((s) => isDone(stepKey(ctx.lv, ctx.unit, s.id)));
     setRes({
       correct: score?.right ?? 0,
       total: score?.total ?? 0,
       points: first ? ctx.step.xp : 0,
       goalDone: Math.min(getTodayDone(), DAILY_GOAL),
       goalTotal: DAILY_GOAL,
-      unitComplete: first && left.length === 0,
+      unitComplete: unitDone,
+      tier: unitDone ? 'session' : stageDone ? 'zone' : 'step',
+      zone: ctx.step.stage,
+      title: unitDone ? `${ctx.unit}회 완료!` : stageDone ? `${STAGE_KO[ctx.step.stage]} 완료!` : undefined,
+      sub: unitDone ? `${all.length}단계를 다 했어요` : stageDone && nx ? `다음은 ${STAGE_KO[nx.stage]} · ${nx.t}` : undefined,
+      nextPoints: nx?.xp,
+      where: buildWhere(all, (id) => isDone(stepKey(ctx.lv, ctx.unit, id)), ctx.step.id, ctx.step.t),
     });
   };
   const celebrate = res ? (
