@@ -31,12 +31,16 @@ export function BadgeIc({ ic, size = 22, color = Colors.ink }: { ic: BadgeIcon; 
 }
 
 /** 섹션 제목 줄 (프로토타입 .sec-title.my-h: 제목 + 오른쪽 '전체 보기 ›') */
-export function SecHead({ title, more, onMore }: { title: string; more?: string; onMore?: () => void }) {
+/** badge: 제목 바로 옆에 붙는 작은 표시 (내 스터디 '연동됨') */
+export function SecHead({ title, more, onMore, badge }: { title: string; more?: string; onMore?: () => void; badge?: ReactNode }) {
   return (
     <View style={styles.secHead}>
-      <PText style={styles.secTitle} accessibilityRole="header">
-        {title}
-      </PText>
+      <View style={styles.secTitleRow}>
+        <PText style={styles.secTitle} accessibilityRole="header">
+          {title}
+        </PText>
+        {badge}
+      </View>
       {more && (
         <Pressable onPress={onMore} accessibilityRole="button" accessibilityLabel={`${title} ${more}`} hitSlop={10}>
           <PText style={styles.secMore}>{more}</PText>
@@ -288,6 +292,7 @@ export function MyList({ rows }: { rows: { label: string; icon?: ReactNode; valu
 
 const styles = StyleSheet.create({
   secHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, marginHorizontal: 2 },
+  secTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   secTitle: { fontFamily: Font.display, fontSize: 17, lineHeight: 24 },
   secMore: { fontFamily: Font.body900, fontSize: 13, lineHeight: 19, color: Colors.inkSub, paddingVertical: 6, paddingHorizontal: 2 },
   stats: { flexDirection: 'row', gap: 8, marginRight: 2 },

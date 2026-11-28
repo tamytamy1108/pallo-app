@@ -49,7 +49,8 @@ export default function SettingsScreen() {
     <AccountPage title="설정" bodyStyle={styles.body} scrollRef={scrollRef}>
       <Sec title="계정">
         <GoRow title="닉네임 · 한 줄 소개" value={me.name} onPress={() => setSheet('nick')} />
-        <GoRow title="내 지점" value={pendingLinks ? `확인 중 ${pendingLinks}` : ''} onPress={() => go('/me/settings/branch')} />
+        {/* 연동됨은 마이 카드가 아니라 여기서 봐요 (2026-11-28) — 확인 중인 요청이 있으면 그게 먼저 */}
+        <GoRow title="내 지점" value={pendingLinks ? `확인 중 ${pendingLinks}` : member ? '연동됨' : ''} onPress={() => go('/me/settings/branch')} />
         <GoRow title="로그인 계정" value={loginName ? `${loginName} 연결됨` : ''} onPress={() => go('/me/settings/login')} />
       </Sec>
       <Sec title="알림" onLayout={onNotiLayout}>
