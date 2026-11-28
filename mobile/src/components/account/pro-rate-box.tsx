@@ -89,7 +89,7 @@ export function ProRateBox() {
         {perfect ? (
           <View style={[styles.foot, styles.footPerfect]}>
             <Sparkle size={14} color={Colors.yellow} />
-            <PText style={[styles.footT, styles.footTPerfect]}>{`최고 보상 확정 · 다음 달 1일에 +${earned}이 들어와요`}</PText>
+            <PText style={[styles.footT, styles.footTPerfect]}>{`한 번도 안 빠진 최고의 프로! · 다음 달 1일에 +${earned}`}</PText>
             <Sparkle size={14} color={Colors.yellow} />
           </View>
         ) : (
