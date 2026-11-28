@@ -129,6 +129,23 @@ function devMe(who: DevPersona): Pick<Me, 'role' | 'memberAccessLevel' | 'teachL
 
 /** 프로처럼 보이는 계정: 프로 · 지점 관리자 (마이 숫자 · 보낸/받은 노트 · 내 수업 — 둘 다 현장에서 프로로 참여할 수 있어요) */
 export const isProLike = (role: Role) => role === 'leader' || role === 'manager';
+
+/** 한 지점에서의 내 역할 (여러 지점에 다니면 지점마다 하나씩) */
+export type BranchRole = { branch: string; role: Role };
+
+/** 지점마다 역할이 다르면 높은 쪽 하나로 보여요: 프로 > 스텝(지점 관리자) > 멤버 > 비회원 (2026-11-28 · 하남점 프로 + 잠실점 멤버 = 프로) */
+const ROLE_RANK: Record<Role, number> = { leader: 3, manager: 2, member: 1, guest: 0 };
+
+/** 여러 지점의 역할 중 이름 옆에 보일 하나 — 같은 등급이면 먼저 온 지점. 비어 있으면 null */
+export function topBranchRole(list: readonly BranchRole[]): BranchRole | null {
+  return list.reduce<BranchRole | null>((top, r) => (!top || ROLE_RANK[r.role] > ROLE_RANK[top.role] ? r : top), null);
+}
+
+/** 서버가 지점별 역할을 주면: 가장 높은 역할 · 그 지점을 내 role · branch 로 (프로면 이름 아래 줄도 프로인 지점) */
+export function applyBranchRoles(list: readonly BranchRole[]) {
+  const top = topBranchRole(list);
+  if (top) updateMe({ role: top.role, branch: top.branch });
+}
 export const useMe = meStore.useStore;
 export const getMe = meStore.get;
 export const updateMe = (patch: Partial<Me>) => meStore.set((s) => ({ ...s, ...patch }));
